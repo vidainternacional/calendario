@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
-import LoginForm from '@/components/auth/LoginForm'
+import SignupForm from '@/components/auth/SignupForm'
 
 export const metadata: Metadata = {
-  title: 'Iniciar sesión',
+  title: 'Crear cuenta',
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+    <main className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-8">
       {/* Glow de fondo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl" />
@@ -31,15 +31,15 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Vida Internacional</h1>
+          <h1 className="text-2xl font-bold text-white">Crear cuenta</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Accede a tu cuenta de servidor
+            Únete al equipo de Vida Internacional
           </p>
         </div>
 
         {/* Card */}
         <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 shadow-xl">
-          <LoginForm />
+          <SignupForm />
         </div>
       </div>
     </main>

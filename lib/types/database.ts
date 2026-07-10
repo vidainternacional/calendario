@@ -1,6 +1,6 @@
-// Tipos generados desde el esquema de Supabase
-// Actualizar con: npx supabase gen types typescript --project-id <project-id> > lib/types/database.ts
-// o: npx supabase gen types typescript --local > lib/types/database.ts
+// Tipos de base de datos — generados parcialmente
+// Para regenerar con el schema real:
+//   npx supabase gen types typescript --project-id atjtjpchslxbseayzflz > lib/types/database.ts
 
 export type Json =
   | string
@@ -13,13 +13,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      // TODO: Reemplazar con tipos generados por supabase gen types
-      // Ejecutar: npx supabase gen types typescript --project-id atjtjpchslxbseayzflz > lib/types/database.ts
-      [key: string]: {
-        Row: Record<string, unknown>
-        Insert: Record<string, unknown>
-        Update: Record<string, unknown>
+      usuarios: {
+        Row: {
+          id: string
+          nombre: string
+          email: string
+          rol: string
+          ministerio_id: string | null
+          foto_url: string | null
+          activo: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          nombre: string
+          email: string
+          rol?: string
+          ministerio_id?: string | null
+          foto_url?: string | null
+          activo?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          nombre?: string
+          email?: string
+          rol?: string
+          ministerio_id?: string | null
+          foto_url?: string | null
+          activo?: boolean
+          updated_at?: string
+        }
       }
+      // Más tablas se agregarán al generar tipos desde Supabase CLI
     }
     Views: {
       [_ in never]: never
