@@ -83,11 +83,10 @@ export async function signup(
     const adminClient = createAdminClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: profileError } = await (adminClient as any)
-      .from('usuarios')
+      .from('profiles')
       .insert({
         id: data.user.id,
-        nombre,
-        email,
+        nombre_completo: nombre,
         rol: 'lider', // rol por defecto
       })
 
