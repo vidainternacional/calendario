@@ -26,7 +26,7 @@ export default function InstallBanner() {
 
     if (isIOSDevice) {
       // For iOS, just show a hint banner, as we can't trigger an install prompt programmatically
-      const hasDismissed = localStorage.getItem('pwa_ios_dismissed')
+      const hasDismissed = sessionStorage.getItem('pwa_dismissed')
       if (!hasDismissed) {
         setShowBanner(true)
       }
@@ -36,7 +36,10 @@ export default function InstallBanner() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault() // Prevent automatic prompt
       setDeferredPrompt(e)
-      setShowBanner(true) // Show our custom UI
+      const hasDismissed = sessionStorage.getItem('pwa_dismissed')
+      if (!hasDismissed) {
+        setShowBanner(true) // Show our custom UI
+      }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -65,15 +68,15 @@ export default function InstallBanner() {
     setDeferredPrompt(null)
   }
 
-  const dismissIOS = () => {
-    localStorage.setItem('pwa_ios_dismissed', 'true')
+  const dismissBanner = () => {
+    sessionStorage.setItem('pwa_dismissed', 'true')
     setShowBanner(false)
   }
 
   if (isIOS) {
     return (
       <div className="bg-indigo-600 text-white rounded-[18px] p-4 mb-8 shadow-lg flex items-start gap-3 relative animate-in slide-in-from-top-4">
-        <button onClick={dismissIOS} className="absolute top-2 right-2 p-1 text-indigo-200 hover:text-white rounded-full">
+        <button onClick={dismissBanner} className="absolute top-2 right-2 p-1 text-indigo-200 hover:text-white rounded-full">
           <X className="w-4 h-4" />
         </button>
         <div className="bg-white/20 p-2 rounded-xl shrink-0">
@@ -90,7 +93,10 @@ export default function InstallBanner() {
   }
 
   return (
-    <div className="bg-indigo-600 text-white rounded-[18px] p-4 mb-8 shadow-[0_6px_24px_rgba(79,70,229,0.30)] flex items-center justify-between gap-4 animate-in slide-in-from-top-4">
+    <div className="bg-indigo-600 text-white rounded-[18px] p-4 mb-8 shadow-[0_6px_24px_rgba(79,70,229,0.30)] flex items-center justify-between gap-4 relative animate-in slide-in-from-top-4 pr-10">
+      <button onClick={dismissBanner} className="absolute top-1/2 -translate-y-1/2 right-2 p-1 text-indigo-200 hover:text-white rounded-full">
+        <X className="w-4 h-4" />
+      </button>
       <div className="flex items-center gap-3">
         <div className="bg-white/20 p-2 rounded-xl shrink-0">
           <Download className="w-5 h-5" />
