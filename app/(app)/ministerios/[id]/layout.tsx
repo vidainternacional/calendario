@@ -45,7 +45,7 @@ export default async function MinisterioLayout({
   ]
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-[#f4f5f9] flex flex-col">
       {/* Header dinámico con colores del ministerio */}
       <header 
         className="relative pt-12 pb-6 px-4"
@@ -57,7 +57,7 @@ export default async function MinisterioLayout({
         <div className="max-w-lg mx-auto relative z-10">
           <Link 
             href="/ministerios" 
-            className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-white hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver
@@ -70,7 +70,7 @@ export default async function MinisterioLayout({
                 {ministerio.nombre}
               </h1>
               {ministerio.descripcion && (
-                <p className="text-sm text-slate-300 mt-0.5 line-clamp-1">{ministerio.descripcion}</p>
+                <p className="text-sm text-white mt-0.5 line-clamp-1">{ministerio.descripcion}</p>
               )}
             </div>
           </div>
@@ -78,13 +78,13 @@ export default async function MinisterioLayout({
       </header>
 
       {/* Tabs de navegación internas */}
-      <div className="border-b border-slate-800 bg-slate-900/50 sticky top-0 z-20 backdrop-blur-md">
+      <div className="border-b border-slate-100 bg-white sticky top-0 z-20 backdrop-blur-md">
         <div className="max-w-lg mx-auto px-4 flex gap-6 overflow-x-auto no-scrollbar">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-2 py-4 text-sm font-medium text-slate-400 hover:text-white border-b-2 border-transparent hover:border-slate-600 whitespace-nowrap transition-colors"
+              className="flex items-center gap-2 py-4 text-sm font-medium text-white/80 hover:text-white border-b-2 border-transparent hover:border-slate-600 whitespace-nowrap transition-colors"
             >
               <item.icon className="w-4 h-4" />
               {item.label}

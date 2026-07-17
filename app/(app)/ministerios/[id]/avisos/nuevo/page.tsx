@@ -41,8 +41,8 @@ export default async function NuevoAvisoPage({
   }
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <h2 className="text-xl font-bold text-white mb-6">Crear Nuevo Aviso</h2>
+    <div className="bg-white border border-slate-100 rounded-[18px] p-6 shadow-xl">
+      <h2 className="text-xl font-bold text-[#171923] mb-6">Crear Nuevo Aviso</h2>
       <NuevoAvisoForm ministerioId={id} />
     </div>
   )

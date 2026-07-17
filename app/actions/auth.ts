@@ -78,7 +78,7 @@ export async function signup(
     return { error: error.message }
   }
 
-  // 2. Crear perfil en la tabla usuarios (usando service role para bypass RLS)
+  // 2. Crear perfil en la tabla profiles (usando service role para bypass RLS)
   if (data.user) {
     const adminClient = createAdminClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,7 +87,7 @@ export async function signup(
       .insert({
         id: data.user.id,
         nombre_completo: nombre,
-        rol: 'lider', // rol por defecto
+        rol: 'servidor', // rol por defecto
       })
 
     if (profileError) {

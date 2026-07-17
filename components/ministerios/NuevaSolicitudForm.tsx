@@ -69,7 +69,7 @@ export default function NuevaSolicitudForm({ ministerioId }: { ministerioId: str
       <div className="flex gap-3 pt-4">
         <Link 
           href={`/ministerios/${ministerioId}/solicitudes`}
-          className="flex-1 text-center rounded-xl bg-slate-800 hover:bg-slate-700 px-4 py-3 text-sm font-semibold text-white transition-colors"
+          className="flex-1 text-center rounded-xl bg-slate-200 hover:bg-slate-300 px-4 py-3 text-sm font-semibold text-[#171923] transition-colors"
         >
           Cancelar
         </Link>

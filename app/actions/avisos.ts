@@ -1,15 +1,23 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
+export type AvisoState = { error?: string; success?: boolean } | undefined
+
+/**
+ * Crea un aviso/publicación.
+ * @param ministerioId - UUID del ministerio, o "" para publicación global (visible a todos).
+ */
 export async function crearAviso(
   ministerioId: string,
-  _state: { error?: string; success?: string } | undefined,
+  _state: AvisoState,
   formData: FormData
-) {
-  const titulo = formData.get('titulo') as string
-  const cuerpo = formData.get('cuerpo') as string
+): Promise<AvisoState> {
+  const titulo = (formData.get('titulo') as string)?.trim()
+  const cuerpo = (formData.get('cuerpo') as string)?.trim()
+  // Si viene del formulario, el campo ministerio_id del form tiene prioridad
+  const minIdForm = (formData.get('ministerio_id') as string) ?? ministerioId
 
   if (!titulo || !cuerpo) {
     return { error: 'Por favor completa todos los campos.' }
@@ -23,7 +31,7 @@ export async function crearAviso(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('publicaciones').insert({
-    ministerio_id: ministerioId,
+    ministerio_id: minIdForm === '' ? null : minIdForm,
     autor_id: user.id,
     tipo: 'aviso',
     titulo,
@@ -34,5 +42,6 @@ export async function crearAviso(
     return { error: error.message }
   }
 
-  redirect(`/ministerios/${ministerioId}/avisos`)
+  revalidatePath('/avisos')
+  return { success: true }
 }

@@ -37,18 +37,18 @@ export default async function MinisteriosPage() {
   })) || []
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-8 max-w-lg mx-auto">
+    <main className="min-h-screen bg-[#f4f5f9] px-4 py-8 max-w-lg mx-auto">
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Mis Ministerios</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-[#171923]">Mis Ministerios</h1>
+        <p className="text-sm text-gray-500 mt-1">
           Ministerios en los que sirves
         </p>
       </header>
 
       {misMinisterios.length === 0 ? (
-        <div className="text-center py-12 px-4 border border-slate-800 rounded-2xl bg-slate-900/50">
-          <p className="text-slate-400">Aún no perteneces a ningún ministerio.</p>
+        <div className="text-center py-12 px-4 border border-slate-100 rounded-[18px] bg-white">
+          <p className="text-gray-500">Aún no perteneces a ningún ministerio.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -56,7 +56,7 @@ export default async function MinisteriosPage() {
             <Link
               key={min.id}
               href={`/ministerios/${min.id}/avisos`}
-              className="group relative overflow-hidden rounded-2xl border border-slate-800 hover:border-slate-700 transition-all p-5 bg-slate-900/80 backdrop-blur-sm"
+              className="group relative overflow-hidden rounded-[18px] border border-slate-100 hover:border-slate-100 transition-all p-5 bg-white backdrop-blur-sm"
               style={{
                 boxShadow: `0 4px 20px -10px ${min.color_primario}40`
               }}
@@ -69,7 +69,7 @@ export default async function MinisteriosPage() {
 
               <div className="relative z-10 flex items-start gap-4">
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-white/10"
+                  className="w-12 h-12 rounded-[18px] flex items-center justify-center text-2xl shadow-inner border border-white/10"
                   style={{ background: `linear-gradient(135deg, ${min.color_primario}20, ${min.color_secundario}20)` }}
                 >
                   {min.emoji}
@@ -77,7 +77,7 @@ export default async function MinisteriosPage() {
                 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-white group-hover:text-transparent group-hover:bg-clip-text transition-colors"
+                    <h2 className="text-lg font-bold text-[#171923] group-hover:text-transparent group-hover:bg-clip-text transition-colors"
                         style={{ backgroundImage: `linear-gradient(to right, ${min.color_primario}, ${min.color_secundario})` }}>
                       {min.nombre}
                     </h2>
@@ -88,7 +88,7 @@ export default async function MinisteriosPage() {
                     )}
                   </div>
                   {min.descripcion && (
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                       {min.descripcion}
                     </p>
                   )}

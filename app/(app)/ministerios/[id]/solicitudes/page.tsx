@@ -67,7 +67,7 @@ export default async function SolicitudesPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Solicitudes</h2>
+        <h2 className="text-lg font-bold text-[#171923]">Solicitudes</h2>
         {/* Cualquier miembro puede crear */}
         <Link
           href={`/ministerios/${id}/solicitudes/nueva`}
@@ -79,9 +79,9 @@ export default async function SolicitudesPage({
       </div>
 
       {!solicitudes || solicitudes.length === 0 ? (
-        <div className="text-center py-16 px-4 border border-dashed border-slate-700 rounded-2xl">
-          <FileText className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No hay solicitudes en este ministerio.</p>
+        <div className="text-center py-16 px-4 border border-dashed border-slate-100 rounded-[18px]">
+          <FileText className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+          <p className="text-gray-500">No hay solicitudes en este ministerio.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -92,23 +92,23 @@ export default async function SolicitudesPage({
             return (
               <article 
                 key={sol.id} 
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row gap-4"
+                className="bg-white border border-slate-100 rounded-[18px] p-5 shadow-lg flex flex-col sm:flex-row gap-4"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white">{sol.titulo}</h3>
+                    <h3 className="text-lg font-semibold text-[#171923]">{sol.titulo}</h3>
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.color} ${config.border}`}>
                       <StateIcon className="w-3 h-3" />
                       {sol.estado.charAt(0).toUpperCase() + sol.estado.slice(1)}
                     </span>
                   </div>
                   
-                  <p className="text-slate-300 text-sm mb-4">
+                  <p className="text-[#171923] text-sm mb-4">
                     {sol.detalle}
                   </p>
                   
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-                    <span className="font-medium text-slate-400">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                    <span className="font-medium text-gray-500">
                       Por: {sol.profiles?.nombre_completo || 'Usuario'}
                     </span>
                     <span>•</span>
@@ -122,7 +122,7 @@ export default async function SolicitudesPage({
 
                 {/* Si está pendiente y el usuario puede aprobar, mostramos los botones */}
                 {sol.estado === 'pendiente' && puedeAprobar && (
-                  <div className="sm:border-l border-slate-800 sm:pl-4 pt-4 sm:pt-0 flex flex-row sm:flex-col gap-2 justify-center shrink-0">
+                  <div className="sm:border-l border-slate-100 sm:pl-4 pt-4 sm:pt-0 flex flex-row sm:flex-col gap-2 justify-center shrink-0">
                     <AprobacionBotones solicitudId={sol.id} path={`/ministerios/${id}/solicitudes`} />
                   </div>
                 )}

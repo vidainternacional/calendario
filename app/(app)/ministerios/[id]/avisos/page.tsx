@@ -59,7 +59,7 @@ export default async function AvisosPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Avisos y Noticias</h2>
+        <h2 className="text-lg font-bold text-[#171923]">Avisos y Noticias</h2>
         {puedePublicar && (
           <Link
             href={`/ministerios/${id}/avisos/nuevo`}
@@ -72,23 +72,23 @@ export default async function AvisosPage({
       </div>
 
       {!avisos || avisos.length === 0 ? (
-        <div className="text-center py-16 px-4 border border-dashed border-slate-700 rounded-2xl">
-          <Megaphone className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No hay avisos recientes en este ministerio.</p>
+        <div className="text-center py-16 px-4 border border-dashed border-slate-100 rounded-[18px]">
+          <Megaphone className="w-10 h-10 text-gray-500 mx-auto mb-3" />
+          <p className="text-gray-500">No hay avisos recientes en este ministerio.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {avisos.map((aviso: any) => (
             <article 
               key={aviso.id} 
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg"
+              className="bg-white border border-slate-100 rounded-[18px] p-5 shadow-lg"
             >
-              <h3 className="text-lg font-semibold text-white mb-2">{aviso.titulo}</h3>
-              <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed mb-4">
+              <h3 className="text-lg font-semibold text-[#171923] mb-2">{aviso.titulo}</h3>
+              <p className="text-[#171923] text-sm whitespace-pre-wrap leading-relaxed mb-4">
                 {aviso.cuerpo}
               </p>
-              <div className="flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-800">
-                <span className="font-medium text-slate-400">
+              <div className="flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-slate-100">
+                <span className="font-medium text-gray-500">
                   {aviso.profiles?.nombre_completo || 'Usuario'}
                 </span>
                 <span>

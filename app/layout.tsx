@@ -45,7 +45,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="min-h-full bg-slate-950 text-slate-100 font-sans antialiased">
+      <body className="min-h-full bg-[#f4f5f9] text-[#171923] font-sans antialiased">
         {children}
         <script
           dangerouslySetInnerHTML={{

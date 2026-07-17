@@ -1,8 +1,8 @@
-const CACHE_NAME = 'vida-shell-v1'
+const CACHE_NAME = 'vida-shell-v1.1'
 const SHELL_ASSETS = [
-  '/',
-  '/inicio',
   '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ]
 
 self.addEventListener('install', (event) => {
@@ -29,10 +29,17 @@ self.addEventListener('fetch', (event) => {
   // Solo cachear GET requests
   if (event.request.method !== 'GET') return
 
+  // Bypassear peticiones de navegación para que el middleware de Next.js
+  // pueda hacer los redirects correctamente sin el error de "redirect mode is not follow"
+  if (event.request.mode === 'navigate') {
+    return
+  }
+
   // No cachear API calls ni Supabase
   const url = new URL(event.request.url)
   if (
     url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/_next/') ||
     url.hostname.includes('supabase.co')
   ) {
     return
