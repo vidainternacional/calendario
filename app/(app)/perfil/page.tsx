@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
-import { User, Mail, Shield, Bell, Check } from 'lucide-react'
+import Link from 'next/link'
+import { User, Mail, Shield, Bell, Settings2 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Mi Perfil',
@@ -144,6 +145,28 @@ export default async function PerfilPage() {
             </div>
           )}
         </section>
+        {/* Panel de Administración (solo pastor/admin) */}
+        {(['pastor', 'administrador'] as const).includes((profile as any)?.rol) && (
+          <section>
+            <Link
+              href="/admin"
+              className="flex items-center justify-between gap-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[.98] text-white px-5 py-4 rounded-[18px] shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                  <Settings2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Panel de Administración</p>
+                  <p className="text-[11px] text-indigo-200 mt-0.5">Ministerios, usuarios y membresías</p>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-indigo-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </section>
+        )}
       </div>
     </main>
   )

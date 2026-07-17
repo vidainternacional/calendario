@@ -4,6 +4,12 @@ import { useState, useEffect } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { guardarMinisterio } from '@/app/actions/admin'
 
+const EMOJIS_COMUNES = [
+  '🎵', '🙏', '👶', '📖', '🎤', '⛪', '🍽️', '🎨',
+  '💒', '📢', '🕊️', '❤️', '🌿', '🎺', '🥁', '🎹',
+  '✝️', '🌟', '🤝', '👑', '🎯', '📣', '🎶', '💡',
+]
+
 export default function MinisterioModal({ 
   ministerio, 
   isOpen, 
@@ -15,6 +21,14 @@ export default function MinisterioModal({
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [selectedEmoji, setSelectedEmoji] = useState(ministerio?.emoji || '✨')
+  const [showPicker, setShowPicker] = useState(false)
+
+  // Sync emoji when ministerio changes (opening modal for edit)
+  useEffect(() => {
+    setSelectedEmoji(ministerio?.emoji || '✨')
+    setShowPicker(false)
+  }, [ministerio, isOpen])
 
   useEffect(() => {
     if (isOpen) {
@@ -33,6 +47,8 @@ export default function MinisterioModal({
     setError('')
     try {
       const formData = new FormData(e.currentTarget)
+      // Override with controlled emoji value
+      formData.set('emoji', selectedEmoji)
       await guardarMinisterio(formData)
       onClose()
     } catch (err: any) {
@@ -62,27 +78,71 @@ export default function MinisterioModal({
           )}
 
           {ministerio && <input type="hidden" name="id" value={ministerio.id} />}
-          
-          <div className="grid grid-cols-4 gap-3">
-            <div className="col-span-1 space-y-1.5">
-              <label className="block text-xs font-bold text-gray-500 uppercase">Emoji</label>
-              <input 
-                name="emoji" 
-                defaultValue={ministerio?.emoji || '✨'}
-                required
-                maxLength={2}
-                className="w-full bg-[#f4f5f9] border border-slate-200 rounded-xl px-3 py-2.5 text-center text-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
+          {/* Hidden field so FormData has emoji even if not using controlled input */}
+          <input type="hidden" name="emoji" value={selectedEmoji} />
+
+          {/* Emoji + Nombre */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-4 gap-3">
+              <div className="col-span-1 space-y-1.5">
+                <label className="block text-xs font-bold text-gray-500 uppercase">Emoji</label>
+                {/* Trigger button */}
+                <button
+                  type="button"
+                  onClick={() => setShowPicker(v => !v)}
+                  className="w-full h-[42px] bg-[#f4f5f9] border border-slate-200 rounded-xl text-center text-xl hover:border-indigo-400 transition-colors focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  {selectedEmoji}
+                </button>
+              </div>
+              <div className="col-span-3 space-y-1.5">
+                <label className="block text-xs font-bold text-gray-500 uppercase">Nombre</label>
+                <input 
+                  name="nombre" 
+                  defaultValue={ministerio?.nombre || ''}
+                  required
+                  className="w-full bg-[#f4f5f9] border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#171923] focus:ring-2 focus:ring-indigo-500 outline-none"
+                />
+              </div>
             </div>
-            <div className="col-span-3 space-y-1.5">
-              <label className="block text-xs font-bold text-gray-500 uppercase">Nombre</label>
-              <input 
-                name="nombre" 
-                defaultValue={ministerio?.nombre || ''}
-                required
-                className="w-full bg-[#f4f5f9] border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#171923] focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
-            </div>
+
+            {/* Emoji picker panel */}
+            {showPicker && (
+              <div className="border border-slate-200 rounded-xl p-3 bg-[#f4f5f9]">
+                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Selecciona o escribe uno</p>
+                <div className="grid grid-cols-8 gap-1 mb-3">
+                  {EMOJIS_COMUNES.map(e => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => { setSelectedEmoji(e); setShowPicker(false) }}
+                      className={`text-lg h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-white hover:shadow-sm ${
+                        selectedEmoji === e ? 'bg-white shadow-sm ring-2 ring-indigo-400' : ''
+                      }`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400 font-medium shrink-0">Manual:</span>
+                  <input
+                    type="text"
+                    maxLength={2}
+                    value={selectedEmoji}
+                    onChange={e => setSelectedEmoji(e.target.value)}
+                    className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-center text-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPicker(false)}
+                    className="text-xs text-indigo-600 font-semibold px-3 py-1 bg-indigo-50 hover:bg-indigo-100 rounded-lg"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
