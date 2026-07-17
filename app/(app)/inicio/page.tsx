@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
+import InstallBanner from '@/components/pwa/InstallBanner'
 import { Calendar, MapPin, Clock, Megaphone, Info } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -93,6 +94,8 @@ export default async function InicioPage() {
       </header>
 
       <div className="space-y-8">
+        <InstallBanner />
+        
         {/* Próximos Eventos Personales */}
         <section>
           <div className="flex items-center gap-2 mb-4">
