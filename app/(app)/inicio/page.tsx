@@ -122,17 +122,19 @@ export default async function InicioPage() {
                     </div>
                     
                     <div className="flex-1 border-l border-slate-100 pl-4">
-                      <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="flex items-start justify-between gap-2 mb-2">
                         <h3 className="text-sm font-semibold text-[#171923]">{evento.titulo}</h3>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>
-                          {asignacion.estado}
-                        </span>
                       </div>
                       
-                      <div className="flex flex-col gap-1.5 mt-2">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <Clock className="w-3.5 h-3.5" />
-                          {format(new Date(evento.fecha_inicio), 'HH:mm')}
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>
+                            {asignacion.estado}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <Clock className="w-3.5 h-3.5" />
+                            {format(new Date(evento.fecha_inicio), 'HH:mm')}
+                          </div>
                         </div>
                         {evento.ubicacion && (
                           <div className="flex items-center gap-1.5 text-xs text-gray-500">
