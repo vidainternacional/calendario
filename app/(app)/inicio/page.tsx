@@ -81,7 +81,7 @@ export default async function InicioPage() {
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-600 text-[#171923] font-bold text-sm">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-600 text-white font-bold text-sm">
             {inicial}
           </div>
           <div>
@@ -113,7 +113,7 @@ export default async function InicioPage() {
                 return (
                   <article key={evento.id} className="bg-white border border-slate-100 rounded-[18px] p-4 flex gap-4 shadow-[0_4px_18px_rgba(20,24,40,0.08)]">
                     <div className="flex flex-col items-center justify-center min-w-[3.5rem]">
-                      <span className="text-xs text-gray-500 uppercase font-medium">
+                      <span className="text-xs text-gray-500 capitalize font-medium">
                         {format(new Date(evento.fecha_inicio), 'MMM', { locale: es })}
                       </span>
                       <span className="text-lg font-bold text-[#171923]">
@@ -123,7 +123,7 @@ export default async function InicioPage() {
                     
                     <div className="flex-1 border-l border-slate-100 pl-4">
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="text-sm font-semibold text-[#171923] line-clamp-1">{evento.titulo}</h3>
+                        <h3 className="text-sm font-semibold text-[#171923]">{evento.titulo}</h3>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>
                           {asignacion.estado}
                         </span>
@@ -166,7 +166,7 @@ export default async function InicioPage() {
               {publicaciones.map((pub: any) => (
                 <article key={pub.id} className="bg-white border border-slate-100 rounded-[18px] p-5 shadow-[0_4px_18px_rgba(20,24,40,0.08)]">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-800 text-[#171923] border border-slate-100">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-100 text-gray-600 border border-slate-200">
                       {pub.tipo.replace('_', ' ')}
                     </span>
                     <span className="text-xs text-gray-500">
@@ -183,7 +183,7 @@ export default async function InicioPage() {
                   )}
                   
                   <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-slate-100 pt-3">
-                    <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[#171923] font-bold text-[10px]">
+                    <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-[10px]">
                       {(pub.profiles?.nombre_completo || 'A').charAt(0).toUpperCase()}
                     </div>
                     <span>Por {pub.profiles?.nombre_completo || 'Autor desconocido'}</span>

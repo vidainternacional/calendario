@@ -104,7 +104,7 @@ export default async function PerfilPage() {
                   <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
                     m.es_lider 
                       ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' 
-                      : 'bg-slate-800 text-gray-500 border-slate-100'
+                      : 'bg-slate-100 text-gray-500 border-slate-200'
                   }`}>
                     {m.es_lider ? 'Líder' : 'Servidor'}
                   </span>

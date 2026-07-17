@@ -61,15 +61,15 @@ export default function ProponerIntercambioModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
+      <div className="bg-white rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
           <h3 className="font-bold text-[#171923]">Proponer Intercambio</h3>
           <button onClick={onClose} className="p-2 text-gray-500 hover:bg-slate-100 rounded-full transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1">
           <input type="hidden" name="asignacion_origen_id" value={asignacion_origen_id} />
           
           <div>

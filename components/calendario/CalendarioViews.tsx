@@ -104,7 +104,7 @@ export default function CalendarioViews({ asignaciones }: { asignaciones: any[] 
           const date = parseISO(diaStr)
           return (
             <div key={diaStr} className="relative">
-              <h2 className="sticky top-[152px] z-20 bg-[#f4f5f9]/95 backdrop-blur-sm py-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 -mx-4 px-4 border-b border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+              <h2 className="sticky top-[152px] z-20 bg-[#f4f5f9]/95 backdrop-blur-sm py-2 text-xs font-bold text-gray-500 capitalize tracking-wider mb-2 -mx-4 px-4 border-b border-transparent shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
                 {format(date, "EEEE, d 'de' MMMM", { locale: es })}
               </h2>
               <div className="space-y-3 pt-2">
@@ -141,7 +141,7 @@ export default function CalendarioViews({ asignaciones }: { asignaciones: any[] 
                   todayDay ? 'bg-indigo-50/60' : ''
                 }`}
               >
-                <div className={`text-[10px] uppercase font-bold ${
+                <div className={`text-[10px] capitalize font-bold ${
                   todayDay ? 'text-indigo-500' : 'text-gray-500'
                 }`}>
                   {format(day, 'EEE', { locale: es })}
@@ -278,7 +278,7 @@ export default function CalendarioViews({ asignaciones }: { asignaciones: any[] 
         {/* Cabecera días */}
         <div className="grid grid-cols-7 border-b border-slate-100">
           {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
-            <div key={d} className="py-2 text-center text-[10px] text-gray-400 uppercase font-bold border-r border-slate-100 last:border-0">
+            <div key={d} className="py-2 text-center text-[10px] text-gray-400 capitalize font-bold border-r border-slate-100 last:border-0">
               {d}
             </div>
           ))}
