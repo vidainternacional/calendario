@@ -22,38 +22,41 @@ export default async function InicioPage() {
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('nombre_completo')
-    .eq('id', user.id)
-    .single()
+  // Parallelize independent queries
+  const [profileRes, misEventosRes, membresiasRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('nombre_completo')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('eventos')
+      .select(`
+        id,
+        titulo,
+        fecha_inicio,
+        ubicacion,
+        evento_asignaciones!inner (
+          estado,
+          profile_id
+        )
+      `)
+      .eq('evento_asignaciones.profile_id', user.id)
+      .gte('fecha_inicio', new Date().toISOString())
+      .order('fecha_inicio', { ascending: true })
+      .limit(5),
+    supabase
+      .from('ministerio_miembros')
+      .select('ministerio_id')
+      .eq('profile_id', user.id)
+  ])
+
+  const profile = profileRes.data
+  const misEventos = misEventosRes.data
+  const membresias = membresiasRes.data
 
   const nombre = (profile as any)?.nombre_completo || user.email?.split('@')[0] || 'Servidor'
   const inicial = nombre.charAt(0).toUpperCase()
-
-  // 1. Mis próximos eventos
-  const { data: misEventos } = await supabase
-    .from('eventos')
-    .select(`
-      id,
-      titulo,
-      fecha_inicio,
-      ubicacion,
-      evento_asignaciones!inner (
-        estado,
-        profile_id
-      )
-    `)
-    .eq('evento_asignaciones.profile_id', user.id)
-    .gte('fecha_inicio', new Date().toISOString())
-    .order('fecha_inicio', { ascending: true })
-    .limit(5)
-
-  // 2. Publicaciones recientes
-  const { data: membresias } = await supabase
-    .from('ministerio_miembros')
-    .select('ministerio_id')
-    .eq('profile_id', user.id)
 
   const ministerioIds = membresias?.map((m: any) => m.ministerio_id) || []
   
