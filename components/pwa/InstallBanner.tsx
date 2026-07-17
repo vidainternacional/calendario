@@ -18,10 +18,10 @@ export default function InstallBanner() {
 
     // Detect iOS for specific instructions (iOS doesn't support beforeinstallprompt)
     const ua = window.navigator.userAgent
-    const isIPad = !!ua.match(/iPad/i)
-    const isIPhone = !!ua.match(/iPhone/i)
-    const isWebKit = !!ua.match(/WebKit/i)
-    const isIOSDevice = (isIPad || isIPhone) && isWebKit && !ua.match(/CriOS/i)
+    // iOS 13+ iPadOS might identify as MacIntel, so we check touch points
+    const isIPadOS = window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1
+    const isIOSDevice = /iPad|iPhone|iPod/i.test(ua) || isIPadOS
+    
     setIsIOS(isIOSDevice)
 
     if (isIOSDevice) {
