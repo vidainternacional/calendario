@@ -47,6 +47,18 @@ export default async function AdminPage() {
       ? iconSetting.valor.replace(/"/g, '')
       : 'dorado'
 
+  // 4. Estudio Profundo System Prompt
+  const { data: promptSetting } = await (supabase as any)
+    .from('app_settings')
+    .select('valor')
+    .eq('clave', 'estudio_system_prompt')
+    .maybeSingle()
+
+  const estudioPrompt: string =
+    typeof promptSetting?.valor === 'string'
+      ? promptSetting.valor.replace(/^"|"$/g, '').replace(/\\n/g, '\n')
+      : ''
+
   return (
     <main className="px-4 py-8 max-w-2xl mx-auto pb-28">
       <header className="mb-8">
@@ -60,6 +72,7 @@ export default async function AdminPage() {
         ministerios={ministerios || []}
         usuarios={usuarios || []}
         activeIconVariant={activeIconVariant}
+        initialEstudioPrompt={estudioPrompt}
       />
     </main>
   )

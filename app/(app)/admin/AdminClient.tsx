@@ -1,16 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check } from 'lucide-react'
+import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check, Sparkles } from 'lucide-react'
 import MinisterioModal from '@/components/admin/MinisterioModal'
 import UsuarioMembresiaModal from '@/components/admin/UsuarioMembresiaModal'
-import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant } from '@/app/actions/admin'
+import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant, updateEstudioPrompt } from '@/app/actions/admin'
 import Image from 'next/image'
 
-export default function AdminClient({ ministerios, usuarios, activeIconVariant }: { 
+export default function AdminClient({ ministerios, usuarios, activeIconVariant, initialEstudioPrompt }: { 
   ministerios: any[], 
   usuarios: any[],
   activeIconVariant?: string
+  initialEstudioPrompt?: string
 }) {
   const [activeTab, setActiveTab] = useState<'ministerios' | 'usuarios'>('ministerios')
   
@@ -28,6 +29,11 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant }
   const [iconSaving, setIconSaving] = useState(false)
   const [iconSuccess, setIconSuccess] = useState(false)
 
+  // IA Prompt state
+  const [promptValue, setPromptValue] = useState(initialEstudioPrompt || '')
+  const [promptSaving, setPromptSaving] = useState(false)
+  const [promptSuccess, setPromptSuccess] = useState(false)
+
   const handleIconChange = async (variant: 'dorado' | 'blanco' | 'rojo') => {
     if (variant === selectedIcon) return
     setSelectedIcon(variant)
@@ -41,6 +47,24 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant }
       console.error(e)
     } finally {
       setIconSaving(false)
+    }
+  }
+
+  const handlePromptSave = async () => {
+    setPromptSaving(true)
+    setPromptSuccess(false)
+    try {
+      const result = await updateEstudioPrompt(promptValue)
+      if (result.success) {
+        setPromptSuccess(true)
+        setTimeout(() => setPromptSuccess(false), 3000)
+      } else {
+        alert(result.error)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setPromptSaving(false)
     }
   }
 
@@ -111,6 +135,36 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant }
         <p className="text-[11px] text-amber-600 mt-3 text-center">
           ⚠️ El cambio solo afecta a nuevas instalaciones — los usuarios que ya instalaron la app conservan el ícono anterior.
         </p>
+      </div>
+
+      {/* ── IA Prompt Editor ─────────────────────────────── */}
+      <div className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-indigo-500" />
+            <span className="text-sm font-semibold text-[#171923]">Estudio Profundo IA (System Prompt)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {promptSuccess && <span className="text-xs text-emerald-600 font-medium">✓ Guardado</span>}
+            <button
+              onClick={handlePromptSave}
+              disabled={promptSaving || !promptValue.trim()}
+              className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {promptSaving ? 'Guardando...' : 'Guardar Prompt'}
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+          Este es el <strong>System Prompt</strong> que guía a la IA en el módulo de "Estudio Profundo".
+          Modifícalo para ajustar el tono, metodología o instrucciones de la respuesta.
+        </p>
+        <textarea
+          value={promptValue}
+          onChange={(e) => setPromptValue(e.target.value)}
+          className="w-full h-64 p-3 text-xs font-mono text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-y"
+          placeholder="Escribe las instrucciones base para la IA..."
+        />
       </div>
 
       {/* ── Tabs ─────────────────────────────── */}

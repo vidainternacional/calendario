@@ -182,3 +182,33 @@ export async function updateIconVariant(variant: 'dorado' | 'blanco' | 'rojo') {
   revalidatePath('/admin')
   return { success: true }
 }
+
+export async function updateEstudioPrompt(prompt: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
+
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+  const rol = (profile as any)?.rol
+  if (rol !== 'pastor' && rol !== 'administrador') {
+    throw new Error('Permisos insuficientes')
+  }
+
+  const { error } = await (supabase as any)
+    .from('app_settings')
+    .upsert({
+      clave: 'estudio_system_prompt',
+      valor: `"${prompt}"`,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'clave'
+    })
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/estudios/profundo')
+  return { success: true }
+}

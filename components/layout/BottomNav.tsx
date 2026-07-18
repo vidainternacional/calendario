@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Calendar, Megaphone, FileText, User } from 'lucide-react'
+import { Home, Calendar, Megaphone, FileText, User, BookOpen } from 'lucide-react'
 
 export default function BottomNav() {
   const pathname = usePathname()
@@ -11,7 +11,7 @@ export default function BottomNav() {
     { name: 'Inicio', href: '/inicio', icon: Home },
     { name: 'Calendario', href: '/calendario', icon: Calendar },
     { name: 'Avisos', href: '/avisos', icon: Megaphone },
-    { name: 'Solicitudes', href: '/solicitudes', icon: FileText },
+    { name: 'Estudios', href: '/estudios', icon: BookOpen },
     { name: 'Perfil', href: '/perfil', icon: User },
   ]
 
