@@ -61,7 +61,18 @@ export default async function AdminPage() {
       ? promptSetting.valor.replace(/^"|"$/g, '').replace(/\\n/g, '\n')
       : ''
 
-  // 5. Current User Role
+  // 5. Contadores de elementos pendientes
+  const { count: pendingPreguntas } = await (supabase as any)
+    .from('preguntas_congregacion')
+    .select('*', { count: 'exact', head: true })
+    .eq('estado', 'pendiente')
+
+  const { count: pendingAvisos } = await (supabase as any)
+    .from('publicaciones')
+    .select('*', { count: 'exact', head: true })
+    .eq('estado', 'pendiente')
+
+  // 6. Current User Role
   const { data: { user } } = await supabase.auth.getUser()
   let currentUserRol = 'servidor'
   if (user) {
@@ -77,6 +88,41 @@ export default async function AdminPage() {
           Gestiona ministerios, usuarios y accesos
         </p>
       </header>
+
+      {/* ── Estadísticas Generales ────────────────────────────────────────────── */}
+      <div className="mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Usuarios</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-[#171923]">{usuarios?.length || 0}</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ministerios</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-[#171923]">{ministerios?.length || 0}</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight">Avisos Pendientes</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className={`text-3xl font-bold ${pendingAvisos ? 'text-amber-500' : 'text-[#171923]'}`}>
+              {pendingAvisos || 0}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight">Dudas / Buzón</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className={`text-3xl font-bold ${pendingPreguntas ? 'text-rose-500' : 'text-[#171923]'}`}>
+              {pendingPreguntas || 0}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* ── Accesos Rápidos ─────────────────────────────────────────────── */}
       <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
