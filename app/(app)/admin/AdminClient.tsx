@@ -4,14 +4,15 @@ import { useState } from 'react'
 import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check, Sparkles } from 'lucide-react'
 import MinisterioModal from '@/components/admin/MinisterioModal'
 import UsuarioMembresiaModal from '@/components/admin/UsuarioMembresiaModal'
-import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant, updateEstudioPrompt } from '@/app/actions/admin'
+import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant, updateEstudioPrompt, togglePastorGeneral } from '@/app/actions/admin'
 import Image from 'next/image'
 
-export default function AdminClient({ ministerios, usuarios, activeIconVariant, initialEstudioPrompt }: { 
+export default function AdminClient({ ministerios, usuarios, activeIconVariant, initialEstudioPrompt, currentUserRol }: { 
   ministerios: any[], 
   usuarios: any[],
   activeIconVariant?: string
   initialEstudioPrompt?: string
+  currentUserRol?: string
 }) {
   const [activeTab, setActiveTab] = useState<'ministerios' | 'usuarios'>('ministerios')
   
@@ -65,6 +66,14 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
       console.error(e)
     } finally {
       setPromptSaving(false)
+    }
+  }
+
+  const handlePastorGeneralToggle = async (userId: string, currentState: boolean) => {
+    const result = await togglePastorGeneral(userId, !currentState)
+    if (!result.success && result.error) {
+      setRolError(result.error)
+      setTimeout(() => setRolError(null), 5000)
     }
   }
 
@@ -262,6 +271,26 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
                       </select>
                       {esLider && <Shield className="w-3.5 h-3.5 text-amber-500" />}
                     </div>
+
+                    {u.rol === 'pastor' && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <label className="flex items-center cursor-pointer gap-2">
+                          <div className="relative">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only" 
+                              checked={!!u.es_pastor_general}
+                              disabled={currentUserRol !== 'administrador'}
+                              onChange={() => handlePastorGeneralToggle(u.id, !!u.es_pastor_general)}
+                            />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${u.es_pastor_general ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
+                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${u.es_pastor_general ? 'transform translate-x-4' : ''}`}></div>
+                          </div>
+                          <span className="text-xs font-semibold text-slate-600">Pastor General</span>
+                        </label>
+                      </div>
+                    )}
+
                   </div>
                   <button 
                     onClick={() => handleOpenMemModal(u)}

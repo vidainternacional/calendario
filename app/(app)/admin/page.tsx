@@ -20,6 +20,7 @@ export default async function AdminPage() {
       nombre_completo,
       rol,
       activo,
+      es_pastor_general,
       ministerio_miembros (
         ministerio_id,
         es_lider,
@@ -59,6 +60,14 @@ export default async function AdminPage() {
       ? promptSetting.valor.replace(/^"|"$/g, '').replace(/\\n/g, '\n')
       : ''
 
+  // 5. Current User Role
+  const { data: { user } } = await supabase.auth.getUser()
+  let currentUserRol = 'servidor'
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+    if ((profile as any)?.rol) currentUserRol = (profile as any).rol
+  }
+
   return (
     <main className="px-4 py-8 max-w-2xl mx-auto pb-28">
       <header className="mb-8">
@@ -73,6 +82,7 @@ export default async function AdminPage() {
         usuarios={usuarios || []}
         activeIconVariant={activeIconVariant}
         initialEstudioPrompt={estudioPrompt}
+        currentUserRol={currentUserRol}
       />
     </main>
   )

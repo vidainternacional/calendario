@@ -29,13 +29,14 @@ export default async function MinisterioLayout({
     notFound()
   }
 
-  // Si no es miembro y no tiene membresía, no debería entrar a menos que sea admin (para simplificar, asumiremos que si RLS lo permite, lo mostramos, pero aquí chequearemos que tenga membresia)
-  if (!rolReq.data) {
-    // Verificar si es pastor/admin (simplificado: chequeamos rol en su profile)
-    const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
-    if ((profile as any)?.rol !== 'pastor' && (profile as any)?.rol !== 'administrador') {
-      redirect('/ministerios')
-    }
+  // Si no es miembro y no tiene membresía, no debería entrar a menos que sea admin
+  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+  const p = profile as any
+  const isAdminOrPastor = p?.rol === 'pastor' || p?.rol === 'administrador' || p?.es_pastor_general
+  const esLider = (rolReq.data as any)?.es_lider
+
+  if (!rolReq.data && !isAdminOrPastor) {
+    redirect('/ministerios')
   }
 
   const navItems = [
@@ -43,6 +44,10 @@ export default async function MinisterioLayout({
     { href: `/ministerios/${id}/eventos`, label: 'Eventos', icon: Calendar },
     { href: `/ministerios/${id}/solicitudes`, label: 'Solicitudes', icon: FileText },
   ]
+
+  if (esLider || isAdminOrPastor) {
+    navItems.push({ href: `/ministerios/${id}/solicitudes-ingreso`, label: 'Ingresos', icon: FileText as any }) // Reusing FileText or User
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f5f9] flex flex-col">

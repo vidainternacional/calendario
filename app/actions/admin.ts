@@ -212,3 +212,27 @@ export async function updateEstudioPrompt(prompt: string) {
   revalidatePath('/estudios/profundo')
   return { success: true }
 }
+
+export async function togglePastorGeneral(profileId: string, esPastorGeneral: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
+
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+  const rol = (profile as any)?.rol
+  if (rol !== 'administrador') {
+    return { success: false, error: 'Solo un administrador puede asignar el rol de Pastor General.' }
+  }
+
+  const { error } = await (supabase as any)
+    .from('profiles')
+    .update({ es_pastor_general: esPastorGeneral })
+    .eq('id', profileId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}

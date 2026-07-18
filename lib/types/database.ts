@@ -17,6 +17,7 @@ export type Database = {
           activo: boolean
           created_at: string
           telefono: string | null
+          es_pastor_general: boolean
         }
         Insert: {
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           activo?: boolean
           created_at?: string
           telefono?: string | null
+          es_pastor_general?: boolean
         }
         Update: {
           id?: string
@@ -32,6 +34,7 @@ export type Database = {
           rol?: 'servidor' | 'lider' | 'pastor' | 'administrador'
           activo?: boolean
           telefono?: string | null
+          es_pastor_general?: boolean
         }
       }
       ministerios: {
@@ -55,6 +58,28 @@ export type Database = {
           profile_id: string
           es_lider: boolean
           created_at: string
+        }
+      }
+      ministerio_solicitudes_ingreso: {
+        Row: {
+          id: string
+          profile_id: string
+          ministerio_id: string
+          estado: 'pendiente' | 'aprobada' | 'rechazada'
+          created_at: string
+          resuelto_at: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          ministerio_id: string
+          estado?: 'pendiente' | 'aprobada' | 'rechazada'
+          created_at?: string
+          resuelto_at?: string | null
+        }
+        Update: {
+          estado?: 'pendiente' | 'aprobada' | 'rechazada'
+          resuelto_at?: string | null
         }
       }
       publicaciones: {
