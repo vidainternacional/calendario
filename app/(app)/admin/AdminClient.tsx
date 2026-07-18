@@ -16,6 +16,16 @@ export default function AdminClient({ ministerios, usuarios }: { ministerios: an
   const [memModalOpen, setMemModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any | null>(null)
 
+  const [rolError, setRolError] = useState<string | null>(null)
+
+  const handleRolChange = async (userId: string, nuevoRol: string) => {
+    const result = await cambiarRolUsuario(userId, nuevoRol as any)
+    if (!result.success && result.error) {
+      setRolError(result.error)
+      setTimeout(() => setRolError(null), 5000)
+    }
+  }
+
   const handleOpenMinModal = (min: any | null = null) => {
     setEditingMin(min)
     setMinModalOpen(true)
@@ -112,7 +122,7 @@ export default function AdminClient({ ministerios, usuarios }: { ministerios: an
                     <div className="flex items-center gap-2 mt-1.5">
                       <select
                         value={u.rol}
-                        onChange={(e) => cambiarRolUsuario(u.id, e.target.value as any)}
+                        onChange={(e) => handleRolChange(u.id, e.target.value)}
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase cursor-pointer border-none outline-none ${badgeColors}`}
                       >
                         <option value="servidor">Servidor</option>
@@ -147,6 +157,13 @@ export default function AdminClient({ ministerios, usuarios }: { ministerios: an
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Role change error toast */}
+      {rolError && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl max-w-xs text-center animate-in slide-in-from-bottom-4">
+          {rolError}
         </div>
       )}
 

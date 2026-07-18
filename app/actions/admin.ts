@@ -76,14 +76,30 @@ export async function cambiarRolUsuario(profileId: string, nuevoRol: 'servidor' 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('No autorizado')
 
-  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
-  const _rol3 = (profile as any)?.rol
-  if (_rol3 !== 'pastor' && _rol3 !== 'administrador') {
-    throw new Error('Permisos insuficientes')
+  const { data: callerProfile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+  const callerRol = (callerProfile as any)?.rol
+  if (callerRol !== 'pastor' && callerRol !== 'administrador') {
+    return { success: false, error: 'Permisos insuficientes' }
+  }
+
+  // 🔒 Guard: cannot change your own role
+  if (profileId === user.id) {
+    return { success: false, error: 'No puedes cambiar tu propio rol desde el panel de administración.' }
+  }
+
+  // 🔒 Guard: only pastors can assign the "pastor" role
+  if (nuevoRol === 'pastor' && callerRol !== 'pastor') {
+    return { success: false, error: 'Solo un pastor puede asignar el rol de pastor a otro usuario.' }
   }
 
   const { error } = await (supabase as any).from('profiles').update({ rol: nuevoRol }).eq('id', profileId)
-  if (error) throw new Error(error.message)
+  if (error) {
+    // DB trigger will reject the superadmin account change
+    if (error.message?.includes('protected')) {
+      return { success: false, error: 'Este usuario está protegido y no puede cambiar de rol.' }
+    }
+    return { success: false, error: error.message }
+  }
 
   revalidatePath('/admin')
   return { success: true }
