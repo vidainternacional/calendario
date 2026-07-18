@@ -93,3 +93,37 @@ export async function notifyUser(
     await supabase.from('push_subscriptions').delete().in('id', expiredIds)
   }
 }
+
+/**
+ * Sends a push notification to multiple subscriptions in parallel.
+ */
+export async function notifyMultipleUsers(
+  supabase: any,
+  profileIds: string[],
+  payload: PushPayload
+): Promise<void> {
+  if (!profileIds.length) return
+
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('id, endpoint, p256dh, auth')
+    .in('profile_id', profileIds)
+
+  if (!subs?.length) return
+
+  const expiredIds: string[] = []
+
+  await Promise.all(
+    subs.map(async (sub: any) => {
+      const result = await sendPushNotification(
+        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+        payload
+      )
+      if (result.expired) expiredIds.push(sub.id)
+    })
+  )
+
+  if (expiredIds.length > 0) {
+    await supabase.from('push_subscriptions').delete().in('id', expiredIds)
+  }
+}

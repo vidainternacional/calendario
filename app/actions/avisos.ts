@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { notifyMultipleUsers } from '@/lib/webpush'
 
 export type AvisoState = { error?: string; success?: boolean } | undefined
 
@@ -40,6 +41,46 @@ export async function crearAviso(
 
   if (error) {
     return { error: error.message }
+  }
+
+  // Enviar notificación push
+  // NOTA: Si el ministerio_id es null (global), obtenemos todos los perfiles, sino solo los del ministerio
+  const { data: ministerio } = minIdForm 
+    ? await supabase.from('ministerios').select('nombre').eq('id', minIdForm).single()
+    : { data: { nombre: 'General' } }
+
+  const minNombre = (ministerio as any)?.nombre || 'General'
+
+  let targetUserIds: string[] = []
+  if (!minIdForm) {
+    // Todos los usuarios
+    const { data: allUsers } = await supabase.from('profiles').select('id').neq('id', user.id)
+    if (allUsers) targetUserIds = allUsers.map((u: any) => u.id)
+  } else {
+    // Solo miembros del ministerio
+    const { data: miembros } = await supabase.from('ministerio_miembros').select('profile_id').eq('ministerio_id', minIdForm).neq('profile_id', user.id)
+    if (miembros) targetUserIds = miembros.map((m: any) => m.profile_id)
+  }
+
+  // Filtrar por preferencias de notificaciones (omitimos a los que tienen activo = false explícitamente)
+  if (targetUserIds.length > 0) {
+    const { data: prefData } = await supabase
+      .from('notificaciones_preferencias')
+      .select('profile_id')
+      .eq('activo', false)
+      .eq('ministerio_id', minIdForm || 'uuid-00000000-0000-0000-0000-000000000000')
+    
+    const disabledIds = new Set(prefData?.map((p: any) => p.profile_id) || [])
+    const finalUserIds = targetUserIds.filter(id => !disabledIds.has(id))
+
+    if (finalUserIds.length > 0) {
+      await notifyMultipleUsers(supabase, finalUserIds, {
+        title: `Nuevo aviso en ${minNombre}`,
+        body: titulo,
+        url: minIdForm ? `/ministerios/${minIdForm}/avisos` : '/avisos',
+        tag: 'aviso_nuevo',
+      })
+    }
   }
 
   revalidatePath('/avisos')

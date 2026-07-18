@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { notifyUser, notifyMultipleUsers } from '@/lib/webpush'
 
 // ────────────────────────────────────────────────────────────────────────────
 // PROPONER INTERCAMBIO
@@ -31,6 +32,60 @@ export async function proponerIntercambio(formData: FormData) {
   if (error) {
     console.error('Error proponiendo intercambio:', error)
     return { error: 'Error al proponer el intercambio' }
+  }
+
+  // Notificar al destinatario o al ministerio completo
+  const { data: profile } = await db.from('profiles').select('nombre_completo').eq('id', user.id).single()
+  const solicitanteNombre = profile?.nombre_completo || 'Alguien'
+  const notifBody = mensaje ? `"${mensaje}"` : 'Ha solicitado un intercambio de turno.'
+
+  if (destinatario_id) {
+    // Intercambio directo
+    await notifyUser(supabase, destinatario_id, {
+      title: `🔄 Solicitud de intercambio de ${solicitanteNombre}`,
+      body: notifBody,
+      url: '/intercambios',
+      tag: 'intercambio_nuevo',
+    })
+  } else {
+    // Intercambio abierto: notificar a todos los del mismo ministerio
+    const { data: asig } = await db
+      .from('evento_asignaciones')
+      .select('eventos(ministerio_id)')
+      .eq('id', asignacion_origen_id)
+      .single()
+    
+    const ministerioId = asig?.eventos?.ministerio_id
+    if (ministerioId) {
+      const { data: miembros } = await db
+        .from('ministerio_miembros')
+        .select('profile_id')
+        .eq('ministerio_id', ministerioId)
+        .neq('profile_id', user.id)
+
+      if (miembros && miembros.length > 0) {
+        const targetIds = miembros.map((m: any) => m.profile_id)
+        
+        // Check preferences
+        const { data: prefData } = await db
+          .from('notificaciones_preferencias')
+          .select('profile_id')
+          .eq('activo', false)
+          .eq('ministerio_id', ministerioId)
+        
+        const disabledIds = new Set(prefData?.map((p: any) => p.profile_id) || [])
+        const finalIds = targetIds.filter((id: string) => !disabledIds.has(id))
+
+        if (finalIds.length > 0) {
+          await notifyMultipleUsers(supabase, finalIds, {
+            title: `🔄 Intercambio abierto de ${solicitanteNombre}`,
+            body: notifBody,
+            url: '/intercambios',
+            tag: 'intercambio_nuevo',
+          })
+        }
+      }
+    }
   }
 
   revalidatePath('/calendario')

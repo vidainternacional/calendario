@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { notifyUser } from '@/lib/webpush'
 
 export async function actualizarEstadoSolicitud(id: string, estado: 'aprobada' | 'rechazada', path: string) {
   const supabase = await createClient()
@@ -190,6 +191,15 @@ async function _resolverSolicitud(
       }
     }
   }
+
+  // Notificar al solicitante
+  const esAprobada = estado === 'aprobada'
+  await notifyUser(supabase, solicitud.solicitado_por, {
+    title: esAprobada ? '✅ Solicitud aprobada' : '❌ Solicitud rechazada',
+    body: `Tu solicitud "${solicitud.titulo}" ha sido ${estado}.`,
+    url: '/solicitudes',
+    tag: 'solicitud_resuelta',
+  })
 
   revalidatePath('/solicitudes')
   return { success: true }
