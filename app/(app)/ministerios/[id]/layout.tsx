@@ -46,7 +46,8 @@ export default async function MinisterioLayout({
   ]
 
   if (esLider || isAdminOrPastor) {
-    navItems.push({ href: `/ministerios/${id}/solicitudes-ingreso`, label: 'Ingresos', icon: FileText as any }) // Reusing FileText or User
+    navItems.push({ href: `/ministerios/${id}/miembros`, label: 'Miembros', icon: FileText as any })
+    navItems.push({ href: `/ministerios/${id}/solicitudes-ingreso`, label: 'Ingresos', icon: FileText as any })
   }
 
   return (
