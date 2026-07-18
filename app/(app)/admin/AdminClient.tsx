@@ -1,12 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Users, Shield, Power, PowerOff, Edit3 } from 'lucide-react'
+import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check } from 'lucide-react'
 import MinisterioModal from '@/components/admin/MinisterioModal'
 import UsuarioMembresiaModal from '@/components/admin/UsuarioMembresiaModal'
-import { toggleMinisterioActivo, cambiarRolUsuario } from '@/app/actions/admin'
+import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant } from '@/app/actions/admin'
+import Image from 'next/image'
 
-export default function AdminClient({ ministerios, usuarios }: { ministerios: any[], usuarios: any[] }) {
+export default function AdminClient({ ministerios, usuarios, activeIconVariant }: { 
+  ministerios: any[], 
+  usuarios: any[],
+  activeIconVariant?: string
+}) {
   const [activeTab, setActiveTab] = useState<'ministerios' | 'usuarios'>('ministerios')
   
   // Modals state
@@ -17,6 +22,27 @@ export default function AdminClient({ ministerios, usuarios }: { ministerios: an
   const [editingUser, setEditingUser] = useState<any | null>(null)
 
   const [rolError, setRolError] = useState<string | null>(null)
+  const [selectedIcon, setSelectedIcon] = useState<'dorado' | 'blanco' | 'rojo'>(
+    (activeIconVariant as any) || 'dorado'
+  )
+  const [iconSaving, setIconSaving] = useState(false)
+  const [iconSuccess, setIconSuccess] = useState(false)
+
+  const handleIconChange = async (variant: 'dorado' | 'blanco' | 'rojo') => {
+    if (variant === selectedIcon) return
+    setSelectedIcon(variant)
+    setIconSaving(true)
+    setIconSuccess(false)
+    try {
+      await updateIconVariant(variant)
+      setIconSuccess(true)
+      setTimeout(() => setIconSuccess(false), 3000)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIconSaving(false)
+    }
+  }
 
   const handleRolChange = async (userId: string, nuevoRol: string) => {
     const result = await cambiarRolUsuario(userId, nuevoRol as any)
@@ -38,6 +64,56 @@ export default function AdminClient({ ministerios, usuarios }: { ministerios: an
 
   return (
     <>
+      {/* ── Icon Variant Picker ─────────────────────────────── */}
+      <div className="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+        <div className="flex items-center gap-2 mb-3">
+          <Smartphone size={16} className="text-slate-500" />
+          <span className="text-sm font-semibold text-[#171923]">Ícono de la aplicación</span>
+          {iconSaving && <span className="text-xs text-slate-400 ml-auto">Guardando…</span>}
+          {iconSuccess && <span className="text-xs text-emerald-600 ml-auto font-medium">✓ Guardado</span>}
+        </div>
+        <p className="text-xs text-slate-400 mb-4">Selecciona la variante de ícono para nuevas instalaciones de la PWA.</p>
+        <div className="flex gap-3 justify-center">
+          {([
+            { key: 'dorado', label: 'Dorado', border: '#D4A017' },
+            { key: 'blanco', label: 'Blanco', border: '#333' },
+            { key: 'rojo',   label: 'Rojo',   border: '#CC0000' },
+          ] as const).map(({ key, label, border }) => (
+            <button
+              key={key}
+              onClick={() => handleIconChange(key)}
+              className={`relative flex flex-col items-center gap-1.5 rounded-xl p-2 transition-all ${
+                selectedIcon === key
+                  ? 'ring-2 ring-offset-2 bg-slate-50'
+                  : 'opacity-70 hover:opacity-100'
+              }`}
+            >
+              <div
+                className="relative w-16 h-16 rounded-[18px] overflow-hidden shadow-md"
+                style={{ outline: selectedIcon === key ? `2.5px solid ${border}` : '2px solid transparent' }}
+              >
+                <Image
+                  src={`/icons/variant-${key}/icon-192.png`}
+                  alt={`Ícono ${label}`}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <span className="text-[11px] font-medium text-slate-600">{label}</span>
+              {selectedIcon === key && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <Check size={10} className="text-white" strokeWidth={3} />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-amber-600 mt-3 text-center">
+          ⚠️ El cambio solo afecta a nuevas instalaciones — los usuarios que ya instalaron la app conservan el ícono anterior.
+        </p>
+      </div>
+
+      {/* ── Tabs ─────────────────────────────── */}
       <div className="flex p-1 bg-slate-200/50 rounded-xl mb-6">
         <button
           onClick={() => setActiveTab('ministerios')}

@@ -154,3 +154,31 @@ export async function setEsLider(profileId: string, ministerioId: string, esLide
   revalidatePath('/admin')
   return { success: true }
 }
+
+export async function updateIconVariant(variant: 'dorado' | 'blanco' | 'rojo') {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
+
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+  const rol = (profile as any)?.rol
+  if (rol !== 'pastor' && rol !== 'administrador') {
+    throw new Error('Permisos insuficientes')
+  }
+
+  const { error } = await (supabase as any)
+    .from('app_settings')
+    .update({ valor: variant, updated_at: new Date().toISOString() })
+    .eq('clave', 'active_icon_variant')
+
+  if (error) {
+    // Si no existía, hacemos insert
+    await (supabase as any).from('app_settings').insert({
+      clave: 'active_icon_variant',
+      valor: variant
+    })
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
