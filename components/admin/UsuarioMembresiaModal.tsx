@@ -30,7 +30,8 @@ export default function UsuarioMembresiaModal({
   if (!isOpen || !usuario) return null
 
   // Mapeo fácil
-  const misMembresias = usuario.ministerio_miembros || []
+  const baseMembresias = usuario.ministerio_miembros || []
+  const misMembresias = Array.isArray(baseMembresias) ? baseMembresias : [baseMembresias]
   const hasMinisterio = (minId: string) => misMembresias.some((m: any) => m.ministerio_id === minId)
   const isLider = (minId: string) => misMembresias.some((m: any) => m.ministerio_id === minId && m.es_lider)
 

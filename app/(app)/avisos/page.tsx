@@ -53,9 +53,15 @@ export default async function AvisosPage() {
   const ministerioIds = (membresias || []).map((m: any) => m.ministerio_id)
 
   // Ministerios donde el usuario es líder (para el formulario)
-  const ministeriosLider = (membresias || [])
-    .filter((m: any) => m.es_lider)
-    .map((m: any) => ({ id: m.ministerios?.id ?? m.ministerio_id, nombre: m.ministerios?.nombre ?? 'Ministerio' }))
+  let ministeriosLider = []
+  if (esPastorAdmin) {
+    const { data: allMin } = await supabase.from('ministerios').select('id, nombre').eq('activo', true)
+    ministeriosLider = (allMin || []).map((m: any) => ({ id: m.id, nombre: m.nombre }))
+  } else {
+    ministeriosLider = (membresias || [])
+      .filter((m: any) => m.es_lider)
+      .map((m: any) => ({ id: m.ministerios?.id ?? m.ministerio_id, nombre: m.ministerios?.nombre ?? 'Ministerio' }))
+  }
 
   // Puede crear aviso si es pastor/admin O si es líder de al menos un ministerio
   const puedeCrear = esPastorAdmin || ministeriosLider.length > 0

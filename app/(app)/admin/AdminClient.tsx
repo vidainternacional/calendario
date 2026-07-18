@@ -301,18 +301,24 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
                   </button>
                 </div>
                 
-                {u.ministerio_miembros?.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-50">
-                    {u.ministerio_miembros.map((m:any) => (
-                      <span key={m.ministerio_id} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200" style={{ color: m.ministerios?.color_primario || '#64748b', backgroundColor: `${m.ministerios?.color_primario || '#64748b'}15` }}>
-                        {m.ministerios?.nombre}
-                        {m.es_lider && <Shield className="w-2.5 h-2.5" />}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="pt-2 text-xs text-gray-400">Sin ministerios asignados</div>
-                )}
+                {(() => {
+                  const membresias = Array.isArray(u.ministerio_miembros) 
+                    ? u.ministerio_miembros 
+                    : (u.ministerio_miembros ? [u.ministerio_miembros] : [])
+                  
+                  return membresias.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-50">
+                      {membresias.map((m:any) => (
+                        <span key={m.ministerio_id} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200" style={{ color: m.ministerios?.color_primario || '#64748b', backgroundColor: `${m.ministerios?.color_primario || '#64748b'}15` }}>
+                          {m.ministerios?.nombre}
+                          {m.es_lider && <Shield className="w-2.5 h-2.5" />}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-2 text-xs text-gray-400">Sin ministerios asignados</div>
+                  )
+                })()}
               </div>
             )
           })}
