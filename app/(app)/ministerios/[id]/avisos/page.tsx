@@ -54,6 +54,7 @@ export default async function AvisosPage({
       )
     `)
     .eq('ministerio_id', id)
+    .eq('estado', 'aprobado')
     .order('created_at', { ascending: false })
 
   return (

@@ -30,10 +30,15 @@ export default function NuevoAvisoModal({
     undefined
   )
 
-  // Cerrar al éxito
+  // Manejo del estado devuelto
+  const [pendiente, setPendiente] = useState(false)
   useEffect(() => {
     if (state?.success) {
-      setOpen(false)
+      if (state.pendiente) {
+        setPendiente(true)
+      } else {
+        setOpen(false)
+      }
     }
   }, [state])
 
@@ -100,7 +105,23 @@ export default function NuevoAvisoModal({
           </button>
         </div>
 
-        {/* Form */}
+        {pendiente ? (
+          <div className="px-6 py-12 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">⏳</span>
+            </div>
+            <h3 className="text-xl font-bold text-[#171923] mb-2">Aviso en revisión</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Tu aviso global ha sido enviado y será publicado una vez que sea aprobado por un administrador o pastor general.
+            </p>
+            <button
+              onClick={() => { setOpen(false); setPendiente(false); }}
+              className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        ) : (
         <form action={action} className="px-6 py-5 space-y-4 pb-10 overflow-y-auto flex-1">
           {/* Error */}
           {state?.error && (
@@ -182,6 +203,7 @@ export default function NuevoAvisoModal({
             )}
           </button>
         </form>
+        )}
       </div>
     </>
   )

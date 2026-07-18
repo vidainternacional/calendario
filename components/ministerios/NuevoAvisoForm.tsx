@@ -3,12 +3,38 @@
 import { useActionState } from 'react'
 import { crearAviso } from '@/app/actions/avisos'
 import { Loader2, ArrowLeft } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 export default function NuevoAvisoForm({ ministerioId }: { ministerioId: string }) {
   // Bind the ministerioId to the action
   const actionWithId = crearAviso.bind(null, ministerioId)
   const [state, action, pending] = useActionState(actionWithId, undefined)
+
+  if (state?.success) {
+    if (state.pendiente) {
+      return (
+        <div className="text-center py-12 space-y-4">
+          <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⏳</span>
+          </div>
+          <h2 className="text-xl font-bold text-[#171923]">Aviso en revisión</h2>
+          <p className="text-gray-500">
+            Tu aviso ha sido enviado y será publicado una vez que sea aprobado por un administrador.
+          </p>
+          <Link 
+            href={ministerioId ? `/ministerios/${ministerioId}/avisos` : '/avisos'}
+            className="inline-block mt-4 text-indigo-600 font-semibold text-sm hover:text-indigo-500"
+          >
+            Volver a los avisos
+          </Link>
+        </div>
+      )
+    }
+    
+    // Redirect if direct success without pending
+    redirect(ministerioId ? `/ministerios/${ministerioId}/avisos` : '/avisos')
+  }
 
   return (
     <form action={action} className="space-y-6">

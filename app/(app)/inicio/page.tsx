@@ -71,6 +71,7 @@ export default async function InicioPage() {
       profiles!autor_id (nombre_completo)
     `)
     .or(`ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : 'uuid-00000000-0000-0000-0000-000000000000'})`)
+    .eq('estado', 'aprobado')
     .order('created_at', { ascending: false })
     .limit(5)
 

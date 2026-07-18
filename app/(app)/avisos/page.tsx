@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Megaphone, Info, Globe } from 'lucide-react'
+import Link from 'next/link'
 import NuevoAvisoModal from '@/components/avisos/NuevoAvisoModal'
 
 export const metadata: Metadata = {
@@ -74,6 +75,7 @@ export default async function AvisosPage() {
       profiles!autor_id (nombre_completo),
       ministerios (nombre)
     `)
+    .eq('estado', 'aprobado')
     .order('created_at', { ascending: false })
 
   if (!esPastorAdmin && ministerioIds.length > 0) {
@@ -107,10 +109,20 @@ export default async function AvisosPage() {
         </div>
 
         {puedeCrear && (
-          <NuevoAvisoModal
-            ministeriosLider={ministeriosLider}
-            esPastorAdmin={esPastorAdmin}
-          />
+          <div className="flex items-center gap-2">
+            {esPastorAdmin && (
+              <Link
+                href="/avisos/pendientes-aprobacion"
+                className="inline-flex items-center justify-center h-10 px-4 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl text-sm font-semibold transition-colors border border-amber-200"
+              >
+                Revisar
+              </Link>
+            )}
+            <NuevoAvisoModal
+              ministeriosLider={ministeriosLider}
+              esPastorAdmin={esPastorAdmin}
+            />
+          </div>
         )}
       </header>
 

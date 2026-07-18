@@ -91,6 +91,7 @@ export type Database = {
           titulo: string
           cuerpo: string | null
           imagen_url: string | null
+          estado: 'pendiente' | 'aprobado' | 'rechazado'
           created_at: string
         }
         Insert: {
@@ -101,6 +102,7 @@ export type Database = {
           titulo: string
           cuerpo?: string | null
           imagen_url?: string | null
+          estado?: 'pendiente' | 'aprobado' | 'rechazado'
           created_at?: string
         }
       }
