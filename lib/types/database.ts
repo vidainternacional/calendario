@@ -120,6 +120,40 @@ export type Database = {
           created_at: string
         }
       }
+      preguntas_congregacion: {
+        Row: {
+          id: string
+          profile_id: string | null
+          es_anonima: boolean
+          texto: string
+          respuesta: string | null
+          respondida_por: string | null
+          estado: 'pendiente' | 'respondida' | 'archivada'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id?: string | null
+          es_anonima?: boolean
+          texto: string
+          respuesta?: string | null
+          respondida_por?: string | null
+          estado?: 'pendiente' | 'respondida' | 'archivada'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          profile_id?: string | null
+          es_anonima?: boolean
+          texto?: string
+          respuesta?: string | null
+          respondida_por?: string | null
+          estado?: 'pendiente' | 'respondida' | 'archivada'
+          created_at?: string
+          updated_at?: string
+        }
+      }
       evento_asignaciones: {
         Row: {
           id: string

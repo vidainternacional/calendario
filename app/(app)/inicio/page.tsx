@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import InstallBanner from '@/components/pwa/InstallBanner'
+import Link from 'next/link'
 import { Calendar, MapPin, Clock, Megaphone, Info } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -99,6 +100,25 @@ export default async function InicioPage() {
 
       <div className="space-y-8">
         <InstallBanner />
+        
+        {/* Buzón Rápido */}
+        <section>
+          <Link 
+            href="/preguntas"
+            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group"
+          >
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl">💬</span>
+                <h3 className="font-bold text-[#171923]">Buzón de Congregación</h3>
+              </div>
+              <p className="text-xs text-gray-500">Envía tus dudas, motivos de oración o sugerencias.</p>
+            </div>
+            <div className="text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl text-xs font-semibold group-hover:bg-indigo-100 transition-colors">
+              Escribir
+            </div>
+          </Link>
+        </section>
         
         {/* Próximos Eventos Personales */}
         <section>

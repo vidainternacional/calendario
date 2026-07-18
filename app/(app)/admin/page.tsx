@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminClient from './AdminClient'
+import Link from 'next/link'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -76,6 +77,22 @@ export default async function AdminPage() {
           Gestiona ministerios, usuarios y accesos
         </p>
       </header>
+
+      {/* ── Accesos Rápidos ─────────────────────────────────────────────── */}
+      <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link 
+          href="/admin/preguntas"
+          className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group"
+        >
+          <div>
+            <h3 className="font-bold text-[#171923]">Buzón de Congregación</h3>
+            <p className="text-xs text-gray-500 mt-1">Preguntas y sugerencias</p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+            <span className="text-xl">💬</span>
+          </div>
+        </Link>
+      </div>
 
       <AdminClient
         ministerios={ministerios || []}
