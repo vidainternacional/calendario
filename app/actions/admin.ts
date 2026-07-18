@@ -87,10 +87,7 @@ export async function cambiarRolUsuario(profileId: string, nuevoRol: 'servidor' 
     return { success: false, error: 'No puedes cambiar tu propio rol desde el panel de administración.' }
   }
 
-  // 🔒 Guard: only pastors can assign the "pastor" role
-  if (nuevoRol === 'pastor' && callerRol !== 'pastor') {
-    return { success: false, error: 'Solo un pastor puede asignar el rol de pastor a otro usuario.' }
-  }
+  // El administrador y el pastor pueden asignar cualquier rol (ya se validó que no sea a sí mismo)
 
   const { error } = await (supabase as any).from('profiles').update({ rol: nuevoRol }).eq('id', profileId)
   if (error) {
