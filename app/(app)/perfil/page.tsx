@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
 import { User, Mail, Shield, Bell, Settings2 } from 'lucide-react'
+import PushToggle from '@/components/pwa/PushToggle'
+import PushTestButton from '@/components/pwa/PushTestButton'
 
 export const metadata: Metadata = {
   title: 'Mi Perfil',
@@ -115,39 +117,23 @@ export default async function PerfilPage() {
           )}
         </section>
 
-        {/* Preferencias de Notificaciones */}
+        {/* Notificaciones Push */}
         <section className="bg-white border border-slate-100 rounded-[18px] p-6">
           <div className="flex items-center gap-2 mb-4">
             <Bell className="w-5 h-5 text-indigo-400" />
             <h3 className="text-lg font-semibold text-[#171923]">Notificaciones</h3>
           </div>
           
-          <p className="text-sm text-gray-500 mb-6">
-            Activa o desactiva las alertas que recibes de cada ministerio.
+          <p className="text-sm text-gray-500 mb-5">
+            Activa las alertas push para recibir avisos, solicitudes e intercambios en tiempo real.
           </p>
 
-          {!membresias || membresias.length === 0 ? (
-            <p className="text-sm text-gray-500">No hay ministerios para configurar.</p>
-          ) : (
-            <div className="space-y-4">
-              {membresias.map((m: any) => (
-                <label key={`notif-${m.id}`} className="flex items-center justify-between cursor-pointer group">
-                  <span className="text-sm font-medium text-[#171923] group-hover:text-[#171923] transition-colors">
-                    {m.ministerios.nombre}
-                  </span>
-                  <div className="relative">
-                    {/* Toggle Switch (solo visual por ahora) */}
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          )}
+          <PushToggle />
         </section>
         {/* Panel de Administración (solo pastor/admin) */}
         {(['pastor', 'administrador'] as const).includes((profile as any)?.rol) && (
-          <section>
+          <section className="space-y-3">
+            <PushTestButton />
             <Link
               href="/admin"
               className="flex items-center justify-between gap-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[.98] text-white px-5 py-4 rounded-[18px] shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all"

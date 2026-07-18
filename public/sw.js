@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vida-shell-v1.1'
+const CACHE_NAME = 'vida-shell-v1.2'
 const SHELL_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
@@ -26,16 +26,9 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  // Solo cachear GET requests
   if (event.request.method !== 'GET') return
+  if (event.request.mode === 'navigate') return
 
-  // Bypassear peticiones de navegación para que el middleware de Next.js
-  // pueda hacer los redirects correctamente sin el error de "redirect mode is not follow"
-  if (event.request.mode === 'navigate') {
-    return
-  }
-
-  // No cachear API calls ni Supabase
   const url = new URL(event.request.url)
   if (
     url.pathname.startsWith('/api/') ||
@@ -48,6 +41,56 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request)
+    })
+  )
+})
+
+// ─── Push Notifications ──────────────────────────────────────────────────────
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+
+  let payload
+  try {
+    payload = event.data.json()
+  } catch {
+    payload = { title: 'Vida Internacional', body: event.data.text(), url: '/inicio' }
+  }
+
+  const options = {
+    body: payload.body,
+    icon: payload.icon || '/icons/icon-192.png',
+    badge: payload.badge || '/icons/icon-maskable-192.png',
+    tag: payload.tag || 'default',
+    data: { url: payload.url || '/inicio' },
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, options)
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const targetUrl = event.notification.data?.url || '/inicio'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If app is already open, focus it and navigate
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.focus()
+          client.navigate(targetUrl)
+          return
+        }
+      }
+      // Otherwise open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl)
+      }
     })
   )
 })
