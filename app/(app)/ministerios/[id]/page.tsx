@@ -14,11 +14,12 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
-  const [{ data: min }, { data: mem }, { data: pubs }, { count: miembros }] = await Promise.all([
+  const [{ data: min }, { data: mem }, { data: pubs }, { count: miembros }, { data: eventosMin }] = await Promise.all([
     db.from('ministerios').select('id, nombre, emoji, color_primario, color_secundario, descripcion').eq('id', id).single(),
     db.from('ministerio_miembros').select('es_lider').eq('ministerio_id', id).eq('profile_id', user.id).maybeSingle(),
     db.from('publicaciones').select('id, titulo, cuerpo, created_at, autor:profiles!publicaciones_autor_id_fkey(nombre_completo)').eq('ministerio_id', id).order('created_at', { ascending: false }).limit(5),
     db.from('ministerio_miembros').select('id', { count: 'exact', head: true }).eq('ministerio_id', id),
+    db.from('eventos').select('id, titulo, ubicacion, fecha_inicio').eq('ministerio_id', id).gte('fecha_inicio', new Date().toISOString()).order('fecha_inicio').limit(5),
   ])
   if (!min) notFound()
 
@@ -29,10 +30,9 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   return (
     <main className="pb-28">
       {/* Banner con la identidad del ministerio */}
-      <div className="px-4 pt-6 pb-8 text-white" style={{ background: `linear-gradient(135deg, ${min.color_primario}, ${min.color_secundario})` }}>
+      <div className="px-4 pt-8 pb-14 text-white" style={{ background: `linear-gradient(135deg, ${min.color_primario}, ${min.color_secundario})` }}>
         <div className="max-w-2xl mx-auto">
-          <Link href="/ministerios" className="text-white/70 text-xs">← Ministerios</Link>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4">
             <div className="text-5xl">{min.emoji}</div>
             <div>
               <h1 className="text-2xl font-bold">{min.nombre}</h1>
@@ -82,6 +82,27 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
             <NotificarMinisterioForm ministerioId={id} color={min.color_primario} />
           </section>
         )}
+
+        {/* Eventos del ministerio */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Próximos eventos de {min.nombre}</h2>
+          {(!eventosMin || eventosMin.length === 0) && <p className="text-sm text-slate-400 text-center py-6 bg-white rounded-2xl border border-slate-100">Sin eventos próximos.</p>}
+          <div className="space-y-3">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(eventosMin ?? []).map((e: any) => (
+              <div key={e.id} className="bg-white rounded-2xl border-l-4 border border-slate-100 shadow-sm p-4 flex items-center gap-4" style={{ borderLeftColor: min.color_primario }}>
+                <div className="text-center min-w-[52px] rounded-xl py-2 px-1 text-white" style={{ background: min.color_primario }}>
+                  <p className="text-[10px] font-bold uppercase">{new Date(e.fecha_inicio).toLocaleDateString('es', { month: 'short' })}</p>
+                  <p className="text-xl font-bold leading-none">{new Date(e.fecha_inicio).getDate()}</p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-[#171923]">{e.titulo}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{new Date(e.fecha_inicio).toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', hour12: true })}{e.ubicacion ? ` · ${e.ubicacion}` : ''}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Publicaciones recientes del ministerio */}
         <section>
