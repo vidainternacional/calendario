@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useActionState, useEffect, useRef } from 'react'
 import { enviarPregunta, type PreguntaState } from '@/app/actions/preguntas'
 import { Loader2, Send } from 'lucide-react'
@@ -11,7 +13,7 @@ export default function PreguntaForm() {
   useEffect(() => {
     if (state?.success) {
       formRef.current?.reset()
-      alert('Tu pregunta ha sido enviada con éxito.')
+      mostrarToast('Tu pregunta ha sido enviada con éxito.')
     }
   }, [state])
 

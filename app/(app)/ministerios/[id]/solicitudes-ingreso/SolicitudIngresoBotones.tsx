@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useState } from 'react'
 import { aprobarSolicitudIngreso, rechazarSolicitudIngreso } from '@/app/actions/ministerios'
 import { CheckCircle, XCircle } from 'lucide-react'
@@ -19,7 +21,7 @@ export default function SolicitudIngresoBotones({
     setLoading(true)
     const res = await aprobarSolicitudIngreso(solicitudId, profileId, ministerioId)
     if (!res.success) {
-      alert(res.error)
+      mostrarToast(res.error)
       setLoading(false)
     }
   }
@@ -29,7 +31,7 @@ export default function SolicitudIngresoBotones({
     setLoading(true)
     const res = await rechazarSolicitudIngreso(solicitudId, ministerioId)
     if (!res.success) {
-      alert(res.error)
+      mostrarToast(res.error)
       setLoading(false)
     }
   }

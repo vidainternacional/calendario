@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useState } from 'react'
 import { archivarPregunta } from '@/app/actions/preguntas'
 import { Archive, Loader2 } from 'lucide-react'
@@ -13,7 +15,7 @@ export default function ArchivarPreguntaBoton({ preguntaId }: { preguntaId: stri
     setLoading(true)
     const res = await archivarPregunta(preguntaId)
     if (!res?.success) {
-      alert(res?.error || 'Error al archivar.')
+      mostrarToast(res?.error || 'Error al archivar.')
       setLoading(false)
     }
   }

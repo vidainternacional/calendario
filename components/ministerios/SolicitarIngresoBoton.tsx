@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useState } from 'react'
 import { solicitarIngreso } from '@/app/actions/ministerios'
 import { Check, Plus } from 'lucide-react'
@@ -20,7 +22,7 @@ export default function SolicitarIngresoBoton({ ministerioId, estadoActual }: { 
     setLoading(true)
     const res = await solicitarIngreso(ministerioId)
     if (!res.success) {
-      alert(res.error)
+      mostrarToast(res.error)
       setLoading(false)
     }
   }

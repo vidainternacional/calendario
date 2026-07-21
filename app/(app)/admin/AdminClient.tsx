@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useState, useMemo } from 'react'
 import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check, Sparkles, Search, UserCheck, UserX, Clock, Ban } from 'lucide-react'
 import MinisterioModal from '@/components/admin/MinisterioModal'
@@ -60,7 +62,7 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
         setPromptSuccess(true)
         setTimeout(() => setPromptSuccess(false), 3000)
       } else {
-        alert(result.error)
+        mostrarToast(result.error)
       }
     } catch (e) {
       console.error(e)

@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useState } from 'react'
 import { responderPregunta } from '@/app/actions/preguntas'
 import { Loader2, Send } from 'lucide-react'
@@ -15,7 +17,7 @@ export default function ResponderPreguntaForm({ preguntaId }: { preguntaId: stri
     setLoading(true)
     const res = await responderPregunta(preguntaId, respuesta)
     if (!res?.success) {
-      alert(res?.error || 'Ocurrió un error al responder.')
+      mostrarToast(res?.error || 'Ocurrió un error al responder.')
       setLoading(false)
     }
   }

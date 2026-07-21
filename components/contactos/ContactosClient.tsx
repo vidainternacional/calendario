@@ -118,7 +118,7 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
       <div className="flex p-1 bg-slate-200/50 rounded-xl mb-6">
         {([['contactos', 'Contactos', Users], ['qr', 'Mi QR', QrCode], ['escanear', 'Escanear', ScanLine]] as const).map(([k, label, Icon]) => (
           <button key={k} onClick={() => setTab(k)}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors ${tab === k ? 'bg-white text-[#171923] shadow-sm' : 'text-gray-500'}`}>
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors ${tab === k ? 'bg-white text-[#171923] shadow-sm' : 'text-slate-700'}`} style={tab === k ? { background:'#fff', color:'#171923' } : { color:'#334155' }}>
             <Icon className="w-4 h-4" /> {label}
           </button>
         ))}

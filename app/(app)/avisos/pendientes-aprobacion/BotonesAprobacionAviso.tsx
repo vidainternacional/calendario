@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useState } from 'react'
 import { aprobarAviso, rechazarAviso } from '@/app/actions/avisos'
 import { CheckCircle, XCircle } from 'lucide-react'
@@ -11,7 +13,7 @@ export default function BotonesAprobacionAviso({ avisoId }: { avisoId: string })
     setLoading(true)
     const res = await aprobarAviso(avisoId)
     if (!res?.success) {
-      alert(res?.error || 'Error al aprobar aviso')
+      mostrarToast(res?.error || 'Error al aprobar aviso')
       setLoading(false)
     }
   }
@@ -21,7 +23,7 @@ export default function BotonesAprobacionAviso({ avisoId }: { avisoId: string })
     setLoading(true)
     const res = await rechazarAviso(avisoId)
     if (!res?.success) {
-      alert(res?.error || 'Error al rechazar aviso')
+      mostrarToast(res?.error || 'Error al rechazar aviso')
       setLoading(false)
     }
   }

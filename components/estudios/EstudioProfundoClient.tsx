@@ -1,5 +1,7 @@
 'use client'
 
+import { mostrarToast } from '@/lib/ui/toast'
+
 import { useActionState, useEffect, useState } from 'react'
 import { Sparkles, Search, ChevronDown, ChevronUp, BookOpen, AlertCircle, RefreshCw, Clock, Save, Edit3 } from 'lucide-react'
 import { analizarPasaje, obtenerHistorial, obtenerNota, guardarNota, type EstudioState, type EstudioResultado } from '@/app/actions/estudio'
@@ -63,7 +65,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
       setNotaSuccess(true)
       setTimeout(() => setNotaSuccess(false), 3000)
     } else {
-      alert(res.error)
+      mostrarToast(res.error)
     }
   }
 

@@ -99,6 +99,17 @@ export default async function InicioPage() {
       </header>
 
       <div className="space-y-8">
+        {(!membresias || membresias.length === 0) && (
+          <section data-id="sin-ministerio" className="bg-gradient-to-br from-[#C0392B] to-[#8e2820] text-white rounded-[20px] p-6 mb-6">
+            <h2 className="text-lg font-bold mb-1.5">¡Bienvenido a la familia! 🙌</h2>
+            <p className="text-sm text-white/85 leading-relaxed mb-4">
+              Aún no perteneces a un ministerio. Explora los ministerios de la iglesia y solicita unirte al que Dios puso en tu corazón para servir.
+            </p>
+            <Link href="/ministerios" className="inline-block bg-white text-[#C0392B] text-sm font-bold px-5 py-2.5 rounded-xl">
+              Explorar ministerios →
+            </Link>
+          </section>
+        )}
         <InstallBanner />
         
         {/* Buzón Rápido */}
