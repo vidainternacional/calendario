@@ -42,6 +42,7 @@ export default function LoginPage() {
           <LoginForm />
         </div>
       </div>
-    </main>
+    <a href="/olvide" className="block text-center text-xs text-slate-400 mb-3 hover:text-[#171923]">¿Olvidaste tu contraseña?</a>
+        </main>
   )
 }
