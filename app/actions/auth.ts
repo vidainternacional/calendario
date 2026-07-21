@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/server'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -25,13 +24,27 @@ export async function login(
 
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     if (error.message.includes('Invalid login credentials')) {
       return { error: 'Correo o contraseña incorrectos.' }
     }
     return { error: error.message }
+  }
+
+  // Verificar estado de la cuenta — pendientes/suspendidos van a la sala de espera
+  if (authData.user) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase as any)
+      .from('profiles')
+      .select('estado_cuenta')
+      .eq('id', authData.user.id)
+      .single()
+
+    if (profile && profile.estado_cuenta !== 'activo') {
+      redirect('/pendiente')
+    }
   }
 
   redirect('/inicio')
@@ -62,12 +75,14 @@ export async function signup(
 
   const supabase = await createClient()
 
-  // 1. Crear usuario en Supabase Auth
-  const { data, error } = await supabase.auth.signUp({
+  // Crear usuario en Supabase Auth.
+  // El perfil se crea AUTOMÁTICAMENTE vía trigger en la base de datos
+  // (handle_new_user) con estado_cuenta = 'pendiente'.
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { nombre }, // metadata en auth.users
+      data: { nombre }, // metadata que el trigger usa para nombre_completo
     },
   })
 
@@ -78,25 +93,8 @@ export async function signup(
     return { error: error.message }
   }
 
-  // 2. Crear perfil en la tabla profiles (usando service role para bypass RLS)
-  if (data.user) {
-    const adminClient = createAdminClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: profileError } = await (adminClient as any)
-      .from('profiles')
-      .insert({
-        id: data.user.id,
-        nombre_completo: nombre,
-        rol: 'servidor', // rol por defecto
-      })
-
-    if (profileError) {
-      // No bloqueamos el flujo si falla el perfil — se puede crear después
-      console.error('Error creando perfil:', profileError.message)
-    }
-  }
-
-  redirect('/inicio')
+  // Cuenta nueva → sala de espera hasta que un líder/admin la apruebe
+  redirect('/pendiente')
 }
 
 // ─── Logout ───────────────────────────────────────────────────────────────────

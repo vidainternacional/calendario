@@ -19,8 +19,11 @@ export default async function AdminPage() {
     .select(`
       id,
       nombre_completo,
+      email,
       rol,
       activo,
+      estado_cuenta,
+      created_at,
       es_pastor_general,
       ministerio_miembros (
         ministerio_id,

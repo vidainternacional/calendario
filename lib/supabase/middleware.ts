@@ -43,10 +43,36 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && pathname === '/login') {
+  if (user && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone()
     url.pathname = '/inicio'
     return NextResponse.redirect(url)
+  }
+
+  // ── Guardia de estado de cuenta ──────────────────────────────
+  // Usuarios no-activos (pendiente/suspendido/rechazado) solo
+  // pueden ver /pendiente. Usuarios activos no tienen nada que
+  // hacer en /pendiente.
+  if (user && !isPublicRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('estado_cuenta')
+      .eq('id', user.id)
+      .single<{ estado_cuenta: string }>()
+
+    const estado = profile?.estado_cuenta ?? 'pendiente'
+
+    if (estado !== 'activo' && pathname !== '/pendiente') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/pendiente'
+      return NextResponse.redirect(url)
+    }
+
+    if (estado === 'activo' && pathname === '/pendiente') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/inicio'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

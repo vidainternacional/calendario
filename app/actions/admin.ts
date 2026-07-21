@@ -87,7 +87,20 @@ export async function cambiarRolUsuario(profileId: string, nuevoRol: 'servidor' 
     return { success: false, error: 'No puedes cambiar tu propio rol desde el panel de administración.' }
   }
 
-  // El administrador y el pastor pueden asignar cualquier rol (ya se validó que no sea a sí mismo)
+  // 🔒 Jerarquía de roles:
+  //   - Solo un ADMINISTRADOR puede otorgar el rol 'administrador'
+  //   - Solo un ADMINISTRADOR puede cambiar el rol de otro administrador
+  //   (la BD también lo bloquea vía trigger guard_role_escalation — defensa doble)
+  if (nuevoRol === 'administrador' && callerRol !== 'administrador') {
+    return { success: false, error: 'Solo un administrador puede otorgar el rol de administrador.' }
+  }
+
+  const { data: targetProfile } = await supabase.from('profiles').select('rol').eq('id', profileId).single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const targetRol = (targetProfile as any)?.rol
+  if (targetRol === 'administrador' && callerRol !== 'administrador') {
+    return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
+  }
 
   const { error } = await (supabase as any).from('profiles').update({ rol: nuevoRol }).eq('id', profileId)
   if (error) {
@@ -232,4 +245,76 @@ export async function togglePastorGeneral(profileId: string, esPastorGeneral: bo
 
   revalidatePath('/admin')
   return { success: true }
+}
+
+
+// ─── FASE 1: Gestión de estados de cuenta ────────────────────────────────────
+
+type EstadoCuenta = 'pendiente' | 'activo' | 'suspendido' | 'rechazado'
+
+async function verificarPermisoGestion() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { supabase, user: null, callerRol: null, error: 'No autorizado' }
+
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const callerRol = (profile as any)?.rol as string | undefined
+
+  if (callerRol !== 'pastor' && callerRol !== 'administrador') {
+    return { supabase, user, callerRol, error: 'Permisos insuficientes' }
+  }
+  return { supabase, user, callerRol, error: null }
+}
+
+/**
+ * Cambia el estado de cuenta de un usuario.
+ * - Aprobar cuenta:   'activo'
+ * - Rechazar cuenta:  'rechazado'
+ * - Suspender:        'suspendido'
+ * - Reactivar:        'activo'
+ * Reglas: no puedes cambiarte a ti mismo; solo un administrador
+ * puede suspender/rechazar a otro administrador. El superadmin está
+ * protegido a nivel de base de datos.
+ */
+export async function setEstadoCuenta(profileId: string, estado: EstadoCuenta) {
+  const { supabase, user, callerRol, error: permError } = await verificarPermisoGestion()
+  if (permError || !user) return { success: false, error: permError ?? 'No autorizado' }
+
+  if (profileId === user.id) {
+    return { success: false, error: 'No puedes cambiar el estado de tu propia cuenta.' }
+  }
+
+  const { data: targetProfile } = await supabase.from('profiles').select('rol').eq('id', profileId).single()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const targetRol = (targetProfile as any)?.rol
+  if (targetRol === 'administrador' && callerRol !== 'administrador') {
+    return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('profiles')
+    .update({ estado_cuenta: estado })
+    .eq('id', profileId)
+
+  if (error) {
+    if (error.message?.includes('protected')) {
+      return { success: false, error: 'Esta cuenta está protegida y no puede ser desactivada.' }
+    }
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+/** Aprueba una cuenta pendiente → acceso completo a la app. */
+export async function aprobarUsuario(profileId: string) {
+  return setEstadoCuenta(profileId, 'activo')
+}
+
+/** Rechaza una solicitud de cuenta. */
+export async function rechazarUsuario(profileId: string) {
+  return setEstadoCuenta(profileId, 'rechazado')
 }

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check, Sparkles } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check, Sparkles, Search, UserCheck, UserX, Clock, Ban } from 'lucide-react'
 import MinisterioModal from '@/components/admin/MinisterioModal'
 import UsuarioMembresiaModal from '@/components/admin/UsuarioMembresiaModal'
-import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant, updateEstudioPrompt, togglePastorGeneral } from '@/app/actions/admin'
+import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant, updateEstudioPrompt, togglePastorGeneral, aprobarUsuario, rechazarUsuario, setEstadoCuenta } from '@/app/actions/admin'
 import Image from 'next/image'
 
 export default function AdminClient({ ministerios, usuarios, activeIconVariant, initialEstudioPrompt, currentUserRol }: { 
@@ -83,6 +83,65 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
       setRolError(result.error)
       setTimeout(() => setRolError(null), 5000)
     }
+  }
+
+  // ── FASE 1: búsqueda, filtros y gestión de estados ──
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroRol, setFiltroRol] = useState<string>('todos')
+  const [filtroEstado, setFiltroEstado] = useState<string>('todos')
+  const [procesando, setProcesando] = useState<string | null>(null)
+
+  const pendientes = useMemo(
+    () => usuarios.filter(u => u.estado_cuenta === 'pendiente'),
+    [usuarios]
+  )
+
+  const usuariosFiltrados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    return usuarios.filter(u => {
+      if (u.estado_cuenta === 'pendiente') return false // van en su propia sección
+      if (filtroRol !== 'todos' && u.rol !== filtroRol) return false
+      if (filtroEstado !== 'todos' && (u.estado_cuenta ?? 'activo') !== filtroEstado) return false
+      if (q) {
+        const nombre = (u.nombre_completo ?? '').toLowerCase()
+        const email = (u.email ?? '').toLowerCase()
+        if (!nombre.includes(q) && !email.includes(q)) return false
+      }
+      return true
+    })
+  }, [usuarios, busqueda, filtroRol, filtroEstado])
+
+  const handleAprobar = async (userId: string) => {
+    setProcesando(userId)
+    const result = await aprobarUsuario(userId)
+    if (!result.success && result.error) {
+      setRolError(result.error)
+      setTimeout(() => setRolError(null), 5000)
+    }
+    setProcesando(null)
+  }
+
+  const handleRechazar = async (userId: string) => {
+    if (!confirm('¿Rechazar esta solicitud de cuenta? La persona no podrá entrar a la app.')) return
+    setProcesando(userId)
+    const result = await rechazarUsuario(userId)
+    if (!result.success && result.error) {
+      setRolError(result.error)
+      setTimeout(() => setRolError(null), 5000)
+    }
+    setProcesando(null)
+  }
+
+  const handleToggleSuspension = async (userId: string, estadoActual: string) => {
+    const suspender = estadoActual !== 'suspendido'
+    if (suspender && !confirm('¿Suspender esta cuenta? La persona perderá el acceso hasta que la reactives.')) return
+    setProcesando(userId)
+    const result = await setEstadoCuenta(userId, suspender ? 'suspendido' : 'activo')
+    if (!result.success && result.error) {
+      setRolError(result.error)
+      setTimeout(() => setRolError(null), 5000)
+    }
+    setProcesando(null)
   }
 
   const handleOpenMinModal = (min: any | null = null) => {
@@ -246,7 +305,91 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
 
       {activeTab === 'usuarios' && (
         <div className="space-y-4">
-          {usuarios.map(u => {
+
+          {/* ── Solicitudes pendientes de aprobación ── */}
+          {pendientes.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <h3 className="text-sm font-bold text-amber-800">
+                  {pendientes.length === 1
+                    ? '1 cuenta espera aprobación'
+                    : `${pendientes.length} cuentas esperan aprobación`}
+                </h3>
+              </div>
+              {pendientes.map(p => (
+                <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center justify-between gap-3 border border-amber-100">
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-[#171923] truncate">{p.nombre_completo}</p>
+                    {p.email && <p className="text-xs text-slate-500 truncate">{p.email}</p>}
+                    {p.created_at && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Registrado: {new Date(p.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleAprobar(p.id)}
+                      disabled={procesando === p.id}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors disabled:opacity-50"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" /> Aprobar
+                    </button>
+                    <button
+                      onClick={() => handleRechazar(p.id)}
+                      disabled={procesando === p.id}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl transition-colors disabled:opacity-50"
+                    >
+                      <UserX className="w-3.5 h-3.5" /> Rechazar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Buscador y filtros ── */}
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar por nombre o correo..."
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={filtroRol}
+                onChange={e => setFiltroRol(e.target.value)}
+                className="flex-1 text-xs font-semibold px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none"
+              >
+                <option value="todos">Todos los roles</option>
+                <option value="servidor">Servidores</option>
+                <option value="lider">Líderes</option>
+                <option value="pastor">Pastores</option>
+                <option value="administrador">Administradores</option>
+              </select>
+              <select
+                value={filtroEstado}
+                onChange={e => setFiltroEstado(e.target.value)}
+                className="flex-1 text-xs font-semibold px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none"
+              >
+                <option value="todos">Todos los estados</option>
+                <option value="activo">Activos</option>
+                <option value="suspendido">Suspendidos</option>
+                <option value="rechazado">Rechazados</option>
+              </select>
+            </div>
+            <p className="text-[11px] text-slate-400 pl-1">
+              {usuariosFiltrados.length} {usuariosFiltrados.length === 1 ? 'usuario' : 'usuarios'}
+            </p>
+          </div>
+
+          {usuariosFiltrados.map(u => {
             const esLider = u.ministerio_miembros?.some((m:any) => m.es_lider)
             let badgeColors = 'bg-slate-100 text-slate-600'
             if (u.rol === 'pastor') badgeColors = 'bg-indigo-100 text-indigo-700'
@@ -270,7 +413,14 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
                         <option value="administrador">Admin</option>
                       </select>
                       {esLider && <Shield className="w-3.5 h-3.5 text-amber-500" />}
+                      {u.estado_cuenta === 'suspendido' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase bg-rose-100 text-rose-700">Suspendido</span>
+                      )}
+                      {u.estado_cuenta === 'rechazado' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase bg-slate-200 text-slate-500">Rechazado</span>
+                      )}
                     </div>
+                    {u.email && <p className="text-[11px] text-slate-400 mt-1">{u.email}</p>}
 
                     {u.rol === 'pastor' && (
                       <div className="mt-3 flex items-center gap-2">
@@ -292,13 +442,27 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
                     )}
 
                   </div>
-                  <button 
-                    onClick={() => handleOpenMemModal(u)}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-[#171923] rounded-lg transition-colors border border-slate-200"
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Membresías
-                  </button>
+                  <div className="flex flex-col items-end gap-2">
+                    <button 
+                      onClick={() => handleOpenMemModal(u)}
+                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-[#171923] rounded-lg transition-colors border border-slate-200"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      Membresías
+                    </button>
+                    <button
+                      onClick={() => handleToggleSuspension(u.id, u.estado_cuenta ?? 'activo')}
+                      disabled={procesando === u.id}
+                      className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border disabled:opacity-50 ${
+                        u.estado_cuenta === 'suspendido'
+                          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                          : 'bg-white hover:bg-rose-50 text-rose-500 border-rose-200'
+                      }`}
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                      {u.estado_cuenta === 'suspendido' ? 'Reactivar' : 'Suspender'}
+                    </button>
+                  </div>
                 </div>
                 
                 {(() => {

@@ -1,0 +1,16 @@
+-- Ejecutada en Supabase el 2026-07-20 ✅  (registro histórico)
+-- A) Trigger protect_profile_columns: nadie puede auto-cambiarse rol,
+--    estado_cuenta, es_pastor_general, email ni activo (cierre del hueco
+--    de auto-promoción vía API directa).
+-- B) Política pastor_gestiona_perfiles: los pastores pueden aprobar
+--    cuentas y cambiar roles (antes fallaba en silencio).
+-- C) Tabla ministerio_solicitudes_ingreso creada (el código la usaba
+--    pero no existía) con sus 3 políticas.
+-- D) Intercambios reparados: políticas actualizar_propia_asignacion,
+--    aceptar_intercambio_asignacion y lider_gestiona_asignaciones.
+-- E) lider_gestiona_eventos: líderes crean/editan eventos de su
+--    ministerio; globales solo pastor/admin.
+-- F) leer_miembros + pastor_gestiona_miembros + pastor_gestiona_ministerios.
+-- G) Publicaciones: autor gestiona las suyas; pastores aprueban/rechazan.
+-- H) Función cuenta_activa(): pendientes/suspendidos ya no leen datos
+--    de la iglesia por la API (solo su propio perfil).

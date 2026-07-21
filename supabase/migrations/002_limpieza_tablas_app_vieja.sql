@@ -1,0 +1,4 @@
+-- Ejecutada en Supabase el 2026-07-20 ✅
+-- Eliminó las 15 tablas vacías de la app original rota (users, accounts,
+-- sessions, events, ministries, messages, etc.) que estaban sin RLS.
+-- Este archivo queda como registro histórico.

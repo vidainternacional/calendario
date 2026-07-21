@@ -1,0 +1,6 @@
+-- Ejecutada en Supabase el 2026-07-20 ✅  (registro histórico)
+-- 1) search_path fijado en mi_rol, es_admin_o_pastor, lidera,
+--    check_max_liderazgos (advertencia del linter).
+-- 2) REVOKE EXECUTE de las funciones de trigger para anon/authenticated.
+-- 3) Enviar preguntas requiere cuenta activa y profile_id propio.
+-- 4) Estudios IA (leer/insertar) requieren cuenta activa.
