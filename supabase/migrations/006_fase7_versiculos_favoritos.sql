@@ -1,0 +1,3 @@
+-- Ejecutada en Supabase el 2026-07-20 ✅  (registro histórico)
+-- Tabla versiculos_favoritos: cada usuario guarda sus versículos
+-- (traducción, libro, capítulo, verso, texto) con RLS propia.
