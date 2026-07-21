@@ -48,7 +48,7 @@ export default async function InicioPage() {
       .limit(5),
     supabase
       .from('ministerio_miembros')
-      .select('ministerio_id')
+      .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario )')
       .eq('profile_id', user.id)
   ])
 
@@ -99,6 +99,21 @@ export default async function InicioPage() {
       </header>
 
       <div className="space-y-8">
+        {membresias && membresias.length > 0 && (
+          <div data-id="mis-ministerios-switch" className="mb-5 -mx-1 overflow-x-auto">
+            <div className="flex gap-2 px-1 pb-1">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {membresias.map((m: any) => (
+                <Link key={m.ministerio_id} href={`/ministerios/${m.ministerio_id}`}
+                  className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold shadow-sm"
+                  style={{ background: m.ministerios?.color_primario ?? '#C0392B' }}>
+                  <span>{m.ministerios?.emoji ?? '⛪'}</span> {m.ministerios?.nombre ?? 'Ministerio'}
+                  {m.es_lider && <span className="text-[10px] bg-white/25 px-1.5 py-0.5 rounded-md">LÍDER</span>}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         {(!membresias || membresias.length === 0) && (
           <section data-id="sin-ministerio" className="bg-gradient-to-br from-[#C0392B] to-[#8e2820] text-white rounded-[20px] p-6 mb-6">
             <h2 className="text-lg font-bold mb-1.5">¡Bienvenido a la familia! 🙌</h2>
