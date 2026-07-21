@@ -113,13 +113,13 @@ export default function BibliaClient() {
       <p className="text-sm text-slate-500 mb-6 ml-[52px]">Lee, escucha y estudia la Palabra</p>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <select value={trad} onChange={e => setTrad(e.target.value)} className="text-sm font-medium px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+        <select value={trad} onChange={e => setTrad(e.target.value)} className="text-sm font-medium px-3 py-2.5 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none" style={{ colorScheme: 'light' }}>
           {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName ?? t.name}</option>)}
         </select>
-        <select value={libro} onChange={e => setLibro(e.target.value)} className="text-sm font-medium px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+        <select value={libro} onChange={e => setLibro(e.target.value)} className="text-sm font-medium px-3 py-2.5 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none" style={{ colorScheme: 'light' }}>
           {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
-        <select value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className="text-sm font-medium px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+        <select value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className="text-sm font-medium px-3 py-2.5 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none" style={{ colorScheme: 'light' }}>
           {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}
         </select>
       </div>

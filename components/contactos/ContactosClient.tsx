@@ -23,8 +23,14 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
 
   const otro = (r: Relacion): Persona | null => (r.solicitante_id === miId ? r.destinatario : r.solicitante)
 
-  const qrData = encodeURIComponent(`vida:${qrToken}`)
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=12&data=${qrData}`
+  // QR dibujado por la propia app (sin servicios externos)
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (tab !== 'qr' || !qrCanvasRef.current || !qrToken) return
+    import('qrcode').then(QR => {
+      QR.toCanvas(qrCanvasRef.current, `vida:${qrToken}`, { width: 280, margin: 2, color: { dark: '#171923', light: '#ffffff' } })
+    }).catch(() => {})
+  }, [tab, qrToken])
 
   const flash = (texto: string, ok: boolean) => { setMsg({ texto, ok }); setTimeout(() => setMsg(null), 4500) }
 
@@ -165,8 +171,7 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
       {tab === 'qr' && (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 text-center">
           <p className="text-sm text-slate-500 mb-5">Muestra este código para que otros te agreguen</p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrUrl} alt="Mi código QR" width={280} height={280} className="mx-auto rounded-2xl border border-slate-100" />
+          <canvas ref={qrCanvasRef} width={280} height={280} className="mx-auto rounded-2xl border border-slate-100" />
           <p className="mt-5 font-bold text-[#171923]">{miNombre}</p>
           <p className="text-xs text-slate-400 mt-1">Vida Internacional</p>
         </div>
