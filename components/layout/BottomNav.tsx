@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Calendar, Megaphone, FileText, User, BookOpen } from 'lucide-react'
+import { Home, Calendar, Megaphone, User, BookOpen } from 'lucide-react'
 
 export default function BottomNav() {
   const pathname = usePathname()
@@ -16,12 +16,22 @@ export default function BottomNav() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-[0_-4px_18px_rgba(20,24,40,0.08)] pb-safe">
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        background: '#ffffff',
+        boxShadow: '0 -4px 18px rgba(20,24,40,0.08)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        transform: 'translateZ(0)',
+      }}
+    >
       <nav className="flex justify-around items-center px-2 h-16 max-w-lg mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon
-          // Simple match: if pathname starts with href, it's active. Except for exact matches if needed.
-          // For '/ministerios', any subpath should also light it up.
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
 
           return (
