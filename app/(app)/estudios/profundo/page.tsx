@@ -42,7 +42,7 @@ export default async function EstudioProfundoPage({ searchParams }: { searchPara
         </div>
       </div>
 
-      <EstudioProfundoClient initialPasaje={pasaje ?? ''} />
+      <EstudioProfundoClient {...({ initialPasaje: pasaje ?? '' } as Record<string, string>)} />
     </main>
   )
 }

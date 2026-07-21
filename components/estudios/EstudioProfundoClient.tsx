@@ -18,7 +18,7 @@ const SECTIONS: { key: keyof EstudioResultado; label: string; bg: string; icon: 
   { key: 'reflexion', label: '11. Reflexión Espiritual', bg: 'bg-teal-50 text-teal-900 border-teal-100', icon: Sparkles },
 ]
 
-export default function EstudioProfundoClient() {
+export default function EstudioProfundoClient({ initialPasaje = '' }: { initialPasaje?: string }) {
   const [state, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({})
 
@@ -101,7 +101,7 @@ export default function EstudioProfundoClient() {
               disabled={isPending}
               placeholder="Ej: Juan 3:16, Romanos 8:28-30"
               className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C0392B] focus:border-[#C0392B] sm:text-sm disabled:opacity-50 transition-shadow"
-            />
+             defaultValue={initialPasaje} />
           </div>
           <button
             type="submit"
