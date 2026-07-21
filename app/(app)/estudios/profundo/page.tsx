@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   title: 'Estudio Profundo (IA)',
 }
 
-export default async function EstudioProfundoPage() {
+export default async function EstudioProfundoPage({ searchParams }: { searchParams: Promise<{ pasaje?: string }> }) {
+  const { pasaje } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -41,7 +42,7 @@ export default async function EstudioProfundoPage() {
         </div>
       </div>
 
-      <EstudioProfundoClient />
+      <EstudioProfundoClient initialPasaje={pasaje ?? ''} />
     </main>
   )
 }

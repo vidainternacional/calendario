@@ -53,6 +53,28 @@ export default async function EstudiosPage() {
           <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#C0392B] group-hover:translate-x-1 transition-all shrink-0 mt-4 sm:mt-0 relative z-10" />
         </Link>
 
+        {/* Biblia */}
+        <Link
+          href="/biblia"
+          className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all"
+        >
+          <div className="relative z-10 flex items-start sm:items-center gap-4">
+            <div className="bg-indigo-600 p-3 rounded-xl text-white shrink-0">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                Biblia
+                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-wide">Nuevo</span>
+              </h2>
+              <p className="text-sm text-slate-500 mt-1 max-w-sm">
+                Lee cualquier libro y capítulo, escúchalo en voz alta y envíalo al Estudio Profundo con un toque.
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all shrink-0 mt-4 sm:mt-0" />
+        </Link>
+
         {/* Placeholders for future sections */}
         <div className="opacity-60 pointer-events-none">
           <div className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-white rounded-2xl shadow-sm border border-slate-200">

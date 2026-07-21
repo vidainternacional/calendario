@@ -117,6 +117,17 @@ export default async function PerfilPage() {
           )}
         </section>
 
+        {/* Contactos */}
+        <Link href="/contactos" className="block bg-white border border-slate-100 rounded-[18px] p-6 hover:border-indigo-200 transition-colors">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[#171923]">Mis Contactos 🤝</h3>
+              <p className="text-sm text-slate-500 mt-1">Tu código QR y tus conexiones con otros servidores</p>
+            </div>
+            <span className="text-slate-300 text-xl">›</span>
+          </div>
+        </Link>
+
         {/* Notificaciones Push */}
         <section className="bg-white border border-slate-100 rounded-[18px] p-6">
           <div className="flex items-center gap-2 mb-4">

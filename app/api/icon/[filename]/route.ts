@@ -10,7 +10,7 @@ export async function GET(
   // Use a fresh admin client for this route to quickly read the setting
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
   let variant = 'dorado' // default fallback
@@ -40,7 +40,7 @@ export async function GET(
   return NextResponse.redirect(iconUrl, {
     status: 302,
     headers: {
-      'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
     },
   })
 }

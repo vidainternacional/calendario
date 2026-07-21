@@ -165,6 +165,17 @@ export async function analizarPasaje(
     activePrompt = setting.valor
   }
 
+  // 🔒 Límite diario: máx 10 estudios NUEVOS por usuario (protege la cuota gratis de Gemini)
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+  const { count: usadosHoy } = await (supabase as any)
+    .from('estudios_profundos_ia')
+    .select('id', { count: 'exact', head: true })
+    .eq('generado_por', user.id)
+    .gte('created_at', hoy.toISOString())
+  if ((usadosHoy ?? 0) >= 10) {
+    return { status: 'error', error: 'Alcanzaste el límite de 10 estudios nuevos por día. Los estudios ya generados por la comunidad no cuentan — intenta buscar el pasaje de nuevo mañana. 🙏' }
+  }
+
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) return { status: 'error', error: 'API de IA no configurada. Contacta al administrador.' }
 

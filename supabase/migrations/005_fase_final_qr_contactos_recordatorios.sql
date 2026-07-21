@@ -1,0 +1,9 @@
+-- Ejecutada en Supabase el 2026-07-20 ✅  (registro histórico)
+-- A) qr_token único en profiles (identidad QR de cada servidor)
+-- B) Tabla contactos reconstruida: solicitante/destinatario/estado
+--    con 4 políticas RLS (ver, crear con cuenta activa, responder, eliminar)
+-- C) Banderas notif_1d / notif_1h en evento_asignaciones (anti-duplicados)
+-- D) pg_cron + pg_net activados con 2 trabajos:
+--    'recordatorios-eventos' cada hora  → POST /api/cron/recordatorios
+--    'resumen-lunes' lunes 13:00 UTC    → POST /api/cron/resumen-semanal
+--    Ambos con header x-cron-secret (mismo valor que CRON_SECRET en Vercel)
