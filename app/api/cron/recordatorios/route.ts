@@ -50,5 +50,27 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // 🎂 Cumpleaños: una vez al día (corrida de las 13:00 UTC = 7:00 am El Salvador)
+  if (new Date().getUTCHours() === 13) {
+    const { data: cumpleaneros } = await supabase
+      .from('profiles')
+      .select('id, nombre_completo, fecha_nacimiento')
+      .not('fecha_nacimiento', 'is', null)
+      .eq('estado_cuenta', 'activo')
+    const hoySv = new Date(Date.now() - 6 * 3600_000)
+    for (const p of cumpleaneros ?? []) {
+      const f = new Date(p.fecha_nacimiento + 'T12:00:00Z')
+      if (f.getUTCMonth() === hoySv.getUTCMonth() && f.getUTCDate() === hoySv.getUTCDate()) {
+        await notifyUser(supabase, p.id, {
+          title: '🎂 ¡Feliz cumpleaños!',
+          body: `${p.nombre_completo}, la familia de Vida Internacional te desea un día lleno de bendición. 🙌`,
+          url: '/inicio',
+          tag: 'cumple',
+        })
+        enviadas++
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true, enviadas })
 }

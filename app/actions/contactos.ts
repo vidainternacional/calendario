@@ -103,3 +103,48 @@ export async function eliminarContacto(id: string) {
   revalidatePath('/contactos')
   return { success: true }
 }
+
+
+/** Conexión por código manual (respaldo cuando el QR/cámara no funciona). */
+export async function enviarSolicitudPorCodigo(codigo: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('contacto_por_codigo', { codigo })
+  if (error || !data?.length) return { error: 'Código no encontrado. Verifica los 8 caracteres.' }
+
+  const target = data[0] as { id: string; nombre_completo: string }
+  if (target.id === user.id) return { error: '¡Ese es tu propio código! 😄' }
+
+  // Reusar el flujo del QR con el token completo del destinatario no es posible
+  // (solo tenemos el id), así que insertamos directo con las mismas validaciones.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  const { data: existente } = await db
+    .from('contactos')
+    .select('id, estado')
+    .or(`and(solicitante_id.eq.${user.id},destinatario_id.eq.${target.id}),and(solicitante_id.eq.${target.id},destinatario_id.eq.${user.id})`)
+    .maybeSingle()
+
+  if (existente) {
+    if (existente.estado === 'aceptado') return { error: `${target.nombre_completo} ya está en tus contactos.` }
+    if (existente.estado === 'pendiente') return { error: 'Ya hay una solicitud pendiente entre ustedes.' }
+    await db.from('contactos').delete().eq('id', existente.id)
+  }
+
+  const { error: insErr } = await db.from('contactos').insert({ solicitante_id: user.id, destinatario_id: target.id })
+  if (insErr) return { error: 'No se pudo enviar la solicitud.' }
+
+  const { data: yo } = await db.from('profiles').select('nombre_completo').eq('id', user.id).single()
+  await notifyUser(supabase, target.id, {
+    title: 'Nueva solicitud de contacto 🤝',
+    body: `${yo?.nombre_completo ?? 'Alguien'} desea agregarte a sus contactos.`,
+    url: '/contactos',
+    tag: 'contacto',
+  })
+
+  revalidatePath('/contactos')
+  return { success: true, nombre: target.nombre_completo }
+}

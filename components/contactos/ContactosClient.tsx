@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { QrCode, ScanLine, Users, Check, X, Trash2, Camera } from 'lucide-react'
-import { enviarSolicitudPorQr, responderSolicitudContacto, eliminarContacto } from '@/app/actions/contactos'
+import { enviarSolicitudPorQr, enviarSolicitudPorCodigo, responderSolicitudContacto, eliminarContacto } from '@/app/actions/contactos'
 
 type Persona = { id: string; nombre_completo: string; email: string | null }
 type Relacion = {
@@ -49,6 +49,7 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
   const videoRef = useRef<HTMLVideoElement>(null)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  const [codigo, setCodigo] = useState('')
   const stopRef = useRef<() => void>(() => {})
 
   useEffect(() => () => stopRef.current(), [])
@@ -174,6 +175,10 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
           <canvas ref={qrCanvasRef} width={280} height={280} className="mx-auto rounded-2xl border border-slate-100" />
           <p className="mt-5 font-bold text-[#171923]">{miNombre}</p>
           <p className="text-xs text-slate-400 mt-1">Vida Internacional</p>
+          <div className="mt-5 bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <p className="text-[11px] text-slate-400 mb-1">¿La cámara del otro no funciona? Dale tu código:</p>
+            <p className="text-lg font-mono font-bold tracking-[0.2em] text-[#171923]">{qrToken.slice(0, 8)}</p>
+          </div>
         </div>
       )}
 
@@ -193,6 +198,20 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
           </div>
           {scanError && <p className="mt-4 text-sm text-rose-600">{scanError}</p>}
           <p className="mt-4 text-xs text-slate-400">Apunta al QR de tu compañero. La solicitud se envía sola al detectarlo.</p>
+          <div className="mt-5 border-t border-slate-100 pt-5 text-left">
+            <p className="text-xs font-semibold text-slate-500 mb-2">¿No funciona la cámara? Ingresa su código:</p>
+            <div className="flex gap-2">
+              <input value={codigo} onChange={e => setCodigo(e.target.value)} maxLength={8} placeholder="Ej: a3f9c21b"
+                className="flex-1 text-sm font-mono tracking-widest px-3 py-2.5 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none" style={{ colorScheme: 'light' }} />
+              <button disabled={pending || codigo.trim().length < 8} onClick={() => {
+                startTransition(async () => {
+                  const r = await enviarSolicitudPorCodigo(codigo)
+                  flash(r.error ?? `📤 Solicitud enviada a ${r.nombre}.`, !r.error)
+                  if (!r.error) setCodigo('')
+                })
+              }} className="px-4 text-sm font-semibold bg-indigo-600 text-white rounded-xl disabled:opacity-40">Conectar</button>
+            </div>
+          </div>
         </div>
       )}
     </main>

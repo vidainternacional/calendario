@@ -64,7 +64,7 @@ export default function UsuarioMembresiaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm flex flex-col max-h-[85vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
           <div>
             <h3 className="font-bold text-[#171923] text-sm">Membresías</h3>

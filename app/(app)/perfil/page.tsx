@@ -5,6 +5,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
 import { User, Mail, Shield, Bell, Settings2 } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
+import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PushTestButton from '@/components/pwa/PushTestButton'
 
 export const metadata: Metadata = {
@@ -85,6 +86,12 @@ export default async function PerfilPage() {
               <span className="text-sm">{(profile as any)?.telefono || 'Sin teléfono registrado'}</span>
             </div>
           </div>
+
+          <EditarPerfilForm
+            nombre={(profile as any)?.nombre_completo ?? ''}
+            telefono={(profile as any)?.telefono ?? null}
+            fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null}
+          />
         </section>
 
         {/* Ministerios y Roles */}

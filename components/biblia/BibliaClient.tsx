@@ -208,7 +208,7 @@ export default function BibliaClient() {
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <select value={trad} onChange={e => cambiarTrad(e.target.value)} className={selectCls} style={{ colorScheme: 'light' }}>
-          {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName ?? t.name}</option>)}
+          {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName ? `${t.shortName} — ${t.name}` : t.name}</option>)}
         </select>
         <select value={libro} onChange={e => cambiarLibro(e.target.value)} className={selectCls} style={{ colorScheme: 'light' }}>
           {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -230,7 +230,14 @@ export default function BibliaClient() {
       </div>
 
       <article className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
-        <h2 className="text-xl font-bold text-[#171923] mb-5">{pasaje}</h2>
+        <div className="flex items-center justify-between mb-5">
+          <button onClick={() => setCapitulo(c => Math.max(1, c - 1))} disabled={capitulo <= 1}
+            className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-bold disabled:opacity-30">‹</button>
+          <h2 className="text-xl font-bold text-[#171923]">{pasaje}</h2>
+          <button onClick={() => setCapitulo(c => Math.min(libroActual?.numberOfChapters ?? c, c + 1))}
+            disabled={capitulo >= (libroActual?.numberOfChapters ?? 1)}
+            className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-bold disabled:opacity-30">›</button>
+        </div>
         {cargando && <div className="flex justify-center py-14"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>}
         {error && <p className="text-sm text-rose-600 text-center py-8">{error}</p>}
         {!cargando && !error && (

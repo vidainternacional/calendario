@@ -1,5 +1,5 @@
 # Vida Internacional — Documento Técnico
-**Versión 2.1 · Fases 1–7 completadas — SQL aplicado en Supabase**
+**Versión 2.2 · Fases 1–8 completadas — SQL aplicado en Supabase**
 
 App PWA de gestión interna para la iglesia Vida Internacional: ministerios, servidores, eventos, avisos, solicitudes, intercambios de turnos, estudios bíblicos con IA y notificaciones push.
 
@@ -88,7 +88,8 @@ Ver `.env.local.example`. Supabase ×3, `GEMINI_API_KEY`, VAPID ×3, `CRON_SECRE
 | **F5 — Biblia** | `/biblia`: +traducciones en español (Free Use Bible API), dropdowns versión/libro/capítulo, audio por voz del navegador (es), botón "Estudiar con IA" que precarga el pasaje en Estudio Profundo. Tarjeta en Estudios | ✅ v2.0 |
 | **F6 — Recordatorios** | pg_cron (Supabase) llama cada hora a `/api/cron/recordatorios` (1 día y 1 hora antes, banderas anti-duplicado, hora de El Salvador) y los lunes a `/api/cron/resumen-semanal` ("Tienes X eventos esta semana"). Protegidos con CRON_SECRET | ✅ v2.0 |
 | **F7 — Biblia Pro** | Tocar un versículo → escuchar desde ahí o guardar como ⭐ favorito (tabla versiculos_favoritos); panel de favoritos con salto directo al pasaje; la app recuerda dónde quedaste leyendo (posición local); Estudiar con IA usa el versículo seleccionado | ✅ v2.1 |
-| F8 — Futuro | Chat entre contactos, fotos con expiración de 2h (Supabase Storage), modo TV lobby, prédicas en video | Ideas |
+| **F8 — Pulido general** | Perfil editable (nombre, teléfono, fecha de nacimiento) con felicitación push automática de cumpleaños 7am; flechas ‹ › de capítulos y nombres completos de versiones en Biblia; código manual de 8 caracteres como respaldo del QR; scroll en todos los modales; márgenes seguros y fin del desborde lateral | ✅ v2.2 |
+| F9 — Futuro | Chat entre contactos, fotos con expiración de 2h (Supabase Storage), modo TV lobby, prédicas en video | Ideas |
 
 ## 8. Método de trabajo
 

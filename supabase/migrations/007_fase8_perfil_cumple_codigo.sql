@@ -1,0 +1,3 @@
+-- Ejecutada en Supabase el 2026-07-20 ✅  (registro histórico)
+-- fecha_nacimiento en profiles + función contacto_por_codigo(codigo)
+-- (búsqueda por los primeros 8 caracteres del qr_token, solo cuentas activas).

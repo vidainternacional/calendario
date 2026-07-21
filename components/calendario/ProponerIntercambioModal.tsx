@@ -61,7 +61,7 @@ export default function ProponerIntercambioModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full max-w-sm overflow-hidden flex flex-col max-h-[85vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
           <h3 className="font-bold text-[#171923]">Proponer Intercambio</h3>
           <button onClick={onClose} className="p-2 text-gray-500 hover:bg-slate-100 rounded-full transition-colors">

@@ -71,7 +71,7 @@ export default function NuevaSolicitudModal({ ministerios }: NuevaSolicitudModal
         role="dialog"
         aria-modal="true"
         aria-label="Nueva solicitud"
-        className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[28px] shadow-2xl transition-transform duration-300 ease-out max-w-lg mx-auto flex flex-col max-h-[85vh] ${
+        className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[28px] shadow-2xl transition-transform duration-300 ease-out max-w-lg mx-auto flex flex-col max-h-[85vh] overflow-y-auto ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
