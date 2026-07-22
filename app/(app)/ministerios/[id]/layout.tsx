@@ -47,19 +47,21 @@ export default async function MinisterioLayout({
   return (
     <div className="min-h-screen bg-[#f4f5f9]">
       <div
-        className="max-w-2xl mx-auto px-4 pb-0"
+        className="relative z-10 max-w-2xl mx-auto px-4"
         style={{ paddingTop: 'max(0.25rem, env(safe-area-inset-top))' }}
       >
         <Link
           href="/ministerios"
-          className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+          className="inline-flex h-10 items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver a ministerios
         </Link>
       </div>
 
-      {children}
+      <div className="-mt-12 sm:-mt-8">
+        {children}
+      </div>
     </div>
   )
 }
