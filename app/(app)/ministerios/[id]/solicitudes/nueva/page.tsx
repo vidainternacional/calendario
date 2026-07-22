@@ -19,9 +19,11 @@ export default async function NuevaSolicitudPage({
   if (!user) redirect('/login')
 
   return (
-    <div className="bg-white border border-slate-100 rounded-[18px] p-6 shadow-xl">
-      <h2 className="text-xl font-bold text-[#171923] mb-6">Crear Nueva Solicitud</h2>
-      <NuevaSolicitudForm ministerioId={id} />
+    <div className="mx-auto w-full max-w-2xl px-4 pb-28 sm:px-0">
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
+        <h2 className="mb-5 text-xl font-bold text-[#171923] sm:mb-6">Crear nueva solicitud</h2>
+        <NuevaSolicitudForm ministerioId={id} />
+      </div>
     </div>
   )
 }
