@@ -1,41 +1,89 @@
 'use client'
 
-import { mostrarToast } from '@/lib/ui/toast'
-
-import { useState, useMemo } from 'react'
-import { Plus, Users, Shield, Power, PowerOff, Edit3, Smartphone, Check, Sparkles, Search, UserCheck, UserX, Clock, Ban } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import Image from 'next/image'
+import {
+  Ban,
+  Check,
+  Clock,
+  Edit3,
+  Loader2,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  Shield,
+  Smartphone,
+  Sparkles,
+  UserCheck,
+  UserX,
+  Users,
+} from 'lucide-react'
 import MinisterioModal from '@/components/admin/MinisterioModal'
 import UsuarioMembresiaModal from '@/components/admin/UsuarioMembresiaModal'
-import { toggleMinisterioActivo, cambiarRolUsuario, updateIconVariant, updateEstudioPrompt, togglePastorGeneral, aprobarUsuario, rechazarUsuario, setEstadoCuenta } from '@/app/actions/admin'
-import Image from 'next/image'
+import { mostrarToast } from '@/lib/ui/toast'
+import {
+  aprobarUsuario,
+  cambiarRolUsuario,
+  rechazarUsuario,
+  setEstadoCuenta,
+  toggleMinisterioActivo,
+  togglePastorGeneral,
+  updateEstudioPrompt,
+  updateIconVariant,
+} from '@/app/actions/admin'
 
-export default function AdminClient({ ministerios, usuarios, activeIconVariant, initialEstudioPrompt, currentUserRol }: { 
-  ministerios: any[], 
-  usuarios: any[],
+export default function AdminClient({
+  ministerios,
+  usuarios,
+  activeIconVariant,
+  initialEstudioPrompt,
+  currentUserRol,
+}: {
+  ministerios: any[]
+  usuarios: any[]
   activeIconVariant?: string
   initialEstudioPrompt?: string
   currentUserRol?: string
 }) {
   const [activeTab, setActiveTab] = useState<'ministerios' | 'usuarios'>('ministerios')
-  
-  // Modals state
   const [minModalOpen, setMinModalOpen] = useState(false)
   const [editingMin, setEditingMin] = useState<any | null>(null)
-  
   const [memModalOpen, setMemModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any | null>(null)
-
   const [rolError, setRolError] = useState<string | null>(null)
-  const [selectedIcon, setSelectedIcon] = useState<'dorado' | 'blanco' | 'rojo'>(
-    (activeIconVariant as any) || 'dorado'
-  )
+  const [selectedIcon, setSelectedIcon] = useState<'dorado' | 'blanco' | 'rojo'>((activeIconVariant as any) || 'dorado')
   const [iconSaving, setIconSaving] = useState(false)
   const [iconSuccess, setIconSuccess] = useState(false)
-
-  // IA Prompt state
   const [promptValue, setPromptValue] = useState(initialEstudioPrompt || '')
   const [promptSaving, setPromptSaving] = useState(false)
   const [promptSuccess, setPromptSuccess] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroRol, setFiltroRol] = useState('todos')
+  const [filtroEstado, setFiltroEstado] = useState('todos')
+  const [procesando, setProcesando] = useState<string | null>(null)
+
+  const showError = (message: string) => {
+    setRolError(message)
+    setTimeout(() => setRolError(null), 5000)
+  }
+
+  const pendientes = useMemo(
+    () => usuarios.filter((usuario) => usuario.estado_cuenta === 'pendiente'),
+    [usuarios]
+  )
+
+  const usuariosFiltrados = useMemo(() => {
+    const query = busqueda.trim().toLowerCase()
+    return usuarios.filter((usuario) => {
+      if (usuario.estado_cuenta === 'pendiente') return false
+      if (filtroRol !== 'todos' && usuario.rol !== filtroRol) return false
+      if (filtroEstado !== 'todos' && (usuario.estado_cuenta ?? 'activo') !== filtroEstado) return false
+      if (!query) return true
+      return (usuario.nombre_completo ?? '').toLowerCase().includes(query) ||
+        (usuario.email ?? '').toLowerCase().includes(query)
+    })
+  }, [usuarios, busqueda, filtroRol, filtroEstado])
 
   const handleIconChange = async (variant: 'dorado' | 'blanco' | 'rojo') => {
     if (variant === selectedIcon) return
@@ -46,8 +94,8 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
       await updateIconVariant(variant)
       setIconSuccess(true)
       setTimeout(() => setIconSuccess(false), 3000)
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(error)
     } finally {
       setIconSaving(false)
     }
@@ -64,8 +112,8 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
       } else {
         mostrarToast(result.error)
       }
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      console.error(error)
     } finally {
       setPromptSaving(false)
     }
@@ -73,53 +121,18 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
 
   const handlePastorGeneralToggle = async (userId: string, currentState: boolean) => {
     const result = await togglePastorGeneral(userId, !currentState)
-    if (!result.success && result.error) {
-      setRolError(result.error)
-      setTimeout(() => setRolError(null), 5000)
-    }
+    if (!result.success && result.error) showError(result.error)
   }
 
   const handleRolChange = async (userId: string, nuevoRol: string) => {
     const result = await cambiarRolUsuario(userId, nuevoRol as any)
-    if (!result.success && result.error) {
-      setRolError(result.error)
-      setTimeout(() => setRolError(null), 5000)
-    }
+    if (!result.success && result.error) showError(result.error)
   }
-
-  // ── FASE 1: búsqueda, filtros y gestión de estados ──
-  const [busqueda, setBusqueda] = useState('')
-  const [filtroRol, setFiltroRol] = useState<string>('todos')
-  const [filtroEstado, setFiltroEstado] = useState<string>('todos')
-  const [procesando, setProcesando] = useState<string | null>(null)
-
-  const pendientes = useMemo(
-    () => usuarios.filter(u => u.estado_cuenta === 'pendiente'),
-    [usuarios]
-  )
-
-  const usuariosFiltrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    return usuarios.filter(u => {
-      if (u.estado_cuenta === 'pendiente') return false // van en su propia sección
-      if (filtroRol !== 'todos' && u.rol !== filtroRol) return false
-      if (filtroEstado !== 'todos' && (u.estado_cuenta ?? 'activo') !== filtroEstado) return false
-      if (q) {
-        const nombre = (u.nombre_completo ?? '').toLowerCase()
-        const email = (u.email ?? '').toLowerCase()
-        if (!nombre.includes(q) && !email.includes(q)) return false
-      }
-      return true
-    })
-  }, [usuarios, busqueda, filtroRol, filtroEstado])
 
   const handleAprobar = async (userId: string) => {
     setProcesando(userId)
     const result = await aprobarUsuario(userId)
-    if (!result.success && result.error) {
-      setRolError(result.error)
-      setTimeout(() => setRolError(null), 5000)
-    }
+    if (!result.success && result.error) showError(result.error)
     setProcesando(null)
   }
 
@@ -127,10 +140,7 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
     if (!confirm('¿Rechazar esta solicitud de cuenta? La persona no podrá entrar a la app.')) return
     setProcesando(userId)
     const result = await rechazarUsuario(userId)
-    if (!result.success && result.error) {
-      setRolError(result.error)
-      setTimeout(() => setRolError(null), 5000)
-    }
+    if (!result.success && result.error) showError(result.error)
     setProcesando(null)
   }
 
@@ -139,377 +149,202 @@ export default function AdminClient({ ministerios, usuarios, activeIconVariant, 
     if (suspender && !confirm('¿Suspender esta cuenta? La persona perderá el acceso hasta que la reactives.')) return
     setProcesando(userId)
     const result = await setEstadoCuenta(userId, suspender ? 'suspendido' : 'activo')
-    if (!result.success && result.error) {
-      setRolError(result.error)
-      setTimeout(() => setRolError(null), 5000)
-    }
+    if (!result.success && result.error) showError(result.error)
     setProcesando(null)
-  }
-
-  const handleOpenMinModal = (min: any | null = null) => {
-    setEditingMin(min)
-    setMinModalOpen(true)
-  }
-
-  const handleOpenMemModal = (user: any) => {
-    setEditingUser(user)
-    setMemModalOpen(true)
   }
 
   return (
     <>
-      {/* ── Icon Variant Picker ─────────────────────────────── */}
-      <div className="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <div className="flex items-center gap-2 mb-3">
+      <section className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-2">
           <Smartphone size={16} className="text-slate-500" />
           <span className="text-sm font-semibold text-[#171923]">Ícono de la aplicación</span>
-          {iconSaving && <span className="text-xs text-slate-400 ml-auto">Guardando…</span>}
-          {iconSuccess && <span className="text-xs text-emerald-600 ml-auto font-medium">✓ Guardado</span>}
+          {iconSaving && <span className="ml-auto text-xs text-slate-400">Guardando…</span>}
+          {iconSuccess && <span className="ml-auto text-xs font-medium text-emerald-600">✓ Guardado</span>}
         </div>
-        <p className="text-xs text-slate-400 mb-4">Selecciona la variante de ícono para nuevas instalaciones de la PWA.</p>
-        <div className="flex gap-3 justify-center">
+        <p className="mb-4 text-xs leading-relaxed text-slate-400">Selecciona la variante de ícono para nuevas instalaciones de la PWA.</p>
+        <div className="flex justify-center gap-2 sm:gap-3">
           {([
             { key: 'dorado', label: 'Dorado', border: '#D4A017' },
             { key: 'blanco', label: 'Blanco', border: '#333' },
-            { key: 'rojo',   label: 'Rojo',   border: '#CC0000' },
+            { key: 'rojo', label: 'Rojo', border: '#CC0000' },
           ] as const).map(({ key, label, border }) => (
             <button
               key={key}
+              type="button"
               onClick={() => handleIconChange(key)}
-              className={`relative flex flex-col items-center gap-1.5 rounded-xl p-2 transition-all ${
-                selectedIcon === key
-                  ? 'ring-2 ring-offset-2 bg-slate-50'
-                  : 'opacity-70 hover:opacity-100'
-              }`}
+              className={`relative flex min-w-0 flex-1 flex-col items-center gap-1.5 rounded-xl p-2 transition-all sm:flex-none ${selectedIcon === key ? 'bg-slate-50 ring-2 ring-offset-2' : 'opacity-70 hover:opacity-100'}`}
             >
-              <div
-                className="relative w-16 h-16 rounded-[18px] overflow-hidden shadow-md"
-                style={{ outline: selectedIcon === key ? `2.5px solid ${border}` : '2px solid transparent' }}
-              >
-                <Image
-                  src={`/icons/variant-${key}/icon-192.png`}
-                  alt={`Ícono ${label}`}
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative h-14 w-14 overflow-hidden rounded-[16px] shadow-md sm:h-16 sm:w-16 sm:rounded-[18px]" style={{ outline: selectedIcon === key ? `2.5px solid ${border}` : '2px solid transparent' }}>
+                <Image src={`/icons/variant-${key}/icon-192.png`} alt={`Ícono ${label}`} fill className="object-cover" />
               </div>
               <span className="text-[11px] font-medium text-slate-600">{label}</span>
-              {selectedIcon === key && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-                  <Check size={10} className="text-white" strokeWidth={3} />
-                </div>
-              )}
+              {selectedIcon === key && <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500"><Check size={10} className="text-white" strokeWidth={3} /></span>}
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-amber-600 mt-3 text-center">
-          ⚠️ El cambio solo afecta a nuevas instalaciones — los usuarios que ya instalaron la app conservan el ícono anterior.
-        </p>
-      </div>
+        <p className="mt-3 text-center text-[11px] leading-relaxed text-amber-600">⚠️ El cambio solo afecta a nuevas instalaciones.</p>
+      </section>
 
-      {/* ── IA Prompt Editor ─────────────────────────────── */}
-      <div className="mb-6 bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-indigo-500" />
-            <span className="text-sm font-semibold text-[#171923]">Estudio Profundo IA (System Prompt)</span>
+      <section className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2">
+            <Sparkles size={16} className="shrink-0 text-indigo-500" />
+            <span className="text-sm font-semibold text-[#171923]">Estudio Profundo IA</span>
           </div>
-          <div className="flex items-center gap-2">
-            {promptSuccess && <span className="text-xs text-emerald-600 font-medium">✓ Guardado</span>}
-            <button
-              onClick={handlePromptSave}
-              disabled={promptSaving || !promptValue.trim()}
-              className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {promptSaving ? 'Guardando...' : 'Guardar Prompt'}
+          <div className="flex items-center gap-2 sm:justify-end">
+            {promptSuccess && <span className="text-xs font-medium text-emerald-600">✓ Guardado</span>}
+            <button type="button" onClick={handlePromptSave} disabled={promptSaving || !promptValue.trim()} className="ml-auto min-h-11 rounded-xl bg-indigo-600 px-4 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50 sm:min-h-0 sm:py-2">
+              {promptSaving ? 'Guardando…' : 'Guardar prompt'}
             </button>
           </div>
         </div>
-        <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-          Este es el <strong>System Prompt</strong> que guía a la IA en el módulo de "Estudio Profundo".
-          Modifícalo para ajustar el tono, metodología o instrucciones de la respuesta.
-        </p>
-        <textarea
-          value={promptValue}
-          onChange={(e) => setPromptValue(e.target.value)}
-          className="w-full h-64 p-3 text-xs font-mono text-slate-700 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-y"
-          placeholder="Escribe las instrucciones base para la IA..."
-        />
-      </div>
+        <p className="mb-3 text-xs leading-relaxed text-slate-500">Instrucciones que guían a la IA en el módulo de Estudio Profundo.</p>
+        <textarea value={promptValue} onChange={(event) => setPromptValue(event.target.value)} className="h-64 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 font-mono text-base text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 sm:text-xs" placeholder="Escribe las instrucciones base para la IA..." />
+      </section>
 
-      {/* ── Tabs ─────────────────────────────── */}
-      <div className="flex p-1 bg-slate-200/50 rounded-xl mb-6">
-        <button
-          onClick={() => setActiveTab('ministerios')}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
-            activeTab === 'ministerios' ? 'bg-white text-[#171923] shadow-sm' : 'text-gray-500 hover:text-[#171923]'
-          }`}
-        >
-          Ministerios
-        </button>
-        <button
-          onClick={() => setActiveTab('usuarios')}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${
-            activeTab === 'usuarios' ? 'bg-white text-[#171923] shadow-sm' : 'text-gray-500 hover:text-[#171923]'
-          }`}
-        >
-          Usuarios
-        </button>
+      <div className="mb-6 flex rounded-xl bg-slate-200/50 p-1" role="tablist" aria-label="Gestión administrativa">
+        {(['ministerios', 'usuarios'] as const).map((tab) => (
+          <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)} className={`min-h-11 flex-1 rounded-lg px-3 text-sm font-semibold capitalize transition-colors ${activeTab === tab ? 'bg-white text-[#171923] shadow-sm' : 'text-gray-500 hover:text-[#171923]'}`}>
+            {tab}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'ministerios' && (
-        <div className="space-y-4">
-          <button 
-            onClick={() => handleOpenMinModal()}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors active:scale-95"
-          >
-            <Plus className="w-4 h-4" /> Nuevo Ministerio
+        <section className="space-y-4">
+          <button type="button" onClick={() => { setEditingMin(null); setMinModalOpen(true) }} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-500 active:scale-[0.98]">
+            <Plus className="h-4 w-4" /> Nuevo ministerio
           </button>
-          
           <div className="grid gap-4">
-            {ministerios.map(m => (
-              <div key={m.id} className={`bg-white p-5 rounded-[20px] shadow-[0_4px_18px_rgba(20,24,40,0.05)] border ${m.activo ? 'border-slate-100' : 'border-rose-100 opacity-60'} relative overflow-hidden flex flex-col gap-3`}>
-                <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: m.color_primario }}></div>
-                <div className="flex items-start justify-between pl-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{m.emoji}</span>
-                    <div>
-                      <h3 className="font-bold text-[#171923]">{m.nombre}</h3>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${m.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {m.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+            {ministerios.map((ministerio) => (
+              <article key={ministerio.id} className={`relative flex flex-col gap-3 overflow-hidden rounded-[20px] border bg-white p-4 shadow-[0_4px_18px_rgba(20,24,40,0.05)] sm:p-5 ${ministerio.activo ? 'border-slate-100' : 'border-rose-100 opacity-60'}`}>
+                <span className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: ministerio.color_primario }} />
+                <div className="flex items-start justify-between gap-3 pl-2">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <span className="text-2xl">{ministerio.emoji}</span>
+                    <div className="min-w-0">
+                      <h3 className="break-words font-bold text-[#171923]">{ministerio.nombre}</h3>
+                      <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${ministerio.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>{ministerio.activo ? 'Activo' : 'Inactivo'}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => handleOpenMinModal(m)}
-                      className="p-2 text-indigo-500 bg-indigo-50 hover:bg-indigo-100 rounded-full transition-colors"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <form action={async () => { await toggleMinisterioActivo(m.id, !m.activo); }}>
-                      <button type="submit" className={`p-2 rounded-full transition-colors ${m.activo ? 'text-rose-500 bg-rose-50 hover:bg-rose-100' : 'text-emerald-500 bg-emerald-50 hover:bg-emerald-100'}`}>
-                        {m.activo ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
-                      </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button type="button" onClick={() => { setEditingMin(ministerio); setMinModalOpen(true) }} className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 hover:bg-indigo-100" aria-label={`Editar ${ministerio.nombre}`}><Edit3 className="h-4 w-4" /></button>
+                    <form action={async () => { await toggleMinisterioActivo(ministerio.id, !ministerio.activo) }}>
+                      <button type="submit" className={`flex h-11 w-11 items-center justify-center rounded-full ${ministerio.activo ? 'bg-rose-50 text-rose-500 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100'}`} aria-label={ministerio.activo ? 'Desactivar ministerio' : 'Activar ministerio'}>{ministerio.activo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}</button>
                     </form>
                   </div>
                 </div>
-                {m.descripcion && (
-                  <p className="text-sm text-gray-500 pl-2 leading-relaxed">
-                    {m.descripcion}
-                  </p>
-                )}
-              </div>
+                {ministerio.descripcion && <p className="pl-2 text-sm leading-relaxed text-gray-500">{ministerio.descripcion}</p>}
+              </article>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {activeTab === 'usuarios' && (
-        <div className="space-y-4">
-
-          {/* ── Solicitudes pendientes de aprobación ── */}
+        <section className="space-y-4">
           {pendientes.length > 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-bold text-amber-800">
-                  {pendientes.length === 1
-                    ? '1 cuenta espera aprobación'
-                    : `${pendientes.length} cuentas esperan aprobación`}
-                </h3>
-              </div>
-              {pendientes.map(p => (
-                <div key={p.id} className="bg-white rounded-2xl p-4 flex items-center justify-between gap-3 border border-amber-100">
+            <div className="space-y-3 rounded-[20px] border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-amber-600" /><h3 className="text-sm font-bold text-amber-800">{pendientes.length === 1 ? '1 cuenta espera aprobación' : `${pendientes.length} cuentas esperan aprobación`}</h3></div>
+              {pendientes.map((usuario) => (
+                <article key={usuario.id} className="rounded-2xl border border-amber-100 bg-white p-4">
                   <div className="min-w-0">
-                    <p className="font-bold text-sm text-[#171923] truncate">{p.nombre_completo}</p>
-                    {p.email && <p className="text-xs text-slate-500 truncate">{p.email}</p>}
-                    {p.created_at && (
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        Registrado: {new Date(p.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    )}
+                    <p className="break-words text-sm font-bold text-[#171923]">{usuario.nombre_completo || 'Usuario sin nombre'}</p>
+                    {usuario.email && <p className="mt-0.5 break-all text-xs text-slate-500">{usuario.email}</p>}
+                    {usuario.created_at && <p className="mt-1 text-[10px] text-slate-400">Registrado: {new Date(usuario.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleAprobar(p.id)}
-                      disabled={procesando === p.id}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors disabled:opacity-50"
-                    >
-                      <UserCheck className="w-3.5 h-3.5" /> Aprobar
-                    </button>
-                    <button
-                      onClick={() => handleRechazar(p.id)}
-                      disabled={procesando === p.id}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl transition-colors disabled:opacity-50"
-                    >
-                      <UserX className="w-3.5 h-3.5" /> Rechazar
-                    </button>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => handleAprobar(usuario.id)} disabled={procesando === usuario.id} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">{procesando === usuario.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserCheck className="h-3.5 w-3.5" />} Aprobar</button>
+                    <button type="button" onClick={() => handleRechazar(usuario.id)} disabled={procesando === usuario.id} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50"><UserX className="h-3.5 w-3.5" /> Rechazar</button>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
 
-          {/* ── Buscador y filtros ── */}
-          <div className="space-y-2">
+          <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm sm:p-4">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
-                placeholder="Buscar por nombre o correo..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar por nombre o correo..." className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-base outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
-            <div className="flex gap-2">
-              <select
-                value={filtroRol}
-                onChange={e => setFiltroRol(e.target.value)}
-                className="flex-1 text-xs font-semibold px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none"
-              >
-                <option value="todos">Todos los roles</option>
-                <option value="servidor">Servidores</option>
-                <option value="lider">Líderes</option>
-                <option value="pastor">Pastores</option>
-                <option value="administrador">Administradores</option>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <select value={filtroRol} onChange={(event) => setFiltroRol(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-semibold outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm">
+                <option value="todos">Todos los roles</option><option value="servidor">Servidores</option><option value="lider">Líderes</option><option value="pastor">Pastores</option><option value="administrador">Administradores</option>
               </select>
-              <select
-                value={filtroEstado}
-                onChange={e => setFiltroEstado(e.target.value)}
-                className="flex-1 text-xs font-semibold px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none"
-              >
-                <option value="todos">Todos los estados</option>
-                <option value="activo">Activos</option>
-                <option value="suspendido">Suspendidos</option>
-                <option value="rechazado">Rechazados</option>
+              <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-semibold outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm">
+                <option value="todos">Todos los estados</option><option value="activo">Activos</option><option value="suspendido">Suspendidos</option><option value="rechazado">Rechazados</option>
               </select>
             </div>
-            <p className="text-[11px] text-slate-400 pl-1">
-              {usuariosFiltrados.length} {usuariosFiltrados.length === 1 ? 'usuario' : 'usuarios'}
-            </p>
+            <p className="mt-2 px-1 text-[11px] text-slate-400">{usuariosFiltrados.length} {usuariosFiltrados.length === 1 ? 'usuario' : 'usuarios'}</p>
           </div>
 
-          {usuariosFiltrados.map(u => {
-            const esLider = u.ministerio_miembros?.some((m:any) => m.es_lider)
-            let badgeColors = 'bg-slate-100 text-slate-600'
-            if (u.rol === 'pastor') badgeColors = 'bg-indigo-100 text-indigo-700'
-            if (u.rol === 'administrador') badgeColors = 'bg-rose-100 text-rose-700'
-            if (u.rol === 'lider') badgeColors = 'bg-amber-100 text-amber-700'
+          {usuariosFiltrados.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center"><Users className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-2 text-sm font-semibold text-slate-600">No se encontraron usuarios</p><p className="mt-1 text-xs text-slate-400">Prueba con otros filtros o términos de búsqueda.</p></div>}
 
-            return (
-              <div key={u.id} className="bg-white p-5 rounded-[20px] shadow-[0_4px_18px_rgba(20,24,40,0.05)] border border-slate-100 flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-bold text-[#171923] text-sm">{u.nombre_completo}</h3>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <select
-                        value={u.rol}
-                        onChange={(e) => handleRolChange(u.id, e.target.value)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase cursor-pointer border-none outline-none ${badgeColors}`}
-                      >
-                        <option value="servidor">Servidor</option>
-                        <option value="lider">Líder</option>
-                        <option value="pastor">Pastor</option>
-                        <option value="administrador">Admin</option>
+          <div className="grid gap-3 sm:gap-4">
+            {usuariosFiltrados.map((usuario) => {
+              const membresias = Array.isArray(usuario.ministerio_miembros) ? usuario.ministerio_miembros : usuario.ministerio_miembros ? [usuario.ministerio_miembros] : []
+              const esLider = membresias.some((membresia: any) => membresia.es_lider)
+              let roleClass = 'bg-slate-100 text-slate-600'
+              if (usuario.rol === 'pastor') roleClass = 'bg-indigo-100 text-indigo-700'
+              if (usuario.rol === 'administrador') roleClass = 'bg-rose-100 text-rose-700'
+              if (usuario.rol === 'lider') roleClass = 'bg-amber-100 text-amber-700'
+
+              return (
+                <article key={usuario.id} className="rounded-[20px] border border-slate-100 bg-white p-4 shadow-[0_4px_18px_rgba(20,24,40,0.05)] sm:p-5">
+                  <div className="min-w-0">
+                    <h3 className="break-words text-base font-bold leading-snug text-[#171923]">{usuario.nombre_completo || 'Usuario sin nombre'}</h3>
+                    {usuario.email && <p className="mt-1 break-all text-xs text-slate-400">{usuario.email}</p>}
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <select value={usuario.rol} onChange={(event) => handleRolChange(usuario.id, event.target.value)} className={`min-h-9 rounded-lg border-0 px-2.5 text-xs font-bold uppercase outline-none ${roleClass}`} aria-label={`Rol de ${usuario.nombre_completo}`}>
+                        <option value="servidor">Servidor</option><option value="lider">Líder</option><option value="pastor">Pastor</option><option value="administrador">Admin</option>
                       </select>
-                      {esLider && <Shield className="w-3.5 h-3.5 text-amber-500" />}
-                      {u.estado_cuenta === 'suspendido' && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase bg-rose-100 text-rose-700">Suspendido</span>
-                      )}
-                      {u.estado_cuenta === 'rechazado' && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase bg-slate-200 text-slate-500">Rechazado</span>
-                      )}
+                      {esLider && <span className="inline-flex min-h-8 items-center gap-1 rounded-lg bg-amber-50 px-2 text-[10px] font-bold uppercase text-amber-700"><Shield className="h-3 w-3" /> Líder</span>}
+                      {usuario.estado_cuenta === 'suspendido' && <span className="inline-flex min-h-8 items-center rounded-lg bg-rose-100 px-2 text-[10px] font-bold uppercase text-rose-700">Suspendido</span>}
+                      {usuario.estado_cuenta === 'rechazado' && <span className="inline-flex min-h-8 items-center rounded-lg bg-slate-200 px-2 text-[10px] font-bold uppercase text-slate-500">Rechazado</span>}
                     </div>
-                    {u.email && <p className="text-[11px] text-slate-400 mt-1">{u.email}</p>}
+                  </div>
 
-                    {u.rol === 'pastor' && (
-                      <div className="mt-3 flex items-center gap-2">
-                        <label className="flex items-center cursor-pointer gap-2">
-                          <div className="relative">
-                            <input 
-                              type="checkbox" 
-                              className="sr-only" 
-                              checked={!!u.es_pastor_general}
-                              disabled={currentUserRol !== 'administrador'}
-                              onChange={() => handlePastorGeneralToggle(u.id, !!u.es_pastor_general)}
-                            />
-                            <div className={`block w-10 h-6 rounded-full transition-colors ${u.es_pastor_general ? 'bg-indigo-500' : 'bg-slate-300'}`}></div>
-                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${u.es_pastor_general ? 'transform translate-x-4' : ''}`}></div>
-                          </div>
-                          <span className="text-xs font-semibold text-slate-600">Pastor General</span>
-                        </label>
+                  {usuario.rol === 'pastor' && (
+                    <label className="mt-4 flex min-h-12 cursor-pointer items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                      <span className="text-xs font-semibold text-slate-600">Pastor general</span>
+                      <span className="relative inline-flex h-7 w-12 shrink-0">
+                        <input type="checkbox" className="peer sr-only" checked={!!usuario.es_pastor_general} disabled={currentUserRol !== 'administrador'} onChange={() => handlePastorGeneralToggle(usuario.id, !!usuario.es_pastor_general)} />
+                        <span className="absolute inset-0 rounded-full bg-slate-300 transition-colors peer-checked:bg-indigo-500 peer-disabled:opacity-50" />
+                        <span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5" />
+                      </span>
+                    </label>
+                  )}
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => { setEditingUser(usuario); setMemModalOpen(true) }} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-[#171923] hover:bg-slate-100"><Users className="h-3.5 w-3.5" /> Membresías</button>
+                    <button type="button" onClick={() => handleToggleSuspension(usuario.id, usuario.estado_cuenta ?? 'activo')} disabled={procesando === usuario.id} className={`flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold disabled:opacity-50 ${usuario.estado_cuenta === 'suspendido' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'border-rose-200 bg-white text-rose-500 hover:bg-rose-50'}`}>
+                      {procesando === usuario.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="h-3.5 w-3.5" />} {usuario.estado_cuenta === 'suspendido' ? 'Reactivar' : 'Suspender'}
+                    </button>
+                  </div>
+
+                  <div className="mt-4 border-t border-slate-100 pt-3">
+                    {membresias.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {membresias.map((membresia: any) => (
+                          <span key={membresia.ministerio_id} className="inline-flex max-w-full items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-[10px] font-bold uppercase" style={{ color: membresia.ministerios?.color_primario || '#64748b', backgroundColor: `${membresia.ministerios?.color_primario || '#64748b'}15` }}>
+                            <span className="truncate">{membresia.ministerios?.nombre || 'Ministerio'}</span>{membresia.es_lider && <Shield className="h-2.5 w-2.5 shrink-0" />}
+                          </span>
+                        ))}
                       </div>
-                    )}
-
+                    ) : <p className="text-xs text-gray-400">Sin ministerios asignados</p>}
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <button 
-                      onClick={() => handleOpenMemModal(u)}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-[#171923] rounded-lg transition-colors border border-slate-200"
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      Membresías
-                    </button>
-                    <button
-                      onClick={() => handleToggleSuspension(u.id, u.estado_cuenta ?? 'activo')}
-                      disabled={procesando === u.id}
-                      className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border disabled:opacity-50 ${
-                        u.estado_cuenta === 'suspendido'
-                          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
-                          : 'bg-white hover:bg-rose-50 text-rose-500 border-rose-200'
-                      }`}
-                    >
-                      <Ban className="w-3.5 h-3.5" />
-                      {u.estado_cuenta === 'suspendido' ? 'Reactivar' : 'Suspender'}
-                    </button>
-                  </div>
-                </div>
-                
-                {(() => {
-                  const membresias = Array.isArray(u.ministerio_miembros) 
-                    ? u.ministerio_miembros 
-                    : (u.ministerio_miembros ? [u.ministerio_miembros] : [])
-                  
-                  return membresias.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-50">
-                      {membresias.map((m:any) => (
-                        <span key={m.ministerio_id} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-200" style={{ color: m.ministerios?.color_primario || '#64748b', backgroundColor: `${m.ministerios?.color_primario || '#64748b'}15` }}>
-                          {m.ministerios?.nombre}
-                          {m.es_lider && <Shield className="w-2.5 h-2.5" />}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-2 text-xs text-gray-400">Sin ministerios asignados</div>
-                  )
-                })()}
-              </div>
-            )
-          })}
-        </div>
+                </article>
+              )
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Role change error toast */}
-      {rolError && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl max-w-xs text-center animate-in slide-in-from-bottom-4">
-          {rolError}
-        </div>
-      )}
+      {rolError && <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 right-4 z-[80] mx-auto max-w-sm rounded-2xl bg-rose-600 px-5 py-3 text-center text-sm font-medium text-white shadow-xl animate-in slide-in-from-bottom-4" role="alert">{rolError}</div>}
 
-      <MinisterioModal
-        isOpen={minModalOpen}
-        onClose={() => setMinModalOpen(false)}
-        ministerio={editingMin}
-      />
-
-      <UsuarioMembresiaModal
-        isOpen={memModalOpen}
-        onClose={() => setMemModalOpen(false)}
-        usuario={editingUser}
-        todosMinisterios={ministerios}
-      />
+      <MinisterioModal isOpen={minModalOpen} onClose={() => setMinModalOpen(false)} ministerio={editingMin} />
+      <UsuarioMembresiaModal isOpen={memModalOpen} onClose={() => setMemModalOpen(false)} usuario={editingUser} todosMinisterios={ministerios} />
     </>
   )
 }
