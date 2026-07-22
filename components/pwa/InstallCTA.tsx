@@ -23,7 +23,6 @@ export default function InstallCTA() {
     setIsStandalone(standalone)
     if (standalone) return
 
-    // Detect any iOS device (Safari, Chrome, Firefox — all WebKit on iOS)
     const ua = window.navigator.userAgent
     const isIPadOS =
       window.navigator.platform === 'MacIntel' &&
@@ -41,49 +40,47 @@ export default function InstallCTA() {
 
   if (!mounted) return null
 
-  // Already installed — show "Abrir la app" link
+  const buttonClass =
+    'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-5 py-3.5 text-base font-bold text-white shadow-lg shadow-red-900/30 transition-all hover:bg-[#a93226] active:scale-[0.98] sm:w-auto sm:px-8 sm:py-4 sm:text-lg'
+
   if (isStandalone) {
     return (
-      <a
-        href="/inicio"
-        className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-[#C0392B] text-white font-bold text-lg shadow-lg shadow-red-900/30 hover:bg-[#a93226] active:scale-95 transition-all"
-      >
+      <a href="/inicio" className={buttonClass}>
         Abrir la App →
       </a>
     )
   }
 
-  // iOS — show hint panel
   if (isIOS) {
     return (
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex w-full max-w-sm flex-col items-center gap-3">
         <button
           onClick={() => setShowIOSHint(v => !v)}
-          className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-[#C0392B] text-white font-bold text-lg shadow-lg shadow-red-900/30 hover:bg-[#a93226] active:scale-95 transition-all"
+          className={buttonClass}
+          aria-expanded={showIOSHint}
         >
-          <Download className="w-5 h-5" />
+          <Download className="h-5 w-5 shrink-0" />
           Descargar la App
         </button>
 
         {showIOSHint && (
-          <div className="mt-2 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl px-5 py-4 max-w-xs shadow-xl text-sm text-slate-700 text-left animate-in slide-in-from-top-3">
-            <p className="font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
-              <Share className="w-4 h-4 text-blue-500" />
+          <div className="mt-1 w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-4 text-left text-sm text-slate-700 shadow-xl backdrop-blur animate-in slide-in-from-top-3 sm:px-5">
+            <p className="mb-2 flex items-center gap-1.5 font-semibold text-slate-900">
+              <Share className="h-4 w-4 shrink-0 text-blue-500" />
               Cómo instalar en iOS
             </p>
-            <ol className="list-decimal list-inside space-y-1.5 leading-snug">
-              <li>Toca el botón <strong>Compartir</strong> (cuadrado con flecha ↑) en Safari.</li>
-              <li>Desplázate y toca <strong>"Añadir a la pantalla de inicio"</strong>.</li>
-              <li>Confirma tocando <strong>"Añadir"</strong>.</li>
+            <ol className="list-inside list-decimal space-y-1.5 leading-relaxed">
+              <li>Toca el botón <strong>Compartir</strong> en Safari.</li>
+              <li>Busca <strong>Añadir a la pantalla de inicio</strong>.</li>
+              <li>Confirma tocando <strong>Añadir</strong>.</li>
             </ol>
-            <p className="text-xs text-slate-400 mt-2">* Debes abrirlo en Safari para que esta opción aparezca.</p>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">Debes abrir la página en Safari para ver esta opción.</p>
           </div>
         )}
       </div>
     )
   }
 
-  // Android / Desktop Chrome — native prompt
   if (deferredPrompt) {
     return (
       <button
@@ -92,21 +89,17 @@ export default function InstallCTA() {
           await deferredPrompt.userChoice
           setDeferredPrompt(null)
         }}
-        className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-[#C0392B] text-white font-bold text-lg shadow-lg shadow-red-900/30 hover:bg-[#a93226] active:scale-95 transition-all"
+        className={buttonClass}
       >
-        <Download className="w-5 h-5" />
+        <Download className="h-5 w-5 shrink-0" />
         Descargar la App
       </button>
     )
   }
 
-  // Fallback — browser doesn't support install prompt yet, link to /inicio
   return (
-    <a
-      href="/inicio"
-      className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-[#C0392B] text-white font-bold text-lg shadow-lg shadow-red-900/30 hover:bg-[#a93226] active:scale-95 transition-all"
-    >
-      <Download className="w-5 h-5" />
+    <a href="/inicio" className={buttonClass}>
+      <Download className="h-5 w-5 shrink-0" />
       Descargar la App
     </a>
   )
