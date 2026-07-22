@@ -27,7 +27,6 @@ export default function ProponerIntercambioModal({
       setFetching(true)
       const fetchMembers = async () => {
         const supabase = createClient()
-        // Buscar perfiles de los miembros de ese ministerio
         const { data } = await supabase
           .from('ministerio_miembros')
           .select(`
@@ -60,60 +59,62 @@ export default function ProponerIntercambioModal({
   }
 
   return (
-    <div className="modal-overlay-safe bg-slate-900/40 backdrop-blur-sm">
-      <div className="modal-panel-safe bg-white rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] max-w-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm overflow-hidden">
+      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full sm:max-w-sm max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
           <h3 className="font-bold text-[#171923] break-safe">Proponer Intercambio</h3>
-          <button onClick={onClose} className="p-2 text-gray-500 hover:bg-slate-100 rounded-full transition-colors shrink-0">
+          <button onClick={onClose} className="p-2 text-gray-500 hover:bg-slate-100 rounded-full transition-colors shrink-0" aria-label="Cerrar modal">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="modal-body-safe p-4 space-y-4 overflow-y-auto flex-1">
-          <input type="hidden" name="asignacion_origen_id" value={asignacion_origen_id} />
-          
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1">Evento a ceder</p>
-            <p className="text-sm font-semibold text-[#171923] break-safe">{evento_titulo}</p>
+        <form onSubmit={handleSubmit} className="min-h-0 flex flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 [-webkit-overflow-scrolling:touch]">
+            <input type="hidden" name="asignacion_origen_id" value={asignacion_origen_id} />
+            
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1">Evento a ceder</p>
+              <p className="text-sm font-semibold text-[#171923] break-safe">{evento_titulo}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#171923] mb-1.5">
+                Destinatario (opcional)
+              </label>
+              {fetching ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Cargando miembros...
+                </div>
+              ) : (
+                <select 
+                  name="destinatario_id" 
+                  className="w-full bg-[#f4f5f9] border-none rounded-xl px-4 py-3 text-[#171923] focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="">Abierto a cualquier miembro</option>
+                  {members.map(m => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
+                </select>
+              )}
+              <p className="text-[10px] text-gray-500 mt-1.5 break-safe">
+                Si lo dejas abierto, cualquier miembro del ministerio podrá aceptarlo.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#171923] mb-1.5">
+                Mensaje (opcional)
+              </label>
+              <textarea 
+                name="mensaje"
+                rows={3}
+                placeholder="Ej: Tengo una emergencia, ¿alguien puede cubrirme?"
+                className="w-full bg-[#f4f5f9] border-none rounded-xl px-4 py-3 text-[#171923] placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-[#171923] mb-1.5">
-              Destinatario (opcional)
-            </label>
-            {fetching ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Loader2 className="w-4 h-4 animate-spin" /> Cargando miembros...
-              </div>
-            ) : (
-              <select 
-                name="destinatario_id" 
-                className="w-full bg-[#f4f5f9] border-none rounded-xl px-4 py-3 text-[#171923] focus:ring-2 focus:ring-indigo-500 outline-none"
-              >
-                <option value="">Abierto a cualquier miembro</option>
-                {members.map(m => (
-                  <option key={m.id} value={m.id}>{m.nombre}</option>
-                ))}
-              </select>
-            )}
-            <p className="text-[10px] text-gray-500 mt-1.5 break-safe">
-              Si lo dejas abierto, cualquier miembro del ministerio podrá aceptarlo.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-[#171923] mb-1.5">
-              Mensaje (opcional)
-            </label>
-            <textarea 
-              name="mensaje"
-              rows={3}
-              placeholder="Ej: Tengo una emergencia, ¿alguien puede cubrirme?"
-              className="w-full bg-[#f4f5f9] border-none rounded-xl px-4 py-3 text-[#171923] placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-            />
-          </div>
-
-          <div className="pt-2 flex gap-3">
+          <div className="shrink-0 border-t border-slate-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-3">
             <button
               type="button"
               onClick={onClose}
