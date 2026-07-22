@@ -11,7 +11,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import InstallBanner from '@/components/pwa/InstallBanner'
 import MinisterioSwitcher from '@/components/inicio/MinisterioSwitcher'
 import PublicacionCard from '@/components/avisos/PublicacionCard'
-import { PageSkeleton } from '@/components/ui/Skeleton'
+import { SkeletonPage } from '@/components/ui/Skeleton'
 
 type InicioData = {
   profile: any | null
@@ -113,7 +113,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
   if (!data) {
     return (
       <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-8">
-        <PageSkeleton cards={4} />
+        <SkeletonPage cards={4} />
       </main>
     )
   }
