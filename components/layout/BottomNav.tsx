@@ -17,7 +17,7 @@ export default function BottomNav() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[100] isolate border-t border-slate-100 bg-white/95 shadow-[0_-4px_18px_rgba(20,24,40,0.08)] backdrop-blur-xl"
+      className="app-bottom-nav fixed inset-x-0 bottom-0 z-[100] isolate border-t border-slate-100 bg-white/95 shadow-[0_-4px_18px_rgba(20,24,40,0.08)] backdrop-blur-xl"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         WebkitTransform: 'translate3d(0,0,0)',
@@ -26,7 +26,7 @@ export default function BottomNav() {
         backfaceVisibility: 'hidden',
       }}
     >
-      <nav className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
+      <nav className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-center justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
@@ -41,7 +41,7 @@ export default function BottomNav() {
               }`}
             >
               <Icon className={`h-5 w-5 ${isActive ? 'fill-indigo-500/20' : ''}`} />
-              <span className="text-[10px] font-medium">{item.name}</span>
+              <span className="app-bottom-nav-label text-[10px] font-medium">{item.name}</span>
             </Link>
           )
         })}
