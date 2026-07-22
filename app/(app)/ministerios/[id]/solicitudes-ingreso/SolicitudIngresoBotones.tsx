@@ -1,19 +1,18 @@
 'use client'
 
 import { mostrarToast } from '@/lib/ui/toast'
-
 import { useState } from 'react'
 import { aprobarSolicitudIngreso, rechazarSolicitudIngreso } from '@/app/actions/ministerios'
 import { CheckCircle, XCircle } from 'lucide-react'
 
-export default function SolicitudIngresoBotones({ 
-  solicitudId, 
-  profileId, 
-  ministerioId 
-}: { 
-  solicitudId: string, 
-  profileId: string, 
-  ministerioId: string 
+export default function SolicitudIngresoBotones({
+  solicitudId,
+  profileId,
+  ministerioId,
+}: {
+  solicitudId: string
+  profileId: string
+  ministerioId: string
 }) {
   const [loading, setLoading] = useState(false)
 
@@ -37,20 +36,24 @@ export default function SolicitudIngresoBotones({
   }
 
   return (
-    <div className="flex gap-2">
-      <button 
+    <div className="flex flex-col gap-2 sm:flex-row">
+      <button
+        type="button"
         onClick={handleAprobar}
         disabled={loading}
-        className="flex-1 inline-flex items-center justify-center gap-2 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <CheckCircle className="w-4 h-4" /> Aprobar
+        <CheckCircle className="h-4 w-4" />
+        Aprobar
       </button>
-      <button 
+      <button
+        type="button"
         onClick={handleRechazar}
         disabled={loading}
-        className="flex-1 inline-flex items-center justify-center gap-2 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <XCircle className="w-4 h-4" /> Rechazar
+        <XCircle className="h-4 w-4" />
+        Rechazar
       </button>
     </div>
   )
