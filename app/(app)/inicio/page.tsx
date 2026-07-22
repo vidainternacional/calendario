@@ -24,7 +24,6 @@ export default async function InicioPage() {
     redirect('/login')
   }
 
-  // Parallelize independent queries
   const [profileRes, misEventosRes, membresiasRes] = await Promise.all([
     supabase
       .from('profiles')
@@ -50,7 +49,7 @@ export default async function InicioPage() {
     supabase
       .from('ministerio_miembros')
       .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario )')
-      .eq('profile_id', user.id)
+      .eq('profile_id', user.id),
   ])
 
   const profile = profileRes.data
@@ -66,7 +65,7 @@ export default async function InicioPage() {
     (membresias || []).some((m: any) => m.es_lider)
 
   const ministerioIds = membresias?.map((m: any) => m.ministerio_id) || []
-  
+
   const { data: publicaciones } = await supabase
     .from('publicaciones')
     .select(`
@@ -85,52 +84,57 @@ export default async function InicioPage() {
   const estadoConfig = {
     asignado: { color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
     confirmado: { color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-    declinado: { color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' }
+    declinado: { color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f5f9] px-4 py-8 max-w-lg mx-auto">
-      {/* Header */}
-      <header className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-600 text-white font-bold text-sm">
+    <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-28 pt-5 sm:px-6 sm:pt-8">
+      <header className="mb-6 flex items-start justify-between gap-3 sm:mb-8 sm:items-center">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
             {inicial}
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-gray-500">Bienvenido,</p>
-            <p className="text-sm font-semibold text-[#171923]">{nombre}</p>
+            <p className="break-words text-sm font-semibold text-[#171923]">{nombre}</p>
           </div>
         </div>
-        <LogoutButton />
+        <div className="shrink-0">
+          <LogoutButton />
+        </div>
       </header>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {membresias && membresias.length > 0 && (
-          <MinisterioSwitcher membresias={(membresias as any[]).map((m: any) => ({
-            ministerio_id: m.ministerio_id,
-            es_lider: !!m.es_lider,
-            nombre: m.ministerios?.nombre ?? 'Ministerio',
-            emoji: m.ministerios?.emoji ?? '⛪',
-            color: m.ministerios?.color_primario ?? '#C0392B',
-          }))} />
+          <MinisterioSwitcher
+            membresias={(membresias as any[]).map((m: any) => ({
+              ministerio_id: m.ministerio_id,
+              es_lider: !!m.es_lider,
+              nombre: m.ministerios?.nombre ?? 'Ministerio',
+              emoji: m.ministerios?.emoji ?? '⛪',
+              color: m.ministerios?.color_primario ?? '#C0392B',
+            }))}
+          />
         )}
 
         {puedeGestionarSolicitudes && (
           <section>
             <Link
               href="/solicitudes"
-              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group"
+              className="group flex min-h-20 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
+              <div className="flex min-w-0 items-start gap-3 sm:items-center">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <FileText className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-[#171923]">Solicitudes</h3>
-                  <p className="text-xs text-gray-500">Revisa, aprueba o crea solicitudes del ministerio.</p>
+                  <p className="mt-0.5 break-words text-xs leading-relaxed text-gray-500">
+                    Revisa, aprueba o crea solicitudes del ministerio.
+                  </p>
                 </div>
               </div>
-              <span className="text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl text-xs font-semibold group-hover:bg-indigo-100 transition-colors shrink-0">
+              <span className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors group-hover:bg-indigo-100 sm:w-auto">
                 Abrir
               </span>
             </Link>
@@ -138,47 +142,51 @@ export default async function InicioPage() {
         )}
 
         {(!membresias || membresias.length === 0) && (
-          <section data-id="sin-ministerio" className="bg-gradient-to-br from-[#C0392B] to-[#8e2820] text-white rounded-[20px] p-6 mb-6">
-            <h2 className="text-lg font-bold mb-1.5">¡Bienvenido a la familia! 🙌</h2>
-            <p className="text-sm text-white/85 leading-relaxed mb-4">
+          <section data-id="sin-ministerio" className="rounded-2xl bg-gradient-to-br from-[#C0392B] to-[#8e2820] p-5 text-white sm:p-6">
+            <h2 className="mb-1.5 text-lg font-bold">¡Bienvenido a la familia! 🙌</h2>
+            <p className="mb-4 text-sm leading-relaxed text-white/85">
               Aún no perteneces a un ministerio. Explora los ministerios de la iglesia y solicita unirte al que Dios puso en tu corazón para servir.
             </p>
-            <Link href="/ministerios" className="inline-block bg-white text-[#C0392B] text-sm font-bold px-5 py-2.5 rounded-xl">
+            <Link
+              href="/ministerios"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#C0392B] sm:w-auto"
+            >
               Explorar ministerios →
             </Link>
           </section>
         )}
+
         <InstallBanner />
-        
-        {/* Buzón Rápido */}
+
         <section>
-          <Link 
+          <Link
             href="/preguntas"
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group"
+            className="group flex min-h-20 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5"
           >
-            <div>
-              <div className="flex items-center gap-2 mb-1">
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2">
                 <span className="text-xl">💬</span>
-                <h3 className="font-bold text-[#171923]">Buzón de Congregación</h3>
+                <h3 className="break-words font-bold text-[#171923]">Buzón de Congregación</h3>
               </div>
-              <p className="text-xs text-gray-500">Envía tus dudas, motivos de oración o sugerencias.</p>
+              <p className="break-words text-xs leading-relaxed text-gray-500">
+                Envía tus dudas, motivos de oración o sugerencias.
+              </p>
             </div>
-            <div className="text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl text-xs font-semibold group-hover:bg-indigo-100 transition-colors">
+            <span className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors group-hover:bg-indigo-100 sm:w-auto">
               Escribir
-            </div>
+            </span>
           </Link>
         </section>
-        
-        {/* Próximos Eventos Personales */}
+
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-lg font-bold text-[#171923]">Tus Próximos Eventos</h2>
+          <div className="mb-4 flex items-center gap-2">
+            <Calendar className="h-5 w-5 shrink-0 text-indigo-400" />
+            <h2 className="break-words text-lg font-bold text-[#171923]">Tus próximos eventos</h2>
           </div>
 
           {!misEventos || misEventos.length === 0 ? (
-            <div className="bg-white border border-slate-100 border-dashed rounded-[18px] p-6 text-center">
-              <p className="text-sm text-gray-500">No tienes eventos próximos asignados. ¡Disfruta tu tiempo libre!</p>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6">
+              <p className="text-sm leading-relaxed text-gray-500">No tienes eventos próximos asignados. ¡Disfruta tu tiempo libre!</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -187,35 +195,33 @@ export default async function InicioPage() {
                 const config = estadoConfig[asignacion.estado as keyof typeof estadoConfig] || estadoConfig.asignado
 
                 return (
-                  <article key={evento.id} className="bg-white border border-slate-100 rounded-[18px] p-4 flex gap-4 shadow-[0_4px_18px_rgba(20,24,40,0.08)]">
-                    <div className="flex flex-col items-center justify-center min-w-[3.5rem]">
-                      <span className="text-xs text-gray-500 capitalize font-medium">
+                  <article key={evento.id} className="flex gap-3 overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:gap-4">
+                    <div className="flex min-w-12 shrink-0 flex-col items-center justify-center">
+                      <span className="text-xs font-medium capitalize text-gray-500">
                         {format(new Date(evento.fecha_inicio), 'MMM', { locale: es })}
                       </span>
                       <span className="text-lg font-bold text-[#171923]">
                         {format(new Date(evento.fecha_inicio), 'dd')}
                       </span>
                     </div>
-                    
-                    <div className="flex-1 border-l border-slate-100 pl-4">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="text-sm font-semibold text-[#171923]">{evento.titulo}</h3>
-                      </div>
-                      
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>
+
+                    <div className="min-w-0 flex-1 border-l border-slate-100 pl-3 sm:pl-4">
+                      <h3 className="break-words text-sm font-semibold text-[#171923]">{evento.titulo}</h3>
+
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>
                             {asignacion.estado}
                           </span>
                           <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            <Clock className="w-3.5 h-3.5" />
+                            <Clock className="h-3.5 w-3.5 shrink-0" />
                             {format(new Date(evento.fecha_inicio), 'HH:mm')}
                           </div>
                         </div>
                         {evento.ubicacion && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            <MapPin className="w-3.5 h-3.5" />
-                            <span className="line-clamp-1">{evento.ubicacion}</span>
+                          <div className="flex min-w-0 items-start gap-1.5 text-xs text-gray-500">
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <span className="break-words">{evento.ubicacion}</span>
                           </div>
                         )}
                       </div>
@@ -227,44 +233,43 @@ export default async function InicioPage() {
           )}
         </section>
 
-        {/* Publicaciones Recientes */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Megaphone className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-lg font-bold text-[#171923]">Publicaciones Recientes</h2>
+          <div className="mb-4 flex items-center gap-2">
+            <Megaphone className="h-5 w-5 shrink-0 text-indigo-400" />
+            <h2 className="break-words text-lg font-bold text-[#171923]">Publicaciones recientes</h2>
           </div>
 
           {!publicaciones || publicaciones.length === 0 ? (
-            <div className="bg-white border border-slate-100 border-dashed rounded-[18px] p-6 text-center flex flex-col items-center justify-center gap-2">
-              <Info className="w-6 h-6 text-gray-500" />
-              <p className="text-sm text-gray-500">No hay publicaciones recientes de tus ministerios.</p>
+            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6">
+              <Info className="h-6 w-6 text-gray-500" />
+              <p className="text-sm leading-relaxed text-gray-500">No hay publicaciones recientes de tus ministerios.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {publicaciones.map((pub: any) => (
-                <article key={pub.id} className="bg-white border border-slate-100 rounded-[18px] p-5 shadow-[0_4px_18px_rgba(20,24,40,0.08)]">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-100 text-gray-600 border border-slate-200">
+                <article key={pub.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-600">
                       {pub.tipo.replace('_', ' ')}
                     </span>
                     <span className="text-xs text-gray-500">
                       {format(new Date(pub.created_at), "d 'de' MMMM", { locale: es })}
                     </span>
                   </div>
-                  
-                  <h3 className="text-base font-semibold text-[#171923] mb-2">{pub.titulo}</h3>
-                  
+
+                  <h3 className="break-words text-base font-semibold text-[#171923]">{pub.titulo}</h3>
+
                   {pub.cuerpo && (
-                    <p className="text-sm text-gray-500 line-clamp-3 mb-4">
+                    <p className="mt-2 break-words text-sm leading-relaxed text-gray-500 line-clamp-3">
                       {pub.cuerpo}
                     </p>
                   )}
-                  
-                  <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-slate-100 pt-3">
-                    <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-[10px]">
+
+                  <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-slate-100 pt-3 text-xs text-gray-500">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
                       {(pub.profiles?.nombre_completo || 'A').charAt(0).toUpperCase()}
                     </div>
-                    <span>Por {pub.profiles?.nombre_completo || 'Autor desconocido'}</span>
+                    <span className="break-words">Por {pub.profiles?.nombre_completo || 'Autor desconocido'}</span>
                   </div>
                 </article>
               ))}
