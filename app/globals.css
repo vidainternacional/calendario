@@ -75,8 +75,7 @@ select {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   padding-top: max(1rem, env(safe-area-inset-top));
   padding-right: max(1rem, env(safe-area-inset-right));
@@ -88,15 +87,41 @@ select {
   width: min(100%, 42rem);
   max-width: 100%;
   max-height: calc(100dvh - 2rem);
-  overflow-x: hidden;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.modal-body-safe {
+  min-width: 0;
+  min-height: 0;
+  overflow-wrap: anywhere;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Bottom sheet de detalle del calendario */
+[role="dialog"][aria-label="Detalle del evento"] {
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+[role="dialog"][aria-label="Detalle del evento"] > div:last-child {
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-.modal-body-safe {
-  min-width: 0;
-  overflow-wrap: anywhere;
+@media (max-width: 639px) {
+  [role="dialog"][aria-label="Detalle del evento"] {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 6rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
 }
 
 @media (min-width: 640px) {
