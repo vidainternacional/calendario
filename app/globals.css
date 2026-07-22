@@ -100,10 +100,17 @@ select {
 }
 
 /* Bottom sheet de detalle del calendario */
+body:has([role="dialog"][aria-label="Detalle del evento"]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
 [role="dialog"][aria-label="Detalle del evento"] {
   min-height: 0;
   overflow: hidden;
   overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
@@ -111,9 +118,10 @@ select {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 1024px) {
   [role="dialog"][aria-label="Detalle del evento"] {
     bottom: calc(4.75rem + env(safe-area-inset-bottom));
     max-height: calc(100dvh - 6rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
