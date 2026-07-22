@@ -15,7 +15,10 @@ export default async function CalendarioPage() {
 
   if (!user) redirect('/login')
 
-  // Obtener SOLO los eventos personales asignados al usuario
+  const inicioDeHoy = new Date()
+  inicioDeHoy.setHours(0, 0, 0, 0)
+
+  // Traer solo eventos vigentes reduce datos transferidos y trabajo de renderizado.
   const { data: asignaciones } = await supabase
     .from('evento_asignaciones')
     .select(`
@@ -36,7 +39,8 @@ export default async function CalendarioPage() {
       )
     `)
     .eq('profile_id', user.id)
-    // Se ordenará en el cliente por fecha ya que date-fns nos da más control
+    .gte('eventos.fecha_inicio', inicioDeHoy.toISOString())
+    .order('fecha_inicio', { referencedTable: 'eventos', ascending: true })
 
   const eventosAsignados = asignaciones || []
 
