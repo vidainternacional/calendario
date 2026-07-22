@@ -30,7 +30,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   return (
     <main className="pb-28">
       {/* Banner con la identidad del ministerio */}
-      <div className="px-4 pt-8 pb-14 text-white" style={{ background: `linear-gradient(135deg, ${min.color_primario}, ${min.color_secundario})` }}>
+      <div className="px-4 pt-3 pb-10 text-white" style={{ background: `linear-gradient(135deg, ${min.color_primario}, ${min.color_secundario})` }}>
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4">
             <div className="text-5xl">{min.emoji}</div>
@@ -39,11 +39,11 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
               <p className="text-white/80 text-sm">{miembros ?? 0} {miembros === 1 ? 'servidor' : 'servidores'}{esLider ? ' · Eres líder aquí 🛡️' : esMiembro ? ' · Eres parte de este ministerio' : ''}</p>
             </div>
           </div>
-          {min.descripcion && <p className="text-white/85 text-sm mt-4 leading-relaxed">{min.descripcion}</p>}
+          {min.descripcion && <p className="text-white/85 text-sm mt-3 leading-relaxed">{min.descripcion}</p>}
         </div>
       </div>
 
-      <div className="px-4 max-w-2xl mx-auto -mt-4 space-y-5">
+      <div className="px-4 max-w-2xl mx-auto -mt-3 space-y-5">
         {/* Herramientas */}
         <div className="grid grid-cols-2 gap-3">
           <Link href={`/ministerios/${id}/avisos`} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3">
