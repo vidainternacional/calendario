@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { CalendarDays } from 'lucide-react'
 import CalendarioViews from '@/components/calendario/CalendarioViews'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const metadata: Metadata = {
   title: 'Calendario',
@@ -36,6 +38,8 @@ export default async function CalendarioPage() {
     .eq('profile_id', user.id)
     // Se ordenará en el cliente por fecha ya que date-fns nos da más control
 
+  const eventosAsignados = asignaciones || []
+
   return (
     <main className="min-h-screen bg-[#f4f5f9] pb-28">
       <div
@@ -51,7 +55,17 @@ export default async function CalendarioPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4">
-        <CalendarioViews asignaciones={asignaciones || []} />
+        {eventosAsignados.length > 0 ? (
+          <CalendarioViews asignaciones={eventosAsignados} />
+        ) : (
+          <EmptyState
+            icon={CalendarDays}
+            title="Aún no tienes eventos asignados"
+            description="Cuando te asignen un turno o una actividad, aparecerá aquí con su fecha, horario y ministerio."
+            compact
+            className="mt-4"
+          />
+        )}
       </div>
     </main>
   )
