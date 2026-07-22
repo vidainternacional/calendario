@@ -5,9 +5,16 @@ import { X, Loader2 } from 'lucide-react'
 import { guardarMinisterio } from '@/app/actions/admin'
 
 const EMOJIS_COMUNES = [
-  '🎵', '🙏', '👶', '📖', '🎤', '⛪', '🍽️', '🎨',
-  '💒', '📢', '🕊️', '❤️', '🌿', '🎺', '🥁', '🎹',
-  '✝️', '🌟', '🤝', '👑', '🎯', '📣', '🎶', '💡',
+  '🎵', '🎶', '🎤', '🎧', '🎼', '🎹', '🎸', '🎺',
+  '🎻', '🥁', '🪘', '🪇', '🙏', '🙌', '🤲', '👏',
+  '🤝', '🫶', '❤️', '🧡', '💛', '💚', '💙', '💜',
+  '🤍', '🕊️', '✝️', '⛪', '💒', '📖', '📚', '📝',
+  '💡', '🌟', '✨', '🔥', '🌿', '🌱', '🌳', '🌈',
+  '👶', '🧒', '👦', '👧', '👨', '👩', '👨‍👩‍👧‍👦', '🧑‍🤝‍🧑',
+  '👥', '🫂', '👑', '🎯', '📣', '📢', '📱', '💻',
+  '📸', '🎥', '🎨', '🖌️', '🍽️', '☕', '🥖', '🧃',
+  '🏠', '🏕️', '🌍', '✈️', '🚐', '⚽', '🏀', '🏐',
+  '🏆', '🎓', '🩺', '🛠️', '🧹', '🧼', '🚪', '🔑',
 ]
 
 export default function MinisterioModal({
@@ -71,7 +78,7 @@ export default function MinisterioModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/45 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-5"
       role="dialog"
       aria-modal="true"
       aria-labelledby="ministerio-modal-title"
@@ -79,7 +86,7 @@ export default function MinisterioModal({
         if (event.target === event.currentTarget && !loading) onClose()
       }}
     >
-      <div className="flex max-h-[calc(100dvh-env(safe-area-inset-top))] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 sm:max-h-[88vh] sm:rounded-[24px] sm:zoom-in-95">
+      <div className="flex max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] w-full max-w-md flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:max-h-[88vh]">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 pb-3 pt-4 sm:px-5">
           <div className="min-w-0 pr-3">
             <h3 id="ministerio-modal-title" className="truncate font-bold text-[#171923]">
@@ -145,7 +152,7 @@ export default function MinisterioModal({
               {showPicker && (
                 <div className="rounded-2xl border border-slate-200 bg-[#f4f5f9] p-3">
                   <p className="mb-2 text-[10px] font-bold uppercase text-gray-500">Selecciona o escribe uno</p>
-                  <div className="mb-3 grid grid-cols-6 gap-1.5 sm:grid-cols-8">
+                  <div className="mb-3 grid max-h-56 grid-cols-6 gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:grid-cols-8">
                     {EMOJIS_COMUNES.map((emoji) => (
                       <button
                         key={emoji}
@@ -170,10 +177,10 @@ export default function MinisterioModal({
                     <input
                       id="emoji-manual"
                       type="text"
-                      maxLength={2}
+                      maxLength={12}
                       value={selectedEmoji}
                       onChange={(event) => setSelectedEmoji(event.target.value)}
-                      className="h-11 w-20 rounded-lg border border-slate-200 bg-white px-2 text-center text-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="h-11 w-24 rounded-lg border border-slate-200 bg-white px-2 text-center text-xl outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <button
                       type="button"
