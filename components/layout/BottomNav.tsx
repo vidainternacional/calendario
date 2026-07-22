@@ -17,19 +17,16 @@ export default function BottomNav() {
 
   return (
     <div
+      className="fixed inset-x-0 bottom-0 z-[100] isolate border-t border-slate-100 bg-white/95 shadow-[0_-4px_18px_rgba(20,24,40,0.08)] backdrop-blur-xl"
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: '#ffffff',
-        boxShadow: '0 -4px 18px rgba(20,24,40,0.08)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        transform: 'translateZ(0)',
+        WebkitTransform: 'translate3d(0,0,0)',
+        transform: 'translate3d(0,0,0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
       }}
     >
-      <nav className="flex justify-around items-center px-2 h-16 max-w-lg mx-auto">
+      <nav className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
@@ -38,12 +35,12 @@ export default function BottomNav() {
             <Link
               key={item.name}
               href={item.href}
-              prefetch={true}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+              prefetch
+              className={`flex h-full w-full flex-col items-center justify-center gap-1 transition-colors ${
                 isActive ? 'text-indigo-500' : 'text-gray-500 hover:text-[#171923]'
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'fill-indigo-500/20' : ''}`} />
+              <Icon className={`h-5 w-5 ${isActive ? 'fill-indigo-500/20' : ''}`} />
               <span className="text-[10px] font-medium">{item.name}</span>
             </Link>
           )
