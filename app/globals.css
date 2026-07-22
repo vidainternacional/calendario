@@ -19,13 +19,50 @@
   }
 }
 
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
 body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Ajustes de pantalla móvil */
-html, body { overflow-x: hidden; }
-main { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
-img, canvas, video { max-width: 100%; }
+/* Ajustes base para experiencia tipo app móvil */
+* {
+  box-sizing: border-box;
+}
+
+main {
+  width: 100%;
+  max-width: 100vw;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+img,
+canvas,
+video,
+svg {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  max-width: 100%;
+}
+
+/* Evita que textos largos rompan tarjetas o modales */
+.break-safe {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
