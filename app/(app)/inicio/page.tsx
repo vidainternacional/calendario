@@ -5,7 +5,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import InstallBanner from '@/components/pwa/InstallBanner'
 import Link from 'next/link'
 import MinisterioSwitcher from '@/components/inicio/MinisterioSwitcher'
-import { Calendar, MapPin, Clock, Megaphone, Info } from 'lucide-react'
+import { Calendar, MapPin, Clock, Megaphone, Info, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -28,7 +28,7 @@ export default async function InicioPage() {
   const [profileRes, misEventosRes, membresiasRes] = await Promise.all([
     supabase
       .from('profiles')
-      .select('nombre_completo')
+      .select('nombre_completo, rol')
       .eq('id', user.id)
       .single(),
     supabase
@@ -58,7 +58,12 @@ export default async function InicioPage() {
   const membresias = membresiasRes.data
 
   const nombre = (profile as any)?.nombre_completo || user.email?.split('@')[0] || 'Servidor'
+  const rol = (profile as any)?.rol as string | undefined
   const inicial = nombre.charAt(0).toUpperCase()
+  const puedeGestionarSolicitudes =
+    rol === 'pastor' ||
+    rol === 'administrador' ||
+    (membresias || []).some((m: any) => m.es_lider)
 
   const ministerioIds = membresias?.map((m: any) => m.ministerio_id) || []
   
@@ -109,6 +114,29 @@ export default async function InicioPage() {
             color: m.ministerios?.color_primario ?? '#C0392B',
           }))} />
         )}
+
+        {puedeGestionarSolicitudes && (
+          <section>
+            <Link
+              href="/solicitudes"
+              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-[#171923]">Solicitudes</h3>
+                  <p className="text-xs text-gray-500">Revisa, aprueba o crea solicitudes del ministerio.</p>
+                </div>
+              </div>
+              <span className="text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl text-xs font-semibold group-hover:bg-indigo-100 transition-colors shrink-0">
+                Abrir
+              </span>
+            </Link>
+          </section>
+        )}
+
         {(!membresias || membresias.length === 0) && (
           <section data-id="sin-ministerio" className="bg-gradient-to-br from-[#C0392B] to-[#8e2820] text-white rounded-[20px] p-6 mb-6">
             <h2 className="text-lg font-bold mb-1.5">¡Bienvenido a la familia! 🙌</h2>
