@@ -10,34 +10,45 @@ const EMOJIS_COMUNES = [
   '✝️', '🌟', '🤝', '👑', '🎯', '📣', '🎶', '💡',
 ]
 
-export default function MinisterioModal({ 
-  ministerio, 
-  isOpen, 
-  onClose 
-}: { 
+export default function MinisterioModal({
+  ministerio,
+  isOpen,
+  onClose,
+}: {
   ministerio: any | null
   isOpen: boolean
-  onClose: () => void 
+  onClose: () => void
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedEmoji, setSelectedEmoji] = useState(ministerio?.emoji || '✨')
   const [showPicker, setShowPicker] = useState(false)
 
-  // Sync emoji when ministerio changes (opening modal for edit)
   useEffect(() => {
     setSelectedEmoji(ministerio?.emoji || '✨')
     setShowPicker(false)
   }, [ministerio, isOpen])
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+    if (!isOpen) {
       setError('')
+      return
     }
-  }, [isOpen])
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !loading) onClose()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, loading, onClose])
 
   if (!isOpen) return null
 
@@ -45,156 +56,216 @@ export default function MinisterioModal({
     e.preventDefault()
     setLoading(true)
     setError('')
+
     try {
       const formData = new FormData(e.currentTarget)
-      // Override with controlled emoji value
       formData.set('emoji', selectedEmoji)
       await guardarMinisterio(formData)
       onClose()
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'No fue posible guardar el ministerio.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm flex flex-col max-h-[85vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
-          <h3 className="font-bold text-[#171923]">
-            {ministerio ? 'Editar Ministerio' : 'Nuevo Ministerio'}
-          </h3>
-          <button type="button" onClick={onClose} className="p-2 text-gray-500 hover:bg-slate-100 rounded-full transition-colors">
-            <X className="w-5 h-5" />
+    <div
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/45 backdrop-blur-sm sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ministerio-modal-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !loading) onClose()
+      }}
+    >
+      <div className="flex max-h-[calc(100dvh-env(safe-area-inset-top))] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 sm:max-h-[88vh] sm:rounded-[24px] sm:zoom-in-95">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 pb-3 pt-4 sm:px-5">
+          <div className="min-w-0 pr-3">
+            <h3 id="ministerio-modal-title" className="truncate font-bold text-[#171923]">
+              {ministerio ? 'Editar ministerio' : 'Nuevo ministerio'}
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Define la identidad básica que se mostrará en la aplicación.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-50 text-gray-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
+            aria-label="Cerrar"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1">
-          {error && (
-            <div className="p-3 bg-rose-50 text-rose-600 rounded-xl text-sm border border-rose-200">
-              {error}
-            </div>
-          )}
 
-          {ministerio && <input type="hidden" name="id" value={ministerio.id} />}
-          {/* Hidden field so FormData has emoji even if not using controlled input */}
-          <input type="hidden" name="emoji" value={selectedEmoji} />
-
-          {/* Emoji + Nombre */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-4 gap-3">
-              <div className="col-span-1 space-y-1.5">
-                <label className="block text-xs font-bold text-gray-500 uppercase">Emoji</label>
-                {/* Trigger button */}
-                <button
-                  type="button"
-                  onClick={() => setShowPicker(v => !v)}
-                  className="w-full h-[42px] bg-[#f4f5f9] border border-slate-200 rounded-xl text-center text-xl hover:border-indigo-400 transition-colors focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
-                  {selectedEmoji}
-                </button>
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-5 sm:px-5">
+            {error && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-600" role="alert">
+                {error}
               </div>
-              <div className="col-span-3 space-y-1.5">
-                <label className="block text-xs font-bold text-gray-500 uppercase">Nombre</label>
-                <input 
-                  name="nombre" 
-                  defaultValue={ministerio?.nombre || ''}
-                  required
-                  className="w-full bg-[#f4f5f9] border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-[#171923] focus:ring-2 focus:ring-indigo-500 outline-none"
+            )}
+
+            {ministerio && <input type="hidden" name="id" value={ministerio.id} />}
+            <input type="hidden" name="emoji" value={selectedEmoji} />
+
+            <div className="space-y-2">
+              <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase text-gray-500">Emoji</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPicker((value) => !value)}
+                    className="flex h-12 w-full items-center justify-center rounded-xl border border-slate-200 bg-[#f4f5f9] text-2xl outline-none transition-colors hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500"
+                    aria-expanded={showPicker}
+                    aria-label="Seleccionar emoji"
+                  >
+                    {selectedEmoji || '✨'}
+                  </button>
+                </div>
+
+                <div className="min-w-0 space-y-1.5">
+                  <label htmlFor="ministerio-nombre" className="block text-xs font-bold uppercase text-gray-500">
+                    Nombre
+                  </label>
+                  <input
+                    id="ministerio-nombre"
+                    name="nombre"
+                    defaultValue={ministerio?.nombre || ''}
+                    required
+                    autoComplete="off"
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 text-base text-[#171923] outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Ej. Alabanza"
+                  />
+                </div>
+              </div>
+
+              {showPicker && (
+                <div className="rounded-2xl border border-slate-200 bg-[#f4f5f9] p-3">
+                  <p className="mb-2 text-[10px] font-bold uppercase text-gray-500">Selecciona o escribe uno</p>
+                  <div className="mb-3 grid grid-cols-6 gap-1.5 sm:grid-cols-8">
+                    {EMOJIS_COMUNES.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => {
+                          setSelectedEmoji(emoji)
+                          setShowPicker(false)
+                        }}
+                        className={`flex h-10 items-center justify-center rounded-lg text-xl transition-colors hover:bg-white hover:shadow-sm ${
+                          selectedEmoji === emoji ? 'bg-white shadow-sm ring-2 ring-indigo-400' : ''
+                        }`}
+                        aria-label={`Usar ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label htmlFor="emoji-manual" className="shrink-0 text-[11px] font-medium text-gray-500">
+                      Manual:
+                    </label>
+                    <input
+                      id="emoji-manual"
+                      type="text"
+                      maxLength={2}
+                      value={selectedEmoji}
+                      onChange={(event) => setSelectedEmoji(event.target.value)}
+                      className="h-11 w-20 rounded-lg border border-slate-200 bg-white px-2 text-center text-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPicker(false)}
+                      className="min-h-11 flex-1 rounded-lg bg-indigo-50 px-4 text-xs font-semibold text-indigo-600 hover:bg-indigo-100"
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label htmlFor="color-primario" className="block text-xs font-bold uppercase text-gray-500">
+                  Color principal
+                </label>
+                <input
+                  id="color-primario"
+                  name="color_primario"
+                  type="color"
+                  defaultValue={ministerio?.color_primario || '#4F46E5'}
+                  className="h-12 w-full cursor-pointer rounded-xl border border-slate-200 bg-white p-1"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="color-secundario" className="block text-xs font-bold uppercase text-gray-500">
+                  Color secundario
+                </label>
+                <input
+                  id="color-secundario"
+                  name="color_secundario"
+                  type="color"
+                  defaultValue={ministerio?.color_secundario || '#E0E7FF'}
+                  className="h-12 w-full cursor-pointer rounded-xl border border-slate-200 bg-white p-1"
                 />
               </div>
             </div>
 
-            {/* Emoji picker panel */}
-            {showPicker && (
-              <div className="border border-slate-200 rounded-xl p-3 bg-[#f4f5f9]">
-                <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Selecciona o escribe uno</p>
-                <div className="grid grid-cols-8 gap-1 mb-3">
-                  {EMOJIS_COMUNES.map(e => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => { setSelectedEmoji(e); setShowPicker(false) }}
-                      className={`text-lg h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-white hover:shadow-sm ${
-                        selectedEmoji === e ? 'bg-white shadow-sm ring-2 ring-indigo-400' : ''
-                      }`}
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400 font-medium shrink-0">Manual:</span>
-                  <input
-                    type="text"
-                    maxLength={2}
-                    value={selectedEmoji}
-                    onChange={e => setSelectedEmoji(e.target.value)}
-                    className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-center text-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPicker(false)}
-                    className="text-xs text-indigo-600 font-semibold px-3 py-1 bg-indigo-50 hover:bg-indigo-100 rounded-lg"
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-gray-500 uppercase">Color Principal</label>
-              <input 
-                name="color_primario" 
-                type="color"
-                defaultValue={ministerio?.color_primario || '#4F46E5'}
-                className="w-full h-10 rounded-xl cursor-pointer"
+              <label htmlFor="ministerio-descripcion" className="block text-xs font-bold uppercase text-gray-500">
+                Descripción
+              </label>
+              <textarea
+                id="ministerio-descripcion"
+                name="descripcion"
+                defaultValue={ministerio?.descripcion || ''}
+                rows={4}
+                className="w-full resize-none rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 text-base leading-relaxed text-[#171923] outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Describe brevemente qué hace este ministerio."
               />
+              <p className="text-[11px] text-slate-400">Este texto aparecerá en el listado general de ministerios.</p>
             </div>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-gray-500 uppercase">Color Secundario</label>
-              <input 
-                name="color_secundario" 
-                type="color"
-                defaultValue={ministerio?.color_secundario || '#E0E7FF'}
-                className="w-full h-10 rounded-xl cursor-pointer"
+
+            <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <input
+                type="checkbox"
+                name="activo"
+                value="true"
+                defaultChecked={ministerio ? ministerio.activo : true}
+                className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
-            </div>
+              <span>
+                <span className="block text-sm font-semibold text-[#171923]">Ministerio activo</span>
+                <span className="block text-xs text-slate-500">Visible y disponible para los miembros.</span>
+              </span>
+            </label>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-500 uppercase">Descripción</label>
-            <textarea 
-              name="descripcion" 
-              defaultValue={ministerio?.descripcion || ''}
-              rows={3}
-              className="w-full bg-[#f4f5f9] border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#171923] focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 pt-2">
-            <input 
-              type="checkbox" 
-              name="activo" 
-              id="activo-check"
-              value="true"
-              defaultChecked={ministerio ? ministerio.activo : true}
-              className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
-            />
-            <label htmlFor="activo-check" className="text-sm font-semibold text-[#171923]">Ministerio activo</label>
-          </div>
-
-          <div className="pt-4 pb-2">
+          <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-slate-100 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:pb-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="min-h-12 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 rounded-xl transition-colors active:scale-95"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-60 active:scale-[0.98]"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Guardar'}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Guardando…
+                </>
+              ) : (
+                'Guardar'
+              )}
             </button>
           </div>
         </form>
