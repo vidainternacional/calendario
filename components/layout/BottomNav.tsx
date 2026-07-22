@@ -1,19 +1,37 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { Home, Calendar, Megaphone, User, BookOpen } from 'lucide-react'
+
+const navItems = [
+  { name: 'Inicio', href: '/inicio', icon: Home },
+  { name: 'Calendario', href: '/calendario', icon: Calendar },
+  { name: 'Avisos', href: '/avisos', icon: Megaphone },
+  { name: 'Estudios', href: '/estudios', icon: BookOpen },
+  { name: 'Perfil', href: '/perfil', icon: User },
+]
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
 
-  const navItems = [
-    { name: 'Inicio', href: '/inicio', icon: Home },
-    { name: 'Calendario', href: '/calendario', icon: Calendar },
-    { name: 'Avisos', href: '/avisos', icon: Megaphone },
-    { name: 'Estudios', href: '/estudios', icon: BookOpen },
-    { name: 'Perfil', href: '/perfil', icon: User },
-  ]
+  useEffect(() => {
+    const prefetchRoutes = () => {
+      navItems.forEach((item) => {
+        if (!pathname.startsWith(item.href)) router.prefetch(item.href)
+      })
+    }
+
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(prefetchRoutes, { timeout: 1500 })
+      return () => window.cancelIdleCallback(idleId)
+    }
+
+    const timeoutId = window.setTimeout(prefetchRoutes, 350)
+    return () => window.clearTimeout(timeoutId)
+  }, [pathname, router])
 
   return (
     <div
@@ -36,6 +54,8 @@ export default function BottomNav() {
               key={item.name}
               href={item.href}
               prefetch
+              onPointerEnter={() => router.prefetch(item.href)}
+              onTouchStart={() => router.prefetch(item.href)}
               className={`flex h-full w-full flex-col items-center justify-center gap-1 transition-colors ${
                 isActive ? 'text-indigo-500' : 'text-gray-500 hover:text-[#171923]'
               }`}
