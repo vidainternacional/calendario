@@ -73,10 +73,11 @@ select {
   inset: 0;
   z-index: 50;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior: none;
+  touch-action: none;
   padding-top: max(1rem, env(safe-area-inset-top));
   padding-right: max(1rem, env(safe-area-inset-right));
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
@@ -90,50 +91,55 @@ select {
   min-height: 0;
   overflow: hidden;
   overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .modal-body-safe {
   min-width: 0;
   min-height: 0;
+  overflow-y: auto;
   overflow-wrap: anywhere;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
-/* Bottom sheet de detalle del calendario */
-body:has([role="dialog"][aria-label="Detalle del evento"]) {
-  overflow: hidden;
-  overscroll-behavior: none;
+/* Bloquea por completo la página detrás de cualquier ficha abierta */
+html:has([role="dialog"]),
+body:has([role="dialog"]),
+html:has(.modal-overlay-safe),
+body:has(.modal-overlay-safe) {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body:has([role="dialog"]),
+body:has(.modal-overlay-safe) {
   touch-action: none;
 }
 
+/* Ficha de detalle del calendario: modal centrado y contenido desplazable */
 [role="dialog"][aria-label="Detalle del evento"] {
+  top: 50% !important;
+  bottom: auto !important;
+  left: 50% !important;
+  right: auto !important;
+  width: min(calc(100vw - 2rem), 34rem) !important;
+  max-width: calc(100vw - 2rem) !important;
+  max-height: calc(100dvh - 2rem) !important;
   min-height: 0;
+  transform: translate(-50%, -50%);
   overflow: hidden;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  border-radius: 1.5rem !important;
 }
 
 [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-}
-
-@media (max-width: 1024px) {
-  [role="dialog"][aria-label="Detalle del evento"] {
-    bottom: calc(4.75rem + env(safe-area-inset-bottom));
-    max-height: calc(100dvh - 6rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  }
-
-  [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
-    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
-  }
-}
-
-@media (min-width: 640px) {
-  .modal-overlay-safe {
-    align-items: center;
-  }
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
