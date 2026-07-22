@@ -266,14 +266,14 @@ export default function AdminClient({
           <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm sm:p-4">
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar por nombre o correo..." className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-base outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar por nombre o correo..." className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-base text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <select value={filtroRol} onChange={(event) => setFiltroRol(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-semibold outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm">
-                <option value="todos">Todos los roles</option><option value="servidor">Servidores</option><option value="lider">Líderes</option><option value="pastor">Pastores</option><option value="administrador">Administradores</option>
+              <select value={filtroRol} onChange={(event) => setFiltroRol(event.target.value)} className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500 sm:text-sm [color-scheme:light]">
+                <option className="text-slate-800" value="todos">Todos los roles</option><option className="text-slate-800" value="servidor">Servidores</option><option className="text-slate-800" value="lider">Líderes</option><option className="text-slate-800" value="pastor">Pastores</option><option className="text-slate-800" value="administrador">Administradores</option>
               </select>
-              <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base font-semibold outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm">
-                <option value="todos">Todos los estados</option><option value="activo">Activos</option><option value="suspendido">Suspendidos</option><option value="rechazado">Rechazados</option>
+              <select value={filtroEstado} onChange={(event) => setFiltroEstado(event.target.value)} className="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-semibold text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500 sm:text-sm [color-scheme:light]">
+                <option className="text-slate-800" value="todos">Todos los estados</option><option className="text-slate-800" value="activo">Activos</option><option className="text-slate-800" value="suspendido">Suspendidos</option><option className="text-slate-800" value="rechazado">Rechazados</option>
               </select>
             </div>
             <p className="mt-2 px-1 text-[11px] text-slate-400">{usuariosFiltrados.length} {usuariosFiltrados.length === 1 ? 'usuario' : 'usuarios'}</p>
