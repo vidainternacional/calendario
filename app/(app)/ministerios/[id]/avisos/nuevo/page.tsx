@@ -18,7 +18,6 @@ export default async function NuevoAvisoPage({
 
   if (!user) redirect('/login')
 
-  // Verificar si tiene permisos (es líder del ministerio o pastor)
   const { data: membresia } = await supabase
     .from('ministerio_miembros')
     .select('es_lider')
@@ -41,9 +40,11 @@ export default async function NuevoAvisoPage({
   }
 
   return (
-    <div className="bg-white border border-slate-100 rounded-[18px] p-6 shadow-xl">
-      <h2 className="text-xl font-bold text-[#171923] mb-6">Crear Nuevo Aviso</h2>
-      <NuevoAvisoForm ministerioId={id} />
+    <div className="px-4 pb-28 sm:px-0">
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
+        <h2 className="mb-5 text-xl font-bold text-[#171923] sm:mb-6">Crear nuevo aviso</h2>
+        <NuevoAvisoForm ministerioId={id} />
+      </div>
     </div>
   )
 }
