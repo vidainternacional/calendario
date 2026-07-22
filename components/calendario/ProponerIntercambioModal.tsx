@@ -59,8 +59,13 @@ export default function ProponerIntercambioModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm overflow-hidden">
-      <div className="bg-white rounded-t-[24px] sm:rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full sm:max-w-sm max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm overflow-hidden p-[max(1rem,env(safe-area-inset-top))]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Proponer intercambio"
+        className="bg-white rounded-[24px] shadow-[0_8px_32px_rgba(20,24,40,0.15)] w-full max-w-sm max-h-[calc(100dvh-2rem)] min-h-0 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200"
+      >
         <div className="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
           <h3 className="font-bold text-[#171923] break-safe">Proponer Intercambio</h3>
           <button onClick={onClose} className="p-2 text-gray-500 hover:bg-slate-100 rounded-full transition-colors shrink-0" aria-label="Cerrar modal">
@@ -68,8 +73,8 @@ export default function ProponerIntercambioModal({
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="min-h-0 flex flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 [-webkit-overflow-scrolling:touch]">
+        <form onSubmit={handleSubmit} className="min-h-0 flex flex-1 flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 [-webkit-overflow-scrolling:touch] touch-pan-y">
             <input type="hidden" name="asignacion_origen_id" value={asignacion_origen_id} />
             
             <div>
