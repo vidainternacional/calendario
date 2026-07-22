@@ -5,7 +5,8 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import InstallBanner from '@/components/pwa/InstallBanner'
 import Link from 'next/link'
 import MinisterioSwitcher from '@/components/inicio/MinisterioSwitcher'
-import { Calendar, MapPin, Clock, Megaphone, Info, FileText } from 'lucide-react'
+import PublicacionCard from '@/components/avisos/PublicacionCard'
+import { Calendar, MapPin, Clock, Megaphone, Info, FileText, ExternalLink } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -15,14 +16,9 @@ export const metadata: Metadata = {
 
 export default async function InicioPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const [profileRes, misEventosRes, membresiasRes] = await Promise.all([
     supabase
@@ -88,23 +84,19 @@ export default async function InicioPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-28 pt-5 sm:px-6 sm:pt-8">
-      <header className="mb-6 flex items-start justify-between gap-3 sm:mb-8 sm:items-center">
+    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-8 landscape:pt-4">
+      <header className="mb-6 flex items-start justify-between gap-3 sm:mb-8 sm:items-center landscape:mb-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
-            {inicial}
-          </div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">{inicial}</div>
           <div className="min-w-0">
             <p className="text-xs text-gray-500">Bienvenido,</p>
             <p className="break-words text-sm font-semibold text-[#171923]">{nombre}</p>
           </div>
         </div>
-        <div className="shrink-0">
-          <LogoutButton />
-        </div>
+        <div className="shrink-0"><LogoutButton /></div>
       </header>
 
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6 sm:space-y-8 landscape:space-y-5">
         {membresias && membresias.length > 0 && (
           <MinisterioSwitcher
             membresias={(membresias as any[]).map((m: any) => ({
@@ -119,24 +111,15 @@ export default async function InicioPage() {
 
         {puedeGestionarSolicitudes && (
           <section>
-            <Link
-              href="/solicitudes"
-              className="group flex min-h-20 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5"
-            >
+            <Link href="/solicitudes" className="group flex min-h-20 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="flex min-w-0 items-start gap-3 sm:items-center">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <FileText className="h-5 w-5" />
-                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><FileText className="h-5 w-5" /></div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-[#171923]">Solicitudes</h3>
-                  <p className="mt-0.5 break-words text-xs leading-relaxed text-gray-500">
-                    Revisa, aprueba o crea solicitudes del ministerio.
-                  </p>
+                  <p className="mt-0.5 break-words text-xs leading-relaxed text-gray-500">Revisa, aprueba o crea solicitudes del ministerio.</p>
                 </div>
               </div>
-              <span className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors group-hover:bg-indigo-100 sm:w-auto">
-                Abrir
-              </span>
+              <span className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors group-hover:bg-indigo-100 sm:w-auto">Abrir</span>
             </Link>
           </section>
         )}
@@ -144,89 +127,54 @@ export default async function InicioPage() {
         {(!membresias || membresias.length === 0) && (
           <section data-id="sin-ministerio" className="rounded-2xl bg-gradient-to-br from-[#C0392B] to-[#8e2820] p-5 text-white sm:p-6">
             <h2 className="mb-1.5 text-lg font-bold">¡Bienvenido a la familia! 🙌</h2>
-            <p className="mb-4 text-sm leading-relaxed text-white/85">
-              Aún no perteneces a un ministerio. Explora los ministerios de la iglesia y solicita unirte al que Dios puso en tu corazón para servir.
-            </p>
-            <Link
-              href="/ministerios"
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#C0392B] sm:w-auto"
-            >
-              Explorar ministerios →
-            </Link>
+            <p className="mb-4 text-sm leading-relaxed text-white/85">Aún no perteneces a un ministerio. Explora los ministerios de la iglesia y solicita unirte al que Dios puso en tu corazón para servir.</p>
+            <Link href="/ministerios" className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#C0392B] sm:w-auto">Explorar ministerios →</Link>
           </section>
         )}
 
         <InstallBanner />
 
         <section>
-          <Link
-            href="/preguntas"
-            className="group flex min-h-20 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5"
-          >
+          <Link href="/preguntas" className="group flex min-h-20 flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div className="min-w-0">
-              <div className="mb-1 flex items-center gap-2">
-                <span className="text-xl">💬</span>
-                <h3 className="break-words font-bold text-[#171923]">Buzón de Congregación</h3>
-              </div>
-              <p className="break-words text-xs leading-relaxed text-gray-500">
-                Envía tus dudas, motivos de oración o sugerencias.
-              </p>
+              <div className="mb-1 flex items-center gap-2"><span className="text-xl">💬</span><h3 className="break-words font-bold text-[#171923]">Buzón de Congregación</h3></div>
+              <p className="break-words text-xs leading-relaxed text-gray-500">Envía tus dudas, motivos de oración o sugerencias.</p>
             </div>
-            <span className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors group-hover:bg-indigo-100 sm:w-auto">
-              Escribir
-            </span>
+            <span className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors group-hover:bg-indigo-100 sm:w-auto">Escribir</span>
           </Link>
         </section>
 
         <section>
-          <div className="mb-4 flex items-center gap-2">
-            <Calendar className="h-5 w-5 shrink-0 text-indigo-400" />
-            <h2 className="break-words text-lg font-bold text-[#171923]">Tus próximos eventos</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2"><Calendar className="h-5 w-5 shrink-0 text-indigo-400" /><h2 className="break-words text-lg font-bold text-[#171923]">Tus próximos eventos</h2></div>
+            <Link href="/calendario" className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl px-3 text-xs font-semibold text-indigo-600">Ver todos <ExternalLink className="h-3.5 w-3.5" /></Link>
           </div>
 
           {!misEventos || misEventos.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6">
-              <p className="text-sm leading-relaxed text-gray-500">No tienes eventos próximos asignados. ¡Disfruta tu tiempo libre!</p>
-            </div>
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6"><p className="text-sm leading-relaxed text-gray-500">No tienes eventos próximos asignados. ¡Disfruta tu tiempo libre!</p></div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2 landscape:grid-cols-2">
               {misEventos.map((evento: any) => {
                 const asignacion = evento.evento_asignaciones[0]
                 const config = estadoConfig[asignacion.estado as keyof typeof estadoConfig] || estadoConfig.asignado
 
                 return (
-                  <article key={evento.id} className="flex gap-3 overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:gap-4">
+                  <Link href="/calendario" key={evento.id} className="flex min-h-28 gap-3 overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md sm:gap-4">
                     <div className="flex min-w-12 shrink-0 flex-col items-center justify-center">
-                      <span className="text-xs font-medium capitalize text-gray-500">
-                        {format(new Date(evento.fecha_inicio), 'MMM', { locale: es })}
-                      </span>
-                      <span className="text-lg font-bold text-[#171923]">
-                        {format(new Date(evento.fecha_inicio), 'dd')}
-                      </span>
+                      <span className="text-xs font-medium capitalize text-gray-500">{format(new Date(evento.fecha_inicio), 'MMM', { locale: es })}</span>
+                      <span className="text-lg font-bold text-[#171923]">{format(new Date(evento.fecha_inicio), 'dd')}</span>
                     </div>
-
                     <div className="min-w-0 flex-1 border-l border-slate-100 pl-3 sm:pl-4">
                       <h3 className="break-words text-sm font-semibold text-[#171923]">{evento.titulo}</h3>
-
                       <div className="mt-2 flex flex-col gap-1.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>
-                            {asignacion.estado}
-                          </span>
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            <Clock className="h-3.5 w-3.5 shrink-0" />
-                            {format(new Date(evento.fecha_inicio), 'HH:mm')}
-                          </div>
+                          <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${config.bg} ${config.color} ${config.border}`}>{asignacion.estado}</span>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500"><Clock className="h-3.5 w-3.5 shrink-0" />{format(new Date(evento.fecha_inicio), 'HH:mm')}</div>
                         </div>
-                        {evento.ubicacion && (
-                          <div className="flex min-w-0 items-start gap-1.5 text-xs text-gray-500">
-                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                            <span className="break-words">{evento.ubicacion}</span>
-                          </div>
-                        )}
+                        {evento.ubicacion && <div className="flex min-w-0 items-start gap-1.5 text-xs text-gray-500"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span className="break-words">{evento.ubicacion}</span></div>}
                       </div>
                     </div>
-                  </article>
+                  </Link>
                 )
               })}
             </div>
@@ -234,44 +182,25 @@ export default async function InicioPage() {
         </section>
 
         <section>
-          <div className="mb-4 flex items-center gap-2">
-            <Megaphone className="h-5 w-5 shrink-0 text-indigo-400" />
-            <h2 className="break-words text-lg font-bold text-[#171923]">Publicaciones recientes</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2"><Megaphone className="h-5 w-5 shrink-0 text-indigo-400" /><h2 className="break-words text-lg font-bold text-[#171923]">Publicaciones recientes</h2></div>
+            <Link href="/avisos" className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl px-3 text-xs font-semibold text-indigo-600">Ver todas <ExternalLink className="h-3.5 w-3.5" /></Link>
           </div>
 
           {!publicaciones || publicaciones.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6">
-              <Info className="h-6 w-6 text-gray-500" />
-              <p className="text-sm leading-relaxed text-gray-500">No hay publicaciones recientes de tus ministerios.</p>
-            </div>
+            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6"><Info className="h-6 w-6 text-gray-500" /><p className="text-sm leading-relaxed text-gray-500">No hay publicaciones recientes de tus ministerios.</p></div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2 landscape:grid-cols-2">
               {publicaciones.map((pub: any) => (
-                <article key={pub.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className="rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-600">
-                      {pub.tipo.replace('_', ' ')}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {format(new Date(pub.created_at), "d 'de' MMMM", { locale: es })}
-                    </span>
-                  </div>
-
-                  <h3 className="break-words text-base font-semibold text-[#171923]">{pub.titulo}</h3>
-
-                  {pub.cuerpo && (
-                    <p className="mt-2 break-words text-sm leading-relaxed text-gray-500 line-clamp-3">
-                      {pub.cuerpo}
-                    </p>
-                  )}
-
-                  <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-slate-100 pt-3 text-xs text-gray-500">
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
-                      {(pub.profiles?.nombre_completo || 'A').charAt(0).toUpperCase()}
-                    </div>
-                    <span className="break-words">Por {pub.profiles?.nombre_completo || 'Autor desconocido'}</span>
-                  </div>
-                </article>
+                <PublicacionCard
+                  key={pub.id}
+                  titulo={pub.titulo}
+                  cuerpo={pub.cuerpo}
+                  tipo={pub.tipo}
+                  fecha={format(new Date(pub.created_at), "d 'de' MMMM", { locale: es })}
+                  autor={pub.profiles?.nombre_completo || 'Autor desconocido'}
+                  compacta
+                />
               ))}
             </div>
           )}
