@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import BackButton from '@/components/navigation/BackButton'
 
 export default async function MinisterioLayout({
   children,
@@ -47,21 +46,13 @@ export default async function MinisterioLayout({
   return (
     <div className="min-h-screen bg-[#f4f5f9]">
       <div
-        className="relative z-10 max-w-2xl mx-auto px-4"
+        className="relative z-10 mx-auto max-w-2xl px-4 pb-2"
         style={{ paddingTop: 'max(0.25rem, env(safe-area-inset-top))' }}
       >
-        <Link
-          href="/ministerios"
-          className="inline-flex h-10 items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Volver a ministerios
-        </Link>
+        <BackButton />
       </div>
 
-      <div className="-mt-12 sm:-mt-8">
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   )
 }
