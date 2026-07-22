@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminClient from './AdminClient'
 import Link from 'next/link'
+import { Building2, MessageCircleQuestion, Megaphone, Users } from 'lucide-react'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -83,65 +84,85 @@ export default async function AdminPage() {
     if ((profile as any)?.rol) currentUserRol = (profile as any).rol
   }
 
+  const estadisticas = [
+    {
+      label: 'Usuarios',
+      value: usuarios?.length || 0,
+      icon: Users,
+      iconClass: 'bg-indigo-50 text-indigo-600',
+      valueClass: 'text-[#171923]',
+    },
+    {
+      label: 'Ministerios',
+      value: ministerios?.length || 0,
+      icon: Building2,
+      iconClass: 'bg-emerald-50 text-emerald-600',
+      valueClass: 'text-[#171923]',
+    },
+    {
+      label: 'Avisos pendientes',
+      value: pendingAvisos || 0,
+      icon: Megaphone,
+      iconClass: 'bg-amber-50 text-amber-600',
+      valueClass: pendingAvisos ? 'text-amber-600' : 'text-[#171923]',
+    },
+    {
+      label: 'Dudas / Buzón',
+      value: pendingPreguntas || 0,
+      icon: MessageCircleQuestion,
+      iconClass: 'bg-rose-50 text-rose-600',
+      valueClass: pendingPreguntas ? 'text-rose-600' : 'text-[#171923]',
+    },
+  ]
+
   return (
-    <main className="px-4 py-8 max-w-2xl mx-auto pb-28">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-[#171923]">Administración</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Gestiona ministerios, usuarios y accesos
+    <main className="min-h-screen bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 max-w-2xl mx-auto">
+      <header className="mb-6 sm:mb-8">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-500 mb-1.5">Panel general</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#171923] leading-tight">Administración</h1>
+        <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+          Gestiona ministerios, usuarios, accesos y contenido de la aplicación.
         </p>
       </header>
 
       {/* ── Estadísticas Generales ────────────────────────────────────────────── */}
-      <div className="mb-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Usuarios</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-[#171923]">{usuarios?.length || 0}</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ministerios</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-[#171923]">{ministerios?.length || 0}</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight">Avisos Pendientes</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className={`text-3xl font-bold ${pendingAvisos ? 'text-amber-500' : 'text-[#171923]'}`}>
-              {pendingAvisos || 0}
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[20px] p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight">Dudas / Buzón</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className={`text-3xl font-bold ${pendingPreguntas ? 'text-rose-500' : 'text-[#171923]'}`}>
-              {pendingPreguntas || 0}
-            </span>
-          </div>
-        </div>
-      </div>
+      <section aria-label="Resumen administrativo" className="mb-6 sm:mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {estadisticas.map(({ label, value, icon: Icon, iconClass, valueClass }) => (
+          <article
+            key={label}
+            className="min-w-0 bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col gap-3"
+          >
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconClass}`}>
+              <Icon className="w-4.5 h-4.5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight break-words">
+                {label}
+              </p>
+              <p className={`mt-1 text-2xl sm:text-3xl font-bold leading-none ${valueClass}`}>{value}</p>
+            </div>
+          </article>
+        ))}
+      </section>
 
       {/* ── Accesos Rápidos ─────────────────────────────────────────────── */}
-      <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link 
-          href="/admin/preguntas"
-          className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow group"
-        >
-          <div>
-            <h3 className="font-bold text-[#171923]">Buzón de Congregación</h3>
-            <p className="text-xs text-gray-500 mt-1">Preguntas y sugerencias</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-            <span className="text-xl">💬</span>
-          </div>
-        </Link>
-      </div>
+      <section className="mb-6 sm:mb-8" aria-labelledby="accesos-rapidos">
+        <h2 id="accesos-rapidos" className="text-sm font-bold text-[#171923] mb-3">Accesos rápidos</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Link
+            href="/admin/preguntas"
+            className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-slate-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-indigo-100 active:scale-[0.99] transition-all group"
+          >
+            <div className="min-w-0">
+              <h3 className="font-bold text-[#171923] leading-tight">Buzón de Congregación</h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">Revisa preguntas, sugerencias y motivos de oración.</p>
+            </div>
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+              <MessageCircleQuestion className="w-5 h-5" aria-hidden="true" />
+            </div>
+          </Link>
+        </div>
+      </section>
 
       <AdminClient
         ministerios={ministerios || []}
