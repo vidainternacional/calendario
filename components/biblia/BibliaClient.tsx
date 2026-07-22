@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { BookOpen, Volume2, Square, Sparkles, Loader2, Star, Play, X, Sun, Moon, Coffee, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { BookOpen, Volume2, Square, Sparkles, Loader2, Star, Play, X, Sun, Moon, Coffee, Minus, Plus, ChevronLeft, ChevronRight, Share2, ExternalLink } from 'lucide-react'
 import { toggleFavorito, favoritosDelCapitulo, listarFavoritos, type Favorito } from '@/app/actions/biblia'
 
 const API = 'https://bible.helloao.org/api'
@@ -14,7 +14,6 @@ type Libro = { id: string; name: string; numberOfChapters: number }
 type Verso = { type: string; number?: number; content?: unknown[] }
 type ModoLectura = 'claro' | 'oscuro' | 'sepia'
 type Preferencias = { modo: ModoLectura; fuente: number }
-
 type Posicion = { trad: string; libro: string; capitulo: number }
 
 function textoDeVerso(v: Verso): string {
@@ -67,6 +66,7 @@ export default function BibliaClient() {
   const [listaFavs, setListaFavs] = useState<Favorito[] | null>(null)
   const [modoLectura, setModoLectura] = useState<ModoLectura>('claro')
   const [tamanoFuente, setTamanoFuente] = useState(17)
+  const [mensajeCompartir, setMensajeCompartir] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   const saltoRef = useRef<Posicion | null>(null)
@@ -149,6 +149,18 @@ export default function BibliaClient() {
 
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
 
+  useEffect(() => {
+    if (!panelFavs) return
+    const cerrar = (event: KeyboardEvent) => { if (event.key === 'Escape') setPanelFavs(false) }
+    document.addEventListener('keydown', cerrar)
+    const overflowAnterior = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', cerrar)
+      document.body.style.overflow = overflowAnterior
+    }
+  }, [panelFavs])
+
   const hablar = (desde?: number) => {
     const synth = window.speechSynthesis
     if (!synth) return
@@ -169,6 +181,27 @@ export default function BibliaClient() {
   }
 
   const detener = () => { window.speechSynthesis?.cancel(); setLeyendo(false) }
+
+  const compartirVersiculo = async (referencia: string, texto: string) => {
+    const contenido = `“${texto}”\n— ${referencia}\n\nCompartido desde Vida Internacional`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: referencia, text: contenido })
+        return
+      }
+      await navigator.clipboard.writeText(contenido)
+      setMensajeCompartir('Versículo copiado')
+      setTimeout(() => setMensajeCompartir(null), 2500)
+    } catch (error) {
+      if ((error as Error)?.name !== 'AbortError') {
+        setMensajeCompartir('No se pudo compartir')
+        setTimeout(() => setMensajeCompartir(null), 2500)
+      }
+    }
+  }
+
+  const enlaceEstudio = (referencia: string, texto: string) =>
+    `/estudios/profundo?pasaje=${encodeURIComponent(`${referencia} — ${texto}`)}`
 
   const marcarFavorito = (v: { n: number; t: string }) => {
     if (!libroActual) return
@@ -244,7 +277,7 @@ export default function BibliaClient() {
 
         <div className={`mb-5 rounded-2xl border p-3 shadow-sm ${tema.card}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {([
                 ['claro', Sun, 'Claro'],
                 ['sepia', Coffee, 'Sepia'],
@@ -289,26 +322,31 @@ export default function BibliaClient() {
           {error && <p className="py-8 text-center text-sm text-rose-600">{error}</p>}
           {!cargando && !error && (
             <div className={`space-y-1 ${tema.text}`} style={{ fontSize: `${tamanoFuente}px`, lineHeight: 1.85 }}>
-              {versos.map(v => (
-                <div key={v.n}>
-                  <p onClick={() => setVersoSel(versoSel === v.n ? null : v.n)}
-                    className={`-mx-2 cursor-pointer rounded-xl px-2 py-2 transition-colors ${versoSel === v.n ? tema.selected : favoritos.has(v.n) ? 'bg-amber-50/70' : 'active:bg-slate-100/40'}`}>
-                    <sup className="mr-1.5 text-[10px] font-bold text-[#C0392B]">{v.n}</sup>
-                    {v.t}
-                    {favoritos.has(v.n) && <Star className="ml-1.5 inline h-3 w-3 fill-amber-400 text-amber-400" />}
-                  </p>
-                  {versoSel === v.n && (
-                    <div className="flex flex-col gap-2 px-2 py-2 sm:flex-row">
-                      <button onClick={() => hablar(v.n)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-xs font-semibold text-white"><Play className="h-3 w-3" /> Escuchar desde aquí</button>
-                      <button onClick={() => marcarFavorito(v)} disabled={pending}
-                        className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-semibold ${favoritos.has(v.n) ? 'border-amber-200 bg-amber-100 text-amber-700' : tema.control}`}>
-                        <Star className={`h-3 w-3 ${favoritos.has(v.n) ? 'fill-amber-400 text-amber-400' : ''}`} />
-                        {favoritos.has(v.n) ? 'Quitar favorito' : 'Guardar favorito'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+              {versos.map(v => {
+                const referencia = `${pasaje}:${v.n}`
+                return (
+                  <div key={v.n}>
+                    <p onClick={() => setVersoSel(versoSel === v.n ? null : v.n)}
+                      className={`-mx-2 cursor-pointer rounded-xl px-2 py-2 transition-colors ${versoSel === v.n ? tema.selected : favoritos.has(v.n) ? 'bg-amber-50/70' : 'active:bg-slate-100/40'}`}>
+                      <sup className="mr-1.5 text-[10px] font-bold text-[#C0392B]">{v.n}</sup>
+                      {v.t}
+                      {favoritos.has(v.n) && <Star className="ml-1.5 inline h-3 w-3 fill-amber-400 text-amber-400" />}
+                    </p>
+                    {versoSel === v.n && (
+                      <div className="grid grid-cols-1 gap-2 px-2 py-2 sm:grid-cols-2 lg:grid-cols-4">
+                        <button onClick={() => hablar(v.n)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-xs font-semibold text-white"><Play className="h-3 w-3" /> Escuchar</button>
+                        <button onClick={() => marcarFavorito(v)} disabled={pending}
+                          className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-semibold ${favoritos.has(v.n) ? 'border-amber-200 bg-amber-100 text-amber-700' : tema.control}`}>
+                          <Star className={`h-3 w-3 ${favoritos.has(v.n) ? 'fill-amber-400 text-amber-400' : ''}`} />
+                          {favoritos.has(v.n) ? 'Quitar' : 'Favorito'}
+                        </button>
+                        <button onClick={() => compartirVersiculo(referencia, v.t)} className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-semibold ${tema.control}`}><Share2 className="h-3.5 w-3.5" /> Compartir</button>
+                        <Link href={enlaceEstudio(referencia, v.t)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-[#C0392B] px-3 text-xs font-semibold text-white"><Sparkles className="h-3.5 w-3.5" /> Estudiar</Link>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -326,24 +364,44 @@ export default function BibliaClient() {
         <p className={`mt-4 text-center text-[11px] ${tema.muted}`}>Textos provistos por Free Use Bible API · dominio público</p>
       </div>
 
+      {mensajeCompartir && <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 right-4 z-[80] mx-auto max-w-sm rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-xl" role="status">{mensajeCompartir}</div>}
+
       {panelFavs && (
-        <div className="fixed inset-0 z-[60] flex items-end bg-black/40 sm:items-center sm:justify-center" onClick={e => { if (e.target === e.currentTarget) setPanelFavs(false) }}>
-          <div className="max-h-[85dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] sm:max-w-lg sm:rounded-3xl">
-            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white p-4">
-              <h3 className="flex items-center gap-2 font-bold text-[#171923]"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /> Mis versículos favoritos</h3>
-              <button onClick={() => setPanelFavs(false)} className="flex h-11 w-11 items-center justify-center rounded-full text-slate-400"><X className="h-5 w-5" /></button>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:p-6" onClick={e => { if (e.target === e.currentTarget) setPanelFavs(false) }}>
+          <section className="flex max-h-full min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="favoritos-title">
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3 sm:px-5">
+              <div className="min-w-0">
+                <h3 id="favoritos-title" className="flex items-center gap-2 truncate font-bold text-[#171923]"><Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" /> Mis versículos favoritos</h3>
+                <p className="mt-0.5 text-xs text-slate-400">Lee, comparte o envía un versículo al estudio.</p>
+              </div>
+              <button onClick={() => setPanelFavs(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-label="Cerrar favoritos"><X className="h-5 w-5" /></button>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
+              {listaFavs === null && <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>}
+              {listaFavs?.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-10 text-center"><Star className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Aún no guardas versículos</p><p className="mt-1 text-xs leading-relaxed text-slate-400">Toca cualquier versículo de la Biblia y selecciona Favorito.</p></div>}
+              <div className="space-y-4">
+                {listaFavs?.map(f => {
+                  const referencia = `${f.libro_nombre} ${f.capitulo}:${f.verso}`
+                  return (
+                    <article key={f.id} className="overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/60 shadow-sm">
+                      <button type="button" onClick={() => irAFavorito(f)} className="w-full p-4 text-left active:bg-amber-100/70">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs font-bold text-amber-700">{referencia}</p>
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-slate-700">{f.texto}</p>
+                      </button>
+                      <div className="grid grid-cols-2 gap-2 border-t border-amber-100 bg-white/70 p-3">
+                        <button type="button" onClick={() => compartirVersiculo(referencia, f.texto)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"><Share2 className="h-4 w-4" /> Compartir</button>
+                        <Link href={enlaceEstudio(referencia, f.texto)} onClick={() => setPanelFavs(false)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#C0392B] px-3 text-xs font-semibold text-white"><Sparkles className="h-4 w-4" /> Estudiar con IA</Link>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
             </div>
-            <div className="space-y-3 p-4">
-              {listaFavs === null && <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-300" /></div>}
-              {listaFavs?.length === 0 && <p className="py-8 text-center text-sm text-slate-400">Aún no guardas versículos.<br />Toca cualquier versículo y elige ⭐ Guardar favorito.</p>}
-              {listaFavs?.map(f => (
-                <button key={f.id} onClick={() => irAFavorito(f)} className="w-full rounded-2xl border border-amber-100 bg-amber-50/60 p-4 text-left transition-colors hover:border-amber-300">
-                  <p className="mb-1 text-xs font-bold text-amber-700">{f.libro_nombre} {f.capitulo}:{f.verso}</p>
-                  <p className="line-clamp-3 text-sm leading-relaxed text-slate-600">{f.texto}</p>
-                </button>
-              ))}
-            </div>
-          </div>
+          </section>
         </div>
       )}
     </main>
