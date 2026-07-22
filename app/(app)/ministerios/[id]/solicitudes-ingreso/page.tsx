@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, User, CheckCircle, XCircle } from 'lucide-react'
+import { User } from 'lucide-react'
 import SolicitudIngresoBotones from './SolicitudIngresoBotones'
 
 export default async function SolicitudesIngresoPage(
@@ -9,7 +8,7 @@ export default async function SolicitudesIngresoPage(
     params: Promise<{ id: string }>
   }
 ) {
-  const params = await props.params;
+  const params = await props.params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -17,11 +16,15 @@ export default async function SolicitudesIngresoPage(
     redirect('/login')
   }
 
-  // Verificar permisos (lider del ministerio, pastor o admin)
-  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rol, es_pastor_general')
+    .eq('id', user.id)
+    .single()
+
   const p = profile as any
   const isAdminOrPastor = p?.rol === 'administrador' || p?.rol === 'pastor' || p?.es_pastor_general
-  
+
   const { data: membresiaLider } = await supabase
     .from('ministerio_miembros')
     .select('es_lider')
@@ -33,16 +36,14 @@ export default async function SolicitudesIngresoPage(
     redirect('/ministerios')
   }
 
-  // Obtener nombre del ministerio
   const { data: ministerio } = await supabase
     .from('ministerios')
-    .select('nombre, color_primario')
+    .select('nombre')
     .eq('id', params.id)
     .single()
 
   if (!ministerio) redirect('/ministerios')
 
-  // Obtener solicitudes pendientes
   const { data: solicitudes } = await (supabase as any)
     .from('ministerio_solicitudes_ingreso')
     .select(`
@@ -59,51 +60,53 @@ export default async function SolicitudesIngresoPage(
     .order('created_at', { ascending: false })
 
   const min = ministerio as any
-  return (
-    <main className="min-h-screen bg-[#f4f5f9] px-4 py-8 max-w-lg mx-auto pb-28">
-      <div className="mb-6">
-        <Link 
-          href={`/ministerios/${params.id}/avisos`}
-          className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Volver a {min.nombre}
-        </Link>
-      </div>
 
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-[#171923]">Solicitudes de Ingreso</h1>
-        <p className="text-sm text-gray-500 mt-1">
+  return (
+    <main className="mx-auto w-full max-w-2xl px-4 pb-28">
+      <header className="mb-5">
+        <h1 className="text-xl font-bold text-[#171923] sm:text-2xl">Solicitudes de ingreso</h1>
+        <p className="mt-1 text-sm leading-relaxed text-slate-500">
           Personas que desean unirse a {min.nombre}
         </p>
       </header>
 
       {!solicitudes || solicitudes.length === 0 ? (
-        <div className="text-center py-12 px-4 border border-slate-100 rounded-[18px] bg-white">
-          <p className="text-gray-500">No hay solicitudes pendientes.</p>
+        <div className="rounded-2xl border border-slate-100 bg-white px-4 py-12 text-center">
+          <p className="text-sm text-slate-500">No hay solicitudes pendientes.</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {solicitudes.map((sol: any) => (
-            <div key={sol.id} className="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                  <User className="w-5 h-5 text-slate-400" />
+            <article key={sol.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4 flex min-w-0 items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                  <User className="h-5 w-5 text-slate-400" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-[#171923]">{sol.profiles?.nombre_completo || 'Usuario Desconocido'}</h3>
-                  <p className="text-xs text-slate-500">
-                    {sol.profiles?.telefono || 'Sin teléfono'} • {new Date(sol.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                  </p>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words text-sm font-bold text-[#171923] sm:text-base">
+                    {sol.profiles?.nombre_completo || 'Usuario desconocido'}
+                  </h3>
+                  <div className="mt-1 flex flex-col gap-0.5 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:gap-x-2">
+                    <span className="break-words">{sol.profiles?.telefono || 'Sin teléfono'}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span>
+                      {new Date(sol.created_at).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <SolicitudIngresoBotones 
-                solicitudId={sol.id} 
-                profileId={sol.profile_id} 
-                ministerioId={params.id} 
+              <SolicitudIngresoBotones
+                solicitudId={sol.id}
+                profileId={sol.profile_id}
+                ministerioId={params.id}
               />
-            </div>
+            </article>
           ))}
         </div>
       )}
