@@ -18,19 +18,13 @@ export default function BottomNav() {
   const router = useRouter()
 
   useEffect(() => {
-    const prefetchRoutes = () => {
+    const timeoutId = globalThis.setTimeout(() => {
       navItems.forEach((item) => {
         if (!pathname.startsWith(item.href)) router.prefetch(item.href)
       })
-    }
+    }, 350)
 
-    if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(prefetchRoutes, { timeout: 1500 })
-      return () => window.cancelIdleCallback(idleId)
-    }
-
-    const timeoutId = window.setTimeout(prefetchRoutes, 350)
-    return () => window.clearTimeout(timeoutId)
+    return () => globalThis.clearTimeout(timeoutId)
   }, [pathname, router])
 
   return (
