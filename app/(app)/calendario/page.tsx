@@ -37,20 +37,22 @@ export default async function CalendarioPage() {
     // Se ordenará en el cliente por fecha ya que date-fns nos da más control
 
   return (
-    <main className="min-h-screen bg-[#f4f5f9] max-w-lg mx-auto">
-      <div className="sticky top-0 z-40 bg-[#f4f5f9]/95 backdrop-blur-md px-4 pt-8 pb-4">
-        <header>
+    <main className="min-h-screen bg-[#f4f5f9] pb-28">
+      <div
+        className="sticky top-0 z-40 border-b border-slate-100/70 bg-[#f4f5f9]/95 px-4 pb-4 backdrop-blur-md"
+        style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+      >
+        <header className="mx-auto max-w-2xl">
           <h1 className="text-2xl font-bold text-[#171923]">Mi Calendario</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-gray-500">
             Tus eventos y turnos asignados
           </p>
         </header>
       </div>
 
-      <div className="px-4">
+      <div className="mx-auto max-w-2xl px-4">
         <CalendarioViews asignaciones={asignaciones || []} />
       </div>
     </main>
   )
 }
-
