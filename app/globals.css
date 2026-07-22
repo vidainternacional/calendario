@@ -62,17 +62,15 @@ select {
   max-width: 100%;
 }
 
-/* Evita que textos largos rompan tarjetas o modales */
 .break-safe {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-/* Contrato reutilizable para modales responsivos */
 .modal-overlay-safe {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 120;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,7 +103,6 @@ select {
   touch-action: pan-y;
 }
 
-/* Bloquea por completo la página detrás de cualquier ficha abierta */
 html:has([role="dialog"]),
 body:has([role="dialog"]),
 html:has(.modal-overlay-safe),
@@ -119,7 +116,17 @@ body:has(.modal-overlay-safe) {
   touch-action: none;
 }
 
-/* Ficha de detalle del calendario: modal centrado y contenido desplazable */
+/* Toda ficha abierta debe quedar por encima de la navegación inferior. */
+[role="dialog"] {
+  z-index: 120 !important;
+}
+
+body:has([role="dialog"]) .app-bottom-nav,
+body:has(.modal-overlay-safe) .app-bottom-nav {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 [role="dialog"][aria-label="Detalle del evento"] {
   top: 50% !important;
   bottom: auto !important;
@@ -145,13 +152,23 @@ body:has(.modal-overlay-safe) {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
-/* En móviles horizontales la barra inferior ocupa una porción mayor del alto útil.
-   Reserva espacio global para que la última ficha o acción nunca quede cubierta. */
 @media (orientation: landscape) and (max-height: 600px) {
   main {
     min-height: 100dvh;
-    padding-top: max(1rem, env(safe-area-inset-top)) !important;
-    padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem)) !important;
+    padding-top: max(0.75rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(4.5rem, calc(env(safe-area-inset-bottom) + 3.75rem)) !important;
+  }
+
+  .app-bottom-nav-inner {
+    height: 3.25rem;
+  }
+
+  .app-bottom-nav-label {
+    display: none;
+  }
+
+  .app-bottom-nav a {
+    gap: 0;
   }
 
   .modal-overlay-safe {
@@ -167,6 +184,6 @@ body:has(.modal-overlay-safe) {
 
   .modal-body-safe,
   [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
-    padding-bottom: max(2rem, calc(env(safe-area-inset-bottom) + 1rem));
+    padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem));
   }
 }
