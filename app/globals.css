@@ -144,3 +144,29 @@ body:has(.modal-overlay-safe) {
   touch-action: pan-y;
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
+
+/* En móviles horizontales la barra inferior ocupa una porción mayor del alto útil.
+   Reserva espacio global para que la última ficha o acción nunca quede cubierta. */
+@media (orientation: landscape) and (max-height: 600px) {
+  main {
+    min-height: 100dvh;
+    padding-top: max(1rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem)) !important;
+  }
+
+  .modal-overlay-safe {
+    align-items: flex-start;
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .modal-panel-safe,
+  [role="dialog"][aria-label="Detalle del evento"] {
+    max-height: calc(100dvh - max(1rem, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
+  }
+
+  .modal-body-safe,
+  [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
+    padding-bottom: max(2rem, calc(env(safe-area-inset-bottom) + 1rem));
+  }
+}
