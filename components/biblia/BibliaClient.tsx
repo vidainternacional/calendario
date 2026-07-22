@@ -58,6 +58,7 @@ export default function BibliaClient() {
   const [favoritos, setFavoritos] = useState<Set<number>>(new Set())
   const [panelFavs, setPanelFavs] = useState(false)
   const [listaFavs, setListaFavs] = useState<Favorito[] | null>(null)
+  const [errorFavs, setErrorFavs] = useState<string | null>(null)
   const [cargandoFavs, setCargandoFavs] = useState(false)
   const [guardandoVerso, setGuardandoVerso] = useState<number | null>(null)
   const [modoLectura, setModoLectura] = useState<ModoLectura>('claro')
@@ -216,6 +217,7 @@ export default function BibliaClient() {
         return siguiente
       })
       setListaFavs(null)
+      setErrorFavs(null)
       avisar(resultado.favorito ? 'Versículo guardado en favoritos' : 'Versículo eliminado de favoritos')
     } catch {
       avisar('No se pudo actualizar el favorito')
@@ -227,11 +229,14 @@ export default function BibliaClient() {
   const abrirFavoritos = async () => {
     setPanelFavs(true)
     setCargandoFavs(true)
+    setErrorFavs(null)
     try {
-      setListaFavs(await listarFavoritos())
+      const resultado = await listarFavoritos()
+      setListaFavs(resultado.favoritos)
+      if (resultado.error) setErrorFavs(resultado.error)
     } catch {
       setListaFavs([])
-      avisar('No se pudieron cargar los favoritos')
+      setErrorFavs('No se pudieron cargar los favoritos')
     } finally {
       setCargandoFavs(false)
     }
@@ -283,7 +288,7 @@ export default function BibliaClient() {
           <select value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className={selectCls} style={{ colorScheme: 'light' }}>{Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}</select>
         </div></div>
 
-        <div className={`mb-5 rounded-2xl border p-3 shadow-sm ${tema.card}`}><div className="flex flex-wrap items-center justify-between gap-3">
+        <div className={`mb-4 rounded-2xl border p-3 shadow-sm ${tema.card}`}><div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">{([['claro', Sun, 'Claro'], ['sepia', Coffee, 'Sepia'], ['oscuro', Moon, 'Oscuro']] as const).map(([modo, Icon, label]) => <button key={modo} type="button" onClick={() => setModoLectura(modo)} className={`flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold ${modoLectura === modo ? 'border-indigo-300 bg-indigo-600 text-white' : tema.control}`}><Icon className="h-4 w-4" /> {label}</button>)}</div>
           <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1"><button type="button" onClick={() => setTamanoFuente(v => Math.max(14, v - 1))} className="flex h-9 w-9 items-center justify-center text-slate-600"><Minus className="h-4 w-4" /></button><span className="min-w-12 text-center text-xs font-bold text-slate-700">{tamanoFuente}px</span><button type="button" onClick={() => setTamanoFuente(v => Math.min(24, v + 1))} className="flex h-9 w-9 items-center justify-center text-slate-600"><Plus className="h-4 w-4" /></button></div>
         </div></div>
@@ -328,9 +333,10 @@ export default function BibliaClient() {
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {cargandoFavs && <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>}
-              {!cargandoFavs && listaFavs?.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-10 text-center"><Star className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Aún no guardas versículos</p></div>}
+              {!cargandoFavs && errorFavs && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-5 text-center"><p className="text-sm font-semibold text-rose-700">{errorFavs}</p><button type="button" onClick={abrirFavoritos} className="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-rose-600 px-4 text-xs font-semibold text-white">Reintentar</button></div>}
+              {!cargandoFavs && !errorFavs && listaFavs?.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-10 text-center"><Star className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Aún no guardas versículos</p></div>}
               <div className="space-y-4">
-                {!cargandoFavs && listaFavs?.map(f => {
+                {!cargandoFavs && !errorFavs && listaFavs?.map(f => {
                   const referencia = `${f.libro_nombre} ${f.capitulo}:${f.verso}`
                   return (
                     <article key={f.id} className="overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/60">
