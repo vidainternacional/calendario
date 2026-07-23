@@ -139,3 +139,5 @@ export async function listarFavoritos(): Promise<Favorito[]> {
           git add app/actions/biblia.ts components/biblia/BibliaClient.tsx
           git commit -m "fix(biblia): compatibilidad estable de favoritos"
           git push
+
+# Trigger 2
