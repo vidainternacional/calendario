@@ -122,13 +122,15 @@ if (!client.includes(reactDomImport)) {
 }
 
 const brokenModalClass = 'flex h-[calc(100dvh-max(1.5rem,env(safe-area-inset-top))-max(1.5rem,env(safe-area-inset-bottom)))] max-h-[52rem] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-3rem)]'
-const visibleModalClass = 'flex min-h-[20rem] max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl'
+const visibleModalClass = 'flex min-h-[20rem] max-h-[86dvh] w-full max-w-lg flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.32)]'
 if (client.includes(brokenModalClass)) client = client.replace(brokenModalClass, visibleModalClass)
+client = client.replace('flex min-h-[20rem] max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl', visibleModalClass)
 
 const overlayClass = 'fixed inset-0 z-[120] flex items-center justify-center overflow-hidden bg-black/55 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6'
-const safeOverlayClass = 'fixed inset-0 z-[9999] flex items-end justify-center bg-black/55 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6'
+const safeOverlayClass = 'fixed inset-0 z-[9999] flex items-end justify-center bg-slate-950/60 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-[3px] sm:items-center sm:p-6'
 if (client.includes(overlayClass)) client = client.replace(overlayClass, safeOverlayClass)
 client = client.replace('fixed inset-0 z-[120] flex items-end justify-center bg-black/55 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6', safeOverlayClass)
+client = client.replace('fixed inset-0 z-[9999] flex items-end justify-center bg-black/55 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6', safeOverlayClass)
 
 const portalOpen = "      {panelFavs && typeof document !== 'undefined' && createPortal(("
 if (!client.includes(portalOpen)) {
@@ -140,5 +142,26 @@ if (!client.includes(portalClose)) {
   client = client.replace('      )}\n    </main>', portalClose)
 }
 
+client = client.replace(
+  'relative z-10 flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3 sm:px-5',
+  'relative z-10 flex shrink-0 items-center justify-between gap-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 via-white to-white px-4 py-4 sm:px-5'
+)
+client = client.replace(
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500',
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95'
+)
+client = client.replace(
+  'min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:px-5 sm:pb-6',
+  'min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain bg-slate-50/70 px-4 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:px-5 sm:pb-6'
+)
+client = client.replace(
+  'overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/60',
+  'overflow-hidden rounded-2xl border border-amber-200/80 bg-white shadow-sm ring-1 ring-slate-900/[0.02]'
+)
+client = client.replace(
+  'grid grid-cols-1 gap-2 border-t border-amber-100 bg-white/70 p-3 min-[380px]:grid-cols-2',
+  'grid grid-cols-1 gap-2 border-t border-slate-100 bg-slate-50/80 p-3 min-[380px]:grid-cols-2'
+)
+
 await writeFile(clientPath, client, 'utf8')
-console.log('Compatibilidad, modal visible y portal de favoritos aplicados')
+console.log('Compatibilidad, portal y pulido visual de favoritos aplicados')
