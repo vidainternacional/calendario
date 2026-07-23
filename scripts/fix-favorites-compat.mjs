@@ -163,5 +163,30 @@ client = client.replace(
   'grid grid-cols-1 gap-2 border-t border-slate-100 bg-slate-50/80 p-3 min-[380px]:grid-cols-2'
 )
 
+const panelStateAnchor = "  const [panelFavs, setPanelFavs] = useState(false)"
+const modalBehaviorEffect = `
+
+  useEffect(() => {
+    if (!panelFavs) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPanelFavs(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [panelFavs])`
+
+if (client.includes(panelStateAnchor) && !client.includes("document.body.style.overflow = 'hidden'")) {
+  client = client.replace(panelStateAnchor, `${panelStateAnchor}${modalBehaviorEffect}`)
+}
+
 await writeFile(clientPath, client, 'utf8')
-console.log('Compatibilidad, portal y pulido visual de favoritos aplicados')
+console.log('Compatibilidad, portal, pulido visual y comportamiento móvil de favoritos aplicados')
