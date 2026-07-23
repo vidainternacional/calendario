@@ -116,19 +116,29 @@ if (client.includes(currentBlock)) {
   throw new Error('No se encontró el bloque de favoritos esperado')
 }
 
-const brokenModalClass = 'flex h-[calc(100dvh-max(1.5rem,env(safe-area-inset-top))-max(1.5rem,env(safe-area-inset-bottom)))] max-h-[52rem] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-3rem)]'
-const visibleModalClass = 'flex min-h-[20rem] max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl'
-
-if (client.includes(brokenModalClass)) {
-  client = client.replace(brokenModalClass, visibleModalClass)
+const reactDomImport = "import { createPortal } from 'react-dom'"
+if (!client.includes(reactDomImport)) {
+  client = client.replace("import Link from 'next/link'", "import Link from 'next/link'\nimport { createPortal } from 'react-dom'")
 }
 
-const overlayClass = 'fixed inset-0 z-[120] flex items-center justify-center overflow-hidden bg-black/55 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6'
-const safeOverlayClass = 'fixed inset-0 z-[120] flex items-end justify-center bg-black/55 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6'
+const brokenModalClass = 'flex h-[calc(100dvh-max(1.5rem,env(safe-area-inset-top))-max(1.5rem,env(safe-area-inset-bottom)))] max-h-[52rem] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-3rem)]'
+const visibleModalClass = 'flex min-h-[20rem] max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl'
+if (client.includes(brokenModalClass)) client = client.replace(brokenModalClass, visibleModalClass)
 
-if (client.includes(overlayClass)) {
-  client = client.replace(overlayClass, safeOverlayClass)
+const overlayClass = 'fixed inset-0 z-[120] flex items-center justify-center overflow-hidden bg-black/55 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6'
+const safeOverlayClass = 'fixed inset-0 z-[9999] flex items-end justify-center bg-black/55 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6'
+if (client.includes(overlayClass)) client = client.replace(overlayClass, safeOverlayClass)
+client = client.replace('fixed inset-0 z-[120] flex items-end justify-center bg-black/55 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6', safeOverlayClass)
+
+const portalOpen = "      {panelFavs && typeof document !== 'undefined' && createPortal(("
+if (!client.includes(portalOpen)) {
+  client = client.replace('      {panelFavs && (\n        <div', `${portalOpen}\n        <div`)
+}
+
+const portalClose = '      ), document.body)}\n    </main>'
+if (!client.includes(portalClose)) {
+  client = client.replace('      )}\n    </main>', portalClose)
 }
 
 await writeFile(clientPath, client, 'utf8')
-console.log('Compatibilidad y modal visible de favoritos aplicados')
+console.log('Compatibilidad, modal visible y portal de favoritos aplicados')
