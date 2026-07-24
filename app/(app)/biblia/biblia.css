@@ -20,8 +20,46 @@ body:has(main.bg-slate-50) {
 main.bg-slate-950,
 main[class*="bg-[#f4ecd8]"],
 main.bg-slate-50 {
+  position: relative;
+  isolation: isolate;
   min-height: 100dvh;
   transition: background-color 180ms ease, color 180ms ease;
+}
+
+main.bg-slate-950 {
+  background-color: #020617 !important;
+}
+
+main[class*="bg-[#f4ecd8]"] {
+  background-color: #f4ecd8 !important;
+}
+
+main.bg-slate-50 {
+  background-color: #f8fafc !important;
+}
+
+/* Capa fija detrás de todo el contenido para eliminar franjas del layout padre. */
+main.bg-slate-950::before,
+main[class*="bg-[#f4ecd8]"]::before,
+main.bg-slate-50::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: background-color 180ms ease;
+}
+
+main.bg-slate-950::before {
+  background: #020617;
+}
+
+main[class*="bg-[#f4ecd8]"]::before {
+  background: #f4ecd8;
+}
+
+main.bg-slate-50::before {
+  background: #f8fafc;
 }
 
 /* Segundo panel de opciones: modos de lectura y tamaño de fuente. */
