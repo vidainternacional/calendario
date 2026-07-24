@@ -91,3 +91,7 @@ Crear la ruta protegida `/pastoral` con:
 ## Próximo bloque
 
 Implementar y desplegar la puerta de acceso y la pantalla inicial de `/pastoral`, sin crear todavía tablas ni funciones de los módulos posteriores.
+
+## Registro de despliegue
+
+- 2026-07-24: reintento solicitado después del bloqueo temporal `build-rate-limit` de Vercel. El commit incluye los cambios pendientes del buscador avanzado y la integración pastoral con Biblia.
