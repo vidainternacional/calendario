@@ -244,6 +244,40 @@ body:has(.modal-overlay-safe) .app-bottom-nav {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
+/* Compatibilidad para fichas pastorales que todavía usan el patrón móvil anterior. */
+body:has(.fixed.inset-0.z-\[120\].items-end) {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body:has(.fixed.inset-0.z-\[120\].items-end) .app-bottom-nav {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.fixed.inset-0.z-\[120\].items-end {
+  align-items: center !important;
+  overflow: hidden !important;
+  padding-top: max(1rem, env(safe-area-inset-top)) !important;
+  padding-right: max(1rem, env(safe-area-inset-right)) !important;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+  padding-left: max(1rem, env(safe-area-inset-left)) !important;
+}
+
+.fixed.inset-0.z-\[120\].items-end > div {
+  width: min(100%, 36rem) !important;
+  max-width: 36rem !important;
+  max-height: calc(100dvh - 2rem) !important;
+  min-height: 0;
+  margin: auto;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 1.75rem !important;
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom)) !important;
+  animation: modal-panel-enter 190ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (orientation: landscape) and (max-height: 600px) {
   main {
     min-height: 100dvh;
@@ -277,6 +311,16 @@ body:has(.modal-overlay-safe) .app-bottom-nav {
   .modal-body-safe,
   [role="dialog"][aria-label="Detalle del evento"] > div:last-child {
     padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.75rem));
+  }
+
+  .fixed.inset-0.z-\[120\].items-end {
+    align-items: flex-start !important;
+    padding-top: max(0.5rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .fixed.inset-0.z-\[120\].items-end > div {
+    max-height: calc(100dvh - max(1rem, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important;
   }
 }
 
