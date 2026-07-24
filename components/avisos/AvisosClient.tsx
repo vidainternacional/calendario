@@ -134,7 +134,7 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
 
   if (!data) {
     return (
-      <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6">
+      <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6">
         <SkeletonPage cards={4} />
       </main>
     )
@@ -144,11 +144,11 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
   const puedeCrear = esPastorAdmin || ministeriosLider.length > 0
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 landscape:py-4">
-      <header className="mb-7 flex items-start justify-between gap-4 landscape:mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#171923]">Avisos</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+    <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 landscape:py-4">
+      <header className="mb-7 flex min-w-0 flex-col gap-4 min-[430px]:flex-row min-[430px]:items-start min-[430px]:justify-between landscape:mb-4">
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-bold text-[#171923]">Avisos</h1>
+          <p className="mt-0.5 break-words text-sm text-gray-500">
             {items.length === 0
               ? 'Sin publicaciones por ahora'
               : `${items.length} publicación${items.length !== 1 ? 'es' : ''}`}
@@ -157,11 +157,11 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
         </div>
 
         {puedeCrear && (
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 min-[430px]:w-auto min-[430px]:shrink-0 min-[430px]:justify-end">
             {esPastorAdmin && (
               <Link
                 href="/avisos/pendientes-aprobacion"
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-600 transition-colors hover:bg-amber-100"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-600 transition-colors hover:bg-amber-100 min-[430px]:flex-none"
               >
                 Revisar
               </Link>
@@ -179,7 +179,7 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
           <p className="max-w-[220px] text-sm text-gray-500">No hay publicaciones recientes para tu comunidad.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 landscape:grid-cols-2">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2 landscape:grid-cols-2">
           {items.map((pub) => {
             const autor = pub.profiles?.nombre_completo ?? 'Autor desconocido'
             const minNombre = pub.ministerios?.nombre
