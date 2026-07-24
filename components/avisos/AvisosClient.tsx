@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Info } from 'lucide-react'
+import { ClipboardCheck, Info, Megaphone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { readUserCache, writeUserCache } from '@/lib/cache/userCache'
 import NuevoAvisoModal from '@/components/avisos/NuevoAvisoModal'
@@ -143,6 +143,11 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
   const { esPastorAdmin, ministeriosLider, publicaciones: items } = data
   const puedeCrear = esPastorAdmin || ministeriosLider.length > 0
 
+  const abrirNuevoAviso = () => {
+    const trigger = document.getElementById('btn-nuevo-aviso') as HTMLButtonElement | null
+    trigger?.click()
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 landscape:py-4">
       <header className="mb-7 flex min-w-0 flex-col gap-4 min-[430px]:flex-row min-[430px]:items-start min-[430px]:justify-between landscape:mb-4">
@@ -172,12 +177,44 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
       </header>
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center landscape:py-10">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
-            <Info className="h-7 w-7 text-indigo-400" />
+        <section className="overflow-hidden rounded-[26px] border border-white bg-white shadow-sm" aria-labelledby="avisos-vacio-titulo">
+          <div className="bg-gradient-to-br from-indigo-50 via-white to-sky-50 px-5 py-8 text-center sm:px-8 sm:py-10">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-100 bg-white shadow-sm">
+              <Info className="h-8 w-8 text-indigo-500" aria-hidden="true" />
+            </div>
+            <h2 id="avisos-vacio-titulo" className="mt-5 text-xl font-bold text-[#171923]">
+              {puedeCrear ? 'Comparte la primera novedad' : 'Aún no hay avisos para ti'}
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              {puedeCrear
+                ? 'Publica información importante, recordatorios o cambios para que todos reciban el mensaje con claridad.'
+                : 'Cuando la iglesia o uno de tus ministerios publique una novedad, aparecerá aquí y podrás consultarla cuando la necesites.'}
+            </p>
+
+            {puedeCrear && (
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={abrirNuevoAviso}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition-all hover:bg-indigo-500 active:scale-[0.99]"
+                >
+                  <Megaphone className="h-4 w-4" aria-hidden="true" />
+                  Crear primer aviso
+                </button>
+
+                {esPastorAdmin && (
+                  <Link
+                    href="/avisos/pendientes-aprobacion"
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                    Revisar pendientes
+                  </Link>
+                )}
+              </div>
+            )}
           </div>
-          <p className="max-w-[220px] text-sm text-gray-500">No hay publicaciones recientes para tu comunidad.</p>
-        </div>
+        </section>
       ) : (
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 landscape:grid-cols-2">
           {items.map((pub) => {
