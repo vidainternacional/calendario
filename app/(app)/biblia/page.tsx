@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import BibliaClient from '@/components/biblia/BibliaClient'
 import BibliaVoiceControl from '@/components/biblia/BibliaVoiceControl'
 import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmptyEnhancer'
+import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
 import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
@@ -18,6 +19,7 @@ export default async function BibliaPage() {
       <BibliaClient />
       <BibliaVoiceControl />
       <BibliaFavoritesEmptyEnhancer />
+      <BibliaErrorRetryEnhancer />
     </>
   )
 }
