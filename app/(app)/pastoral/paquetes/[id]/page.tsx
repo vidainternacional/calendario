@@ -68,7 +68,6 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
         paqueteId={paquete.id}
         initialAudience={(paquete.audiencia ?? 'iglesia') as any}
         initialPublished={Boolean(paquete.publicado)}
-        publicSlug={paquete.public_slug}
       />
 
       <PaqueteDetalleClient
