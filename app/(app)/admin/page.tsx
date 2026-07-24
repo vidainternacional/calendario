@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminClient from './AdminClient'
 import Link from 'next/link'
-import { Building2, MessageCircleQuestion, Megaphone, Users } from 'lucide-react'
+import { Building2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -47,7 +47,6 @@ export default async function AdminPage() {
     .eq('clave', 'active_icon_variant')
     .maybeSingle()
 
-  // Limpia comillas si se guardó como '"dorado"'
   const activeIconVariant: string =
     typeof iconSetting?.valor === 'string'
       ? iconSetting.valor.replace(/"/g, '')
@@ -76,6 +75,11 @@ export default async function AdminPage() {
     .select('*', { count: 'exact', head: true })
     .eq('estado', 'pendiente')
 
+  const { count: pendingIngresos } = await (supabase as any)
+    .from('ministerio_solicitudes_ingreso')
+    .select('*', { count: 'exact', head: true })
+    .eq('estado', 'pendiente')
+
   // 6. Current User Role
   const { data: { user } } = await supabase.auth.getUser()
   let currentUserRol = 'servidor'
@@ -98,6 +102,13 @@ export default async function AdminPage() {
       icon: Building2,
       iconClass: 'bg-emerald-50 text-emerald-600',
       valueClass: 'text-[#171923]',
+    },
+    {
+      label: 'Ingresos pendientes',
+      value: pendingIngresos || 0,
+      icon: UserPlus,
+      iconClass: 'bg-sky-50 text-sky-600',
+      valueClass: pendingIngresos ? 'text-sky-600' : 'text-[#171923]',
     },
     {
       label: 'Avisos pendientes',
@@ -125,8 +136,7 @@ export default async function AdminPage() {
         </p>
       </header>
 
-      {/* ── Estadísticas Generales ────────────────────────────────────────────── */}
-      <section aria-label="Resumen administrativo" className="mb-6 sm:mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <section aria-label="Resumen administrativo" className="mb-6 sm:mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         {estadisticas.map(({ label, value, icon: Icon, iconClass, valueClass }) => (
           <article
             key={label}
@@ -145,10 +155,31 @@ export default async function AdminPage() {
         ))}
       </section>
 
-      {/* ── Accesos Rápidos ─────────────────────────────────────────────── */}
       <section className="mb-6 sm:mb-8" aria-labelledby="accesos-rapidos">
         <h2 id="accesos-rapidos" className="text-sm font-bold text-[#171923] mb-3">Accesos rápidos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <Link
+            href="/admin/solicitudes-ministerios"
+            className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-sky-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-sky-200 active:scale-[0.99] transition-all group"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-bold text-[#171923] leading-tight">Solicitudes de ministerios</h3>
+                {(pendingIngresos || 0) > 0 && (
+                  <span className="inline-flex min-h-6 items-center rounded-full bg-sky-100 px-2 text-[10px] font-bold text-sky-700">
+                    {pendingIngresos} pendiente{pendingIngresos === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                Aprueba o rechaza ingresos de todos los ministerios.
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:bg-sky-100 transition-colors shrink-0">
+              <UserPlus className="w-5 h-5" aria-hidden="true" />
+            </div>
+          </Link>
+
           <Link
             href="/admin/preguntas"
             className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-slate-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-indigo-100 active:scale-[0.99] transition-all group"
