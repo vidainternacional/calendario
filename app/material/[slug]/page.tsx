@@ -50,15 +50,25 @@ export default async function MaterialPublicoPage({ params }: { params: Promise<
   if (!/^[0-9a-f-]{36}$/i.test(slug)) notFound()
 
   const supabase = await createClient()
-  const { data, error } = await (supabase as any).rpc('get_public_pastoral_package', { p_slug: slug })
+
+  let publicSlug = slug
+  const { data: paquetePorId } = await (supabase as any)
+    .from('pastoral_paquetes')
+    .select('public_slug')
+    .eq('id', slug)
+    .maybeSingle()
+
+  if (paquetePorId?.public_slug) publicSlug = paquetePorId.public_slug
+
+  const { data, error } = await (supabase as any).rpc('get_public_pastoral_package', { p_slug: publicSlug })
   if (error || !data) notFound()
 
   const material = data as any
   if (material.access === 'login_required') {
-    return <AccesoRestringido slug={slug} audiencia={material.audiencia} requiereLogin />
+    return <AccesoRestringido slug={publicSlug} audiencia={material.audiencia} requiereLogin />
   }
   if (material.access === 'forbidden') {
-    return <AccesoRestringido slug={slug} audiencia={material.audiencia} requiereLogin={false} />
+    return <AccesoRestringido slug={publicSlug} audiencia={material.audiencia} requiereLogin={false} />
   }
   if (material.access !== 'granted') notFound()
 
