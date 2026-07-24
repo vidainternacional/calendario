@@ -11,7 +11,7 @@ const ERROR_MESSAGES = [
 export default function BibliaErrorRetryEnhancer() {
   useEffect(() => {
     const enhance = () => {
-      const paragraphs = Array.from(document.querySelectorAll('main p'))
+      const paragraphs = Array.from(document.querySelectorAll<HTMLParagraphElement>('main p'))
       const errorParagraph = paragraphs.find(node =>
         ERROR_MESSAGES.includes(node.textContent?.trim() ?? '')
       )
