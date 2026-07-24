@@ -25,14 +25,23 @@ export default async function PastoralPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('nombre_completo, rol, es_pastor_general')
+    .select('nombre_completo, rol, es_pastor_general, estado_cuenta')
     .eq('id', user.id)
     .single()
 
   const rol = (profile as { rol?: string } | null)?.rol
-  if (rol !== 'pastor' && rol !== 'administrador') redirect('/inicio')
+  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
+  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') redirect('/inicio')
 
   const disponibles = [
+    {
+      href: '/pastoral/colecciones',
+      title: 'Colecciones pastorales',
+      description: 'Organiza versículos por tema, serie, prédica o propósito ministerial.',
+      action: 'Abrir colecciones',
+      icon: BookHeart,
+      iconClass: 'bg-violet-600 text-white',
+    },
     {
       href: '/biblia',
       title: 'Biblia y versículos',
@@ -52,11 +61,6 @@ export default async function PastoralPage() {
   ]
 
   const proximos = [
-    {
-      title: 'Colecciones pastorales',
-      description: 'Organiza versículos por tema, serie o propósito ministerial.',
-      icon: BookHeart,
-    },
     {
       title: 'Bosquejos',
       description: 'Crea, edita y recupera bosquejos para prédicas y enseñanzas.',
