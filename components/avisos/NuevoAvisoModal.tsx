@@ -49,18 +49,20 @@ export default function NuevoAvisoModal({
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    const previousOverflow = document.body.style.overflow
+    if (open) document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
   }, [open])
 
   return (
     <>
       <button
         id="btn-nuevo-aviso"
+        type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 transition-all"
+        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition-all hover:bg-indigo-500 active:scale-95 min-[430px]:flex-none"
       >
-        <Megaphone className="w-4 h-4" />
+        <Megaphone className="h-4 w-4 shrink-0" />
         Nuevo aviso
       </button>
 
@@ -74,47 +76,49 @@ export default function NuevoAvisoModal({
             role="dialog"
             aria-modal="true"
             aria-label="Nuevo aviso"
-            className="modal-panel-safe bg-white rounded-[24px] shadow-2xl max-w-lg flex flex-col"
+            className="modal-panel-safe flex max-w-lg flex-col rounded-[24px] bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 shrink-0">
-              <h2 className="text-base font-bold text-[#171923]">Nuevo aviso</h2>
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-6 sm:pb-4 sm:pt-5">
+              <h2 className="min-w-0 break-words text-base font-bold text-[#171923]">Nuevo aviso</h2>
               <button
+                type="button"
                 onClick={() => setOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-slate-100"
                 aria-label="Cerrar"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             {pendiente ? (
-              <div className="modal-body-safe px-6 py-12 flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-4">
+              <div className="modal-body-safe flex flex-col items-center px-5 py-10 text-center sm:px-6 sm:py-12">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
                   <span className="text-2xl">⏳</span>
                 </div>
-                <h3 className="text-xl font-bold text-[#171923] mb-2">Aviso en revisión</h3>
-                <p className="text-sm text-gray-500 mb-6">
+                <h3 className="mb-2 text-xl font-bold text-[#171923]">Aviso en revisión</h3>
+                <p className="mb-6 text-sm text-gray-500">
                   Tu aviso global ha sido enviado y será publicado una vez que sea aprobado por un administrador o pastor general.
                 </p>
                 <button
+                  type="button"
                   onClick={() => { setOpen(false); setPendiente(false) }}
-                  className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition-colors"
+                  className="min-h-11 rounded-xl bg-slate-100 px-6 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200"
                 >
                   Cerrar
                 </button>
               </div>
             ) : (
-              <form action={action} className="min-h-0 flex flex-1 flex-col overflow-hidden">
-                <div className="modal-body-safe px-6 py-5 space-y-4 flex-1">
+              <form action={action} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div className="modal-body-safe flex-1 space-y-4 px-4 py-4 sm:px-6 sm:py-5">
                   {state?.error && (
-                    <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-600">
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
                       {state.error}
                     </div>
                   )}
 
                   <div className="space-y-1.5">
-                    <label htmlFor="aviso-ministerio" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <label htmlFor="aviso-ministerio" className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Publicar en
                     </label>
                     <div className="relative">
@@ -122,7 +126,7 @@ export default function NuevoAvisoModal({
                         id="aviso-ministerio"
                         name="ministerio_id"
                         required={!esPastorAdmin}
-                        className="w-full appearance-none rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 pr-10 text-sm text-[#171923] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
+                        className="w-full appearance-none rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 pr-10 text-base text-[#171923] transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm"
                       >
                         {esPastorAdmin && (
                           <option value="">🌐 Todos los ministerios</option>
@@ -131,12 +135,12 @@ export default function NuevoAvisoModal({
                           <option key={m.id} value={m.id}>{m.nombre}</option>
                         ))}
                       </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="aviso-titulo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <label htmlFor="aviso-titulo" className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Título
                     </label>
                     <input
@@ -146,12 +150,12 @@ export default function NuevoAvisoModal({
                       placeholder="Ej: Reunión de líderes este sábado"
                       required
                       maxLength={120}
-                      className="w-full rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 text-sm text-[#171923] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
+                      className="w-full rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 text-base text-[#171923] placeholder:text-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="aviso-cuerpo" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <label htmlFor="aviso-cuerpo" className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Mensaje
                     </label>
                     <textarea
@@ -160,21 +164,21 @@ export default function NuevoAvisoModal({
                       rows={4}
                       placeholder="Escribe aquí los detalles del aviso..."
                       required
-                      className="w-full rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 text-sm text-[#171923] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all resize-none"
+                      className="w-full resize-none rounded-xl border border-slate-200 bg-[#f4f5f9] px-4 py-3 text-base text-[#171923] placeholder:text-gray-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm"
                     />
                   </div>
                 </div>
 
-                <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
                   <button
                     id="btn-publicar-aviso"
                     type="submit"
                     disabled={pending}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-all active:scale-95"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition-all hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {pending ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Publicando...
                       </>
                     ) : (
