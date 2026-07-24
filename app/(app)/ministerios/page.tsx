@@ -39,20 +39,20 @@ export default async function MinisteriosPage() {
   const allMinisterios = ministeriosActivos || []
 
   return (
-    <main className="min-h-screen bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:px-6 max-w-3xl mx-auto">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#171923]">Ministerios</h1>
-        <p className="text-sm sm:text-base text-gray-500 mt-1 max-w-2xl">
+    <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:px-6">
+      <header className="mb-6 min-w-0 sm:mb-8">
+        <h1 className="break-words text-2xl font-bold text-[#171923] sm:text-3xl">Ministerios</h1>
+        <p className="mt-1 max-w-2xl break-words text-sm text-gray-500 sm:text-base">
           Descubre e intégrate a los ministerios de la iglesia
         </p>
       </header>
 
       {allMinisterios.length === 0 ? (
-        <div className="text-center py-12 px-4 border border-slate-100 rounded-[20px] bg-white shadow-sm">
-          <p className="text-gray-500">No hay ministerios activos actualmente.</p>
+        <div className="rounded-[20px] border border-slate-100 bg-white px-4 py-12 text-center shadow-sm">
+          <p className="break-words text-gray-500">No hay ministerios activos actualmente.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2">
           {allMinisterios.map((min: any) => {
             const mem = membresiaMap.get(min.id) as any
             const esMiembro = !!mem
@@ -67,41 +67,41 @@ export default async function MinisteriosPage() {
                   style={{ backgroundColor: min.color_primario || '#6366f1' }}
                 />
 
-                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                   <div
-                    className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-2xl flex items-center justify-center text-2xl border border-slate-100 shadow-inner"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-100 text-2xl shadow-inner sm:h-14 sm:w-14"
                     style={{ backgroundColor: `${min.color_primario || '#6366f1'}12` }}
                   >
                     {min.emoji}
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="text-lg sm:text-xl font-bold text-[#171923] leading-tight break-words min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-col items-start gap-2 min-[380px]:flex-row min-[380px]:justify-between">
+                      <h2 className="min-w-0 break-words text-lg font-bold leading-tight text-[#171923] sm:text-xl">
                         {min.nombre}
                       </h2>
                       {esLider && (
-                        <span className="shrink-0 text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                        <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">
                           Líder
                         </span>
                       )}
                       {esMiembro && !esLider && (
-                        <span className="shrink-0 text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                        <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
                           Miembro
                         </span>
                       )}
                     </div>
 
                     {min.descripcion ? (
-                      <p className="text-sm text-gray-500 mt-1.5 leading-relaxed line-clamp-2">
+                      <p className="mt-1.5 line-clamp-2 break-words text-sm leading-relaxed text-gray-500">
                         {min.descripcion}
                       </p>
                     ) : (
-                      <p className="text-sm text-gray-400 mt-1.5">Conoce y sirve junto a este ministerio.</p>
+                      <p className="mt-1.5 break-words text-sm text-gray-400">Conoce y sirve junto a este ministerio.</p>
                     )}
 
                     {!esMiembro && (
-                      <div className="mt-4">
+                      <div className="mt-4 min-w-0">
                         <SolicitarIngresoBoton ministerioId={min.id} estadoActual={estadoSolicitud || 'ninguno'} />
                       </div>
                     )}
@@ -110,7 +110,7 @@ export default async function MinisteriosPage() {
               </>
             )
 
-            const baseClasses = 'group relative overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 sm:p-5 shadow-[0_6px_20px_rgba(20,24,40,0.06)] transition-all min-h-[132px]'
+            const baseClasses = 'group relative min-h-[132px] min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(20,24,40,0.06)] transition-all sm:p-5'
 
             if (esMiembro) {
               return (
