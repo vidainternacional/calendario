@@ -1,6 +1,6 @@
 # FASE C — Panel Pastoral
 
-Estado: ACTIVA — BIBLIOTECA PASTORAL EN PROGRESO
+Estado: ACTIVA — MATERIALES DE ESTUDIO Y DISTRIBUCIÓN EN PROGRESO
 
 Objetivo: construir herramientas pastorales para preparar, organizar, conservar y distribuir contenido espiritual dentro de Vida Internacional.
 
@@ -32,8 +32,8 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 2. Definición de permisos, navegación y estructura del panel. — COMPLETADO
 3. Gestión de versículos y colecciones pastorales. — COMPLETADO
 4. Creación y organización de bosquejos. — COMPLETADO
-5. Biblioteca de materiales. — EN PROGRESO
-6. Materiales de estudio y distribución. — PENDIENTE
+5. Biblioteca de materiales. — COMPLETADO
+6. Materiales de estudio y distribución. — EN PROGRESO
 7. Revisión integral, pruebas y cierre documental. — PENDIENTE
 
 ## Diagnóstico técnico y funcional
@@ -117,6 +117,29 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Despliegue final: `dpl_5DzC2kwYcLgBf4rQVrKTSdz8FdRC` — `READY`.
 - Validación funcional en producción confirmada por el usuario el 2026-07-24.
 
+## Bloque completado: Biblioteca Pastoral
+
+### Funciones disponibles
+
+- Crear y organizar archivos y enlaces privados por pastor.
+- Clasificar mediante categoría, descripción y etiquetas.
+- Buscar y filtrar recursos desde una interfaz responsive.
+- Abrir, editar y eliminar recursos con permisos por propietario.
+- Almacenar imágenes, PDF, documentos, presentaciones, audio y video de hasta 25 MB por archivo.
+- Generar accesos temporales firmados para los archivos privados.
+- Seleccionar recursos desde los paquetes pastorales.
+- Subir archivos y agregar enlaces directamente desde `Preparar`, registrándolos también en la Biblioteca Pastoral.
+- Utilizar imágenes en diapositivas y relacionar un PDF de presentación.
+
+### Evidencia
+
+- Acciones seguras de biblioteca: `3fd8f2983c6e4ba8cd8f5809b174c7f71ce118ea`.
+- Interfaz y página: `08adb21ccf8667e78a6b13c160e473b925d01a6a` y `ea8259061b56ceeb3f456b9063f2cfcd2b6300b2`.
+- Acceso desde el Centro Pastoral: `652ca2393350bc267e42e16ef97fcb399bf3c5b3`.
+- Carga directa desde paquetes: `0f7a39c6131c5faec8b02d09fb87ff890f83cf4e` y `15493dd9424846ccb86c8cd19903e45f97382f0d`.
+- Despliegue consolidado: `dpl_BMuGcKqvTbTrz5i8Zsxg48k7TwYH` — `READY`.
+- Validación visual y funcional confirmada por el usuario el 2026-07-24.
+
 ## Criterios de cierre de fase
 
 - El pastor puede acceder al panel con permisos correctos.
@@ -131,4 +154,4 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 
 ## Próximo bloque
 
-Completar y validar la Biblioteca Pastoral; después implementar Materiales de Estudio y Distribución con relaciones entre bosquejos, colecciones, recursos y audiencia final.
+Completar Materiales de Estudio y Distribución: enlace público seguro, audiencia, publicación y experiencia de lectura para la congregación.
