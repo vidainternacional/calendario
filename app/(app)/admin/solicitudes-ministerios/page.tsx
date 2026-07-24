@@ -8,28 +8,42 @@ export default async function SolicitudesMinisteriosAdminPage() {
 
   const { data: solicitudes, error } = await (supabase as any)
     .from('ministerio_solicitudes_ingreso')
-    .select(`
-      id,
-      profile_id,
-      ministerio_id,
-      created_at,
-      profiles:profile_id (
-        nombre_completo,
-        telefono,
-        email
-      ),
-      ministerios:ministerio_id (
-        nombre,
-        color_primario,
-        emoji
-      )
-    `)
+    .select('id, profile_id, ministerio_id, created_at')
     .eq('estado', 'pendiente')
     .order('created_at', { ascending: false })
 
   if (error) console.error('[Admin] Error solicitudes de ministerios:', error)
 
-  const items = solicitudes || []
+  const solicitudesBase = solicitudes || []
+  const profileIds = [...new Set(solicitudesBase.map((item: any) => item.profile_id).filter(Boolean))]
+  const ministerioIds = [...new Set(solicitudesBase.map((item: any) => item.ministerio_id).filter(Boolean))]
+
+  const [profilesReq, ministeriosReq] = await Promise.all([
+    profileIds.length > 0
+      ? supabase
+          .from('profiles')
+          .select('id, nombre_completo, telefono, email')
+          .in('id', profileIds)
+      : Promise.resolve({ data: [], error: null }),
+    ministerioIds.length > 0
+      ? supabase
+          .from('ministerios')
+          .select('id, nombre, color_primario, emoji')
+          .in('id', ministerioIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (profilesReq.error) console.error('[Admin] Error perfiles de solicitudes:', profilesReq.error)
+  if (ministeriosReq.error) console.error('[Admin] Error ministerios de solicitudes:', ministeriosReq.error)
+
+  const profilesMap = new Map((profilesReq.data || []).map((profile: any) => [profile.id, profile]))
+  const ministeriosMap = new Map((ministeriosReq.data || []).map((ministerio: any) => [ministerio.id, ministerio]))
+
+  const items = solicitudesBase.map((solicitud: any) => ({
+    ...solicitud,
+    profiles: profilesMap.get(solicitud.profile_id) || null,
+    ministerios: ministeriosMap.get(solicitud.ministerio_id) || null,
+  }))
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl overflow-x-hidden bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
