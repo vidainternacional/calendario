@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { BookOpen, CalendarDays, Church } from 'lucide-react'
+import { BookOpen, CalendarDays, Church, LockKeyhole, ShieldAlert } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = { title: 'Material Pastoral' }
@@ -14,6 +15,36 @@ function etiquetaAudiencia(audiencia: string) {
   }[audiencia] ?? 'Iglesia'
 }
 
+function AccesoRestringido({ slug, audiencia, requiereLogin }: { slug: string; audiencia: string; requiereLogin: boolean }) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#f7f7fb] px-4 py-10">
+      <section className="w-full max-w-lg rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-sm sm:p-10">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
+          {requiereLogin ? <LockKeyhole className="h-7 w-7" /> : <ShieldAlert className="h-7 w-7" />}
+        </span>
+        <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Material para {etiquetaAudiencia(audiencia).toLowerCase()}</p>
+        <h1 className="mt-2 text-2xl font-bold text-slate-950">
+          {requiereLogin ? 'Inicia sesión para continuar' : 'Este material requiere otro nivel de acceso'}
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          {requiereLogin
+            ? 'El pastor compartió este contenido con miembros registrados de Vida Internacional.'
+            : 'Tu cuenta está activa, pero este contenido fue dirigido a un equipo o rol diferente.'}
+        </p>
+        {requiereLogin ? (
+          <Link href={`/login?next=${encodeURIComponent(`/material/${slug}`)}`} className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-indigo-600 px-5 text-sm font-bold text-white">
+            Iniciar sesión
+          </Link>
+        ) : (
+          <Link href="/inicio" className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-5 text-sm font-bold text-slate-700">
+            Volver al inicio
+          </Link>
+        )}
+      </section>
+    </main>
+  )
+}
+
 export default async function MaterialPublicoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   if (!/^[0-9a-f-]{36}$/i.test(slug)) notFound()
@@ -23,6 +54,14 @@ export default async function MaterialPublicoPage({ params }: { params: Promise<
   if (error || !data) notFound()
 
   const material = data as any
+  if (material.access === 'login_required') {
+    return <AccesoRestringido slug={slug} audiencia={material.audiencia} requiereLogin />
+  }
+  if (material.access === 'forbidden') {
+    return <AccesoRestringido slug={slug} audiencia={material.audiencia} requiereLogin={false} />
+  }
+  if (material.access !== 'granted') notFound()
+
   const bosquejo = material.bosquejo as any | null
   const coleccion = material.coleccion as any | null
   const puntos = Array.isArray(bosquejo?.puntos) ? bosquejo.puntos : []
@@ -61,10 +100,7 @@ export default async function MaterialPublicoPage({ params }: { params: Promise<
             </div>
           </section>}
 
-          {bosquejo?.introduccion && <section>
-            <h2 className="text-xl font-bold text-slate-950">Introducción</h2>
-            <p className="mt-3 whitespace-pre-wrap text-base leading-8 text-slate-700">{bosquejo.introduccion}</p>
-          </section>}
+          {bosquejo?.introduccion && <section><h2 className="text-xl font-bold text-slate-950">Introducción</h2><p className="mt-3 whitespace-pre-wrap text-base leading-8 text-slate-700">{bosquejo.introduccion}</p></section>}
 
           {puntos.length > 0 && <section>
             <h2 className="text-xl font-bold text-slate-950">Desarrollo</h2>
@@ -77,15 +113,9 @@ export default async function MaterialPublicoPage({ params }: { params: Promise<
             </div>
           </section>}
 
-          {bosquejo?.conclusion && <section>
-            <h2 className="text-xl font-bold text-slate-950">Conclusión</h2>
-            <p className="mt-3 whitespace-pre-wrap text-base leading-8 text-slate-700">{bosquejo.conclusion}</p>
-          </section>}
+          {bosquejo?.conclusion && <section><h2 className="text-xl font-bold text-slate-950">Conclusión</h2><p className="mt-3 whitespace-pre-wrap text-base leading-8 text-slate-700">{bosquejo.conclusion}</p></section>}
 
-          {material.instrucciones && <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-amber-900">Aplicación para la semana</h2>
-            <p className="mt-3 whitespace-pre-wrap text-base leading-8 text-amber-950/80">{material.instrucciones}</p>
-          </section>}
+          {material.instrucciones && <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6"><h2 className="text-lg font-bold text-amber-900">Aplicación para la semana</h2><p className="mt-3 whitespace-pre-wrap text-base leading-8 text-amber-950/80">{material.instrucciones}</p></section>}
         </div>
       </article>
     </main>
