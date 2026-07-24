@@ -1,6 +1,6 @@
 # FASE C — Panel Pastoral
 
-Estado: ACTIVA — MATERIALES DE ESTUDIO Y DISTRIBUCIÓN EN PROGRESO
+Estado: ACTIVA — REVISIÓN INTEGRAL Y CIERRE DOCUMENTAL EN PROGRESO
 
 Objetivo: construir herramientas pastorales para preparar, organizar, conservar y distribuir contenido espiritual dentro de Vida Internacional.
 
@@ -33,8 +33,8 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 3. Gestión de versículos y colecciones pastorales. — COMPLETADO
 4. Creación y organización de bosquejos. — COMPLETADO
 5. Biblioteca de materiales. — COMPLETADO
-6. Materiales de estudio y distribución. — EN PROGRESO
-7. Revisión integral, pruebas y cierre documental. — PENDIENTE
+6. Materiales de estudio y distribución. — COMPLETADO
+7. Revisión integral, pruebas y cierre documental. — EN PROGRESO
 
 ## Diagnóstico técnico y funcional
 
@@ -131,15 +131,43 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Seleccionar recursos desde los paquetes pastorales.
 - Subir archivos y agregar enlaces directamente desde `Preparar`, registrándolos también en la Biblioteca Pastoral.
 - Utilizar imágenes en diapositivas y relacionar un PDF de presentación.
+- Mostrar miniaturas seguras para imágenes y documentos.
+- Abrir recursos dentro de la aplicación.
+- Mantener centrados y utilizables los formularios de Archivo y Enlace en móvil y escritorio.
 
 ### Evidencia
 
 - Acciones seguras de biblioteca: `3fd8f2983c6e4ba8cd8f5809b174c7f71ce118ea`.
 - Interfaz y página: `08adb21ccf8667e78a6b13c160e473b925d01a6a` y `ea8259061b56ceeb3f456b9063f2cfcd2b6300b2`.
-- Acceso desde el Centro Pastoral: `652ca2393350bc267e42e16ef97fcb399bf3c5b3`.
+- Acceso desde el Centro Pastoral: `652ca2393350bc267e42e16dd8db5305f7ff1`.
 - Carga directa desde paquetes: `0f7a39c6131c5faec8b02d09fb87ff890f83cf4e` y `15493dd9424846ccb86c8cd19903e45f97382f0d`.
-- Despliegue consolidado: `dpl_BMuGcKqvTbTrz5i8Zsxg48k7TwYH` — `READY`.
+- Vistas previas y apertura interna: `71590a977eb6ca75b3c451a2cce37604b8adee35`, `57c488e3fa27c78c9799b5dbcba8e7d0475d95c9` y `0cbc7a52a9b3ca4c8764a919b0a8ed2782d15001`.
+- Modales centrados: `81941241a5498c95ebbf0eb59fe816dfd97b40f0`.
+- Despliegue consolidado: `dpl_2BFvs9KHFaSvUfVxL9ZrwKViiuV5` — `READY`.
 - Validación visual y funcional confirmada por el usuario el 2026-07-24.
+
+## Bloque completado: materiales de estudio y distribución
+
+### Funciones disponibles
+
+- Reunir bosquejo, colección de versículos y recursos en un paquete pastoral.
+- Preparar una guía congregacional y una presentación independiente.
+- Publicar materiales dentro del Inicio de la aplicación.
+- Controlar audiencia y permisos de acceso.
+- Abrir publicaciones usando `public_slug` o el `id` antiguo del paquete.
+- Conservar el destino correcto cuando el material requiere inicio de sesión.
+- Imprimir o guardar la guía como PDF.
+- Copiar el contenido completo.
+- Compartir desde el dispositivo y usar el enlace como opción secundaria.
+- Mantener el material dentro de la aplicación durante el flujo normal.
+
+### Evidencia
+
+- Publicación segura y permisos: `2d8b1199eb2d53239ac5c66c45dbf9735c179c12`, `805e23a07bd1f035d5c23468d8724852d4a5a642` y `0b27f1b941209ca30f260b8998f0f78e93d77e57`.
+- Publicación dentro de Inicio: `07918bf16e54bc10d0fe15e89b5c9746d1d456c6`, `d006e0b3f348545b1f307f8df9f9cf6555ab061a` y `0b35f8e11466d815cfb67a51e87341b0c21131ea`.
+- Compatibilidad de enlaces y control de acceso: `ec92ddc6a542e4057ef8306df0cb213e1eccd9ce` y `fe19a45842e4d0406a45dfc7ac2017b3de86bac5`.
+- Despliegue consolidado: `dpl_AhRdaZqPBCM4Gy6cRZWAeNJQohKw` — producción.
+- Validación funcional confirmada por el usuario el 2026-07-24.
 
 ## Requisitos transversales registrados para fases posteriores
 
@@ -152,7 +180,6 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Las necesidades de ayuda y situaciones específicas deberán poder gestionarse con audiencia, responsables, estados y confidencialidad.
 - Las festividades y mensajes especiales deberán ser administrables por pastores o administradores, sin modificar código y de acuerdo con la doctrina de Vida Internacional.
 - Los canales oficiales de YouTube, Facebook, Instagram y TikTok podrán integrarse dentro de la aplicación; solo estos destinos externos podrán sacar al usuario cuando corresponda.
-- La Biblioteca Pastoral deberá incorporar miniaturas o vistas previas para imágenes y documentos, similares a una biblioteca visual.
 - El panel administrativo futuro deberá medir actividad agregada, uso de funciones, consumo de IA y tendencias, protegiendo datos pastorales sensibles.
 
 ## Decisión gradual para presentaciones y proyección
@@ -178,6 +205,13 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Los estados de carga, error, vacío y retroalimentación conservan el estándar de la FASE B.
 - La evidencia final queda registrada antes de actualizar el documento maestro.
 
+## Revisión integral en progreso
+
+- No se detectaron errores de ejecución en las rutas pastorales durante la revisión de producción del 2026-07-24.
+- La publicación por `public_slug` y por `id` antiguo fue validada con un paquete real.
+- La apertura segura, los permisos y el regreso al material después del login quedaron corregidos.
+- Queda pendiente revisar el Centro Pastoral como experiencia completa, confirmar estados vacíos/carga/error y documentar capacidad de almacenamiento y límites antes del cierre.
+
 ## Próximo bloque
 
-Completar la publicación interna de Materiales de Estudio en el Inicio de la aplicación y añadir vistas previas seguras en la Biblioteca Pastoral. El enlace externo permanecerá como opción secundaria de distribución.
+Revisar el Centro Pastoral completo como un único flujo de trabajo, corregir cualquier inconsistencia de navegación o retroalimentación y completar la documentación de almacenamiento, límites y evidencia final. No cerrar la FASE C hasta que el documento maestro refleje explícitamente su cierre.
