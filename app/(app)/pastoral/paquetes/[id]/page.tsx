@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
 import CargaRapidaRecursos from '@/components/pastoral/CargaRapidaRecursos'
+import PackageDistributionControls from '@/components/pastoral/PackageDistributionControls'
 
 export const metadata: Metadata = { title: 'Paquete Pastoral' }
 
@@ -21,7 +22,7 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
 
   const { data: paquete } = await (supabase as any)
     .from('pastoral_paquetes')
-    .select('id, titulo, descripcion_publica, instrucciones, bosquejo_id, coleccion_id, recurso_ids, estado, presentacion_diapositivas, presentacion_pdf_recurso_id')
+    .select('id, titulo, descripcion_publica, instrucciones, bosquejo_id, coleccion_id, recurso_ids, estado, presentacion_diapositivas, presentacion_pdf_recurso_id, audiencia, publicado, public_slug')
     .eq('id', id).eq('profile_id', user.id).maybeSingle()
   if (!paquete) notFound()
 
@@ -62,6 +63,13 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
       </header>
 
       <CargaRapidaRecursos />
+
+      <PackageDistributionControls
+        paqueteId={paquete.id}
+        initialAudience={(paquete.audiencia ?? 'iglesia') as any}
+        initialPublished={Boolean(paquete.publicado)}
+        publicSlug={paquete.public_slug}
+      />
 
       <PaqueteDetalleClient
         paquete={paquete as any}
