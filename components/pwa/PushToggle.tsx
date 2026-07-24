@@ -24,7 +24,6 @@ export default function PushToggle() {
   const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check if push is supported
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
       setPermission('unsupported')
       return
@@ -32,7 +31,6 @@ export default function PushToggle() {
 
     setPermission(Notification.permission as PermissionState)
 
-    // Check if there's an existing subscription
     navigator.serviceWorker.ready.then((reg) => {
       reg.pushManager.getSubscription().then((sub) => {
         if (sub) setCurrentEndpoint(sub.endpoint)
@@ -90,9 +88,9 @@ export default function PushToggle() {
 
   if (permission === 'unsupported') {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-400">
-        <BellOff className="w-4 h-4" />
-        <span>Tu navegador no soporta notificaciones</span>
+      <div className="flex min-w-0 items-start gap-2 text-sm text-gray-400">
+        <BellOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <span className="min-w-0 break-words">Tu navegador no soporta notificaciones</span>
       </div>
     )
   }
@@ -100,18 +98,18 @@ export default function PushToggle() {
   const isActive = permission === 'granted' && !!currentEndpoint
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-start justify-between gap-4">
+      <div className="flex min-w-0 flex-1 items-start gap-2">
         {isActive
-          ? <Bell className="w-4 h-4 text-indigo-500" />
-          : <BellOff className="w-4 h-4 text-gray-400" />
+          ? <Bell className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" aria-hidden="true" />
+          : <BellOff className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
         }
-        <div>
-          <p className="text-sm font-medium text-[#171923]">
+        <div className="min-w-0">
+          <p className="break-words text-sm font-medium text-[#171923]">
             {isActive ? 'Notificaciones activas' : 'Notificaciones desactivadas'}
           </p>
           {permission === 'denied' && (
-            <p className="text-xs text-rose-500 mt-0.5">
+            <p className="mt-0.5 break-words text-xs text-rose-500">
               Permiso bloqueado en el navegador. Ve a Configuración para habilitarlo.
             </p>
           )}
@@ -121,22 +119,26 @@ export default function PushToggle() {
       {permission !== 'denied' && (
         <button
           id="push-toggle-btn"
+          type="button"
           onClick={isActive ? desactivarNotificaciones : activarNotificaciones}
           disabled={loading}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-            isActive ? 'bg-indigo-500' : 'bg-slate-200'
-          }`}
+          className="inline-flex min-h-11 min-w-12 shrink-0 items-center justify-center rounded-xl transition-colors focus:outline-none disabled:opacity-50"
           aria-label={isActive ? 'Desactivar notificaciones push' : 'Activar notificaciones push'}
+          aria-pressed={isActive}
         >
-          {loading ? (
-            <Loader2 className="w-3 h-3 text-white absolute left-1/2 -translate-x-1/2 animate-spin" />
-          ) : (
-            <span
-              className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                isActive ? 'translate-x-5' : 'translate-x-0.5'
-              }`}
-            />
-          )}
+          <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            isActive ? 'bg-indigo-500' : 'bg-slate-200'
+          }`}>
+            {loading ? (
+              <Loader2 className="absolute left-1/2 h-3 w-3 -translate-x-1/2 animate-spin text-white" aria-hidden="true" />
+            ) : (
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                  isActive ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            )}
+          </span>
         </button>
       )}
     </div>
