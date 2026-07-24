@@ -90,6 +90,28 @@ button:disabled,
   outline-offset: 3px;
 }
 
+/* Jerarquía transversal de acciones de texto. No afecta botones circulares o controles solo-icono. */
+:where(button, a[href], [role="button"])[class*="bg-indigo-"][class*="text-white"]:not([class*="rounded-full"]),
+:where(button, a[href], [role="button"])[class*="bg-violet-"][class*="text-white"]:not([class*="rounded-full"]),
+:where(button, a[href], [role="button"])[class*="bg-purple-"][class*="text-white"]:not([class*="rounded-full"]) {
+  min-height: 2.75rem;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+:where(button, a[href], [role="button"])[class*="bg-rose-"][class*="text-white"]:not([class*="rounded-full"]),
+:where(button, a[href], [role="button"])[class*="bg-red-"][class*="text-white"]:not([class*="rounded-full"]) {
+  min-height: 2.75rem;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(127, 29, 29, 0.08);
+}
+
+:where(button, a[href], [role="button"])[class*="border-slate-"][class*="bg-white"]:not([class*="rounded-full"]),
+:where(button, a[href], [role="button"])[class*="border-slate-"][class*="bg-slate-50"]:not([class*="rounded-full"]) {
+  min-height: 2.75rem;
+  font-weight: 600;
+}
+
 @keyframes page-enter {
   from {
     opacity: 0;
