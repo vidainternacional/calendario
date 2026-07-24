@@ -49,7 +49,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
 
   return (
     <main className="pb-28" style={{ fontFamily: fuenteCuerpo }}>
-      <section className="relative isolate min-h-[330px] overflow-hidden text-white sm:min-h-[370px]">
+      <section className="relative isolate min-h-[330px] overflow-hidden rounded-b-[30px] text-white shadow-[0_14px_36px_rgba(15,23,42,0.16)] sm:min-h-[370px] sm:rounded-b-[36px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
