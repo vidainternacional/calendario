@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { HandHeart, UsersRound } from 'lucide-react'
 import SolicitarIngresoBoton from '@/components/ministerios/SolicitarIngresoBoton'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const metadata: Metadata = {
   title: 'Ministerios',
@@ -37,6 +39,7 @@ export default async function MinisteriosPage() {
 
   const solicitudMap = new Map(solicitudes?.map((s: any) => [s.ministerio_id, s.estado]))
   const allMinisterios = ministeriosActivos || []
+  const sinMembresias = !membresias || membresias.length === 0
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:px-6">
@@ -48,89 +51,109 @@ export default async function MinisteriosPage() {
       </header>
 
       {allMinisterios.length === 0 ? (
-        <div className="rounded-[20px] border border-slate-100 bg-white px-4 py-12 text-center shadow-sm">
-          <p className="break-words text-gray-500">No hay ministerios activos actualmente.</p>
-        </div>
+        <EmptyState
+          icon={UsersRound}
+          title="No hay ministerios disponibles"
+          description="Cuando se habiliten ministerios activos, aparecerán aquí para que puedas conocerlos e integrarte."
+          compact
+          className="bg-white"
+        />
       ) : (
-        <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-          {allMinisterios.map((min: any) => {
-            const mem = membresiaMap.get(min.id) as any
-            const esMiembro = !!mem
-            const esLider = mem?.es_lider
-            const estadoSolicitud = solicitudMap.get(min.id) as 'pendiente' | 'rechazada' | undefined
+        <>
+          {sinMembresias && (
+            <section className="mb-5 flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4 text-indigo-950 shadow-sm sm:p-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+                <HandHeart className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold">Encuentra dónde servir</h2>
+                <p className="mt-1 text-sm leading-6 text-indigo-800/80">
+                  Revisa los ministerios disponibles y toca <strong>Solicitar ingreso</strong> en el que deseas integrarte. Recibirás una respuesta cuando revisen tu solicitud.
+                </p>
+              </div>
+            </section>
+          )}
 
-            const CardContent = (
-              <>
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-y-0 left-0 w-1.5"
-                  style={{ backgroundColor: min.color_primario || '#6366f1' }}
-                />
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+            {allMinisterios.map((min: any) => {
+              const mem = membresiaMap.get(min.id) as any
+              const esMiembro = !!mem
+              const esLider = mem?.es_lider
+              const estadoSolicitud = solicitudMap.get(min.id) as 'pendiente' | 'rechazada' | undefined
 
-                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+              const CardContent = (
+                <>
                   <div
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-100 text-2xl shadow-inner sm:h-14 sm:w-14"
-                    style={{ backgroundColor: `${min.color_primario || '#6366f1'}12` }}
-                  >
-                    {min.emoji}
-                  </div>
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-1.5"
+                    style={{ backgroundColor: min.color_primario || '#6366f1' }}
+                  />
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 flex-col items-start gap-2 min-[380px]:flex-row min-[380px]:justify-between">
-                      <h2 className="min-w-0 break-words text-lg font-bold leading-tight text-[#171923] sm:text-xl">
-                        {min.nombre}
-                      </h2>
-                      {esLider && (
-                        <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">
-                          Líder
-                        </span>
-                      )}
-                      {esMiembro && !esLider && (
-                        <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
-                          Miembro
-                        </span>
-                      )}
+                  <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                    <div
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-100 text-2xl shadow-inner sm:h-14 sm:w-14"
+                      style={{ backgroundColor: `${min.color_primario || '#6366f1'}12` }}
+                    >
+                      {min.emoji}
                     </div>
 
-                    {min.descripcion ? (
-                      <p className="mt-1.5 line-clamp-2 break-words text-sm leading-relaxed text-gray-500">
-                        {min.descripcion}
-                      </p>
-                    ) : (
-                      <p className="mt-1.5 break-words text-sm text-gray-400">Conoce y sirve junto a este ministerio.</p>
-                    )}
-
-                    {!esMiembro && (
-                      <div className="mt-4 min-w-0">
-                        <SolicitarIngresoBoton ministerioId={min.id} estadoActual={estadoSolicitud || 'ninguno'} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-col items-start gap-2 min-[380px]:flex-row min-[380px]:justify-between">
+                        <h2 className="min-w-0 break-words text-lg font-bold leading-tight text-[#171923] sm:text-xl">
+                          {min.nombre}
+                        </h2>
+                        {esLider && (
+                          <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">
+                            Líder
+                          </span>
+                        )}
+                        {esMiembro && !esLider && (
+                          <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                            Miembro
+                          </span>
+                        )}
                       </div>
-                    )}
+
+                      {min.descripcion ? (
+                        <p className="mt-1.5 line-clamp-2 break-words text-sm leading-relaxed text-gray-500">
+                          {min.descripcion}
+                        </p>
+                      ) : (
+                        <p className="mt-1.5 break-words text-sm text-gray-400">Conoce y sirve junto a este ministerio.</p>
+                      )}
+
+                      {!esMiembro && (
+                        <div className="mt-4 min-w-0">
+                          <SolicitarIngresoBoton ministerioId={min.id} estadoActual={estadoSolicitud || 'ninguno'} />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </>
-            )
-
-            const baseClasses = 'group relative min-h-[132px] min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(20,24,40,0.06)] transition-all sm:p-5'
-
-            if (esMiembro) {
-              return (
-                <Link
-                  key={min.id}
-                  href={`/ministerios/${min.id}/avisos`}
-                  className={`${baseClasses} hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(20,24,40,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500`}
-                >
-                  {CardContent}
-                </Link>
+                </>
               )
-            }
 
-            return (
-              <div key={min.id} className={baseClasses}>
-                {CardContent}
-              </div>
-            )
-          })}
-        </div>
+              const baseClasses = 'group relative min-h-[132px] min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(20,24,40,0.06)] transition-all sm:p-5'
+
+              if (esMiembro) {
+                return (
+                  <Link
+                    key={min.id}
+                    href={`/ministerios/${min.id}/avisos`}
+                    className={`${baseClasses} hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(20,24,40,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500`}
+                  >
+                    {CardContent}
+                  </Link>
+                )
+              }
+
+              return (
+                <div key={min.id} className={baseClasses}>
+                  {CardContent}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
     </main>
   )
