@@ -63,12 +63,29 @@ export default function BottomNav() {
                 aria-label={item.name}
                 onPointerEnter={() => router.prefetch(item.href)}
                 onTouchStart={() => router.prefetch(item.href)}
-                className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 transition-colors ${
-                  isActive ? 'text-indigo-500' : 'text-gray-500 hover:text-[#171923]'
+                className={`group flex h-full min-w-0 flex-1 flex-col items-center justify-center px-1 text-gray-500 outline-none motion-safe:transition-[color,transform] motion-safe:duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${
+                  isActive ? 'text-indigo-600' : 'hover:text-[#171923]'
                 }`}
               >
-                <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? 'fill-indigo-500/20' : ''}`} />
-                <span className="app-bottom-nav-label max-w-full truncate text-[10px] font-medium">{item.name}</span>
+                <span
+                  className={`flex min-h-8 min-w-11 items-center justify-center rounded-2xl px-3 motion-safe:transition-[background-color,transform] motion-safe:duration-200 ${
+                    isActive ? 'bg-indigo-50 motion-safe:-translate-y-0.5' : 'bg-transparent'
+                  }`}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className={`h-5 w-5 shrink-0 motion-safe:transition-[transform,fill] motion-safe:duration-200 ${
+                      isActive ? 'scale-105 fill-indigo-500/20' : 'group-active:scale-95'
+                    }`}
+                  />
+                </span>
+                <span
+                  className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] motion-safe:transition-[font-weight,opacity] motion-safe:duration-200 ${
+                    isActive ? 'font-bold opacity-100' : 'font-medium opacity-80'
+                  }`}
+                >
+                  {item.name}
+                </span>
               </Link>
             )
           })}
