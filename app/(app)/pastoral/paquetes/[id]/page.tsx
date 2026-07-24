@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
+import CargaRapidaRecursos from '@/components/pastoral/CargaRapidaRecursos'
 
 export const metadata: Metadata = { title: 'Paquete Pastoral' }
 
@@ -59,6 +60,8 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
         <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Preparar y compartir</h1>
         <p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-500">Prepara la guía congregacional y una presentación independiente para pantalla o proyector.</p>
       </header>
+
+      <CargaRapidaRecursos />
 
       <PaqueteDetalleClient
         paquete={paquete as any}
