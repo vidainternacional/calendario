@@ -111,37 +111,39 @@ export function SkeletonPage({
   cards?: number
 }) {
   return (
-    <main className="mx-auto w-full max-w-3xl pb-28">
-      <div
-        role="status"
-        aria-live="polite"
-        aria-label="Cargando página"
-        className="space-y-6"
-      >
-        <header className="space-y-3">
-          <Skeleton className="h-7 w-44" />
-          <Skeleton className="h-4 w-full max-w-sm" />
-        </header>
+    <main className="min-h-screen bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
+      <div className="mx-auto w-full max-w-3xl">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="Cargando página"
+          className="space-y-6"
+        >
+          <header className="space-y-3">
+            <Skeleton className="h-7 w-44" />
+            <Skeleton className="h-4 w-full max-w-sm" />
+          </header>
 
-        {children ?? (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
-                >
-                  <Skeleton className="h-9 w-9 rounded-xl" />
-                  <Skeleton className="mt-4 h-4 w-3/4" />
-                  <Skeleton className="mt-2 h-3 w-1/2" />
-                </div>
-              ))}
-            </div>
-            <SkeletonList count={cards} />
-          </>
-        )}
+          {children ?? (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                  >
+                    <Skeleton className="h-9 w-9 rounded-xl" />
+                    <Skeleton className="mt-4 h-4 w-3/4" />
+                    <Skeleton className="mt-2 h-3 w-1/2" />
+                  </div>
+                ))}
+              </div>
+              <SkeletonList count={cards} />
+            </>
+          )}
 
-        <span className="sr-only">Cargando página…</span>
+          <span className="sr-only">Cargando página…</span>
+        </div>
       </div>
     </main>
   )
