@@ -48,7 +48,7 @@ export default async function MaterialesPastoralesPage() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Preparar y distribuir</p>
             <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">Materiales de estudio</h1>
-            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">Administre las guías creadas desde sus paquetes, revise su audiencia y abra el enlace que recibirá la congregación.</p>
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">Administre las guías creadas desde sus paquetes, revise su audiencia y abra la publicación que recibirá la congregación.</p>
           </div>
           <Link href="/pastoral/paquetes" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white"><CirclePlus className="h-4 w-4" /> Nuevo material</Link>
         </div>
@@ -74,7 +74,7 @@ export default async function MaterialesPastoralesPage() {
               <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-500"><Share2 className="h-4 w-4" /> Audiencia: {audienciaLabel[material.audiencia] ?? 'Iglesia'}</div>
               <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
                 <Link href={`/pastoral/paquetes/${material.id}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 text-xs font-bold text-white">Administrar <ChevronRight className="h-4 w-4" /></Link>
-                {material.publicado && material.public_slug ? <Link href={`/material/${material.public_slug}`} target="_blank" className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-xs font-bold text-indigo-700"><Eye className="h-4 w-4" /> Ver publicado</Link> : <Link href={`/pastoral/paquetes/${material.id}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700">Publicar</Link>}
+                {material.publicado && material.public_slug ? <Link href={`/material/${material.public_slug}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-xs font-bold text-indigo-700"><Eye className="h-4 w-4" /> Ver publicado</Link> : <Link href={`/pastoral/paquetes/${material.id}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-700">Publicar</Link>}
               </div>
             </article>
           ))}
