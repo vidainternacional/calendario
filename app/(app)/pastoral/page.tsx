@@ -43,7 +43,7 @@ export default async function PastoralPage() {
       iconClass: 'bg-violet-600 text-white',
     },
     {
-      href: '/biblia',
+      href: '/biblia?from=pastoral',
       title: 'Biblia y versículos',
       description: 'Lee, escucha y recupera los versículos que ya guardaste como favoritos.',
       action: 'Abrir Biblia',
@@ -51,7 +51,7 @@ export default async function PastoralPage() {
       iconClass: 'bg-indigo-600 text-white',
     },
     {
-      href: '/estudios/profundo',
+      href: '/estudios/profundo?from=pastoral',
       title: 'Estudio Profundo',
       description: 'Prepara un análisis inicial de un pasaje para apoyar tu estudio y enseñanza.',
       action: 'Comenzar estudio',
@@ -133,26 +133,14 @@ export default async function PastoralPage() {
       <section aria-labelledby="modulos-en-construccion">
         <div className="mb-3">
           <h2 id="modulos-en-construccion" className="text-sm font-bold text-[#171923]">Módulos de esta fase</h2>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-            Se habilitarán por bloques pequeños y verificables.
-          </p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">Se habilitarán por bloques pequeños y verificables.</p>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           {proximos.map(({ title, description, icon: Icon }) => (
-            <article
-              key={title}
-              aria-disabled="true"
-              className="flex min-w-0 items-start gap-3 rounded-[18px] border border-dashed border-slate-300 bg-slate-100/70 p-4"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-500 shadow-sm">
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-bold leading-tight text-slate-700">{title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{description}</p>
-                <p className="mt-2 text-[11px] font-semibold text-slate-400">En construcción</p>
-              </div>
+            <article key={title} aria-disabled="true" className="flex min-w-0 items-start gap-3 rounded-[18px] border border-dashed border-slate-300 bg-slate-100/70 p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-500 shadow-sm"><Icon className="h-5 w-5" aria-hidden="true" /></div>
+              <div className="min-w-0"><h3 className="font-bold leading-tight text-slate-700">{title}</h3><p className="mt-1 text-xs leading-relaxed text-slate-500">{description}</p><p className="mt-2 text-[11px] font-semibold text-slate-400">En construcción</p></div>
             </article>
           ))}
         </div>
