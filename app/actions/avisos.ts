@@ -1,10 +1,17 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
 import { notifyMultipleUsers } from '@/lib/webpush'
 
-export type AvisoState = { error?: string; success?: boolean; pendiente?: boolean } | undefined
+export type AvisoState = {
+  error?: string
+  success?: boolean
+  pendiente?: boolean
+  notificados?: number
+  mensaje?: string
+} | undefined
 
 /**
  * Crea un aviso/publicación.
@@ -30,17 +37,19 @@ export async function crearAviso(
     return { error: 'No autorizado' }
   }
 
-  // Determinar estado: globales de no-pastor/admin quedan pendientes
   const isGlobal = !minIdForm || minIdForm === ''
   let estado = 'aprobado'
 
   if (isGlobal) {
-    const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('rol, es_pastor_general')
+      .eq('id', user.id)
+      .single()
+
     const p = profile as any
     const puedePublicarDirecto = p?.rol === 'administrador' || p?.es_pastor_general
-    if (!puedePublicarDirecto) {
-      estado = 'pendiente'
-    }
+    if (!puedePublicarDirecto) estado = 'pendiente'
   }
 
   const { error } = await (supabase as any).from('publicaciones').insert({
@@ -52,55 +61,109 @@ export async function crearAviso(
     estado,
   })
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
-  // Solo disparar notificación si queda aprobado
+  let notificados = 0
+  let mensaje = estado === 'pendiente'
+    ? 'El aviso fue enviado a revisión.'
+    : 'El aviso fue publicado correctamente.'
+
   if (estado === 'aprobado') {
-    await _enviarNotificacionAviso(supabase, user.id, minIdForm || '', titulo)
+    try {
+      notificados = await _enviarNotificacionAviso(user.id, minIdForm || '', titulo)
+      mensaje = notificados > 0
+        ? `Aviso publicado y enviado a ${notificados} dispositivo${notificados === 1 ? '' : 's'}.`
+        : 'Aviso publicado. No había dispositivos habilitados para recibir esta notificación.'
+    } catch (pushError) {
+      console.error('[avisos] El aviso se publicó, pero falló el reparto push:', pushError)
+      mensaje = 'El aviso fue publicado, pero no se pudo completar el envío de notificaciones.'
+    }
   }
 
   revalidatePath('/avisos')
   revalidatePath('/inicio')
-  return { success: true, pendiente: estado === 'pendiente' }
+  return {
+    success: true,
+    pendiente: estado === 'pendiente',
+    notificados,
+    mensaje,
+  }
 }
 
-async function _enviarNotificacionAviso(supabase: any, autorId: string, minIdForm: string, titulo: string) {
+async function _enviarNotificacionAviso(
+  autorId: string,
+  minIdForm: string,
+  titulo: string
+): Promise<number> {
+  const service = createServiceClient()
+
   const { data: ministerio } = minIdForm
-    ? await supabase.from('ministerios').select('nombre').eq('id', minIdForm).single()
+    ? await service.from('ministerios').select('nombre').eq('id', minIdForm).single()
     : { data: { nombre: 'General' } }
 
   const minNombre = (ministerio as any)?.nombre || 'General'
 
   let targetUserIds: string[] = []
   if (!minIdForm) {
-    const { data: allUsers } = await supabase.from('profiles').select('id').neq('id', autorId)
-    if (allUsers) targetUserIds = allUsers.map((u: any) => u.id)
+    const { data: allUsers, error: usersError } = await service
+      .from('profiles')
+      .select('id')
+      .neq('id', autorId)
+      .eq('activo', true)
+
+    if (usersError) throw usersError
+    targetUserIds = (allUsers || []).map((u: any) => u.id)
   } else {
-    const { data: miembros } = await supabase.from('ministerio_miembros').select('profile_id').eq('ministerio_id', minIdForm).neq('profile_id', autorId)
-    if (miembros) targetUserIds = miembros.map((m: any) => m.profile_id)
-  }
-
-  if (targetUserIds.length > 0) {
-    const { data: prefData } = await supabase
-      .from('notificaciones_preferencias')
+    const { data: miembros, error: miembrosError } = await service
+      .from('ministerio_miembros')
       .select('profile_id')
-      .eq('activo', false)
-      .eq('ministerio_id', minIdForm || 'uuid-00000000-0000-0000-0000-000000000000')
+      .eq('ministerio_id', minIdForm)
+      .neq('profile_id', autorId)
 
-    const disabledIds = new Set(prefData?.map((p: any) => p.profile_id) || [])
-    const finalUserIds = targetUserIds.filter((id: string) => !disabledIds.has(id))
-
-    if (finalUserIds.length > 0) {
-      await notifyMultipleUsers(supabase, finalUserIds, {
-        title: `Nuevo aviso en ${minNombre}`,
-        body: titulo,
-        url: minIdForm ? `/ministerios/${minIdForm}/avisos` : '/avisos',
-        tag: 'aviso_nuevo',
-      })
-    }
+    if (miembrosError) throw miembrosError
+    targetUserIds = (miembros || []).map((m: any) => m.profile_id)
   }
+
+  if (targetUserIds.length === 0) {
+    console.log('[avisos] Sin destinatarios para notificación', { minIdForm })
+    return 0
+  }
+
+  const preferenciasQuery = service
+    .from('notificaciones_preferencias')
+    .select('profile_id')
+    .eq('activo', false)
+
+  const { data: prefData, error: preferenciasError } = minIdForm
+    ? await preferenciasQuery.eq('ministerio_id', minIdForm)
+    : await preferenciasQuery.is('ministerio_id', null)
+
+  if (preferenciasError) {
+    console.warn('[avisos] No se pudieron leer preferencias; se continúa con destinatarios activos:', preferenciasError)
+  }
+
+  const disabledIds = new Set((prefData || []).map((p: any) => p.profile_id))
+  const finalUserIds = targetUserIds.filter((id) => !disabledIds.has(id))
+
+  if (finalUserIds.length === 0) {
+    console.log('[avisos] Todos los destinatarios desactivaron esta categoría')
+    return 0
+  }
+
+  const enviados = await notifyMultipleUsers(service, finalUserIds, {
+    title: `Nuevo aviso en ${minNombre}`,
+    body: titulo,
+    url: minIdForm ? `/ministerios/${minIdForm}/avisos` : '/avisos',
+    tag: minIdForm ? `aviso_${minIdForm}` : 'aviso_general',
+  })
+
+  console.log('[avisos] Reparto push completado', {
+    ministerioId: minIdForm || null,
+    destinatarios: finalUserIds.length,
+    dispositivos: enviados,
+  })
+
+  return enviados
 }
 
 export async function aprobarAviso(avisoId: string) {
@@ -108,13 +171,17 @@ export async function aprobarAviso(avisoId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'No autorizado' }
 
-  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rol, es_pastor_general')
+    .eq('id', user.id)
+    .single()
+
   const p = profile as any
   if (p?.rol !== 'administrador' && !p?.es_pastor_general) {
     return { success: false, error: 'No tienes permisos para aprobar avisos.' }
   }
 
-  // Fetch the aviso to send notification
   const { data: aviso } = await (supabase as any)
     .from('publicaciones')
     .select('titulo, autor_id, ministerio_id')
@@ -128,15 +195,23 @@ export async function aprobarAviso(avisoId: string) {
 
   if (error) return { success: false, error: error.message }
 
-  // Dispatch notification now
+  let notificados = 0
   if (aviso) {
-    await _enviarNotificacionAviso(supabase, aviso.autor_id, aviso.ministerio_id || '', aviso.titulo)
+    try {
+      notificados = await _enviarNotificacionAviso(
+        aviso.autor_id,
+        aviso.ministerio_id || '',
+        aviso.titulo
+      )
+    } catch (pushError) {
+      console.error('[avisos] Aviso aprobado, pero falló el reparto push:', pushError)
+    }
   }
 
   revalidatePath('/avisos/pendientes-aprobacion')
   revalidatePath('/avisos')
   revalidatePath('/inicio')
-  return { success: true }
+  return { success: true, notificados }
 }
 
 export async function rechazarAviso(avisoId: string) {
@@ -144,7 +219,12 @@ export async function rechazarAviso(avisoId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'No autorizado' }
 
-  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rol, es_pastor_general')
+    .eq('id', user.id)
+    .single()
+
   const p = profile as any
   if (p?.rol !== 'administrador' && !p?.es_pastor_general) {
     return { success: false, error: 'No tienes permisos para rechazar avisos.' }
@@ -160,5 +240,3 @@ export async function rechazarAviso(avisoId: string) {
   revalidatePath('/avisos/pendientes-aprobacion')
   return { success: true }
 }
-
-
