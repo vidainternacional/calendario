@@ -1,6 +1,6 @@
 # FASE C — Panel Pastoral
 
-Estado: ACTIVA — BIBLIOTECA PASTORAL PENDIENTE
+Estado: ACTIVA — BIBLIOTECA PASTORAL EN PROGRESO
 
 Objetivo: construir herramientas pastorales para preparar, organizar, conservar y distribuir contenido espiritual dentro de Vida Internacional.
 
@@ -32,7 +32,7 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 2. Definición de permisos, navegación y estructura del panel. — COMPLETADO
 3. Gestión de versículos y colecciones pastorales. — COMPLETADO
 4. Creación y organización de bosquejos. — COMPLETADO
-5. Biblioteca de materiales. — PENDIENTE
+5. Biblioteca de materiales. — EN PROGRESO
 6. Materiales de estudio y distribución. — PENDIENTE
 7. Revisión integral, pruebas y cierre documental. — PENDIENTE
 
@@ -53,6 +53,17 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - La autorización se comprueba en servidor.
 - Biblia y Estudio Profundo se muestran como accesos rápidos secundarios.
 - Colecciones pastorales y bosquejos funcionan como módulos centrales de preparación.
+
+## Decisión de integración pastoral final
+
+- El Centro Pastoral no se considerará una colección de módulos aislados.
+- Colecciones, bosquejos, biblioteca y materiales de estudio formarán un solo flujo de preparación pastoral.
+- Un bosquejo deberá poder vincular versículos, colecciones y recursos de biblioteca.
+- El resultado final deberá poder reunirse como un paquete de prédica o estudio.
+- El paquete final deberá admitir distribución a la iglesia según permisos y audiencia.
+- La distribución deberá contemplar, como mínimo, impresión/PDF, copia, compartir por enlace y envío desde el dispositivo.
+- Al completar los módulos funcionales, el dashboard se rediseñará como un centro de trabajo complementario que muestre progreso, recursos relacionados y acciones siguientes.
+- La capacidad de almacenamiento, consumo mensual, límites del plan y opciones de ampliación se documentarán antes del cierre de la fase, sin bloquear la implementación actual.
 
 ## Bloque completado: colecciones y versículos
 
@@ -113,9 +124,11 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Puede organizar versículos y materiales pastorales.
 - La biblioteca permite localizar contenido de forma clara.
 - Los materiales de estudio pueden prepararse y distribuirse según el alcance definido.
+- Los módulos pastorales pueden relacionarse y reunirse en un paquete final compartible.
+- El Centro Pastoral presenta el flujo completo como una sola experiencia de trabajo.
 - Los estados de carga, error, vacío y retroalimentación conservan el estándar de la FASE B.
 - La evidencia final queda registrada antes de actualizar el documento maestro.
 
 ## Próximo bloque
 
-Diseñar e implementar la Biblioteca Pastoral para conservar y localizar archivos, enlaces y recursos, manteniendo privacidad, búsqueda clara y funcionamiento responsive.
+Completar y validar la Biblioteca Pastoral; después implementar Materiales de Estudio y Distribución con relaciones entre bosquejos, colecciones, recursos y audiencia final.
