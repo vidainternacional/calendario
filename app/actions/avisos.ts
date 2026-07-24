@@ -61,7 +61,7 @@ export async function crearAviso(
 
   if (estado === 'aprobado') {
     try {
-      notificados = await _enviarNotificacionAviso(minIdForm || '', titulo)
+      notificados = await _enviarNotificacionAviso(minIdForm || '', titulo, cuerpo)
       mensaje = notificados > 0
         ? `Aviso publicado y enviado a ${notificados} dispositivo${notificados === 1 ? '' : 's'}.`
         : 'Aviso publicado. No había dispositivos habilitados para recibir esta notificación.'
@@ -78,15 +78,10 @@ export async function crearAviso(
 
 async function _enviarNotificacionAviso(
   minIdForm: string,
-  titulo: string
+  titulo: string,
+  cuerpo: string
 ): Promise<number> {
   const service = createServiceClient()
-
-  const { data: ministerio } = minIdForm
-    ? await service.from('ministerios').select('nombre').eq('id', minIdForm).single()
-    : { data: { nombre: 'General' } }
-
-  const minNombre = (ministerio as any)?.nombre || 'General'
 
   let targetUserIds: string[] = []
   if (!minIdForm) {
@@ -136,8 +131,8 @@ async function _enviarNotificacionAviso(
   }
 
   const enviados = await notifyMultipleUsers(service, finalUserIds, {
-    title: `Nuevo aviso en ${minNombre}`,
-    body: titulo,
+    title: titulo,
+    body: cuerpo,
     url: minIdForm ? `/ministerios/${minIdForm}/avisos` : '/avisos',
     tag: minIdForm ? `aviso_${minIdForm}` : 'aviso_general',
   })
@@ -169,7 +164,7 @@ export async function aprobarAviso(avisoId: string) {
 
   const { data: aviso } = await (supabase as any)
     .from('publicaciones')
-    .select('titulo, ministerio_id')
+    .select('titulo, cuerpo, ministerio_id')
     .eq('id', avisoId)
     .single()
 
@@ -183,7 +178,11 @@ export async function aprobarAviso(avisoId: string) {
   let notificados = 0
   if (aviso) {
     try {
-      notificados = await _enviarNotificacionAviso(aviso.ministerio_id || '', aviso.titulo)
+      notificados = await _enviarNotificacionAviso(
+        aviso.ministerio_id || '',
+        aviso.titulo,
+        aviso.cuerpo
+      )
     } catch (pushError) {
       console.error('[avisos] Aviso aprobado, pero falló el reparto push:', pushError)
     }
