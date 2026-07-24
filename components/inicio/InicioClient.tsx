@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Calendar, MapPin, Clock, Megaphone, Info, FileText, ExternalLink } from 'lucide-react'
+import { Calendar, MapPin, Clock, Megaphone, FileText, ExternalLink } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { createClient } from '@/lib/supabase/client'
@@ -11,6 +11,7 @@ import LogoutButton from '@/components/auth/LogoutButton'
 import InstallBanner from '@/components/pwa/InstallBanner'
 import MinisterioSwitcher from '@/components/inicio/MinisterioSwitcher'
 import PublicacionCard from '@/components/avisos/PublicacionCard'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 
 type InicioData = {
@@ -196,7 +197,13 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           </div>
 
           {misEventos.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6"><p className="text-sm leading-relaxed text-gray-500">No tienes eventos próximos asignados. ¡Disfruta tu tiempo libre!</p></div>
+            <EmptyState
+              icon={Calendar}
+              title="No tienes eventos próximos"
+              description="Cuando te asignen un turno o una actividad, aparecerá aquí. También puedes revisar el calendario completo."
+              action={{ label: 'Abrir calendario', href: '/calendario' }}
+              compact
+            />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 landscape:grid-cols-2">
               {misEventos.map((evento: any) => {
@@ -219,7 +226,13 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         <section>
           <div className="mb-4 flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-2"><Megaphone className="h-5 w-5 shrink-0 text-indigo-400" /><h2 className="break-words text-lg font-bold text-[#171923]">Publicaciones recientes</h2></div><Link href="/avisos" className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl px-3 text-xs font-semibold text-indigo-600">Ver todas <ExternalLink className="h-3.5 w-3.5" /></Link></div>
           {publicaciones.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-center sm:p-6"><Info className="h-6 w-6 text-gray-500" /><p className="text-sm leading-relaxed text-gray-500">No hay publicaciones recientes de tus ministerios.</p></div>
+            <EmptyState
+              icon={Megaphone}
+              title="Aún no hay publicaciones recientes"
+              description="Los avisos generales y las novedades de tus ministerios aparecerán aquí."
+              action={{ label: 'Ir a avisos', href: '/avisos' }}
+              compact
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 landscape:grid-cols-2">{publicaciones.map((pub: any) => <PublicacionCard key={pub.id} titulo={pub.titulo} cuerpo={pub.cuerpo} tipo={pub.tipo} fecha={format(new Date(pub.created_at), "d 'de' MMMM", { locale: es })} autor={pub.profiles?.nombre_completo || 'Autor desconocido'} compacta />)}</div>
           )}
