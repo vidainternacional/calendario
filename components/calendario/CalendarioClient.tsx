@@ -110,7 +110,8 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
           <EmptyState
             icon={CalendarDays}
             title="Aún no tienes eventos asignados"
-            description="Cuando te asignen un turno o una actividad, aparecerá aquí con su fecha, horario y ministerio."
+            description="Cuando te asignen un turno o una actividad, aparecerá aquí con su fecha, horario y ministerio. Mientras tanto, puedes revisar los ministerios en los que participas."
+            action={{ label: 'Ver mis ministerios', href: '/ministerios' }}
             compact
             className="mt-4"
           />
