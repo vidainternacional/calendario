@@ -6,25 +6,41 @@ import {
   BookOpen,
   ChevronRight,
   FileText,
+  FolderOpen,
   Library,
   PackageOpen,
+  Plus,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata: Metadata = { title: 'Panel Pastoral' }
+export const metadata: Metadata = { title: 'Centro Pastoral' }
+
+const estadoPaquete: Record<string, { texto: string; clase: string }> = {
+  borrador: { texto: 'Borrador', clase: 'bg-slate-100 text-slate-600' },
+  listo: { texto: 'Listo', clase: 'bg-emerald-50 text-emerald-700' },
+  compartido: { texto: 'Compartido', clase: 'bg-indigo-50 text-indigo-700' },
+}
 
 export default async function PastoralPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('nombre_completo, rol, es_pastor_general, estado_cuenta')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: paquetes }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('nombre_completo, rol, es_pastor_general, estado_cuenta')
+      .eq('id', user.id)
+      .single(),
+    (supabase as any)
+      .from('pastoral_paquetes')
+      .select('id, titulo, descripcion_publica, estado, updated_at')
+      .eq('profile_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(4),
+  ])
 
   const rol = (profile as { rol?: string } | null)?.rol
   const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
@@ -32,54 +48,84 @@ export default async function PastoralPage() {
 
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)
+  const recientes = (paquetes ?? []) as Array<{ id: string; titulo: string; descripcion_publica: string; estado: string; updated_at: string }>
 
-  const etapas = [
-    { numero: '1', titulo: 'Investigar', texto: 'Biblia, concordancia y estudio profundo.' },
-    { numero: '2', titulo: 'Preparar', texto: 'Colecciones y bosquejo del mensaje.' },
-    { numero: '3', titulo: 'Reunir', texto: 'Archivos, enlaces y recursos de apoyo.' },
-    { numero: '4', titulo: 'Compartir', texto: 'Paquete final para la iglesia.' },
+  const herramientas = [
+    { href: '/pastoral/bosquejos', titulo: 'Bosquejos', texto: 'Preparar y predicar', icono: FileText, clase: 'bg-violet-50 text-violet-700' },
+    { href: '/pastoral/colecciones', titulo: 'Versículos', texto: 'Colecciones bíblicas', icono: BookHeart, clase: 'bg-indigo-50 text-indigo-700' },
+    { href: '/pastoral/biblioteca', titulo: 'Biblioteca', texto: 'Archivos y enlaces', icono: Library, clase: 'bg-amber-50 text-amber-700' },
+    { href: '/pastoral/paquetes', titulo: 'Paquetes', texto: 'Preparar y compartir', icono: PackageOpen, clase: 'bg-emerald-50 text-emerald-700' },
   ]
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
-      <header className="mb-6 sm:mb-8">
-        <div className="mb-3 flex items-center gap-2 text-indigo-600"><ShieldCheck className="h-4 w-4" /><p className="text-xs font-bold uppercase tracking-[0.16em]">Centro pastoral</p></div>
-        <h1 className="text-2xl font-bold leading-tight text-[#171923] sm:text-3xl">{nombre ? `Bienvenido, ${nombre}` : 'Panel Pastoral'}</h1>
-        <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-500">Prepara el mensaje, reúne los recursos y entrega una guía completa a la congregación desde un solo flujo.</p>
-        {esPastorGeneral && <span className="mt-3 inline-flex min-h-7 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">Pastor General</span>}
+    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7 lg:px-8">
+      <header className="mb-5 sm:mb-6">
+        <div className="flex items-center gap-2 text-indigo-600"><ShieldCheck className="h-4 w-4" /><p className="text-xs font-bold uppercase tracking-[0.16em]">Centro pastoral</p></div>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">{nombre ? `Hola, ${nombre}` : 'Centro Pastoral'}</h1>
+          {esPastorGeneral && <span className="inline-flex min-h-7 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">Pastor General</span>}
+        </div>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">Prepare el mensaje, reúna sus recursos y comparta el resultado con la iglesia desde este mismo espacio.</p>
       </header>
 
-      <section className="overflow-hidden rounded-[28px] bg-gradient-to-br from-indigo-800 via-violet-800 to-slate-950 p-5 text-white shadow-[0_18px_55px_rgba(67,56,202,0.28)] sm:p-7 lg:flex lg:items-center lg:justify-between lg:gap-10">
-        <div className="max-w-2xl">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15"><PackageOpen className="h-6 w-6" /></div>
-          <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-indigo-200">Resultado final</p>
-          <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Paquetes pastorales</h2>
-          <p className="mt-3 text-sm leading-6 text-white/75 sm:text-base">Une bosquejo, versículos, biblioteca y aplicación en una sola guía lista para imprimir, copiar o compartir con la iglesia.</p>
+      <section aria-labelledby="paquetes-recientes" className="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 id="paquetes-recientes" className="text-lg font-bold text-slate-950">Sus paquetes pastorales</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Continúe donde quedó o prepare uno nuevo.</p>
+          </div>
+          <Link href="/pastoral/paquetes" className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white sm:px-4"><Plus className="h-4 w-4" /> <span className="hidden sm:inline">Nuevo paquete</span><span className="sm:hidden">Nuevo</span></Link>
         </div>
-        <Link href="/pastoral/paquetes" className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-indigo-800 shadow-sm lg:mt-0 lg:w-auto lg:min-w-48">Abrir paquetes <ChevronRight className="h-4 w-4" /></Link>
+
+        {recientes.length ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {recientes.map((paquete) => {
+              const estadoActual = estadoPaquete[paquete.estado] ?? estadoPaquete.borrador
+              return (
+                <Link key={paquete.id} href={`/pastoral/paquetes/${paquete.id}`} className="group flex min-h-[154px] flex-col rounded-[20px] border border-slate-200 bg-slate-50 p-4 transition hover:border-indigo-200 hover:bg-indigo-50/30 active:scale-[0.99]">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-sm"><FolderOpen className="h-5 w-5" /></span>
+                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${estadoActual.clase}`}>{estadoActual.texto}</span>
+                  </div>
+                  <h3 className="mt-4 line-clamp-2 font-bold leading-snug text-slate-900">{paquete.titulo}</h3>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{paquete.descripcion_publica || 'Paquete pastoral listo para completar.'}</p>
+                  <span className="mt-auto flex items-center justify-end pt-3 text-xs font-bold text-indigo-700">Abrir <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col items-center rounded-[20px] border border-dashed border-indigo-200 bg-indigo-50/40 px-5 py-8 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-indigo-700 shadow-sm"><PackageOpen className="h-6 w-6" /></span>
+            <h3 className="mt-3 font-bold text-slate-900">Todavía no hay paquetes</h3>
+            <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">Cree el primero para unir bosquejo, versículos, recursos y material para la congregación.</p>
+            <Link href="/pastoral/paquetes" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white"><Plus className="h-4 w-4" /> Crear primer paquete</Link>
+          </div>
+        )}
+
+        {recientes.length > 0 && <Link href="/pastoral/paquetes" className="mt-4 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-700">Ver todos los paquetes <ChevronRight className="h-4 w-4" /></Link>}
       </section>
 
-      <section className="mt-6" aria-labelledby="flujo-pastoral">
-        <div className="mb-3"><h2 id="flujo-pastoral" className="text-sm font-bold text-slate-900">Flujo de preparación</h2><p className="mt-0.5 text-xs text-slate-500">Cada herramienta alimenta el paquete final.</p></div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {etapas.map((etapa) => <article key={etapa.numero} className="rounded-[18px] border border-slate-200 bg-white p-4 shadow-sm"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700">{etapa.numero}</span><h3 className="mt-3 font-bold text-slate-900">{etapa.titulo}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{etapa.texto}</p></article>)}
+      <section className="mt-5" aria-labelledby="herramientas-centro">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <div><h2 id="herramientas-centro" className="text-base font-bold text-slate-950">Herramientas de preparación</h2><p className="mt-0.5 text-xs text-slate-500">Todo lo que agregue aquí puede formar parte de un paquete.</p></div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {herramientas.map(({ href, titulo, texto, icono: Icono, clase }) => (
+            <Link key={href} href={href} className="group flex min-h-[126px] flex-col rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.99]">
+              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${clase}`}><Icono className="h-5 w-5" /></span>
+              <h3 className="mt-3 text-sm font-bold text-slate-900 sm:text-base">{titulo}</h3>
+              <span className="mt-0.5 flex items-center justify-between gap-2 text-[11px] leading-4 text-slate-500 sm:text-xs">{texto}<ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5" /></span>
+            </Link>
+          ))}
         </div>
       </section>
 
-      <section className="mt-8" aria-labelledby="herramientas-pastorales">
-        <div className="mb-3"><h2 id="herramientas-pastorales" className="text-sm font-bold text-slate-900">Herramientas del mensaje</h2><p className="mt-0.5 text-xs text-slate-500">Trabaja cada parte y después relaciónala dentro del paquete.</p></div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/pastoral/colecciones" className="group rounded-[24px] border border-indigo-100 bg-white p-5 shadow-sm transition-transform active:scale-[0.99]"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700"><BookHeart className="h-5 w-5" /></span><p className="mt-4 text-xs font-bold uppercase tracking-[0.15em] text-indigo-500">Fundamento bíblico</p><h3 className="mt-1 text-lg font-bold text-slate-900">Colecciones</h3><p className="mt-2 text-sm leading-6 text-slate-500">Agrupa versículos y notas por tema o mensaje.</p><span className="mt-4 flex items-center justify-between text-sm font-bold text-indigo-700">Abrir <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span></Link>
-          <Link href="/pastoral/bosquejos" className="group rounded-[24px] border border-violet-100 bg-white p-5 shadow-sm transition-transform active:scale-[0.99]"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-700"><FileText className="h-5 w-5" /></span><p className="mt-4 text-xs font-bold uppercase tracking-[0.15em] text-violet-500">Desarrollo del mensaje</p><h3 className="mt-1 text-lg font-bold text-slate-900">Bosquejos</h3><p className="mt-2 text-sm leading-6 text-slate-500">Prepara, predica y presenta desde cualquier dispositivo.</p><span className="mt-4 flex items-center justify-between text-sm font-bold text-violet-700">Abrir <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span></Link>
-          <Link href="/pastoral/biblioteca" className="group rounded-[24px] border border-amber-100 bg-white p-5 shadow-sm transition-transform active:scale-[0.99]"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700"><Library className="h-5 w-5" /></span><p className="mt-4 text-xs font-bold uppercase tracking-[0.15em] text-amber-600">Recursos de apoyo</p><h3 className="mt-1 text-lg font-bold text-slate-900">Biblioteca</h3><p className="mt-2 text-sm leading-6 text-slate-500">Conserva archivos, enlaces, estudios y presentaciones.</p><span className="mt-4 flex items-center justify-between text-sm font-bold text-amber-700">Abrir <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span></Link>
-        </div>
-      </section>
-
-      <section className="mt-8" aria-labelledby="apoyo-investigacion">
-        <div className="mb-3"><h2 id="apoyo-investigacion" className="text-sm font-bold text-slate-900">Investigación y apoyo</h2></div>
-        <div className="grid grid-cols-2 gap-3 sm:max-w-xl">
-          <Link href="/biblia?from=pastoral" className="group flex min-h-[112px] flex-col justify-between rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.99]"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><BookOpen className="h-5 w-5" /></span><span className="mt-4 flex items-center justify-between gap-2 text-sm font-bold text-slate-900">Biblia <ChevronRight className="h-4 w-4 text-slate-300" /></span></Link>
-          <Link href="/estudios/profundo?from=pastoral" className="group flex min-h-[112px] flex-col justify-between rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.99]"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-[#C0392B]"><Sparkles className="h-5 w-5" /></span><span className="mt-4 flex items-center justify-between gap-2 text-sm font-bold text-slate-900">Estudio Profundo <ChevronRight className="h-4 w-4 text-slate-300" /></span></Link>
+      <section className="mt-5" aria-labelledby="investigacion-pastoral">
+        <h2 id="investigacion-pastoral" className="mb-3 text-base font-bold text-slate-950">Investigar</h2>
+        <div className="grid grid-cols-2 gap-3 lg:max-w-2xl">
+          <Link href="/biblia?from=pastoral" className="flex min-h-[92px] items-center gap-3 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.99]"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><BookOpen className="h-5 w-5" /></span><span className="min-w-0"><strong className="block text-sm text-slate-900">Biblia</strong><span className="block truncate text-[11px] text-slate-500 sm:text-xs">Leer y buscar</span></span></Link>
+          <Link href="/estudios/profundo?from=pastoral" className="flex min-h-[92px] items-center gap-3 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.99]"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-[#C0392B]"><Sparkles className="h-5 w-5" /></span><span className="min-w-0"><strong className="block text-sm text-slate-900">Estudio profundo</strong><span className="block truncate text-[11px] text-slate-500 sm:text-xs">Analizar un pasaje</span></span></Link>
         </div>
       </section>
     </main>
