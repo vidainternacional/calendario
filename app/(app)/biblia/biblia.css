@@ -1,0 +1,77 @@
+/* El modo de lectura debe cubrir también el fondo exterior y el rebote del scroll. */
+html:has(main.bg-slate-950),
+body:has(main.bg-slate-950) {
+  background: #020617 !important;
+  color-scheme: dark;
+}
+
+html:has(main[class*="bg-[#f4ecd8]"]),
+body:has(main[class*="bg-[#f4ecd8]"]) {
+  background: #f4ecd8 !important;
+  color-scheme: light;
+}
+
+html:has(main.bg-slate-50),
+body:has(main.bg-slate-50) {
+  background: #f8fafc !important;
+  color-scheme: light;
+}
+
+main.bg-slate-950,
+main[class*="bg-[#f4ecd8]"],
+main.bg-slate-50 {
+  min-height: 100dvh;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+/* Segundo panel de opciones: modos de lectura y tamaño de fuente. */
+main.bg-slate-950 > div > div:nth-of-type(3) > div,
+main[class*="bg-[#f4ecd8]"] > div > div:nth-of-type(3) > div,
+main.bg-slate-50 > div > div:nth-of-type(3) > div {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.875rem;
+  align-items: stretch;
+}
+
+main.bg-slate-950 > div > div:nth-of-type(3) > div > div:first-child,
+main[class*="bg-[#f4ecd8]"] > div > div:nth-of-type(3) > div > div:first-child,
+main.bg-slate-50 > div > div:nth-of-type(3) > div > div:first-child {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+main.bg-slate-950 > div > div:nth-of-type(3) > div > div:first-child > button,
+main[class*="bg-[#f4ecd8]"] > div > div:nth-of-type(3) > div > div:first-child > button,
+main.bg-slate-50 > div > div:nth-of-type(3) > div > div:first-child > button {
+  width: 100%;
+  justify-content: center;
+  padding-inline: 0.5rem;
+}
+
+main.bg-slate-950 > div > div:nth-of-type(3) > div > div:last-child,
+main[class*="bg-[#f4ecd8]"] > div > div:nth-of-type(3) > div > div:last-child,
+main.bg-slate-50 > div > div:nth-of-type(3) > div > div:last-child {
+  width: min(100%, 18rem);
+  min-height: 3rem;
+  justify-self: center;
+  justify-content: space-between;
+  border-radius: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  main.bg-slate-950 > div > div:nth-of-type(3) > div,
+  main[class*="bg-[#f4ecd8]"] > div > div:nth-of-type(3) > div,
+  main.bg-slate-50 > div > div:nth-of-type(3) > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  main.bg-slate-950 > div > div:nth-of-type(3) > div > div:last-child,
+  main[class*="bg-[#f4ecd8]"] > div > div:nth-of-type(3) > div > div:last-child,
+  main.bg-slate-50 > div > div:nth-of-type(3) > div > div:last-child {
+    width: 12rem;
+  }
+}
