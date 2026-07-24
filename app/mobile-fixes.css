@@ -1,26 +1,26 @@
-/* Correcciones móviles transversales. */
-
-:root {
-  --background: #f4f5f9;
-  --foreground: #171923;
-}
+/*
+ * Correcciones móviles transversales.
+ *
+ * La animación original de <main> terminaba con transform: translateY(0).
+ * Aunque visualmente equivale a no mover el contenido, un transform distinto
+ * de "none" crea un nuevo containing block para descendientes position: fixed.
+ * En Safari/iOS esto podía desplazar, recortar u ocultar fichas y botones.
+ */
 
 html,
 body {
-  min-height: 100%;
-  background: #f4f5f9 !important;
-  color: #171923;
+  background: #f4f5f9;
   overscroll-behavior-x: none;
 }
 
 body {
-  min-height: 100dvh;
+  touch-action: pan-y;
 }
 
 main {
-  min-height: 100dvh;
-  background: #f4f5f9;
   animation-name: page-enter-safe;
+  overflow-x: clip;
+  background: #f4f5f9;
 }
 
 @keyframes page-enter-safe {
@@ -42,10 +42,25 @@ main {
   overflow-wrap: anywhere;
 }
 
-/* Evita que el rebote del viewport revele un lienzo negro en iOS/PWA. */
-@supports (-webkit-touch-callout: none) {
-  html,
-  body {
-    background-color: #f4f5f9 !important;
-  }
+/*
+ * Las vistas Semana y Mes usan grids densos de 7 y 8 columnas.
+ * En Safari móvil, un hijo con ancho mínimo implícito puede ensanchar el grid
+ * unos píxeles y permitir que el viewport completo se desplace lateralmente.
+ */
+[class~="grid-cols-7"],
+[class~="grid-cols-8"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+[class~="grid-cols-7"] > *,
+[class~="grid-cols-8"] > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+[class~="overflow-y-auto"] {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
