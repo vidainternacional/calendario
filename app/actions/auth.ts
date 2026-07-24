@@ -3,13 +3,15 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
 export type AuthState =
   | { error?: string; success?: string }
   | undefined
 
-// ─── Login ────────────────────────────────────────────────────────────────────
+function destinoSeguro(valor: FormDataEntryValue | null) {
+  const destino = typeof valor === 'string' ? valor.trim() : ''
+  if (!destino.startsWith('/') || destino.startsWith('//')) return '/inicio'
+  return destino
+}
 
 export async function login(
   _state: AuthState,
@@ -17,13 +19,13 @@ export async function login(
 ): Promise<AuthState> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const nextPath = destinoSeguro(formData.get('next'))
 
   if (!email || !password) {
     return { error: 'Por favor completa todos los campos.' }
   }
 
   const supabase = await createClient()
-
   const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
@@ -33,9 +35,7 @@ export async function login(
     return { error: error.message }
   }
 
-  // Verificar estado de la cuenta — pendientes/suspendidos van a la sala de espera
   if (authData.user) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('estado_cuenta')
@@ -47,10 +47,8 @@ export async function login(
     }
   }
 
-  redirect('/inicio')
+  redirect(nextPath)
 }
-
-// ─── Signup ───────────────────────────────────────────────────────────────────
 
 export async function signup(
   _state: AuthState,
@@ -74,16 +72,10 @@ export async function signup(
   }
 
   const supabase = await createClient()
-
-  // Crear usuario en Supabase Auth.
-  // El perfil se crea AUTOMÁTICAMENTE vía trigger en la base de datos
-  // (handle_new_user) con estado_cuenta = 'pendiente'.
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { nombre }, // metadata que el trigger usa para nombre_completo
-    },
+    options: { data: { nombre } },
   })
 
   if (error) {
@@ -93,11 +85,8 @@ export async function signup(
     return { error: error.message }
   }
 
-  // Cuenta nueva → sala de espera hasta que un líder/admin la apruebe
   redirect('/pendiente')
 }
-
-// ─── Logout ───────────────────────────────────────────────────────────────────
 
 export async function logout(): Promise<void> {
   const supabase = await createClient()
