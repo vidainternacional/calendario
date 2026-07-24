@@ -9,14 +9,15 @@ import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
-export default async function BibliaPage() {
+export default async function BibliaPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const { from } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   return (
     <>
-      <BibliaClient />
+      <BibliaClient fromPastoral={from === 'pastoral'} />
       <BibliaVoiceControl />
       <BibliaFavoritesEmptyEnhancer />
       <BibliaErrorRetryEnhancer />
