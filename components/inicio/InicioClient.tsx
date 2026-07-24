@@ -10,6 +10,7 @@ import { readUserCache, writeUserCache } from '@/lib/cache/userCache'
 import LogoutButton from '@/components/auth/LogoutButton'
 import InstallBanner from '@/components/pwa/InstallBanner'
 import MinisterioSwitcher from '@/components/inicio/MinisterioSwitcher'
+import MaterialesInicio from '@/components/inicio/MaterialesInicio'
 import PublicacionCard from '@/components/avisos/PublicacionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
@@ -222,6 +223,8 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             </div>
           )}
         </section>
+
+        <MaterialesInicio />
 
         <section>
           <div className="mb-4 flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-2"><Megaphone className="h-5 w-5 shrink-0 text-indigo-400" /><h2 className="break-words text-lg font-bold text-[#171923]">Publicaciones recientes</h2></div><Link href="/avisos" className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl px-3 text-xs font-semibold text-indigo-600">Ver todas <ExternalLink className="h-3.5 w-3.5" /></Link></div>
