@@ -53,6 +53,12 @@ export default async function MinisterioLayout({
     redirect('/ministerios')
   }
 
+  const { data: membresias } = await supabase
+    .from('ministerio_miembros')
+    .select('ministerio_id')
+    .eq('profile_id', user.id)
+
+  const ids = (membresias || []).map((item: any) => item.ministerio_id)
   let ministeriosAccesibles: Array<{
     id: string
     nombre: string
@@ -60,10 +66,11 @@ export default async function MinisterioLayout({
     color: string | null
   }> = []
 
-  if (isAdminOrPastor) {
+  if (ids.length > 0) {
     const { data } = await supabase
       .from('ministerios')
       .select('id, nombre, emoji, color_primario')
+      .in('id', ids)
       .eq('activo', true)
       .order('orden', { ascending: true })
 
@@ -73,57 +80,50 @@ export default async function MinisterioLayout({
       emoji: item.emoji,
       color: item.color_primario,
     }))
-  } else {
-    const { data: membresias } = await supabase
-      .from('ministerio_miembros')
-      .select('ministerio_id')
-      .eq('profile_id', user.id)
-
-    const ids = (membresias || []).map((item: any) => item.ministerio_id)
-    if (ids.length > 0) {
-      const { data } = await supabase
-        .from('ministerios')
-        .select('id, nombre, emoji, color_primario')
-        .in('id', ids)
-        .eq('activo', true)
-        .order('orden', { ascending: true })
-
-      ministeriosAccesibles = (data || []).map((item: any) => ({
-        id: item.id,
-        nombre: item.nombre,
-        emoji: item.emoji,
-        color: item.color_primario,
-      }))
-    }
   }
 
-  if (!ministeriosAccesibles.some((item) => item.id === ministerio.id)) {
-    ministeriosAccesibles.unshift({
-      id: ministerio.id,
-      nombre: ministerio.nombre,
-      emoji: ministerio.emoji,
-      color: ministerio.color_primario,
-    })
+  let solicitudesPendientes = 0
+  if (puedeGestionarIngresos) {
+    const { count } = await (supabase as any)
+      .from('ministerio_solicitudes_ingreso')
+      .select('id', { count: 'exact', head: true })
+      .eq('ministerio_id', id)
+      .eq('estado', 'pendiente')
+
+    solicitudesPendientes = count || 0
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f4f5f9]">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#f4f5f9]">
       <div
-        className="relative z-20 mx-auto max-w-2xl px-4 pb-3"
-        style={{ paddingTop: 'max(0.25rem, env(safe-area-inset-top))' }}
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 mx-auto max-w-2xl px-4"
+        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="pointer-events-auto flex min-w-0 items-center gap-2">
           <BackButton />
-          <MinisterioDashboardSwitcher actualId={id} ministerios={ministeriosAccesibles} />
+          <MinisterioDashboardSwitcher
+            actualId={id}
+            actual={{
+              id: ministerio.id,
+              nombre: ministerio.nombre,
+              emoji: ministerio.emoji,
+              color: ministerio.color_primario,
+            }}
+            ministerios={ministeriosAccesibles}
+          />
         </div>
 
-        {puedeGestionarIngresos && (
+        {solicitudesPendientes > 0 && (
           <Link
             href={`/ministerios/${id}/solicitudes-ingreso`}
-            className="mt-2 inline-flex min-h-11 w-full max-w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 active:scale-[0.98]"
+            className="pointer-events-auto mt-2 inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-xl border border-white/50 bg-white/95 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-lg backdrop-blur-md transition-colors hover:bg-white active:scale-[0.98]"
           >
             <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">Solicitudes de ingreso</span>
+            <span className="truncate">
+              {solicitudesPendientes === 1
+                ? '1 solicitud de ingreso'
+                : `${solicitudesPendientes} solicitudes de ingreso`}
+            </span>
           </Link>
         )}
       </div>
