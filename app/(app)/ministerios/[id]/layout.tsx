@@ -22,7 +22,7 @@ export default async function MinisterioLayout({
   const [minReq, membresiaReq, profileReq] = await Promise.all([
     supabase
       .from('ministerios')
-      .select('id, nombre, descripcion, emoji, color_primario, color_secundario')
+      .select('id, nombre, descripcion, emoji, color_primario, color_secundario, portada_url, avatar_url, fuente_titulo, fuente_cuerpo')
       .eq('id', id)
       .single(),
     supabase
@@ -45,6 +45,10 @@ export default async function MinisterioLayout({
     emoji: string | null
     color_primario: string | null
     color_secundario: string | null
+    portada_url: string | null
+    avatar_url: string | null
+    fuente_titulo: string | null
+    fuente_cuerpo: string | null
   } | null
   if (!ministerio) notFound()
 
@@ -105,10 +109,12 @@ export default async function MinisterioLayout({
     <div className="relative min-h-screen overflow-x-hidden bg-[#f4f5f9]">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-30 mx-auto max-w-2xl px-4"
-        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
       >
         <div className="pointer-events-auto flex min-w-0 items-center gap-2">
-          <BackButton />
+          <div className="rounded-full bg-white/95 shadow-lg ring-1 ring-black/5 backdrop-blur-md">
+            <BackButton />
+          </div>
           <MinisterioDashboardSwitcher
             actualId={id}
             actual={{
