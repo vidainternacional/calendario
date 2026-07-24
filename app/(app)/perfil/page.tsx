@@ -3,10 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
-import { User, Mail, Shield, Bell, Settings2 } from 'lucide-react'
+import { User, Mail, Shield, Bell, Settings2, Users } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PushTestButton from '@/components/pwa/PushTestButton'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const metadata: Metadata = {
   title: 'Mi Perfil',
@@ -99,9 +100,14 @@ export default async function PerfilPage() {
           <h3 className="text-lg font-semibold text-[#171923] mb-4">Tus Ministerios</h3>
 
           {!membresias || membresias.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center">
-              <p className="text-sm text-gray-500">No perteneces a ningún ministerio aún.</p>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Aún no perteneces a un ministerio"
+              description="Explora los ministerios de la iglesia y solicita ingreso al espacio donde deseas servir. Tus asignaciones aparecerán aquí cuando seas agregado."
+              action={{ label: 'Explorar ministerios', href: '/ministerios' }}
+              compact
+              className="min-h-0 bg-slate-50 shadow-none"
+            />
           ) : (
             <div className="space-y-1">
               {membresias.map((m: any) => (
