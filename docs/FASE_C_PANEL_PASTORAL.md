@@ -155,3 +155,8 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 ## Próximo bloque
 
 Completar Materiales de Estudio y Distribución: enlace público seguro, audiencia, publicación y experiencia de lectura para la congregación.
+
+## Verificación de despliegue pendiente
+
+- Se solicitó un nuevo despliegue consolidado el 2026-07-24 para incluir Materiales de estudio, footer estático y correcciones de contraste en Biblioteca.
+- La validación funcional continuará únicamente después de confirmar el estado `READY` en producción.
