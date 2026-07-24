@@ -13,12 +13,20 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   if (!user) redirect('/login')
 
   const db = supabase as any
-  const [{ data: min }, { data: mem }, { data: pubs }, { count: miembros }, { data: eventosMin }] = await Promise.all([
+  const [
+    { data: min },
+    { data: mem },
+    { data: pubs },
+    { count: miembros },
+    { data: eventosMin },
+    { count: ingresosPendientes },
+  ] = await Promise.all([
     db.from('ministerios').select('id, nombre, emoji, color_primario, color_secundario, descripcion').eq('id', id).single(),
     db.from('ministerio_miembros').select('es_lider').eq('ministerio_id', id).eq('profile_id', user.id).maybeSingle(),
     db.from('publicaciones').select('id, titulo, cuerpo, created_at, autor:profiles!publicaciones_autor_id_fkey(nombre_completo)').eq('ministerio_id', id).order('created_at', { ascending: false }).limit(5),
     db.from('ministerio_miembros').select('id', { count: 'exact', head: true }).eq('ministerio_id', id),
     db.from('eventos').select('id, titulo, ubicacion, fecha_inicio').eq('ministerio_id', id).gte('fecha_inicio', new Date().toISOString()).order('fecha_inicio').limit(5),
+    db.from('ministerio_solicitudes_ingreso').select('id', { count: 'exact', head: true }).eq('ministerio_id', id).eq('estado', 'pendiente'),
   ])
   if (!min) notFound()
 
@@ -28,7 +36,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
 
   return (
     <main className="pb-28">
-      <section className="relative isolate min-h-[250px] overflow-hidden text-white sm:min-h-[290px]">
+      <section className="relative isolate min-h-[310px] overflow-hidden text-white sm:min-h-[350px]">
         <div
           className="absolute inset-0"
           style={{
@@ -42,12 +50,12 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
         <div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-white/15 blur-2xl" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.24),transparent_28%),radial-gradient(circle_at_84%_74%,rgba(255,255,255,0.12),transparent_24%)]" />
         <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:28px_28px]" />
-        <div className="absolute right-5 top-5 select-none text-[7rem] leading-none opacity-[0.12] blur-[0.2px] sm:right-10 sm:text-[9rem]" aria-hidden="true">
+        <div className="absolute right-5 top-16 select-none text-[7rem] leading-none opacity-[0.12] blur-[0.2px] sm:right-10 sm:text-[9rem]" aria-hidden="true">
           {min.emoji}
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/45 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/50 to-transparent" />
 
-        <div className="relative mx-auto flex min-h-[250px] max-w-2xl flex-col justify-end px-4 pb-9 pt-8 sm:min-h-[290px] sm:pb-10">
+        <div className="relative mx-auto flex min-h-[310px] max-w-2xl flex-col justify-end px-4 pb-9 pt-[calc(6rem+env(safe-area-inset-top))] sm:min-h-[350px] sm:pb-10">
           <div className="flex min-w-0 items-end gap-3 sm:gap-4">
             <div
               className="grid h-16 w-16 shrink-0 place-items-center rounded-full border-[3px] border-white/90 bg-white/18 text-3xl shadow-[0_10px_30px_rgba(0,0,0,0.24)] backdrop-blur-md sm:h-20 sm:w-20 sm:text-4xl"
@@ -70,7 +78,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
         </div>
       </section>
 
-      <div className="mx-auto -mt-4 max-w-2xl space-y-5 px-4">
+      <div className="mx-auto mt-4 max-w-2xl space-y-5 px-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Link href={`/ministerios/${id}/avisos`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
             <Megaphone className="h-5 w-5 shrink-0" style={{ color: min.color_primario }} />
@@ -86,10 +94,12 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
               <span className="break-words text-sm font-semibold text-[#171923]">Solicitudes</span>
             </Link>
           )}
-          {esLider && (
-            <Link href={`/ministerios/${id}/solicitudes-ingreso`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          {esLider && (ingresosPendientes || 0) > 0 && (
+            <Link href={`/ministerios/${id}/solicitudes-ingreso`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm">
               <UserPlus className="h-5 w-5 shrink-0" style={{ color: min.color_primario }} />
-              <span className="break-words text-sm font-semibold text-[#171923]">Nuevos servidores</span>
+              <span className="break-words text-sm font-semibold text-[#171923]">
+                {ingresosPendientes === 1 ? '1 nuevo servidor' : `${ingresosPendientes} nuevos servidores`}
+              </span>
             </Link>
           )}
         </div>
