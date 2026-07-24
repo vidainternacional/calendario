@@ -1,0 +1,31 @@
+/*
+ * Correcciones móviles transversales.
+ *
+ * La animación original de <main> terminaba con transform: translateY(0).
+ * Aunque visualmente equivale a no mover el contenido, un transform distinto
+ * de "none" crea un nuevo containing block para descendientes position: fixed.
+ * En Safari/iOS esto podía desplazar, recortar u ocultar fichas y botones.
+ */
+
+main {
+  animation-name: page-enter-safe;
+}
+
+@keyframes page-enter-safe {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Refuerzo común para overlays y fichas de toda la aplicación. */
+.modal-overlay-safe,
+[role="dialog"] {
+  max-width: 100vw;
+}
+
+[role="dialog"] {
+  overflow-wrap: anywhere;
+}
