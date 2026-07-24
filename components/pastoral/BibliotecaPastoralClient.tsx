@@ -1,8 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
 import {
-  ExternalLink,
   FileAudio,
   FileImage,
   FileText,
@@ -160,31 +160,28 @@ export default function BibliotecaPastoralClient({ recursos }: { recursos: Recur
         </section>
       ) : (
         <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtrados.map((recurso) => {
-            const destino = recurso.tipo === 'enlace' ? recurso.url : recurso.signed_url
-            return (
-              <article key={recurso.id} className="flex min-h-[350px] flex-col rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <RecursoPreview recurso={recurso} />
-                <div className="mt-4 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-bold leading-snug text-slate-950">{recurso.titulo}</h2>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">{tipoVisual(recurso).etiqueta}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">{categoriaLabel(recurso.categoria)}</span>
+          {filtrados.map((recurso) => (
+            <article key={recurso.id} className="flex min-h-[350px] flex-col rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <RecursoPreview recurso={recurso} />
+              <div className="mt-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold leading-snug text-slate-950">{recurso.titulo}</h2>
+                  <p className="mt-1 text-xs font-semibold text-slate-400">{tipoVisual(recurso).etiqueta}</p>
                 </div>
-                {recurso.descripcion && <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{recurso.descripcion}</p>}
-                {recurso.etiquetas?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{recurso.etiquetas.map((etiqueta) => <span key={etiqueta} className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">#{etiqueta}</span>)}</div>}
-                <div className="mt-auto pt-5">
-                  {recurso.tipo === 'archivo' && <p className="mb-3 truncate text-xs text-slate-400">{recurso.nombre_archivo} {formatoTamano(recurso.tamano_bytes) && `· ${formatoTamano(recurso.tamano_bytes)}`}</p>}
-                  <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-                    <a href={destino ?? '#'} target="_blank" rel="noreferrer" className={`flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 text-xs font-bold text-white ${!destino ? 'pointer-events-none opacity-40' : ''}`}><ExternalLink className="h-4 w-4" /> Abrir</a>
-                    <button onClick={() => setEditando(recurso)} aria-label={`Editar ${recurso.titulo}`} className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => eliminar(recurso)} aria-label={`Eliminar ${recurso.titulo}`} className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4" /></button>
-                  </div>
+                <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">{categoriaLabel(recurso.categoria)}</span>
+              </div>
+              {recurso.descripcion && <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{recurso.descripcion}</p>}
+              {recurso.etiquetas?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{recurso.etiquetas.map((etiqueta) => <span key={etiqueta} className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">#{etiqueta}</span>)}</div>}
+              <div className="mt-auto pt-5">
+                {recurso.tipo === 'archivo' && <p className="mb-3 truncate text-xs text-slate-400">{recurso.nombre_archivo} {formatoTamano(recurso.tamano_bytes) && `· ${formatoTamano(recurso.tamano_bytes)}`}</p>}
+                <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                  <Link href={`/pastoral/biblioteca/${recurso.id}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 text-xs font-bold text-white"><FolderOpen className="h-4 w-4" /> Ver recurso</Link>
+                  <button onClick={() => setEditando(recurso)} aria-label={`Editar ${recurso.titulo}`} className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Pencil className="h-4 w-4" /></button>
+                  <button onClick={() => eliminar(recurso)} aria-label={`Eliminar ${recurso.titulo}`} className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4" /></button>
                 </div>
-              </article>
-            )
-          })}
+              </div>
+            </article>
+          ))}
         </section>
       )}
 
