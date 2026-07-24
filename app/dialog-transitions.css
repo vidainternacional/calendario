@@ -14,6 +14,17 @@
   }
 }
 
+@keyframes vida-sheet-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 [role='dialog'][aria-modal='true'] {
   animation: vida-dialog-backdrop-in 160ms ease-out both;
 }
@@ -21,6 +32,20 @@
 [role='dialog'][aria-modal='true'] > :first-child {
   animation: vida-dialog-panel-in 190ms cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: center bottom;
+}
+
+/* Algunos paneles móviles, como Favoritos de Biblia, colocan el rol en la tarjeta. */
+*:has(> section[role='dialog'][aria-modal='true']) {
+  animation: vida-dialog-backdrop-in 160ms ease-out both;
+}
+
+section[role='dialog'][aria-modal='true'] {
+  animation: vida-sheet-panel-in 210ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center bottom;
+}
+
+section[role='dialog'][aria-modal='true'] > :first-child {
+  animation: none;
 }
 
 [role='dialog'][aria-modal='true'] button,
@@ -33,9 +58,17 @@
   transform: scale(0.98);
 }
 
+@media (min-width: 640px) {
+  section[role='dialog'][aria-modal='true'] {
+    animation-name: vida-dialog-panel-in;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [role='dialog'][aria-modal='true'],
-  [role='dialog'][aria-modal='true'] > :first-child {
+  [role='dialog'][aria-modal='true'] > :first-child,
+  *:has(> section[role='dialog'][aria-modal='true']),
+  section[role='dialog'][aria-modal='true'] {
     animation: none !important;
   }
 
