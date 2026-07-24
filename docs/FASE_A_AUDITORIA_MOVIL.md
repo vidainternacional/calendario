@@ -28,16 +28,37 @@ Objetivo: lograr una experiencia profesional y consistente en teléfonos, sin in
 
 | Módulo | Overflow | Modales / menús | Botones | Formularios / tablas | Navegación | Estado |
 |---|---|---|---|---|---|---|
-| Inicio | Pendiente | Pendiente | Pendiente | No aplica / pendiente | Pendiente | Pendiente |
-| Calendario | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
+| Inicio | Revisado | No presenta bloqueos | Revisado | No aplica | Validada | Completado |
+| Calendario | Corregido en contenedor base | En revisión | En revisión | En revisión | Validada | En revisión |
 | Avisos | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
 | Biblia | En revisión | Favoritos corregido | En revisión | En revisión | En revisión | Parcial |
 | Perfil | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
 | Ministerios | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
 | Configuración | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
-| Navegación global | Pendiente | Pendiente | Pendiente | No aplica | Pendiente | Pendiente |
+| Navegación global | Corregido | Compatible con diálogos | Revisado | No aplica | Validada en producción | Completado |
 
 ## Hallazgos resueltos
+
+### Navegación global
+
+- La barra inferior fija podía cubrir el final del contenido.
+- Se añadió una reserva de espacio equivalente a su altura y safe area inferior.
+- Se respetan safe areas laterales en iPhone/iPad.
+- Se reforzaron anchos flexibles, truncado de etiquetas y atributos de accesibilidad.
+- Despliegue de producción validado y mejora de fluidez confirmada.
+
+### Inicio
+
+- Se revisaron contenedor, tarjetas, grids, áreas táctiles, textos largos, estados vacíos y padding inferior.
+- No se encontraron bloqueos reproducibles ni overflow horizontal que requiriera cambios adicionales.
+- La navegación inferior ya no cubre su contenido final.
+
+### Calendario — contenedor base
+
+- Se sustituyó el padding inferior fijo por uno que incluye `safe-area-inset-bottom`.
+- Se añadieron límites de ancho y protección contra overflow horizontal.
+- El encabezado y contenido respetan safe areas laterales.
+- El módulo permanece en revisión hasta validar vistas, controles y modales.
 
 ### Biblia — Favoritos
 
@@ -50,9 +71,9 @@ Objetivo: lograr una experiencia profesional y consistente en teléfonos, sin in
 
 ## Orden de trabajo
 
-1. Navegación global y contenedores base.
-2. Inicio.
-3. Calendario.
+1. Navegación global y contenedores base. ✅
+2. Inicio. ✅
+3. Calendario. En revisión.
 4. Avisos.
 5. Biblia.
 6. Perfil.
