@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import Link from 'next/link'
+import { UserPlus } from 'lucide-react'
 import BackButton from '@/components/navigation/BackButton'
 
 export default async function MinisterioLayout({
@@ -38,18 +40,30 @@ export default async function MinisterioLayout({
     profile?.rol === 'pastor' ||
     profile?.rol === 'administrador' ||
     profile?.es_pastor_general
+  const esLider = Boolean((membresiaReq.data as any)?.es_lider)
+  const puedeGestionarIngresos = esLider || isAdminOrPastor
 
   if (!membresiaReq.data && !isAdminOrPastor) {
     redirect('/ministerios')
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5f9]">
+    <div className="min-h-screen overflow-x-hidden bg-[#f4f5f9]">
       <div
-        className="relative z-10 mx-auto max-w-2xl px-4 pb-2"
+        className="relative z-10 mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 pb-3"
         style={{ paddingTop: 'max(0.25rem, env(safe-area-inset-top))' }}
       >
         <BackButton />
+
+        {puedeGestionarIngresos && (
+          <Link
+            href={`/ministerios/${id}/solicitudes-ingreso`}
+            className="inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 active:scale-[0.98]"
+          >
+            <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">Solicitudes de ingreso</span>
+          </Link>
+        )}
       </div>
 
       <div>{children}</div>
