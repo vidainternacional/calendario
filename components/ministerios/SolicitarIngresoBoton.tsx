@@ -31,7 +31,7 @@ export default function SolicitarIngresoBoton({ ministerioId, estadoActual }: { 
       type="button"
       onClick={handleSolicitar}
       disabled={loading}
-      className="inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
       aria-busy={loading}
     >
       {loading ? (
