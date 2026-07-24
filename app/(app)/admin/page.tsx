@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminClient from './AdminClient'
 import Link from 'next/link'
-import { Building2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
+import { Building2, CheckCircle2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -126,6 +127,10 @@ export default async function AdminPage() {
     },
   ]
 
+  const totalPendientes = (pendingIngresos || 0) + (pendingAvisos || 0) + (pendingPreguntas || 0)
+  const sinMinisterios = !ministerios || ministerios.length === 0
+  const sinUsuarios = !usuarios || usuarios.length === 0
+
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 max-w-2xl mx-auto">
       <header className="mb-6 sm:mb-8">
@@ -154,6 +159,39 @@ export default async function AdminPage() {
           </article>
         ))}
       </section>
+
+      {totalPendientes === 0 && !sinUsuarios && (
+        <section className="mb-6 flex items-start gap-3 rounded-[20px] border border-emerald-100 bg-emerald-50 px-4 py-4 shadow-sm" role="status">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm">
+            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-emerald-900">Todo está al día</h2>
+            <p className="mt-1 text-xs leading-relaxed text-emerald-700">No hay solicitudes, avisos ni mensajes pendientes de revisión.</p>
+          </div>
+        </section>
+      )}
+
+      {(sinMinisterios || sinUsuarios) && (
+        <div className="mb-6 grid gap-4">
+          {sinMinisterios && (
+            <EmptyState
+              icon={Building2}
+              title="Aún no hay ministerios"
+              description="Crea el primer ministerio desde la sección de gestión que aparece más abajo."
+              compact
+            />
+          )}
+          {sinUsuarios && (
+            <EmptyState
+              icon={Users}
+              title="Aún no hay usuarios registrados"
+              description="Las cuentas nuevas aparecerán aquí cuando las personas se registren en la aplicación."
+              compact
+            />
+          )}
+        </div>
+      )}
 
       <section className="mb-6 sm:mb-8" aria-labelledby="accesos-rapidos">
         <h2 id="accesos-rapidos" className="text-sm font-bold text-[#171923] mb-3">Accesos rápidos</h2>
