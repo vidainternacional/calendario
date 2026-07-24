@@ -64,7 +64,11 @@ export default function PublicacionCard({
   const modal = abierta && typeof document !== 'undefined'
     ? createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-end justify-center bg-slate-950/60 p-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-[3px] sm:items-center sm:p-6"
+          className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-slate-950/60 px-[max(.75rem,env(safe-area-inset-left))] py-[max(.75rem,env(safe-area-inset-top))] backdrop-blur-[3px]"
+          style={{
+            paddingRight: 'max(.75rem, env(safe-area-inset-right))',
+            paddingBottom: 'max(.75rem, env(safe-area-inset-bottom))',
+          }}
           onClick={(event) => {
             if (event.target === event.currentTarget) setAbierta(false)
           }}
@@ -73,7 +77,7 @@ export default function PublicacionCard({
             role="dialog"
             aria-modal="true"
             aria-label={titulo}
-            className="flex min-h-[18rem] max-h-[86dvh] w-full max-w-xl flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.32)]"
+            className="flex min-h-0 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.32)]"
           >
             <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
               <div className="min-w-0 flex-1">
@@ -93,7 +97,7 @@ export default function PublicacionCard({
               </button>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50/70 px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] sm:px-5 sm:pb-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50/70 px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] sm:px-5 sm:pb-6">
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
                 {cuerpo ? (
                   <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{cuerpo}</p>
