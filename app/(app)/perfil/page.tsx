@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
-import { User, Mail, Shield, Bell, Settings2, Users } from 'lucide-react'
+import { User, Mail, Shield, Bell, Settings2, Users, BookHeart } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PushTestButton from '@/components/pwa/PushTestButton'
@@ -46,6 +46,7 @@ export default async function PerfilPage() {
   }
 
   const rolGlobal = roles[(profile as any)?.rol as keyof typeof roles] || roles.servidor
+  const tieneAccesoPastoral = (['pastor', 'administrador'] as const).includes((profile as any)?.rol)
 
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-8 max-w-xl mx-auto">
@@ -155,9 +156,28 @@ export default async function PerfilPage() {
           <PushToggle />
         </section>
 
-        {(['pastor', 'administrador'] as const).includes((profile as any)?.rol) && (
+        {tieneAccesoPastoral && (
           <section className="space-y-3">
+            <Link
+              href="/pastoral"
+              className="flex items-center justify-between gap-4 bg-white border border-indigo-200 hover:border-indigo-300 active:scale-[.98] text-[#171923] px-4 sm:px-5 py-4 rounded-[20px] shadow-sm transition-all min-w-0"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                  <BookHeart className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-sm break-words">Panel Pastoral</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Versículos, bosquejos, biblioteca y materiales</p>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-indigo-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+
             <PushTestButton />
+
             <Link
               href="/admin"
               className="flex items-center justify-between gap-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[.98] text-white px-4 sm:px-5 py-4 rounded-[20px] shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all min-w-0"
