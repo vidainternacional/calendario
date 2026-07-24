@@ -88,6 +88,7 @@ export async function editarBosquejoPastoral(id: string, formData: FormData) {
     introduccion: texto(formData, 'introduccion', 4000),
     puntos: puntosDesdeFormulario(formData),
     conclusion: texto(formData, 'conclusion', 4000),
+    notas_privadas: texto(formData, 'notas_privadas', 6000),
     estado: estadoValido(texto(formData, 'estado', 20)),
     fecha_predicacion: fecha || null,
     updated_at: new Date().toISOString(),
