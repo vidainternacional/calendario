@@ -38,8 +38,9 @@ export default function PackageDistributionControls({
         mostrarToast(resultado.error)
         return
       }
-      setPublicado(resultado.publicado)
-      mostrarToast(resultado.publicado ? 'Paquete publicado' : 'Publicación desactivada')
+      const estadoPublicado = Boolean(resultado.publicado)
+      setPublicado(estadoPublicado)
+      mostrarToast(estadoPublicado ? 'Paquete publicado' : 'Publicación desactivada')
     })
   }
 
