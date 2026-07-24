@@ -195,13 +195,15 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <AdminClient
-        ministerios={ministerios || []}
-        usuarios={usuarios || []}
-        activeIconVariant={activeIconVariant}
-        initialEstudioPrompt={estudioPrompt}
-        currentUserRol={currentUserRol}
-      />
+      <div className="min-w-0 overflow-x-hidden [&>section:nth-child(1)_button]:min-h-24 [&>section:nth-child(1)_button]:px-2.5 [&>section:nth-child(1)_button]:py-3 [&>section:nth-child(2)_button]:w-full sm:[&>section:nth-child(2)_button]:w-auto [&>section:nth-child(2)_textarea]:!h-[min(16rem,42dvh)] [&>section:nth-child(2)_textarea]:min-h-44 [&>section:nth-child(2)_textarea]:max-h-[55dvh]">
+        <AdminClient
+          ministerios={ministerios || []}
+          usuarios={usuarios || []}
+          activeIconVariant={activeIconVariant}
+          initialEstudioPrompt={estudioPrompt}
+          currentUserRol={currentUserRol}
+        />
+      </div>
     </main>
   )
 }
