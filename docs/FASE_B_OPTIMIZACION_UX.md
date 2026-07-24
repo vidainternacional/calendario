@@ -1,6 +1,6 @@
 # FASE B — Optimización de UX
 
-Estado: EN PROGRESO — REVISIÓN TRANSVERSAL
+Estado: COMPLETADA
 
 Objetivo: mejorar la percepción de fluidez, claridad y respuesta del sistema después del cierre de la FASE A.
 
@@ -13,13 +13,13 @@ Objetivo: mejorar la percepción de fluidez, claridad y respuesta del sistema de
 - Estados de carga coherentes.
 - Manejo visual y recuperable de errores.
 
-## Reglas
+## Reglas aplicadas
 
-- No reabrir la auditoría general de pulido móvil salvo regresión directa.
-- Evitar animaciones decorativas que retrasen tareas.
-- Respetar `prefers-reduced-motion`.
-- Mantener lenguaje humano y orientado a la iglesia.
-- Aplicar cambios pequeños, verificables y reversibles.
+- No se reabrió la auditoría general de pulido móvil salvo regresiones directas.
+- Se evitaron animaciones decorativas que retrasaran tareas.
+- Se respetó `prefers-reduced-motion`.
+- Se mantuvo lenguaje humano y orientado a la iglesia.
+- Los cambios se realizaron de forma pequeña, verificable y reversible.
 
 ## Orden de trabajo
 
@@ -27,9 +27,9 @@ Objetivo: mejorar la percepción de fluidez, claridad y respuesta del sistema de
 2. Retroalimentación de acciones principales. — COMPLETADO
 3. Estados vacíos de módulos principales. — COMPLETADO
 4. Transiciones de navegación y paneles. — COMPLETADO
-5. Revisión transversal de consistencia. — EN PROGRESO
+5. Revisión transversal de consistencia. — COMPLETADO
 
-## Estado actual
+## Estado final
 
 | Área | Carga | Error | Estado vacío | Retroalimentación | Estado |
 |---|---|---|---|---|---|
@@ -37,10 +37,10 @@ Objetivo: mejorar la percepción de fluidez, claridad y respuesta del sistema de
 | Inicio | Carga global disponible | Cobertura global | Orientado y útil | Acciones con respuesta | Completado |
 | Calendario | Carga global disponible | Cobertura global | Orientado y útil | Acciones con respuesta | Completado |
 | Avisos | Carga y envío visibles | Cobertura global y reporte de push | Orientado y útil | Toasts y estado de envío | Completado |
-| Biblia / Estudios | Cargas locales visibles | Global y errores locales | Favoritos y recursos orientados | Favoritos, voz y lectura con respuesta | En revisión transversal |
+| Biblia / Estudios | Cargas locales visibles | Global y errores locales recuperables | Favoritos y recursos orientados | Favoritos, voz y lectura con respuesta | Completado |
 | Perfil | Carga global disponible | Cobertura global | Ministerios con salida útil | Acciones con respuesta | Completado |
 | Ministerios | Carga global disponible | Cobertura global | Primer ingreso y ausencia orientados | Solicitud con respuesta | Completado |
-| Administración | Carga global disponible | Cobertura global | Pendientes, usuarios y ministerios orientados | Formularios y membresías con respuesta | En revisión transversal |
+| Administración | Carga global disponible | Cobertura global | Pendientes, usuarios y ministerios orientados | Formularios y membresías con respuesta | Completado |
 
 ## Bloques completados
 
@@ -51,13 +51,22 @@ Objetivo: mejorar la percepción de fluidez, claridad y respuesta del sistema de
 - Jerarquía visual de fichas de Avisos.
 - Claridad de recursos disponibles y próximos en Estudios.
 - Modos de lectura, selector de voz y estilos de entonación en Biblia.
+- Coherencia temática del lector bíblico en claro, oscuro y sepia.
+- Paleta consistente para selección y favoritos bíblicos.
+- Estrella de favoritos dorada en todos los temas.
 - Transición de navegación inferior, diálogos, paneles y hojas móviles.
 - Alineación del skeleton global con el layout autenticado.
-- Coherencia temática de controles y selección en el lector bíblico.
+- Errores locales de Biblia con acción recuperable de reintento.
+- Jerarquía, tamaño táctil, foco y estados de botones primarios, secundarios y destructivos.
 
-## Pendiente antes de cerrar la fase
+## Evidencia final
 
-- Completar la revisión transversal de errores locales y acciones de reintento.
-- Revisar consistencia final de botones primarios, secundarios y destructivos.
-- Confirmar en producción los últimos ajustes del lector bíblico.
-- Registrar la evidencia final y proponer el cierre en `__VIDA_INTERNACIONAL.md` únicamente cuando estos puntos estén completados.
+- Despliegue de recuperación de errores bíblicos: `dpl_49eFStqLxtbF1TQ2iFSw6Ui3ZQDY` — READY.
+- Commit correctivo de tipado: `2f83e61a9ef6f6569926e3e0c59a19ce3477a35a`.
+- Despliegue de consistencia final de botones: `dpl_EDGzfzcrbsTcLWurRNLpuMExMWpu` — READY.
+- Commit de normalización de botones: `fe90afa627276e2bfc1061a7d2513c91c7754e3d`.
+- Producción: `calendario-vida-internacional.vercel.app`.
+
+## Cierre
+
+La FASE B queda formalmente completada. El documento maestro debe reflejar este cierre antes de iniciar cualquier objetivo de la FASE C.
