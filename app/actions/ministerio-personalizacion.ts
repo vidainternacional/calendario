@@ -4,6 +4,18 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/
+const FUENTES_TITULO = new Set(['moderna', 'elegante', 'fuerte'])
+const FUENTES_CUERPO = new Set(['clasica', 'amable', 'compacta'])
+
+function urlImagenValida(value: string) {
+  if (!value) return true
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && url.pathname.includes('/storage/v1/object/public/ministerios/')
+  } catch {
+    return false
+  }
+}
 
 export async function personalizarMinisterio(formData: FormData) {
   const supabase = await createClient()
@@ -16,6 +28,10 @@ export async function personalizarMinisterio(formData: FormData) {
   const emoji = String(formData.get('emoji') || '⛪').trim().slice(0, 12)
   const colorPrimario = String(formData.get('color_primario') || '')
   const colorSecundario = String(formData.get('color_secundario') || '')
+  const portadaUrl = String(formData.get('portada_url') || '').trim()
+  const avatarUrl = String(formData.get('avatar_url') || '').trim()
+  const fuenteTitulo = String(formData.get('fuente_titulo') || 'moderna')
+  const fuenteCuerpo = String(formData.get('fuente_cuerpo') || 'clasica')
 
   if (!ministerioId) return { success: false, error: 'Ministerio inválido.' }
   if (nombre.length < 2 || nombre.length > 80) {
@@ -26,6 +42,12 @@ export async function personalizarMinisterio(formData: FormData) {
   }
   if (!HEX_COLOR.test(colorPrimario) || !HEX_COLOR.test(colorSecundario)) {
     return { success: false, error: 'Selecciona colores válidos.' }
+  }
+  if (!FUENTES_TITULO.has(fuenteTitulo) || !FUENTES_CUERPO.has(fuenteCuerpo)) {
+    return { success: false, error: 'Selecciona tipografías válidas.' }
+  }
+  if (!urlImagenValida(portadaUrl) || !urlImagenValida(avatarUrl)) {
+    return { success: false, error: 'Las imágenes seleccionadas no son válidas.' }
   }
 
   const [{ data: profile }, { data: membresia }] = await Promise.all([
@@ -57,6 +79,10 @@ export async function personalizarMinisterio(formData: FormData) {
       emoji: emoji || '⛪',
       color_primario: colorPrimario,
       color_secundario: colorSecundario,
+      portada_url: portadaUrl || null,
+      avatar_url: avatarUrl || null,
+      fuente_titulo: fuenteTitulo,
+      fuente_cuerpo: fuenteCuerpo,
     })
     .eq('id', ministerioId)
 
