@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { UserPlus } from 'lucide-react'
 import BackButton from '@/components/navigation/BackButton'
 import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDashboardSwitcher'
+import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
 
 export default async function MinisterioLayout({
   children,
@@ -19,7 +20,11 @@ export default async function MinisterioLayout({
   if (!user) redirect('/login')
 
   const [minReq, membresiaReq, profileReq] = await Promise.all([
-    supabase.from('ministerios').select('id, nombre, emoji, color_primario').eq('id', id).single(),
+    supabase
+      .from('ministerios')
+      .select('id, nombre, descripcion, emoji, color_primario, color_secundario')
+      .eq('id', id)
+      .single(),
     supabase
       .from('ministerio_miembros')
       .select('es_lider')
@@ -36,8 +41,10 @@ export default async function MinisterioLayout({
   const ministerio = minReq.data as {
     id: string
     nombre: string
+    descripcion: string | null
     emoji: string | null
     color_primario: string | null
+    color_secundario: string | null
   } | null
   if (!ministerio) notFound()
 
@@ -48,6 +55,7 @@ export default async function MinisterioLayout({
     profile?.es_pastor_general
   const esLider = Boolean((membresiaReq.data as any)?.es_lider)
   const puedeGestionarIngresos = esLider || isAdminOrPastor
+  const puedePersonalizar = esLider || isAdminOrPastor
 
   if (!membresiaReq.data && !isAdminOrPastor) {
     redirect('/ministerios')
@@ -111,6 +119,7 @@ export default async function MinisterioLayout({
             }}
             ministerios={ministeriosAccesibles}
           />
+          {puedePersonalizar && <PersonalizarMinisterioButton ministerio={ministerio} />}
         </div>
 
         {solicitudesPendientes > 0 && (
