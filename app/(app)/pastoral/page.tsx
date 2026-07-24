@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import {
   BookHeart,
   BookOpen,
+  BookOpenCheck,
   ChevronRight,
   FileText,
   FolderOpen,
@@ -54,6 +55,7 @@ export default async function PastoralPage() {
     { href: '/pastoral/bosquejos', titulo: 'Bosquejos', texto: 'Preparar y predicar', icono: FileText, clase: 'bg-violet-50 text-violet-700' },
     { href: '/pastoral/colecciones', titulo: 'Versículos', texto: 'Colecciones bíblicas', icono: BookHeart, clase: 'bg-indigo-50 text-indigo-700' },
     { href: '/pastoral/biblioteca', titulo: 'Biblioteca', texto: 'Archivos y enlaces', icono: Library, clase: 'bg-amber-50 text-amber-700' },
+    { href: '/pastoral/materiales', titulo: 'Materiales', texto: 'Guías y distribución', icono: BookOpenCheck, clase: 'bg-cyan-50 text-cyan-700' },
     { href: '/pastoral/paquetes', titulo: 'Paquetes', texto: 'Preparar y compartir', icono: PackageOpen, clase: 'bg-emerald-50 text-emerald-700' },
   ]
 
@@ -110,7 +112,7 @@ export default async function PastoralPage() {
         <div className="mb-3 flex items-end justify-between gap-3">
           <div><h2 id="herramientas-centro" className="text-base font-bold text-slate-950">Herramientas de preparación</h2><p className="mt-0.5 text-xs text-slate-500">Todo lo que agregue aquí puede formar parte de un paquete.</p></div>
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {herramientas.map(({ href, titulo, texto, icono: Icono, clase }) => (
             <Link key={href} href={href} className="group flex min-h-[126px] flex-col rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm active:scale-[0.99]">
               <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${clase}`}><Icono className="h-5 w-5" /></span>
