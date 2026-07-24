@@ -100,7 +100,7 @@ export default function PublicacionCard({
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50/70 px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] sm:px-5 sm:pb-6">
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
                 {cuerpo ? (
-                  <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{cuerpo}</p>
+                  <p className="whitespace-pre-wrap break-words text-[17px] leading-8 text-slate-700">{cuerpo}</p>
                 ) : (
                   <p className="text-sm text-slate-500">Esta publicación no tiene contenido adicional.</p>
                 )}
@@ -108,10 +108,10 @@ export default function PublicacionCard({
 
               <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">{inicial}</div>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">{inicial}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-semibold text-[#171923]">{autor}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">{fecha}</p>
+                    <p className="break-words text-xs font-medium text-slate-600">{autor}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-400">{fecha}</p>
                   </div>
                 </div>
                 <div className="mt-3 border-t border-slate-200 pt-3">
