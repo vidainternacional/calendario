@@ -61,7 +61,8 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Un bosquejo deberá poder vincular versículos, colecciones y recursos de biblioteca.
 - El resultado final deberá poder reunirse como un paquete de prédica o estudio.
 - El paquete final deberá admitir distribución a la iglesia según permisos y audiencia.
-- La distribución deberá contemplar, como mínimo, impresión/PDF, copia, compartir por enlace y envío desde el dispositivo.
+- La publicación normal de un material deberá aparecer dentro del Inicio de la aplicación; el enlace será una opción secundaria para compartir.
+- La distribución deberá contemplar, como mínimo, aparición dentro de la app, impresión/PDF, copia, compartir por enlace y envío desde el dispositivo.
 - Al completar los módulos funcionales, el dashboard se rediseñará como un centro de trabajo complementario que muestre progreso, recursos relacionados y acciones siguientes.
 - La capacidad de almacenamiento, consumo mensual, límites del plan y opciones de ampliación se documentarán antes del cierre de la fase, sin bloquear la implementación actual.
 
@@ -140,6 +141,20 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Despliegue consolidado: `dpl_BMuGcKqvTbTrz5i8Zsxg48k7TwYH` — `READY`.
 - Validación visual y funcional confirmada por el usuario el 2026-07-24.
 
+## Requisitos transversales registrados para fases posteriores
+
+- Las notificaciones deberán ser un sistema general de la aplicación, no limitado a mensajes: avisos, alertas, eventos, publicaciones, ayuda, cumpleaños y cambios relevantes.
+- Toda persona de la congregación podrá registrarse y utilizar la aplicación aunque no pertenezca a un ministerio.
+- Los perfiles deberán poder aportar los datos necesarios, con permisos y privacidad, para atención pastoral y felicitaciones.
+- Los cumpleaños deberán poder aparecer en el calendario general.
+- El sistema deberá admitir una felicitación general para la congregación y una notificación personal para el cumpleañero.
+- Deberá existir seguimiento pastoral responsable de personas con ausencias, sin conclusiones automáticas ni exposición pública.
+- Las necesidades de ayuda y situaciones específicas deberán poder gestionarse con audiencia, responsables, estados y confidencialidad.
+- Las festividades y mensajes especiales deberán ser administrables por pastores o administradores, sin modificar código y de acuerdo con la doctrina de Vida Internacional.
+- Los canales oficiales de YouTube, Facebook, Instagram y TikTok podrán integrarse dentro de la aplicación; solo estos destinos externos podrán sacar al usuario cuando corresponda.
+- La Biblioteca Pastoral deberá incorporar miniaturas o vistas previas para imágenes y documentos, similares a una biblioteca visual.
+- El panel administrativo futuro deberá medir actividad agregada, uso de funciones, consumo de IA y tendencias, protegiendo datos pastorales sensibles.
+
 ## Criterios de cierre de fase
 
 - El pastor puede acceder al panel con permisos correctos.
@@ -154,9 +169,4 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 
 ## Próximo bloque
 
-Completar Materiales de Estudio y Distribución: enlace público seguro, audiencia, publicación y experiencia de lectura para la congregación.
-
-## Verificación de despliegue pendiente
-
-- Se solicitó un nuevo despliegue consolidado el 2026-07-24 para incluir Materiales de estudio, footer estático y correcciones de contraste en Biblioteca.
-- La validación funcional continuará únicamente después de confirmar el estado `READY` en producción.
+Completar la publicación interna de Materiales de Estudio en el Inicio de la aplicación y añadir vistas previas seguras en la Biblioteca Pastoral. El enlace externo permanecerá como opción secundaria de distribución.
