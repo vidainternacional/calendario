@@ -155,6 +155,17 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - La Biblioteca Pastoral deberá incorporar miniaturas o vistas previas para imágenes y documentos, similares a una biblioteca visual.
 - El panel administrativo futuro deberá medir actividad agregada, uso de funciones, consumo de IA y tendencias, protegiendo datos pastorales sensibles.
 
+## Decisión gradual para presentaciones y proyección
+
+- Vida mantendrá una vista propia de presentación a pantalla completa, controlable desde teléfono, tablet o computadora.
+- La primera implementación no dependerá de Holyrics ni de una API externa para evitar fragilidad y retrasos.
+- Se priorizará exportar la presentación pastoral a formatos reutilizables, comenzando por PDF e imágenes por diapositiva.
+- Los archivos exportados podrán enviarse manualmente a Holyrics o a la computadora de proyección.
+- Una integración automática con Holyrics solo se evaluará si existe una API pública, estable y documentada que permita importar y controlar presentaciones sin depender de automatizaciones frágiles de interfaz.
+- Se añadirán plantillas visuales simples y editables: fondo, imagen, alineación, tamaño de texto y contraste.
+- La asistencia mediante IA se limitará inicialmente a proponer estructura, texto breve y estilo; no bloqueará la edición manual ni será requisito para presentar.
+- El control remoto avanzado entre dispositivos se evaluará en un incremento posterior mediante una sesión local segura, sin mezclarlo con el cierre básico de Materiales de Estudio.
+
 ## Criterios de cierre de fase
 
 - El pastor puede acceder al panel con permisos correctos.
