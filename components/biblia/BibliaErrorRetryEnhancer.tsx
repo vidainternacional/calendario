@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { RefreshCw, TriangleAlert } from 'lucide-react'
 
 const ERROR_MESSAGES = [
   'No se pudo conectar con la biblioteca bíblica.',
