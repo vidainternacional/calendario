@@ -69,22 +69,27 @@ export async function actualizarDistribucionPaquete(
   const audienciaFinal = audienciaValida(audiencia)
   const { data: anterior } = await (supabase as any)
     .from('pastoral_paquetes')
-    .select('titulo, descripcion_publica, publicado, public_slug')
+    .select('titulo, descripcion_publica, publicado, public_slug, published_at')
     .eq('id', paqueteId)
     .eq('profile_id', user.id)
     .maybeSingle()
 
   if (!anterior) return { success: false, error: 'No se encontró el paquete pastoral.' }
 
+  const esPublicacionNueva = publicado && !Boolean(anterior.publicado)
+  const cambios: Record<string, unknown> = {
+    audiencia: audienciaFinal,
+    publicado,
+    destacado: Boolean(destacado),
+    updated_at: new Date().toISOString(),
+  }
+
+  if (esPublicacionNueva) cambios.published_at = new Date().toISOString()
+  if (!publicado) cambios.published_at = null
+
   const { data, error: updateError } = await (supabase as any)
     .from('pastoral_paquetes')
-    .update({
-      audiencia: audienciaFinal,
-      publicado,
-      destacado: Boolean(destacado),
-      published_at: publicado ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(cambios)
     .eq('id', paqueteId)
     .eq('profile_id', user.id)
     .select('titulo, descripcion_publica, public_slug, audiencia, publicado, destacado')
@@ -95,7 +100,6 @@ export async function actualizarDistribucionPaquete(
   }
 
   let notificaciones = 0
-  const esPublicacionNueva = publicado && !Boolean(anterior.publicado)
 
   if (esPublicacionNueva) {
     const { admin, profileIds } = await destinatariosPorAudiencia(audienciaFinal)
