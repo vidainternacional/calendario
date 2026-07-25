@@ -1,53 +1,48 @@
 'use client'
 
-import { useEffect } from 'react'
+import { createElement, useEffect } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import PastoralBibleNative from '@/components/pastoral/PastoralBibleNative'
 
 export default function PastoralWorkspaceBridge({ paqueteId }: { paqueteId: string }) {
   useEffect(() => {
-    let recargaProgramada = false
+    let root: Root | null = null
+    let mount: HTMLDivElement | null = null
 
     const prepararInterfaz = () => {
       const iframe = document.querySelector<HTMLIFrameElement>('iframe[title="Biblia integrada del Centro Pastoral"]')
-      if (iframe) {
-        const url = new URL(iframe.src, window.location.origin)
-        if (url.searchParams.get('paqueteId') !== paqueteId) {
-          url.searchParams.set('paqueteId', paqueteId)
-          iframe.src = url.toString()
-        }
-      }
+      if (!iframe) return
 
-      document.querySelectorAll<HTMLButtonElement>('button').forEach((boton) => {
-        if (boton.textContent?.includes('Actualizar versículos')) boton.style.display = 'none'
+      const section = iframe.closest('section')
+      if (!section || section.dataset.bibliaNativa === 'true') return
+      section.dataset.bibliaNativa = 'true'
+
+      Array.from(section.children).forEach((child) => {
+        if (child instanceof HTMLElement) child.style.display = 'none'
       })
+
+      mount = document.createElement('div')
+      mount.dataset.pastoralBibleNative = 'true'
+      mount.className = 'w-full'
+      section.appendChild(mount)
+      section.className = 'w-full'
+
+      root = createRoot(mount)
+      root.render(createElement(PastoralBibleNative, { paqueteId }))
 
       document.querySelectorAll<HTMLLabelElement>('label').forEach((label) => {
-        if (!label.textContent?.includes('Colección de versículos')) return
-        label.style.display = 'none'
+        if (label.textContent?.includes('Colección de versículos')) label.style.display = 'none'
       })
-
-      document.querySelectorAll<HTMLParagraphElement>('p').forEach((parrafo) => {
-        if (parrafo.textContent?.includes('Busque un pasaje, agréguelo a una colección pastoral')) {
-          parrafo.textContent = 'Busque un pasaje, toque el versículo y agréguelo directamente a este proyecto.'
-        }
-      })
-    }
-
-    const manejarMensaje = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
-      if (!['vida:pastoral-versiculo-agregado', 'vida:pastoral-versiculo-eliminado'].includes(event.data?.type)) return
-      if (recargaProgramada) return
-      recargaProgramada = true
-      window.setTimeout(() => window.location.reload(), 250)
     }
 
     prepararInterfaz()
     const observer = new MutationObserver(prepararInterfaz)
     observer.observe(document.body, { childList: true, subtree: true })
-    window.addEventListener('message', manejarMensaje)
 
     return () => {
       observer.disconnect()
-      window.removeEventListener('message', manejarMensaje)
+      root?.unmount()
+      mount?.remove()
     }
   }, [paqueteId])
 
