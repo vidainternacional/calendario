@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { BookHeart, ChevronRight, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { readUserCache } from '@/lib/cache/userCache'
 
 type MaterialVisible = {
   id: string
@@ -15,7 +16,11 @@ type MaterialVisible = {
 }
 
 type MaterialesInicioProps = {
-  puedeAbrirCentroPastoral: boolean
+  puedeAbrirCentroPastoral?: boolean
+}
+
+type InicioCache = {
+  profile?: { rol?: string } | null
 }
 
 const audienciaLabel: Record<MaterialVisible['audiencia'], string> = {
@@ -25,23 +30,33 @@ const audienciaLabel: Record<MaterialVisible['audiencia'], string> = {
   publico: 'Público',
 }
 
-export default function MaterialesInicio({ puedeAbrirCentroPastoral }: MaterialesInicioProps) {
+export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoRecibido }: MaterialesInicioProps) {
   const [materiales, setMateriales] = useState<MaterialVisible[] | null>(null)
+  const [puedeAbrirCentroPastoral, setPuedeAbrirCentroPastoral] = useState(Boolean(permisoRecibido))
 
   useEffect(() => {
     let activo = true
 
     async function cargar() {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      const cache = user ? readUserCache<InicioCache>(user.id, 'inicio:v1') : null
+      const rolCache = cache?.profile?.rol
+      const permisoCache = rolCache === 'pastor' || rolCache === 'administrador'
+
       const { data } = await (supabase as any).rpc('get_visible_pastoral_packages')
-      if (activo) setMateriales((data ?? []) as MaterialVisible[])
+
+      if (activo) {
+        setMateriales((data ?? []) as MaterialVisible[])
+        setPuedeAbrirCentroPastoral(Boolean(permisoRecibido) || permisoCache)
+      }
     }
 
     void cargar()
     return () => {
       activo = false
     }
-  }, [])
+  }, [permisoRecibido])
 
   if (materiales === null) {
     return (
@@ -54,7 +69,7 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral }: Materiale
   if (!puedeAbrirCentroPastoral && materiales.length === 0) return null
 
   return (
-    <div className="space-y-6" data-build="pastoral-centro-v2">
+    <div className="space-y-6" data-build="pastoral-centro-v3">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
