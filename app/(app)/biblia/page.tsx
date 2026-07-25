@@ -12,8 +12,9 @@ import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
-export default async function BibliaPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
-  const { from } = await searchParams
+export default async function BibliaPage({ searchParams }: { searchParams: Promise<{ from?: string; embed?: string }> }) {
+  const { from, embed } = await searchParams
+  const estaEmbebida = embed === '1'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -48,7 +49,7 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      {from === 'pastoral' && (
+      {from === 'pastoral' && !estaEmbebida && (
         <Link
           href="/pastoral"
           className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.65rem)] z-[90] inline-flex min-h-10 items-center gap-1.5 rounded-full border border-indigo-200 bg-white/95 px-3 text-xs font-bold text-indigo-700 shadow-lg backdrop-blur-md"
@@ -62,6 +63,13 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
       <BibliaFavoritesEmptyEnhancer />
       <BibliaErrorRetryEnhancer />
       {from === 'pastoral' && <BibliaPastoralCollectionEnhancer colecciones={coleccionesPastorales} />}
+      {estaEmbebida && (
+        <style>{`
+          .app-bottom-nav { display: none !important; }
+          body { background: white !important; }
+          .biblia-page, main { padding-bottom: 1rem !important; }
+        `}</style>
+      )}
     </>
   )
 }
