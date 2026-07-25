@@ -31,14 +31,15 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
         onClick={() => setAbierto(v => !v)}
         aria-expanded={abierto}
         aria-haspopup="menu"
-        className="w-full min-h-16 flex items-center gap-3 rounded-[20px] border border-white/20 px-4 py-3 text-left text-white shadow-[0_8px_24px_rgba(20,24,40,0.12)] transition-transform active:scale-[0.99]"
+        className="relative flex min-h-16 w-full items-center gap-3 overflow-hidden rounded-[20px] border border-white/20 px-4 py-3 text-left text-white shadow-[0_8px_24px_rgba(20,24,40,0.12)] transition-transform active:scale-[0.99]"
         style={{ background: `linear-gradient(135deg, ${principal.color}, ${principal.color}dd)` }}
       >
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-xl ring-1 ring-white/20">
+        <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 rotate-12 bg-gradient-to-r from-transparent via-white/24 to-transparent ministry-shine" />
+        <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-xl ring-1 ring-white/20">
           {principal.emoji}
         </span>
 
-        <span className="min-w-0 flex-1">
+        <span className="relative min-w-0 flex-1">
           <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-white/70">
             Mi ministerio
           </span>
@@ -48,12 +49,12 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
         </span>
 
         {membresias.length > 1 && (
-          <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold ring-1 ring-white/20">
+          <span className="relative shrink-0 rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold ring-1 ring-white/20">
             +{membresias.length - 1}
           </span>
         )}
 
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/15">
+        <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 ring-1 ring-white/15">
           <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`} />
         </span>
       </button>
@@ -124,6 +125,18 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
           </div>
         </>
       )}
+
+      <style jsx global>{`
+        @keyframes ministry-shine {
+          0%, 70% { transform: translateX(-160%) rotate(12deg); opacity: 0; }
+          74% { opacity: 1; }
+          94%, 100% { transform: translateX(520%) rotate(12deg); opacity: 0; }
+        }
+        .ministry-shine { animation: ministry-shine 8.5s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .ministry-shine { animation: none; display: none; }
+        }
+      `}</style>
     </div>
   )
 }
