@@ -4,10 +4,8 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
-import CargaRapidaRecursos from '@/components/pastoral/CargaRapidaRecursos'
-import PackageDistributionControls from '@/components/pastoral/PackageDistributionControls'
 
-export const metadata: Metadata = { title: 'Paquete Pastoral' }
+export const metadata: Metadata = { title: 'Espacio Pastoral' }
 
 export default async function PaquetePastoralDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -22,8 +20,11 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
 
   const { data: paquete } = await (supabase as any)
     .from('pastoral_paquetes')
-    .select('id, titulo, descripcion_publica, instrucciones, bosquejo_id, coleccion_id, recurso_ids, estado, presentacion_diapositivas, presentacion_pdf_recurso_id, audiencia, publicado, public_slug')
-    .eq('id', id).eq('profile_id', user.id).maybeSingle()
+    .select('id, titulo, descripcion_publica, instrucciones, notas_privadas, bosquejo_id, coleccion_id, recurso_ids, estado, presentacion_diapositivas, presentacion_pdf_recurso_id, audiencia, publicado, destacado, public_slug')
+    .eq('id', id)
+    .eq('profile_id', user.id)
+    .maybeSingle()
+
   if (!paquete) notFound()
 
   const [{ data: bosquejos }, { data: colecciones }, { data: bibliotecaBase }] = await Promise.all([
@@ -44,8 +45,14 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
   const bosquejo = (bosquejos ?? []).find((item: any) => item.id === paquete.bosquejo_id) ?? null
   const coleccionBase = (colecciones ?? []).find((item: any) => item.id === paquete.coleccion_id) ?? null
   let coleccion = null
+
   if (coleccionBase) {
-    const { data: versiculos } = await (supabase as any).from('pastoral_versiculos').select('id, referencia, texto, traduccion, nota').eq('coleccion_id', coleccionBase.id).eq('profile_id', user.id).order('created_at', { ascending: true })
+    const { data: versiculos } = await (supabase as any)
+      .from('pastoral_versiculos')
+      .select('id, referencia, texto, traduccion, nota')
+      .eq('coleccion_id', coleccionBase.id)
+      .eq('profile_id', user.id)
+      .order('created_at', { ascending: true })
     coleccion = { ...coleccionBase, versiculos: versiculos ?? [] }
   }
 
@@ -54,21 +61,12 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
   const pdfPresentacion = biblioteca.find((item: any) => item.id === paquete.presentacion_pdf_recurso_id) ?? null
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
-      <header className="mb-6 print:hidden">
-        <Link href="/pastoral/paquetes" className="inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-bold text-indigo-700"><ArrowLeft className="h-4 w-4" /> Paquetes pastorales</Link>
-        <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Paquete integral</p>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Preparar y compartir</h1>
-        <p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-500">Prepara la guía congregacional y una presentación independiente para pantalla o proyector.</p>
-      </header>
-
-      <CargaRapidaRecursos />
-
-      <PackageDistributionControls
-        paqueteId={paquete.id}
-        initialAudience={(paquete.audiencia ?? 'iglesia') as any}
-        initialPublished={Boolean(paquete.publicado)}
-      />
+    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
+      <div className="mb-2 print:hidden">
+        <Link href="/pastoral" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 text-sm font-bold text-violet-700">
+          <ArrowLeft className="h-4 w-4" /> Centro Pastoral
+        </Link>
+      </div>
 
       <PaqueteDetalleClient
         paquete={paquete as any}
