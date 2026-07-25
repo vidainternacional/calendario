@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
+import PastoralWorkspaceBridge from '@/components/pastoral/PastoralWorkspaceBridge'
 
 export const metadata: Metadata = { title: 'Espacio Pastoral' }
 
@@ -68,6 +69,7 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
         </Link>
       </div>
 
+      <PastoralWorkspaceBridge paqueteId={paquete.id} />
       <PaqueteDetalleClient
         paquete={paquete as any}
         bosquejo={bosquejo as any}

@@ -47,6 +47,33 @@ function urlValida(valor: string) {
   }
 }
 
+function uuidOpcional(valor: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(valor) ? valor : null
+}
+
+async function adjuntarAlPaquete(supabase: any, profileId: string, paqueteId: string | null, recursoId: string) {
+  if (!paqueteId) return true
+
+  const { data: paquete } = await supabase
+    .from('pastoral_paquetes')
+    .select('recurso_ids')
+    .eq('id', paqueteId)
+    .eq('profile_id', profileId)
+    .maybeSingle()
+
+  if (!paquete) return false
+  const actuales = Array.isArray(paquete.recurso_ids) ? paquete.recurso_ids as string[] : []
+  const recursoIds = Array.from(new Set([...actuales, recursoId])).slice(0, 30)
+  const { error } = await supabase
+    .from('pastoral_paquetes')
+    .update({ recurso_ids: recursoIds, updated_at: new Date().toISOString() })
+    .eq('id', paqueteId)
+    .eq('profile_id', profileId)
+
+  if (!error) revalidatePath(`/pastoral/paquetes/${paqueteId}`)
+  return !error
+}
+
 export async function crearEnlaceBibliotecaPastoral(formData: FormData) {
   const { supabase, user, error } = await contextoPastoral()
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
@@ -56,7 +83,7 @@ export async function crearEnlaceBibliotecaPastoral(formData: FormData) {
   if (!titulo) return { success: false, error: 'Escribe un título para el recurso.' }
   if (!url) return { success: false, error: 'Escribe un enlace válido que comience con http o https.' }
 
-  const { error: insertError } = await (supabase as any).from('pastoral_biblioteca').insert({
+  const { data, error: insertError } = await (supabase as any).from('pastoral_biblioteca').insert({
     profile_id: user.id,
     titulo,
     descripcion: texto(formData, 'descripcion', 1200),
@@ -64,12 +91,17 @@ export async function crearEnlaceBibliotecaPastoral(formData: FormData) {
     etiquetas: etiquetasDesdeTexto(texto(formData, 'etiquetas', 500)),
     tipo: 'enlace',
     url,
-  })
+  }).select('id').single()
 
-  if (insertError) return { success: false, error: 'No se pudo guardar el enlace.' }
+  if (insertError || !data) return { success: false, error: 'No se pudo guardar el enlace.' }
+
+  const paqueteId = uuidOpcional(texto(formData, 'paquete_id', 60))
+  const adjuntado = await adjuntarAlPaquete(supabase, user.id, paqueteId, data.id as string)
+  if (paqueteId && !adjuntado) return { success: false, error: 'El enlace se guardó, pero no pudo agregarse al proyecto.' }
+
   revalidatePath('/pastoral')
   revalidatePath('/pastoral/biblioteca')
-  return { success: true }
+  return { success: true, resourceId: data.id as string }
 }
 
 export async function subirArchivoBibliotecaPastoral(formData: FormData) {
@@ -92,7 +124,7 @@ export async function subirArchivoBibliotecaPastoral(formData: FormData) {
 
   if (uploadError) return { success: false, error: 'No se pudo subir el archivo. Revisa el formato y el tamaño.' }
 
-  const { error: insertError } = await (supabase as any).from('pastoral_biblioteca').insert({
+  const { data, error: insertError } = await (supabase as any).from('pastoral_biblioteca').insert({
     profile_id: user.id,
     titulo,
     descripcion: texto(formData, 'descripcion', 1200),
@@ -103,16 +135,20 @@ export async function subirArchivoBibliotecaPastoral(formData: FormData) {
     nombre_archivo: archivo.name.slice(0, 255),
     mime_type: archivo.type || null,
     tamano_bytes: archivo.size,
-  })
+  }).select('id').single()
 
-  if (insertError) {
+  if (insertError || !data) {
     await supabase.storage.from('pastoral-library').remove([storagePath])
     return { success: false, error: 'El archivo se subió, pero no pudo registrarse.' }
   }
 
+  const paqueteId = uuidOpcional(texto(formData, 'paquete_id', 60))
+  const adjuntado = await adjuntarAlPaquete(supabase, user.id, paqueteId, data.id as string)
+  if (paqueteId && !adjuntado) return { success: false, error: 'El archivo se guardó, pero no pudo agregarse al proyecto.' }
+
   revalidatePath('/pastoral')
   revalidatePath('/pastoral/biblioteca')
-  return { success: true }
+  return { success: true, resourceId: data.id as string }
 }
 
 export async function editarRecursoBibliotecaPastoral(id: string, formData: FormData) {

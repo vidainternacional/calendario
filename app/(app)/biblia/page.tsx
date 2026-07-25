@@ -8,20 +8,22 @@ import BibliaVoiceControl from '@/components/biblia/BibliaVoiceControl'
 import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmptyEnhancer'
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
+import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
-export default async function BibliaPage({ searchParams }: { searchParams: Promise<{ from?: string; embed?: string }> }) {
-  const { from, embed } = await searchParams
+export default async function BibliaPage({ searchParams }: { searchParams: Promise<{ from?: string; embed?: string; paqueteId?: string }> }) {
+  const { from, embed, paqueteId } = await searchParams
   const estaEmbebida = embed === '1'
+  const esProyectoPastoral = from === 'pastoral' && estaEmbebida
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   let coleccionesPastorales: Array<{ id: string; nombre: string; color: string }> = []
 
-  if (from === 'pastoral') {
+  if (from === 'pastoral' && !esProyectoPastoral) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('rol, estado_cuenta')
@@ -58,15 +60,18 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
           Panel Pastoral
         </Link>
       )}
+
+      {esProyectoPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
       <BibliaClient />
-      <BibliaVoiceControl />
+      {!estaEmbebida && <BibliaVoiceControl />}
       <BibliaFavoritesEmptyEnhancer />
       <BibliaErrorRetryEnhancer />
-      {from === 'pastoral' && <BibliaPastoralCollectionEnhancer colecciones={coleccionesPastorales} />}
+      {from === 'pastoral' && !esProyectoPastoral && <BibliaPastoralCollectionEnhancer colecciones={coleccionesPastorales} />}
+
       {estaEmbebida && (
         <style>{`
           .app-bottom-nav { display: none !important; }
-          body { background: white !important; }
+          body { background: white !important; overflow-x: hidden !important; }
           .biblia-page, main { padding-bottom: 1rem !important; }
         `}</style>
       )}

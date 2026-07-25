@@ -11,6 +11,12 @@ import { mostrarToast } from '@/lib/ui/toast'
 
 type Modo = 'cerrado' | 'archivo' | 'enlace'
 
+type Props = {
+  paqueteId?: string
+  categoriaInicial?: 'predica' | 'estudio' | 'liderazgo' | 'consejeria' | 'multimedia' | 'administrativo' | 'otro'
+  onResourceAdded?: (resourceId: string) => void
+}
+
 const categorias = [
   ['predica', 'Prédica'],
   ['estudio', 'Estudio'],
@@ -21,37 +27,43 @@ const categorias = [
   ['otro', 'Otro'],
 ]
 
-export default function CargaRapidaRecursos() {
+export default function CargaRapidaRecursos({ paqueteId, categoriaInicial = 'multimedia', onResourceAdded }: Props) {
   const router = useRouter()
   const formularioRef = useRef<HTMLFormElement>(null)
   const [modo, setModo] = useState<Modo>('cerrado')
   const [isPending, startTransition] = useTransition()
 
   const enviar = (formData: FormData) => {
+    const paqueteDesdeRuta = window.location.pathname.match(/^\/pastoral\/paquetes\/([0-9a-f-]{36})/i)?.[1]
+    const paqueteActual = paqueteId ?? paqueteDesdeRuta
+    if (paqueteActual) formData.set('paquete_id', paqueteActual)
+
     startTransition(async () => {
-      const resultado = modo === 'archivo'
+      const resultado: { success: boolean; error?: string; resourceId?: string } = modo === 'archivo'
         ? await subirArchivoBibliotecaPastoral(formData)
         : await crearEnlaceBibliotecaPastoral(formData)
 
       if (!resultado.success) {
-        mostrarToast(resultado.error)
+        mostrarToast(resultado.error ?? 'No se pudo guardar el recurso')
         return
       }
 
-      mostrarToast(modo === 'archivo' ? 'Recurso subido' : 'Enlace agregado')
+      if (resultado.resourceId) onResourceAdded?.(resultado.resourceId)
+      mostrarToast(paqueteActual ? 'Recurso agregado al proyecto' : modo === 'archivo' ? 'Recurso subido' : 'Enlace agregado')
       formularioRef.current?.reset()
       setModo('cerrado')
-      router.refresh()
+      if (paqueteActual) window.setTimeout(() => window.location.reload(), 250)
+      else router.refresh()
     })
   }
 
   return (
-    <section className="print:hidden mb-5 rounded-[22px] border border-indigo-100 bg-white p-4 shadow-sm sm:p-5">
+    <section className="print:hidden rounded-[22px] border border-indigo-100 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Recursos del paquete</p>
-          <h2 className="mt-1 text-lg font-bold text-slate-900">Agregar material sin salir de Preparar</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">Suba una imagen, PDF u otro archivo, o agregue un enlace. También quedará guardado en la Biblioteca Pastoral.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Agregar al proyecto</p>
+          <h2 className="mt-1 text-lg font-bold text-slate-900">Subir material sin salir del espacio de trabajo</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">El recurso quedará incluido automáticamente en este proyecto y también se guardará en la Biblioteca Pastoral.</p>
         </div>
         {modo === 'cerrado' && (
           <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -98,7 +110,7 @@ export default function CargaRapidaRecursos() {
 
             <label>
               <span className="mb-1.5 block text-xs font-bold text-slate-700">Categoría</span>
-              <select name="categoria" defaultValue={modo === 'archivo' ? 'multimedia' : 'estudio'} className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900">
+              <select name="categoria" defaultValue={categoriaInicial} className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900">
                 {categorias.map(([valor, etiqueta]) => <option key={valor} value={valor}>{etiqueta}</option>)}
               </select>
             </label>
@@ -116,7 +128,7 @@ export default function CargaRapidaRecursos() {
 
           <button type="submit" disabled={isPending} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white disabled:opacity-60 sm:w-auto sm:min-w-48">
             {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {isPending ? 'Guardando…' : modo === 'archivo' ? 'Subir recurso' : 'Guardar enlace'}
+            {isPending ? 'Guardando…' : modo === 'archivo' ? 'Subir y agregar' : 'Guardar y agregar'}
           </button>
         </form>
       )}
