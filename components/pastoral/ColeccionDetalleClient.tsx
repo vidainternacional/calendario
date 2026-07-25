@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
-import { Copy, Edit3, Mail, Printer, Search, Share2, Trash2, X, Loader2 } from 'lucide-react'
+import { Check, Copy, Edit3, Mail, Printer, Search, Share2, Trash2, X, Loader2 } from 'lucide-react'
 import { editarColeccionPastoral, eliminarVersiculoPastoral } from '@/app/actions/pastoral'
 import PastoralVerseFinder from '@/components/pastoral/PastoralVerseFinder'
 import { mostrarToast } from '@/lib/ui/toast'
@@ -22,7 +22,14 @@ export type ColeccionDetalle = {
   }>
 }
 
-const colores = ['indigo', 'violet', 'amber', 'emerald', 'rose', 'sky']
+const colores = [
+  { id: 'indigo', nombre: 'Índigo', muestra: 'bg-indigo-600', anillo: 'peer-checked:ring-indigo-600' },
+  { id: 'violet', nombre: 'Violeta', muestra: 'bg-violet-600', anillo: 'peer-checked:ring-violet-600' },
+  { id: 'amber', nombre: 'Ámbar', muestra: 'bg-amber-500', anillo: 'peer-checked:ring-amber-500' },
+  { id: 'emerald', nombre: 'Esmeralda', muestra: 'bg-emerald-600', anillo: 'peer-checked:ring-emerald-600' },
+  { id: 'rose', nombre: 'Rosa', muestra: 'bg-rose-600', anillo: 'peer-checked:ring-rose-600' },
+  { id: 'sky', nombre: 'Celeste', muestra: 'bg-sky-500', anillo: 'peer-checked:ring-sky-500' },
+]
 
 export default function ColeccionDetalleClient({ coleccion }: { coleccion: ColeccionDetalle }) {
   const [editarAbierto, setEditarAbierto] = useState(false)
@@ -125,7 +132,22 @@ export default function ColeccionDetalleClient({ coleccion }: { coleccion: Colec
             <form action={editar} className="modal-body-safe space-y-4 p-5">
               <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Nombre</span><input name="nombre" defaultValue={coleccion.nombre} required maxLength={80} className="min-h-12 w-full rounded-xl border border-slate-200 px-3 text-base text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" /></label>
               <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Introducción o propósito</span><textarea name="descripcion" defaultValue={coleccion.descripcion} maxLength={500} rows={5} className="w-full rounded-xl border border-slate-200 p-3 text-base text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" /></label>
-              <fieldset><legend className="mb-2 text-xs font-bold text-slate-700">Color</legend><div className="grid grid-cols-3 gap-2">{colores.map((color) => <label key={color}><input type="radio" name="color" value={color} defaultChecked={coleccion.color === color} className="peer sr-only" /><span className="flex min-h-11 items-center justify-center rounded-xl bg-slate-100 text-xs font-semibold capitalize peer-checked:bg-indigo-600 peer-checked:text-white">{color}</span></label>)}</div></fieldset>
+              <fieldset>
+                <legend className="mb-1 text-xs font-bold text-slate-700">Color de la colección</legend>
+                <p className="mb-3 text-xs leading-5 text-slate-500">Este color ayuda a reconocer la colección rápidamente en el Centro Pastoral.</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {colores.map((color) => (
+                    <label key={color.id} className="cursor-pointer">
+                      <input type="radio" name="color" value={color.id} defaultChecked={coleccion.color === color.id} className="peer sr-only" />
+                      <span className={`relative flex min-h-14 items-center gap-3 rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition peer-checked:border-transparent peer-checked:ring-2 peer-checked:ring-offset-2 ${color.anillo}`}>
+                        <span className={`h-7 w-7 shrink-0 rounded-full ${color.muestra}`} aria-hidden="true" />
+                        <span>{color.nombre}</span>
+                        <Check className="absolute right-2 top-2 h-4 w-4 opacity-0 peer-checked:opacity-100" />
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <button type="submit" disabled={isPending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 text-sm font-semibold text-white">{isPending && <Loader2 className="h-4 w-4 animate-spin" />} Guardar cambios</button>
             </form>
           </section>
