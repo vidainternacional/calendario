@@ -14,8 +14,7 @@ type MaterialVisible = {
   public_slug: string
 }
 
-type EstadoInicio = {
-  materiales: MaterialVisible[]
+type MaterialesInicioProps = {
   puedeAbrirCentroPastoral: boolean
 }
 
@@ -26,34 +25,16 @@ const audienciaLabel: Record<MaterialVisible['audiencia'], string> = {
   publico: 'Público',
 }
 
-export default function MaterialesInicio() {
-  const [estado, setEstado] = useState<EstadoInicio | null>(null)
+export default function MaterialesInicio({ puedeAbrirCentroPastoral }: MaterialesInicioProps) {
+  const [materiales, setMateriales] = useState<MaterialVisible[] | null>(null)
 
   useEffect(() => {
     let activo = true
 
     async function cargar() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const [materialesRes, perfilRes] = await Promise.all([
-        (supabase as any).rpc('get_visible_pastoral_packages'),
-        user
-          ? supabase.from('profiles').select('rol, estado_cuenta').eq('id', user.id).single()
-          : Promise.resolve({ data: null }),
-      ])
-
-      const perfil = perfilRes.data as { rol?: string; estado_cuenta?: string | null } | null
-      const puedeAbrirCentroPastoral =
-        ['pastor', 'administrador'].includes(perfil?.rol ?? '') &&
-        (perfil?.estado_cuenta ?? 'activo') === 'activo'
-
-      if (activo) {
-        setEstado({
-          materiales: (materialesRes.data ?? []) as MaterialVisible[],
-          puedeAbrirCentroPastoral,
-        })
-      }
+      const { data } = await (supabase as any).rpc('get_visible_pastoral_packages')
+      if (activo) setMateriales((data ?? []) as MaterialVisible[])
     }
 
     void cargar()
@@ -62,7 +43,7 @@ export default function MaterialesInicio() {
     }
   }, [])
 
-  if (estado === null) {
+  if (materiales === null) {
     return (
       <section aria-label="Área pastoral">
         <div className="h-24 animate-pulse rounded-2xl border border-indigo-100 bg-white" />
@@ -70,11 +51,10 @@ export default function MaterialesInicio() {
     )
   }
 
-  const { materiales, puedeAbrirCentroPastoral } = estado
   if (!puedeAbrirCentroPastoral && materiales.length === 0) return null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-build="pastoral-centro-v2">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
@@ -88,7 +68,7 @@ export default function MaterialesInicio() {
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-100">Área de trabajo pastoral</p>
                 <h2 className="mt-1 text-lg font-bold">Centro Pastoral</h2>
-                <p className="mt-1 text-xs leading-5 text-indigo-100">Una sola entrada para preparar bosquejos, versículos, recursos, paquetes y materiales.</p>
+                <p className="mt-1 text-xs leading-5 text-indigo-100">Una sola entrada para bosquejos, versículos, biblioteca, paquetes y materiales.</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 shrink-0 text-white/75 transition-transform group-hover:translate-x-1" />
