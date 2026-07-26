@@ -64,10 +64,15 @@ export default function BibleVerseActionsPersistent() {
         if (!panel) return
 
         const acciones = Array.from(panel.querySelectorAll<HTMLElement>(':scope > button, :scope > a'))
+          .filter((accion) => accion.dataset.vidaNoteAction !== 'true')
         const etiquetas = acciones.map((accion) => accion.getAttribute('aria-label') || accion.getAttribute('title') || texto(accion))
         if (!etiquetas.includes('Compartir')) return
 
+        const firma = etiquetas.join('|')
+        if (panel.dataset.vidaIconsReady === 'true' && panel.dataset.vidaActionsSignature === firma) return
+
         panel.dataset.vidaVerseActions = 'true'
+        panel.dataset.vidaActionsSignature = firma
         panel.className = 'mb-4 mt-2 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-sm transition-[opacity,transform] duration-150 ease-out dark:border-slate-700 dark:bg-slate-900/70'
 
         acciones.forEach((accion, indice) => {
@@ -85,8 +90,8 @@ export default function BibleVerseActionsPersistent() {
 
         if (!panel.querySelector('[data-vida-note-action="true"]')) {
           const contenedorVerso = panel.parentElement
-          const parrafo = contenedorVerso?.querySelector<HTMLElement>(':scope > p')
-          const numero = texto(parrafo?.querySelector('sup'))
+          const parrafo = contenedorVerso?.querySelector<HTMLElement>(':scope > p') ?? null
+          const numero = texto(parrafo?.querySelector('sup') ?? null)
           const pasaje = texto(document.querySelector('h2'))
 
           if (parrafo && numero && pasaje) {
