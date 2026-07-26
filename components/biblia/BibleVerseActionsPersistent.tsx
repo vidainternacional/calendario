@@ -3,8 +3,8 @@
 import { useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
-const claseNeutral = 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-slate-200 bg-white p-0 text-[0px] text-slate-700 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
-const claseFavorito = 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-amber-400 bg-amber-400 p-0 text-[0px] text-amber-950 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95'
+const claseBase = 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-0 text-[0px] leading-none text-slate-700 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
+const claseFavorito = 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-0 text-[0px] leading-none text-amber-400 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800'
 
 const accionesValidas = ['Guardar', 'Quitar', 'Escuchar', 'Compartir', 'Profundo', 'Estudiar']
 
@@ -18,10 +18,21 @@ function nombreAccion(accion: HTMLElement) {
   return accion.getAttribute('aria-label') || accion.getAttribute('title') || visible
 }
 
-function estilizarIconoOriginal(accion: HTMLElement) {
+function estilizarIconoOriginal(accion: HTMLElement, favoritoActivo: boolean) {
   accion.querySelectorAll<SVGElement>('svg').forEach((svg) => {
     svg.classList.remove('h-3.5', 'w-3.5', 'h-4', 'w-4', 'h-5', 'w-5')
-    svg.classList.add('h-[19px]', 'w-[19px]', 'shrink-0')
+    svg.classList.add('block', 'h-[19px]', 'w-[19px]', 'shrink-0')
+    svg.style.display = 'block'
+    svg.style.margin = '0'
+    svg.style.transform = 'translateY(0)'
+
+    if (favoritoActivo) {
+      svg.setAttribute('fill', 'currentColor')
+      svg.style.color = 'rgb(251 191 36)'
+    } else {
+      svg.setAttribute('fill', 'none')
+      svg.style.color = ''
+    }
   })
 }
 
@@ -55,11 +66,12 @@ export default function BibleVerseActionsPersistent() {
           const nombre = etiquetas[indice]
 
           if (accionesValidas.includes(nombre)) {
+            const favoritoActivo = nombre === 'Quitar'
             accion.dataset.vidaActionName = nombre
             accion.setAttribute('aria-label', nombre)
             accion.setAttribute('title', nombre)
-            accion.className = nombre === 'Quitar' ? claseFavorito : claseNeutral
-            estilizarIconoOriginal(accion)
+            accion.className = favoritoActivo ? claseFavorito : claseBase
+            estilizarIconoOriginal(accion, favoritoActivo)
           }
 
           if ((nombre === 'Guardar' || nombre === 'Quitar') && accion.dataset.vidaFavoriteRefresh !== 'true') {
