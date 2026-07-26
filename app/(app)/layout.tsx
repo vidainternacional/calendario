@@ -1,3 +1,4 @@
+import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BottomNav from '@/components/layout/BottomNav'
 
 export default function AppLayout({
@@ -7,6 +8,7 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
+      <BibleSelectorPolish />
       <div className="flex-1 pb-16">
         {/* pb-16 to account for the bottom nav height */}
         {children}
