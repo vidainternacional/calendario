@@ -23,6 +23,7 @@ html {
   width: 100%;
   min-height: 100%;
   overflow-x: hidden;
+  background: var(--background);
 }
 
 body {
@@ -32,6 +33,31 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* El rebote/overscroll de iOS debe usar el mismo fondo que la Biblia. */
+html[data-biblia-tema="claro"],
+body[data-biblia-tema="claro"] {
+  --background: #f7f7f4;
+  --foreground: #0f172a;
+  background-color: #f7f7f4 !important;
+  color-scheme: light;
+}
+
+html[data-biblia-tema="sepia"],
+body[data-biblia-tema="sepia"] {
+  --background: #efe5d0;
+  --foreground: #34291f;
+  background-color: #efe5d0 !important;
+  color-scheme: light;
+}
+
+html[data-biblia-tema="oscuro"],
+body[data-biblia-tema="oscuro"] {
+  --background: #020617;
+  --foreground: #ffffff;
+  background-color: #020617 !important;
+  color-scheme: dark;
 }
 
 /* Ajustes base para experiencia tipo app móvil */
