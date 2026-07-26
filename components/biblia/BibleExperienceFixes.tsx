@@ -4,7 +4,20 @@ import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 const PREF_KEY = 'vida-biblia-preferencias'
+const NOTAS_KEY = 'vida-biblia-notas-v2'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
+
+type NotaBiblica = {
+  id: string
+  titulo: string
+  contenido: string
+  tipo: 'versiculo' | 'estudio' | 'predicacion' | 'personal'
+  referencia: string
+  paquete: string
+  paqueteId?: string
+  creadaEn: string
+  actualizadaEn: string
+}
 
 function textoNormalizado(value: string | null | undefined) {
   return (value ?? '').replace(/\s+/g, ' ').trim()
@@ -25,12 +38,34 @@ function dispararCambioTema(modo: ModoBiblia) {
 }
 
 function estiloPanelVoz(panel: HTMLElement, modo: ModoBiblia) {
-  const clases = modo === 'oscuro'
+  panel.className = modo === 'oscuro'
     ? 'mx-auto mb-5 max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-2 text-white shadow-xl'
     : modo === 'sepia'
       ? 'mx-auto mb-5 max-w-sm rounded-2xl border border-[#cdb991] bg-[#fff8e8] p-2 text-[#382d21] shadow-xl'
       : 'mx-auto mb-5 max-w-sm rounded-2xl border border-violet-200 bg-white p-2 text-slate-800 shadow-xl'
-  panel.className = clases
+}
+
+function guardarNotaDeVersiculo(referencia: string, contenido: string) {
+  const ahora = new Date().toISOString()
+  const id = crypto.randomUUID()
+  const nota: NotaBiblica = {
+    id,
+    titulo: referencia,
+    contenido,
+    tipo: 'versiculo',
+    referencia,
+    paquete: '',
+    creadaEn: ahora,
+    actualizadaEn: ahora,
+  }
+  try {
+    const raw = localStorage.getItem(NOTAS_KEY)
+    const actuales = raw ? JSON.parse(raw) as NotaBiblica[] : []
+    localStorage.setItem(NOTAS_KEY, JSON.stringify([nota, ...actuales]))
+  } catch {
+    localStorage.setItem(NOTAS_KEY, JSON.stringify([nota]))
+  }
+  return id
 }
 
 export default function BibleExperienceFixes() {
@@ -215,6 +250,54 @@ export default function BibleExperienceFixes() {
           botonVoz.parentElement?.insertAdjacentElement('afterend', panel)
         }, { capture: true })
       }
+
+      document.querySelectorAll<HTMLElement>('button, a').forEach((accion) => {
+        const etiqueta = textoNormalizado(accion.textContent)
+        if (!['Guardar', 'Quitar', 'Escuchar', 'Compartir', 'Profundo'].includes(etiqueta)) return
+        const panel = accion.parentElement
+        if (!panel || panel.dataset.vidaVerseActions === 'true') return
+        const acciones = Array.from(panel.querySelectorAll<HTMLElement>(':scope > button, :scope > a'))
+        if (!acciones.some((item) => textoNormalizado(item.textContent) === 'Compartir')) return
+
+        panel.dataset.vidaVerseActions = 'true'
+        panel.className = 'mb-4 mt-2 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-out dark:border-slate-700 dark:bg-slate-900/70'
+        panel.style.transformOrigin = 'top center'
+        panel.animate(
+          [{ opacity: 0, transform: 'translateY(-6px) scale(.98)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+          { duration: 180, easing: 'ease-out' },
+        )
+
+        const iconos: Record<string, string> = { Guardar: '★', Quitar: '★', Escuchar: '🔊', Compartir: '↗', Profundo: '✦' }
+        acciones.forEach((item) => {
+          const nombre = textoNormalizado(item.textContent)
+          item.setAttribute('aria-label', nombre)
+          item.setAttribute('title', nombre)
+          item.className = 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-base font-bold text-slate-700 shadow-sm transition-transform duration-150 hover:scale-105 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
+          item.textContent = iconos[nombre] ?? '•'
+        })
+
+        const versoContenedor = panel.parentElement
+        const parrafo = versoContenedor?.querySelector<HTMLElement>(':scope > p')
+        const numero = textoNormalizado(parrafo?.querySelector('sup')?.textContent)
+        const pasaje = textoNormalizado(document.querySelector<HTMLElement>('h2')?.textContent)
+        if (!parrafo || !numero || !pasaje) return
+
+        const crearNota = document.createElement('button')
+        crearNota.type = 'button'
+        crearNota.setAttribute('aria-label', 'Crear nota de este versículo')
+        crearNota.setAttribute('title', 'Crear nota')
+        crearNota.className = 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-violet-200 bg-violet-50 text-lg text-violet-700 shadow-sm transition-transform duration-150 hover:scale-105 active:scale-95 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200'
+        crearNota.textContent = '✎'
+        crearNota.addEventListener('click', () => {
+          const copia = parrafo.cloneNode(true) as HTMLElement
+          copia.querySelectorAll('sup, svg').forEach((elemento) => elemento.remove())
+          const texto = textoNormalizado(copia.textContent)
+          const referencia = `${pasaje}:${numero}`
+          const id = guardarNotaDeVersiculo(referencia, texto)
+          router.push(`/biblia/notas?nota=${encodeURIComponent(id)}`)
+        })
+        panel.append(crearNota)
+      })
 
       if (intentos >= maxIntentos) window.clearInterval(timer)
     }
