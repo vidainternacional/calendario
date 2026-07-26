@@ -6,10 +6,8 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  Coffee,
   Copy,
   Headphones,
-  Highlighter,
   Loader2,
   Minus,
   Moon,
@@ -21,6 +19,7 @@ import {
   Star,
   Sun,
   Trash2,
+  Type,
   Volume2,
 } from 'lucide-react'
 import { toggleFavorito, favoritosDelCapitulo } from '@/app/actions/biblia'
@@ -30,6 +29,7 @@ import { mostrarToast } from '@/lib/ui/toast'
 const API = 'https://bible.helloao.org/api'
 const POS_KEY = 'vida-biblia-posicion'
 const PREF_KEY = 'vida-biblia-preferencias'
+const NOTAS_KEY = 'vida-biblia-notas'
 
 type Traduccion = { id: string; name: string; language: string; shortName?: string }
 type Libro = { id: string; name: string; numberOfChapters: number }
@@ -53,33 +53,29 @@ function textoDeVerso(v: VersoApi): string {
   if (!Array.isArray(v.content)) return ''
   return v.content.map((c) => {
     if (typeof c === 'string') return c
-    if (c && typeof c === 'object' && 'text' in (c as Record<string, unknown>)) return String((c as Record<string, unknown>).text)
+    if (c && typeof c === 'object' && 'text' in (c as Record<string, unknown>)) {
+      return String((c as Record<string, unknown>).text)
+    }
     return ''
   }).join(' ').replace(/\s+/g, ' ').trim()
 }
 
-function leerPosicion(): Posicion | null {
+function leerJson<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(POS_KEY)
-    return raw ? JSON.parse(raw) as Posicion : null
-  } catch { return null }
-}
-
-function leerPreferencias(): Preferencias {
-  try {
-    const raw = localStorage.getItem(PREF_KEY)
-    if (!raw) return { modo: 'claro', fuente: 18 }
-    const parsed = JSON.parse(raw) as Preferencias
-    return {
-      modo: ['claro', 'oscuro', 'sepia'].includes(parsed.modo) ? parsed.modo : 'claro',
-      fuente: Math.min(24, Math.max(15, Number(parsed.fuente) || 18)),
-    }
-  } catch { return { modo: 'claro', fuente: 18 } }
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) as T : fallback
+  } catch {
+    return fallback
+  }
 }
 
 function nombreTraduccion(t: Traduccion): string {
   if (!t.shortName || t.shortName === t.name) return t.name
   return `${t.name} (${t.shortName})`
+}
+
+function etiquetaTraduccion(t: Traduccion): string {
+  return t.shortName || t.name
 }
 
 export default function BibliaClient({
@@ -109,22 +105,29 @@ export default function BibliaClient({
   const [guardandoVerso, setGuardandoVerso] = useState<number | null>(null)
   const [modoLectura, setModoLectura] = useState<ModoLectura>('claro')
   const [tamanoFuente, setTamanoFuente] = useState(18)
+  const [mostrarTamano, setMostrarTamano] = useState(false)
   const [vista, setVista] = useState<Vista>('leer')
   const [voces, setVoces] = useState<SpeechSynthesisVoice[]>([])
   const [vozSeleccionada, setVozSeleccionada] = useState('')
+  const [notas, setNotas] = useState<Record<string, string>>({})
   const [isPending, startTransition] = useTransition()
   const saltoRef = useRef<Posicion | null>(null)
   const listoRef = useRef(false)
 
   useEffect(() => {
-    const prefs = leerPreferencias()
-    setModoLectura(prefs.modo)
-    setTamanoFuente(prefs.fuente)
+    const prefs = leerJson<Preferencias>(PREF_KEY, { modo: 'claro', fuente: 18 })
+    setModoLectura(['claro', 'oscuro', 'sepia'].includes(prefs.modo) ? prefs.modo : 'claro')
+    setTamanoFuente(Math.min(28, Math.max(15, Number(prefs.fuente) || 18)))
+    setNotas(leerJson<Record<string, string>>(NOTAS_KEY, {}))
   }, [])
 
   useEffect(() => {
     try { localStorage.setItem(PREF_KEY, JSON.stringify({ modo: modoLectura, fuente: tamanoFuente })) } catch {}
   }, [modoLectura, tamanoFuente])
+
+  useEffect(() => {
+    try { localStorage.setItem(NOTAS_KEY, JSON.stringify(notas)) } catch {}
+  }, [notas])
 
   useEffect(() => {
     const cargarVoces = () => {
@@ -141,7 +144,7 @@ export default function BibliaClient({
   }, [])
 
   useEffect(() => {
-    saltoRef.current = leerPosicion()
+    saltoRef.current = leerJson<Posicion | null>(POS_KEY, null)
     fetch(`${API}/available_translations.json`).then(r => {
       if (!r.ok) throw new Error('translations')
       return r.json()
@@ -174,7 +177,9 @@ export default function BibliaClient({
         setLibro(salto.libro)
         setCapitulo(salto.capitulo)
         saltoRef.current = null
-      } else setLibro(prev => bs.some(b => b.id === prev) ? prev : bs[0]?.id ?? '')
+      } else {
+        setLibro(prev => bs.some(b => b.id === prev) ? prev : bs[0]?.id ?? '')
+      }
       setTimeout(() => { listoRef.current = true }, 0)
     }).catch(() => setError('No se pudieron cargar los libros.'))
   }, [trad])
@@ -182,6 +187,7 @@ export default function BibliaClient({
   const libroActual = useMemo(() => libros.find(b => b.id === libro), [libros, libro])
   const traduccionActual = useMemo(() => traducciones.find(t => t.id === trad), [traducciones, trad])
   const pasaje = `${libroActual?.name ?? ''} ${capitulo}`
+  const notaKey = `${trad}:${libro}:${capitulo}`
 
   useEffect(() => {
     if (!trad || !libro) return
@@ -192,6 +198,7 @@ export default function BibliaClient({
     setMostrarFavoritos(false)
     window.speechSynthesis?.cancel()
     setLeyendo(false)
+
     fetch(`${API}/${trad}/${libro}/${capitulo}.json`).then(r => {
       if (!r.ok) throw new Error('chapter')
       return r.json()
@@ -200,7 +207,11 @@ export default function BibliaClient({
       const contenido: VersoApi[] = d.chapter?.content ?? []
       setVersos(contenido.filter(c => c.type === 'verse' && typeof c.number === 'number').map(c => ({ n: c.number as number, t: textoDeVerso(c) })))
     }).catch(() => activo && setError('No se pudo cargar el capítulo.')).finally(() => activo && setCargando(false))
-    favoritosDelCapitulo(trad, libro, capitulo).then(favs => activo && setFavoritos(new Set(favs))).catch(() => activo && setFavoritos(new Set()))
+
+    favoritosDelCapitulo(trad, libro, capitulo)
+      .then(favs => activo && setFavoritos(new Set(favs)))
+      .catch(() => activo && setFavoritos(new Set()))
+
     if (listoRef.current) {
       try { localStorage.setItem(POS_KEY, JSON.stringify({ trad, libro, capitulo })) } catch {}
     }
@@ -244,8 +255,21 @@ export default function BibliaClient({
   const irAnterior = () => setCapitulo(c => Math.max(1, c - 1))
   const irSiguiente = () => setCapitulo(c => Math.min(libroActual?.numberOfChapters ?? c, c + 1))
   const irAVersiculo = (numero: number) => {
+    if (!numero) return
     setVersoSel(numero)
     requestAnimationFrame(() => document.getElementById(`versiculo-${numero}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }
+
+  const siguienteVoz = () => {
+    if (!voces.length) return mostrarToast('No hay voces en español disponibles')
+    const actual = Math.max(0, voces.findIndex(v => v.name === vozSeleccionada))
+    const siguiente = voces[(actual + 1) % voces.length]
+    setVozSeleccionada(siguiente.name)
+    mostrarToast(siguiente.name)
+  }
+
+  const siguienteTema = () => {
+    setModoLectura(actual => actual === 'claro' ? 'sepia' : actual === 'sepia' ? 'oscuro' : 'claro')
   }
 
   const marcarFavorito = async (v: Verso) => {
@@ -256,19 +280,27 @@ export default function BibliaClient({
       if ('error' in resultado) return mostrarToast(resultado.error || 'No se pudo guardar el favorito')
       setFavoritos(prev => {
         const siguiente = new Set(prev)
-        if (resultado.favorito) siguiente.add(v.n); else siguiente.delete(v.n)
+        if (resultado.favorito) siguiente.add(v.n)
+        else siguiente.delete(v.n)
         return siguiente
       })
       mostrarToast(resultado.favorito ? 'Versículo guardado' : 'Versículo eliminado de favoritos')
-    } finally { setGuardandoVerso(null) }
+    } finally {
+      setGuardandoVerso(null)
+    }
   }
 
   const compartirVersiculo = async (referencia: string, texto: string) => {
     const contenido = `“${texto}”\n— ${referencia}\n\nCompartido desde Vida Internacional`
     try {
       if (navigator.share) await navigator.share({ title: referencia, text: contenido })
-      else { await navigator.clipboard.writeText(contenido); mostrarToast('Versículo copiado') }
-    } catch (e) { if ((e as Error)?.name !== 'AbortError') mostrarToast('No se pudo compartir') }
+      else {
+        await navigator.clipboard.writeText(contenido)
+        mostrarToast('Versículo copiado')
+      }
+    } catch (e) {
+      if ((e as Error)?.name !== 'AbortError') mostrarToast('No se pudo compartir')
+    }
   }
 
   const agregarAlProyecto = (v: Verso) => {
@@ -289,16 +321,13 @@ export default function BibliaClient({
 
   const tema = {
     claro: {
-      page: 'bg-[#f7f7f4]', panel: 'bg-white border-slate-200', text: 'text-slate-800', title: 'text-slate-950', muted: 'text-slate-500', selected: 'bg-violet-50 ring-1 ring-violet-200',
-      control: 'border-slate-200 bg-white text-slate-900', soft: 'bg-slate-100 text-slate-700', circle: 'border-slate-200 bg-white text-slate-700', divider: 'border-slate-200',
+      page: 'bg-[#f7f7f4]', panel: 'bg-white border-slate-200', text: 'text-slate-800', title: 'text-slate-950', muted: 'text-slate-500', selected: 'bg-violet-50 ring-1 ring-violet-200', control: 'border-slate-200 bg-white text-slate-900', soft: 'bg-slate-100 text-slate-700', circle: 'border-slate-200 bg-white text-slate-700', divider: 'border-slate-200',
     },
     oscuro: {
-      page: 'bg-slate-950', panel: 'bg-slate-900 border-slate-800', text: 'text-slate-100', title: 'text-white', muted: 'text-slate-400', selected: 'bg-violet-950/70 ring-1 ring-violet-700',
-      control: 'border-slate-700 bg-slate-900 text-white', soft: 'bg-slate-800 text-slate-100', circle: 'border-slate-700 bg-slate-900 text-white', divider: 'border-slate-800',
+      page: 'bg-slate-950', panel: 'bg-slate-900 border-slate-800', text: 'text-slate-100', title: 'text-white', muted: 'text-slate-400', selected: 'bg-violet-950/70 ring-1 ring-violet-700', control: 'border-slate-700 bg-slate-900 text-white', soft: 'bg-slate-800 text-slate-100', circle: 'border-slate-700 bg-slate-900 text-white', divider: 'border-slate-800',
     },
     sepia: {
-      page: 'bg-[#efe5d0]', panel: 'bg-[#fffaf0] border-[#dac8a5]', text: 'text-[#493c2d]', title: 'text-[#2d241b]', muted: 'text-[#7d6b54]', selected: 'bg-[#ead9b5] ring-1 ring-[#c9ad78]',
-      control: 'border-[#cdb991] bg-[#fff8e8] text-[#382d21]', soft: 'bg-[#ead9b5] text-[#493c2d]', circle: 'border-[#cdb991] bg-[#fff8e8] text-[#493c2d]', divider: 'border-[#dac8a5]',
+      page: 'bg-[#efe5d0]', panel: 'bg-[#fffaf0] border-[#dac8a5]', text: 'text-[#493c2d]', title: 'text-[#2d241b]', muted: 'text-[#7d6b54]', selected: 'bg-[#ead9b5] ring-1 ring-[#c9ad78]', control: 'border-[#cdb991] bg-[#fff8e8] text-[#382d21]', soft: 'bg-[#ead9b5] text-[#493c2d]', circle: 'border-[#cdb991] bg-[#fff8e8] text-[#493c2d]', divider: 'border-[#dac8a5]',
     },
   }[modoLectura]
 
@@ -330,37 +359,43 @@ export default function BibliaClient({
 
         <div className={`overflow-hidden rounded-[26px] border shadow-sm ${esPastoral ? 'border-slate-200 bg-white' : tema.panel}`}>
           <div className={`sticky top-0 z-20 border-b p-3 backdrop-blur-xl ${esPastoral ? 'border-slate-200 bg-white/95' : `${tema.divider} ${tema.panel}`}`}>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(260px,1.5fr)_minmax(170px,1fr)_130px_130px]">
-              <select aria-label="Versión de la Biblia" value={trad} onChange={e => cambiarTrad(e.target.value)} className={`min-h-11 min-w-0 rounded-xl border px-3 text-sm font-semibold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
+            <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2 text-center sm:grid-cols-4">
+              <select aria-label="Versión de la Biblia" title={traduccionActual ? nombreTraduccion(traduccionActual) : 'Versión'} value={trad} onChange={e => cambiarTrad(e.target.value)} className={`min-h-10 min-w-0 rounded-full border px-2 text-center text-xs font-bold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
                 {traducciones.map(t => <option key={t.id} value={t.id}>{nombreTraduccion(t)}</option>)}
               </select>
-              <select aria-label="Libro de la Biblia" value={libro} onChange={e => cambiarLibro(e.target.value)} className={`min-h-11 min-w-0 rounded-xl border px-3 text-sm font-semibold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
+              <select aria-label="Libro de la Biblia" value={libro} onChange={e => cambiarLibro(e.target.value)} className={`min-h-10 min-w-0 rounded-full border px-2 text-center text-xs font-bold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
                 {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
-              <select aria-label="Capítulo" value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className={`min-h-11 rounded-xl border px-3 text-sm font-semibold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
-                {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Capítulo {n}</option>)}
+              <select aria-label="Capítulo" value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className={`min-h-10 rounded-full border px-2 text-center text-xs font-bold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
+                {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Cap. {n}</option>)}
               </select>
-              <select aria-label="Versículo" value={versoSel ?? ''} onChange={e => irAVersiculo(Number(e.target.value))} disabled={!versos.length} className={`min-h-11 rounded-xl border px-3 text-sm font-semibold disabled:opacity-50 ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
+              <select aria-label="Versículo" value={versoSel ?? ''} onChange={e => irAVersiculo(Number(e.target.value))} disabled={!versos.length} className={`min-h-10 rounded-full border px-2 text-center text-xs font-bold disabled:opacity-50 ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
                 <option value="">Versículo</option>
-                {versos.map(v => <option key={v.n} value={v.n}>Versículo {v.n}</option>)}
+                {versos.map(v => <option key={v.n} value={v.n}>Vers. {v.n}</option>)}
               </select>
             </div>
 
-            <div className="mt-2 flex items-center justify-between gap-2 overflow-x-auto">
-              <div className="flex min-w-max gap-1.5">
-                {tabs.map(([id,label,Icon]) => <button key={id} type="button" onClick={() => setVista(id)} className={`flex min-h-10 items-center gap-1.5 rounded-xl px-3 text-xs font-bold ${vista === id ? 'bg-violet-600 text-white' : esPastoral ? 'bg-slate-100 text-slate-600' : tema.soft}`}><Icon className="h-3.5 w-3.5" />{label}</button>)}
-              </div>
-              <div className={`flex shrink-0 items-center gap-1 rounded-xl p-1 ${esPastoral ? 'bg-slate-100' : tema.soft}`}>
-                <button type="button" aria-label="Reducir texto" onClick={() => setTamanoFuente(v => Math.max(15, v - 1))} className="grid h-8 w-8 place-items-center"><Minus className="h-3.5 w-3.5" /></button>
-                <button type="button" aria-label="Aumentar texto" onClick={() => setTamanoFuente(v => Math.min(24, v + 1))} className="grid h-8 w-8 place-items-center"><Plus className="h-3.5 w-3.5" /></button>
-              </div>
+            <div className="mt-2 grid grid-cols-4 gap-1.5">
+              {tabs.map(([id, label, Icon]) => (
+                <button key={id} type="button" onClick={() => setVista(id)} className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-bold ${vista === id ? 'bg-violet-600 text-white' : esPastoral ? 'bg-slate-100 text-slate-600' : tema.soft}`}>
+                  <Icon className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
           {mostrarFavoritos && !esPastoral && (
             <section className={`border-b p-4 ${tema.divider}`}>
               <div className="mb-3 flex items-center gap-2"><Star className="h-5 w-5 fill-amber-400 text-amber-400" /><h2 className={`font-bold ${tema.title}`}>Favoritos</h2></div>
-              {favoritosVisibles.length ? <div className="space-y-2">{favoritosVisibles.map(v => <button key={v.n} type="button" onClick={() => irAVersiculo(v.n)} className={`block w-full rounded-xl p-3 text-left text-sm ${tema.soft}`}><strong>{pasaje}:{v.n}</strong><span className="ml-2 opacity-80">{v.t}</span></button>)}</div> : <p className={`text-sm ${tema.muted}`}>No hay favoritos guardados en este capítulo.</p>}
+              {favoritosVisibles.length ? (
+                <div className="max-h-72 space-y-2 overflow-y-auto overscroll-contain pr-1">
+                  {favoritosVisibles.map(v => (
+                    <button key={v.n} type="button" onClick={() => { irAVersiculo(v.n); setMostrarFavoritos(false) }} className={`block w-full rounded-xl p-3 text-left text-sm ${tema.soft}`}>
+                      <strong>{pasaje}:{v.n}</strong><span className="ml-2 opacity-80">{v.t}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : <p className={`text-sm ${tema.muted}`}>No hay favoritos guardados en este capítulo.</p>}
             </section>
           )}
 
@@ -373,27 +408,27 @@ export default function BibliaClient({
 
           {vista === 'leer' && (
             <div className="p-4 sm:p-7">
-              <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <button type="button" onClick={irAnterior} disabled={capitulo <= 1} className={`grid h-11 w-11 place-items-center rounded-full border disabled:opacity-30 ${esPastoral ? 'border-slate-200' : tema.circle}`}><ChevronLeft className="h-5 w-5" /></button>
-                <div className="text-center"><h2 className={`text-2xl font-bold ${esPastoral ? 'text-slate-950' : tema.title}`}>{pasaje}</h2><p className={`mt-1 text-xs ${esPastoral ? 'text-slate-500' : tema.muted}`}>{traduccionActual ? nombreTraduccion(traduccionActual) : ''}</p></div>
+                <div className="min-w-0 text-center"><h2 className={`text-2xl font-bold ${esPastoral ? 'text-slate-950' : tema.title}`}>{pasaje}</h2><p className={`mt-1 truncate text-xs ${esPastoral ? 'text-slate-500' : tema.muted}`} title={traduccionActual ? nombreTraduccion(traduccionActual) : ''}>{traduccionActual ? nombreTraduccion(traduccionActual) : ''}</p></div>
                 <button type="button" onClick={irSiguiente} disabled={capitulo >= (libroActual?.numberOfChapters ?? 1)} className={`grid h-11 w-11 place-items-center rounded-full border disabled:opacity-30 ${esPastoral ? 'border-slate-200' : tema.circle}`}><ChevronRight className="h-5 w-5" /></button>
               </div>
 
-              <div className="mb-5 flex flex-wrap items-center justify-center gap-2">
-                <button type="button" onClick={() => leyendo ? detener() : hablar()} className="flex min-h-11 items-center gap-2 rounded-full bg-indigo-600 px-5 text-xs font-bold text-white">{leyendo ? <Square className="h-3.5 w-3.5" /> : <Headphones className="h-3.5 w-3.5" />}{leyendo ? 'Detener' : 'Escuchar capítulo'}</button>
-                <button type="button" onClick={() => {
-                  if (!voces.length) return mostrarToast('No hay voces en español disponibles')
-                  const actual = Math.max(0, voces.findIndex(v => v.name === vozSeleccionada))
-                  const siguiente = voces[(actual + 1) % voces.length]
-                  setVozSeleccionada(siguiente.name)
-                  mostrarToast(siguiente.name)
-                }} aria-label={`Voz ${vozActual?.name ?? 'Paulina'}`} title={vozActual?.name ?? 'Paulina'} className={`grid h-11 w-11 place-items-center rounded-full border ${esPastoral ? 'border-slate-200 bg-white text-violet-700' : tema.circle}`}>
-                  <Volume2 className="h-5 w-5" />
-                </button>
-                {!esPastoral && (['claro','sepia','oscuro'] as ModoLectura[]).map(m => <button key={m} type="button" onClick={() => setModoLectura(m)} className={`grid h-11 w-11 place-items-center rounded-full border ${modoLectura === m ? 'border-violet-500 bg-violet-600 text-white' : tema.circle}`}>{m === 'claro' ? <Sun className="h-4 w-4" /> : m === 'sepia' ? <Coffee className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button>)}
+              <div className="mx-auto mb-5 grid max-w-sm grid-cols-4 gap-2">
+                <button type="button" onClick={() => leyendo ? detener() : hablar()} aria-label={leyendo ? 'Detener audio' : 'Escuchar capítulo'} title={leyendo ? 'Detener' : 'Escuchar capítulo'} className="grid h-12 w-full place-items-center rounded-full bg-indigo-600 text-white">{leyendo ? <Square className="h-4 w-4" /> : <Headphones className="h-5 w-5" />}</button>
+                <button type="button" onClick={siguienteVoz} aria-label={`Cambiar voz. Actual: ${vozActual?.name ?? 'voz del sistema'}`} title={vozActual?.name ?? 'Cambiar voz'} className={`grid h-12 w-full place-items-center rounded-full border ${esPastoral ? 'border-slate-200 bg-white text-violet-700' : tema.circle}`}><Volume2 className="h-5 w-5" /></button>
+                <button type="button" onClick={() => setMostrarTamano(v => !v)} aria-label="Cambiar tamaño de letra" aria-expanded={mostrarTamano} title={`Tamaño ${tamanoFuente}`} className={`grid h-12 w-full place-items-center rounded-full border ${mostrarTamano ? 'border-violet-500 bg-violet-600 text-white' : esPastoral ? 'border-slate-200 bg-white text-slate-700' : tema.circle}`}><Type className="h-5 w-5" /></button>
+                {!esPastoral ? <button type="button" onClick={siguienteTema} aria-label="Cambiar tema" title={`Tema ${modoLectura}`} className={`grid h-12 w-full place-items-center rounded-full border ${tema.circle}`}>{modoLectura === 'oscuro' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}</button> : <button type="button" onClick={() => hablar(versoSel ?? 1)} aria-label="Escuchar desde el versículo seleccionado" className="grid h-12 w-full place-items-center rounded-full border border-slate-200 bg-white text-slate-700"><Volume2 className="h-5 w-5" /></button>}
               </div>
 
-              {vozActual && <p className={`mb-4 text-center text-[11px] ${tema.muted}`}>Voz: {vozActual.name}</p>}
+              {mostrarTamano && (
+                <div className={`mx-auto mb-5 flex max-w-[220px] items-center justify-between rounded-full border p-1.5 ${esPastoral ? 'border-slate-200 bg-white text-slate-700' : tema.control}`}>
+                  <button type="button" aria-label="Reducir letra" onClick={() => setTamanoFuente(v => Math.max(15, v - 1))} className="grid h-10 w-10 place-items-center rounded-full"><Minus className="h-4 w-4" /></button>
+                  <span className="text-sm font-bold">{tamanoFuente}px</span>
+                  <button type="button" aria-label="Aumentar letra" onClick={() => setTamanoFuente(v => Math.min(28, v + 1))} className="grid h-10 w-10 place-items-center rounded-full"><Plus className="h-4 w-4" /></button>
+                </div>
+              )}
+
               {cargando && <div className="grid place-items-center py-16"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div>}
               {error && <p className="py-12 text-center text-sm font-semibold text-rose-600">{error}</p>}
               {!cargando && !error && <article className={`mx-auto max-w-[720px] ${esPastoral ? 'text-slate-800' : tema.text}`} style={{ fontSize: tamanoFuente, lineHeight: 1.95 }}>{versos.map(v => {
@@ -404,11 +439,34 @@ export default function BibliaClient({
             </div>
           )}
 
-          {vista === 'estudio' && <div className="p-5 sm:p-7"><div className="rounded-2xl border border-violet-100 bg-violet-50 p-5"><Sparkles className="h-6 w-6 text-violet-600" /><h2 className="mt-3 text-xl font-bold text-violet-950">Estudio del capítulo</h2><p className="mt-2 text-sm leading-6 text-violet-800">Seleccione un versículo en Leer para abrir explicación, contexto y preguntas.</p><Link href={`/estudios/profundo?pasaje=${encodeURIComponent(versoSel ? `${pasaje}:${versoSel}` : pasaje)}`} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white"><Sparkles className="h-4 w-4" />Abrir estudio profundo</Link></div></div>}
+          {vista === 'estudio' && (
+            <div className="p-5 sm:p-7">
+              <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5">
+                <Sparkles className="h-6 w-6 text-violet-600" />
+                <h2 className="mt-3 text-xl font-bold text-violet-950">Estudio del capítulo</h2>
+                <p className="mt-2 text-sm leading-6 text-violet-800">Abre el estudio profundo del capítulo actual o selecciona primero un versículo desde Leer.</p>
+                <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(versoSel ? `${pasaje}:${versoSel}` : pasaje)}`} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white"><Sparkles className="h-4 w-4" />Abrir estudio profundo</Link>
+              </div>
+            </div>
+          )}
 
-          {vista === 'comparar' && <div className="p-5 sm:p-7"><div className="mb-4"><label><span className={`mb-1 block text-xs font-bold ${esPastoral ? 'text-slate-600' : tema.muted}`}>Segunda traducción</span><select value={tradComparada} onChange={e => setTradComparada(e.target.value)} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>{traducciones.filter(t => t.id !== trad).map(t => <option key={t.id} value={t.id}>{nombreTraduccion(t)}</option>)}</select></label></div>{cargandoComparacion ? <div className="grid place-items-center py-14"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div> : <div className="space-y-3">{versos.map(v => { const otro = versosComparados.find(x => x.n === v.n); return <article key={v.n} className={`grid gap-3 rounded-2xl border p-4 sm:grid-cols-2 ${esPastoral ? 'border-slate-200 bg-white' : `${tema.panel}`}`}><div><p className="text-[10px] font-bold uppercase text-violet-600">{traduccionActual ? nombreTraduccion(traduccionActual) : ''}</p><p className={`mt-2 text-sm leading-6 ${esPastoral ? 'text-slate-700' : tema.text}`}><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{v.t}</p></div><div><p className="text-[10px] font-bold uppercase text-indigo-600">{nombreTraduccion(traducciones.find(t => t.id === tradComparada) ?? { id: '', name: 'Comparación', language: '' })}</p><p className={`mt-2 text-sm leading-6 ${esPastoral ? 'text-slate-700' : tema.text}`}><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{otro?.t || 'No disponible'}</p></div></article> })}</div>}</div>}
+          {vista === 'comparar' && (
+            <div className="p-5 sm:p-7">
+              <label className="mb-4 block"><span className={`mb-1 block text-xs font-bold ${tema.muted}`}>Segunda traducción</span><select value={tradComparada} onChange={e => setTradComparada(e.target.value)} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.control}`}>{traducciones.filter(t => t.id !== trad).map(t => <option key={t.id} value={t.id}>{nombreTraduccion(t)}</option>)}</select></label>
+              {cargandoComparacion ? <div className="grid place-items-center py-14"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div> : <div className="space-y-3">{versos.map(v => { const otro = versosComparados.find(x => x.n === v.n); return <article key={v.n} className={`grid gap-3 rounded-2xl border p-4 sm:grid-cols-2 ${tema.control}`}><div><p className="text-[10px] font-bold uppercase text-violet-600">{traduccionActual ? etiquetaTraduccion(traduccionActual) : ''}</p><p className="mt-2 text-sm leading-6"><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{v.t}</p></div><div><p className="text-[10px] font-bold uppercase text-indigo-600">{traducciones.find(t => t.id === tradComparada) ? etiquetaTraduccion(traducciones.find(t => t.id === tradComparada) as Traduccion) : ''}</p><p className="mt-2 text-sm leading-6"><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{otro?.t || 'No disponible'}</p></div></article> })}</div>}
+            </div>
+          )}
 
-          {vista === 'notas' && <div className="p-5 sm:p-7"><div className="grid gap-4 sm:grid-cols-2"><article className="rounded-2xl border border-amber-100 bg-amber-50 p-5"><Highlighter className="h-6 w-6 text-amber-600" /><h2 className="mt-3 font-bold text-amber-950">Resaltados</h2><p className="mt-2 text-sm leading-6 text-amber-900/70">Los resaltados persistentes se conectarán en una siguiente entrega.</p></article><article className="rounded-2xl border border-sky-100 bg-sky-50 p-5"><NotebookPen className="h-6 w-6 text-sky-600" /><h2 className="mt-3 font-bold text-sky-950">Notas personales</h2><p className="mt-2 text-sm leading-6 text-sky-900/70">Las notas se organizarán por versículo, capítulo y carpeta de estudio.</p></article></div></div>}
+          {vista === 'notas' && (
+            <div className="p-5 sm:p-7">
+              <div className={`rounded-2xl border p-5 ${tema.control}`}>
+                <NotebookPen className="h-6 w-6 text-violet-600" />
+                <h2 className={`mt-3 text-lg font-bold ${tema.title}`}>Notas de {pasaje}</h2>
+                <p className={`mt-1 text-xs ${tema.muted}`}>Se guardan automáticamente en este dispositivo.</p>
+                <textarea value={notas[notaKey] ?? ''} onChange={e => setNotas(prev => ({ ...prev, [notaKey]: e.target.value }))} placeholder="Escribe observaciones, ideas o aplicaciones…" className={`mt-4 min-h-48 w-full resize-y rounded-xl border p-3 text-sm outline-none ${tema.control}`} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>
