@@ -3,6 +3,7 @@ import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
 import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleVerseActionIconsReady from '@/components/biblia/BibleVerseActionIconsReady'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
+import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import BottomNav from '@/components/layout/BottomNav'
 
 export default function AppLayout({
@@ -14,6 +15,7 @@ export default function AppLayout({
     <div className="flex flex-col min-h-screen">
       <BibleVerseActionsNoFlash />
       <BibleVerseActionIconsReady />
+      <BibleVerseActionsPersistent />
       <BibleSelectorPolish />
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
