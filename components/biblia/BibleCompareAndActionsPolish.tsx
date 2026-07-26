@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
 const PREF_KEY = 'vida-biblia-preferencias'
@@ -30,7 +30,22 @@ const iconos: Record<string, string> = {
   'Crear nota de este versículo': '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>',
 }
 
+function ocultarMenuAnteriorMientrasSePrepara() {
+  document.querySelectorAll<HTMLElement>('article > div.relative > div.grid.grid-cols-2.rounded-2xl').forEach((panel) => {
+    if (panel.dataset.vidaVerseActions === 'true') return
+    panel.style.opacity = '0'
+    panel.style.visibility = 'hidden'
+    panel.style.pointerEvents = 'none'
+  })
+}
+
 function estilizarAcciones() {
+  document.querySelectorAll<HTMLElement>('[data-vida-verse-actions="true"]').forEach((panel) => {
+    panel.style.visibility = 'visible'
+    panel.style.opacity = '1'
+    panel.style.pointerEvents = 'auto'
+  })
+
   document.querySelectorAll<HTMLElement>('[data-vida-verse-actions="true"] button, [data-vida-verse-actions="true"] a').forEach((accion) => {
     const nombre = accion.getAttribute('aria-label') || accion.getAttribute('title') || ''
     const svg = iconos[nombre]
@@ -75,7 +90,7 @@ function mejorarComparacion() {
   const principal = selects.find((select) => /versi[oó]n de la biblia/i.test(select.getAttribute('aria-label') ?? ''))
   const etiquetaSegunda = Array.from(document.querySelectorAll<HTMLLabelElement>('label')).find((label) => /segunda traducci[oó]n/i.test(texto(label)))
   const secundaria = etiquetaSegunda?.querySelector('select') ?? null
-  if (!principal || !secundaria) return
+  if (!principal || !secundaria || !etiquetaSegunda) return
 
   const zona = etiquetaSegunda.closest<HTMLElement>('div.p-5') ?? etiquetaSegunda.parentElement
   if (!zona) return
@@ -165,18 +180,19 @@ function mejorarComparacion() {
 export default function BibleCompareAndActionsPolish() {
   const pathname = usePathname()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (pathname !== '/biblia') return
     let intentos = 0
     const aplicar = () => {
       intentos += 1
+      ocultarMenuAnteriorMientrasSePrepara()
       mejorarSelectores()
       estilizarAcciones()
       mejorarComparacion()
       if (intentos >= 100) window.clearInterval(timer)
     }
     aplicar()
-    const timer = window.setInterval(aplicar, 250)
+    const timer = window.setInterval(aplicar, 100)
     return () => window.clearInterval(timer)
   }, [pathname])
 
