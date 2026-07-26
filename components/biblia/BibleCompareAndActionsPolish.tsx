@@ -27,12 +27,14 @@ const iconos: Record<string, string> = {
   Escuchar: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a9 9 0 0 1 0 12"/></svg>',
   Compartir: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.6 6.8-4.2M8.6 13.4l6.8 4.2"/></svg>',
   Profundo: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"/></svg>',
+  Estudiar: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"/></svg>',
+  'Crear nota': '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>',
   'Crear nota de este versículo': '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>',
 }
 
 function ocultarMenuAnteriorMientrasSePrepara() {
   document.querySelectorAll<HTMLElement>('article > div.relative > div.grid.grid-cols-2.rounded-2xl').forEach((panel) => {
-    if (panel.dataset.vidaVerseActions === 'true') return
+    if (panel.dataset.vidaIconsReady === 'true') return
     panel.style.opacity = '0'
     panel.style.visibility = 'hidden'
     panel.style.pointerEvents = 'none'
@@ -41,22 +43,34 @@ function ocultarMenuAnteriorMientrasSePrepara() {
 
 function estilizarAcciones() {
   document.querySelectorAll<HTMLElement>('[data-vida-verse-actions="true"]').forEach((panel) => {
-    panel.style.visibility = 'visible'
-    panel.style.opacity = '1'
-    panel.style.pointerEvents = 'auto'
-  })
+    const acciones = Array.from(panel.querySelectorAll<HTMLElement>(':scope > button, :scope > a'))
+    if (!acciones.length) return
 
-  document.querySelectorAll<HTMLElement>('[data-vida-verse-actions="true"] button, [data-vida-verse-actions="true"] a').forEach((accion) => {
-    const nombre = accion.getAttribute('aria-label') || accion.getAttribute('title') || ''
-    const svg = iconos[nombre]
-    if (!svg) return
-    accion.innerHTML = svg
-    const activo = nombre === 'Quitar'
-    accion.className = activo
-      ? 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-amber-400 bg-amber-400 text-amber-950 shadow-sm transition-transform duration-150 active:scale-95'
-      : nombre === 'Crear nota de este versículo'
-        ? 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-violet-300 bg-violet-50 text-violet-700 shadow-sm transition-transform duration-150 active:scale-95 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200'
-        : 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-transform duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
+    let iconosAplicados = 0
+    acciones.forEach((accion) => {
+      const nombre = accion.getAttribute('aria-label') || accion.getAttribute('title') || texto(accion)
+      const svg = iconos[nombre]
+      if (!svg) return
+
+      accion.innerHTML = svg
+      accion.dataset.vidaIconReady = 'true'
+      iconosAplicados += 1
+
+      const activo = nombre === 'Quitar'
+      const esNota = nombre === 'Crear nota' || nombre === 'Crear nota de este versículo'
+      accion.className = activo
+        ? 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-amber-400 bg-amber-400 text-amber-950 shadow-sm transition-transform duration-150 active:scale-95'
+        : esNota
+          ? 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-violet-300 bg-violet-50 text-violet-700 shadow-sm transition-transform duration-150 active:scale-95 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200'
+          : 'grid h-12 w-12 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-transform duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
+    })
+
+    if (iconosAplicados === acciones.length) {
+      panel.dataset.vidaIconsReady = 'true'
+      panel.style.visibility = 'visible'
+      panel.style.opacity = '1'
+      panel.style.pointerEvents = 'auto'
+    }
   })
 }
 
