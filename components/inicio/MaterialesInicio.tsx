@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { BookHeart, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { AlertTriangle, BookHeart, ChevronRight, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { readUserCache } from '@/lib/cache/userCache'
 import ShineSweep from '@/components/ui/ShineSweep'
@@ -41,32 +41,75 @@ function esNuevo(material: MaterialVisible) {
 export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoRecibido }: MaterialesInicioProps) {
   const [materiales, setMateriales] = useState<MaterialVisible[] | null>(null)
   const [puedeAbrirCentroPastoral, setPuedeAbrirCentroPastoral] = useState(Boolean(permisoRecibido))
+  const [errorCarga, setErrorCarga] = useState(false)
+  const [intento, setIntento] = useState(0)
 
   useEffect(() => {
     let activo = true
 
     async function cargar() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      const cache = user ? readUserCache<InicioCache>(user.id, 'inicio:v1') : null
-      const rolCache = cache?.profile?.rol
-      const permisoCache = rolCache === 'pastor' || rolCache === 'administrador'
-      const { data } = await (supabase as any).rpc('get_visible_pastoral_packages')
+      setErrorCarga(false)
 
-      if (activo) {
-        setMateriales((data ?? []) as MaterialVisible[])
-        setPuedeAbrirCentroPastoral(Boolean(permisoRecibido) || permisoCache)
+      try {
+        const supabase = createClient()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError) throw authError
+
+        const cache = user ? readUserCache<InicioCache>(user.id, 'inicio:v1') : null
+        const rolCache = cache?.profile?.rol
+        const permisoCache = rolCache === 'pastor' || rolCache === 'administrador'
+        const { data, error } = await (supabase as any).rpc('get_visible_pastoral_packages')
+        if (error) throw error
+
+        if (activo) {
+          setMateriales((data ?? []) as MaterialVisible[])
+          setPuedeAbrirCentroPastoral(Boolean(permisoRecibido) || permisoCache)
+        }
+      } catch (error) {
+        console.error('No se pudieron cargar los materiales pastorales', error)
+        if (activo) {
+          setMateriales([])
+          setErrorCarga(true)
+        }
       }
     }
 
     void cargar()
     return () => { activo = false }
-  }, [permisoRecibido])
+  }, [permisoRecibido, intento])
 
   if (materiales === null) {
     return (
-      <section aria-label="Área pastoral">
+      <section aria-label="Área pastoral" aria-busy="true">
         <div className="h-24 animate-pulse rounded-2xl border border-indigo-100 bg-white" />
+        <span className="sr-only">Cargando materiales pastorales…</span>
+      </section>
+    )
+  }
+
+  if (!puedeAbrirCentroPastoral && errorCarga) {
+    return (
+      <section aria-label="Error al cargar materiales pastorales" className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700">
+            <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-bold text-amber-950">No pudimos cargar los materiales</h2>
+            <p className="mt-1 text-xs leading-5 text-amber-900/75">Puede intentar nuevamente. El resto de Inicio continúa disponible.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setMateriales(null)
+                setIntento((valor) => valor + 1)
+              }}
+              className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-amber-900 px-4 text-xs font-bold text-white active:scale-[0.99]"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Intentar de nuevo
+            </button>
+          </div>
+        </div>
       </section>
     )
   }
@@ -74,7 +117,7 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoReci
   if (!puedeAbrirCentroPastoral && materiales.length === 0) return null
 
   return (
-    <div className="space-y-6" data-build="pastoral-centro-v5">
+    <div className="space-y-6" data-build="pastoral-centro-v6">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
@@ -97,7 +140,29 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoReci
         </section>
       )}
 
-      {materiales.length > 0 && (
+      {errorCarga && (
+        <section aria-label="Error al cargar materiales pastorales" className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+              <p className="text-xs leading-5 text-amber-900">El Centro Pastoral está disponible, pero los materiales publicados no pudieron cargarse.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setMateriales(null)
+                setIntento((valor) => valor + 1)
+              }}
+              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-3 text-xs font-bold text-amber-900 active:scale-[0.99]"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Reintentar
+            </button>
+          </div>
+        </section>
+      )}
+
+      {!errorCarga && materiales.length > 0 && (
         <section aria-labelledby="materiales-inicio">
           <div className="mb-4 flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
