@@ -45,6 +45,21 @@ function diapositivasDesdeFormulario(formData: FormData): Diapositiva[] {
   })).filter((item) => item.titulo || item.contenido || item.recurso_id).slice(0, 30)
 }
 
+export async function listarPaquetesPastoralesParaNotas() {
+  const { supabase, user, error } = await contextoPastoral()
+  if (error || !user) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error }
+
+  const { data, error: queryError } = await (supabase as any)
+    .from('pastoral_paquetes')
+    .select('id, titulo')
+    .eq('profile_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(50)
+
+  if (queryError) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error: 'No se pudieron cargar los paquetes.' }
+  return { success: true as const, paquetes: (data ?? []) as Array<{ id: string; titulo: string }> }
+}
+
 export async function crearPaquetePastoral(formData: FormData) {
   const { supabase, user, error } = await contextoPastoral()
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
