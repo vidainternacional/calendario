@@ -7,12 +7,19 @@ type TraduccionApi = {
   id: string
   name?: string
   shortName?: string
+  englishName?: string
   language?: string
-  languageName?: string
-  languageEnglishName?: string
 }
 
 const API = 'https://bible.helloao.org/api/available_translations.json'
+const POS_KEY = 'vida-biblia-posicion'
+const MAX_INTENTOS = 24
+
+function esReinaValera1909(item?: TraduccionApi) {
+  if (!item) return false
+  const texto = `${item.id} ${item.name ?? ''} ${item.shortName ?? ''} ${item.englishName ?? ''}`.toLowerCase()
+  return texto.includes('1909') || texto.includes('rv09') || texto.includes('rv1909')
+}
 
 export default function BibleSelectorPolish() {
   const pathname = usePathname()
@@ -21,23 +28,24 @@ export default function BibleSelectorPolish() {
     if (pathname !== '/biblia' && !pathname.startsWith('/pastoral/paquetes/')) return
 
     let cancelado = false
+    let intento = 0
     let traducciones = new Map<string, TraduccionApi>()
 
     const mejorarSelectores = () => {
-      const selects = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
-      const grupos = selects
+      const grupos = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
         .map((select) => select.parentElement)
         .filter((parent): parent is HTMLElement => Boolean(parent))
         .filter((parent, index, parents) => parents.indexOf(parent) === index)
         .filter((parent) => parent.querySelectorAll('select').length === 3)
 
+      let encontrado = false
+
       grupos.forEach((grupo) => {
         const [version, libro, capitulo] = Array.from(grupo.querySelectorAll<HTMLSelectElement>('select'))
         if (!version || !libro || !capitulo) return
         if (!Array.from(capitulo.options).every((option) => /^\d+$/.test(option.value))) return
-        if (grupo.dataset.bibleSelectorPolished === 'true' && traducciones.size === 0) return
 
-        grupo.dataset.bibleSelectorPolished = 'true'
+        encontrado = true
         grupo.className = 'grid grid-cols-1 gap-2 sm:grid-cols-[minmax(270px,1.5fr)_minmax(170px,1fr)_minmax(160px,.75fr)]'
 
         version.setAttribute('aria-label', 'Versión de la Biblia')
@@ -48,8 +56,8 @@ export default function BibleSelectorPolish() {
         libro.setAttribute('title', 'Libro de la Biblia')
         libro.classList.add('w-full')
 
-        capitulo.setAttribute('aria-label', 'Capítulo')
-        capitulo.setAttribute('title', 'Capítulo')
+        capitulo.setAttribute('aria-label', 'Capítulo de la Biblia')
+        capitulo.setAttribute('title', 'Capítulo de la Biblia')
         capitulo.classList.add('w-full')
 
         Array.from(version.options).forEach((option) => {
@@ -61,29 +69,51 @@ export default function BibleSelectorPolish() {
         })
 
         Array.from(capitulo.options).forEach((option) => {
-          const numero = option.value
-          option.textContent = `Capítulo ${numero}`
+          option.textContent = `Capítulo ${option.value}`
         })
+
+        let posicionGuardada: { trad?: string } | null = null
+        try {
+          const raw = localStorage.getItem(POS_KEY)
+          posicionGuardada = raw ? JSON.parse(raw) as { trad?: string } : null
+        } catch {}
+
+        if (!posicionGuardada?.trad && grupo.dataset.rv1909Selected !== 'true') {
+          const rv1909 = Array.from(version.options).find((option) => esReinaValera1909(traducciones.get(option.value)))
+          if (rv1909 && version.value !== rv1909.value) {
+            version.value = rv1909.value
+            version.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+          if (rv1909) grupo.dataset.rv1909Selected = 'true'
+        }
       })
+
+      return encontrado
     }
 
-    mejorarSelectores()
-    const observer = new MutationObserver(mejorarSelectores)
-    observer.observe(document.body, { childList: true, subtree: true })
-
     fetch(API)
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error('No se pudo cargar el catálogo bíblico')
+        return response.json()
+      })
       .then((data) => {
         if (cancelado) return
         const lista = (data.translations ?? []) as TraduccionApi[]
         traducciones = new Map(lista.map((item) => [item.id, item]))
-        mejorarSelectores()
       })
       .catch(() => {})
+      .finally(() => {
+        if (cancelado) return
+        const timer = window.setInterval(() => {
+          intento += 1
+          const listo = mejorarSelectores()
+          if (listo || intento >= MAX_INTENTOS) window.clearInterval(timer)
+        }, 250)
+        mejorarSelectores()
+      })
 
     return () => {
       cancelado = true
-      observer.disconnect()
     }
   }, [pathname])
 
