@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, BookOpen, CheckSquare, FileText, List, Mic2, NotebookPen, Plus, Search, Trash2, Clock3 } from 'lucide-react'
 import { listarPaquetesPastoralesParaNotas } from '@/app/actions/pastoral-paquetes'
 
@@ -68,11 +68,15 @@ export default function NotasBibliaPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const seleccionada = notas.find((nota) => nota.id === seleccionadaId) ?? null
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const guardadas = cargarNotas()
+    const solicitada = new URLSearchParams(window.location.search).get('nota')
     setNotas(guardadas)
-    setSeleccionadaId(guardadas[0]?.id ?? null)
+    setSeleccionadaId(solicitada && guardadas.some((nota) => nota.id === solicitada) ? solicitada : guardadas[0]?.id ?? null)
     setModo(cargarTema())
+  }, [])
+
+  useEffect(() => {
     listarPaquetesPastoralesParaNotas().then((r) => { if (r.success) setPaquetes(r.paquetes) }).catch(() => {})
   }, [])
 
