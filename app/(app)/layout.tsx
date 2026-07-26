@@ -5,6 +5,7 @@ import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
 import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import BottomNav from '@/components/layout/BottomNav'
+import MobileFormPolish from '@/components/layout/MobileFormPolish'
 import MobileTablePolish from '@/components/layout/MobileTablePolish'
 
 export default function AppLayout({
@@ -21,7 +22,12 @@ export default function AppLayout({
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
       <MobileTablePolish />
-      <div data-mobile-table-scope="true" className="flex-1 pb-16">
+      <MobileFormPolish />
+      <div
+        data-mobile-table-scope="true"
+        data-mobile-form-scope="true"
+        className="flex-1 pb-16"
+      >
         {/* pb-16 to account for the bottom nav height */}
         {children}
       </div>
