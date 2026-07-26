@@ -41,7 +41,6 @@ function estilizarIconoOriginal(accion: HTMLElement, favoritoActivo: boolean) {
 }
 
 function aplicarFavoritoVisual(accion: HTMLElement, activo: boolean) {
-  accion.dataset.vidaFavoriteOptimistic = activo ? 'true' : 'false'
   accion.className = activo ? claseFavorito : claseBase
   estilizarIconoOriginal(accion, activo)
 }
@@ -80,7 +79,15 @@ export default function BibleVerseActionsPersistent() {
     if (pathname !== '/biblia') return
 
     let frame = 0
-    const reintentos = new Set<number>()
+    const expiraciones = new Map<HTMLElement, number>()
+
+    const limpiarOptimista = (accion: HTMLElement) => {
+      accion.removeAttribute('data-vida-favorite-optimistic')
+      accion.removeAttribute('data-vida-favorite-expected')
+      const timer = expiraciones.get(accion)
+      if (timer) window.clearTimeout(timer)
+      expiraciones.delete(accion)
+    }
 
     const preparar = () => {
       frame = 0
@@ -110,6 +117,13 @@ export default function BibleVerseActionsPersistent() {
           accion.setAttribute('title', nombre)
 
           if (nombre === 'Guardar' || nombre === 'Quitar') {
+            const esperado = accion.dataset.vidaFavoriteExpected
+            const esperadoActivo = esperado === 'true'
+
+            if (esperado !== undefined && favoritoActivoReal === esperadoActivo) {
+              limpiarOptimista(accion)
+            }
+
             const optimista = accion.dataset.vidaFavoriteOptimistic
             const activoVisual = optimista === undefined ? favoritoActivoReal : optimista === 'true'
             aplicarFavoritoVisual(accion, activoVisual)
@@ -118,17 +132,25 @@ export default function BibleVerseActionsPersistent() {
               accion.dataset.vidaFavoriteRefresh = 'true'
               accion.addEventListener('click', () => {
                 if ('disabled' in accion && (accion as HTMLButtonElement).disabled) return
-                const actual = accion.dataset.vidaFavoriteOptimistic === 'true' || nombreAccion(accion) === 'Quitar'
-                aplicarFavoritoVisual(accion, !actual)
 
-                ;[180, 500, 1000].forEach((delay) => {
-                  const timer = window.setTimeout(() => {
-                    accion.removeAttribute('data-vida-favorite-optimistic')
-                    preparar()
-                    reintentos.delete(timer)
-                  }, delay)
-                  reintentos.add(timer)
-                })
+                const realActual = nombreAccion(accion) === 'Quitar'
+                const visualActual = accion.dataset.vidaFavoriteOptimistic === undefined
+                  ? realActual
+                  : accion.dataset.vidaFavoriteOptimistic === 'true'
+                const siguiente = !visualActual
+
+                accion.dataset.vidaFavoriteOptimistic = siguiente ? 'true' : 'false'
+                accion.dataset.vidaFavoriteExpected = siguiente ? 'true' : 'false'
+                aplicarFavoritoVisual(accion, siguiente)
+
+                const anterior = expiraciones.get(accion)
+                if (anterior) window.clearTimeout(anterior)
+
+                const timer = window.setTimeout(() => {
+                  limpiarOptimista(accion)
+                  preparar()
+                }, 5000)
+                expiraciones.set(accion, timer)
               })
             }
           } else {
@@ -186,8 +208,8 @@ export default function BibleVerseActionsPersistent() {
     return () => {
       observer.disconnect()
       if (frame) window.cancelAnimationFrame(frame)
-      reintentos.forEach((timer) => window.clearTimeout(timer))
-      reintentos.clear()
+      expiraciones.forEach((timer) => window.clearTimeout(timer))
+      expiraciones.clear()
     }
   }, [pathname, router])
 
