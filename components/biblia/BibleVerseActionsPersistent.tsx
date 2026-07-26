@@ -11,6 +11,7 @@ const claseNota = 'inline-flex h-12 w-12 shrink-0 items-center justify-center ro
 
 const accionesValidas = ['Guardar', 'Quitar', 'Escuchar', 'Compartir', 'Profundo', 'Estudiar']
 const iconoNota = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>'
+const iconoFavoritoVersiculo = '<svg data-vida-optimistic-verse-star="true" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ml-1.5 inline h-3 w-3 text-amber-400"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg>'
 
 function texto(elemento: Element | null) {
   return (elemento?.textContent ?? '').replace(/\s+/g, ' ').trim()
@@ -43,6 +44,37 @@ function estilizarIconoOriginal(accion: HTMLElement, favoritoActivo: boolean) {
 function aplicarFavoritoVisual(accion: HTMLElement, activo: boolean) {
   accion.className = activo ? claseFavorito : claseBase
   estilizarIconoOriginal(accion, activo)
+}
+
+function estrellasReales(parrafo: HTMLElement) {
+  return Array.from(parrafo.querySelectorAll<SVGElement>('svg')).filter((svg) =>
+    svg.dataset.vidaOptimisticVerseStar !== 'true' &&
+    (svg.classList.contains('fill-amber-400') || svg.classList.contains('text-amber-400'))
+  )
+}
+
+function aplicarFavoritoEnVersiculo(panel: HTMLElement, activo: boolean) {
+  const parrafo = panel.parentElement?.querySelector<HTMLElement>(':scope > p') ?? null
+  if (!parrafo) return
+
+  const optimista = parrafo.querySelector<SVGElement>('[data-vida-optimistic-verse-star="true"]')
+  const reales = estrellasReales(parrafo)
+
+  if (activo) {
+    reales.forEach((estrella) => {
+      estrella.style.display = ''
+      estrella.removeAttribute('data-vida-star-hidden')
+    })
+    if (reales.length) optimista?.remove()
+    else if (!optimista) parrafo.insertAdjacentHTML('beforeend', iconoFavoritoVersiculo)
+    return
+  }
+
+  optimista?.remove()
+  reales.forEach((estrella) => {
+    estrella.dataset.vidaStarHidden = 'true'
+    estrella.style.display = 'none'
+  })
 }
 
 function guardarNota(referencia: string, contenido: string) {
@@ -81,9 +113,11 @@ export default function BibleVerseActionsPersistent() {
     let frame = 0
     const expiraciones = new Map<HTMLElement, number>()
 
-    const limpiarOptimista = (accion: HTMLElement) => {
+    const limpiarOptimista = (accion: HTMLElement, panel: HTMLElement, estadoReal: boolean) => {
       accion.removeAttribute('data-vida-favorite-optimistic')
       accion.removeAttribute('data-vida-favorite-expected')
+      aplicarFavoritoVisual(accion, estadoReal)
+      aplicarFavoritoEnVersiculo(panel, estadoReal)
       const timer = expiraciones.get(accion)
       if (timer) window.clearTimeout(timer)
       expiraciones.delete(accion)
@@ -121,12 +155,13 @@ export default function BibleVerseActionsPersistent() {
             const esperadoActivo = esperado === 'true'
 
             if (esperado !== undefined && favoritoActivoReal === esperadoActivo) {
-              limpiarOptimista(accion)
+              limpiarOptimista(accion, panel, favoritoActivoReal)
             }
 
             const optimista = accion.dataset.vidaFavoriteOptimistic
             const activoVisual = optimista === undefined ? favoritoActivoReal : optimista === 'true'
             aplicarFavoritoVisual(accion, activoVisual)
+            aplicarFavoritoEnVersiculo(panel, activoVisual)
 
             if (accion.dataset.vidaFavoriteRefresh !== 'true') {
               accion.dataset.vidaFavoriteRefresh = 'true'
@@ -142,12 +177,14 @@ export default function BibleVerseActionsPersistent() {
                 accion.dataset.vidaFavoriteOptimistic = siguiente ? 'true' : 'false'
                 accion.dataset.vidaFavoriteExpected = siguiente ? 'true' : 'false'
                 aplicarFavoritoVisual(accion, siguiente)
+                aplicarFavoritoEnVersiculo(panel, siguiente)
 
                 const anterior = expiraciones.get(accion)
                 if (anterior) window.clearTimeout(anterior)
 
                 const timer = window.setTimeout(() => {
-                  limpiarOptimista(accion)
+                  const estadoReal = nombreAccion(accion) === 'Quitar'
+                  limpiarOptimista(accion, panel, estadoReal)
                   preparar()
                 }, 5000)
                 expiraciones.set(accion, timer)
