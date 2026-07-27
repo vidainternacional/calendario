@@ -6,6 +6,7 @@ import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
 import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import BottomNav from '@/components/layout/BottomNav'
+import PastoralEmbeddedBiblePolish from '@/components/pastoral/PastoralEmbeddedBiblePolish'
 
 export default function AppLayout({
   children,
@@ -21,6 +22,7 @@ export default function AppLayout({
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
       <BibleCompareAllVersions />
+      <PastoralEmbeddedBiblePolish />
       <div className="flex-1 pb-16">
         {/* pb-16 to account for the bottom nav height */}
         {children}
