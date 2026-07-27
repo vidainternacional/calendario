@@ -71,7 +71,7 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
       {estaEmbebida && (
         <style>{`
           .app-bottom-nav { display: none !important; }
-          body { background: white !important; overflow-x: hidden !important; }
+          html, body { overflow-x: hidden !important; }
           .biblia-page, main { padding-bottom: 1rem !important; }
         `}</style>
       )}
