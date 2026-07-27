@@ -9,6 +9,15 @@ import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmp
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
+import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
+import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
+import BibleEmbeddedParity from '@/components/biblia/BibleEmbeddedParity'
+import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
+import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
+import BibleNotesTransition from '@/components/biblia/BibleNotesTransition'
+import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
+import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
+import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
@@ -51,6 +60,16 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
+      <BibleNotesTransition embedded={estaEmbebida} paqueteId={paqueteId} />
+      <BibleVerseActionsNoFlash />
+      <BibleVerseActionsPersistent />
+      <BibleNotesPrefetch />
+      <BibleSelectorPolish />
+      <BibleExperienceFixes />
+      <BibleCompareAndActionsPolish />
+      <BibleCompareAllVersions />
+      {estaEmbebida && <BibleEmbeddedParity />}
+
       {from === 'pastoral' && !estaEmbebida && (
         <Link
           href="/pastoral"
