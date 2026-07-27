@@ -1,3 +1,4 @@
+import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
 import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
 import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
 import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
@@ -19,6 +20,7 @@ export default function AppLayout({
       <BibleSelectorPolish />
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
+      <BibleCompareAllVersions />
       <div className="flex-1 pb-16">
         {/* pb-16 to account for the bottom nav height */}
         {children}
