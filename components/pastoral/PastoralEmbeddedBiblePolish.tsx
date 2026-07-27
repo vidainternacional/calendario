@@ -19,10 +19,11 @@ export default function PastoralEmbeddedBiblePolish() {
       url.searchParams.set('from', 'pastoral')
       url.searchParams.set('embed', '1')
       url.searchParams.set('paqueteId', paqueteId)
+      url.searchParams.set('full', '3')
 
       if (iframe.src !== url.toString()) iframe.src = url.toString()
-      iframe.className = 'h-[70dvh] min-h-[520px] max-h-[760px] w-full border-0 bg-transparent'
-      iframe.setAttribute('loading', 'lazy')
+      iframe.className = 'h-[72dvh] min-h-[540px] max-h-[820px] w-full border-0 bg-transparent'
+      iframe.setAttribute('loading', 'eager')
       return true
     }
 
