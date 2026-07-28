@@ -1,6 +1,8 @@
 import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
 import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
+import BibleCompareDualSelectors from '@/components/biblia/BibleCompareDualSelectors'
 import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
+import BibleNotesNavigationFix from '@/components/biblia/BibleNotesNavigationFix'
 import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
 import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
@@ -17,9 +19,11 @@ export default function AppLayout({
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
       <BibleNotesPrefetch />
+      <BibleNotesNavigationFix />
       <BibleSelectorPolish />
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
+      <BibleCompareDualSelectors />
       <BibleCompareAllVersions />
       <div className="flex-1 pb-16">
         {/* pb-16 to account for the bottom nav height */}
