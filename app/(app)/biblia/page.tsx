@@ -9,33 +9,21 @@ import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmp
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
-import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
-import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
-import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
-import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
-import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
-import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
-type SearchParams = {
-  from?: string
-  embed?: string
-  workspace?: string
-  paqueteId?: string
-}
-
-export default async function BibliaPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { from, workspace, paqueteId } = await searchParams
-  const enEspacioPastoral = from === 'pastoral' && workspace === '1' && Boolean(paqueteId)
+export default async function BibliaPage({ searchParams }: { searchParams: Promise<{ from?: string; embed?: string; paqueteId?: string }> }) {
+  const { from, embed, paqueteId } = await searchParams
+  const estaEmbebida = embed === '1'
+  const esProyectoPastoral = from === 'pastoral' && estaEmbebida
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   let coleccionesPastorales: Array<{ id: string; nombre: string; color: string }> = []
 
-  if (from === 'pastoral' && !enEspacioPastoral) {
+  if (from === 'pastoral' && !esProyectoPastoral) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('rol, estado_cuenta')
@@ -63,14 +51,7 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <BibleVerseActionsNoFlash />
-      <BibleVerseActionsPersistent />
-      <BibleNotesPrefetch />
-      <BibleSelectorPolish />
-      <BibleCompareAndActionsPolish />
-      <BibleCompareAllVersions />
-
-      {from === 'pastoral' && !enEspacioPastoral && (
+      {from === 'pastoral' && !estaEmbebida && (
         <Link
           href="/pastoral"
           className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.65rem)] z-[90] inline-flex min-h-10 items-center gap-1.5 rounded-full border border-indigo-200 bg-white/95 px-3 text-xs font-bold text-indigo-700 shadow-lg backdrop-blur-md"
@@ -80,17 +61,17 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
         </Link>
       )}
 
-      {enEspacioPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
+      {esProyectoPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
       <BibliaClient />
-      <BibliaVoiceControl />
+      {!estaEmbebida && <BibliaVoiceControl />}
       <BibliaFavoritesEmptyEnhancer />
       <BibliaErrorRetryEnhancer />
-      {from === 'pastoral' && !enEspacioPastoral && <BibliaPastoralCollectionEnhancer colecciones={coleccionesPastorales} />}
+      {from === 'pastoral' && !esProyectoPastoral && <BibliaPastoralCollectionEnhancer colecciones={coleccionesPastorales} />}
 
-      {enEspacioPastoral && (
+      {estaEmbebida && (
         <style>{`
           .app-bottom-nav { display: none !important; }
-          html, body { overflow-x: hidden !important; }
+          body { background: white !important; overflow-x: hidden !important; }
           .biblia-page, main { padding-bottom: 1rem !important; }
         `}</style>
       )}
