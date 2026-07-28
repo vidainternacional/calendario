@@ -7,9 +7,8 @@ export default function LoadingNotasBiblicas() {
           min-height: 100vh;
           display: grid;
           place-items: center;
-          background: #f7f7f4;
-          color: #475569;
-          transition: background-color 160ms ease, color 160ms ease;
+          background: var(--background, #f7f7f4);
+          color: var(--foreground, #475569);
         }
 
         .vida-notas-loading__indicator {
@@ -21,19 +20,9 @@ export default function LoadingNotasBiblicas() {
           animation: vida-notas-spin 700ms linear infinite;
         }
 
-        html[data-biblia-tema='oscuro'] .vida-notas-loading {
-          background: #020617;
-          color: #cbd5e1;
-        }
-
         html[data-biblia-tema='oscuro'] .vida-notas-loading__indicator {
           border-color: rgba(167, 139, 250, 0.24);
           border-top-color: #a78bfa;
-        }
-
-        html[data-biblia-tema='sepia'] .vida-notas-loading {
-          background: #efe5d0;
-          color: #493c2d;
         }
 
         html[data-biblia-tema='sepia'] .vida-notas-loading__indicator {
