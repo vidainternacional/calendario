@@ -1,37 +1,15 @@
 'use client'
 
 import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-
-function textoNormalizado(value: string | null | undefined) {
-  return (value ?? '').replace(/\s+/g, ' ').trim()
-}
+import { usePathname, useRouter } from 'next/navigation'
 
 export default function BibleNotesPrefetch() {
   const pathname = usePathname()
+  const router = useRouter()
 
   useEffect(() => {
-    if (pathname !== '/biblia') return
-
-    let navegando = false
-
-    const abrirNotas = (event: MouseEvent) => {
-      const objetivo = event.target as HTMLElement | null
-      const boton = objetivo?.closest<HTMLButtonElement>('button')
-      if (!boton || textoNormalizado(boton.textContent) !== 'Notas') return
-
-      event.preventDefault()
-      event.stopPropagation()
-      event.stopImmediatePropagation()
-
-      if (navegando) return
-      navegando = true
-      window.location.assign('/biblia/notas')
-    }
-
-    document.addEventListener('click', abrirNotas, true)
-    return () => document.removeEventListener('click', abrirNotas, true)
-  }, [pathname])
+    if (pathname === '/biblia') router.prefetch('/biblia/notas')
+  }, [pathname, router])
 
   return null
 }
