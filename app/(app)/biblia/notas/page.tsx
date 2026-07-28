@@ -50,11 +50,18 @@ function cargarNotas(): NotaBiblica[] {
   } catch { return [] }
 }
 
+function esModoLectura(value: string | undefined): value is ModoLectura {
+  return value === 'claro' || value === 'oscuro' || value === 'sepia'
+}
+
 function cargarTema(): ModoLectura {
+  const temaActivo = document.documentElement.dataset.bibliaTema
+  if (esModoLectura(temaActivo)) return temaActivo
+
   try {
     const raw = localStorage.getItem(PREF_KEY)
-    const modo = raw ? JSON.parse(raw)?.modo : 'claro'
-    return ['claro', 'oscuro', 'sepia'].includes(modo) ? modo : 'claro'
+    const modo = raw ? JSON.parse(raw)?.modo as string | undefined : undefined
+    return esModoLectura(modo) ? modo : 'claro'
   } catch { return 'claro' }
 }
 
@@ -63,17 +70,21 @@ export default function NotasBibliaPage() {
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState<TipoNota | 'todas'>('todas')
-  const [modo, setModo] = useState<ModoLectura>('claro')
+  const [modo, setModo] = useState<ModoLectura | null>(null)
   const [paquetes, setPaquetes] = useState<Paquete[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const seleccionada = notas.find((nota) => nota.id === seleccionadaId) ?? null
 
   useLayoutEffect(() => {
+    const temaInicial = cargarTema()
+    document.documentElement.dataset.bibliaTema = temaInicial
+    document.body.dataset.bibliaTema = temaInicial
+
     const guardadas = cargarNotas()
     const solicitada = new URLSearchParams(window.location.search).get('nota')
     setNotas(guardadas)
     setSeleccionadaId(solicitada && guardadas.some((nota) => nota.id === solicitada) ? solicitada : guardadas[0]?.id ?? null)
-    setModo(cargarTema())
+    setModo(temaInicial)
   }, [])
 
   useEffect(() => {
@@ -85,11 +96,11 @@ export default function NotasBibliaPage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(notas))
   }, [notas, seleccionadaId])
 
-  const tema = {
+  const tema = modo ? {
     claro: { page: 'bg-[#f7f7f4] text-slate-900', panel: 'border-slate-200 bg-white', soft: 'bg-slate-100 text-slate-700', editor: 'bg-[#fafaf8]', field: 'border-slate-200 bg-white text-slate-900', muted: 'text-slate-500', selected: 'bg-violet-100 ring-violet-300' },
     sepia: { page: 'bg-[#efe5d0] text-[#34291f]', panel: 'border-[#d4c09b] bg-[#fff8e8]', soft: 'bg-[#ead9b5] text-[#493c2d]', editor: 'bg-[#f7ecd6]', field: 'border-[#cdb991] bg-[#fff8e8] text-[#382d21]', muted: 'text-[#7d6b54]', selected: 'bg-[#e4cea3] ring-[#c6a76b]' },
     oscuro: { page: 'bg-slate-950 text-white', panel: 'border-slate-800 bg-slate-900', soft: 'bg-slate-800 text-slate-200', editor: 'bg-slate-950/45', field: 'border-slate-700 bg-slate-900 text-white', muted: 'text-slate-400', selected: 'bg-violet-950 ring-violet-700' },
-  }[modo]
+  }[modo] : null
 
   const notasFiltradas = useMemo(() => {
     const termino = busqueda.trim().toLowerCase()
@@ -125,6 +136,10 @@ export default function NotasBibliaPage() {
     const contenido = `${seleccionada.contenido.slice(0, inicio)}${texto}${seleccionada.contenido.slice(fin)}`
     actualizar({ contenido })
     requestAnimationFrame(() => { area.focus(); area.setSelectionRange(inicio + texto.length, inicio + texto.length) })
+  }
+
+  if (!modo || !tema) {
+    return <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]" aria-hidden="true" />
   }
 
   return (
