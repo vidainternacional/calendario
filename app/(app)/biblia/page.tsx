@@ -9,6 +9,7 @@ import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmp
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
+import '@/components/biblia/bible-notes-transition.css'
 import './biblia.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
