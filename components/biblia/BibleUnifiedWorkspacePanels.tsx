@@ -52,6 +52,15 @@ function parametrosContexto() {
   return params
 }
 
+function buscarZonaPanel(elemento: Element | null) {
+  if (!elemento) return null
+
+  return elemento.closest<HTMLElement>('[class~="p-5"], [class~="sm:p-7"]')
+    ?? elemento.parentElement?.parentElement
+    ?? elemento.parentElement
+    ?? null
+}
+
 export default function BibleUnifiedWorkspacePanels() {
   const pathname = usePathname()
 
@@ -67,7 +76,7 @@ export default function BibleUnifiedWorkspacePanels() {
       if (!activo) return
 
       const titulo = Array.from(document.querySelectorAll<HTMLElement>('h2')).find((elemento) => /^Notas de /i.test(normalizar(elemento.textContent)))
-      const zona = titulo?.closest<HTMLElement>('div.p-5, div.sm\:p-7') ?? titulo?.parentElement?.parentElement ?? null
+      const zona = buscarZonaPanel(titulo)
       if (!zona || zona.dataset.vidaUnifiedNotes === 'true') return
 
       zona.dataset.vidaUnifiedNotes = 'true'
@@ -152,7 +161,7 @@ export default function BibleUnifiedWorkspacePanels() {
       if (!activo) return
 
       const etiqueta = Array.from(document.querySelectorAll<HTMLLabelElement>('label')).find((label) => /Segunda traducci[oó]n/i.test(normalizar(label.textContent)))
-      const zona = etiqueta?.closest<HTMLElement>('div.p-5, div.sm\:p-7') ?? etiqueta?.parentElement ?? null
+      const zona = buscarZonaPanel(etiqueta)
       if (!zona) return
 
       const selects = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
@@ -218,8 +227,17 @@ export default function BibleUnifiedWorkspacePanels() {
     }
 
     const actualizar = () => {
-      prepararNotas()
-      prepararComparar()
+      try {
+        prepararNotas()
+      } catch (error) {
+        console.error('[Biblia] No se pudo preparar el cuaderno de notas', error)
+      }
+
+      try {
+        prepararComparar()
+      } catch (error) {
+        console.error('[Biblia] No se pudo preparar la comparación', error)
+      }
     }
 
     const observer = new MutationObserver(actualizar)
