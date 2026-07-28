@@ -41,10 +41,12 @@ export default function BibleCompareDualSelectors() {
         .find((select) => /versi[oó]n de la biblia/i.test(select.getAttribute('aria-label') ?? ''))
       const etiquetaSecundaria = Array.from(document.querySelectorAll<HTMLLabelElement>('label'))
         .find((label) => /segunda traducci[oó]n|biblia 2/i.test(texto(label)))
-      const secundaria = etiquetaSecundaria?.querySelector<HTMLSelectElement>('select') ?? null
-      const zona = etiquetaSecundaria?.closest<HTMLElement>('div.p-5') ?? etiquetaSecundaria?.parentElement ?? null
 
-      if (!principal || !secundaria || !zona) return
+      if (!principal || !etiquetaSecundaria) return
+
+      const secundaria = etiquetaSecundaria.querySelector<HTMLSelectElement>('select')
+      const zona = etiquetaSecundaria.closest<HTMLElement>('div.p-5') ?? etiquetaSecundaria.parentElement
+      if (!secundaria || !zona) return
 
       etiquetaSecundaria.style.display = 'none'
 
