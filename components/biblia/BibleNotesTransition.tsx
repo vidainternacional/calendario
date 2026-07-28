@@ -26,7 +26,7 @@ function destinoNotas(embedded: boolean, paqueteId?: string) {
   const params = new URLSearchParams()
   if (embedded) {
     params.set('from', 'pastoral')
-    params.set('embed', '1')
+    params.set('workspace', '1')
     if (paqueteId) params.set('paqueteId', paqueteId)
   }
   const query = params.toString()
