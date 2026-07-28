@@ -11,28 +11,38 @@ export default function PastoralEmbeddedBiblePolish() {
     if (!match) return
 
     const paqueteId = match[1]
+    const destino = new URL('/biblia', window.location.origin)
+    destino.searchParams.set('from', 'pastoral')
+    destino.searchParams.set('workspace', '1')
+    destino.searchParams.set('paqueteId', paqueteId)
+    destino.searchParams.set('source', 'pastoral-workspace-v1')
+
     const aplicar = () => {
       const iframe = document.querySelector<HTMLIFrameElement>('iframe[title="Biblia integrada del Centro Pastoral"]')
       if (!iframe) return false
 
-      const url = new URL('/biblia', window.location.origin)
-      url.searchParams.set('from', 'pastoral')
-      url.searchParams.set('workspace', '1')
-      url.searchParams.set('paqueteId', paqueteId)
-      url.searchParams.set('full', '4')
+      const actual = new URL(iframe.src || iframe.getAttribute('src') || '/', window.location.origin)
+      const esCorrecta = actual.pathname === '/biblia'
+        && actual.searchParams.get('from') === 'pastoral'
+        && actual.searchParams.get('workspace') === '1'
+        && actual.searchParams.get('paqueteId') === paqueteId
 
-      if (iframe.src !== url.toString()) iframe.src = url.toString()
-      iframe.className = 'h-[78dvh] min-h-[600px] max-h-[900px] w-full border-0 bg-transparent'
+      if (!esCorrecta) iframe.src = destino.toString()
+      iframe.className = 'h-[82dvh] min-h-[640px] max-h-[980px] w-full border-0 bg-transparent'
       iframe.setAttribute('loading', 'eager')
+      iframe.setAttribute('data-vida-pastoral-bible', 'general')
       return true
     }
 
-    if (aplicar()) return
-    const observer = new MutationObserver(() => {
-      if (aplicar()) observer.disconnect()
-    })
+    aplicar()
+    const observer = new MutationObserver(aplicar)
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
+    const timer = window.setInterval(aplicar, 500)
+
+    return () => {
+      observer.disconnect()
+      window.clearInterval(timer)
+    }
   }, [pathname])
 
   return null
