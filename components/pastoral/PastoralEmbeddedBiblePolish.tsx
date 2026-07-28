@@ -15,14 +15,14 @@ export default function PastoralEmbeddedBiblePolish() {
       const iframe = document.querySelector<HTMLIFrameElement>('iframe[title="Biblia integrada del Centro Pastoral"]')
       if (!iframe) return false
 
-      const url = new URL(iframe.src, window.location.origin)
+      const url = new URL('/biblia', window.location.origin)
       url.searchParams.set('from', 'pastoral')
-      url.searchParams.set('embed', '1')
+      url.searchParams.set('workspace', '1')
       url.searchParams.set('paqueteId', paqueteId)
-      url.searchParams.set('full', '3')
+      url.searchParams.set('full', '4')
 
       if (iframe.src !== url.toString()) iframe.src = url.toString()
-      iframe.className = 'h-[72dvh] min-h-[540px] max-h-[820px] w-full border-0 bg-transparent'
+      iframe.className = 'h-[78dvh] min-h-[600px] max-h-[900px] w-full border-0 bg-transparent'
       iframe.setAttribute('loading', 'eager')
       return true
     }
