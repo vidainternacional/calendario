@@ -11,8 +11,6 @@ import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoral
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
 import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
-import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
-import BibleNotesInlineMode from '@/components/biblia/BibleNotesInlineMode'
 import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
 import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
@@ -65,12 +63,10 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <BibleNotesInlineMode />
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
       <BibleNotesPrefetch />
       <BibleSelectorPolish />
-      <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
       <BibleCompareAllVersions />
 
