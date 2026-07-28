@@ -52,7 +52,7 @@ function parametrosContexto() {
   return params
 }
 
-function buscarZonaPanel(elemento: Element | null) {
+function buscarZonaPanel(elemento: Element | null | undefined) {
   if (!elemento) return null
 
   return elemento.closest<HTMLElement>('[class~="p-5"], [class~="sm:p-7"]')
