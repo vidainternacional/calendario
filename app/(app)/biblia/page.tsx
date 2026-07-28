@@ -12,8 +12,8 @@ import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
 import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
 import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
+import BibleNotesInlineMode from '@/components/biblia/BibleNotesInlineMode'
 import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
-import BibleNotesTransition from '@/components/biblia/BibleNotesTransition'
 import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
 import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
@@ -65,7 +65,7 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <BibleNotesTransition embedded={enEspacioPastoral} paqueteId={paqueteId} />
+      <BibleNotesInlineMode />
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
       <BibleNotesPrefetch />
