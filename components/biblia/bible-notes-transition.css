@@ -12,14 +12,14 @@
 
 /* El panel de Notas se monta al cambiar de pestaña; esta regla suaviza esa entrada
    sin modificar el lector, el comparador ni el estado de las notas. */
-.biblia-page div.p-5:has(textarea[placeholder^="Escribe observaciones"]),
-.biblia-page div.sm\:p-7:has(textarea[placeholder^="Escribe observaciones"]) {
+div.p-5:has(textarea[placeholder^="Escribe observaciones"]),
+div.sm\:p-7:has(textarea[placeholder^="Escribe observaciones"]) {
   animation: vida-biblia-notas-entrada 180ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .biblia-page div.p-5:has(textarea[placeholder^="Escribe observaciones"]),
-  .biblia-page div.sm\:p-7:has(textarea[placeholder^="Escribe observaciones"]) {
+  div.p-5:has(textarea[placeholder^="Escribe observaciones"]),
+  div.sm\:p-7:has(textarea[placeholder^="Escribe observaciones"]) {
     animation: none;
   }
 }
