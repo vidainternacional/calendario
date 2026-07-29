@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, PackageOpen } from 'lucide-react'
+import { PackageOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaquetesClient from '@/components/pastoral/PaquetesClient'
+import PastoralPageHeader from '@/components/pastoral/PastoralPageHeader'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Paquetes Pastorales' }
@@ -40,12 +40,12 @@ export default async function PaquetesPastoralesPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
-      <header className="mb-6">
-        <Link href="/pastoral" className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200"><ArrowLeft className="h-4 w-4" /> Centro Pastoral</Link>
-        <div className="flex items-center gap-2 text-indigo-600"><PackageOpen className="h-4 w-4" /><p className="text-xs font-bold uppercase tracking-[0.16em]">Flujo integrado</p></div>
-        <h1 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">Paquetes pastorales</h1>
-        <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-500">Reúne bosquejo, versículos, recursos y aplicación en una sola guía lista para preparar, imprimir y compartir con la iglesia.</p>
-      </header>
+      <PastoralPageHeader
+        eyebrow="Espacio de trabajo"
+        title="Paquetes"
+        description="Reúne el bosquejo, los versículos y los recursos en una guía lista para compartir."
+        icon={PackageOpen}
+      />
 
       <PaquetesClient
         paquetes={(paquetes ?? []) as any}

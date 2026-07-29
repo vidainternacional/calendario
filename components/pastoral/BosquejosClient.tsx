@@ -67,8 +67,10 @@ export default function BosquejosClient({ bosquejos }: { bosquejos: Bosquejo[] }
       {filtrados.length === 0 ? (
         <div className="mt-6 rounded-[22px] border border-dashed border-slate-300 bg-white p-8 text-center">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600"><FileText className="h-6 w-6" /></span>
-          <h2 className="mt-4 font-bold text-slate-900">{bosquejos.length ? 'No hay coincidencias' : 'Comienza tu primer bosquejo'}</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">Organiza la idea central, el pasaje, los puntos y la conclusión de una prédica.</p>
+          <div className="pastoral-centered-copy">
+            <h2 className="mt-4 font-bold text-slate-900">{bosquejos.length ? 'No hay coincidencias' : 'Crea tu primer bosquejo'}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">Organiza el pasaje, los puntos y la conclusión del mensaje.</p>
+          </div>
         </div>
       ) : (
         <div className="mt-5 space-y-3">
@@ -78,7 +80,7 @@ export default function BosquejosClient({ bosquejos }: { bosquejos: Bosquejo[] }
                 <button type="button" onClick={() => router.push(`/pastoral/bosquejos/${item.id}`)} className="min-w-0 flex-1 text-left">
                   <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${estadoClase[item.estado]}`}>{item.estado}</span>
                   <h2 className="mt-2 truncate text-base font-bold text-slate-900">{item.titulo}</h2>
-                  <p className="mt-1 text-xs text-slate-500">{[item.tema, item.pasaje_base].filter(Boolean).join(' · ') || 'Sin tema ni pasaje todavía'}</p>
+                  <p className="mt-1 text-xs text-slate-500">{[item.tema, item.pasaje_base].filter(Boolean).join(' · ') || 'Sin tema ni pasaje'}</p>
                   <p className="mt-3 text-[11px] text-slate-400">Actualizado {new Date(item.updated_at).toLocaleDateString('es-SV')}</p>
                 </button>
                 <button type="button" onClick={() => eliminar(item.id, item.titulo)} disabled={isPending} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500" aria-label={`Eliminar ${item.titulo}`}><Trash2 className="h-4 w-4" /></button>
@@ -92,7 +94,7 @@ export default function BosquejosClient({ bosquejos }: { bosquejos: Bosquejo[] }
         <div className="modal-overlay-safe bg-black/55" onClick={(event) => { if (event.target === event.currentTarget) setModal(false) }}>
           <section className="modal-panel-safe rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="nuevo-bosquejo-title">
             <header className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <div><h2 id="nuevo-bosquejo-title" className="font-bold text-slate-900">Nuevo bosquejo</h2><p className="mt-0.5 text-xs text-slate-500">Crea la base y continúa en el editor.</p></div>
+              <div><h2 id="nuevo-bosquejo-title" className="font-bold text-slate-900">Nuevo bosquejo</h2><p className="mt-0.5 text-xs text-slate-500">Define la base y continúa en el editor.</p></div>
               <button type="button" onClick={() => setModal(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600" aria-label="Cerrar"><X className="h-5 w-5" /></button>
             </header>
             <form action={crear} className="modal-body-safe space-y-4 p-5">
