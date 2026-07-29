@@ -111,14 +111,6 @@ export default function BibleExperienceFixes() {
       })
 
       const botones = Array.from(document.querySelectorAll<HTMLButtonElement>('button'))
-      const botonNotas = botones.find((boton) => textoNormalizado(boton.textContent) === 'Notas')
-      if (botonNotas && botonNotas.dataset.vidaNotasReady !== 'true') {
-        botonNotas.dataset.vidaNotasReady = 'true'
-        botonNotas.addEventListener('click', (event) => {
-          event.preventDefault(); event.stopImmediatePropagation(); router.push('/biblia/notas')
-        }, { capture: true })
-      }
-
       const selects = Array.from(document.querySelectorAll<HTMLSelectElement>('select'))
       const versionPrincipal = selects.find((select) => /versi[oó]n de la biblia/i.test(select.getAttribute('aria-label') ?? ''))
       if (versionPrincipal) {
@@ -150,7 +142,7 @@ export default function BibleExperienceFixes() {
           Array.from(selectorSecundario.options).forEach((option) => { const n = catalogo.get(option.value); if (n) option.textContent = n })
           selectorSecundario.setAttribute('aria-label', 'Biblia 2 para comparar')
           selectorSecundario.title = catalogo.get(selectorSecundario.value) ?? 'Biblia 2'
-          const zonaComparar = selectorSecundario.closest<HTMLElement>('div.p-5, div.sm\:p-7, section') ?? selectorSecundario.parentElement
+          const zonaComparar = selectorSecundario.closest<HTMLElement>('div.p-5, div.sm\\:p-7, section') ?? selectorSecundario.parentElement
           if (zonaComparar && !zonaComparar.querySelector('[data-vida-dual-selector]')) {
             const bloque = document.createElement('div')
             bloque.dataset.vidaDualSelector = 'true'
