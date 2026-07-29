@@ -1,0 +1,110 @@
+@media (max-width: 639px) {
+  .pastoral-package-page {
+    padding-bottom: calc(12.5rem + env(safe-area-inset-bottom));
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 {
+    padding-bottom: 5.75rem;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) {
+    position: fixed;
+    z-index: 65;
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: calc(5.25rem + env(safe-area-inset-bottom));
+    left: max(0.75rem, env(safe-area-inset-left));
+    margin-top: 0;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border-color: rgb(221 214 254 / 0.95);
+    background: rgb(255 255 255 / 0.96);
+    box-shadow: 0 18px 48px rgb(15 23 42 / 0.22);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:first-child {
+    display: none;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 0.5rem;
+    scroll-padding-inline: 0.5rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child > div {
+    gap: 0.25rem;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button {
+    min-height: 3.75rem;
+    min-width: 4.35rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 1rem;
+    text-align: center;
+    scroll-snap-align: center;
+    touch-action: manipulation;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button > svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button > span {
+    display: block;
+    max-width: 100%;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button strong {
+    display: block;
+    max-width: 3.85rem;
+    overflow: hidden;
+    font-size: 0.625rem;
+    line-height: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button strong + span {
+    display: none;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 {
+    scroll-margin-top: 5.25rem;
+  }
+
+  .pastoral-mobile-workspace-shell > .text-slate-900 > div.sticky {
+    display: none;
+  }
+
+  .pastoral-mobile-workspace-shell iframe[title='Biblia integrada del Centro Pastoral'] {
+    height: calc(100dvh - 10.75rem) !important;
+    min-height: 34rem !important;
+    background: transparent !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button {
+    min-width: 4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button {
+    transition: none !important;
+  }
+}
