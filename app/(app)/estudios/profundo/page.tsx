@@ -54,14 +54,24 @@ export default async function EstudioProfundoPage({ searchParams }: { searchPara
         </div>
       </section>
 
+      <section className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950" role="note">
+        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+        <div>
+          <h2 className="text-sm font-bold">Asistencia en revisión por fuentes</h2>
+          <p className="mt-1 text-xs leading-5 text-amber-800">
+            La IA ayuda a organizar el estudio, pero la capa de citas verificables todavía está en desarrollo. Contrasta los datos históricos y lingüísticos antes de enseñarlos o publicarlos.
+          </p>
+        </div>
+      </section>
+
       <EstudioProfundoClient initialPasaje={pasaje ?? ''} />
 
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#C0392B]">Vista previa</p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">Lo que incluirá cada estudio</h2>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#C0392B]">Estructura del análisis</p>
+          <h2 className="mt-1 text-xl font-bold text-slate-900">Lo que incluye cada estudio</h2>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Estas áreas son visibles desde ahora. Los resultados completos aparecerán cuando el proveedor de IA esté configurado.
+            Cada sección debe distinguir el texto, el contexto probable, la interpretación y la reflexión. Los datos sin respaldo suficiente deben indicarse como no verificados.
           </p>
         </div>
 
