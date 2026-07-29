@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { ArrowLeft, BookHeart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import ColeccionesClient from '@/components/pastoral/ColeccionesClient'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = {
   title: 'Colecciones Pastorales',
@@ -14,15 +15,13 @@ export default async function ColeccionesPastoralesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('rol, estado_cuenta')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') redirect('/inicio')
+  if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const { data, error } = await (supabase as any)
     .from('pastoral_colecciones')
