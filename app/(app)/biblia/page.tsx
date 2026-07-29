@@ -10,6 +10,7 @@ import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhanc
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import './biblia.css'
+import './biblia-first-paint.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
