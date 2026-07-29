@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import EstudioProfundoClient from '@/components/estudios/EstudioProfundoClient'
+import FuentesBiblicasAprobadas from '@/components/estudios/FuentesBiblicasAprobadas'
 import { ArrowLeft, BookOpen, Languages, History, Sparkles, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 
@@ -63,6 +64,8 @@ export default async function EstudioProfundoPage({ searchParams }: { searchPara
           </p>
         </div>
       </section>
+
+      <FuentesBiblicasAprobadas />
 
       <EstudioProfundoClient initialPasaje={pasaje ?? ''} />
 
