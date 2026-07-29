@@ -4,7 +4,9 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
+import PastoralMobileWorkspaceShell from '@/components/pastoral/PastoralMobileWorkspaceShell'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import './workspace-mobile.css'
 
 export const metadata: Metadata = { title: 'Espacio Pastoral' }
 
@@ -65,23 +67,25 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
   const pdfPresentacion = biblioteca.find((item: any) => item.id === paquete.presentacion_pdf_recurso_id) ?? null
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
+    <main className="pastoral-package-page mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
       <div className="mb-2 print:hidden">
         <Link href="/pastoral" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 text-sm font-bold text-violet-700">
           <ArrowLeft className="h-4 w-4" /> Centro Pastoral
         </Link>
       </div>
 
-      <PaqueteDetalleClient
-        paquete={paquete as any}
-        bosquejo={bosquejo as any}
-        coleccion={coleccion as any}
-        recursos={recursosSeleccionados as any}
-        pdfPresentacion={pdfPresentacion as any}
-        bosquejos={(bosquejos ?? []).map((item: any) => ({ id: item.id, titulo: item.titulo }))}
-        colecciones={(colecciones ?? []).map((item: any) => ({ id: item.id, titulo: item.nombre }))}
-        biblioteca={biblioteca as any}
-      />
+      <PastoralMobileWorkspaceShell>
+        <PaqueteDetalleClient
+          paquete={paquete as any}
+          bosquejo={bosquejo as any}
+          coleccion={coleccion as any}
+          recursos={recursosSeleccionados as any}
+          pdfPresentacion={pdfPresentacion as any}
+          bosquejos={(bosquejos ?? []).map((item: any) => ({ id: item.id, titulo: item.titulo }))}
+          colecciones={(colecciones ?? []).map((item: any) => ({ id: item.id, titulo: item.nombre }))}
+          biblioteca={biblioteca as any}
+        />
+      </PastoralMobileWorkspaceShell>
     </main>
   )
 }
