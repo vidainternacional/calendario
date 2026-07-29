@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { ArrowLeft, PackageOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaquetesClient from '@/components/pastoral/PaquetesClient'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Paquetes Pastorales' }
 
@@ -12,10 +13,13 @@ export default async function PaquetesPastoralesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('rol, estado_cuenta').eq('id', user.id).single()
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') redirect('/inicio')
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
+    .eq('id', user.id)
+    .single()
+
+  if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const [{ data: paquetes }, { data: bosquejos }, { data: colecciones }, { data: recursos }] = await Promise.all([
     (supabase as any).from('pastoral_paquetes').select('id, titulo, descripcion_publica, estado, updated_at').eq('profile_id', user.id).order('updated_at', { ascending: false }),
