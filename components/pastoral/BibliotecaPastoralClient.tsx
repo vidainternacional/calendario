@@ -137,7 +137,7 @@ export default function BibliotecaPastoralClient({ recursos }: { recursos: Recur
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="relative block flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input aria-label="Buscar recursos" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por título, descripción o etiqueta" className={`min-h-12 w-full rounded-xl border border-slate-300 pl-10 pr-3 text-base font-medium shadow-inner outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 ${campoClaro}`} />
+            <input aria-label="Buscar recursos" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar recursos" className={`min-h-12 w-full rounded-xl border border-slate-300 pl-10 pr-3 text-base font-medium shadow-inner outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 ${campoClaro}`} />
           </label>
           <div className="grid grid-cols-2 gap-2 sm:flex">
             <button onClick={() => setModal('enlace')} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-sm font-bold text-indigo-700"><Link2 className="h-4 w-4" /> Enlace</button>
@@ -155,25 +155,27 @@ export default function BibliotecaPastoralClient({ recursos }: { recursos: Recur
       {filtrados.length === 0 ? (
         <section className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-white p-8 text-center sm:p-12">
           <FolderOpen className="mx-auto h-10 w-10 text-slate-300" />
-          <h2 className="mt-4 text-lg font-bold text-slate-900">No hay recursos para mostrar</h2>
-          <p className="mt-2 text-sm text-slate-500">Agrega un archivo o enlace, o cambia los filtros de búsqueda.</p>
+          <div className="pastoral-centered-copy">
+            <h2 className="mt-4 text-lg font-bold text-slate-900">No hay recursos</h2>
+            <p className="mt-2 text-sm text-slate-500">Agrega un archivo o enlace, o cambia los filtros.</p>
+          </div>
         </section>
       ) : (
         <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtrados.map((recurso) => (
-            <article key={recurso.id} className="flex min-h-[350px] flex-col rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <article key={recurso.id} className="flex min-h-[320px] flex-col rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <RecursoPreview recurso={recurso} />
               <div className="mt-4 flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 text-left">
                   <h2 className="text-lg font-bold leading-snug text-slate-950">{recurso.titulo}</h2>
                   <p className="mt-1 text-xs font-semibold text-slate-400">{tipoVisual(recurso).etiqueta}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">{categoriaLabel(recurso.categoria)}</span>
               </div>
-              {recurso.descripcion && <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{recurso.descripcion}</p>}
+              {recurso.descripcion && <p className="mt-2 line-clamp-2 text-left text-sm leading-6 text-slate-500">{recurso.descripcion}</p>}
               {recurso.etiquetas?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{recurso.etiquetas.map((etiqueta) => <span key={etiqueta} className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">#{etiqueta}</span>)}</div>}
               <div className="mt-auto pt-5">
-                {recurso.tipo === 'archivo' && <p className="mb-3 truncate text-xs text-slate-400">{recurso.nombre_archivo} {formatoTamano(recurso.tamano_bytes) && `· ${formatoTamano(recurso.tamano_bytes)}`}</p>}
+                {recurso.tipo === 'archivo' && <p className="mb-3 truncate text-left text-xs text-slate-400">{recurso.nombre_archivo} {formatoTamano(recurso.tamano_bytes) && `· ${formatoTamano(recurso.tamano_bytes)}`}</p>}
                 <div className="grid grid-cols-[1fr_auto_auto] gap-2">
                   <Link href={`/pastoral/biblioteca/${recurso.id}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 text-xs font-bold text-white"><FolderOpen className="h-4 w-4" /> Ver recurso</Link>
                   <button onClick={() => setEditando(recurso)} aria-label={`Editar ${recurso.titulo}`} className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Pencil className="h-4 w-4" /></button>
@@ -189,15 +191,15 @@ export default function BibliotecaPastoralClient({ recursos }: { recursos: Recur
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-6">
           <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-[28px] bg-white p-5 text-slate-950 shadow-2xl sm:max-w-xl sm:rounded-[28px] sm:p-7">
             <div className="flex items-start justify-between gap-3">
-              <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">Biblioteca pastoral</p><h2 className="mt-2 text-xl font-bold text-slate-950">{editando ? 'Editar recurso' : modal === 'archivo' ? 'Subir archivo' : 'Guardar enlace'}</h2></div>
-              <button onClick={() => { setModal(null); setEditando(null) }} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600"><X className="h-5 w-5" /></button>
+              <div><p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Biblioteca</p><h2 className="mt-1 text-xl font-bold text-slate-950">{editando ? 'Editar recurso' : modal === 'archivo' ? 'Subir archivo' : 'Guardar enlace'}</h2></div>
+              <button onClick={() => { setModal(null); setEditando(null) }} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600" aria-label="Cerrar"><X className="h-5 w-5" /></button>
             </div>
 
             <form action={(formData) => {
               if (editando) ejecutar((datos) => editarRecursoBibliotecaPastoral(editando.id, datos), formData, 'Recurso actualizado')
               else if (modal === 'archivo') ejecutar(subirArchivoBibliotecaPastoral, formData, 'Archivo guardado')
               else ejecutar(crearEnlaceBibliotecaPastoral, formData, 'Enlace guardado')
-            }} className="mt-6 space-y-4">
+            }} className="mt-5 space-y-4">
               <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Título</span><input name="titulo" defaultValue={editando?.titulo ?? ''} required maxLength={140} className={`min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base ${campoClaro}`} /></label>
               {(modal === 'enlace' || editando?.tipo === 'enlace') && <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Enlace</span><input name="url" type="url" defaultValue={editando?.url ?? ''} required placeholder="https://" className={`min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base ${campoClaro}`} /></label>}
               {modal === 'archivo' && !editando && <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Archivo · máximo 25 MB</span><input name="archivo" type="file" required className="block min-h-12 w-full rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-900 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-bold file:text-indigo-700" /></label>}
@@ -205,8 +207,8 @@ export default function BibliotecaPastoralClient({ recursos }: { recursos: Recur
                 <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Categoría</span><select name="categoria" defaultValue={editando?.categoria ?? 'otro'} className={`min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base ${campoClaro}`}>{categorias.filter(([id]) => id !== 'todos').map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
                 <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Etiquetas</span><input name="etiquetas" defaultValue={editando?.etiquetas?.join(', ') ?? ''} placeholder="fe, liderazgo, jóvenes" className={`min-h-12 w-full rounded-xl border border-slate-300 px-3 text-base ${campoClaro}`} /></label>
               </div>
-              <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Descripción</span><textarea name="descripcion" defaultValue={editando?.descripcion ?? ''} maxLength={1200} rows={5} className={`w-full rounded-xl border border-slate-300 p-3 text-base leading-6 ${campoClaro}`} /></label>
-              <button type="submit" disabled={isPending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white disabled:opacity-60">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}{isPending ? 'Guardando…' : editando ? 'Guardar cambios' : 'Agregar a la biblioteca'}</button>
+              <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Descripción</span><textarea name="descripcion" defaultValue={editando?.descripcion ?? ''} maxLength={1200} rows={4} className={`w-full rounded-xl border border-slate-300 p-3 text-base leading-6 ${campoClaro}`} /></label>
+              <button type="submit" disabled={isPending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white disabled:opacity-60">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}{isPending ? 'Guardando…' : editando ? 'Guardar cambios' : 'Agregar'}</button>
             </form>
           </div>
         </div>
