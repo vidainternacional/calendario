@@ -3,26 +3,27 @@
  * paleta clara. Estas reglas usan el tema preparado en <html> para que ese
  * primer frame ya coincida con la preferencia guardada.
  *
- * Solo actúan mientras la sección conserva la clase clara inicial; al hidratar,
- * React coloca las clases definitivas y estas reglas dejan de aplicar.
+ * La protección solo actúa antes de que BibliaClient marque la sección con
+ * `transition-colors`. Después de hidratar, el tema visible de React es la
+ * fuente de verdad y ninguna regla inicial puede imponer la paleta anterior.
  */
-html[data-biblia-tema='oscuro'] section[class~="bg-[#f7f7f4]"] {
+html[data-biblia-tema='oscuro'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] {
   background-color: #020617 !important;
   color: #ffffff !important;
 }
 
-html[data-biblia-tema='oscuro'] section[class~="bg-[#f7f7f4]"] [class~="bg-white"] {
+html[data-biblia-tema='oscuro'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] [class~="bg-white"] {
   background-color: #0f172a !important;
   border-color: #1e293b !important;
   color: #f8fafc !important;
 }
 
-html[data-biblia-tema='oscuro'] section[class~="bg-[#f7f7f4]"] [class~="bg-slate-100"] {
+html[data-biblia-tema='oscuro'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] [class~="bg-slate-100"] {
   background-color: #1e293b !important;
   color: #e2e8f0 !important;
 }
 
-html[data-biblia-tema='oscuro'] section[class~="bg-[#f7f7f4]"] :is(
+html[data-biblia-tema='oscuro'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] :is(
   [class~="text-slate-950"],
   [class~="text-slate-900"],
   [class~="text-slate-800"],
@@ -31,25 +32,54 @@ html[data-biblia-tema='oscuro'] section[class~="bg-[#f7f7f4]"] :is(
   color: #f8fafc !important;
 }
 
-html[data-biblia-tema='oscuro'] section[class~="bg-[#f7f7f4]"] :is(
+html[data-biblia-tema='oscuro'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] :is(
   [class~="text-slate-500"],
   [class~="text-slate-400"]
 ) {
   color: #94a3b8 !important;
 }
 
-html[data-biblia-tema='sepia'] section[class~="bg-[#f7f7f4]"] {
+html[data-biblia-tema='sepia'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] {
   background-color: #efe5d0 !important;
   color: #34291f !important;
 }
 
-html[data-biblia-tema='sepia'] section[class~="bg-[#f7f7f4]"] [class~="bg-white"] {
+html[data-biblia-tema='sepia'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] [class~="bg-white"] {
   background-color: #fffaf0 !important;
   border-color: #dac8a5 !important;
   color: #493c2d !important;
 }
 
-html[data-biblia-tema='sepia'] section[class~="bg-[#f7f7f4]"] [class~="bg-slate-100"] {
+html[data-biblia-tema='sepia'] section:not(.transition-colors)[class~="bg-[#f7f7f4]"] [class~="bg-slate-100"] {
   background-color: #ead9b5 !important;
   color: #493c2d !important;
+}
+
+/*
+ * Durante un cambio manual de tema, el fondo exterior debe cambiar en el
+ * mismo recálculo de estilos que la sección de la Biblia. Esto evita mostrar
+ * por debajo la paleta anterior durante la transición y el rebote de iOS.
+ */
+html:has(section.transition-colors[class~="bg-[#f7f7f4]"]),
+html:has(section.transition-colors[class~="bg-[#f7f7f4]"]) body {
+  --background: #f7f7f4;
+  --foreground: #0f172a;
+  background-color: #f7f7f4 !important;
+  color-scheme: light;
+}
+
+html:has(section.transition-colors[class~="bg-[#efe5d0]"]),
+html:has(section.transition-colors[class~="bg-[#efe5d0]"]) body {
+  --background: #efe5d0;
+  --foreground: #34291f;
+  background-color: #efe5d0 !important;
+  color-scheme: light;
+}
+
+html:has(section.transition-colors[class~="bg-slate-950"]),
+html:has(section.transition-colors[class~="bg-slate-950"]) body {
+  --background: #020617;
+  --foreground: #ffffff;
+  background-color: #020617 !important;
+  color-scheme: dark;
 }
