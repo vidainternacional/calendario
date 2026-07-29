@@ -1,193 +1,102 @@
 # FASE C — Auditoría de cierre
 
-Fecha de revisión inicial: 2026-07-24  
-Última actualización: 2026-07-29
+Fecha de cierre: 2026-07-29
 
-Estado: revisión técnica completada; pendiente únicamente confirmación visual y funcional final antes de cerrar la fase en el documento maestro.
+Estado: **CERRADA — CRITERIOS TÉCNICOS Y FUNCIONALES CUMPLIDOS**
 
-## Alcance revisado
+## Alcance auditado
 
 - Centro Pastoral.
-- Colecciones de versículos.
+- Colecciones y versículos.
 - Bosquejos pastorales.
-- Biblioteca Pastoral.
+- Biblioteca privada.
 - Paquetes y materiales de estudio.
 - Publicación interna y distribución.
-- Navegación, carga, error, vacío y recuperación.
+- Biblia integrada en el proyecto pastoral.
+- Navegación móvil.
+- Carga, error, vacío y recuperación.
 - Acceso pastoral asignable.
-- Almacenamiento e integridad de relaciones.
+- Storage e integridad de relaciones.
 
-## Resultado funcional
+## Resultado
 
-- El flujo pastoral permite preparar, organizar y distribuir contenido desde una sola experiencia.
-- Los paquetes relacionan bosquejos, colecciones y recursos de biblioteca.
-- Las publicaciones aparecen dentro de Inicio según audiencia y permisos.
-- Las rutas de materiales aceptan `public_slug` y el identificador antiguo del paquete.
-- Cuando se requiere autenticación, el destino del material se conserva.
-- La guía puede imprimirse o guardarse como PDF, copiarse y compartirse desde el dispositivo.
-- La publicación normal permanece dentro de Vida; el enlace es una opción secundaria.
-- Los estados vacíos conservan acciones para crear el primer elemento o continuar el flujo.
-- Pastores y administradores activos tienen acceso automático; otras cuentas activas pueden recibir permiso explícito sin cambiar su rol global.
+El flujo permite preparar un mensaje o estudio, reunir bosquejo, versículos y recursos, crear una guía y una presentación, publicar el material dentro de Vida y compartirlo mediante las opciones del dispositivo.
 
-## Correcciones de la auditoría
+La Biblia utilizada desde el proyecto pastoral es la misma experiencia general de la aplicación, con Leer, Estudio, Comparar, Notas, favoritos, temas, audio y acciones contextuales para el proyecto.
 
-### Navegación interna
+## Lista final de comprobación
 
-Se eliminó la apertura forzada en una pestaña nueva desde Materiales de estudio.
+- Acceso y permisos: cumplido.
+- Acceso individual para líderes, servidores u otras cuentas activas: cumplido.
+- Revocación inmediata sin modificar el rol global: cumplido.
+- Aislamiento por propietario mediante RLS: cumplido.
+- Colecciones y versículos: cumplido.
+- Bosquejos: cumplido.
+- Biblioteca y recuperación de recursos: cumplido.
+- Integración mediante paquetes: cumplido.
+- Materiales y distribución: cumplido.
+- Publicación interna por `public_slug` y compatibilidad con identificador anterior: cumplido.
+- Navegación interna del material publicado: cumplido.
+- Experiencia móvil del proyecto pastoral: cumplido.
+- Estados de carga, error y vacío: cumplido.
+- Integridad de relaciones y archivos: cumplido.
+- Evidencia y límites de almacenamiento: documentados.
+- Validación funcional del usuario: confirmada.
 
-Evidencia:
+## Evidencia de seguridad
 
-- `797eefdcfa4ecd9706b26ceeded957a725475080`
+La matriz final ejecutada en producción comprobó:
 
-### Estado de carga transversal
+1. una cuenta servidora no puede autoasignarse acceso;
+2. una cuenta administradora activa puede concederlo;
+3. la persona autorizada conserva su rol original;
+4. puede crear contenido propio bajo RLS;
+5. no obtiene permisos administrativos;
+6. Administración puede revocar el acceso;
+7. la revocación desactiva la autorización pastoral;
+8. la cuenta revocada no puede crear contenido pastoral;
+9. el estado original queda restaurado.
 
-Se agregó `app/(app)/pastoral/loading.tsx` con una representación visual estable del Centro Pastoral, accesible mediante `aria-busy` y texto para lectores de pantalla.
+Resultado: **9 de 9 comprobaciones correctas**, sin datos ni permisos temporales restantes.
 
-Evidencia:
+Documento detallado: `docs/FASE_C_VALIDACION_ACCESO_2026-07-29.md`.
 
-- `23ef3f40ab748a146f9230dafefa81dfddaeb933`
+## Integridad observada
 
-### Alineación del skeleton con el flujo unificado
+- Bosquejos: 1.
+- Colecciones: 2.
+- Versículos: 3.
+- Recursos de biblioteca: 1.
+- Paquetes: 1.
+- Relaciones huérfanas o cruzadas: 0.
+- Recursos inexistentes asociados a paquetes: 0.
+- Archivos registrados sin objeto físico: 0.
+- Publicaciones sin `public_slug`: 0.
 
-Durante la revisión final se detectó que el skeleton todavía representaba el dashboard pastoral antiguo con anchura `max-w-6xl` y tarjetas en cuadrícula, mientras la pantalla real utiliza un espacio unificado `max-w-3xl`. Esto podía producir un salto de diseño al terminar la carga.
+## Almacenamiento
 
-Se actualizó el skeleton para conservar:
+El bucket `pastoral-library` permanece privado, con accesos firmados y límite propio de 25 MiB por archivo.
 
-- la misma anchura del Centro Pastoral real;
-- la misma cabecera;
-- el bloque principal de espacio pastoral;
-- la lista vertical de herramientas;
-- los accesos secundarios a Biblia y Estudio.
+Uso auditado:
 
-Evidencia:
+- un archivo;
+- 20,272 bytes utilizados;
+- cero archivos huérfanos.
 
-- `ff288bfc59291483eb1078c96aea4e5e3b824c8d`
-- despliegue `dpl_9Sb2oNakGsP1b1PGUftFYp2kYKem` — `READY`.
-
-### Recuperación ante errores
-
-Se agregó `app/(app)/pastoral/error.tsx` para cubrir todos los módulos del segmento pastoral. Incluye:
-
-- mensaje humano y claro;
-- confirmación de que la información guardada permanece disponible;
-- acción `Intentar de nuevo`;
-- regreso al Centro Pastoral;
-- referencia técnica mediante `digest` cuando Next.js la proporciona.
-
-Evidencia:
-
-- `e7c65dfb811453f3c767f15768539942d636f7cd`
-
-### Errores reales frente a estados vacíos
-
-La revisión integral detectó que varias consultas del servidor descartaban el error de Supabase y convertían un fallo real en una lista vacía. Esto podía mostrar mensajes como “Todavía no hay materiales” aunque el contenido no hubiera podido cargarse.
-
-Se corrigieron las rutas:
-
-- `/pastoral`;
-- `/pastoral/bosquejos`;
-- `/pastoral/colecciones`;
-- `/pastoral/biblioteca`;
-- `/pastoral/paquetes`;
-- `/pastoral/materiales`.
-
-Comportamiento resultante:
-
-- una consulta correcta sin registros conserva el estado vacío correspondiente;
-- un fallo al verificar el perfil o recuperar datos activa el límite de error pastoral;
-- la persona puede reintentar o volver al Centro Pastoral;
-- los enlaces de regreso utilizan de forma consistente el nombre `Centro Pastoral`.
-
-Evidencia:
-
-- `3b2b15b9c3e3e2d6569f12d93e7161b61144eb46`;
-- `09a5d473ad0d5c1df4f320e16b87135422401726`;
-- `1e91adbcd6865b85e644ac6b55d5c9e12bdbbd81`;
-- `a6107973ed453ccd6ef94ce4ae2b994f47fe8c89`;
-- `025c9a1ab5033971c0a1e78fad249dc23f6d3fd0`;
-- `3ddc768f35e819527b9134e36b5dd1f9d3c791aa`;
-- preview consolidado `dpl_9pgNUsoKUaAZ7CjUZZzjmEQU3PnR` — `READY`;
-- compilación de Next.js y TypeScript completadas correctamente.
+Los límites y el procedimiento de revisión mensual están en `docs/FASE_C_ALMACENAMIENTO_Y_LIMITES.md`.
 
 ## Producción
 
-- No se encontraron grupos de errores de ejecución en las rutas pastorales durante la consulta de los últimos siete días realizada el 2026-07-29.
-- Las publicaciones internas fueron probadas con un paquete real.
-- La corrección de navegación interna quedó desplegada en producción.
-- `Materiales de estudio → Ver publicado` utiliza navegación interna mediante `/material/[slug]` y no abre una pestaña externa.
-- El límite de error pastoral conserva reintento y regreso seguro al Centro Pastoral.
-- El skeleton alineado con la experiencia unificada compiló correctamente y quedó `READY` en producción.
-- La nueva diferenciación entre error real y estado vacío pasó preview y queda pendiente de integración final a producción.
+- Compilación de Next.js: correcta.
+- TypeScript: correcto.
+- Rutas generadas: 32 de 32.
+- Errores recientes agrupados en rutas pastorales: ninguno detectado durante la revisión final.
+- Despliegue de la última base funcional y documental: `dpl_3BqdnmDqMyzzUwGVh32bXvM7oAx1` — `READY`.
 
-## Almacenamiento pastoral
+## Decisión editorial
 
-Bucket privado utilizado:
+La normalización detallada de textos, fuentes, alineaciones y espacios de toda la aplicación queda reservada para Optimización General. La base pastoral actual fue aceptada y no bloquea este cierre.
 
-- `pastoral-library`.
+## Conclusión
 
-Configuración verificada el 2026-07-29:
-
-- bucket privado;
-- límite técnico por archivo: `26,214,400` bytes, equivalentes a 25 MiB;
-- enlaces firmados por una hora;
-- tipos permitidos: PDF, documentos, presentaciones, texto, imágenes, audio y video compatibles;
-- separación de archivos por propietario.
-
-Uso observado el 2026-07-29:
-
-- archivos almacenados: 1;
-- registros de archivo: 1;
-- enlaces externos: 0;
-- espacio total: 20,272 bytes;
-- tamaño aproximado total: 19.80 KiB;
-- archivo más grande: 20,272 bytes;
-- archivos registrados sin objeto físico: 0;
-- objetos físicos sin registro pastoral: 0.
-
-La auditoría tampoco detectó paquetes relacionados con bosquejos, colecciones, recursos o PDF de presentación pertenecientes a otra cuenta; identificadores de recursos inexistentes; ni publicaciones sin `public_slug`.
-
-La aplicación utiliza accesos temporales firmados para archivos privados. No se aumenta el límite de 25 MiB durante la FASE C. Cualquier ampliación debe considerar el plan activo de Supabase, transferencia mensual, crecimiento de audio/video y costos antes de modificar la validación.
-
-Documento detallado:
-
-- `docs/FASE_C_ALMACENAMIENTO_Y_LIMITES.md`.
-
-## Decisiones para crecimiento
-
-- Mantener 25 MiB por archivo como límite inicial.
-- Recomendar compresión de imágenes, audio, video, PDF y presentaciones antes de subirlos.
-- No usar la Biblioteca Pastoral como repositorio de grabaciones extensas sin revisar capacidad y transferencia.
-- Mantener videos largos en los canales oficiales y registrar el enlace en la Biblioteca.
-- Revisar el uso mensual y el plan activo desde `Usage` o `Billing` de la organización en Supabase.
-- Mantener archivos privados y accesos firmados.
-- Tratar optimización profunda, métricas y escalabilidad como trabajo de la FASE E.
-
-## Criterios de cierre
-
-Estado técnico:
-
-- acceso y permisos: cumplido técnicamente;
-- acceso pastoral asignable: implementado y protegido;
-- versículos y colecciones: cumplido;
-- bosquejos: cumplido;
-- biblioteca y recuperación de recursos: cumplido;
-- materiales y distribución: cumplido;
-- integración en paquetes: cumplido;
-- flujo unificado del Centro Pastoral: cumplido;
-- estados vacíos y retroalimentación: cumplido;
-- carga transversal: implementada y alineada con la pantalla real;
-- recuperación ante errores: implementada y conectada a las consultas principales;
-- navegación interna del material publicado: confirmada en código;
-- integridad de relaciones y archivos: confirmada;
-- ausencia de errores recientes en producción: confirmada;
-- evidencia y almacenamiento: documentados.
-
-## Validación pendiente antes del cierre oficial
-
-Confirmar visual y funcionalmente en producción:
-
-1. Entrar al Centro Pastoral y navegar por Bosquejos, Versículos, Biblioteca, Paquetes y Materiales sin saltos graves de anchura o estructura durante la carga.
-2. Conceder acceso pastoral a una cuenta activa con rol `lider` o `servidor`, entrar con esa cuenta y crear contenido propio.
-3. Confirmar que esa cuenta no obtiene acceso administrativo y que, al retirar el permiso, deja de entrar al Centro Pastoral.
-
-Después de esa confirmación se puede actualizar `docs/FASE_C_PANEL_PASTORAL.md` y `__VIDA_INTERNACIONAL.md` para declarar la FASE C como completada. No debe iniciarse la siguiente fase hasta que el documento maestro refleje ese cierre.
+La Fase C cumple sus criterios de cierre. No quedan pendientes funcionales dentro de su alcance. El avance a la Fase D depende únicamente de que el documento maestro `__VIDA_INTERNACIONAL.md` registre la Fase C como completada y la Fase D como activa.
