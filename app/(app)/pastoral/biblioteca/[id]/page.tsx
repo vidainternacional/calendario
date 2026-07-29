@@ -13,6 +13,7 @@ import {
   Presentation,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Recurso Pastoral' }
 
@@ -37,15 +38,13 @@ export default async function RecursoBibliotecaPastoralPage({ params }: { params
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(`/login?next=${encodeURIComponent(`/pastoral/biblioteca/${id}`)}`)
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('rol, estado_cuenta')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') redirect('/inicio')
+  if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const { data: recurso } = await (supabase as any)
     .from('pastoral_biblioteca')
