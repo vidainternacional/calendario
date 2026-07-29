@@ -13,7 +13,7 @@ export default function AppLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="vida-app-shell flex min-h-screen flex-col">
+    <div className="flex flex-col min-h-screen">
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
       <BibleNotesPrefetch />
@@ -21,7 +21,7 @@ export default function AppLayout({
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
       <BibleCompareAllVersions />
-      <div className="vida-app-content flex-1 pb-16">
+      <div className="flex-1 pb-16">
         {/* pb-16 to account for the bottom nav height */}
         {children}
       </div>
