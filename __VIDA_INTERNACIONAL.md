@@ -21,7 +21,7 @@ Este archivo es el control oficial y versionado del proyecto. Antes de trabajar 
 | FASE A | Experiencia profesional mobile first | COMPLETADA |
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
-| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA** |
+| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 2** |
 | FASE E | Optimización General: rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Cuaderno correlativo de prédicas y notas | PENDIENTE |
 
@@ -68,10 +68,24 @@ Construir herramientas avanzadas de estudio bíblico apoyadas por fuentes verifi
 - Cuaderno correlativo de prédicas de la Fase F.
 - Cambios amplios en la Biblia estable sin una necesidad demostrada y una validación aislada.
 
+### Bloques
+
+- Bloque 1 — Diagnóstico y arquitectura: **COMPLETADO**.
+- Bloque 2 — Fuentes, atribución y privacidad: **ACTIVO**.
+
+### Evidencia del Bloque 1
+
+- `docs/FASE_D_DIAGNOSTICO_Y_ARQUITECTURA.md`
+- modelo de IA configurable y actualizado;
+- esquema y validación de respuesta;
+- caché versionado;
+- RLS de propiedad corregida;
+- preview `dpl_9Mfawd7aiUCvCtjqD2cQR4TRPMZZ` — `READY`.
+
 ### Bloque activo
 
-**Bloque 1 — Diagnóstico y arquitectura.**
+**Bloque 2 — Fuentes, atribución y privacidad.**
 
-Revisar únicamente los archivos, rutas, datos y servicios relacionados con Biblia, Estudio Profundo, comparaciones y fuentes. Documentar el estado real, riesgos, dependencias y el primer incremento seguro antes de implementar funciones avanzadas.
+Crear el registro de fuentes aprobadas con proveedor, tipo, idioma, sitio, licencia y versión. Incorporar inicialmente solo metadatos verificables de HelloAO, sin importar comentarios completos ni modificar la Biblia general.
 
-No avanzar al Bloque 2 hasta que el diagnóstico y la arquitectura queden documentados.
+No avanzar al Bloque 3 hasta que el registro, sus políticas y el servicio de lectura estén documentados y validados en producción.
