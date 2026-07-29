@@ -1,8 +1,8 @@
 import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
 import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
 import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
-import BibleNotesPrefetch from '@/components/biblia/BibleNotesPrefetch'
 import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
+import BibleThemeRouteSync from '@/components/biblia/BibleThemeRouteSync'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
 import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import BottomNav from '@/components/layout/BottomNav'
@@ -14,9 +14,9 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
+      <BibleThemeRouteSync />
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
-      <BibleNotesPrefetch />
       <BibleSelectorPolish />
       <BibleExperienceFixes />
       <BibleCompareAndActionsPolish />
