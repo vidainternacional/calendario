@@ -1,6 +1,6 @@
 # FASE D — IA Bíblica Avanzada
 
-Estado: **ACTIVA — BLOQUE 1, DIAGNÓSTICO Y ARQUITECTURA**
+Estado: **ACTIVA — BLOQUE 2, FUENTES, ATRIBUCIÓN Y PRIVACIDAD**
 
 Fecha de inicio: 2026-07-29
 
@@ -36,35 +36,67 @@ Ampliar el estudio bíblico de Vida Internacional con fuentes verificables, cont
 
 ## Orden de trabajo
 
-1. Diagnóstico del sistema actual y sus fuentes. — **EN PROGRESO**
-2. Arquitectura de datos, atribución y privacidad. — PENDIENTE
+1. Diagnóstico del sistema actual y sus fuentes. — **COMPLETADO**
+2. Arquitectura de datos, atribución y privacidad. — **EN PROGRESO**
 3. Contexto histórico y cultural. — PENDIENTE
 4. Comparaciones y herramientas de estudio ampliadas. — PENDIENTE
 5. Cronologías y mapas. — PENDIENTE
 6. IA bíblica avanzada. — PENDIENTE
 7. Pruebas, documentación y cierre. — PENDIENTE
 
-## Bloque 1 — Diagnóstico y arquitectura
+## Bloque 1 completado — Diagnóstico y arquitectura
 
-### Revisar
+El diagnóstico confirmó:
 
-- rutas y componentes de Biblia y Estudio Profundo;
-- modelo de traducciones y disponibilidad sin conexión;
-- implementación de Comparar y Notas;
-- fuentes históricas o comentarios ya existentes;
-- integraciones de IA o variables de entorno relacionadas;
-- tablas y políticas de Supabase usadas por estudio bíblico;
-- riesgos de privacidad, costos y dependencia externa;
-- puntos seguros de extensión sin duplicar la Biblia.
+- Biblia general estable sobre HelloAO;
+- Comparar limitado actualmente a dos traducciones;
+- notas bíblicas nuevas almacenadas localmente;
+- notas de Estudio Profundo protegidas en Supabase;
+- proveedor de IA configurado con un modelo retirado;
+- ausencia de recuperación y citas de fuentes antes de generar;
+- caché sin versión de modelo, prompt o fuentes;
+- política de inserción que no exigía propiedad explícita.
 
-### Entregables
+Primer incremento entregado:
 
-- inventario técnico real;
-- mapa del flujo de datos;
-- riesgos clasificados;
-- decisión de arquitectura para fuentes y atribución;
-- primer incremento funcional pequeño y reversible.
+- modelo configurable y rechazo de modelos retirados;
+- valor predeterminado `gemini-3.6-flash`;
+- salida JSON con esquema obligatorio y validación de once secciones;
+- prompt responsable que prohíbe fuentes inventadas;
+- errores técnicos ocultos al usuario;
+- caché versionado por modelo, prompt y fuentes;
+- índices de caché y cuota;
+- RLS que exige `generado_por = auth.uid()`;
+- aviso visible sobre el estado provisional de las citas.
+
+Evidencia:
+
+- diagnóstico: `docs/FASE_D_DIAGNOSTICO_Y_ARQUITECTURA.md`;
+- migración: `fase_d_endurecer_cache_estudios_ia`;
+- preview: `dpl_9Mfawd7aiUCvCtjqD2cQR4TRPMZZ` — `READY`;
+- Next.js y TypeScript: correctos;
+- rutas generadas: 32 de 32.
+
+## Bloque 2 activo — Fuentes, atribución y privacidad
+
+### Objetivo
+
+Crear el registro verificable de fuentes antes de recuperar contenido histórico o entregar citas a la IA.
+
+### Alcance del bloque
+
+- tabla de fuentes aprobadas con tipo, idioma, proveedor, sitio y licencia;
+- política de lectura segura y administración controlada;
+- catálogo inicial de metadatos de HelloAO;
+- clasificación de traducción, comentario, referencia cruzada, perfil y fuente histórica;
+- atribución visible y reutilizable;
+- versión del conjunto de fuentes;
+- prohibición técnica de enviar notas privadas al paquete de evidencia.
+
+### Primer incremento permitido
+
+Registrar metadatos y licencias. No importar comentarios completos ni modificar todavía la experiencia estable de Biblia.
 
 ### Criterio para avanzar
 
-El Bloque 1 se completa únicamente cuando el diagnóstico quede documentado y exista una arquitectura aprobada que no comprometa la Biblia general, las notas privadas ni el Centro Pastoral.
+El Bloque 2 se completa cuando el registro de fuentes esté en producción, las licencias iniciales estén documentadas y exista un servicio de lectura que entregue metadatos verificables sin incluir contenido privado.
