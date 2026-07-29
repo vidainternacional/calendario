@@ -2,7 +2,7 @@
 
 Fecha: 2026-07-29
 
-Estado: **IMPLEMENTADO — PENDIENTE DE VALIDACIÓN EN PRODUCCIÓN**
+Estado: **IMPLEMENTADO — SEGURIDAD VALIDADA; PREVIEW FINAL PENDIENTE**
 
 ## Objetivo
 
@@ -40,6 +40,19 @@ Campos principales:
 - La cuenta debe estar activa.
 - No existen políticas de inserción, actualización o eliminación para clientes.
 - Las altas y cambios iniciales se realizan mediante migraciones versionadas o una futura acción administrativa protegida.
+
+### Matriz ejecutada en producción
+
+La validación se ejecutó con una cuenta activa dentro de una transacción revertida:
+
+1. La cuenta activa ve exactamente dos fuentes aprobadas. — CORRECTO
+2. Las fuentes pendientes visibles son cero. — CORRECTO
+3. Una cuenta `authenticated` no puede insertar fuentes. — CORRECTO
+4. Una cuenta `authenticated` no puede modificar fuentes. — CORRECTO
+
+Resultado: **4 de 4 comprobaciones correctas**. No quedaron registros de prueba ni cambios temporales.
+
+El asesor de seguridad de Supabase no generó advertencias nuevas relacionadas con `biblical_sources`. Los avisos existentes corresponden a funciones, Storage y autenticación anteriores, fuera de este bloque.
 
 ## Fuentes iniciales
 
@@ -144,14 +157,14 @@ Una futura incorporación de contenido privado requerirá una acción explícita
 
 ## Criterios de validación
 
-- migración aplicada sin pérdida de datos;
-- cuatro registros iniciales presentes;
-- solo dos registros aprobados y habilitados;
-- `anon` sin acceso;
-- `authenticated` con lectura y sin escritura;
-- servicio compilado y validado por TypeScript;
-- catálogo visible en Estudio Profundo;
-- preview `READY`;
-- ausencia de nuevas advertencias de seguridad asociadas a `biblical_sources`.
+- migración aplicada sin pérdida de datos; — CUMPLIDO
+- cuatro registros iniciales presentes; — CUMPLIDO
+- solo dos registros aprobados y habilitados; — CUMPLIDO
+- `anon` sin acceso; — CUMPLIDO
+- `authenticated` con lectura y sin escritura; — CUMPLIDO
+- servicio compilado y validado por TypeScript; — PENDIENTE DEL PREVIEW FINAL
+- catálogo visible en Estudio Profundo; — PENDIENTE DEL PREVIEW FINAL
+- preview `READY`; — PENDIENTE
+- ausencia de nuevas advertencias de seguridad asociadas a `biblical_sources`; — CUMPLIDO
 
-El Bloque 2 no se cerrará hasta verificar estos puntos en producción.
+El Bloque 2 no se cerrará hasta verificar el preview completo y el despliegue de producción.
