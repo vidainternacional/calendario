@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import './mobile-fixes.css'
 import './dialog-transitions.css'
-import './bible-theme-transitions.css'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,40 +37,14 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-const bibleThemeBootstrap = `
-  (() => {
-    try {
-      if (!window.location.pathname.startsWith('/biblia')) return
-
-      const raw = window.localStorage.getItem('vida-biblia-preferencias')
-      const storedMode = raw ? JSON.parse(raw)?.modo : null
-      const mode = ['claro', 'sepia', 'oscuro'].includes(storedMode) ? storedMode : 'claro'
-      const colors = {
-        claro: { background: '#f7f7f4', foreground: '#0f172a', scheme: 'light' },
-        sepia: { background: '#efe5d0', foreground: '#34291f', scheme: 'light' },
-        oscuro: { background: '#020617', foreground: '#ffffff', scheme: 'dark' },
-      }
-      const theme = colors[mode]
-      const root = document.documentElement
-
-      root.dataset.bibliaTema = mode
-      root.style.setProperty('--background', theme.background)
-      root.style.setProperty('--foreground', theme.foreground)
-      root.style.backgroundColor = theme.background
-      root.style.colorScheme = theme.scheme
-    } catch {}
-  })()
-`
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full`} suppressHydrationWarning>
+    <html lang="es" className={`${inter.variable} h-full`}>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: bibleThemeBootstrap }} />
         <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/apple-touch-icon.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/api/icon/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
