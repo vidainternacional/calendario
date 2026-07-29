@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import {
   BookOpen,
@@ -24,12 +24,12 @@ import {
 } from 'lucide-react'
 import { toggleFavorito, favoritosDelCapitulo } from '@/app/actions/biblia'
 import { agregarVersiculoAlProyecto } from '@/app/actions/pastoral-proyecto-versiculos'
+import BibleNotesWorkspace from '@/components/biblia/BibleNotesWorkspace'
 import { mostrarToast } from '@/lib/ui/toast'
 
 const API = 'https://bible.helloao.org/api'
 const POS_KEY = 'vida-biblia-posicion'
 const PREF_KEY = 'vida-biblia-preferencias'
-const NOTAS_KEY = 'vida-biblia-notas'
 
 type Traduccion = { id: string; name: string; language: string; shortName?: string }
 type Libro = { id: string; name: string; numberOfChapters: number }
@@ -78,6 +78,10 @@ function etiquetaTraduccion(t: Traduccion): string {
   return t.shortName || t.name
 }
 
+function esModoLectura(value: string | undefined): value is ModoLectura {
+  return value === 'claro' || value === 'oscuro' || value === 'sepia'
+}
+
 export default function BibliaClient({
   modo = 'general',
   paqueteId,
@@ -105,29 +109,30 @@ export default function BibliaClient({
   const [guardandoVerso, setGuardandoVerso] = useState<number | null>(null)
   const [modoLectura, setModoLectura] = useState<ModoLectura>('claro')
   const [tamanoFuente, setTamanoFuente] = useState(18)
+  const [preferenciasListas, setPreferenciasListas] = useState(esPastoral)
   const [mostrarTamano, setMostrarTamano] = useState(false)
   const [vista, setVista] = useState<Vista>('leer')
   const [voces, setVoces] = useState<SpeechSynthesisVoice[]>([])
   const [vozSeleccionada, setVozSeleccionada] = useState('')
-  const [notas, setNotas] = useState<Record<string, string>>({})
   const [isPending, startTransition] = useTransition()
   const saltoRef = useRef<Posicion | null>(null)
   const listoRef = useRef(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (esPastoral) return
     const prefs = leerJson<Preferencias>(PREF_KEY, { modo: 'claro', fuente: 18 })
-    setModoLectura(['claro', 'oscuro', 'sepia'].includes(prefs.modo) ? prefs.modo : 'claro')
+    const modoInicial = esModoLectura(prefs.modo) ? prefs.modo : 'claro'
+    document.documentElement.dataset.bibliaTema = modoInicial
+    document.body.dataset.bibliaTema = modoInicial
+    setModoLectura(modoInicial)
     setTamanoFuente(Math.min(28, Math.max(15, Number(prefs.fuente) || 18)))
-    setNotas(leerJson<Record<string, string>>(NOTAS_KEY, {}))
-  }, [])
+    setPreferenciasListas(true)
+  }, [esPastoral])
 
   useEffect(() => {
+    if (!preferenciasListas || esPastoral) return
     try { localStorage.setItem(PREF_KEY, JSON.stringify({ modo: modoLectura, fuente: tamanoFuente })) } catch {}
-  }, [modoLectura, tamanoFuente])
-
-  useEffect(() => {
-    try { localStorage.setItem(NOTAS_KEY, JSON.stringify(notas)) } catch {}
-  }, [notas])
+  }, [modoLectura, tamanoFuente, preferenciasListas, esPastoral])
 
   useEffect(() => {
     const cargarVoces = () => {
@@ -187,7 +192,6 @@ export default function BibliaClient({
   const libroActual = useMemo(() => libros.find(b => b.id === libro), [libros, libro])
   const traduccionActual = useMemo(() => traducciones.find(t => t.id === trad), [traducciones, trad])
   const pasaje = `${libroActual?.name ?? ''} ${capitulo}`
-  const notaKey = `${trad}:${libro}:${capitulo}`
 
   useEffect(() => {
     if (!trad || !libro) return
@@ -342,8 +346,8 @@ export default function BibliaClient({
   const vozActual = voces.find(v => v.name === vozSeleccionada)
 
   return (
-    <section className={`${esPastoral ? '' : `min-h-screen ${tema.page}`} transition-colors`}>
-      <div className={esPastoral ? '' : 'mx-auto max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6'}>
+    <section className={`${esPastoral ? '' : `min-h-screen ${tema.page}`} ${preferenciasListas ? 'transition-colors' : ''}`}>
+      <div className={esPastoral ? '' : `mx-auto ${vista === 'notas' ? 'max-w-5xl' : 'max-w-4xl'} px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6`}>
         {!esPastoral && (
           <header className="mb-4 flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -457,16 +461,7 @@ export default function BibliaClient({
             </div>
           )}
 
-          {vista === 'notas' && (
-            <div className="p-5 sm:p-7">
-              <div className={`rounded-2xl border p-5 ${tema.control}`}>
-                <NotebookPen className="h-6 w-6 text-violet-600" />
-                <h2 className={`mt-3 text-lg font-bold ${tema.title}`}>Notas de {pasaje}</h2>
-                <p className={`mt-1 text-xs ${tema.muted}`}>Se guardan automáticamente en este dispositivo.</p>
-                <textarea value={notas[notaKey] ?? ''} onChange={e => setNotas(prev => ({ ...prev, [notaKey]: e.target.value }))} placeholder="Escribe observaciones, ideas o aplicaciones…" className={`mt-4 min-h-48 w-full resize-y rounded-xl border p-3 text-sm outline-none ${tema.control}`} />
-              </div>
-            </div>
-          )}
+          {vista === 'notas' && !esPastoral && <BibleNotesWorkspace modo={modoLectura} embedded />}
         </div>
       </div>
     </section>
