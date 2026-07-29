@@ -1,6 +1,6 @@
 # FASE C — Sistema visual y editorial del Centro Pastoral
 
-Estado: IMPLEMENTADO — PENDIENTE DE VALIDACIÓN VISUAL EN PRODUCCIÓN
+Estado: BASE ACEPTADA — AUDITORÍA FINA DIFERIDA AL CIERRE GLOBAL DE LA APP
 
 ## Alcance de esta fase
 
@@ -35,9 +35,22 @@ El Centro Pastoral debe sentirse como una sola experiencia de trabajo, con una j
 
 También se compactaron estados vacíos, modales, formularios y tarjetas de Bosquejos, Colecciones, Biblioteca y Paquetes.
 
+## Decisión de producto — 2026-07-29
+
+La base visual aplicada se considera suficiente para continuar el desarrollo funcional de la aplicación.
+
+La revisión detallada de textos, alineaciones, tamaños, espacios y tipografías no seguirá consumiendo tiempo dentro de la FASE C. Se realizará como una auditoría integral cuando estén terminadas las demás funciones de la app, ya sea directamente por el responsable del proyecto o mediante una herramienta especializada como Comet.
+
+Hasta esa auditoría final:
+
+- se conserva lo ya implementado en el Centro Pastoral;
+- solo se corregirá un texto o estilo si provoca un error funcional, de accesibilidad o de comprensión grave;
+- no se ampliará esta normalización a otras rutas durante la FASE C;
+- la revisión editorial y gráfica fina no será un requisito para cerrar esta fase.
+
 ## Hallazgo transversal diferido
 
-La aplicación carga Inter desde `next/font`, pero la configuración global de Tailwind todavía referencia variables Geist y `body` fuerza Arial. Corregirlo globalmente modificaría toda la aplicación y queda reservado para la fase de Optimización General.
+La aplicación carga Inter desde `next/font`, pero la configuración global de Tailwind todavía referencia variables Geist y `body` fuerza Arial. Corregirlo globalmente modificaría toda la aplicación y queda reservado para la fase de Optimización General o para la auditoría integral final.
 
 La futura normalización global deberá:
 
@@ -49,10 +62,12 @@ La futura normalización global deberá:
 
 ## Evidencia técnica
 
-- Rama: `fase-c/coherencia-visual-pastoral`.
-- Preview final: `dpl_4kJqiuTri1PWGA4ye3Y25vveXiVc` — `READY`.
+- Rama original: `fase-c/coherencia-visual-pastoral`.
+- Integración en `main`: `9784b641af0a0e8fc46c0eac1f738bb6bfa421fa`.
+- Producción: `dpl_EWmZpUG1PBw55cj5EaXexNzED9x1` — `READY`.
 - Compilación de Next.js: correcta.
 - TypeScript: correcto.
 - Generación: 32 de 32 rutas.
+- Aceptación provisional del usuario: 2026-07-29.
 
-La Fase C permanece activa hasta la validación visual del recorrido pastoral en móvil y escritorio.
+La Fase C continúa únicamente con sus comprobaciones funcionales y documentales pendientes.

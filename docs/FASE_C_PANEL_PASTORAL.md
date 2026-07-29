@@ -184,7 +184,9 @@ Evidencia:
 - integración consolidada: `9f3918d5673926f4f45f6df6323c37367922c169`;
 - documentación: `docs/FASE_C_ACCESO_PASTORAL_ASIGNABLE.md`;
 - producción: `dpl_28siKGg7ic5a327nVHBhQNGNfouK` — `READY`;
-- pruebas transaccionales de concesión, aislamiento y revocación completadas sin dejar datos temporales.
+- pruebas transaccionales de concesión, aislamiento y revocación completadas sin dejar datos temporales;
+- matriz repetida en producción el 2026-07-29: 9 de 9 comprobaciones correctas;
+- evidencia detallada: `docs/FASE_C_VALIDACION_ACCESO_2026-07-29.md`.
 
 ## Requisitos transversales registrados para fases posteriores
 
@@ -209,6 +211,14 @@ Evidencia:
 - Se añadirán plantillas visuales simples y editables: fondo, imagen, alineación, tamaño de texto y contraste.
 - La asistencia mediante IA se limitará inicialmente a proponer estructura, texto breve y estilo; no bloqueará la edición manual ni será requisito para presentar.
 - El control remoto avanzado entre dispositivos se evaluará en un incremento posterior mediante una sesión local segura, sin mezclarlo con el cierre básico de Materiales de Estudio.
+
+## Decisión sobre la auditoría visual y editorial final
+
+- La base visual pastoral desplegada en producción se considera suficiente para continuar con el cierre funcional.
+- La auditoría detallada de textos, alineaciones, espacios y tipografías se realizará cuando estén terminadas las demás funciones de la aplicación.
+- Esa auditoría podrá realizarla directamente el responsable del proyecto o una herramienta especializada como Comet.
+- La FASE C no seguirá ampliando ajustes editoriales o gráficos, salvo que exista un defecto funcional, de accesibilidad o de comprensión grave.
+- Esta decisión queda documentada en `docs/FASE_C_SISTEMA_VISUAL_PASTORAL.md` y no impide el cierre funcional de la fase.
 
 ## Criterios de cierre de fase
 
@@ -235,7 +245,11 @@ Evidencia:
 - El consumo observado es de 20,272 bytes con un archivo; no requiere ampliación.
 - Los límites, costos de referencia, umbrales y procedimiento mensual quedaron registrados en `docs/FASE_C_ALMACENAMIENTO_Y_LIMITES.md`.
 - Preview integral: `dpl_9pgNUsoKUaAZ7CjUZZzjmEQU3PnR` — `READY`, con compilación y TypeScript correctos.
+- Sistema visual pastoral integrado: `9784b641af0a0e8fc46c0eac1f738bb6bfa421fa`.
+- Producción del sistema visual: `dpl_EWmZpUG1PBw55cj5EaXexNzED9x1` — `READY`, con 32 de 32 rutas y TypeScript correcto.
+- La base visual fue aceptada provisionalmente por el usuario el 2026-07-29; la auditoría fina quedó diferida al cierre global.
+- La matriz de concesión y revocación de acceso pastoral pasó 9 de 9 comprobaciones en producción y restauró el estado original.
 
 ## Próximo bloque
 
-Confirmar visual y funcionalmente en producción el recorrido `Centro Pastoral → Bosquejos → Versículos → Biblioteca → Paquetes → Materiales`, incluyendo una cuenta no pastoral con permiso asignado y posterior revocación. Después de esa confirmación se propondrá el cierre de la FASE C en `__VIDA_INTERNACIONAL.md`. No iniciar la fase siguiente hasta que el documento maestro refleje explícitamente ese cierre.
+Confirmar únicamente el recorrido funcional en producción `Centro Pastoral → Bosquejos → Versículos → Biblioteca → Paquetes → Materiales`. La matriz de acceso y revocación ya está completada. La auditoría fina de textos, alineaciones, espacios y tipografías queda fuera de este cierre y se realizará al final de la aplicación. Después de la confirmación funcional se propondrá el cierre de la FASE C en `__VIDA_INTERNACIONAL.md`. No iniciar la fase siguiente hasta que el documento maestro refleje explícitamente ese cierre.
