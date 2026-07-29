@@ -56,22 +56,22 @@ export default function ColeccionesClient({ colecciones }: { colecciones: Colecc
 
       <section className="mt-5" aria-labelledby="mis-colecciones-title">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 id="mis-colecciones-title" className="text-sm font-bold text-slate-900">Mis colecciones</h2>
+          <h2 id="mis-colecciones-title" className="text-sm font-bold text-slate-900">Colecciones</h2>
           {colecciones.length > 0 && <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600">{colecciones.length}</span>}
         </div>
 
         {colecciones.length === 0 ? (
-          <EmptyState icon={BookHeart} title="Aún no tienes colecciones" description="Crea una colección para organizar versículos por tema, serie, prédica o propósito ministerial." compact />
+          <EmptyState icon={BookHeart} title="No hay colecciones" description="Agrupa versículos por tema o mensaje." compact />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {colecciones.map((coleccion) => {
               const estilo = estilos[coleccion.color] ?? estilos.indigo
               return (
                 <article key={coleccion.id} className={`relative overflow-hidden rounded-[20px] border bg-white shadow-sm transition-shadow hover:shadow-md ${estilo.border}`}>
-                  <Link href={`/pastoral/colecciones/${coleccion.id}`} className="block p-4 pr-16" aria-label={`Abrir colección ${coleccion.nombre}`}>
+                  <Link href={`/pastoral/colecciones/${coleccion.id}`} className="block p-4 pr-16 text-left" aria-label={`Abrir colección ${coleccion.nombre}`}>
                     <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${estilo.icon}`}><FolderPlus className="h-5 w-5" /></div>
                     <h3 className="mt-3 break-words font-bold text-slate-900">{coleccion.nombre}</h3>
-                    {coleccion.descripcion && <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-500">{coleccion.descripcion}</p>}
+                    {coleccion.descripcion && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{coleccion.descripcion}</p>}
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <span className={`inline-flex min-h-7 items-center rounded-full px-2.5 text-[10px] font-bold uppercase tracking-wide ${estilo.badge}`}>{coleccion.totalVersiculos} versículo{coleccion.totalVersiculos === 1 ? '' : 's'}</span>
                       <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600">Abrir <ChevronRight className="h-4 w-4" /></span>
@@ -89,12 +89,12 @@ export default function ColeccionesClient({ colecciones }: { colecciones: Colecc
         <div className="modal-overlay-safe bg-black/55" onClick={(event) => { if (event.target === event.currentTarget) setAbierto(false) }}>
           <section className="modal-panel-safe rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="nueva-coleccion-title">
             <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-              <div><h2 id="nueva-coleccion-title" className="font-bold text-slate-900">Nueva colección</h2><p className="mt-0.5 text-xs text-slate-500">Organiza versículos para tu trabajo pastoral.</p></div>
+              <div><h2 id="nueva-coleccion-title" className="font-bold text-slate-900">Nueva colección</h2><p className="mt-0.5 text-xs text-slate-500">Agrupa los versículos de un tema.</p></div>
               <button type="button" onClick={() => setAbierto(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600" aria-label="Cerrar"><X className="h-5 w-5" /></button>
             </header>
             <form action={crear} className="modal-body-safe space-y-4 p-5">
               <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Nombre</span><input name="nombre" required maxLength={80} className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej. Fe en tiempos difíciles" /></label>
-              <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Descripción opcional</span><textarea name="descripcion" maxLength={500} rows={3} className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-base text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Para qué usarás esta colección" /></label>
+              <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Descripción <span className="font-normal text-slate-400">(opcional)</span></span><textarea name="descripcion" maxLength={500} rows={3} className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-base text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Para qué usarás esta colección" /></label>
               <fieldset><legend className="mb-2 text-xs font-bold text-slate-700">Color</legend><div className="grid grid-cols-3 gap-2">{Object.keys(estilos).map((color, index) => <label key={color} className="cursor-pointer"><input type="radio" name="color" value={color} defaultChecked={index === 0} className="peer sr-only" /><span className={`flex min-h-11 items-center justify-center rounded-xl border border-transparent text-xs font-semibold capitalize peer-checked:ring-2 peer-checked:ring-indigo-500 ${estilos[color].badge}`}>{color}</span></label>)}</div></fieldset>
               <button type="submit" disabled={isPending} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}{isPending ? 'Creando…' : 'Crear colección'}</button>
             </form>
