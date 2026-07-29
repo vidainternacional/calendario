@@ -20,10 +20,10 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 
 ## Principios
 
-- El panel debe servir al pastor y no agregar carga administrativa innecesaria.
+- El panel debe servir a las personas autorizadas para preparar enseñanza y no agregar carga administrativa innecesaria.
 - El contenido debe poder encontrarse y reutilizarse con facilidad.
 - Las funciones pastorales deben conservar un lenguaje humano, espiritual y claro.
-- Los permisos deben limitar el acceso a los roles autorizados.
+- Los permisos deben limitar el acceso a roles o cuentas expresamente autorizadas.
 - Cada bloque debe ser pequeño, verificable y documentado.
 
 ## Orden de trabajo
@@ -41,16 +41,18 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 ### Base existente reutilizable
 
 - Los perfiles distinguen los roles `servidor`, `lider`, `pastor` y `administrador`.
-- Las acciones pastorales autorizan a `pastor` y `administrador` activos.
+- `pastor` y `administrador` activos conservan acceso automático al Centro Pastoral.
+- Una cuenta activa con otro rol puede recibir el permiso explícito `acceso_centro_pastoral` sin cambiar su rol global.
 - Existe el indicador `es_pastor_general` como atributo adicional.
 - Biblia, favoritos y Estudio Profundo se reutilizan dentro del contexto pastoral.
 - La FASE B aporta estados de carga, error, vacío, toasts, transiciones y reglas táctiles.
 
 ### Decisiones de arquitectura
 
-- El Panel Pastoral es independiente de `/admin`.
-- Pueden acceder `pastor` y `administrador`.
-- La autorización se comprueba en servidor.
+- El Centro Pastoral es independiente de `/admin`.
+- Pueden acceder `pastor` y `administrador` activos, además de otras cuentas activas autorizadas individualmente por un administrador.
+- La autorización se comprueba en servidor, acciones, RLS y Storage.
+- Conceder acceso pastoral no concede funciones administrativas ni cambia el rol global.
 - Biblia y Estudio Profundo se muestran como accesos rápidos secundarios.
 - Colecciones pastorales y bosquejos funcionan como módulos centrales de preparación.
 
@@ -78,8 +80,8 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Buscar por referencia mediante selección guiada de traducción, libro, capítulo y versículo.
 - Buscar por concordancia usando palabras o frases.
 - Previsualizar resultados antes de agregarlos.
-- Agregar versículos desde Biblia cuando se entra desde el Panel Pastoral.
-- Regresar directamente al Panel Pastoral desde Biblia y Estudio Profundo sin alterar la navegación normal.
+- Agregar versículos desde Biblia cuando se entra desde el Centro Pastoral.
+- Regresar directamente al Centro Pastoral desde Biblia y Estudio Profundo sin alterar la navegación normal.
 
 ### Evidencia
 
@@ -97,7 +99,7 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Crear, buscar, abrir, editar y eliminar bosquejos.
 - Guardar título, tema, pasaje base, propósito, introducción, puntos, conclusión, estado y fecha de predicación.
 - Organizar hasta doce puntos principales.
-- Conservar notas privadas visibles únicamente para el pastor.
+- Conservar notas privadas visibles únicamente para la cuenta propietaria.
 - Usar los modos `Editar`, `Predicar` y `Presentar`.
 - Leer el bosquejo con tipografía amplia y jerarquía clara.
 - Presentar una diapositiva por vez con navegación táctil y mediante teclado.
@@ -122,7 +124,7 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 
 ### Funciones disponibles
 
-- Crear y organizar archivos y enlaces privados por pastor.
+- Crear y organizar archivos y enlaces privados por cuenta autorizada.
 - Clasificar mediante categoría, descripción y etiquetas.
 - Buscar y filtrar recursos desde una interfaz responsive.
 - Abrir, editar y eliminar recursos con permisos por propietario.
@@ -169,6 +171,21 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 - Despliegue consolidado: `dpl_AhRdaZqPBCM4Gy6cRZWAeNJQohKw` — producción.
 - Validación funcional confirmada por el usuario el 2026-07-24.
 
+## Bloque complementario: acceso pastoral asignable
+
+- Administración puede conceder o retirar acceso al Centro Pastoral a líderes, servidores u otras cuentas activas.
+- La persona conserva su rol global y no recibe acceso al panel administrativo.
+- La autorización se aplica en páginas, acciones, RLS y Storage.
+- El contenido continúa aislado por propietario.
+- Una cuenta común no puede concederse el permiso a sí misma.
+
+Evidencia:
+
+- integración consolidada: `9f3918d5673926f4f45f6df6323c37367922c169`;
+- documentación: `docs/FASE_C_ACCESO_PASTORAL_ASIGNABLE.md`;
+- producción: `dpl_28siKGg7ic5a327nVHBhQNGNfouK` — `READY`;
+- pruebas transaccionales de concesión, aislamiento y revocación completadas sin dejar datos temporales.
+
 ## Requisitos transversales registrados para fases posteriores
 
 - Las notificaciones deberán ser un sistema general de la aplicación, no limitado a mensajes: avisos, alertas, eventos, publicaciones, ayuda, cumpleaños y cambios relevantes.
@@ -195,7 +212,7 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 
 ## Criterios de cierre de fase
 
-- El pastor puede acceder al panel con permisos correctos.
+- Una cuenta autorizada puede acceder al Centro Pastoral con permisos correctos.
 - Puede crear, editar, organizar y recuperar bosquejos.
 - Puede organizar versículos y materiales pastorales.
 - La biblioteca permite localizar contenido de forma clara.
@@ -207,11 +224,18 @@ Objetivo: construir herramientas pastorales para preparar, organizar, conservar 
 
 ## Revisión integral en progreso
 
-- No se detectaron errores de ejecución en las rutas pastorales durante la revisión de producción del 2026-07-24.
+- No se detectaron grupos recientes de errores de ejecución en las rutas pastorales durante la revisión del 2026-07-29.
 - La publicación por `public_slug` y por `id` antiguo fue validada con un paquete real.
 - La apertura segura, los permisos y el regreso al material después del login quedaron corregidos.
-- Queda pendiente revisar el Centro Pastoral como experiencia completa, confirmar estados vacíos/carga/error y documentar capacidad de almacenamiento y límites antes del cierre.
+- El skeleton está alineado con la anchura y estructura del Centro Pastoral real.
+- Las consultas principales ya diferencian un estado vacío legítimo de un error al recuperar datos.
+- Los enlaces de regreso de las áreas principales utilizan consistentemente `Centro Pastoral`.
+- El bucket privado, el límite de 25 MiB, los tipos permitidos y el consumo actual fueron verificados directamente en producción.
+- No se detectaron archivos huérfanos, recursos inexistentes ni relaciones pastorales cruzadas entre propietarios.
+- El consumo observado es de 20,272 bytes con un archivo; no requiere ampliación.
+- Los límites, costos de referencia, umbrales y procedimiento mensual quedaron registrados en `docs/FASE_C_ALMACENAMIENTO_Y_LIMITES.md`.
+- Preview integral: `dpl_9pgNUsoKUaAZ7CjUZZzjmEQU3PnR` — `READY`, con compilación y TypeScript correctos.
 
 ## Próximo bloque
 
-Revisar el Centro Pastoral completo como un único flujo de trabajo, corregir cualquier inconsistencia de navegación o retroalimentación y completar la documentación de almacenamiento, límites y evidencia final. No cerrar la FASE C hasta que el documento maestro refleje explícitamente su cierre.
+Confirmar visual y funcionalmente en producción el recorrido `Centro Pastoral → Bosquejos → Versículos → Biblioteca → Paquetes → Materiales`, incluyendo una cuenta no pastoral con permiso asignado y posterior revocación. Después de esa confirmación se propondrá el cierre de la FASE C en `__VIDA_INTERNACIONAL.md`. No iniciar la fase siguiente hasta que el documento maestro refleje explícitamente ese cierre.

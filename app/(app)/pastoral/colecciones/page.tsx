@@ -15,12 +15,13 @@ export default async function ColeccionesPastoralesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile, error: profileError } = await (supabase as any)
     .from('profiles')
     .select('rol, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
+  if (profileError) throw new Error('No fue posible verificar el acceso a las colecciones pastorales.')
   if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const { data, error } = await (supabase as any)
@@ -29,7 +30,7 @@ export default async function ColeccionesPastoralesPage() {
     .eq('profile_id', user.id)
     .order('updated_at', { ascending: false })
 
-  if (error) console.error('[ColeccionesPastoralesPage]', error)
+  if (error) throw new Error('No fue posible cargar las colecciones pastorales.')
 
   const colecciones = (data ?? []).map((coleccion: any) => ({
     id: coleccion.id,
@@ -44,7 +45,7 @@ export default async function ColeccionesPastoralesPage() {
       <header className="mb-6">
         <Link href="/pastoral" className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Panel Pastoral
+          Centro Pastoral
         </Link>
         <div className="flex items-center gap-2 text-indigo-600">
           <BookHeart className="h-4 w-4" aria-hidden="true" />

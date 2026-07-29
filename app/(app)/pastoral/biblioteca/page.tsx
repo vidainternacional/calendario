@@ -13,19 +13,22 @@ export default async function BibliotecaPastoralPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await (supabase as any)
+  const { data: profile, error: profileError } = await (supabase as any)
     .from('profiles')
     .select('rol, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
+  if (profileError) throw new Error('No fue posible verificar el acceso a la Biblioteca Pastoral.')
   if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
-  const { data } = await (supabase as any)
+  const { data, error } = await (supabase as any)
     .from('pastoral_biblioteca')
     .select('id, titulo, descripcion, categoria, etiquetas, tipo, url, storage_path, nombre_archivo, mime_type, tamano_bytes, updated_at')
     .eq('profile_id', user.id)
     .order('updated_at', { ascending: false })
+
+  if (error) throw new Error('No fue posible cargar los recursos de la Biblioteca Pastoral.')
 
   const recursos = await Promise.all((data ?? []).map(async (recurso: any) => {
     if (recurso.tipo !== 'archivo' || !recurso.storage_path) return { ...recurso, signed_url: null }

@@ -30,21 +30,23 @@ export default async function PastoralPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: paquetes }] = await Promise.all([
-    (supabase as any)
-      .from('profiles')
-      .select('nombre_completo, rol, es_pastor_general, estado_cuenta, acceso_centro_pastoral')
-      .eq('id', user.id)
-      .single(),
-    (supabase as any)
-      .from('pastoral_paquetes')
-      .select('id, titulo, descripcion_publica, estado, updated_at')
-      .eq('profile_id', user.id)
-      .order('updated_at', { ascending: false })
-      .limit(3),
-  ])
+  const { data: profile, error: profileError } = await (supabase as any)
+    .from('profiles')
+    .select('nombre_completo, rol, es_pastor_general, estado_cuenta, acceso_centro_pastoral')
+    .eq('id', user.id)
+    .single()
 
+  if (profileError) throw new Error('No fue posible verificar el acceso al Centro Pastoral.')
   if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
+
+  const { data: paquetes, error: paquetesError } = await (supabase as any)
+    .from('pastoral_paquetes')
+    .select('id, titulo, descripcion_publica, estado, updated_at')
+    .eq('profile_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(3)
+
+  if (paquetesError) throw new Error('No fue posible cargar los paquetes pastorales recientes.')
 
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)
