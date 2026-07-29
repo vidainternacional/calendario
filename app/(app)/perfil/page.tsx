@@ -8,6 +8,7 @@ import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PushTestButton from '@/components/pwa/PushTestButton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = {
   title: 'Mi Perfil',
@@ -19,9 +20,9 @@ export default async function PerfilPage() {
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('nombre_completo, rol, telefono, fecha_nacimiento')
+    .select('nombre_completo, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
@@ -45,8 +46,10 @@ export default async function PerfilPage() {
     administrador: { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/20', label: 'Admin' }
   }
 
-  const rolGlobal = roles[(profile as any)?.rol as keyof typeof roles] || roles.servidor
-  const tieneAccesoPastoral = (['pastor', 'administrador'] as const).includes((profile as any)?.rol)
+  const rolActual = (profile as any)?.rol as keyof typeof roles
+  const rolGlobal = roles[rolActual] || roles.servidor
+  const tieneCentroPastoral = tieneAccesoPastoral(profile as any)
+  const tienePanelAdministrativo = ['pastor', 'administrador'].includes(rolActual)
 
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-8 max-w-xl mx-auto">
@@ -156,45 +159,49 @@ export default async function PerfilPage() {
           <PushToggle />
         </section>
 
-        {tieneAccesoPastoral && (
+        {(tieneCentroPastoral || tienePanelAdministrativo) && (
           <section className="space-y-3">
-            <Link
-              href="/pastoral"
-              className="flex items-center justify-between gap-4 bg-white border border-indigo-200 hover:border-indigo-300 active:scale-[.98] text-[#171923] px-4 sm:px-5 py-4 rounded-[20px] shadow-sm transition-all min-w-0"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-                  <BookHeart className="w-5 h-5 text-indigo-600" />
+            {tieneCentroPastoral && (
+              <Link
+                href="/pastoral"
+                className="flex items-center justify-between gap-4 bg-white border border-indigo-200 hover:border-indigo-300 active:scale-[.98] text-[#171923] px-4 sm:px-5 py-4 rounded-[20px] shadow-sm transition-all min-w-0"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                    <BookHeart className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm break-words">Centro Pastoral</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Versículos, bosquejos, biblioteca y materiales</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-sm break-words">Panel Pastoral</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Versículos, bosquejos, biblioteca y materiales</p>
-                </div>
-              </div>
-              <svg className="w-5 h-5 text-indigo-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
+                <svg className="w-5 h-5 text-indigo-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            )}
 
-            <PushTestButton />
+            {tienePanelAdministrativo && <PushTestButton />}
 
-            <Link
-              href="/admin"
-              className="flex items-center justify-between gap-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[.98] text-white px-4 sm:px-5 py-4 rounded-[20px] shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all min-w-0"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                  <Settings2 className="w-5 h-5 text-white" />
+            {tienePanelAdministrativo && (
+              <Link
+                href="/admin"
+                className="flex items-center justify-between gap-4 bg-indigo-600 hover:bg-indigo-500 active:scale-[.98] text-white px-4 sm:px-5 py-4 rounded-[20px] shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all min-w-0"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                    <Settings2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm break-words">Panel de Administración</p>
+                    <p className="text-[11px] text-indigo-200 mt-0.5 leading-relaxed">Ministerios, usuarios y membresías</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-sm break-words">Panel de Administración</p>
-                  <p className="text-[11px] text-indigo-200 mt-0.5 leading-relaxed">Ministerios, usuarios y membresías</p>
-                </div>
-              </div>
-              <svg className="w-5 h-5 text-indigo-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
+                <svg className="w-5 h-5 text-indigo-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            )}
           </section>
         )}
       </div>

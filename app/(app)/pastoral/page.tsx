@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Centro Pastoral' }
 
@@ -30,9 +31,9 @@ export default async function PastoralPage() {
   if (!user) redirect('/login')
 
   const [{ data: profile }, { data: paquetes }] = await Promise.all([
-    supabase
+    (supabase as any)
       .from('profiles')
-      .select('nombre_completo, rol, es_pastor_general, estado_cuenta')
+      .select('nombre_completo, rol, es_pastor_general, estado_cuenta, acceso_centro_pastoral')
       .eq('id', user.id)
       .single(),
     (supabase as any)
@@ -43,9 +44,7 @@ export default async function PastoralPage() {
       .limit(3),
   ])
 
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') redirect('/inicio')
+  if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)

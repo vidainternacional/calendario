@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminClient from './AdminClient'
 import Link from 'next/link'
-import { Building2, CheckCircle2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
+import { BookOpenCheck, Building2, CheckCircle2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 export default async function AdminPage() {
@@ -196,6 +196,21 @@ export default async function AdminPage() {
       <section className="mb-6 sm:mb-8" aria-labelledby="accesos-rapidos">
         <h2 id="accesos-rapidos" className="text-sm font-bold text-[#171923] mb-3">Accesos rápidos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {currentUserRol === 'administrador' && (
+            <Link
+              href="/admin/accesos-pastorales"
+              className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-indigo-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-indigo-200 active:scale-[0.99] transition-all group"
+            >
+              <div className="min-w-0">
+                <h3 className="font-bold text-[#171923] leading-tight">Accesos pastorales</h3>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">Autoriza quién puede preparar estudios y materiales.</p>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
+                <BookOpenCheck className="w-5 h-5" aria-hidden="true" />
+              </div>
+            </Link>
+          )}
+
           <Link
             href="/admin/solicitudes-ministerios"
             className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-sky-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-sky-200 active:scale-[0.99] transition-all group"

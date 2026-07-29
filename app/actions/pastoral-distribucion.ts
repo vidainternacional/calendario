@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { notifyMultipleUsers } from '@/lib/webpush'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 const AUDIENCIAS = ['iglesia', 'lideres', 'servidores', 'publico'] as const
 
@@ -13,15 +14,13 @@ async function contextoPastoral() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('rol, estado_cuenta')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') {
+  if (!tieneAccesoPastoral(profile as any)) {
     return { supabase, user, error: 'No tienes permiso para publicar paquetes pastorales.' }
   }
 

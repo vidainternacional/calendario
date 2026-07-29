@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 type Diapositiva = { titulo: string; contenido: string; recurso_id: string | null }
 
@@ -10,10 +11,13 @@ async function contextoPastoral() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
 
-  const { data: profile } = await supabase.from('profiles').select('rol, estado_cuenta').eq('id', user.id).single()
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') return { supabase, user, error: 'No tienes permiso para administrar paquetes pastorales.' }
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
+    .eq('id', user.id)
+    .single()
+
+  if (!tieneAccesoPastoral(profile as any)) return { supabase, user, error: 'No tienes permiso para administrar paquetes pastorales.' }
   return { supabase, user, error: null }
 }
 

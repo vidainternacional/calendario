@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowLeft, BookOpenCheck, ChevronRight, CirclePlus, Eye, Share2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Materiales de estudio' }
 
@@ -18,10 +19,13 @@ export default async function MaterialesPastoralesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('rol, estado_cuenta').eq('id', user.id).single()
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estado !== 'activo') redirect('/inicio')
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
+    .eq('id', user.id)
+    .single()
+
+  if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const { data } = await (supabase as any)
     .from('pastoral_paquetes')
