@@ -56,15 +56,32 @@ html[data-biblia-tema='sepia'] section:not(.transition-colors)[class~="bg-[#f7f7
 }
 
 /*
- * Durante un cambio manual de tema, el fondo exterior debe cambiar en el
- * mismo recálculo de estilos que la sección de la Biblia. Esto evita mostrar
- * por debajo la paleta anterior durante la transición y el rebote de iOS.
+ * El tema debe cambiar como una sola unidad. Tailwind animaba únicamente el
+ * fondo de la sección mientras paneles, bordes y textos cambiaban de inmediato,
+ * creando un estado visual intermedio. Se desactivan solo las transiciones CSS
+ * dentro de la experiencia bíblica; las animaciones de carga y la navegación
+ * permanecen intactas.
+ */
+html:has(section.transition-colors),
+html:has(section.transition-colors) body,
+html:has(section.transition-colors) section.transition-colors,
+html:has(section.transition-colors) section.transition-colors * {
+  transition-property: none !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+
+/*
+ * Durante un cambio manual de tema, el fondo exterior usa la misma paleta que
+ * la sección hidratada. Esto cubre también el rebote de iOS y evita que debajo
+ * se vea el color anterior.
  */
 html:has(section.transition-colors[class~="bg-[#f7f7f4]"]),
 html:has(section.transition-colors[class~="bg-[#f7f7f4]"]) body {
   --background: #f7f7f4;
   --foreground: #0f172a;
   background-color: #f7f7f4 !important;
+  color: #0f172a;
   color-scheme: light;
 }
 
@@ -73,6 +90,7 @@ html:has(section.transition-colors[class~="bg-[#efe5d0]"]) body {
   --background: #efe5d0;
   --foreground: #34291f;
   background-color: #efe5d0 !important;
+  color: #34291f;
   color-scheme: light;
 }
 
@@ -81,5 +99,6 @@ html:has(section.transition-colors[class~="bg-slate-950"]) body {
   --background: #020617;
   --foreground: #ffffff;
   background-color: #020617 !important;
+  color: #ffffff;
   color-scheme: dark;
 }
