@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
 import PastoralWorkspaceBridge from '@/components/pastoral/PastoralWorkspaceBridge'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Espacio Pastoral' }
 
@@ -14,10 +15,13 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('rol, estado_cuenta').eq('id', user.id).single()
-  const rol = (profile as { rol?: string } | null)?.rol
-  const estadoCuenta = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-  if (!['pastor', 'administrador'].includes(rol ?? '') || estadoCuenta !== 'activo') redirect('/inicio')
+  const { data: profile } = await (supabase as any)
+    .from('profiles')
+    .select('rol, estado_cuenta, acceso_centro_pastoral')
+    .eq('id', user.id)
+    .single()
+
+  if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const { data: paquete } = await (supabase as any)
     .from('pastoral_paquetes')
