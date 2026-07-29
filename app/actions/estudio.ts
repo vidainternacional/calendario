@@ -2,132 +2,66 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { GoogleGenAI } from '@google/genai'
+import {
+  ESTUDIO_PROMPT_VERSION,
+  ESTUDIO_RESPONSE_JSON_SCHEMA,
+  ESTUDIO_SOURCE_VERSION,
+  obtenerModeloEstudio,
+  validarResultadoEstudio,
+  type EstudioResultadoValidado,
+} from '@/lib/estudios/ai-config'
 
-const SYSTEM_PROMPT = `SISTEMA — ESTUDIOS BÍBLICOS INTEGRALES (NIVEL ACADÉMICO AVANZADO)
+const BASE_SYSTEM_PROMPT = `SISTEMA — ASISTENTE RESPONSABLE DE ESTUDIO BÍBLICO
 
-ROL Y PERFIL
+FUNCIÓN
+Ayudas a organizar un estudio bíblico claro, respetuoso y útil. No sustituyes el texto bíblico, la investigación académica ni la revisión pastoral.
 
-Actúas como un experto de nivel mundial en estudios bíblicos integrales,
-con formación académica rigurosa y experiencia real en:
+LÍMITES DE ESTA VERSIÓN
+- En esta solicitud no recibes una biblioteca académica ni documentos de fuentes externas.
+- No afirmes que consultaste léxicos, manuscritos, historiadores o comentarios que no estén incluidos en el contexto.
+- No inventes citas, variantes textuales, etimologías, fechas, transliteraciones ni palabras en hebreo, arameo, griego o latín.
+- Cuando un dato lingüístico o histórico no pueda sostenerse con seguridad, indícalo claramente como no verificado en esta versión.
+- Distingue el texto observable, el contexto histórico probable, la interpretación y la reflexión espiritual.
+- Presenta diferentes lecturas responsables cuando el pasaje admita más de una interpretación.
+- No describas una interpretación humana como una certeza absoluta sobre la intención oculta de Dios.
+- No uses el contenido para manipular, condenar ni imponer una tradición religiosa.
 
-- Arameo bíblico (siríaco – Peshitta)
-- Hebreo bíblico (Texto Masorético)
-- Griego koiné (Nuevo Testamento)
-- Latín (Vulgata)
-- Crítica textual y análisis de manuscritos
-- Historia del judaísmo del Segundo Templo
-- Contexto cultural, político y religioso del siglo I
-- Hermenéutica y exégesis bíblica
-- Teología bíblica y cristología histórica
+MARCO DE FE Y LECTURA
+- Trata la Biblia con reverencia y respeto.
+- Reconoce a Jesús como el Hijo de Dios dentro del marco doctrinal de Vida Internacional.
+- Conserva honestidad intelectual y reconoce incertidumbre cuando corresponda.
+- La reflexión espiritual debe surgir del pasaje, no de afirmaciones inventadas.
 
-NO eres un predicador.
-NO impones dogmas.
-NO evitas preguntas difíciles.
-NO manipulas el texto para sostener tradiciones posteriores.
+FORMATO
+Devuelve únicamente un objeto JSON que cumpla exactamente el esquema solicitado. Cada campo debe contener texto útil y completo. No agregues markdown, bloques de código ni propiedades adicionales.`
 
---------------------------------------------------
-MARCO FUNDAMENTAL
---------------------------------------------------
+const FINAL_SAFETY_INSTRUCTIONS = `REGLAS OBLIGATORIAS FINALES
 
-Operas desde estas convicciones explícitas, sin dogmatismo ni proselitismo:
+1. No inventes fuentes ni digas que consultaste una obra que no fue proporcionada.
+2. Si no puedes verificar el texto original o una afirmación histórica, dilo dentro de la sección correspondiente.
+3. En "que_quiso_comunicar", presenta una lectura interpretativa responsable basada en el pasaje, no una certeza incuestionable.
+4. En "que_no_quiso_decir", evita crear hombres de paja; explica límites razonables del texto.
+5. Mantén separadas explicación y reflexión espiritual.
+6. Devuelve las once propiedades requeridas y ninguna otra.`
 
-- Dios es real.
-- Jesús es el Hijo de Dios.
-- Jesús vino a revelar al Padre y a redimir a la humanidad.
-- La Biblia es inspirada por Dios, pero fue transmitida mediante lenguas,
-  culturas, géneros literarios y traductores humanos.
-
-Estas convicciones NO anulan el análisis histórico, lingüístico o crítico,
-sino que conviven con él de forma honesta.
-
---------------------------------------------------
-MISIÓN PRINCIPAL
---------------------------------------------------
-
-Ayudar al usuario a comprender qué quiso comunicar realmente Dios
-a través de los textos bíblicos originales, distinguiendo claramente entre:
-
-- El texto original
-- Las traducciones antiguas y modernas
-- Las interpretaciones humanas
-- Las tradiciones religiosas posteriores
-
-La fidelidad textual tiene prioridad sobre la tradición.
-
---------------------------------------------------
-FUENTES AUTORIZADAS
---------------------------------------------------
-
-Utilizas exclusivamente fuentes académicas y primarias, tales como:
-
-- Texto Masorético, Peshitta, Septuaginta, NT griego
-- Manuscritos antiguos relevantes (Sinaítico, Alejandrino, Qumrán, etc.)
-- Léxicos y diccionarios académicos (BDB, HALOT, Liddell-Scott, BDAG)
-- Estudios históricos del judaísmo del Segundo Templo
-- Comparación crítica entre versiones bíblicas
-
---------------------------------------------------
-METODOLOGÍA OBLIGATORIA DE RESPUESTA
---------------------------------------------------
-
-Siempre que analices un pasaje bíblico, sigues este orden EXACTO.
-Devuelve la respuesta como JSON válido con esta estructura exacta (sin markdown, sin código de bloque, solo JSON puro):
-
-{
-  "texto_original": "...",
-  "transliteracion": "...",
-  "traduccion_literal": "...",
-  "traduccion_interpretativa": "...",
-  "comparacion_versiones": "...",
-  "contexto_historico": "...",
-  "analisis_linguistico": "...",
-  "que_quiso_comunicar": "...",
-  "que_no_quiso_decir": "...",
-  "explicacion": "...",
-  "reflexion": "..."
-}
-
---------------------------------------------------
-PRINCIPIOS HERMENÉUTICOS CLAVE
---------------------------------------------------
-
-- El significado original tiene prioridad absoluta.
-- Señala variantes textuales cuando existan.
-- Explica símbolos desde la mentalidad semítica, no occidental moderna.
-- Distingue entre símbolo, metáfora y afirmación histórica.
-- Respeta la fe del usuario sin apagar el pensamiento crítico.
-- La verdad textual está por encima de la tradición religiosa.
-
---------------------------------------------------
-TONO Y ESTILO
---------------------------------------------------
-
-- Claro
-- Profundo
-- Intelectualmente honesto
-- Espiritualmente respetuoso
-- Críticamente responsable
-
-Nunca emocionalista, nunca manipulador, nunca superficial.`
-
-export type EstudioResultado = {
-  texto_original: string
-  transliteracion: string
-  traduccion_literal: string
-  traduccion_interpretativa: string
-  comparacion_versiones: string
-  contexto_historico: string
-  analisis_linguistico: string
-  que_quiso_comunicar: string
-  que_no_quiso_decir: string
-  explicacion: string
-  reflexion: string
-}
+export type EstudioResultado = EstudioResultadoValidado
 
 export type EstudioState =
   | { status: 'idle' }
   | { status: 'success'; pasaje: string; resultado: EstudioResultado }
   | { status: 'error'; error: string }
+
+function normalizarPasaje(pasaje: string) {
+  return pasaje
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/\s+/g, '')
+}
+
+function promptPersonalizado(valor: unknown) {
+  if (typeof valor !== 'string') return ''
+  return valor.trim().slice(0, 20_000)
+}
 
 export async function analizarPasaje(
   _prev: EstudioState,
@@ -135,95 +69,134 @@ export async function analizarPasaje(
 ): Promise<EstudioState> {
   const pasaje = (formData.get('pasaje') as string)?.trim()
   if (!pasaje) return { status: 'error', error: 'Por favor ingresa un pasaje bíblico.' }
+  if (pasaje.length > 500) return { status: 'error', error: 'El pasaje o texto ingresado es demasiado largo.' }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { status: 'error', error: 'Debes iniciar sesión para usar esta función.' }
 
-  const pasajeNormalizado = pasaje.toLowerCase().replace(/\s+/g, '')
+  const { model, retirado } = obtenerModeloEstudio()
+  if (retirado) {
+    console.error('[estudio] Modelo retirado configurado:', model)
+    return { status: 'error', error: 'El proveedor de estudio necesita una actualización del administrador.' }
+  }
 
-  // 1. Check cache
-  const { data: cached } = await (supabase as any)
+  const pasajeNormalizado = normalizarPasaje(pasaje)
+
+  const { data: cached, error: cacheError } = await (supabase as any)
     .from('estudios_profundos_ia')
     .select('resultado')
     .eq('pasaje_normalizado', pasajeNormalizado)
-    .single()
+    .eq('modelo', model)
+    .eq('prompt_version', ESTUDIO_PROMPT_VERSION)
+    .eq('source_version', ESTUDIO_SOURCE_VERSION)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
-  if (cached && cached.resultado) {
-    return { status: 'success', pasaje, resultado: cached.resultado as EstudioResultado }
+  if (cacheError) console.error('[estudio] Error al leer caché:', cacheError)
+
+  const resultadoCache = validarResultadoEstudio(cached?.resultado)
+  if (resultadoCache) {
+    return { status: 'success', pasaje, resultado: resultadoCache }
   }
 
-  // 2. Read prompt from app_settings
-  let activePrompt = SYSTEM_PROMPT
-  const { data: setting } = await (supabase as any)
-    .from('app_settings')
-    .select('valor')
-    .eq('clave', 'estudio_system_prompt')
-    .single()
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
 
-  if (setting && setting.valor && typeof setting.valor === 'string') {
-    activePrompt = setting.valor
-  }
-
-  // 🔒 Límite diario: máx 10 estudios NUEVOS por usuario (protege la cuota gratis de Gemini)
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
-  const { count: usadosHoy } = await (supabase as any)
+  const { count: usadosHoy, error: quotaError } = await (supabase as any)
     .from('estudios_profundos_ia')
     .select('id', { count: 'exact', head: true })
     .eq('generado_por', user.id)
     .gte('created_at', hoy.toISOString())
+
+  if (quotaError) {
+    console.error('[estudio] No se pudo verificar la cuota:', quotaError)
+    return { status: 'error', error: 'No se pudo verificar el límite de uso. Intenta de nuevo.' }
+  }
+
   if ((usadosHoy ?? 0) >= 10) {
-    return { status: 'error', error: 'Alcanzaste el límite de 10 estudios nuevos por día. Los estudios ya generados por la comunidad no cuentan — intenta buscar el pasaje de nuevo mañana. 🙏' }
+    return {
+      status: 'error',
+      error: 'Alcanzaste el límite de 10 estudios nuevos por día. Los estudios ya disponibles en el caché no cuentan.',
+    }
   }
 
   const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return { status: 'error', error: 'API de IA no configurada. Contacta al administrador.' }
+  if (!apiKey) {
+    console.error('[estudio] GEMINI_API_KEY no configurada')
+    return { status: 'error', error: 'La herramienta de estudio todavía no está configurada.' }
+  }
+
+  const { data: setting, error: settingError } = await (supabase as any)
+    .from('app_settings')
+    .select('valor')
+    .eq('clave', 'estudio_system_prompt')
+    .maybeSingle()
+
+  if (settingError) console.error('[estudio] Error al leer lineamientos:', settingError)
+
+  const lineamientos = promptPersonalizado(setting?.valor)
+  const activePrompt = [
+    BASE_SYSTEM_PROMPT,
+    lineamientos ? `LINEAMIENTOS EDITORIALES CONFIGURADOS\n${lineamientos}` : '',
+    FINAL_SAFETY_INSTRUCTIONS,
+  ].filter(Boolean).join('\n\n')
 
   try {
     const ai = new GoogleGenAI({ apiKey })
-
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: `Analiza el siguiente pasaje bíblico con tu metodología completa de 11 puntos: ${pasaje}`,
+      model,
+      contents: `Analiza este pasaje o referencia bíblica siguiendo las once secciones requeridas:\n\n${pasaje}`,
       config: {
         systemInstruction: activePrompt,
-        temperature: 0.3,
         maxOutputTokens: 8192,
         responseMimeType: 'application/json',
+        responseJsonSchema: ESTUDIO_RESPONSE_JSON_SCHEMA,
       },
     })
 
-    const raw = response.text ?? ''
-
-    // Strip markdown code fences if Gemini wraps the JSON
-    const jsonStr = raw
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim()
-
-    let resultado: EstudioResultado
-    try {
-      resultado = JSON.parse(jsonStr)
-    } catch {
-      // Fallback: wrap entire response in the first field if parsing fails
-      console.error('[estudio] JSON parse failed, raw:', raw.slice(0, 300))
-      return { status: 'error', error: 'Error al procesar la respuesta de la IA. Intenta de nuevo.' }
+    const raw = response.text?.trim() ?? ''
+    if (!raw) {
+      console.error('[estudio] Respuesta vacía del proveedor', { model })
+      return { status: 'error', error: 'La IA no devolvió un análisis válido. Intenta de nuevo.' }
     }
 
-    // Save to cache
-    await (supabase as any).from('estudios_profundos_ia').insert({
-      pasaje,
-      pasaje_normalizado: pasajeNormalizado,
-      resultado: resultado as any,
-      generado_por: user.id
-    })
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch (error) {
+      console.error('[estudio] JSON inválido:', error, raw.slice(0, 300))
+      return { status: 'error', error: 'La IA devolvió un formato inválido. Intenta de nuevo.' }
+    }
+
+    const resultado = validarResultadoEstudio(parsed)
+    if (!resultado) {
+      console.error('[estudio] Resultado incompleto o inválido', { model })
+      return { status: 'error', error: 'El análisis llegó incompleto. Intenta de nuevo.' }
+    }
+
+    const { error: insertError } = await (supabase as any)
+      .from('estudios_profundos_ia')
+      .insert({
+        pasaje,
+        pasaje_normalizado: pasajeNormalizado,
+        resultado,
+        generado_por: user.id,
+        modelo: model,
+        prompt_version: ESTUDIO_PROMPT_VERSION,
+        source_version: ESTUDIO_SOURCE_VERSION,
+      })
+
+    if (insertError) console.error('[estudio] No se pudo guardar el caché:', insertError)
 
     return { status: 'success', pasaje, resultado }
-  } catch (err: unknown) {
-    console.error('[estudio] Gemini error:', err)
-    const msg = err instanceof Error ? err.message : 'Error desconocido'
-    return { status: 'error', error: `Error al contactar la IA: ${msg}` }
+  } catch (error: unknown) {
+    console.error('[estudio] Error del proveedor:', error)
+    return {
+      status: 'error',
+      error: 'No se pudo completar el análisis en este momento. Intenta nuevamente más tarde.',
+    }
   }
 }
 
@@ -232,12 +205,17 @@ export async function obtenerHistorial() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data } = await (supabase as any)
+  const { data, error } = await (supabase as any)
     .from('estudios_profundos_ia')
     .select('pasaje, created_at')
     .eq('generado_por', user.id)
     .order('created_at', { ascending: false })
     .limit(10)
+
+  if (error) {
+    console.error('[estudio] Error al cargar historial:', error)
+    return []
+  }
 
   return (data || []) as { pasaje: string; created_at: string }[]
 }
@@ -247,13 +225,18 @@ export async function obtenerNota(pasaje: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const pasajeNormalizado = pasaje.toLowerCase().replace(/\s+/g, '')
-  const { data } = await (supabase as any)
+  const pasajeNormalizado = normalizarPasaje(pasaje)
+  const { data, error } = await (supabase as any)
     .from('notas_estudio')
     .select('nota')
     .eq('profile_id', user.id)
     .eq('pasaje_normalizado', pasajeNormalizado)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    console.error('[estudio] Error al cargar nota:', error)
+    return null
+  }
 
   return (data as any)?.nota || null
 }
@@ -261,26 +244,24 @@ export async function obtenerNota(pasaje: string) {
 export async function guardarNota(pasaje: string, nota: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false }
+  if (!user) return { success: false, error: 'Debes iniciar sesión.' }
 
-  const pasajeNormalizado = pasaje.toLowerCase().replace(/\s+/g, '')
-
+  const pasajeNormalizado = normalizarPasaje(pasaje)
   const { error } = await (supabase as any)
     .from('notas_estudio')
     .upsert({
       profile_id: user.id,
       pasaje_normalizado: pasajeNormalizado,
-      nota: nota,
-      updated_at: new Date().toISOString()
+      nota: nota.slice(0, 50_000),
+      updated_at: new Date().toISOString(),
     }, {
-      onConflict: 'profile_id, pasaje_normalizado'
+      onConflict: 'profile_id, pasaje_normalizado',
     })
 
   if (error) {
     console.error('[guardarNota] error:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: 'No se pudo guardar la nota.' }
   }
 
   return { success: true }
 }
-
