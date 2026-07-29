@@ -9,6 +9,7 @@ import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmp
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
+import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 import './biblia.css'
 import './biblia-first-paint.css'
 
@@ -27,15 +28,11 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
   if (from === 'pastoral' && !esProyectoPastoral) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('rol, estado_cuenta')
+      .select('rol, estado_cuenta, acceso_centro_pastoral')
       .eq('id', user.id)
       .single()
 
-    const rol = (profile as { rol?: string } | null)?.rol
-    const estado = (profile as { estado_cuenta?: string | null } | null)?.estado_cuenta ?? 'activo'
-    const tieneAccesoPastoral = ['pastor', 'administrador'].includes(rol ?? '') && estado === 'activo'
-
-    if (tieneAccesoPastoral) {
+    if (tieneAccesoPastoral(profile as any)) {
       const { data } = await (supabase as any)
         .from('pastoral_colecciones')
         .select('id, nombre, color')
@@ -58,13 +55,13 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
           className="fixed left-3 top-[calc(env(safe-area-inset-top)+0.65rem)] z-[90] inline-flex min-h-10 items-center gap-1.5 rounded-full border border-indigo-200 bg-white/95 px-3 text-xs font-bold text-indigo-700 shadow-lg backdrop-blur-md"
         >
           <ArrowLeft className="h-4 w-4" />
-          Panel Pastoral
+          Centro Pastoral
         </Link>
       )}
 
       {esProyectoPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
       <BibliaClient />
-      {!estaEmbebida && <BibliaVoiceControl />}
+      <BibliaVoiceControl />
       <BibliaFavoritesEmptyEnhancer />
       <BibliaErrorRetryEnhancer />
       {from === 'pastoral' && !esProyectoPastoral && <BibliaPastoralCollectionEnhancer colecciones={coleccionesPastorales} />}
@@ -72,8 +69,6 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
       {estaEmbebida && (
         <style>{`
           .app-bottom-nav { display: none !important; }
-          body { background: white !important; overflow-x: hidden !important; }
-          .biblia-page, main { padding-bottom: 1rem !important; }
         `}</style>
       )}
     </>
