@@ -37,14 +37,27 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
+const bibleThemeBootstrap = `
+  (() => {
+    try {
+      if (!window.location.pathname.startsWith('/biblia')) return
+      const raw = window.localStorage.getItem('vida-biblia-preferencias')
+      const storedMode = raw ? JSON.parse(raw)?.modo : 'claro'
+      const mode = storedMode === 'oscuro' || storedMode === 'sepia' ? storedMode : 'claro'
+      document.documentElement.dataset.bibliaTema = mode
+    } catch {}
+  })()
+`
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full`}>
+    <html lang="es" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: bibleThemeBootstrap }} />
         <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/apple-touch-icon.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/api/icon/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
