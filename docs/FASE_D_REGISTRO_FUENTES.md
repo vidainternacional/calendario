@@ -167,4 +167,8 @@ Una futura incorporación de contenido privado requerirá una acción explícita
 - preview `READY`; — PENDIENTE
 - ausencia de nuevas advertencias de seguridad asociadas a `biblical_sources`; — CUMPLIDO
 
+### Reintento del preview
+
+El 2026-07-30 se generó un commit técnico mínimo sobre la rama del PR #9 para solicitar a Vercel un preview nuevo del estado completo, después del bloqueo temporal por límite de builds.
+
 El Bloque 2 no se cerrará hasta verificar el preview completo y el despliegue de producción.
