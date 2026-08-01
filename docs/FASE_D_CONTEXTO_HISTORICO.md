@@ -2,7 +2,7 @@
 
 Fecha de inicio: 2026-07-31
 
-Estado: **PRIMER INCREMENTO IMPLEMENTADO — VALIDACIÓN EN CURSO**
+Estado: **PRIMER INCREMENTO VALIDADO — PENDIENTE DE INTEGRACIÓN Y PRODUCCIÓN**
 
 ## Objetivo
 
@@ -105,6 +105,44 @@ El servicio:
 - devuelve atribución y licencia de la fuente;
 - calcula una versión del paquete recuperado;
 - no consulta notas, bosquejos, biblioteca, paquetes ni contenido pastoral.
+
+## Validación ejecutada
+
+### Base de datos
+
+Migración aplicada en Supabase: `contexto_historico_biblico`.
+
+Se confirmó:
+
+- tabla creada correctamente;
+- RLS habilitado;
+- `anon` sin `SELECT`;
+- `authenticated` con `SELECT` y sin `INSERT`, `UPDATE` ni `DELETE`.
+
+### Matriz de seguridad
+
+La prueba se ejecutó dentro de una transacción revertida, usando fragmentos temporales y una cuenta activa:
+
+1. La cuenta activa ve únicamente el fragmento aprobado vinculado a una fuente aprobada. — CORRECTO
+2. El fragmento pendiente permanece oculto. — CORRECTO
+3. El fragmento aprobado vinculado a una fuente pendiente permanece oculto. — CORRECTO
+4. La inserción desde `authenticated` está bloqueada. — CORRECTO
+5. La actualización desde `authenticated` está bloqueada. — CORRECTO
+
+Resultado: **5 de 5 comprobaciones correctas**. No quedaron fragmentos ni cambios temporales.
+
+### Asesor de seguridad
+
+No se generaron advertencias nuevas asociadas a `biblical_context_fragments`. Los avisos existentes corresponden a tablas, funciones, Storage y configuración de autenticación anteriores, fuera del alcance de este bloque.
+
+### Preview
+
+- commit: `fabb7f29871dd89a8dfaec6c7a64940a1c6b0332`;
+- deployment: `dpl_28Vy1JuCrHoZ8TKAQyDuBJw2XxSe`;
+- estado: `READY`;
+- Next.js 16.2.10 compiló correctamente;
+- TypeScript terminó sin errores;
+- páginas generadas: 32 de 32.
 
 ## Regla para el siguiente incremento
 
