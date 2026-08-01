@@ -1,0 +1,5 @@
+/* Corrección aislada: el selector nativo de Biblia 2 queda oculto cuando
+   la experiencia comparativa ya muestra los dos selectores superiores. */
+label:has(> select[aria-label="Biblia 2 para comparar"]) {
+  display: none !important;
+}
