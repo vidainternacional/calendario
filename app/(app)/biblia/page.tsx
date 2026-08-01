@@ -12,6 +12,7 @@ import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 import './biblia.css'
 import './biblia-first-paint.css'
+import './biblia-compare-fix.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
