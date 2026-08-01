@@ -2,156 +2,118 @@
 
 Fecha de inicio: 2026-07-31
 
-Estado: **PRIMER INCREMENTO VALIDADO — PENDIENTE DE INTEGRACIÓN Y PRODUCCIÓN**
+Estado: **SEGUNDO INCREMENTO IMPLEMENTADO — VALIDACIÓN EN CURSO**
 
 ## Objetivo
 
 Crear una capa verificable de fragmentos históricos y culturales asociados a pasajes bíblicos, sin enviar contenido privado a servicios externos y sin presentar inferencias como hechos documentados.
 
-## Alcance de este incremento
+## Primer incremento — arquitectura
 
-Este primer incremento incorpora únicamente:
+El primer incremento quedó integrado en `main` y validado en producción:
 
-- modelo de datos para fragmentos contextuales;
+- tabla `public.biblical_context_fragments`;
 - relación obligatoria con `biblical_sources`;
-- referencia canónica por libro, capítulo y rango de versículos;
-- clasificación del tipo de contexto y del tipo de contenido;
-- metadatos de periodo, lugares, pueblos y temas;
-- revisión y habilitación antes de lectura;
-- RLS de solo lectura para cuentas activas;
-- servicio exclusivo de servidor para recuperar contexto aprobado;
-- versión SHA-256 abreviada del paquete recuperado.
+- referencias por libro, capítulo y rango de versículos;
+- distinción entre cita, resumen editorial e inferencia;
+- RLS de solo lectura;
+- servicio exclusivo de servidor;
+- versión SHA-256 del paquete recuperado.
 
-Todavía no incorpora:
+Evidencia:
 
-- fragmentos históricos publicados;
-- comentarios completos;
-- generación de IA con contexto recuperado;
-- cambios en `/biblia`;
-- cronologías o mapas;
-- contenido privado de notas, bosquejos o biblioteca pastoral.
+- migración: `contexto_historico_biblico`;
+- matriz de seguridad: 5 de 5;
+- PR: #11;
+- commit de `main`: `bb23b0290b0f954dbef695ef18576f510a2e56c6`;
+- producción: `dpl_A5dyMWwNbUbY43z6dGr33nKVt1wS` — `READY`;
+- Next.js y TypeScript correctos;
+- 32 de 32 páginas generadas.
 
-## Modelo de datos
+## Segundo incremento — Pleiades y Roma
 
-Tabla: `public.biblical_context_fragments`
+### Fuente aprobada
 
-### Identidad y contenido
+Se registra `Pleiades: A Gazetteer of Past Places` como fuente histórica aprobada.
 
-- `slug`: identificador estable;
-- `title`: título editorial;
-- `content`: fragmento o síntesis revisada;
-- `content_kind`: `source_excerpt`, `editorial_summary` o `inference`;
-- `context_type`: periodo, política, religión, costumbre social, institución, pueblo, lugar, arqueología, literatura u otro;
-- `language`: idioma ISO de tres letras.
+Razones:
 
-### Referencia bíblica
+- repertorio académico de lugares antiguos;
+- contenido publicado de acceso abierto;
+- URIs estables por lugar;
+- API JSON de solo lectura;
+- licencia Creative Commons Attribution 3.0;
+- atribución institucional y editorial visible.
 
-- `book_code`: código canónico normalizado;
-- `chapter_start` y `chapter_end`: rango obligatorio de capítulos;
-- `verse_start` y `verse_end`: rango opcional de versículos;
-- `reference_label`: etiqueta legible para mostrar.
+Registro:
 
-### Evidencia y atribución
+- slug: `pleiades-gazetteer`;
+- tipo: `historical`;
+- proveedor: `Pleiades`;
+- licencia: CC BY 3.0;
+- estado: aprobado y habilitado;
+- importación: únicamente resúmenes editoriales limitados y trazables.
 
-- `source_id`: referencia obligatoria a `biblical_sources`;
-- `source_locator`: URL, endpoint, sección, página o identificador estable dentro de la fuente;
-- `provider_version` y `content_hash`: trazabilidad del contenido;
-- la atribución y licencia se recuperan desde la fuente vinculada.
+### Primeros fragmentos
 
-### Clasificación
+Se incorporan dos resúmenes editoriales basados en el registro estable de Roma, Pleiades ID `423025`:
 
-- `period_label`;
-- `location_names`;
-- `people_groups`;
-- `topics`;
-- `metadata` para datos técnicos no sensibles.
+- `roma-capital-romanos`, asociado a Romanos 1–16;
+- `roma-capital-hechos-28`, asociado a Hechos 28:14–31.
 
-### Revisión
+Cada fragmento conserva:
 
-- `review_status`: `approved`, `pending` o `rejected`;
-- `enabled`;
-- `approved_at` y `approved_by`.
+- URI canónico de Pleiades;
+- localizador de API;
+- descripción de origen;
+- versión de consulta;
+- hash SHA-256 del resumen;
+- atribución y licencia de la fuente;
+- nota explícita de que la relación con el pasaje es editorial.
 
-Un fragmento no puede habilitarse si no está aprobado y no tiene fecha de aprobación.
+No se importó un comentario completo ni se presentó una síntesis editorial como cita literal.
 
-## Seguridad
+## Visualización inicial
 
-- RLS está habilitado.
-- `anon` no recibe privilegios.
-- `authenticated` recibe únicamente `SELECT`.
-- La cuenta debe estar activa.
-- Solo se leen fragmentos habilitados y aprobados.
-- La fuente relacionada también debe estar habilitada y aprobada.
-- No existen políticas de escritura para clientes.
-- Las inserciones y revisiones iniciales se realizarán mediante migraciones versionadas o una futura acción administrativa protegida.
+Componente: `components/estudios/ContextoHistoricoVerificado.tsx`
 
-## Servicio de recuperación
+Ubicación: `/estudios/profundo`
 
-Archivo: `lib/estudios/biblical-context.ts`
+La interfaz:
 
-Funciones:
+- muestra ejemplos cuando no existe una referencia compatible;
+- reconoce inicialmente Romanos y Hechos;
+- recupera fragmentos exclusivamente desde el servidor;
+- muestra tipo de contenido, referencia, lugar y periodo;
+- muestra fuente, atribución, licencia y enlace estable;
+- muestra la versión del paquete;
+- declara que el contenido no se envía todavía a la IA.
 
-- `listarContextoBiblicoParaReferencia()`;
-- `obtenerFragmentoContextoBiblico()`.
+El analizador de referencia está en `lib/estudios/biblical-reference.ts` y solo admite los libros cubiertos por fragmentos aprobados en este incremento.
 
-El servicio:
+## Seguridad y privacidad
 
-- se ejecuta exclusivamente en servidor;
-- exige sesión autenticada;
-- valida libro, capítulo, versículo y límite;
-- consulta únicamente fragmentos aprobados;
-- aplica RLS y exige una fuente aprobada;
-- filtra rangos de versículos de forma determinista;
-- devuelve atribución y licencia de la fuente;
-- calcula una versión del paquete recuperado;
-- no consulta notas, bosquejos, biblioteca, paquetes ni contenido pastoral.
+Se mantienen las reglas del primer incremento:
 
-## Validación ejecutada
+- cuenta autenticada y activa;
+- fragmento aprobado y habilitado;
+- fuente aprobada y habilitada;
+- `anon` sin lectura;
+- clientes sin escritura;
+- notas, bosquejos, biblioteca y contenido pastoral fuera del paquete;
+- ninguna evidencia recuperada se añade todavía al prompt de IA.
 
-### Base de datos
+## Validación pendiente
 
-Migración aplicada en Supabase: `contexto_historico_biblico`.
+Antes de cerrar el Bloque 3 se debe confirmar:
 
-Se confirmó:
+- migración aplicada;
+- fuente Pleiades aprobada y visible en el registro;
+- dos fragmentos aprobados y recuperables;
+- fragmentos fuera de rango no visibles;
+- preview `READY`;
+- producción `READY`;
+- visualización correcta para Romanos 8:28 y Hechos 28:16;
+- ausencia de advertencias nuevas asociadas a las tablas del bloque.
 
-- tabla creada correctamente;
-- RLS habilitado;
-- `anon` sin `SELECT`;
-- `authenticated` con `SELECT` y sin `INSERT`, `UPDATE` ni `DELETE`.
-
-### Matriz de seguridad
-
-La prueba se ejecutó dentro de una transacción revertida, usando fragmentos temporales y una cuenta activa:
-
-1. La cuenta activa ve únicamente el fragmento aprobado vinculado a una fuente aprobada. — CORRECTO
-2. El fragmento pendiente permanece oculto. — CORRECTO
-3. El fragmento aprobado vinculado a una fuente pendiente permanece oculto. — CORRECTO
-4. La inserción desde `authenticated` está bloqueada. — CORRECTO
-5. La actualización desde `authenticated` está bloqueada. — CORRECTO
-
-Resultado: **5 de 5 comprobaciones correctas**. No quedaron fragmentos ni cambios temporales.
-
-### Asesor de seguridad
-
-No se generaron advertencias nuevas asociadas a `biblical_context_fragments`. Los avisos existentes corresponden a tablas, funciones, Storage y configuración de autenticación anteriores, fuera del alcance de este bloque.
-
-### Preview
-
-- commit: `fabb7f29871dd89a8dfaec6c7a64940a1c6b0332`;
-- deployment: `dpl_28Vy1JuCrHoZ8TKAQyDuBJw2XxSe`;
-- estado: `READY`;
-- Next.js 16.2.10 compiló correctamente;
-- TypeScript terminó sin errores;
-- páginas generadas: 32 de 32.
-
-## Regla para el siguiente incremento
-
-Antes de publicar fragmentos se debe:
-
-1. seleccionar una fuente académica o primaria con licencia compatible;
-2. registrar y aprobar esa fuente en `biblical_sources`;
-3. conservar un localizador verificable por fragmento;
-4. diferenciar cita, resumen editorial e inferencia;
-5. validar atribución, licencia y revisión en producción.
-
-La integración con la IA permanece bloqueada hasta que existan fragmentos aprobados y una visualización verificable para el usuario.
+La integración con la IA permanece reservada para el Bloque 6.
