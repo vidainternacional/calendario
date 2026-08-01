@@ -1,6 +1,6 @@
-/* Corrección aislada: ocultar únicamente el selector nativo heredado de
-   Biblia 2. Los dos selectores dentro del bloque superior permanecen visibles. */
-div.p-5 > label:has(> select[aria-label="Biblia 2 para comparar"]),
-div.sm\:p-7 > label:has(> select[aria-label="Biblia 2 para comparar"]) {
+/* Corrección aislada: cuando existe el bloque comparativo superior,
+   ocultar únicamente el label heredado que React vuelve a crear como hijo
+   directo del contenedor. Los labels internos Biblia 1 y Biblia 2 permanecen. */
+div.p-5.sm\:p-7:has(> [data-vida-dual-selector]) > label {
   display: none !important;
 }
