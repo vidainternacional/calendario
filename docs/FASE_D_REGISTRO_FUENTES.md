@@ -1,8 +1,8 @@
 # FASE D — Registro de fuentes bíblicas
 
-Fecha: 2026-07-29
+Fecha de cierre: 2026-07-31
 
-Estado: **IMPLEMENTADO — SEGURIDAD VALIDADA; PREVIEW FINAL PENDIENTE**
+Estado: **COMPLETADO Y VALIDADO EN PRODUCCIÓN**
 
 ## Objetivo
 
@@ -155,20 +155,36 @@ Una futura incorporación de contenido privado requerirá una acción explícita
 - Catálogo de comentarios: `https://bible.helloao.org/api/available_commentaries.json`
 - Catálogo de datasets: `https://bible.helloao.org/api/available_datasets.json`
 
-## Criterios de validación
+## Validación final
 
 - migración aplicada sin pérdida de datos; — CUMPLIDO
 - cuatro registros iniciales presentes; — CUMPLIDO
 - solo dos registros aprobados y habilitados; — CUMPLIDO
 - `anon` sin acceso; — CUMPLIDO
 - `authenticated` con lectura y sin escritura; — CUMPLIDO
-- servicio compilado y validado por TypeScript; — PENDIENTE DEL PREVIEW FINAL
-- catálogo visible en Estudio Profundo; — PENDIENTE DEL PREVIEW FINAL
-- preview `READY`; — PENDIENTE
+- servicio compilado y validado por TypeScript; — CUMPLIDO
+- catálogo visible en Estudio Profundo; — CUMPLIDO
 - ausencia de nuevas advertencias de seguridad asociadas a `biblical_sources`; — CUMPLIDO
 
-### Reintento del preview
+### Preview completo
 
-El 2026-07-30 se generó un commit técnico mínimo sobre la rama del PR #9 para solicitar a Vercel un preview nuevo del estado completo, después del bloqueo temporal por límite de builds.
+- commit: `fe8eb9218ef378d122a21f3cd5526f224551f804`;
+- deployment: `dpl_BHyb9dnF9UGFvcsq3N9BLRgUmdGq`;
+- estado: `READY`;
+- Next.js 16.2.10 compiló correctamente;
+- TypeScript terminó sin errores;
+- páginas generadas: 32 de 32;
+- `/estudios/profundo` incluida en el resultado.
 
-El Bloque 2 no se cerrará hasta verificar el preview completo y el despliegue de producción.
+### Producción
+
+- integración: PR #9;
+- commit de `main`: `d33daca536549b912a4f9a9fb246e1060fb0ee77`;
+- deployment: `dpl_DN5g5tLwJdhNLbkMngMsjUJJcn5V`;
+- estado: `READY`;
+- alias de producción asignados sin error;
+- confirmación visual del panel de fuentes aprobadas: recibida el 2026-07-31.
+
+## Conclusión
+
+El Bloque 2 queda cerrado. El registro, las políticas, el servicio de lectura, la atribución visible y la regla de privacidad están documentados y validados en producción.
