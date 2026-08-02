@@ -24,6 +24,7 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
         previous_reference: str | None = None
         started_data = False
         classes = Counter()
+        repeated_first_values = Counter()
         field_counts: dict[str, Counter[int]] = {
             "preamble": Counter(),
             "continuation": Counter(),
@@ -55,6 +56,7 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
                 category = "continuation"
             else:
                 category = "non_reference_after_data"
+                repeated_first_values[first] += 1
 
             classes[category] += 1
             totals[category] += 1
@@ -81,12 +83,13 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
                     }
                     for category, counts in field_counts.items()
                 },
+                "non_reference_first_values": dict(repeated_first_values.most_common()),
                 "samples": samples,
             }
         )
 
     payload = {
-        "schema_version": "stepbible-tahot-row-shapes-v2",
+        "schema_version": "stepbible-tahot-row-shapes-v3",
         "source_commit": sources.COMMIT,
         "totals": dict(totals),
         "sources": result_sources,
@@ -108,15 +111,19 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
         "El preámbulo contiene licencia, documentación, encabezados y separadores previos al primer registro bíblico.",
         "No se interpreta todavía la semántica de las continuaciones; este paso solo clasifica su forma.",
         "",
-        "| Fuente | Preámbulo | Continuadas | No reconocidas tras datos |",
-        "|---|---:|---:|---:|",
+        "| Fuente | Preámbulo | Continuadas | No reconocidas tras datos | Valores de primera columna |",
+        "|---|---:|---:|---:|---|",
     ]
     for source in result_sources:
         classes = source["classes"]
+        values = ", ".join(
+            f"`{clipped(value, 36)}`: {count:,}"
+            for value, count in source["non_reference_first_values"].items()
+        ) or "—"
         lines.append(
             f"| {source['key']} | {classes.get('preamble', 0):,} | "
             f"{classes.get('continuation', 0):,} | "
-            f"{classes.get('non_reference_after_data', 0):,} |"
+            f"{classes.get('non_reference_after_data', 0):,} | {values} |"
         )
     (output / "row-shapes.md").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
