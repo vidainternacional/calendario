@@ -6,6 +6,7 @@ on:
       - fase-d/corpus-textual-antiguo-testamento
     paths:
       - "scripts/stepbible/inspect_ot_sources.py"
+      - "scripts/stepbible/inspect_ot_row_shapes.py"
       - ".github/workflows/validate-stepbible-ot-sources.yml"
       - "docs/FASE_D_FUENTES_TEXTUALES_AT.md"
   pull_request:
@@ -13,6 +14,7 @@ on:
       - main
     paths:
       - "scripts/stepbible/inspect_ot_sources.py"
+      - "scripts/stepbible/inspect_ot_row_shapes.py"
       - ".github/workflows/validate-stepbible-ot-sources.yml"
       - "docs/FASE_D_FUENTES_TEXTUALES_AT.md"
   workflow_dispatch:
@@ -23,7 +25,7 @@ permissions:
 jobs:
   inspect-sources:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -37,8 +39,15 @@ jobs:
       - name: Descargar e inspeccionar TAHOT
         run: python scripts/stepbible/inspect_ot_sources.py --output artifacts/stepbible-ot-sources
 
-      - name: Mostrar resumen
-        run: cat artifacts/stepbible-ot-sources/validation.md
+      - name: Clasificar filas continuadas
+        working-directory: scripts/stepbible
+        run: python inspect_ot_row_shapes.py --output ../../artifacts/stepbible-ot-sources --samples 10
+
+      - name: Mostrar resúmenes
+        run: |
+          cat artifacts/stepbible-ot-sources/validation.md
+          printf '\n'
+          cat artifacts/stepbible-ot-sources/row-shapes.md
 
       - uses: actions/upload-artifact@v4
         with:
