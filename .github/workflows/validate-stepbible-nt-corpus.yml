@@ -51,6 +51,12 @@ jobs:
           assert all(item["artifact_sha256"] for item in data["books"])
           assert all(item["base_words"] > 0 for item in data["books"])
 
+          source_hashes = {item["key"]: item["sha256"] for item in data["sources"]}
+          assert source_hashes == {
+              "tagnt-mat-jhn": "ab8eaaeb68e17a1dcfa34e1e9350358f22f03bc2a97244d848750ad81044bc8e",
+              "tagnt-act-rev": "524e32375361e6d3fa2f7ef00b87605fdc4317a762f395651a05fdc31ad031b7",
+          }, source_hashes
+
           mapped = {
               item["step_code"]: (item["source_verse_count"], item["app_verse_count"])
               for item in data["books"]
