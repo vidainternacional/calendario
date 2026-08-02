@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera un paquete reproducible por libro desde TAHOT. No modifica Supabase."""
+"""Genera paquetes reproducibles por libro desde TAHOT. No modifica Supabase."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,6 @@ from typing import Any
 
 import inspect_ot_sources as sources
 from tahot_schema import (
-    RESERVED_COLUMN_COUNT,
     TAHOT_COLUMNS,
     TOTAL_COLUMN_COUNT,
     is_qere_omission_placeholder,
@@ -25,8 +24,7 @@ BOOKS = {
     "Oba": {
         "internal_code": "OBA",
         "name_es": "Obadías",
-        "chapters": 1,
-        "references": 21,
+        "verse_counts": [21],
     },
 }
 
@@ -58,20 +56,19 @@ def split_punctuation(value: str) -> tuple[str, str]:
 
 
 def split_components(value: str) -> list[str]:
-    if value == "":
+    if not value:
         return []
     return [nfc(part.strip()) for part in value.split("/")]
 
 
-def display_surface(hebrew: str) -> tuple[str, str]:
-    lexical, punctuation = split_punctuation(hebrew)
+def display_surface(value: str) -> tuple[str, str]:
+    lexical, punctuation = split_punctuation(value)
     return nfc(lexical.replace("/", "")), nfc(punctuation.replace("/", ""))
 
 
 def display_transliteration(value: str) -> str:
     lexical, punctuation = split_punctuation(value)
-    joined = "".join(part.strip() for part in lexical.split("/"))
-    return f"{joined}{punctuation}".strip()
+    return ("".join(part.strip() for part in lexical.split("/")) + punctuation).strip()
 
 
 def source_gloss_sequence(value: str) -> str:
@@ -79,78 +76,70 @@ def source_gloss_sequence(value: str) -> str:
     return " ".join(part.strip() for part in lexical.split("/") if part.strip())
 
 
-def source_index_parts(value: str) -> dict[str, Any]:
+def source_index_parts(value: str) -> dict[str, int | str]:
     if not value.isdigit():
         raise ValueError(f"Índice fuente no numérico: {value}")
     if len(value) <= 2:
         return {"raw": value, "base": int(value), "subindex": 0}
-    return {
-        "raw": value,
-        "base": int(value[:2]),
-        "subindex": int(value[2:]),
-    }
+    return {"raw": value, "base": int(value[:2]), "subindex": int(value[2:])}
 
 
 def component_alignment(fields: dict[str, str]) -> dict[str, Any]:
-    component_fields = {
+    values = {
         "hebrew": split_components(split_punctuation(fields["hebrew"])[0]),
         "transliteration": split_components(split_punctuation(fields["transliteration"])[0]),
         "translation": split_components(split_punctuation(fields["translation"])[0]),
         "dstrongs": split_components(fields["dstrongs"]),
         "grammar": split_components(fields["grammar"]),
     }
-    counts = {name: len(values) for name, values in component_fields.items()}
-    nonzero = [count for count in counts.values() if count > 0]
-    aligned = len(set(nonzero)) <= 1
+    counts = {name: len(parts) for name, parts in values.items()}
+    nonzero = [count for count in counts.values() if count]
     width = max(nonzero, default=0)
-    components = []
-    for index in range(width):
-        components.append(
+    return {
+        "aligned": len(set(nonzero)) <= 1,
+        "counts": counts,
+        "components": [
             {
                 "index": index + 1,
                 **{
-                    name: values[index] if index < len(values) else None
-                    for name, values in component_fields.items()
+                    name: parts[index] if index < len(parts) else None
+                    for name, parts in values.items()
                 },
             }
-        )
-    return {
-        "aligned": aligned,
-        "counts": counts,
-        "components": components,
+            for index in range(width)
+        ],
     }
 
 
 def parse_row(
-    *,
     line: str,
     line_number: int,
+    book: str,
     source_key: str,
     source_url: str,
 ) -> dict[str, Any] | None:
     if not line or line.startswith("#") or "\t" not in line:
         return None
-    fields_list = line.split("\t")
-    if not fields_list[0].startswith("Oba."):
+    raw = line.split("\t")
+    if not raw[0].startswith(f"{book}."):
         return None
-    if len(fields_list) != TOTAL_COLUMN_COUNT:
+    if len(raw) != TOTAL_COLUMN_COUNT:
         raise RuntimeError(
-            f"L{line_number}: {len(fields_list)} columnas, se esperaban {TOTAL_COLUMN_COUNT}"
+            f"L{line_number}: {len(raw)} columnas; se esperaban {TOTAL_COLUMN_COUNT}"
         )
-    if any(fields_list[len(TAHOT_COLUMNS) :]):
+    if any(raw[len(TAHOT_COLUMNS) :]):
         raise RuntimeError(f"L{line_number}: columnas reservadas con contenido")
 
-    reference = parse_reference_field(fields_list[0])
-    fields = dict(zip(TAHOT_COLUMNS, fields_list[: len(TAHOT_COLUMNS)], strict=True))
+    reference = parse_reference_field(raw[0])
+    fields = dict(zip(TAHOT_COLUMNS, raw[: len(TAHOT_COLUMNS)], strict=True))
     language = language_from_grammar(fields["grammar"])
-    placeholder = is_qere_omission_placeholder(fields_list)
+    placeholder = is_qere_omission_placeholder(raw)
     if language == "unknown":
-        raise RuntimeError(f"L{line_number}: idioma desconocido en {fields['grammar']}")
+        raise RuntimeError(f"L{line_number}: idioma desconocido: {fields['grammar']}")
     if language == "none" and not placeholder:
         raise RuntimeError(f"L{line_number}: fila sin gramática que no es omisión Qere")
 
     surface, punctuation = display_surface(fields["hebrew"])
-    alignment = component_alignment(fields)
     return {
         "source_line": line_number,
         "source_key": source_key,
@@ -174,7 +163,7 @@ def parse_row(
         "punctuation_after": punctuation,
         "transliteration": display_transliteration(fields["transliteration"]),
         "source_gloss_en": source_gloss_sequence(fields["translation"]),
-        "alignment": alignment,
+        "alignment": component_alignment(fields),
         "variants": {
             "meaning": fields["meaning_variants"] or None,
             "spelling": fields["spelling_variants"] or None,
@@ -191,46 +180,43 @@ def parse_row(
 
 def verse_payload(reference: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
     visible = [row for row in rows if row["is_visible_base_word"]]
-    for display_index, row in enumerate(visible, 1):
-        row["display_word_index"] = display_index
+    next_display = 1
     for row in rows:
-        if not row["is_visible_base_word"]:
+        if row["is_visible_base_word"]:
+            row["display_word_index"] = next_display
+            next_display += 1
+        else:
             row["display_word_index"] = None
 
-    original_text = " ".join(
-        f"{row['surface_form']}{row['punctuation_after']}".strip()
-        for row in visible
-        if row["surface_form"] or row["punctuation_after"]
-    )
-    transliteration = " ".join(
-        row["transliteration"] for row in visible if row["transliteration"]
-    )
-    gloss_sequence = " ".join(
-        row["source_gloss_en"] for row in visible if row["source_gloss_en"]
-    )
     canonical = {
         "reference": reference,
-        "original_text": original_text,
-        "transliteration": transliteration,
-        "source_gloss_sequence_en": gloss_sequence,
+        "original_text": " ".join(
+            f"{row['surface_form']}{row['punctuation_after']}".strip()
+            for row in visible
+            if row["surface_form"] or row["punctuation_after"]
+        ),
+        "transliteration": " ".join(
+            row["transliteration"] for row in visible if row["transliteration"]
+        ),
+        "source_gloss_sequence_en": " ".join(
+            row["source_gloss_en"] for row in visible if row["source_gloss_en"]
+        ),
         "rows": rows,
     }
-    content_hash = sha256_text(
-        json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    )
     return {
         **canonical,
         "visible_word_count": len(visible),
         "source_row_count": len(rows),
         "alignment_mismatch_count": sum(
-            1 for row in rows if not row["alignment"]["aligned"]
+            not row["alignment"]["aligned"] for row in rows
         ),
         "variant_row_count": sum(
-            1
+            bool(row["variants"]["meaning"] or row["variants"]["spelling"])
             for row in rows
-            if row["variants"]["meaning"] or row["variants"]["spelling"]
         ),
-        "content_hash": content_hash,
+        "content_hash": sha256_text(
+            json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        ),
     }
 
 
@@ -240,8 +226,15 @@ def write_gzip_json(path: Path, payload: dict[str, Any]) -> tuple[int, str]:
         + "\n"
     ).encode("utf-8")
     path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(path, "wb", compresslevel=9, mtime=0) as handle:
-        handle.write(data)
+    with path.open("wb") as raw_handle:
+        with gzip.GzipFile(
+            fileobj=raw_handle,
+            mode="wb",
+            compresslevel=9,
+            mtime=0,
+            filename="",
+        ) as handle:
+            handle.write(data)
     compressed = path.read_bytes()
     return len(compressed), sha256_bytes(compressed)
 
@@ -281,12 +274,20 @@ def write_audit(path: Path, package: dict[str, Any], artifact: dict[str, Any]) -
     lines.extend(
         [
             "",
-            "El paquete conserva las doce columnas originales de cada fila y cinco columnas reservadas vacías no se serializan.",
-            "Las glosas son las secuencias inglesas de la fuente; todavía no constituyen una traducción literal española.",
+            "El paquete conserva las doce columnas activas originales; las cinco reservadas permanecen vacías.",
+            "Las glosas son inglesas y proceden de la fuente; todavía no son una traducción literal española.",
             "Este proceso no modifica Supabase, la interfaz ni producción.",
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def expected_references(book: str, verse_counts: list[int]) -> list[str]:
+    return [
+        f"{book}.{chapter}.{verse}"
+        for chapter, verse_count in enumerate(verse_counts, 1)
+        for verse in range(1, verse_count + 1)
+    ]
 
 
 def extract(book: str, output: Path) -> dict[str, Any]:
@@ -296,17 +297,20 @@ def extract(book: str, output: Path) -> dict[str, Any]:
     source = source_for_book(book)
     source_url, raw, digest = sources.download(source)
 
-    rows: list[dict[str, Any]] = []
-    for line_number, line in enumerate(raw.decode("utf-8-sig").splitlines(), 1):
-        parsed = parse_row(
-            line=line,
-            line_number=line_number,
-            source_key=str(source["key"]),
-            source_url=source_url,
+    rows = [
+        parsed
+        for line_number, line in enumerate(raw.decode("utf-8-sig").splitlines(), 1)
+        if (
+            parsed := parse_row(
+                line,
+                line_number,
+                book,
+                str(source["key"]),
+                source_url,
+            )
         )
-        if parsed is not None:
-            rows.append(parsed)
-
+        is not None
+    ]
     if not rows:
         raise RuntimeError(f"No se encontraron filas para {book}")
 
@@ -314,17 +318,17 @@ def extract(book: str, output: Path) -> dict[str, Any]:
     for row in rows:
         grouped[row["reference"]["english"]].append(row)
 
-    expected_references = [f"{book}.1.{verse}" for verse in range(1, 22)]
-    if sorted(grouped, key=lambda ref: int(ref.rsplit(".", 1)[1])) != expected_references:
-        raise RuntimeError(
-            f"Referencias incompletas: {sorted(grouped)} != {expected_references}"
-        )
+    expected = expected_references(book, definition["verse_counts"])
+    if set(grouped) != set(expected):
+        missing = sorted(set(expected) - set(grouped))
+        unexpected = sorted(set(grouped) - set(expected))
+        raise RuntimeError(f"Referencias incompletas. Faltan={missing}; extras={unexpected}")
 
-    verses = [verse_payload(reference, grouped[reference]) for reference in expected_references]
+    verses = [verse_payload(reference, grouped[reference]) for reference in expected]
     statuses = Counter(row["textual_status"] for row in rows)
     languages = Counter(row["language"] for row in rows)
     counts = {
-        "chapters": definition["chapters"],
+        "chapters": len(definition["verse_counts"]),
         "references": len(verses),
         "source_rows": len(rows),
         "visible_words": sum(verse["visible_word_count"] for verse in verses),
@@ -332,13 +336,12 @@ def extract(book: str, output: Path) -> dict[str, Any]:
             len(row["alignment"]["components"]) for row in rows
         ),
         "variant_rows": sum(
-            1
+            bool(row["variants"]["meaning"] or row["variants"]["spelling"])
             for row in rows
-            if row["variants"]["meaning"] or row["variants"]["spelling"]
         ),
         "qere_rows": statuses["qere"],
         "qere_omission_placeholders": sum(
-            1 for row in rows if row["is_qere_omission_placeholder"]
+            row["is_qere_omission_placeholder"] for row in rows
         ),
         "restored_rows": statuses["restored"],
         "lxx_addition_rows": statuses["lxx_addition"],
@@ -346,21 +349,19 @@ def extract(book: str, output: Path) -> dict[str, Any]:
         "aramaic_rows": languages["aramaic"],
         "unknown_language_rows": languages["unknown"],
         "alignment_mismatches": sum(
-            1 for row in rows if not row["alignment"]["aligned"]
+            not row["alignment"]["aligned"] for row in rows
         ),
         "invalid_line_hashes": sum(
-            1
+            len(row["source_line_sha256"]) != 64
+            or any(
+                character not in "0123456789abcdef"
+                for character in row["source_line_sha256"]
+            )
             for row in rows
-            if len(row["source_line_sha256"]) != 64
-            or any(char not in "0123456789abcdef" for char in row["source_line_sha256"])
         ),
     }
-    if counts["references"] != definition["references"]:
-        raise RuntimeError("Conteo de referencias inesperado")
-    if counts["unknown_language_rows"]:
-        raise RuntimeError("El paquete contiene idiomas desconocidos")
-    if counts["invalid_line_hashes"]:
-        raise RuntimeError("El paquete contiene hashes de línea inválidos")
+    if counts["unknown_language_rows"] or counts["invalid_line_hashes"]:
+        raise RuntimeError(f"Integridad inválida: {counts}")
 
     package = {
         "schema_version": "stepbible-tahot-book-v1",
@@ -396,6 +397,7 @@ def extract(book: str, output: Path) -> dict[str, Any]:
         "counts": counts,
         "artifact": artifact,
     }
+    output.mkdir(parents=True, exist_ok=True)
     (output / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -415,12 +417,10 @@ def self_test() -> None:
     alignment = component_alignment(fields)
     if not alignment["aligned"] or len(alignment["components"]) != 2:
         raise RuntimeError(f"Alineación sintética inesperada: {alignment}")
-    surface, punctuation = display_surface(fields["hebrew"])
-    if surface != "וּבֵית" or punctuation != "׃":
-        raise RuntimeError(f"Superficie sintética inesperada: {surface!r}, {punctuation!r}")
-    index = source_index_parts("0501")
-    if index != {"raw": "0501", "base": 5, "subindex": 1}:
-        raise RuntimeError(f"Índice suplementario inesperado: {index}")
+    if display_surface(fields["hebrew"]) != ("וּבֵית", "׃"):
+        raise RuntimeError("La superficie sintética no se reconstruyó correctamente")
+    if source_index_parts("0501") != {"raw": "0501", "base": 5, "subindex": 1}:
+        raise RuntimeError("El índice suplementario no se preservó")
     print("Auto-test de paquete TAHOT: OK")
 
 
@@ -434,11 +434,9 @@ def main() -> int:
     )
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
-
     if args.self_test:
         self_test()
         return 0
-
     manifest = extract(args.book, args.output)
     print(json.dumps(manifest["counts"], ensure_ascii=False, indent=2))
     return 0
