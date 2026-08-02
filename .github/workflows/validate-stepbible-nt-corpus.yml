@@ -1,0 +1,80 @@
+name: Validar corpus textual completo del NT
+
+on:
+  pull_request:
+    paths:
+      - "scripts/stepbible/extract_nt_corpus.py"
+      - ".github/workflows/validate-stepbible-nt-corpus.yml"
+      - "docs/FASE_D_IMPORTACION_TEXTUAL_NT.md"
+      - "docs/FASE_D_IMPORTACION_TEXTUAL_NT_CHECKLIST.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    name: Extraer y validar los 27 libros
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validar parser y clasificación de variantes
+        run: python scripts/stepbible/extract_nt_corpus.py --self-test
+
+      - name: Extraer corpus completo
+        run: python scripts/stepbible/extract_nt_corpus.py
+
+      - name: Validar manifiesto global
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("artifacts/stepbible-nt/manifest.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          totals = data["totals"]
+
+          assert totals["books"] == 27, totals
+          assert totals["verses"] == 7958, totals
+          assert totals["versification_books"] == 3, totals
+          assert len(data["books"]) == 27
+          assert sum(item["app_verse_count"] for item in data["books"]) == 7957
+          assert all(item["artifact_sha256"] for item in data["books"])
+          assert all(item["base_words"] > 0 for item in data["books"])
+
+          source_hashes = {item["key"]: item["sha256"] for item in data["sources"]}
+          assert source_hashes == {
+              "tagnt-mat-jhn": "ab8eaaeb68e17a1dcfa34e1e9350358f22f03bc2a97244d848750ad81044bc8e",
+              "tagnt-act-rev": "524e32375361e6d3fa2f7ef00b87605fdc4317a762f395651a05fdc31ad031b7",
+          }, source_hashes
+
+          mapped = {
+              item["step_code"]: (item["source_verse_count"], item["app_verse_count"])
+              for item in data["books"]
+              if item["versification_mapping_required"]
+          }
+          assert mapped == {
+              "2Co": (256, 257),
+              "3Jn": (15, 14),
+              "Rev": (405, 404),
+          }, mapped
+
+          print(json.dumps(totals, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publicar paquetes por libro
+        uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-nt-corpus
+          path: artifacts/stepbible-nt/
+          if-no-files-found: error
+          retention-days: 7
