@@ -7,6 +7,12 @@ on:
     paths:
       - ".github/workflows/apply-tahot-schema-master-update.yml"
       - "scripts/stepbible/apply_tahot_schema_master_update.py"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/apply-tahot-schema-master-update.yml"
+      - "scripts/stepbible/apply_tahot_schema_master_update.py"
 
 permissions:
   contents: write
