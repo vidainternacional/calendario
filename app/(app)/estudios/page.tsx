@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Video, FileText, Clock3 } from 'lucide-react'
+import { BookOpen, ChevronRight, Video, FileText, Clock3, Search } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -26,6 +26,16 @@ export default async function EstudiosPage() {
       iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
       hoverClass: 'hover:border-[#C0392B]/30',
       arrowClass: 'group-hover:text-[#C0392B]',
+    },
+    {
+      href: '/estudios/concordancias',
+      title: 'Concordancias',
+      description: 'Busca palabras, temas o preguntas breves dentro de referencias bíblicas revisadas y relacionadas.',
+      action: 'Buscar en la Biblia',
+      icon: Search,
+      iconClass: 'bg-amber-500 text-white',
+      hoverClass: 'hover:border-amber-300',
+      arrowClass: 'group-hover:text-amber-600',
     },
     {
       href: '/biblia',
