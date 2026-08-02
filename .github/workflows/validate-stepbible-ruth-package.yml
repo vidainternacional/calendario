@@ -1,0 +1,54 @@
+name: Validar paquete TAHOT de Rut
+
+on:
+  push:
+    branches:
+      - fase-d/paquete-tahot-rut
+    paths:
+      - "scripts/stepbible/generate_tahot_book_package.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - ".github/workflows/validate-stepbible-ruth-package.yml"
+      - "docs/FASE_D_PAQUETE_TAHOT_RUT.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/generate_tahot_book_package.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - ".github/workflows/validate-stepbible-ruth-package.yml"
+      - "docs/FASE_D_PAQUETE_TAHOT_RUT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/generate_tahot_book_package.py --self-test
+
+      - name: Generar paquete de Rut
+        run: python scripts/stepbible/generate_tahot_book_package.py --book Rut --output artifacts/tahot-ruth
+
+      - name: Mostrar validación
+        run: cat artifacts/tahot-ruth/rut-validation.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-tahot-ruth-package
+          path: artifacts/tahot-ruth
+          if-no-files-found: error
+          retention-days: 14
