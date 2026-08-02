@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowLeft, BookOpen, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { buscarConcordanciasBiblicas } from '@/lib/estudios/biblical-concordance'
+import { buscarConcordanciasBiblicas, listarTemasConcordancia } from '@/lib/estudios/biblical-concordance'
 
 export const metadata: Metadata = { title: 'Concordancias Bíblicas' }
 
@@ -25,7 +25,10 @@ export default async function ConcordanciasPage({
 
   const { q = '' } = await searchParams
   const search = q.trim()
-  const response = search ? await buscarConcordanciasBiblicas(search) : { query: '', results: [] }
+  const [response, temas] = await Promise.all([
+    search ? buscarConcordanciasBiblicas(search) : Promise.resolve({ query: '', results: [] }),
+    listarTemasConcordancia(80),
+  ])
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
@@ -38,7 +41,7 @@ export default async function ConcordanciasPage({
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Buscar en la Biblia</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Concordancias</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          Escriba una palabra, tema o pregunta breve. La búsqueda utiliza únicamente términos y referencias revisadas dentro de la biblioteca interna.
+          Escriba una palabra, situación o pregunta. El buscador relaciona temas, sinónimos e intenciones revisadas dentro de la biblioteca interna.
         </p>
       </header>
 
@@ -51,7 +54,7 @@ export default async function ConcordanciasPage({
               id="q"
               name="q"
               defaultValue={search}
-              placeholder="Ejemplo: oración, paz, temor, ¿cómo perdonar?"
+              placeholder="Ejemplo: ¿cómo vencer el miedo?, matrimonio, perdón..."
               className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20"
             />
           </div>
@@ -63,21 +66,48 @@ export default async function ConcordanciasPage({
       </form>
 
       {!search && (
-        <section className="mt-5 rounded-3xl border border-dashed border-slate-300 bg-white/70 p-8 text-center">
-          <BookOpen className="mx-auto h-8 w-8 text-slate-300" aria-hidden="true" />
-          <h2 className="mt-3 text-base font-bold text-slate-800">Busque por tema o palabra clave</h2>
-          <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500">
-            Las concordancias crecerán por lotes revisados. No se completarán respuestas con información inventada.
-          </p>
+        <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex items-start gap-3">
+            <BookOpen className="mt-0.5 h-6 w-6 shrink-0 text-[#C0392B]" aria-hidden="true" />
+            <div>
+              <h2 className="font-bold text-slate-900">Explore temas</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                También puede escribir una pregunta con sus propias palabras. Estas sugerencias son solo un punto de partida.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {temas.map(tema => (
+              <Link
+                key={tema.id}
+                href={`/estudios/concordancias?q=${encodeURIComponent(tema.term)}`}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-[#C0392B]/30 hover:bg-red-50 hover:text-[#C0392B]"
+              >
+                {tema.term}
+              </Link>
+            ))}
+          </div>
         </section>
       )}
 
       {search && response.results.length === 0 && (
         <section className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-5">
-          <h2 className="font-bold text-amber-950">Todavía no hay coincidencias aprobadas</h2>
+          <h2 className="font-bold text-amber-950">No encontramos una relación aprobada</h2>
           <p className="mt-1 text-sm leading-6 text-amber-800">
-            La palabra o pregunta “{search}” aún no tiene referencias incorporadas en la concordancia interna. La aplicación no generó una respuesta automática.
+            Pruebe con otra forma de expresar “{search}” o seleccione un tema del catálogo. La aplicación no completó la respuesta con información inventada.
           </p>
+          <details className="mt-4 rounded-2xl border border-amber-200 bg-white/70">
+            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold text-amber-900 [&::-webkit-details-marker]:hidden">
+              Ver temas disponibles
+            </summary>
+            <div className="flex flex-wrap gap-2 border-t border-amber-100 p-4">
+              {temas.map(tema => (
+                <Link key={tema.id} href={`/estudios/concordancias?q=${encodeURIComponent(tema.term)}`} className="rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm">
+                  {tema.term}
+                </Link>
+              ))}
+            </div>
+          </details>
         </section>
       )}
 
@@ -116,7 +146,7 @@ export default async function ConcordanciasPage({
           Cómo funciona esta búsqueda
         </summary>
         <div className="border-t border-slate-100 px-4 py-4 text-sm leading-6 text-slate-600">
-          Busca términos canónicos, sinónimos, transliteraciones e intenciones de pregunta previamente aprobadas. Cada resultado debe conservar fuente, licencia, localizador y estado de revisión en la base de datos.
+          La búsqueda normaliza acentos, descarta palabras comunes, identifica términos importantes y compara la pregunta con temas, sinónimos, transliteraciones e intenciones previamente revisadas. Las referencias conservan fuente, licencia, localizador y estado de aprobación.
         </div>
       </details>
     </main>
