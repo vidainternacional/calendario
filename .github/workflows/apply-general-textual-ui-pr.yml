@@ -1,0 +1,48 @@
+name: Aplicar visualización textual desde PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/apply_general_textual_ui.py"
+      - "components/estudios/TextualEvidencePanel.tsx"
+      - "components/biblia/BibleTextualStudyPanel.tsx"
+      - "app/actions/evidencia-textual.ts"
+      - ".github/workflows/apply-general-textual-ui-pr.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Aplicar parche controlado
+        run: python scripts/apply_general_textual_ui.py
+
+      - name: Validar diferencias
+        run: git diff --check
+
+      - name: Confirmar integración
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            lib/estudios/biblical-textual-study.ts \
+            lib/estudios/resolved-biblical-textual-study.ts \
+            app/actions/estudio-interno.ts \
+            components/estudios/EstudioProfundoClient.tsx \
+            components/biblia/BibliaClient.tsx
+          git commit -m "feat(fase-d): integrar estudio textual en Biblia y Estudio Profundo"
+          git push origin HEAD:${{ github.head_ref }}
