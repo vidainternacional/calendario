@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-01
+Última actualización: 2026-08-02
 
 Fase activa: **FASE D — IA Bíblica Avanzada**
 
@@ -127,4 +127,44 @@ El primer incremento debe:
 - no conectar todavía estos datos a la IA;
 - no importar léxicos completos ni material con licencia incompatible.
 
-No avanzar al Bloque 5 hasta que el modelo, la fuente inicial, la recuperación segura y una visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
+### Avance confirmado del Bloque 4 — cobertura contextual completa
+
+El corpus contextual interno ya cubre los 66 libros y los 1,189 capítulos del canon usado por la aplicación.
+
+Validación del 2026-08-02:
+
+- libros aprobados: 66;
+- libros con contexto: 66;
+- perfiles activos: 66;
+- secciones activas: 239;
+- unidades contextuales activas: 305;
+- capítulos cubiertos: 1,189 de 1,189;
+- capítulos sin cobertura: 0;
+- hashes inválidos: 0;
+- unidades sin declaración de asistencia editorial: 0;
+- rangos exactos duplicados: 0;
+- secciones activas solapadas: 0.
+
+Integridad adicional:
+
+- índice parcial contra duplicados exactos activos;
+- trigger que rechaza nuevas secciones activas solapadas;
+- prueba controlada del trigger completada;
+- RLS y lectura exclusiva de contenido aprobado para cuentas activas;
+- importador restringido al esquema `internal`;
+- ninguna llamada a un proveedor de IA durante la recuperación.
+
+Transparencia:
+
+- `vida-contexto-editorial` se identifica como síntesis editorial asistida por IA y pendiente de revisión humana;
+- no se presenta como fuente primaria ni como comentario académico especializado;
+- STEPBible, Pleiades y otras fuentes externas conservan atribución y licencia separadas.
+
+Documentación principal:
+
+- `docs/FASE_D_COBERTURA_CONTEXTUAL_BIBLIA_COMPLETA.md`;
+- documentos parciales del Pentateuco, históricos, poesía y sabiduría, profetas, Evangelios, cartas paulinas y cartas generales.
+
+El Bloque 4 continúa activo. Antes de cerrarlo todavía corresponde ampliar la cobertura específica de texto original, transliteración, morfología, traducción literal y variantes textuales desde fuentes compatibles, además de validar visualmente el resultado completo en producción.
+
+No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
