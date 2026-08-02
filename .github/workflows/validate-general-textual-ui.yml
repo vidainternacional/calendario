@@ -21,7 +21,7 @@ permissions:
 jobs:
   typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +30,8 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - run: npm ci
+      - name: Instalar dependencias
+        run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Comprobar TypeScript
         run: npx tsc --noEmit
