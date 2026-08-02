@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Video, FileText, Clock3, Search } from 'lucide-react'
+import { BookOpen, ChevronRight, Video, FileText, Clock3 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -20,22 +20,12 @@ export default async function EstudiosPage() {
     {
       href: '/estudios/profundo',
       title: 'Estudio Profundo',
-      description: 'Elige un pasaje y recibe una explicación clara de su texto, contexto, lenguaje, significado y reflexión espiritual.',
+      description: 'Busca versículos, palabras o preguntas y consulta estudios, contexto y concordancias desde una sola herramienta.',
       action: 'Comenzar estudio',
       icon: BookOpen,
       iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
       hoverClass: 'hover:border-[#C0392B]/30',
       arrowClass: 'group-hover:text-[#C0392B]',
-    },
-    {
-      href: '/estudios/concordancias',
-      title: 'Concordancias',
-      description: 'Busca palabras, temas o preguntas breves dentro de referencias bíblicas revisadas y relacionadas.',
-      action: 'Buscar en la Biblia',
-      icon: Search,
-      iconClass: 'bg-amber-500 text-white',
-      hoverClass: 'hover:border-amber-300',
-      arrowClass: 'group-hover:text-amber-600',
     },
     {
       href: '/biblia',
@@ -116,11 +106,7 @@ export default async function EstudiosPage() {
 
         <div className="grid gap-3 sm:grid-cols-2">
           {proximamente.map(({ title, description, icon: Icon }) => (
-            <article
-              key={title}
-              aria-disabled="true"
-              className="flex min-w-0 items-start gap-3 rounded-[18px] border border-dashed border-slate-300 bg-slate-100/70 p-4"
-            >
+            <article key={title} aria-disabled="true" className="flex min-w-0 items-start gap-3 rounded-[18px] border border-dashed border-slate-300 bg-slate-100/70 p-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </div>

@@ -24,15 +24,17 @@ export const metadata: Metadata = {
 export default async function EstudioProfundoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pasaje?: string; from?: string }>
+  searchParams: Promise<{ pasaje?: string; q?: string; tab?: string; from?: string }>
 }) {
-  const { pasaje, from } = await searchParams
+  const { pasaje, q, tab, from } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
   const desdePastoral = from === 'pastoral'
+  const initialQuery = q ?? pasaje ?? ''
+  const initialTab = tab === 'concordancias' ? 'concordance' : 'study'
 
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
@@ -51,12 +53,12 @@ export default async function EstudioProfundoPage({
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Estudio Profundo</h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-            Elija un pasaje y reciba una explicación clara de su texto, contexto, lenguaje, significado y reflexión espiritual.
+            Busque un versículo, una palabra o una pregunta y consulte la biblioteca bíblica interna desde un solo lugar.
           </p>
         </div>
       </header>
 
-      <EstudioProfundoClient initialPasaje={pasaje ?? ''} />
+      <EstudioProfundoClient initialPasaje={initialQuery} initialTab={initialTab} />
 
       <details className="group mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
