@@ -24,6 +24,7 @@ BOOKS={
 REF=re.compile(r"^(?P<book>[123]?[A-Za-z]{2,3})\.(?P<chapter>\d+)\.(?P<verse>\d+)(?P<context>[^#]*)#(?P<index>\d+)(?P<suffix>[^\t]*)$")
 FORM=re.compile(r"^(.*?)\s+\(([^()]*)\)\s*$")
 PUNCT=re.compile(r"^([^\w\u0370-\u03ff]*)(.*?)([^\w\u0370-\u03ff]*)$",re.UNICODE)
+EDITION_PRIORITY=("NA28","NA27","Tyn","SBL","WH","Treg","TR","Byz")
 
 def hbytes(v): return hashlib.sha256(v).hexdigest()
 def htext(v): return hbytes(v.encode("utf-8"))
@@ -64,12 +65,15 @@ def validate_verse(rows,ref):
  rows=sorted(rows,key=lambda x:(x["source_line"],x["source_index"]))
  idx=[x["source_index"] for x in rows]
  if idx!=sorted(idx):raise RuntimeError(f"Índices fuera de orden en {ref}")
- base=[x for x in rows if x["is_base_reading"]]
- if not base:raise RuntimeError(f"Sin lectura NA28 en {ref}")
+ available={w for x in rows for w in x["textual_witnesses"]}
+ edition=next((e for e in EDITION_PRIORITY if e in available),None)
+ if not edition:raise RuntimeError(f"Sin edición textual reconocida en {ref}: {sorted(available)}")
  pos=0
  for x in rows:
+  x["is_base_reading"]=edition in x["textual_witnesses"];x["display_word_index"]=None
   if x["is_base_reading"]:pos+=1;x["display_word_index"]=pos
- return rows
+ if not pos:raise RuntimeError(f"Sin lectura base {edition} en {ref}")
+ return rows,edition
 
 def validate_book(book,verses):
  _,name,chapters,total=BOOKS[book]
@@ -81,8 +85,8 @@ def validate_book(book,verses):
   if vv!=list(range(1,max(vv)+1)):raise RuntimeError(f"Versículos discontinuos en {name} {c}")
 
 def verse_payload(book,c,v,rows):
- rows=validate_verse(rows,f"{book}.{c}.{v}"); base=[x for x in rows if x["is_base_reading"]]; variants=[x for x in rows if not x["is_base_reading"]]
- return {"reference":f"{book}.{c}.{v}","chapter":c,"verse":v,"original_text":" ".join(x["surface_form"] for x in base),
+ rows,edition=validate_verse(rows,f"{book}.{c}.{v}"); base=[x for x in rows if x["is_base_reading"]]; variants=[x for x in rows if not x["is_base_reading"]]
+ return {"reference":f"{book}.{c}.{v}","chapter":c,"verse":v,"base_edition":edition,"uses_fallback_edition":edition!="NA28","original_text":" ".join(x["surface_form"] for x in base),
   "transliteration":" ".join(x["occurrence_transliteration"] for x in base),"source_gloss_sequence_es":" ".join(x["source_gloss_es"] or x["source_gloss_en"] for x in base),
   "base_word_count":len(base),"variant_row_count":len(variants),"words":rows,
   "variant_notes":[{"source_index":x["source_index"],"display_word_index":x["display_word_index"],"surface_form":x["surface_form"],"note":x["variant_note"]} for x in base if x["variant_note"]]}
@@ -93,9 +97,9 @@ def write_gz(path,payload):
  raw=path.read_bytes();return len(raw),hbytes(raw)
 
 def summary(path,manifest):
- t=manifest["totals"]; lines=["# Validación del corpus textual del Nuevo Testamento","",f"- Commit STEPBible: `{COMMIT}`",f"- Libros: {t['books']}",f"- Versículos: {t['verses']}",f"- Palabras base NA28: {t['base_words']}",f"- Lecturas adicionales: {t['variant_rows']}",f"- Filas totales: {t['all_rows']}","","| Libro | Capítulos | Versículos | Palabras base | Lecturas adicionales | SHA-256 |","|---|---:|---:|---:|---:|---|"]
- for b in manifest["books"]:lines.append(f"| {b['name_es']} | {b['chapter_count']} | {b['verses']} | {b['base_words']} | {b['variant_rows']} | `{b['artifact_sha256']}` |")
- lines+= ["","Proceso de solo lectura: no modifica Supabase ni producción."]
+ t=manifest["totals"]; lines=["# Validación del corpus textual del Nuevo Testamento","",f"- Commit STEPBible: `{COMMIT}`",f"- Libros: {t['books']}",f"- Versículos: {t['verses']}",f"- Palabras base: {t['base_words']}",f"- Lecturas adicionales: {t['variant_rows']}",f"- Versículos con edición de respaldo: {t['fallback_verses']}",f"- Filas totales: {t['all_rows']}","","| Libro | Capítulos | Versículos | Palabras base | Respaldo | Lecturas adicionales | SHA-256 |","|---|---:|---:|---:|---:|---:|---|"]
+ for b in manifest["books"]:lines.append(f"| {b['name_es']} | {b['chapter_count']} | {b['verses']} | {b['base_words']} | {b['fallback_verses']} | {b['variant_rows']} | `{b['artifact_sha256']}` |")
+ lines+= ["","NA28 se usa cuando está disponible. Las referencias omitidas por NA28 conservan una lectura de respaldo etiquetada.","Proceso de solo lectura: no modifica Supabase ni producción."]
  path.write_text("\n".join(lines)+"\n",encoding="utf-8")
 
 def extract(out,requested=None):
@@ -113,18 +117,20 @@ def extract(out,requested=None):
  expected=set(BOOKS) if requested is None else requested
  missing=expected-set(grouped)
  if missing:raise RuntimeError(f"Libros sin datos: {sorted(missing)}")
- books=[];tot={"books":0,"verses":0,"base_words":0,"variant_rows":0,"all_rows":0}
+ books=[];tot={"books":0,"verses":0,"base_words":0,"variant_rows":0,"fallback_verses":0,"all_rows":0,"base_editions":{}}
  for book in BOOKS:
   if book not in expected:continue
   verses=grouped[book];validate_book(book,verses);code,name,chapters,vcount=BOOKS[book]
   items=[verse_payload(book,c,v,verses[(c,v)]) for c,v in sorted(verses)]
-  counts={"verses":len(items),"base_words":sum(x["base_word_count"] for x in items),"variant_rows":sum(x["variant_row_count"] for x in items),"all_rows":sum(len(x["words"]) for x in items)}
+  editions={e:sum(1 for x in items if x["base_edition"]==e) for e in EDITION_PRIORITY};editions={k:v for k,v in editions.items() if v}
+  counts={"verses":len(items),"base_words":sum(x["base_word_count"] for x in items),"variant_rows":sum(x["variant_row_count"] for x in items),"fallback_verses":sum(1 for x in items if x["uses_fallback_edition"]),"all_rows":sum(len(x["words"]) for x in items),"base_editions":editions}
   payload={"schema_version":"stepbible-tagnt-book-v1","source_commit":COMMIT,"license":"CC BY 4.0","attribution":"STEP Bible","book":{"step_code":book,"internal_code":code,"name_es":name,"chapter_count":chapters,"verse_count":vcount},"counts":counts,"verses":items}
   fn=f"{code.lower()}.json.gz";size,digest=write_gz(out/"books"/fn,payload)
   books.append({**payload["book"],**counts,"artifact":f"books/{fn}","artifact_bytes":size,"artifact_sha256":digest})
   tot["books"]+=1
-  for k in ("verses","base_words","variant_rows","all_rows"):tot[k]+=counts[k]
-  print(f"{name}: {counts['verses']} versículos, {counts['base_words']} palabras base, {counts['variant_rows']} variantes.",flush=True)
+  for k in ("verses","base_words","variant_rows","fallback_verses","all_rows"):tot[k]+=counts[k]
+  for e,n in editions.items():tot["base_editions"][e]=tot["base_editions"].get(e,0)+n
+  print(f"{name}: {counts['verses']} versículos, {counts['base_words']} palabras base, {counts['fallback_verses']} con respaldo, {counts['variant_rows']} variantes.",flush=True)
  manifest={"schema_version":"stepbible-tagnt-manifest-v1","source_repository":"STEPBible/STEPBible-Data","source_commit":COMMIT,"license":"CC BY 4.0","attribution":"STEP Bible","sources":srcman,"totals":tot,"books":books}
  out.mkdir(parents=True,exist_ok=True);(out/"manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");summary(out/"validation.md",manifest)
  return manifest
@@ -135,7 +141,9 @@ def self_test():
   "Jhn.3.16#11=ko\tαὐτοῦ (autou)\tof him\tG0846=P-GSM\tαὐτός=he/she/it/self\tTreg+TR+Byz\t\t\tde él\tof him\t#11«10:G5207\tG0846_a\tG3778",
   "Jhn.3.16#23=NKO\tἀλλ᾽ (all᾽)\tbut\tG0235=CONJ\tἀλλά=but\tNA28+NA27+Tyn+SBL+WH+Treg+TR+Byz\t\tSBL+WH+Treg+TR+Byz: ἀλλὰ ; \tsino\tbut\t#23\tG0235"]
  rows=[parse_line(x,i+1) for i,x in enumerate(lines)];assert rows[0]["is_base_reading"] and not rows[1]["is_base_reading"] and "ἀλλὰ" in rows[2]["variant_note"]
- out=validate_verse(rows,"Jhn.3.16");assert [x["display_word_index"] for x in out]==[1,None,2]
+ out,edition=validate_verse(rows,"Jhn.3.16");assert edition=="NA28" and [x["display_word_index"] for x in out]==[1,None,2]
+ fallback=[parse_line("Mat.17.21#01=K\tτοῦτο (touto)\tthis\tG3778=D-NSN\tοὗτος=this\tTR+Byz\t\t\testo\tthis\t#01\tG3778",4)]
+ _,edition=validate_verse(fallback,"Mat.17.21");assert edition=="TR" and fallback[0]["is_base_reading"]
  print("Self-test OK")
 
 def main():
