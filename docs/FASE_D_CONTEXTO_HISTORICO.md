@@ -2,7 +2,9 @@
 
 Fecha de inicio: 2026-07-31
 
-Estado: **TERCER INCREMENTO IMPLEMENTADO — VALIDACIÓN VISUAL FINAL PENDIENTE**
+Fecha de cierre: 2026-08-01
+
+Estado: **COMPLETADO Y VALIDADO EN PRODUCCIÓN**
 
 ## Objetivo
 
@@ -112,10 +114,11 @@ Comportamiento:
 - la evidencia se mantiene separada y no se envía al proveedor de IA;
 - Leer, Comparar y Notas no fueron modificados por este incremento.
 
-Preview funcional:
+Evidencia de integración:
 
-- commit: `421396e93eb15b4c2d1f6ac0750d69e0caf78025`;
-- deployment: `dpl_3pmjtEoTaG7nqLgEKeh7JpchEFom` — `READY`;
+- PR: #22;
+- commit de `main`: `307388550a9aa8ca1c50f2d75e664dc4906ef074`;
+- producción: `dpl_s4hkspuCczLhsZPVMHmkPvrLjXnB` — `READY`;
 - Next.js y TypeScript correctos;
 - 32 de 32 páginas generadas;
 - rutas `/biblia` y `/estudios/profundo` incluidas.
@@ -143,11 +146,33 @@ Revalidación de datos realizada el 2026-08-01:
 
 Los avisos preexistentes de otras tablas y funciones permanecen fuera del alcance del Bloque 3 y se reservan para la Fase E.
 
-## Validación pendiente
+## Validación final
 
-Antes de cerrar el Bloque 3 falta únicamente:
+La validación visual y funcional fue confirmada por el usuario el 2026-08-01 después de comprobar:
 
-- integrar el tercer incremento en `main` y validar producción;
-- confirmar visualmente en **Biblia → Estudio** que Romanos 8:28 y Hechos 28:16 muestran el panel, la fuente Pleiades y la licencia CC BY 3.0.
+- visualización del contexto dentro de **Biblia → Estudio**;
+- fuente Pleiades y licencia CC BY 3.0 visibles;
+- enlaces y botones funcionales;
+- tipografía y alineación corregidas;
+- controles de audio estabilizados sin botón flotante duplicado;
+- ausencia de errores recientes en `/biblia` y `/estudios/profundo`.
 
-La integración con la IA permanece reservada para el Bloque 6. Las concordancias, léxicos y herramientas lingüísticas pertenecen al Bloque 4 y no se activarán hasta que el documento maestro registre el cierre del Bloque 3.
+Estado final de producción usado para la confirmación:
+
+- commit: `73f8458e316f1e0d4931456ccad02ef45cabc23e`;
+- deployment: `dpl_9iHrXP25gb2MG16DeTRNKiohmE6P` — `READY`;
+- alias principal actualizado;
+- 32 de 32 páginas generadas.
+
+## Cierre
+
+El Bloque 3 cumple sus criterios:
+
+- modelo de contexto documentado;
+- políticas y RLS activas;
+- recuperación exclusiva en servidor;
+- fuentes, atribución y licencia visibles;
+- visualización inicial integrada y validada en producción;
+- evidencia mantenida separada de la IA.
+
+La integración con la IA permanece reservada para el Bloque 6. Las concordancias, léxicos, significados y herramientas lingüísticas pasan al Bloque 4.
