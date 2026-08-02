@@ -46,25 +46,10 @@ def counts(cur: psycopg.Cursor) -> dict[str, int]:
     return dict(zip(("lexical", "occurrences", "verses", "variants", "batches"), row, strict=True))
 
 
-def call_import(cur: psycopg.Cursor, package: dict, package_sha: str, policy: dict) -> dict:
+def call_import(cur: psycopg.Cursor, payload: dict) -> dict:
     cur.execute(
-        """
-        select internal.import_stepbible_tahot_package(
-          %s::jsonb,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s,%s,%s
-        )
-        """,
-        (
-            json.dumps(package, ensure_ascii=False),
-            package_sha,
-            json.dumps(policy, ensure_ascii=False),
-            json.dumps(SOURCE_FILES),
-            EXPECTED["references"],
-            EXPECTED["visible_words"],
-            EXPECTED["occurrences"],
-            EXPECTED["lexical_ids"],
-            EXPECTED["variant_rows"],
-            EXPECTED["variants"],
-        ),
+        "select internal.import_stepbible_tahot_payload(%s::jsonb,%s::jsonb)",
+        (json.dumps(payload, ensure_ascii=False), json.dumps(SOURCE_FILES)),
     )
     row = cur.fetchone()
     assert row is not None
@@ -77,14 +62,16 @@ def main() -> int:
     parser.add_argument("--fixture", type=Path, required=True)
     parser.add_argument("--draft", type=Path, required=True)
     parser.add_argument("--package", type=Path, required=True)
-    parser.add_argument("--policy", type=Path, required=True)
+    parser.add_argument("--payload", type=Path, required=True)
     args = parser.parse_args()
 
     with gzip.open(args.package, "rt", encoding="utf-8") as handle:
         package = json.load(handle)
-    policy = json.loads(args.policy.read_text(encoding="utf-8"))
+    payload = json.loads(args.payload.read_text(encoding="utf-8"))
     manifest = json.loads((args.package.parent / "manifest.json").read_text(encoding="utf-8"))
     package_sha = manifest["artifact"]["sha256"]
+    assert payload["package_sha256"] == package_sha
+    assert payload["book"]["internal_code"] == package["book"]["internal_code"]
 
     draft_text = args.draft.read_text(encoding="utf-8")
     lowered = draft_text.lower()
@@ -97,10 +84,7 @@ def main() -> int:
         with conn.cursor() as cur:
             cur.execute(args.fixture.read_text(encoding="utf-8"))
             cur.execute(draft_text)
-            signature = (
-                "internal.import_stepbible_tahot_package"
-                "(jsonb,text,jsonb,jsonb,integer,integer,integer,integer,integer,integer)"
-            )
+            signature = "internal.import_stepbible_tahot_payload(jsonb,jsonb)"
             cur.execute("select has_function_privilege('anon', %s, 'EXECUTE')", (signature,))
             if cur.fetchone()[0]:
                 raise RuntimeError("anon conserva EXECUTE")
@@ -113,7 +97,7 @@ def main() -> int:
             with conn.transaction():
                 with conn.cursor() as cur:
                     before = counts(cur)
-                    result = call_import(cur, package, package_sha, policy)
+                    result = call_import(cur, payload)
                     inside = counts(cur)
                     assert result["references"] == EXPECTED["references"]
                     assert inside == {
@@ -151,7 +135,7 @@ def main() -> int:
 
         with conn.transaction():
             with conn.cursor() as cur:
-                call_import(cur, package, package_sha, policy)
+                call_import(cur, payload)
         with conn.cursor() as cur:
             committed = counts(cur)
             assert committed == {
@@ -164,7 +148,7 @@ def main() -> int:
 
         with conn.transaction():
             with conn.cursor() as cur:
-                call_import(cur, package, package_sha, policy)
+                call_import(cur, payload)
         with conn.cursor() as cur:
             rerun = counts(cur)
             assert rerun == committed, (committed, rerun)
@@ -178,6 +162,7 @@ def main() -> int:
         "idempotency": "passed",
         "committed_counts": committed,
         "package_sha256": package_sha,
+        "payload_sha256": payload["payload_sha256"],
     }, ensure_ascii=False, indent=2))
     return 0
 
