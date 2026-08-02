@@ -16,6 +16,8 @@ const CONTENT_KIND_LABELS = {
   inference: 'Inferencia identificada',
 } as const
 
+const CONTEXT_BUTTON_CLASS = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-center font-sans text-sm font-bold leading-none'
+
 function exampleHref(pasaje: string, from?: string) {
   const params = new URLSearchParams({ pasaje })
   if (from === 'pastoral') params.set('from', 'pastoral')
@@ -60,11 +62,11 @@ export default async function ContextoHistoricoVerificado({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link href={exampleHref('Romanos 8:28', from)} className="inline-flex min-h-10 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-900">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <Link href={exampleHref('Romanos 8:28', from)} className={`${CONTEXT_BUTTON_CLASS} border border-amber-200 bg-amber-50 text-amber-900`}>
             Ver ejemplo: Romanos 8:28
           </Link>
-          <Link href={exampleHref('Hechos 28:16', from)} className="inline-flex min-h-10 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-900">
+          <Link href={exampleHref('Hechos 28:16', from)} className={`${CONTEXT_BUTTON_CLASS} border border-amber-200 bg-amber-50 text-amber-900`}>
             Ver ejemplo: Hechos 28:16
           </Link>
         </div>
@@ -111,16 +113,21 @@ export default async function ContextoHistoricoVerificado({
             <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-3">
               <div className="flex items-start gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
-                <div className="min-w-0 text-[11px] leading-5 text-slate-600">
+                <div className="min-w-0 flex-1 text-[11px] leading-5 text-slate-600">
                   <p className="font-semibold text-slate-800">{fragment.source.name}</p>
                   <p>{fragment.source.attribution}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-white px-2 py-0.5 font-semibold ring-1 ring-slate-200">
                       {licenseLabel(fragment.source.licenseUrl)}
                     </span>
-                    <a href={fragment.sourceLocator} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 font-semibold text-amber-800 hover:bg-amber-50">
+                    <a
+                      href={fragment.sourceLocator}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`${CONTEXT_BUTTON_CLASS} w-full text-amber-800 hover:bg-amber-50 sm:w-auto`}
+                    >
                       Abrir registro de la fuente
-                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                     </a>
                   </div>
                 </div>
