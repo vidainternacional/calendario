@@ -1,6 +1,17 @@
 -- FASE D · Bloque 4
 -- Conserva una partición canónica sin solapamientos: Joel 1 y Joel 2–3.
 
+update public.biblical_context_units
+set enabled = false,
+    review_status = 'rejected',
+    metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
+      'disabled_reason', 'overlapping_noncanonical_scope',
+      'replaced_by', jsonb_build_array('joel-1','joel-2-3'),
+      'disabled_at', now()
+    ),
+    updated_at = now()
+where slug in ('joel-1-2-crisis-retorno','joel-2-3-espiritu-naciones');
+
 select internal.import_biblical_context_batch(
   'profetas-menores',
   'profetas-menores-v1-2026-08-02',
@@ -24,14 +35,3 @@ select internal.import_biblical_context_batch(
     {"code":"JOL","slug":"joel-2-3","start":2,"end":3,"title":"Retorno, Espíritu y justicia entre naciones","summary":"El llamado a volver de corazón conduce a restauración, al Espíritu sobre toda carne y a una visión de justicia por la violencia ejercida contra pueblos vulnerables.","intent":"Unir arrepentimiento sincero, participación amplia y esperanza de que la violencia no tendrá la última palabra.","cautions":"La profecía no autoriza afirmaciones personales infalibles ni la identificación automática de crisis modernas con el día de YHWH.","terms":["retorno","Espíritu","toda carne","Sion","justicia"],"reflection":"","groups":[],"places":[]}
   ]$sections$::jsonb
 );
-
-update public.biblical_context_units
-set enabled = false,
-    review_status = 'rejected',
-    metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
-      'disabled_reason', 'overlapping_noncanonical_scope',
-      'replaced_by', jsonb_build_array('joel-1','joel-2-3'),
-      'disabled_at', now()
-    ),
-    updated_at = now()
-where slug in ('joel-1-2-crisis-retorno','joel-2-3-espiritu-naciones');
