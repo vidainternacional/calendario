@@ -33,7 +33,16 @@ begin
   );
 
   execute format(
-    'create or replace function internal.import_stepbible_tagnt_book(text,text,integer,integer,integer,text,text,text) returns jsonb language plpgsql security definer set search_path=public,extensions,internal,pg_temp as %L',
+    'create or replace function internal.import_stepbible_tagnt_book(
+      p_step_code text,
+      p_book_code text,
+      p_expected_references integer,
+      p_expected_base_words integer,
+      p_expected_variant_rows integer,
+      p_artifact_sha256 text,
+      p_source_url text,
+      p_source_file_sha256 text
+    ) returns jsonb language plpgsql security definer set search_path=public,extensions,internal,pg_temp as %L',
     body
   );
 end
