@@ -6,6 +6,7 @@ on:
       - "scripts/stepbible/extract_nt_corpus.py"
       - ".github/workflows/validate-stepbible-nt-corpus.yml"
       - "docs/FASE_D_IMPORTACION_TEXTUAL_NT.md"
+      - "docs/FASE_D_IMPORTACION_TEXTUAL_NT_CHECKLIST.md"
   workflow_dispatch:
 
 permissions:
@@ -41,11 +42,26 @@ jobs:
           path = Path("artifacts/stepbible-nt/manifest.json")
           data = json.loads(path.read_text(encoding="utf-8"))
           totals = data["totals"]
+
           assert totals["books"] == 27, totals
-          assert totals["verses"] == 7957, totals
+          assert totals["verses"] == 7958, totals
+          assert totals["versification_books"] == 3, totals
           assert len(data["books"]) == 27
+          assert sum(item["app_verse_count"] for item in data["books"]) == 7957
           assert all(item["artifact_sha256"] for item in data["books"])
           assert all(item["base_words"] > 0 for item in data["books"])
+
+          mapped = {
+              item["step_code"]: (item["source_verse_count"], item["app_verse_count"])
+              for item in data["books"]
+              if item["versification_mapping_required"]
+          }
+          assert mapped == {
+              "2Co": (256, 257),
+              "3Jn": (15, 14),
+              "Rev": (405, 404),
+          }, mapped
+
           print(json.dumps(totals, ensure_ascii=False, indent=2))
           PY
 
