@@ -116,6 +116,10 @@ function mergeEditions(
       ? editions.reduce((total, edition) => total + Number(edition.tokenCount), 0)
       : null,
     analysisStatus: mergeAnalysisStatus(editions),
+    baseEdition: Array.from(new Set(
+      editions.map(edition => edition.baseEdition).filter((value): value is string => Boolean(value))
+    )).join(' + ') || null,
+    usesFallbackEdition: editions.some(edition => edition.usesFallbackEdition),
     sourceLocator: editions.map(edition => edition.sourceLocator).join(' | '),
     providerVersion: joinNullable(
       Array.from(new Set(editions.map(edition => edition.providerVersion))),

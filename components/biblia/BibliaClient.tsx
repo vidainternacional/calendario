@@ -26,6 +26,7 @@ import {
 import { toggleFavorito, favoritosDelCapitulo } from '@/app/actions/biblia'
 import { agregarVersiculoAlProyecto } from '@/app/actions/pastoral-proyecto-versiculos'
 import BibleHistoricalContextPanel from '@/components/biblia/BibleHistoricalContextPanel'
+import BibleTextualStudyPanel from '@/components/biblia/BibleTextualStudyPanel'
 import BibleNotesWorkspace from '@/components/biblia/BibleNotesWorkspace'
 import { getBookAuthorship } from '@/lib/biblia/book-authorship'
 import { OPEN_BIBLE_VOICE_SETTINGS_EVENT } from '@/lib/biblia/voice-events'
@@ -446,6 +447,7 @@ export default function BibliaClient({
               </p>
             </div>
             <BibleHistoricalContextPanel pasaje={pasajeEstudio} modo={esPastoral ? 'claro' : modoLectura} />
+            <BibleTextualStudyPanel pasaje={pasajeEstudio} translationId={trad} modo={esPastoral ? 'claro' : modoLectura} />
             <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(pasajeEstudio)}`} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white">
               <Sparkles className="h-4 w-4" />
               Abrir estudio profundo

@@ -64,6 +64,8 @@ export type BiblicalTextualEdition = {
   textDirection: 'ltr' | 'rtl'
   tokenCount: number | null
   analysisStatus: 'partial' | 'complete' | 'verified'
+  baseEdition: string | null
+  usesFallbackEdition: boolean
   sourceLocator: string
   providerVersion: string | null
   contentHash: string
@@ -96,6 +98,7 @@ type VerseTextRow = {
   text_direction: 'ltr' | 'rtl'
   token_count: number | null
   analysis_status: 'partial' | 'complete' | 'verified'
+  metadata: Record<string, unknown> | null
   source_locator: string
   provider_version: string | null
   content_hash: string
@@ -307,6 +310,11 @@ async function loadEdition(
       textDirection: verseText.text_direction,
       tokenCount: verseText.token_count === null ? null : Number(verseText.token_count),
       analysisStatus: verseText.analysis_status,
+      baseEdition: typeof verseText.metadata?.base_edition === 'string'
+        ? verseText.metadata.base_edition
+        : null,
+      usesFallbackEdition: verseText.metadata?.uses_fallback_edition === true
+        || verseText.metadata?.uses_fallback_edition === 'true',
       sourceLocator: verseText.source_locator,
       providerVersion: verseText.provider_version,
       contentHash: verseText.content_hash,
@@ -359,7 +367,7 @@ export async function getInternalBiblicalTextualStudy(
 
   const { data, error } = await (supabase as any)
     .from('biblical_verse_texts')
-    .select('id, source_id, language, original_text, normalized_text, transliteration, literal_translation_es, text_direction, token_count, analysis_status, source_locator, provider_version, content_hash')
+    .select('id, source_id, language, original_text, normalized_text, transliteration, literal_translation_es, text_direction, token_count, analysis_status, metadata, source_locator, provider_version, content_hash')
     .eq('book_code', reference.book.code)
     .eq('chapter', reference.chapter)
     .eq('verse', reference.verse)
