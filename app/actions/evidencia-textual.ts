@@ -2,6 +2,7 @@
 
 import { getResolvedBiblicalTextualStudy } from '@/lib/estudios/resolved-biblical-textual-study'
 
+// La evidencia se recupera únicamente desde fuentes internas aprobadas en el servidor.
 export async function cargarEvidenciaTextualBiblica(
   pasaje: string,
   translationId = 'spa_r09'
