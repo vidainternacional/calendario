@@ -1,0 +1,65 @@
+name: Validar compatibilidad de Obadías con Supabase
+
+on:
+  push:
+    branches:
+      - fase-d/compatibilidad-obadias-supabase
+    paths:
+      - "scripts/stepbible/audit_obadiah_model.py"
+      - "scripts/stepbible/extract_ot_book.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - ".github/workflows/validate-obadiah-supabase-compatibility.yml"
+      - "docs/FASE_D_COMPATIBILIDAD_OBADIAS_SUPABASE.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/audit_obadiah_model.py"
+      - "scripts/stepbible/extract_ot_book.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - ".github/workflows/validate-obadiah-supabase-compatibility.yml"
+      - "docs/FASE_D_COMPATIBILIDAD_OBADIAS_SUPABASE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: validate-obadiah-supabase-compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generar paquete reproducible
+        run: python scripts/stepbible/extract_ot_book.py --book Oba --output artifacts/stepbible-obadiah
+
+      - name: Auditar compatibilidad del modelo
+        run: |
+          python scripts/stepbible/audit_obadiah_model.py \
+            artifacts/stepbible-obadiah/oba.json.gz \
+            --output artifacts/obadiah-compatibility
+
+      - name: Mostrar resultados
+        run: |
+          cat artifacts/stepbible-obadiah/audit.md
+          printf '\n'
+          cat artifacts/obadiah-compatibility/compatibility.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obadiah-supabase-compatibility
+          path: |
+            artifacts/stepbible-obadiah/manifest.json
+            artifacts/stepbible-obadiah/audit.md
+            artifacts/obadiah-compatibility
+          if-no-files-found: error
+          retention-days: 14
