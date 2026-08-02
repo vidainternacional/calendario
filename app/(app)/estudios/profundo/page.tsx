@@ -1,24 +1,31 @@
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import {
+  ArrowLeft,
+  BookOpen,
+  BookOpenCheck,
+  ChevronDown,
+  Database,
+  Landmark,
+  ShieldCheck,
+} from 'lucide-react'
 import EstudioProfundoClient from '@/components/estudios/EstudioProfundoClient'
 import FuentesBiblicasAprobadas from '@/components/estudios/FuentesBiblicasAprobadas'
+import BibliotecaBiblicaVerificada from '@/components/estudios/BibliotecaBiblicaVerificada'
 import ContextoHistoricoVerificado from '@/components/estudios/ContextoHistoricoVerificado'
-import { ArrowLeft, BookOpen, Languages, History, Sparkles, ShieldCheck } from 'lucide-react'
-import Link from 'next/link'
+import MetodologiaEstudioProfundo from '@/components/estudios/MetodologiaEstudioProfundo'
 
 export const metadata: Metadata = {
-  title: 'Estudio Profundo (IA)',
+  title: 'Estudio Profundo',
 }
 
-const AREAS = [
-  { icon: Languages, title: 'Texto y lenguaje', text: 'Texto original, transliteración y traducciones.' },
-  { icon: History, title: 'Contexto histórico', text: 'Entorno cultural, religioso y social del pasaje.' },
-  { icon: BookOpen, title: 'Interpretación', text: 'Comparación de versiones y explicación coherente.' },
-  { icon: ShieldCheck, title: 'Lectura responsable', text: 'Qué comunica el texto y qué no debería atribuirse.' },
-]
-
-export default async function EstudioProfundoPage({ searchParams }: { searchParams: Promise<{ pasaje?: string; from?: string }> }) {
+export default async function EstudioProfundoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pasaje?: string; from?: string }>
+}) {
   const { pasaje, from } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,74 +38,82 @@ export default async function EstudioProfundoPage({ searchParams }: { searchPara
     <main className="mx-auto min-h-screen max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
       <Link
         href={desdePastoral ? '/pastoral' : '/estudios'}
-        className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+        className="mb-4 inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         {desdePastoral ? 'Volver al Panel Pastoral' : 'Volver a Estudios'}
       </Link>
 
-      <section className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#8f261d] via-[#C0392B] to-[#d65a4c] p-5 text-white shadow-lg sm:p-8">
-        <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
-        <div className="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-black/10" />
-        <div className="relative">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-white/70">Herramienta de estudio bíblico</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Estudio Profundo</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/85 sm:text-base">
-            Examina un pasaje desde su idioma original, contexto histórico, interpretación y aplicación espiritual.
-          </p>
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white/90">
-            <BookOpen className="h-4 w-4" />
-            Análisis organizado en 11 secciones
-          </div>
-        </div>
-      </section>
-
-      <section className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950" role="note">
-        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
+      <header className="mb-5 flex items-start gap-3 sm:mb-6">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#C0392B] text-white shadow-sm">
+          <BookOpen className="h-5 w-5" aria-hidden="true" />
+        </span>
         <div>
-          <h2 className="text-sm font-bold">Asistencia en revisión por fuentes</h2>
-          <p className="mt-1 text-xs leading-5 text-amber-800">
-            La IA ayuda a organizar el estudio, pero la capa de citas verificables todavía está en desarrollo. Contrasta los datos históricos y lingüísticos antes de enseñarlos o publicarlos.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Estudio Profundo</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+            Elija un pasaje y reciba una explicación clara de su texto, contexto, lenguaje, significado y reflexión espiritual.
           </p>
         </div>
-      </section>
-
-      <FuentesBiblicasAprobadas />
-
-      <ContextoHistoricoVerificado pasaje={pasaje} from={from} />
+      </header>
 
       <EstudioProfundoClient initialPasaje={pasaje ?? ''} />
 
-      <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="mb-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#C0392B]">Estructura del análisis</p>
-          <h2 className="mt-1 text-xl font-bold text-slate-900">Lo que incluye cada estudio</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Cada sección debe distinguir el texto, el contexto probable, la interpretación y la reflexión. Los datos sin respaldo suficiente deben indicarse como no verificados.
-          </p>
-        </div>
+      <details className="group mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <Database className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold text-slate-800">Información del estudio</span>
+              <span className="mt-0.5 block text-xs text-slate-400">Fuentes, evidencia y metodología</span>
+            </span>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {AREAS.map(({ icon: Icon, title, text }) => (
-            <article key={title} className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#C0392B] shadow-sm"><Icon className="h-5 w-5" /></span>
-              <div className="min-w-0"><h3 className="text-sm font-bold text-slate-800">{title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{text}</p></div>
-            </article>
-          ))}
-        </div>
+        <div className="space-y-2 border-t border-slate-100 bg-slate-50/60 p-3 sm:p-4">
+          <details className="group/item overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                <Landmark className="h-4 w-4 text-amber-700" aria-hidden="true" />
+                Evidencia del pasaje
+              </span>
+              <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open/item:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="border-t border-slate-100 p-3 sm:p-4">
+              <BibliotecaBiblicaVerificada pasaje={pasaje} from={from} />
+              <ContextoHistoricoVerificado pasaje={pasaje} from={from} />
+            </div>
+          </details>
 
-        <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white p-4">
-          <p className="text-sm font-semibold text-slate-700">Las 11 secciones del resultado</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {['Texto original', 'Transliteración', 'Traducción literal', 'Interpretación', 'Versiones', 'Contexto', 'Lingüística', 'Mensaje', 'Qué no significa', 'Explicación', 'Reflexión'].map((item, index) => (
-              <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">{index + 1}. {item}</span>
-            ))}
-          </div>
+          <details className="group/item overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                <BookOpenCheck className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+                Fuentes verificadas
+              </span>
+              <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open/item:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="border-t border-slate-100 p-3 sm:p-4">
+              <FuentesBiblicasAprobadas />
+            </div>
+          </details>
+
+          <details className="group/item overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                <ShieldCheck className="h-4 w-4 text-[#C0392B]" aria-hidden="true" />
+                Metodología y límites
+              </span>
+              <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open/item:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="border-t border-slate-100 p-3 sm:p-4">
+              <MetodologiaEstudioProfundo />
+            </div>
+          </details>
         </div>
-      </section>
+      </details>
     </main>
   )
 }

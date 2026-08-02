@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, Sparkles, ChevronRight, Video, FileText, Clock3 } from 'lucide-react'
+import { BookOpen, ChevronRight, Video, FileText, Clock3 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -19,10 +19,10 @@ export default async function EstudiosPage() {
   const recursos = [
     {
       href: '/estudios/profundo',
-      title: 'Estudio Profundo con IA',
-      description: 'Ingresa cualquier pasaje bíblico y recibe un análisis integral con contexto histórico, lenguas originales y hermenéutica.',
+      title: 'Estudio Profundo',
+      description: 'Elige un pasaje y recibe una explicación clara de su texto, contexto, lenguaje, significado y reflexión espiritual.',
       action: 'Comenzar estudio',
-      icon: Sparkles,
+      icon: BookOpen,
       iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
       hoverClass: 'hover:border-[#C0392B]/30',
       arrowClass: 'group-hover:text-[#C0392B]',
@@ -74,7 +74,7 @@ export default async function EstudiosPage() {
           <Link
             key={href}
             href={href}
-            className={`group relative flex min-h-[148px] items-center gap-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] sm:p-6 ${hoverClass}`}
+            className={`group relative flex min-h-[138px] items-center gap-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] sm:p-6 ${hoverClass}`}
           >
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
               <Icon className="h-6 w-6" aria-hidden="true" />
