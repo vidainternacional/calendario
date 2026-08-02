@@ -4,7 +4,6 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import BibliaClient from '@/components/biblia/BibliaClient'
-import BibleBookAuthorship from '@/components/biblia/BibleBookAuthorship'
 import BibliaVoiceControl from '@/components/biblia/BibliaVoiceControl'
 import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmptyEnhancer'
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
@@ -13,7 +12,6 @@ import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 import './biblia.css'
 import './biblia-first-paint.css'
-import './biblia-compare-fix.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
@@ -62,7 +60,6 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
       )}
 
       {esProyectoPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
-      {!estaEmbebida && <BibleBookAuthorship />}
       <BibliaClient />
       <BibliaVoiceControl />
       <BibliaFavoritesEmptyEnhancer />
