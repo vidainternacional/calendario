@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import EstudioProfundoClient from '@/components/estudios/EstudioProfundoClient'
 import FuentesBiblicasAprobadas from '@/components/estudios/FuentesBiblicasAprobadas'
+import BibliotecaBiblicaVerificada from '@/components/estudios/BibliotecaBiblicaVerificada'
 import ContextoHistoricoVerificado from '@/components/estudios/ContextoHistoricoVerificado'
 import MetodologiaEstudioProfundo from '@/components/estudios/MetodologiaEstudioProfundo'
 import { ArrowLeft, BookOpen, Database, History, Languages, ShieldCheck } from 'lucide-react'
@@ -70,6 +71,8 @@ export default async function EstudioProfundoPage({ searchParams }: { searchPara
       <MetodologiaEstudioProfundo />
 
       <FuentesBiblicasAprobadas />
+
+      <BibliotecaBiblicaVerificada pasaje={pasaje} from={from} />
 
       <ContextoHistoricoVerificado pasaje={pasaje} from={from} />
 
