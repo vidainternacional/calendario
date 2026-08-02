@@ -7,12 +7,6 @@
   text-size-adjust: 100%;
 }
 
-label:has(> span > select[aria-label="Versión"]) > span:last-child,
-label:has(> span > select[aria-label="Biblia 1"]) > span:last-child,
-label:has(> span > select[aria-label="Biblia 2"]) > span:last-child {
-  display: none;
-}
-
 select[aria-label="Libro de la Biblia"],
 select[aria-label="Capítulo"],
 select[aria-label="Versículo"] {
