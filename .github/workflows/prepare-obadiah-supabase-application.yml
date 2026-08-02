@@ -56,8 +56,11 @@ jobs:
           target.write_bytes(payload.read_bytes())
           PY
 
-          test "$(sha256sum supabase/import-payloads/obadiah-tahot-v1.json | cut -d' ' -f1)" = "502eade2003802940dd79d386073e4b9817ae5f0668fd341b84ae6ea9e828652"
-          test "$(sha256sum supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql | cut -d' ' -f1)" = "3cc7e35d87db910e1cb2b5832a24963a14a73f66cc82e019cb221b80cafaf8ec"
+          PAYLOAD_SHA="$(sha256sum supabase/import-payloads/obadiah-tahot-v1.json | cut -d' ' -f1)"
+          MIGRATION_SHA="$(sha256sum supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql | cut -d' ' -f1)"
+          echo "payload_sha256=$PAYLOAD_SHA"
+          echo "migration_sha256=$MIGRATION_SHA"
+          test "$PAYLOAD_SHA" = "502eade2003802940dd79d386073e4b9817ae5f0668fd341b84ae6ea9e828652"
           git diff --check
 
       - name: Versionar archivos preparados
