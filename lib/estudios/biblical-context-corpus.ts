@@ -155,7 +155,7 @@ async function listApprovedBooks(): Promise<BiblicalBook[]> {
     return []
   }
 
-  return (data ?? []).map((row: BookRow) => mapBook(row))
+  return ((data ?? []) as BookRow[]).map(mapBook)
 }
 
 export async function parseInternalBibleReference(rawQuery: string): Promise<ParsedBibleReference | null> {
@@ -218,11 +218,11 @@ export async function getInternalBiblicalContext(rawQuery: string): Promise<Bibl
     return null
   }
 
-  const units = (data ?? []).map((row: ContextRow) => mapContext(row))
-  const bookProfile = units.find(unit => unit.scopeKind === 'book') ?? null
+  const units: BiblicalContextUnit[] = ((data ?? []) as ContextRow[]).map(mapContext)
+  const bookProfile = units.find((unit: BiblicalContextUnit) => unit.scopeKind === 'book') ?? null
   const sectionContext = units
-    .filter(unit => unit.scopeKind !== 'book')
-    .sort((a, b) => {
+    .filter((unit: BiblicalContextUnit) => unit.scopeKind !== 'book')
+    .sort((a: BiblicalContextUnit, b: BiblicalContextUnit) => {
       const scopePriority = (value: BiblicalContextUnit) => value.scopeKind === 'chapter' ? 0 : 1
       return scopePriority(a) - scopePriority(b)
         || (a.chapterEnd - a.chapterStart) - (b.chapterEnd - b.chapterStart)
