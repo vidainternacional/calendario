@@ -1,6 +1,30 @@
-/* Corrección aislada: ocultar únicamente el selector nativo heredado de
-   Biblia 2. Los dos selectores dentro del bloque superior permanecen visibles. */
+/* Oculta únicamente el selector heredado de Biblia 2. */
 div.p-5 > label:has(> select[aria-label="Biblia 2 para comparar"]),
 div.sm\:p-7 > label:has(> select[aria-label="Biblia 2 para comparar"]) {
   display: none !important;
+}
+
+/* El bloque comparativo debe ser legible en pantallas estrechas. */
+[data-vida-dual-selector] {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0.75rem !important;
+}
+
+[data-vida-dual-selector] label,
+[data-vida-dual-selector] select {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+[data-vida-dual-selector] select {
+  min-height: 3rem !important;
+  padding-inline: 0.875rem 2rem !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.25rem !important;
+}
+
+@media (min-width: 540px) {
+  [data-vida-dual-selector] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
