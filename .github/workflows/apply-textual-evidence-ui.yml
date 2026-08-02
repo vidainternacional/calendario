@@ -1,0 +1,83 @@
+name: Apply textual evidence UI patch
+
+on:
+  push:
+    branches:
+      - fase-d/visualizacion-textual-piloto
+    paths:
+      - .github/workflows/apply-textual-evidence-ui.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fase-d/visualizacion-textual-piloto
+          fetch-depth: 0
+
+      - name: Integrate textual evidence panel
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('components/estudios/EstudioProfundoClient.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          import_marker = "} from '@/app/actions/estudio-interno'\n"
+          import_line = "import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'\n"
+          if import_line not in text:
+              if text.count(import_marker) != 1:
+                  raise SystemExit('No se encontró un único marcador de importación')
+              text = text.replace(import_marker, import_marker + import_line, 1)
+
+          old_sections = """    return SECTIONS.filter(section => Boolean(state.resultado[section.key]))
+"""
+          new_sections = """    const replacedByTextualEvidence: Array<keyof EstudioResultado> = state.textualEvidence
+      ? ['texto_original', 'transliteracion', 'traduccion_literal']
+      : []
+    return SECTIONS.filter(section =>
+      Boolean(state.resultado[section.key]) && !replacedByTextualEvidence.includes(section.key)
+    )
+"""
+          if old_sections in text:
+              text = text.replace(old_sections, new_sections, 1)
+          elif new_sections not in text:
+              raise SystemExit('No se encontró el bloque de secciones esperado')
+
+          old_render = """          </header>
+
+          <div className=\"divide-y divide-slate-100\">
+"""
+          new_render = """          </header>
+
+          {state.textualEvidence && <TextualEvidencePanel evidence={state.textualEvidence} />}
+
+          <div className=\"divide-y divide-slate-100\">
+"""
+          if old_render in text:
+              text = text.replace(old_render, new_render, 1)
+          elif new_render not in text:
+              raise SystemExit('No se encontró el punto de montaje del panel')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+
+      - name: Commit client integration
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add components/estudios/EstudioProfundoClient.tsx
+          git commit -m "feat(fase-d): integrar panel textual en estudio profundo"
+          git push origin HEAD:fase-d/visualizacion-textual-piloto
