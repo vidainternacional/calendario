@@ -8,8 +8,10 @@ import {
   type BiblicalContextBundle,
   type BiblicalContextUnit,
 } from '@/lib/estudios/biblical-context-corpus'
-import type { BiblicalTextualStudyBundle } from '@/lib/estudios/biblical-textual-study'
-import { getResolvedBiblicalTextualStudy } from '@/lib/estudios/resolved-biblical-textual-study'
+import {
+  getResolvedBiblicalTextualStudy,
+  type ResolvedBiblicalTextualStudyBundle,
+} from '@/lib/estudios/resolved-biblical-textual-study'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -27,7 +29,7 @@ export type EstudioState =
       query: string
       pasaje: string
       resultado: EstudioResultado
-      textualEvidence?: BiblicalTextualStudyBundle
+      textualEvidence?: ResolvedBiblicalTextualStudyBundle
     }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
   | { status: 'error'; error: string }

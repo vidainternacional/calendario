@@ -26,6 +26,7 @@ import {
   type EstudioResultado,
   type EstudioState,
 } from '@/app/actions/estudio-interno'
+import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'
 
 const SECTIONS: { key: keyof EstudioResultado; label: string }[] = [
   { key: 'texto_original', label: '1. Texto original' },
@@ -68,7 +69,12 @@ export default function EstudioProfundoClient({
 
   const sectionsWithContent = useMemo(() => {
     if (state.status !== 'success' || state.kind !== 'study') return []
-    return SECTIONS.filter(section => Boolean(state.resultado[section.key]))
+    const replacedByTextualEvidence: Array<keyof EstudioResultado> = state.textualEvidence
+      ? ['texto_original', 'transliteracion', 'traduccion_literal']
+      : []
+    return SECTIONS.filter(section =>
+      Boolean(state.resultado[section.key]) && !replacedByTextualEvidence.includes(section.key)
+    )
   }, [state])
 
   useEffect(() => {
@@ -233,6 +239,8 @@ export default function EstudioProfundoClient({
               </div>
             </div>
           </header>
+
+          {state.textualEvidence && <TextualEvidencePanel evidence={state.textualEvidence} />}
 
           <div className="divide-y divide-slate-100">
             {sectionsWithContent.map(section => {
