@@ -23,13 +23,13 @@ SOURCES = [
         "key": "tahot-gen-deu",
         "file": "TAHOT Gen-Deu - Translators Amalgamated Hebrew OT - STEPBible.org CC BY.txt",
         "books": "Gen Exo Lev Num Deu".split(),
-        "sha256": None,
+        "sha256": "e9b8546ee48fe0bfc57c3b70f5f40e98d96580e803526d19026224e31753368b",
     },
     {
         "key": "tahot-jos-est",
         "file": "TAHOT Jos-Est - Translators Amalgamated Hebrew OT - STEPBible.org CC BY.txt",
         "books": "Jos Jdg Rut 1Sa 2Sa 1Ki 2Ki 1Ch 2Ch Ezr Neh Est".split(),
-        "sha256": None,
+        "sha256": "195fee1dc3653bab33701f170734eb894ed647c10cd08cc61749375fe8b73775",
     },
     {
         "key": "tahot-job-sng",
@@ -41,7 +41,7 @@ SOURCES = [
         "key": "tahot-isa-mal",
         "file": "TAHOT Isa-Mal - Translators Amalgamated Hebrew OT - STEPBible.org CC BY.txt",
         "books": "Isa Jer Lam Ezk Dan Hos Jol Amo Oba Jon Mic Nam Hab Zep Hag Zec Mal".split(),
-        "sha256": None,
+        "sha256": "f3ded203d2a74d6368932c97ae550d1d0754b271af491dc0dedf36fe3ba0bcc5",
     },
 ]
 

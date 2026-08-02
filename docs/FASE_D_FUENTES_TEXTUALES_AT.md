@@ -65,6 +65,22 @@ El archivo Job–Cantares ya fue validado durante el piloto de Salmos 23:1:
 
 La ejecución completa fijará también los hashes de Génesis–Deuteronomio, Josué–Ester e Isaías–Malaquías.
 
+## Resultado automatizado confirmado
+
+La inspección completa aprobó:
+
+- 4 archivos;
+- 39 libros;
+- 23,261 referencias distintas de la fuente;
+- 305,652 filas con referencia explícita;
+- 46,517 filas continuadas;
+- 23,257 cabeceras repetidas `Eng (Heb) Ref & Type`;
+- 283 filas de preámbulo;
+- 70,208,423 bytes descargados;
+- los cuatro hashes SHA-256 fijados en el inspector.
+
+La evidencia detallada está en `docs/FASE_D_VALIDACION_FUENTES_TAHOT.md`.
+
 ## Validaciones siguientes
 
 Después de aprobar esta inspección se realizará, en bloques separados:
