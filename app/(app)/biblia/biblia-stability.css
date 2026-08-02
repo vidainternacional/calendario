@@ -14,14 +14,30 @@ select[aria-label="Versículo"] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: inherit;
   font-size: 16px;
-  line-height: 1.2;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-align-last: center;
+}
+
+label > span:has(select[aria-label="Versión"]),
+label > span:has(select[aria-label="Biblia 1"]),
+label > span:has(select[aria-label="Biblia 2"]) {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 select[aria-label="Versión"],
 select[aria-label="Biblia 1"],
 select[aria-label="Biblia 2"] {
+  font-family: inherit;
   font-size: 16px;
+  font-weight: 700;
 }
 
 /* Impide que restos de mejoras antiguas vuelvan a competir con React
