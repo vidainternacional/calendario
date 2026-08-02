@@ -60,9 +60,10 @@ El paquete de Obadías produce:
 - 103 prefijos;
 - 40 sufijos;
 - 21 textos completos de versículo;
-- 2 variantes estructurables;
+- 2 filas fuente con variantes;
+- 3 variantes estructurables;
 - índice fuente máximo: 21;
-- máximo de morfemas dentro de una palabra: compatible con `smallint`;
+- máximo de morfemas por palabra: 3;
 - claves `(capítulo, versículo, palabra, morfema)` únicas;
 - 0 identificadores léxicos fuera del formato permitido;
 - 0 números Strong derivados fuera del formato permitido;
@@ -172,10 +173,11 @@ Se crearán 21 filas:
 
 Compatible sin cambios de esquema.
 
-Se crearán dos variantes:
+Las dos filas fuente con variantes generan tres registros:
 
 1. Obadías 1:8: `orthographic`;
-2. Obadías 1:11: `substitution`, con Qere como lectura base y Ketiv como lectura variante.
+2. Obadías 1:11: `substitution`, con Qere como lectura base y Ketiv como lectura variante;
+3. Obadías 1:11: `orthographic`, conservando la forma de Leningrado con letras Ketiv y vocalización Qere.
 
 Las columnas actuales permiten conservar:
 
@@ -243,7 +245,7 @@ La futura migración debe ejecutarse en una sola transacción y cancelar todo si
 - 291 palabras visibles;
 - 434 ocurrencias morfológicas;
 - 184 identificadores léxicos utilizados;
-- 2 variantes;
+- 3 variantes estructuradas;
 - 0 hashes inválidos;
 - 0 claves duplicadas;
 - 0 idiomas desconocidos.
@@ -253,6 +255,10 @@ La futura migración debe ejecutarse en una sola transacción y cancelar todo si
 - paquete: `docs/FASE_D_PAQUETE_TAHOT_OBADIAS.md`;
 - reproducibilidad: `docs/FASE_D_REPRODUCIBILIDAD_OBADIAS.md`;
 - auditor: `scripts/stepbible/audit_obadiah_model.py`;
-- workflow: `.github/workflows/validate-obadiah-supabase-compatibility.yml`.
+- workflow: `.github/workflows/validate-obadiah-supabase-compatibility.yml`;
+- ejecución: `30770540464` — `success`;
+- commit auditado: `ffcd99e6e114c59fc485741286cd7f021d4d94ea`;
+- artefacto: `obadiah-supabase-compatibility`;
+- digest: `sha256:e34838bda5a4cdec516de65d892233ee4c3dd648d9373b1612e616fb3c2b111a`.
 
 El Bloque 4 continúa activo. Este documento no importa datos ni modifica producción.
