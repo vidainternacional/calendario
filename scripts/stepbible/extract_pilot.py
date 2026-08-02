@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Extrae únicamente Salmos 23:1 y Juan 3:16 desde archivos oficiales de STEPBible.
+"""Extrae y valida Salmos 23:1 y Juan 3:16 desde STEPBible.
 
 El script no importa datos ni modifica Supabase. Descarga las fuentes públicas,
-calcula sus hashes y genera un artefacto pequeño con las líneas coincidentes para
+calcula sus hashes, localiza las líneas exactas y genera datos estructurados para
 revisión editorial previa.
 """
 
@@ -12,6 +12,7 @@ import hashlib
 import json
 import re
 import sys
+import unicodedata
 import urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -27,6 +28,7 @@ class SourceSpec:
     language: str
     url: str
     patterns: tuple[str, ...]
+    expected_indexes: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -39,7 +41,7 @@ SOURCES = (
     SourceSpec(
         key="psalm-23-1",
         passage="Salmos 23:1",
-        language="hebreo",
+        language="hebrew",
         url=(
             "https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/"
             "Translators%20Amalgamated%20OT%2BNT/"
@@ -50,11 +52,12 @@ SOURCES = (
             r"\bPsa(?:lm)?[.\s:_-]*23[.\s:_-]+1(?:\b|[#.:_-])",
             r"\bPs[.\s:_-]*23[.\s:_-]+1(?:\b|[#.:_-])",
         ),
+        expected_indexes=(3, 4, 5, 6),
     ),
     SourceSpec(
         key="john-3-16",
         passage="Juan 3:16",
-        language="griego",
+        language="greek",
         url=(
             "https://raw.githubusercontent.com/STEPBible/STEPBible-Data/master/"
             "Translators%20Amalgamated%20OT%2BNT/"
@@ -65,8 +68,13 @@ SOURCES = (
             r"\bJhn[.\s:_-]*3[.\s:_-]+16(?:\b|[#.:_-])",
             r"\bJohn[.\s:_-]*3[.\s:_-]+16(?:\b|[#.:_-])",
         ),
+        expected_indexes=tuple(range(1, 27)),
     ),
 )
+
+
+def nfc(value: str) -> str:
+    return unicodedata.normalize("NFC", value.strip())
 
 
 def download(url: str) -> bytes:
@@ -89,6 +97,117 @@ def find_matches(text: str, patterns: Iterable[str]) -> list[Match]:
     return matches
 
 
+def parse_index(reference: str) -> int:
+    match = re.search(r"#(\d+)", reference)
+    if not match:
+        raise ValueError(f"Referencia sin índice de palabra: {reference}")
+    return int(match.group(1))
+
+
+def parse_hebrew(match: Match) -> dict[str, object]:
+    fields = match.text.split("\t")
+    if len(fields) < 9:
+        raise ValueError(f"Línea hebrea incompleta L{match.line_number}: {match.text}")
+
+    reference = fields[0]
+    lexical_id = fields[8].strip()
+    strong_match = re.search(r"H\d{4}", lexical_id or fields[4])
+    if not strong_match:
+        raise ValueError(f"Strong hebreo ausente L{match.line_number}")
+
+    lemma = ""
+    details = fields[-1]
+    if lexical_id:
+        lemma_match = re.search(re.escape(lexical_id) + r"=([^=}/]+)=", details)
+        if lemma_match:
+            lemma = nfc(lemma_match.group(1))
+
+    surface = nfc(fields[1].replace("\\", ""))
+    return {
+        "source_reference": reference,
+        "word_index": parse_index(reference),
+        "surface_form": surface,
+        "occurrence_transliteration": fields[2].strip(),
+        "source_gloss_en": fields[3].strip(),
+        "strong_expression": fields[4].strip(),
+        "strong_number": strong_match.group(0),
+        "morphology_code": fields[5].strip(),
+        "lexical_id": lexical_id,
+        "lemma": lemma,
+        "source_details": details.strip(),
+        "source_line": match.line_number,
+        "raw_line": match.text,
+    }
+
+
+def parse_greek_surface(value: str) -> tuple[str, str]:
+    match = re.match(r"^(.*?)\s+\(([^()]*)\)\s*$", value)
+    if not match:
+        raise ValueError(f"Forma griega sin transliteración reconocible: {value}")
+    return nfc(match.group(1)), match.group(2).strip()
+
+
+def parse_greek(match: Match) -> dict[str, object]:
+    fields = match.text.split("\t")
+    if len(fields) < 12:
+        raise ValueError(f"Línea griega incompleta L{match.line_number}: {match.text}")
+
+    reference = fields[0]
+    surface, transliteration = parse_greek_surface(fields[1])
+    strong_and_morph = fields[3].split("=", maxsplit=1)
+    if len(strong_and_morph) != 2:
+        raise ValueError(f"Strong/morfología griega inválida L{match.line_number}")
+    strong_number, morphology_code = strong_and_morph
+
+    lemma_field = fields[4].split("=", maxsplit=1)
+    lemma = nfc(lemma_field[0])
+    lemma_gloss = lemma_field[1].strip() if len(lemma_field) == 2 else ""
+
+    return {
+        "source_reference": reference,
+        "word_index": parse_index(reference),
+        "surface_form": surface,
+        "occurrence_transliteration": transliteration,
+        "source_gloss_en": fields[2].strip(),
+        "strong_number": strong_number.strip(),
+        "morphology_code": morphology_code.strip(),
+        "lemma": lemma,
+        "lemma_gloss_en": lemma_gloss,
+        "textual_witnesses": fields[5].strip(),
+        "variant_note": fields[7].strip(),
+        "source_gloss_es": fields[8].strip(),
+        "source_lemma_gloss": fields[9].strip(),
+        "source_word_link": fields[10].strip(),
+        "lexical_id": fields[11].strip(),
+        "source_line": match.line_number,
+        "raw_line": match.text,
+    }
+
+
+def parse_words(source: SourceSpec, matches: list[Match]) -> tuple[str, list[dict[str, object]]]:
+    headers = [match.text for match in matches if match.text.startswith("# ")]
+    detail_matches = [match for match in matches if not match.text.startswith("# ")]
+    if len(headers) != 1:
+        raise RuntimeError(
+            f"Se esperaba un encabezado para {source.passage}; encontrados: {len(headers)}"
+        )
+
+    parser = parse_hebrew if source.language == "hebrew" else parse_greek
+    words = [parser(match) for match in detail_matches]
+    words.sort(key=lambda word: int(word["word_index"]))
+
+    actual_indexes = tuple(int(word["word_index"]) for word in words)
+    if actual_indexes != source.expected_indexes:
+        raise RuntimeError(
+            f"Secuencia incompleta para {source.passage}: "
+            f"esperada {source.expected_indexes}, obtenida {actual_indexes}"
+        )
+    if len({word["word_index"] for word in words}) != len(words):
+        raise RuntimeError(f"Índices duplicados en {source.passage}")
+
+    return headers[0], words
+
+
 def summarize_match_count(source: SourceSpec, matches: list[Match]) -> None:
     if not matches:
         raise RuntimeError(
@@ -106,8 +225,8 @@ def write_markdown(results: list[dict[str, object]]) -> None:
     lines = [
         "# Validación piloto STEPBible",
         "",
-        "Este artefacto contiene únicamente las líneas fuente necesarias para revisar "
-        "Salmos 23:1 y Juan 3:16. No modifica la base de datos.",
+        "La validación comprueba continuidad de posiciones y estructura de cada palabra. "
+        "No modifica la base de datos.",
         "",
     ]
     for result in results:
@@ -119,14 +238,24 @@ def write_markdown(results: list[dict[str, object]]) -> None:
                 f"- Fuente: `{result['url']}`",
                 f"- SHA-256 del archivo: `{result['sha256']}`",
                 f"- Tamaño: {result['bytes']} bytes",
-                f"- Líneas encontradas: {result['match_count']}",
+                f"- Palabras validadas: {result['word_count']}",
+                f"- Posiciones: `{result['word_indexes']}`",
                 "",
-                "```text",
+                "| Posición | Forma | Transliteración | Lema | Strong | Morfología | Glosa fuente |",
+                "|---:|---|---|---|---|---|---|",
             ]
         )
-        for match in result["matches"]:  # type: ignore[index]
-            lines.append(f"L{match['line_number']}: {match['text']}")
-        lines.extend(["```", ""])
+        for word in result["words"]:  # type: ignore[index]
+            source_gloss = str(word.get("source_gloss_es") or word.get("source_gloss_en") or "")
+            lines.append(
+                "| {word_index} | {surface_form} | {occurrence_transliteration} | "
+                "{lemma} | {strong_number} | {morphology_code} | {gloss} |".format(
+                    **word,
+                    gloss=source_gloss.replace("|", "\\|"),
+                )
+            )
+        lines.extend(["", "### Línea de encabezado", "", "```text", str(result["header"]), "```", ""])
+
     (OUTPUT_DIR / "validation.md").write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -141,6 +270,7 @@ def main() -> int:
         text = raw.decode("utf-8-sig")
         matches = find_matches(text, source.patterns)
         summarize_match_count(source, matches)
+        header, words = parse_words(source, matches)
 
         result: dict[str, object] = {
             "key": source.key,
@@ -150,15 +280,21 @@ def main() -> int:
             "sha256": sha256,
             "bytes": len(raw),
             "match_count": len(matches),
-            "matches": [asdict(match) for match in matches],
+            "word_count": len(words),
+            "word_indexes": [word["word_index"] for word in words],
+            "header": header,
+            "words": words,
+            "raw_matches": [asdict(match) for match in matches],
         }
         results.append(result)
-        print(f"Encontradas {len(matches)} líneas para {source.passage}.", flush=True)
+        print(
+            f"Validada secuencia de {len(words)} palabras para {source.passage}.",
+            flush=True,
+        )
 
-    (OUTPUT_DIR / "validation.json").write_text(
-        json.dumps(results, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    payload = json.dumps(results, ensure_ascii=False, indent=2) + "\n"
+    (OUTPUT_DIR / "validation.json").write_text(payload, encoding="utf-8")
+    (OUTPUT_DIR / "structured.json").write_text(payload, encoding="utf-8")
     write_markdown(results)
     print(f"Artefactos escritos en {OUTPUT_DIR}", flush=True)
     return 0
