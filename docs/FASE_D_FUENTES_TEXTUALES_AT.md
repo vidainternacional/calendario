@@ -63,7 +63,7 @@ El archivo Job–Cantares ya fue validado durante el piloto de Salmos 23:1:
 
 `84e118a97e5725e3847cdfdd593873513021c790c63cc91a0d41fca2b5db2ed5`
 
-La ejecución completa fijará también los hashes de Génesis–Deuteronomio, Josué–Ester e Isaías–Malaquías.
+La ejecución completa fijó también los hashes de Génesis–Deuteronomio, Josué–Ester e Isaías–Malaquías.
 
 ## Resultado automatizado confirmado
 
@@ -78,6 +78,8 @@ La inspección completa aprobó:
 - 283 filas de preámbulo;
 - 70,208,423 bytes descargados;
 - los cuatro hashes SHA-256 fijados en el inspector.
+
+El workflow vuelve a descargar los cuatro archivos y cancela la ejecución si cualquiera de sus hashes difiere del valor aprobado.
 
 La evidencia detallada está en `docs/FASE_D_VALIDACION_FUENTES_TAHOT.md`.
 
