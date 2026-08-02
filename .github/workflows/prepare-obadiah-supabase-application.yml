@@ -1,0 +1,75 @@
+name: Preparar aplicación controlada de Obadías
+
+on:
+  push:
+    branches:
+      - fase-d/aplicar-obadias-supabase
+    paths:
+      - ".github/workflows/prepare-obadiah-supabase-application.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/prepare-obadiah-supabase-application.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fase-d/aplicar-obadias-supabase
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerar paquete y payload
+        run: |
+          python scripts/stepbible/extract_ot_book.py --book Oba --output artifacts/stepbible-obadiah
+          python scripts/stepbible/build_obadiah_import_payload.py \
+            artifacts/stepbible-obadiah/oba.json.gz \
+            --policy scripts/stepbible/obadiah_affix_lemma_policy.json \
+            --output artifacts/stepbible-obadiah/import-payload.json
+
+      - name: Preparar migración activa y payload fijado
+        run: |
+          mkdir -p supabase/migrations supabase/import-payloads
+          python - <<'PY'
+          from pathlib import Path
+          draft = Path('supabase/migration-drafts/20260802153000_importador_payload_tahot_obadias.sql')
+          active = Path('supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql')
+          text = draft.read_text(encoding='utf-8')
+          old = '-- BORRADOR NO ACTIVO. Vive fuera de supabase/migrations y no se aplica a producción.'
+          new = '-- MIGRACIÓN ACTIVA VALIDADA. Importador restringido a service_role.'
+          if text.count(old) != 1:
+              raise SystemExit('Encabezado del borrador inesperado')
+          active.write_text(text.replace(old, new, 1), encoding='utf-8')
+          payload = Path('artifacts/stepbible-obadiah/import-payload.json')
+          target = Path('supabase/import-payloads/obadiah-tahot-v1.json')
+          target.write_bytes(payload.read_bytes())
+          PY
+
+          test "$(sha256sum supabase/import-payloads/obadiah-tahot-v1.json | cut -d' ' -f1)" = "502eade2003802940dd79d386073e4b9817ae5f0668fd341b84ae6ea9e828652"
+          test "$(sha256sum supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql | cut -d' ' -f1)" = "3cc7e35d87db910e1cb2b5832a24963a14a73f66cc82e019cb221b80cafaf8ec"
+          git diff --check
+
+      - name: Versionar archivos preparados
+        run: |
+          if git diff --quiet -- supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql supabase/import-payloads/obadiah-tahot-v1.json; then
+            echo "Archivos ya preparados"
+            exit 0
+          fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql \
+            supabase/import-payloads/obadiah-tahot-v1.json
+          git commit -m "feat(fase-d): preparar migración activa de Obadías"
+          git push origin HEAD:fase-d/aplicar-obadias-supabase
