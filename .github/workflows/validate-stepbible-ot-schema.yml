@@ -8,8 +8,10 @@ on:
       - "scripts/stepbible/inspect_ot_schema.py"
       - "scripts/stepbible/inspect_ot_semantics.py"
       - "scripts/stepbible/inspect_ot_sources.py"
+      - "scripts/stepbible/tahot_schema.py"
       - ".github/workflows/validate-stepbible-ot-schema.yml"
       - "docs/FASE_D_ESQUEMA_TAHOT.md"
+      - "__VIDA_INTERNACIONAL.md"
   pull_request:
     branches:
       - main
@@ -17,8 +19,10 @@ on:
       - "scripts/stepbible/inspect_ot_schema.py"
       - "scripts/stepbible/inspect_ot_semantics.py"
       - "scripts/stepbible/inspect_ot_sources.py"
+      - "scripts/stepbible/tahot_schema.py"
       - ".github/workflows/validate-stepbible-ot-schema.yml"
       - "docs/FASE_D_ESQUEMA_TAHOT.md"
+      - "__VIDA_INTERNACIONAL.md"
   workflow_dispatch:
 
 permissions:
@@ -39,12 +43,13 @@ jobs:
         run: |
           python scripts/stepbible/inspect_ot_schema.py --self-test
           python scripts/stepbible/inspect_ot_semantics.py --self-test
+          python scripts/stepbible/tahot_schema.py --self-test
 
       - name: Inspeccionar encabezados y formas de fila
         run: python scripts/stepbible/inspect_ot_schema.py --output artifacts/stepbible-ot-schema --samples 5
 
       - name: Clasificar estados, lenguas y documentación
-        run: python scripts/stepbible/inspect_ot_semantics.py --output artifacts/stepbible-ot-schema --samples 4
+        run: python scripts/stepbible/inspect_ot_semantics.py --output artifacts/stepbible-ot-schema --samples 8
 
       - name: Mostrar resúmenes
         run: |
