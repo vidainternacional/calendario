@@ -8,6 +8,10 @@ import {
   type BiblicalContextBundle,
   type BiblicalContextUnit,
 } from '@/lib/estudios/biblical-context-corpus'
+import {
+  getInternalBiblicalTextualStudy,
+  type BiblicalTextualStudyBundle,
+} from '@/lib/estudios/biblical-textual-study'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -19,7 +23,14 @@ export type EstudioResultado = EstudioResultadoValidado
 
 export type EstudioState =
   | { status: 'idle' }
-  | { status: 'success'; kind: 'study'; query: string; pasaje: string; resultado: EstudioResultado }
+  | {
+      status: 'success'
+      kind: 'study'
+      query: string
+      pasaje: string
+      resultado: EstudioResultado
+      textualEvidence?: BiblicalTextualStudyBundle
+    }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
   | { status: 'error'; error: string }
 
@@ -118,6 +129,8 @@ export async function analizarPasaje(
     return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
   }
 
+  const textualEvidence = await getInternalBiblicalTextualStudy(query)
+
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
     return {
@@ -126,6 +139,7 @@ export async function analizarPasaje(
       query,
       pasaje: estudio.pasaje,
       resultado: estudio.resultado,
+      textualEvidence: textualEvidence ?? undefined,
     }
   }
 
@@ -137,6 +151,7 @@ export async function analizarPasaje(
       query,
       pasaje: contexto.reference.canonicalReference,
       resultado: ensamblarEstudioContextual(contexto),
+      textualEvidence: textualEvidence ?? undefined,
     }
   }
 
