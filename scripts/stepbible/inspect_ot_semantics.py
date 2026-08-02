@@ -17,13 +17,16 @@ KEYWORDS = (
     "hebrew",
     "ketiv",
     "kethiv",
-    "meaning variants",
+    "meaning variant",
     "qere",
     "qeri",
     "read",
-    "spelling variants",
-    "type",
+    "spelling variant",
+    "text type",
     "written",
+    "conjoin word",
+    "expanded strong",
+    "alt strong",
 )
 
 
@@ -33,10 +36,10 @@ def suffix_family(suffix: str) -> str:
     if suffix.startswith("=Q("):
         return "qere_with_ketiv"
     if suffix == "=R":
-        return "r"
+        return "restored"
     if suffix == "=X":
-        return "x"
-    if suffix.startswith("=L") or suffix.startswith("=LA"):
+        return "lxx_addition"
+    if suffix.startswith("=L"):
         return "l_with_annotation"
     if suffix:
         return "other"
@@ -76,19 +79,23 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
     suffix_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
     grammar_languages: Counter[str] = Counter()
     grammar_prefix_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    blank_separator_rows = 0
-    empty_first_nonblank_rows = 0
-    empty_first_nonblank_patterns: Counter[str] = Counter()
-    empty_first_nonblank_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    placeholder_rows: list[dict[str, Any]] = []
+    preamble_blank_rows = 0
+    preamble_tabular_rows = 0
+    preamble_tabular_patterns: Counter[str] = Counter()
+    preamble_tabular_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    data_blank_separator_rows = 0
+    post_data_empty_first_nonblank_rows = 0
+    post_data_empty_first_nonblank_samples: list[dict[str, Any]] = []
     reserved_nonempty: Counter[int] = Counter()
 
     for line_number, line in enumerate(text.splitlines(), 1):
         if not first_data_seen:
             lower = line.lower()
             if line.strip() and len(preamble_lines) < 120:
-                preamble_lines.append({"line": line_number, "text": clipped(line, 300)})
+                preamble_lines.append({"line": line_number, "text": clipped(line, 500)})
             if any(keyword in lower for keyword in KEYWORDS) and len(keyword_lines) < 120:
-                keyword_lines.append({"line": line_number, "text": clipped(line, 500)})
+                keyword_lines.append({"line": line_number, "text": clipped(line, 700)})
 
         if not line or line.startswith("#") or "\t" not in line:
             continue
@@ -107,22 +114,17 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
             exact_suffixes[suffix] += 1
             family = suffix_family(suffix)
             suffix_families[family] += 1
+            row_sample = sample_payload(line_number, fields, headers)
             if len(suffix_samples[suffix]) < sample_limit:
-                suffix_samples[suffix].append(sample_payload(line_number, fields, headers))
+                suffix_samples[suffix].append(row_sample)
 
             grammar = fields[5].strip() if len(fields) > 5 else ""
             language = grammar[:1] if grammar[:1] in {"H", "A"} else "other"
             grammar_languages[language] += 1
             if len(grammar_prefix_samples[language]) < sample_limit:
-                grammar_prefix_samples[language].append(
-                    {
-                        "line": line_number,
-                        "reference": first,
-                        "grammar": grammar,
-                        "hebrew": fields[1] if len(fields) > 1 else "",
-                        "translation": fields[3] if len(fields) > 3 else "",
-                    }
-                )
+                grammar_prefix_samples[language].append(row_sample)
+            if language == "other" and len(placeholder_rows) < 30:
+                placeholder_rows.append(row_sample)
 
             for index, value in enumerate(fields[12:], 13):
                 if value != "":
@@ -130,14 +132,24 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
             continue
 
         if first == "":
-            if all(value == "" for value in fields):
-                blank_separator_rows += 1
+            is_blank = all(value == "" for value in fields)
+            if not first_data_seen:
+                if is_blank:
+                    preamble_blank_rows += 1
+                else:
+                    preamble_tabular_rows += 1
+                    pattern = non_empty_pattern(fields)
+                    preamble_tabular_patterns[pattern] += 1
+                    if len(preamble_tabular_samples[pattern]) < sample_limit:
+                        preamble_tabular_samples[pattern].append(
+                            sample_payload(line_number, fields, headers)
+                        )
+            elif is_blank:
+                data_blank_separator_rows += 1
             else:
-                empty_first_nonblank_rows += 1
-                pattern = non_empty_pattern(fields)
-                empty_first_nonblank_patterns[pattern] += 1
-                if len(empty_first_nonblank_samples[pattern]) < sample_limit:
-                    empty_first_nonblank_samples[pattern].append(
+                post_data_empty_first_nonblank_rows += 1
+                if len(post_data_empty_first_nonblank_samples) < sample_limit:
+                    post_data_empty_first_nonblank_samples.append(
                         sample_payload(line_number, fields, headers)
                     )
 
@@ -146,6 +158,10 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
     if reserved_nonempty:
         raise RuntimeError(
             f"{source['key']} usa columnas reservadas inesperadas: {dict(reserved_nonempty)}"
+        )
+    if post_data_empty_first_nonblank_rows:
+        raise RuntimeError(
+            f"{source['key']} contiene {post_data_empty_first_nonblank_rows} filas de datos sin referencia explícita"
         )
 
     return {
@@ -161,10 +177,14 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
         "suffix_samples": dict(suffix_samples),
         "grammar_languages": dict(grammar_languages.most_common()),
         "grammar_prefix_samples": dict(grammar_prefix_samples),
-        "blank_separator_rows": blank_separator_rows,
-        "empty_first_nonblank_rows": empty_first_nonblank_rows,
-        "empty_first_nonblank_patterns": dict(empty_first_nonblank_patterns.most_common()),
-        "empty_first_nonblank_samples": dict(empty_first_nonblank_samples),
+        "placeholder_rows": placeholder_rows,
+        "preamble_blank_rows": preamble_blank_rows,
+        "preamble_tabular_rows": preamble_tabular_rows,
+        "preamble_tabular_patterns": dict(preamble_tabular_patterns.most_common()),
+        "preamble_tabular_samples": dict(preamble_tabular_samples),
+        "data_blank_separator_rows": data_blank_separator_rows,
+        "post_data_empty_first_nonblank_rows": post_data_empty_first_nonblank_rows,
+        "post_data_empty_first_nonblank_samples": post_data_empty_first_nonblank_samples,
         "reserved_nonempty": dict(reserved_nonempty),
     }
 
@@ -177,13 +197,14 @@ def write_markdown(output: Path, payload: dict[str, Any]) -> None:
         f"- Fuentes: {totals['sources']}",
         f"- Columnas nombradas: {totals['named_columns']}",
         f"- Columnas reservadas vacías: {totals['reserved_columns']}",
-        f"- Separadores completamente vacíos: {totals['blank_separator_rows']:,}",
-        f"- Filas con primera columna vacía y contenido: {totals['empty_first_nonblank_rows']}",
+        f"- Filas tabuladas del preámbulo: {totals['preamble_tabular_rows']:,}",
+        f"- Separadores vacíos después de iniciar los datos: {totals['data_blank_separator_rows']:,}",
+        f"- Filas de datos sin referencia explícita: {totals['post_data_empty_first_nonblank_rows']}",
         f"- Filas hebreas según `Grammar`: {totals['grammar_languages'].get('H', 0):,}",
         f"- Filas arameas según `Grammar`: {totals['grammar_languages'].get('A', 0):,}",
-        f"- Otras filas lingüísticas: {totals['grammar_languages'].get('other', 0):,}",
+        f"- Posiciones sin forma lingüística: {totals['grammar_languages'].get('other', 0):,}",
         "",
-        "La clasificación de estado conserva el sufijo exacto de la referencia. Las familias son técnicas y no sustituyen la documentación de STEPBible.",
+        "La clasificación de estado conserva el sufijo exacto de la referencia. Las familias se basan en las definiciones incluidas por STEPBible dentro de los cuatro archivos.",
         "",
     ]
 
@@ -192,10 +213,12 @@ def write_markdown(output: Path, payload: dict[str, Any]) -> None:
             [
                 f"## {source['key']}",
                 "",
-                f"- separadores vacíos: {source['blank_separator_rows']:,}",
-                f"- filas vacías de referencia con contenido: {source['empty_first_nonblank_rows']:,}",
+                f"- preámbulo tabulado: {source['preamble_tabular_rows']:,}",
+                f"- separadores vacíos de datos: {source['data_blank_separator_rows']:,}",
+                f"- filas de datos sin referencia: {source['post_data_empty_first_nonblank_rows']:,}",
                 f"- filas hebreas: {source['grammar_languages'].get('H', 0):,}",
                 f"- filas arameas: {source['grammar_languages'].get('A', 0):,}",
+                f"- posiciones sin forma lingüística: {source['grammar_languages'].get('other', 0):,}",
                 "",
                 "### Familias de sufijo",
                 "",
@@ -204,21 +227,19 @@ def write_markdown(output: Path, payload: dict[str, Any]) -> None:
         for family, count in source["suffix_families"].items():
             lines.append(f"- `{family}`: {count:,}")
         lines.extend(["", "### Sufijos exactos principales", ""])
-        for suffix, count in list(source["exact_suffixes"].items())[:20]:
+        for suffix, count in list(source["exact_suffixes"].items())[:25]:
             lines.append(f"- `{suffix}`: {count:,}")
 
-        if source["empty_first_nonblank_patterns"]:
-            lines.extend(["", "### Filas sin referencia explícita pero con contenido", ""])
-            for pattern, count in source["empty_first_nonblank_patterns"].items():
-                lines.append(f"- columnas `{pattern}`: {count:,}")
-                for sample in source["empty_first_nonblank_samples"].get(pattern, [])[:3]:
-                    values = "; ".join(
-                        f"{name}={value}" for name, value in sample["named_fields"].items()
-                    )
-                    lines.append(f"  - L{sample['line']}: `{values}`")
+        if source["placeholder_rows"]:
+            lines.extend(["", "### Posiciones sin palabra visible", ""])
+            for sample in source["placeholder_rows"][:8]:
+                values = "; ".join(
+                    f"{name}={value}" for name, value in sample["named_fields"].items()
+                )
+                lines.append(f"- L{sample['line']}: `{values}`")
 
         lines.extend(["", "### Líneas documentales relevantes", ""])
-        for item in source["keyword_lines"][:20]:
+        for item in source["keyword_lines"][:35]:
             lines.append(f"- L{item['line']}: `{item['text']}`")
         lines.append("")
 
@@ -237,7 +258,7 @@ def inspect(output: Path, sample_limit: int) -> dict[str, Any]:
         raise RuntimeError("Los cuatro archivos no comparten el mismo ancho de encabezado")
 
     payload = {
-        "schema_version": "stepbible-tahot-semantics-observation-v1",
+        "schema_version": "stepbible-tahot-semantics-observation-v2",
         "source_repository": "STEPBible/STEPBible-Data",
         "source_commit": sources.COMMIT,
         "license": "CC BY 4.0",
@@ -246,9 +267,12 @@ def inspect(output: Path, sample_limit: int) -> dict[str, Any]:
             "sources": len(inspected),
             "named_columns": next(iter(named_counts)),
             "reserved_columns": next(iter(reserved_counts)),
-            "blank_separator_rows": sum(source["blank_separator_rows"] for source in inspected),
-            "empty_first_nonblank_rows": sum(
-                source["empty_first_nonblank_rows"] for source in inspected
+            "preamble_tabular_rows": sum(source["preamble_tabular_rows"] for source in inspected),
+            "data_blank_separator_rows": sum(
+                source["data_blank_separator_rows"] for source in inspected
+            ),
+            "post_data_empty_first_nonblank_rows": sum(
+                source["post_data_empty_first_nonblank_rows"] for source in inspected
             ),
             "grammar_languages": dict(language_totals),
         },
@@ -269,8 +293,8 @@ def self_test() -> None:
         "=Q(K)": "qere_with_ketiv",
         "=Q(k)": "qere_with_ketiv",
         "=L(abh)": "l_with_annotation",
-        "=R": "r",
-        "=X": "x",
+        "=R": "restored",
+        "=X": "lxx_addition",
     }
     actual = {value: suffix_family(value) for value in expected}
     if actual != expected:
@@ -287,7 +311,7 @@ def main() -> int:
         type=Path,
         default=Path("artifacts/stepbible-ot-schema"),
     )
-    parser.add_argument("--samples", type=int, default=3)
+    parser.add_argument("--samples", type=int, default=4)
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -295,7 +319,7 @@ def main() -> int:
         self_test()
         return 0
 
-    payload = inspect(args.output, max(1, min(args.samples, 8)))
+    payload = inspect(args.output, max(1, min(args.samples, 12)))
     print(json.dumps(payload["totals"], ensure_ascii=False, indent=2))
     return 0
 
