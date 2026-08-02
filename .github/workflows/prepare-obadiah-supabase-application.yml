@@ -58,9 +58,11 @@ jobs:
 
           PAYLOAD_SHA="$(sha256sum supabase/import-payloads/obadiah-tahot-v1.json | cut -d' ' -f1)"
           MIGRATION_SHA="$(sha256sum supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql | cut -d' ' -f1)"
-          echo "payload_sha256=$PAYLOAD_SHA"
-          echo "migration_sha256=$MIGRATION_SHA"
-          test "$PAYLOAD_SHA" = "502eade2003802940dd79d386073e4b9817ae5f0668fd341b84ae6ea9e828652"
+          echo "payload_file_sha256=$PAYLOAD_SHA"
+          echo "migration_file_sha256=$MIGRATION_SHA"
+          test "$PAYLOAD_SHA" = "dea3cbc8a608b6c0a663c1c7dd61103f57652b9b7d73481fe7b2477947d34a30"
+          test "$MIGRATION_SHA" = "e4e5cdbacb68778abffb5a549792723ee36932497fd667b3a207617c26b7604b"
+          grep -q '"payload_sha256":"502eade2003802940dd79d386073e4b9817ae5f0668fd341b84ae6ea9e828652"' supabase/import-payloads/obadiah-tahot-v1.json
           git diff --check
 
       - name: Versionar archivos preparados
