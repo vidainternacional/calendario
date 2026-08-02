@@ -82,10 +82,10 @@ const books: BookAuthorship[] = [
 
 const aliases: Record<string, string> = {
   salmo: 'Salmos', salmos: 'Salmos', cantar: 'Cantares', cantardeloscantares: 'Cantares',
-  1samuel: '1 Samuel', 2samuel: '2 Samuel', 1reyes: '1 Reyes', 2reyes: '2 Reyes',
-  1cronicas: '1 Crónicas', 2cronicas: '2 Crónicas', 1corintios: '1 Corintios', 2corintios: '2 Corintios',
-  1tesalonicenses: '1 Tesalonicenses', 2tesalonicenses: '2 Tesalonicenses', 1timoteo: '1 Timoteo', 2timoteo: '2 Timoteo',
-  1pedro: '1 Pedro', 2pedro: '2 Pedro', 1juan: '1 Juan', 2juan: '2 Juan', 3juan: '3 Juan',
+  '1samuel': '1 Samuel', '2samuel': '2 Samuel', '1reyes': '1 Reyes', '2reyes': '2 Reyes',
+  '1cronicas': '1 Crónicas', '2cronicas': '2 Crónicas', '1corintios': '1 Corintios', '2corintios': '2 Corintios',
+  '1tesalonicenses': '1 Tesalonicenses', '2tesalonicenses': '2 Tesalonicenses', '1timoteo': '1 Timoteo', '2timoteo': '2 Timoteo',
+  '1pedro': '1 Pedro', '2pedro': '2 Pedro', '1juan': '1 Juan', '2juan': '2 Juan', '3juan': '3 Juan',
   revelacion: 'Apocalipsis', revelation: 'Apocalipsis', acts: 'Hechos', psalms: 'Salmos', psalm: 'Salmos',
 }
 
