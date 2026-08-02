@@ -24,7 +24,7 @@ import {
   guardarNota,
   type EstudioResultado,
   type EstudioState,
-} from '@/app/actions/estudio'
+} from '@/app/actions/estudio-interno'
 
 const SECTIONS: { key: keyof EstudioResultado; label: string }[] = [
   { key: 'texto_original', label: '1. Texto original' },
@@ -32,7 +32,7 @@ const SECTIONS: { key: keyof EstudioResultado; label: string }[] = [
   { key: 'traduccion_literal', label: '3. Traducción literal' },
   { key: 'traduccion_interpretativa', label: '4. Traducción interpretativa' },
   { key: 'comparacion_versiones', label: '5. Comparación de traducciones' },
-  { key: 'contexto_historico', label: '6. Contexto histórico' },
+  { key: 'contexto_historico', label: '6. Contexto histórico y judío' },
   { key: 'analisis_linguistico', label: '7. Análisis lingüístico' },
   { key: 'que_quiso_comunicar', label: '8. Qué quiso comunicar el texto' },
   { key: 'que_no_quiso_decir', label: '9. Qué no quiso decir' },
@@ -136,7 +136,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
           ¿Qué pasaje desea estudiar?
         </label>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          Escriba una referencia bíblica o una pregunta concreta sobre el texto.
+          El estudio se prepara desde la biblioteca interna, sin depender de IA.
         </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -148,7 +148,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
               name="pasaje"
               required
               disabled={isPending}
-              placeholder="Ejemplo: Mateo 6:7"
+              placeholder="Prueba: Salmos 23:1 o Juan 3:16"
               className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50"
               defaultValue={initialPasaje}
             />
@@ -163,7 +163,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
         </div>
 
         {state.status === 'error' && (
-          <p className="mt-3 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+          <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             {state.error}
           </p>
@@ -173,9 +173,9 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
       {isPending && (
         <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm" aria-live="polite">
           <RefreshCw className="mx-auto h-7 w-7 animate-spin text-[#C0392B]" aria-hidden="true" />
-          <h2 className="mt-4 text-lg font-bold text-slate-900">Preparando el estudio</h2>
+          <h2 className="mt-4 text-lg font-bold text-slate-900">Consultando la biblioteca interna</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-            Organizando el texto, su contexto, el análisis lingüístico y la reflexión final.
+            Organizando texto original, transliteración, contexto histórico y análisis del pasaje.
           </p>
         </section>
       )}
@@ -183,7 +183,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
       {!isPending && state.status === 'success' && (
         <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <header className="border-b border-slate-100 px-5 py-5 sm:px-7">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Estudio bíblico</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Estudio bíblico interno</p>
             <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="break-words text-2xl font-bold tracking-tight text-slate-950">{state.pasaje}</h2>
               <div className="flex gap-2">
