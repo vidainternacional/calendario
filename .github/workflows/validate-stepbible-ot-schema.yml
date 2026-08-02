@@ -1,0 +1,69 @@
+name: Validar esquema observado de TAHOT
+
+on:
+  push:
+    branches:
+      - fase-d/esquema-columnas-tahot
+    paths:
+      - "scripts/stepbible/inspect_ot_schema.py"
+      - "scripts/stepbible/inspect_ot_semantics.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - ".github/workflows/validate-stepbible-ot-schema.yml"
+      - "docs/FASE_D_ESQUEMA_TAHOT.md"
+      - "__VIDA_INTERNACIONAL.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/inspect_ot_schema.py"
+      - "scripts/stepbible/inspect_ot_semantics.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - ".github/workflows/validate-stepbible-ot-schema.yml"
+      - "docs/FASE_D_ESQUEMA_TAHOT.md"
+      - "__VIDA_INTERNACIONAL.md"
+  workflow_dispatch:
+
+concurrency:
+  group: validate-stepbible-ot-schema-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/inspect_ot_schema.py --self-test
+          python scripts/stepbible/inspect_ot_semantics.py --self-test
+          python scripts/stepbible/tahot_schema.py --self-test
+
+      - name: Inspeccionar encabezados y formas de fila
+        run: python scripts/stepbible/inspect_ot_schema.py --output artifacts/stepbible-ot-schema --samples 5
+
+      - name: Clasificar estados, lenguas y documentación
+        run: python scripts/stepbible/inspect_ot_semantics.py --output artifacts/stepbible-ot-schema --samples 8
+
+      - name: Mostrar resúmenes
+        run: |
+          cat artifacts/stepbible-ot-schema/schema-observation.md
+          printf '\n'
+          cat artifacts/stepbible-ot-schema/schema-semantics.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-ot-schema-observation
+          path: artifacts/stepbible-ot-schema
+          if-no-files-found: error
+          retention-days: 14
