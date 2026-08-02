@@ -1,5 +1,3 @@
-import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
-import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleThemeRouteSync from '@/components/biblia/BibleThemeRouteSync'
 import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFlash'
 import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
@@ -15,8 +13,6 @@ export default function AppLayout({
       <BibleThemeRouteSync />
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
-      <BibleSelectorPolish />
-      <BibleExperienceFixes />
       <div className="flex-1 pb-16">
         {children}
       </div>
