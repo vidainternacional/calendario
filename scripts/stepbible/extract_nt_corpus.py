@@ -25,7 +25,7 @@ REF=re.compile(r"^(?P<book>[123]?[A-Za-z]{2,3})\.(?P<chapter>\d+)\.(?P<verse>\d+
 FORM=re.compile(r"^(.*?)\s+\(([^()]*)\)\s*$")
 PUNCT=re.compile(r"^([^\w\u0370-\u03ff]*)(.*?)([^\w\u0370-\u03ff]*)$",re.UNICODE)
 EDITION_PRIORITY=("NA28","NA27","Tyn","SBL","WH","Treg","TR","Byz")
-SOURCE_VERSE_COUNTS={"2Co":256,"3Jn":15}
+SOURCE_VERSE_COUNTS={"2Co":256,"3Jn":15,"Rev":405}
 
 def hbytes(v): return hashlib.sha256(v).hexdigest()
 def htext(v): return hbytes(v.encode("utf-8"))
@@ -100,7 +100,7 @@ def write_gz(path,payload):
 def summary(path,manifest):
  t=manifest["totals"]; lines=["# Validación del corpus textual del Nuevo Testamento","",f"- Commit STEPBible: `{COMMIT}`",f"- Libros: {t['books']}",f"- Versículos fuente: {t['verses']}",f"- Libros que requieren mapa de versificación: {t['versification_books']}",f"- Palabras base: {t['base_words']}",f"- Lecturas adicionales: {t['variant_rows']}",f"- Versículos con edición de respaldo: {t['fallback_verses']}",f"- Filas totales: {t['all_rows']}","","| Libro | Capítulos | Versículos fuente/app | Palabras base | Respaldo | Lecturas adicionales | SHA-256 |","|---|---:|---:|---:|---:|---:|---|"]
  for b in manifest["books"]:lines.append(f"| {b['name_es']} | {b['chapter_count']} | {b['source_verse_count']}/{b['app_verse_count']} | {b['base_words']} | {b['fallback_verses']} | {b['variant_rows']} | `{b['artifact_sha256']}` |")
- lines+= ["","NA28 se usa cuando está disponible. Las referencias omitidas por NA28 conservan una lectura de respaldo etiquetada.","2 Corintios y 3 Juan requieren mapa de versificación antes de importarse a la numeración de la app.","Proceso de solo lectura: no modifica Supabase ni producción."]
+ lines+= ["","NA28 se usa cuando está disponible. Las referencias omitidas por NA28 conservan una lectura de respaldo etiquetada.","2 Corintios, 3 Juan y Apocalipsis requieren mapa de versificación antes de importarse a la numeración de la app.","Proceso de solo lectura: no modifica Supabase ni producción."]
  path.write_text("\n".join(lines)+"\n",encoding="utf-8")
 
 def extract(out,requested=None):
