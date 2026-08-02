@@ -3,8 +3,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { obtenerEstudioInterno, referenciasInternasDisponibles } from '@/lib/estudios/internal-study'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
-
-export { guardarNota, obtenerHistorial, obtenerNota } from '@/app/actions/estudio'
+import {
+  guardarNota as guardarNotaBase,
+  obtenerHistorial as obtenerHistorialBase,
+  obtenerNota as obtenerNotaBase,
+} from '@/app/actions/estudio'
 
 export type EstudioResultado = EstudioResultadoValidado
 
@@ -48,4 +51,16 @@ export async function analizarPasaje(
     status: 'error',
     error: `La biblioteca interna todavía no tiene un estudio completo y revisado para “${pasaje}”. Por ahora puedes probar ${disponibles}. No se utilizó IA ni se inventó contenido para completar la respuesta.`,
   }
+}
+
+export async function obtenerHistorial() {
+  return obtenerHistorialBase()
+}
+
+export async function obtenerNota(pasaje: string) {
+  return obtenerNotaBase(pasaje)
+}
+
+export async function guardarNota(pasaje: string, nota: string) {
+  return guardarNotaBase(pasaje, nota)
 }
