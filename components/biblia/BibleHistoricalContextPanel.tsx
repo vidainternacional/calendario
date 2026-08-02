@@ -166,10 +166,10 @@ export default function BibleHistoricalContextPanel({
                       href={fragment.sourceLocator}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 font-semibold text-amber-700"
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-center font-sans text-sm font-bold leading-none text-amber-700 sm:w-auto"
                     >
                       Abrir fuente
-                      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                     </a>
                   </div>
                 </div>
