@@ -222,6 +222,53 @@ Documentación:
 
 - `docs/FASE_D_IMPORTACION_TEXTUAL_FILEMON.md`.
 
-El Bloque 4 continúa activo. El siguiente recorrido es importar por lotes los libros del Nuevo Testamento con correspondencia directa, aprobar los mapas de 2 Corintios, 3 Juan y Apocalipsis, ampliar el corpus hebreo y arameo y, finalmente, publicar una visualización general dentro de **Biblia → Estudio**.
+### Avance confirmado del Bloque 4 — Nuevo Testamento textual visible
+
+Los 27 libros del Nuevo Testamento ya están importados y recuperables mediante el perfil de versificación de la traducción seleccionada.
+
+Resultado acumulado:
+
+- capítulos: 260;
+- referencias TAGNT: 7,958;
+- palabras base: 138,096;
+- lecturas adicionales: 4,000;
+- ocurrencias: 142,096;
+- variantes documentadas: 6,409;
+- hashes inválidos: 0.
+
+La visualización general está integrada en **Biblia → Estudio** y **Estudio Profundo** con texto original, transliteración, glosas, Strong, morfología, variantes, edición base, fuente y licencia. Los ejemplos de Juan 3:16, 3 Juan 1:14 y Apocalipsis 13:1 fueron revisados y aprobados visualmente por el usuario el 2026-08-02.
+
+Evidencia:
+
+- PR #58;
+- commit `8286d80495defd21e01c0c27854253bd93d143a2`;
+- preview `dpl_4yJHqNwqRfx1nMtPfqevHL1TT5E4` — `READY`;
+- `docs/FASE_D_VISUALIZACION_TEXTUAL_NT.md`.
+
+### Avance confirmado del Bloque 4 — fuentes textuales del Antiguo Testamento
+
+Las cuatro fuentes TAHOT fijadas al commit de STEPBible fueron descargadas y validadas antes de diseñar la importación masiva.
+
+Resultado:
+
+- archivos: 4;
+- libros esperados y encontrados: 39;
+- referencias distintas de la fuente: 23,261;
+- filas con referencia explícita: 305,652;
+- filas continuadas: 46,517;
+- cabeceras repetidas identificadas: 23,257;
+- filas de preámbulo: 283;
+- tamaño total: 70,208,423 bytes;
+- cuatro hashes SHA-256 fijados;
+- ninguna modificación de Supabase, interfaz o producción durante esta inspección.
+
+Las referencias son las de la fuente hebrea y no se asumirán como numeración global de las traducciones. Las correspondencias se resolverán según la traducción activa.
+
+Documentación:
+
+- `docs/FASE_D_FUENTES_TEXTUALES_AT.md`;
+- `docs/FASE_D_VALIDACION_FUENTES_TAHOT.md`.
+
+El Bloque 4 continúa activo. El siguiente recorrido es interpretar de forma verificable las 17 columnas y las filas continuadas de TAHOT, distinguir hebreo y arameo, modelar Ketiv/Qere y generar paquetes por libro. Después se importará primero un libro pequeño y se validará antes de ampliar a los 39.
 
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
