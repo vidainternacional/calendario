@@ -1,0 +1,58 @@
+name: Validar corpus textual completo del NT
+
+on:
+  pull_request:
+    paths:
+      - "scripts/stepbible/extract_nt_corpus.py"
+      - ".github/workflows/validate-stepbible-nt-corpus.yml"
+      - "docs/FASE_D_IMPORTACION_TEXTUAL_NT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    name: Extraer y validar los 27 libros
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validar parser y clasificación de variantes
+        run: python scripts/stepbible/extract_nt_corpus.py --self-test
+
+      - name: Extraer corpus completo
+        run: python scripts/stepbible/extract_nt_corpus.py
+
+      - name: Validar manifiesto global
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("artifacts/stepbible-nt/manifest.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          totals = data["totals"]
+          assert totals["books"] == 27, totals
+          assert totals["verses"] == 7957, totals
+          assert len(data["books"]) == 27
+          assert all(item["artifact_sha256"] for item in data["books"])
+          assert all(item["base_words"] > 0 for item in data["books"])
+          print(json.dumps(totals, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publicar paquetes por libro
+        uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-nt-corpus
+          path: artifacts/stepbible-nt/
+          if-no-files-found: error
+          retention-days: 7
