@@ -11,6 +11,7 @@ on:
       - ".github/workflows/validate-stepbible-obadiah-package.yml"
       - "docs/FASE_D_PAQUETE_TAHOT_OBADIAS.md"
       - "docs/FASE_D_REPRODUCIBILIDAD_OBADIAS.md"
+      - "__VIDA_INTERNACIONAL.md"
   pull_request:
     branches:
       - main
@@ -21,6 +22,7 @@ on:
       - ".github/workflows/validate-stepbible-obadiah-package.yml"
       - "docs/FASE_D_PAQUETE_TAHOT_OBADIAS.md"
       - "docs/FASE_D_REPRODUCIBILIDAD_OBADIAS.md"
+      - "__VIDA_INTERNACIONAL.md"
   workflow_dispatch:
 
 concurrency:
