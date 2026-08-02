@@ -67,7 +67,7 @@ jobs:
 
       - name: Versionar archivos preparados
         run: |
-          if git diff --quiet -- supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql supabase/import-payloads/obadiah-tahot-v1.json; then
+          if [ -z "$(git status --porcelain -- supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql supabase/import-payloads/obadiah-tahot-v1.json)" ]; then
             echo "Archivos ya preparados"
             exit 0
           fi
