@@ -8,10 +8,8 @@ import {
   type BiblicalContextBundle,
   type BiblicalContextUnit,
 } from '@/lib/estudios/biblical-context-corpus'
-import {
-  getInternalBiblicalTextualStudy,
-  type BiblicalTextualStudyBundle,
-} from '@/lib/estudios/biblical-textual-study'
+import type { BiblicalTextualStudyBundle } from '@/lib/estudios/biblical-textual-study'
+import { getResolvedBiblicalTextualStudy } from '@/lib/estudios/resolved-biblical-textual-study'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -66,16 +64,16 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
   return {
     texto_original: unirSecciones(
       `Idioma original principal: ${languages.join(' y ') || 'pendiente de clasificación'}.`,
-      'Este lote incorpora el contexto verificable del pasaje, pero todavía no almacena el texto original exacto versículo por versículo. Para evitar errores, la aplicación no reconstruye ni inventa palabras hebreas o arameas que aún no estén en el corpus léxico aprobado.'
+      'El contexto general de este pasaje está disponible. El texto original exacto se adjunta por separado cuando existe un paquete textual aprobado para la referencia.'
     ),
-    transliteracion: 'La transliteración exacta del versículo todavía no está disponible en este lote. Se mostrará cuando las ocurrencias del texto original hayan sido importadas y revisadas para esta referencia.',
-    traduccion_literal: 'La biblioteca interna todavía no contiene una traducción literal palabra por palabra aprobada para esta referencia. El texto bíblico puede leerse en la pestaña Biblia; esta sección no sustituye el trabajo textual pendiente.',
+    transliteracion: 'La transliteración exacta aparece en la evidencia textual aprobada cuando está disponible para esta referencia.',
+    traduccion_literal: 'La secuencia literal palabra por palabra aparece en la evidencia textual aprobada. No debe confundirse con una traducción española pulida.',
     traduccion_interpretativa: unirSecciones(
       `Síntesis contextual de la unidad «${alcance}»:`,
       apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
       `Versión interna del paquete: ${version}.`
     ),
-    comparacion_versiones: 'La comparación textual debe realizarse desde Biblia → Comparar. Este estudio contextual no declara una diferencia entre traducciones sin haber recuperado y cotejado sus textos exactos.',
+    comparacion_versiones: 'La comparación de traducciones permanece en Biblia → Comparar. Las diferencias de versificación se resuelven según la traducción seleccionada.',
     contexto_historico: unirSecciones(
       'Contexto general del libro:',
       apartado(bookProfile, 'historicalContext'),
@@ -87,7 +85,7 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
     analisis_linguistico: unirSecciones(
       `Idioma(s) del libro: ${languages.join(', ') || 'no especificado'}.`,
       terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null,
-      'Estos términos orientan la lectura de la sección; no equivalen a definiciones léxicas de cada palabra del versículo. El análisis morfológico y la transliteración detallada aparecerán únicamente cuando exista evidencia léxica aprobada.'
+      'Las palabras, lemas, números Strong y códigos morfológicos se muestran únicamente desde ocurrencias textuales aprobadas.'
     ),
     que_quiso_comunicar: unirSecciones(
       apartado(sectionContext, 'authorialIntent'),
@@ -113,6 +111,10 @@ export async function analizarPasaje(
   formData: FormData
 ): Promise<EstudioState> {
   const query = (formData.get('pasaje') as string)?.trim()
+  const requestedTranslation = (formData.get('translation_id') as string | null)?.trim()
+  const translationId = requestedTranslation && /^[a-z0-9_-]{2,80}$/i.test(requestedTranslation)
+    ? requestedTranslation
+    : 'spa_r09'
 
   if (!query) {
     return { status: 'error', error: 'Escriba un versículo, una palabra o una pregunta.' }
@@ -129,7 +131,7 @@ export async function analizarPasaje(
     return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
   }
 
-  const textualEvidence = await getInternalBiblicalTextualStudy(query)
+  const textualEvidence = await getResolvedBiblicalTextualStudy(query, translationId)
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
@@ -158,7 +160,7 @@ export async function analizarPasaje(
   if (contexto?.status === 'indexed') {
     return {
       status: 'error',
-      error: `${contexto.reference.book.nameEs} ya está reconocido dentro del índice completo de 66 libros, pero su lote contextual todavía no ha sido incorporado. La aplicación no inventó un estudio para ${contexto.reference.canonicalReference}.`,
+      error: `${contexto.reference.book.nameEs} está reconocido dentro del índice completo de 66 libros, pero su lote contextual todavía no ha sido incorporado. La aplicación no inventó un estudio para ${contexto.reference.canonicalReference}.`,
     }
   }
 
@@ -175,7 +177,7 @@ export async function analizarPasaje(
   const disponibles = referenciasInternasDisponibles().join(' y ')
   return {
     status: 'error',
-    error: `No encontramos contenido interno aprobado para “${query}”. Puede probar otra palabra o pregunta, una referencia de Génesis a Deuteronomio, o consultar ${disponibles}. No se utilizó IA ni se inventó información.`,
+    error: `No encontramos contenido interno aprobado para “${query}”. Puede probar otra palabra, pregunta o referencia bíblica válida, o consultar ${disponibles}. No se utilizó IA ni se inventó información.`,
   }
 }
 
