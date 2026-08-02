@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-07-31
+Última actualización: 2026-08-01
 
 Fase activa: **FASE D — IA Bíblica Avanzada**
 
@@ -21,7 +21,7 @@ Este archivo es el control oficial y versionado del proyecto. Antes de trabajar 
 | FASE A | Experiencia profesional mobile first | COMPLETADA |
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
-| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 3** |
+| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 4** |
 | FASE E | Optimización General: rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Cuaderno correlativo de prédicas y notas | PENDIENTE |
 
@@ -72,8 +72,8 @@ Construir herramientas avanzadas de estudio bíblico apoyadas por fuentes verifi
 
 - Bloque 1 — Diagnóstico y arquitectura: **COMPLETADO**.
 - Bloque 2 — Fuentes, atribución y privacidad: **COMPLETADO — 2026-07-31**.
-- Bloque 3 — Contexto histórico y cultural: **ACTIVO**.
-- Bloque 4 — Comparaciones y herramientas ampliadas: PENDIENTE.
+- Bloque 3 — Contexto histórico y cultural: **COMPLETADO — 2026-08-01**.
+- Bloque 4 — Comparaciones y herramientas ampliadas: **ACTIVO**.
 - Bloque 5 — Cronologías y mapas: PENDIENTE.
 - Bloque 6 — IA bíblica avanzada y proveedores: PENDIENTE.
 - Bloque 7 — Pruebas, documentación y cierre: PENDIENTE.
@@ -99,12 +99,32 @@ Construir herramientas avanzadas de estudio bíblico apoyadas por fuentes verifi
 - commit `d33daca536549b912a4f9a9fb246e1060fb0ee77`;
 - confirmación visual recibida el 2026-07-31.
 
+### Evidencia del Bloque 3
+
+- `docs/FASE_D_CONTEXTO_HISTORICO.md`;
+- tabla `public.biblical_context_fragments` y relación obligatoria con fuentes aprobadas;
+- RLS de solo lectura y recuperación exclusiva en servidor;
+- fuente Pleiades aprobada con atribución y licencia CC BY 3.0;
+- fragmentos iniciales de Roma para Romanos y Hechos 28;
+- visualización en `/estudios/profundo` y en **Biblia → Estudio**;
+- PR #22 y commit `307388550a9aa8ca1c50f2d75e664dc4906ef074`;
+- producción inicial `dpl_s4hkspuCczLhsZPVMHmkPvrLjXnB` — `READY`;
+- estado final validado en producción: commit `73f8458e316f1e0d4931456ccad02ef45cabc23e`, deployment `dpl_9iHrXP25gb2MG16DeTRNKiohmE6P` — `READY`;
+- confirmación visual y funcional recibida el 2026-08-01.
+
 ### Bloque activo
 
-**Bloque 3 — Contexto histórico y cultural.**
+**Bloque 4 — Comparaciones y herramientas ampliadas.**
 
-Crear una capa verificable de fragmentos históricos y culturales vinculados a fuentes aprobadas, con referencia canónica, atribución, licencia, revisión y recuperación exclusivamente en servidor.
+Ampliar la experiencia de estudio dentro de la Biblia unificada con comparaciones estables y herramientas lingüísticas verificables, sin duplicar secciones ni presentar significados generados sin fuente.
 
-El primer incremento debe implementar el modelo mínimo y el servicio de recuperación sin conectar todavía esos fragmentos a la IA, sin importar comentarios completos y sin modificar la Biblia general.
+El primer incremento debe:
 
-No avanzar al Bloque 4 hasta que el modelo de contexto, sus políticas, el servicio de recuperación y una visualización inicial estén documentados y validados en producción.
+- inventariar las comparaciones y herramientas ya existentes;
+- definir el modelo mínimo para palabras originales, transliteración, significado contextual, referencias y fuente;
+- evaluar fuentes léxicas y de concordancia compatibles con las reglas de atribución, licencia y privacidad del Bloque 2;
+- mantener las herramientas dentro de **Biblia → Estudio**;
+- no conectar todavía estos datos a la IA;
+- no importar léxicos completos ni material con licencia incompatible.
+
+No avanzar al Bloque 5 hasta que el modelo, la fuente inicial, la recuperación segura y una visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
