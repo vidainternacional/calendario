@@ -22,11 +22,17 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
     for source in sources.SOURCES:
         _, raw, digest = sources.download(source)
         previous_reference: str | None = None
+        started_data = False
         classes = Counter()
-        field_counts = Counter()
+        field_counts: dict[str, Counter[int]] = {
+            "preamble": Counter(),
+            "continuation": Counter(),
+            "non_reference_after_data": Counter(),
+        }
         samples: dict[str, list[dict[str, object]]] = {
+            "preamble": [],
             "continuation": [],
-            "non_reference": [],
+            "non_reference_after_data": [],
         }
 
         for line_number, line in enumerate(raw.decode("utf-8-sig").splitlines(), 1):
@@ -37,18 +43,22 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
             first = fields[0]
             match = sources.REFERENCE_RE.match(first)
             if match:
+                started_data = True
                 previous_reference = (
                     f"{match.group('book')}.{match.group('chapter')}.{match.group('verse')}"
                 )
                 continue
 
-            field_counts[len(fields)] += 1
-            if first == "" and previous_reference:
+            if not started_data:
+                category = "preamble"
+            elif first == "" and previous_reference:
                 category = "continuation"
             else:
-                category = "non_reference"
+                category = "non_reference_after_data"
+
             classes[category] += 1
             totals[category] += 1
+            field_counts[category][len(fields)] += 1
 
             if len(samples[category]) < sample_limit:
                 samples[category].append(
@@ -66,14 +76,17 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
                 "sha256": digest,
                 "classes": dict(classes),
                 "field_counts": {
-                    str(key): value for key, value in sorted(field_counts.items())
+                    category: {
+                        str(key): value for key, value in sorted(counts.items())
+                    }
+                    for category, counts in field_counts.items()
                 },
                 "samples": samples,
             }
         )
 
     payload = {
-        "schema_version": "stepbible-tahot-row-shapes-v1",
+        "schema_version": "stepbible-tahot-row-shapes-v2",
         "source_commit": sources.COMMIT,
         "totals": dict(totals),
         "sources": result_sources,
@@ -87,23 +100,23 @@ def inspect(output: Path, sample_limit: int) -> dict[str, object]:
     lines = [
         "# Formas de fila TAHOT sin referencia repetida",
         "",
+        f"- Filas de preámbulo: {totals['preamble']:,}",
         f"- Filas continuadas: {totals['continuation']:,}",
-        f"- Otras filas tabuladas sin referencia: {totals['non_reference']:,}",
+        f"- Filas no reconocidas después de iniciar los datos: {totals['non_reference_after_data']:,}",
         "",
         "Una fila continuada tiene la primera columna vacía y hereda la referencia bíblica de la fila anterior.",
-        "No se interpreta todavía su semántica; este paso solo evita clasificarlas erróneamente como datos dañados.",
+        "El preámbulo contiene licencia, documentación, encabezados y separadores previos al primer registro bíblico.",
+        "No se interpreta todavía la semántica de las continuaciones; este paso solo clasifica su forma.",
         "",
-        "| Fuente | Continuadas | Otras | Conteos de columnas |",
-        "|---|---:|---:|---|",
+        "| Fuente | Preámbulo | Continuadas | No reconocidas tras datos |",
+        "|---|---:|---:|---:|",
     ]
     for source in result_sources:
-        counts = ", ".join(
-            f"{fields} campos: {count:,}"
-            for fields, count in source["field_counts"].items()
-        )
+        classes = source["classes"]
         lines.append(
-            f"| {source['key']} | {source['classes'].get('continuation', 0):,} | "
-            f"{source['classes'].get('non_reference', 0):,} | {counts or '—'} |"
+            f"| {source['key']} | {classes.get('preamble', 0):,} | "
+            f"{classes.get('continuation', 0):,} | "
+            f"{classes.get('non_reference_after_data', 0):,} |"
         )
     (output / "row-shapes.md").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
