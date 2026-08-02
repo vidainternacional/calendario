@@ -1,0 +1,40 @@
+/* Estabilidad de los controles bíblicos en móvil.
+   Los nombres completos permanecen en las opciones nativas del selector;
+   el botón visible usa únicamente la abreviatura calculada por React. */
+
+[data-biblia-tema] {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+label:has(> span > select[aria-label="Versión"]) > span:last-child,
+label:has(> span > select[aria-label="Biblia 1"]) > span:last-child,
+label:has(> span > select[aria-label="Biblia 2"]) > span:last-child {
+  display: none;
+}
+
+select[aria-label="Libro de la Biblia"],
+select[aria-label="Capítulo"],
+select[aria-label="Versículo"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+select[aria-label="Versión"],
+select[aria-label="Biblia 1"],
+select[aria-label="Biblia 2"] {
+  font-size: 16px;
+}
+
+/* Impide que restos de mejoras antiguas vuelvan a competir con React
+   durante la transición de cachés del cliente. */
+[data-vida-dual-selector],
+[data-vida-comparador-real],
+[data-vida-compare-modes],
+[data-vida-all-versions] {
+  display: none !important;
+}
