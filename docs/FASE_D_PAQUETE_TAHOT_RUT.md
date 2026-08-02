@@ -48,19 +48,48 @@ El paquete no elimina ninguna fila. Para producir `reading_tokens` por posición
 
 Esta regla sirve para auditar el paquete. Todavía no implica importación ni publicación.
 
-## Validaciones obligatorias
+## Resultado validado
 
-- fuente descargada desde el commit fijado;
-- SHA-256 coincidente;
-- solo filas de Rut;
-- 4 capítulos;
-- 85 referencias;
-- ninguna fila aramea;
-- ningún código lingüístico desconocido;
-- todos los versículos con filas y lectura visible;
-- columnas reservadas vacías;
-- hash canónico SHA-256 del paquete;
-- proceso reproducible mediante GitHub Actions.
+El workflow generó y auditó el libro completo:
+
+- capítulos: 4;
+- referencias: 85;
+- filas fuente: 1,294;
+- tokens visibles de lectura: 1,293;
+- filas hebreas: 1,293;
+- filas sin idioma por omisión Qere: 1;
+- filas arameas: 0;
+- estados Leningrado: 1,281;
+- estados Qere: 13;
+- omisiones Qere: 1;
+- filas sin forma hebrea: 1;
+- SHA-256 canónico del paquete: `7f4ae92f1e1aa3e76f5e0f8a2efafbedfcc8c8f9bf673e12af8448780c24e8a1`.
+
+## Auditoría Qere/Ketiv
+
+Los trece casos Qere conservan evidencia Ketiv estructurada:
+
+- 11 casos desde `Meaning variants`;
+- 2 casos desde `Spelling variants`;
+- 1 omisión Qere en `Rut.3.12#05=Q(K)`.
+
+La omisión de Rut 3:12 no produce una palabra visible. La evidencia Ketiv de `אִם` permanece disponible en el artefacto.
+
+Muestras revisadas:
+
+- Rut 1:1;
+- Rut 2:12;
+- Rut 3:9;
+- Rut 4:17;
+- los trece casos Qere del libro.
+
+## Evidencia técnica
+
+- PR #65;
+- workflow `Validar paquete TAHOT de Rut`;
+- ejecución `30771696828` — `success`;
+- artefacto `stepbible-tahot-ruth-package`;
+- digest del artefacto `sha256:1254c03a203e05a739205af073ea6bc401a8829cf135666b596390120d172d10`.
 
 ## Seguridad y alcance
 
@@ -73,4 +102,4 @@ Esta regla sirve para auditar el paquete. Todavía no implica importación ni pu
 
 ## Criterio de avance
 
-Después de aprobar el artefacto se compararán muestras de los cuatro capítulos y los casos textuales encontrados. Solo entonces se diseñará la migración/importador de Rut. El Bloque 4 permanece activo.
+El paquete de Rut queda aprobado como base del importador del Antiguo Testamento. El siguiente incremento será diseñar y probar la importación transaccional de Rut en Supabase, manteniendo RLS, procedencia, hashes y separación Qere/Ketiv. El Bloque 4 permanece activo.
