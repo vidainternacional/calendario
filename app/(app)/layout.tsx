@@ -1,5 +1,3 @@
-import BibleCompareAllVersions from '@/components/biblia/BibleCompareAllVersions'
-import BibleCompareAndActionsPolish from '@/components/biblia/BibleCompareAndActionsPolish'
 import BibleExperienceFixes from '@/components/biblia/BibleExperienceFixes'
 import BibleSelectorPolish from '@/components/biblia/BibleSelectorPolish'
 import BibleThemeRouteSync from '@/components/biblia/BibleThemeRouteSync'
@@ -13,16 +11,13 @@ export default function AppLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <BibleThemeRouteSync />
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
       <BibleSelectorPolish />
       <BibleExperienceFixes />
-      <BibleCompareAndActionsPolish />
-      <BibleCompareAllVersions />
       <div className="flex-1 pb-16">
-        {/* pb-16 to account for the bottom nav height */}
         {children}
       </div>
       <BottomNav />
