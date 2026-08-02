@@ -25,6 +25,7 @@ REF=re.compile(r"^(?P<book>[123]?[A-Za-z]{2,3})\.(?P<chapter>\d+)\.(?P<verse>\d+
 FORM=re.compile(r"^(.*?)\s+\(([^()]*)\)\s*$")
 PUNCT=re.compile(r"^([^\w\u0370-\u03ff]*)(.*?)([^\w\u0370-\u03ff]*)$",re.UNICODE)
 EDITION_PRIORITY=("NA28","NA27","Tyn","SBL","WH","Treg","TR","Byz")
+SOURCE_VERSE_COUNTS={"2Co":256,"3Jn":15}
 
 def hbytes(v): return hashlib.sha256(v).hexdigest()
 def htext(v): return hbytes(v.encode("utf-8"))
@@ -76,7 +77,7 @@ def validate_verse(rows,ref):
  return rows,edition
 
 def validate_book(book,verses):
- _,name,chapters,total=BOOKS[book]
+ _,name,chapters,app_total=BOOKS[book];total=SOURCE_VERSE_COUNTS.get(book,app_total)
  found=sorted({c for c,_ in verses})
  if found!=list(range(1,chapters+1)):raise RuntimeError(f"Capítulos incompletos en {name}: {found}")
  if len(verses)!=total:raise RuntimeError(f"Versículos inválidos en {name}: {len(verses)} != {total}")
@@ -97,9 +98,9 @@ def write_gz(path,payload):
  raw=path.read_bytes();return len(raw),hbytes(raw)
 
 def summary(path,manifest):
- t=manifest["totals"]; lines=["# Validación del corpus textual del Nuevo Testamento","",f"- Commit STEPBible: `{COMMIT}`",f"- Libros: {t['books']}",f"- Versículos: {t['verses']}",f"- Palabras base: {t['base_words']}",f"- Lecturas adicionales: {t['variant_rows']}",f"- Versículos con edición de respaldo: {t['fallback_verses']}",f"- Filas totales: {t['all_rows']}","","| Libro | Capítulos | Versículos | Palabras base | Respaldo | Lecturas adicionales | SHA-256 |","|---|---:|---:|---:|---:|---:|---|"]
- for b in manifest["books"]:lines.append(f"| {b['name_es']} | {b['chapter_count']} | {b['verses']} | {b['base_words']} | {b['fallback_verses']} | {b['variant_rows']} | `{b['artifact_sha256']}` |")
- lines+= ["","NA28 se usa cuando está disponible. Las referencias omitidas por NA28 conservan una lectura de respaldo etiquetada.","Proceso de solo lectura: no modifica Supabase ni producción."]
+ t=manifest["totals"]; lines=["# Validación del corpus textual del Nuevo Testamento","",f"- Commit STEPBible: `{COMMIT}`",f"- Libros: {t['books']}",f"- Versículos fuente: {t['verses']}",f"- Libros que requieren mapa de versificación: {t['versification_books']}",f"- Palabras base: {t['base_words']}",f"- Lecturas adicionales: {t['variant_rows']}",f"- Versículos con edición de respaldo: {t['fallback_verses']}",f"- Filas totales: {t['all_rows']}","","| Libro | Capítulos | Versículos fuente/app | Palabras base | Respaldo | Lecturas adicionales | SHA-256 |","|---|---:|---:|---:|---:|---:|---|"]
+ for b in manifest["books"]:lines.append(f"| {b['name_es']} | {b['chapter_count']} | {b['source_verse_count']}/{b['app_verse_count']} | {b['base_words']} | {b['fallback_verses']} | {b['variant_rows']} | `{b['artifact_sha256']}` |")
+ lines+= ["","NA28 se usa cuando está disponible. Las referencias omitidas por NA28 conservan una lectura de respaldo etiquetada.","2 Corintios y 3 Juan requieren mapa de versificación antes de importarse a la numeración de la app.","Proceso de solo lectura: no modifica Supabase ni producción."]
  path.write_text("\n".join(lines)+"\n",encoding="utf-8")
 
 def extract(out,requested=None):
@@ -117,17 +118,17 @@ def extract(out,requested=None):
  expected=set(BOOKS) if requested is None else requested
  missing=expected-set(grouped)
  if missing:raise RuntimeError(f"Libros sin datos: {sorted(missing)}")
- books=[];tot={"books":0,"verses":0,"base_words":0,"variant_rows":0,"fallback_verses":0,"all_rows":0,"base_editions":{}}
+ books=[];tot={"books":0,"verses":0,"base_words":0,"variant_rows":0,"fallback_verses":0,"all_rows":0,"base_editions":{},"versification_books":0}
  for book in BOOKS:
   if book not in expected:continue
-  verses=grouped[book];validate_book(book,verses);code,name,chapters,vcount=BOOKS[book]
+  verses=grouped[book];validate_book(book,verses);code,name,chapters,app_vcount=BOOKS[book];source_vcount=SOURCE_VERSE_COUNTS.get(book,app_vcount)
   items=[verse_payload(book,c,v,verses[(c,v)]) for c,v in sorted(verses)]
   editions={e:sum(1 for x in items if x["base_edition"]==e) for e in EDITION_PRIORITY};editions={k:v for k,v in editions.items() if v}
   counts={"verses":len(items),"base_words":sum(x["base_word_count"] for x in items),"variant_rows":sum(x["variant_row_count"] for x in items),"fallback_verses":sum(1 for x in items if x["uses_fallback_edition"]),"all_rows":sum(len(x["words"]) for x in items),"base_editions":editions}
-  payload={"schema_version":"stepbible-tagnt-book-v1","source_commit":COMMIT,"license":"CC BY 4.0","attribution":"STEP Bible","book":{"step_code":book,"internal_code":code,"name_es":name,"chapter_count":chapters,"verse_count":vcount},"counts":counts,"verses":items}
+  payload={"schema_version":"stepbible-tagnt-book-v1","source_commit":COMMIT,"license":"CC BY 4.0","attribution":"STEP Bible","book":{"step_code":book,"internal_code":code,"name_es":name,"chapter_count":chapters,"source_verse_count":source_vcount,"app_verse_count":app_vcount,"versification_mapping_required":source_vcount!=app_vcount},"counts":counts,"verses":items}
   fn=f"{code.lower()}.json.gz";size,digest=write_gz(out/"books"/fn,payload)
   books.append({**payload["book"],**counts,"artifact":f"books/{fn}","artifact_bytes":size,"artifact_sha256":digest})
-  tot["books"]+=1
+  tot["books"]+=1;tot["versification_books"]+=int(source_vcount!=app_vcount)
   for k in ("verses","base_words","variant_rows","fallback_verses","all_rows"):tot[k]+=counts[k]
   for e,n in editions.items():tot["base_editions"][e]=tot["base_editions"].get(e,0)+n
   print(f"{name}: {counts['verses']} versículos, {counts['base_words']} palabras base, {counts['fallback_verses']} con respaldo, {counts['variant_rows']} variantes.",flush=True)
