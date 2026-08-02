@@ -10,6 +10,7 @@ on:
       - "scripts/stepbible/inspect_ot_sources.py"
       - ".github/workflows/validate-stepbible-obadiah-package.yml"
       - "docs/FASE_D_PAQUETE_TAHOT_OBADIAS.md"
+      - "docs/FASE_D_REPRODUCIBILIDAD_OBADIAS.md"
   pull_request:
     branches:
       - main
@@ -19,6 +20,7 @@ on:
       - "scripts/stepbible/inspect_ot_sources.py"
       - ".github/workflows/validate-stepbible-obadiah-package.yml"
       - "docs/FASE_D_PAQUETE_TAHOT_OBADIAS.md"
+      - "docs/FASE_D_REPRODUCIBILIDAD_OBADIAS.md"
   workflow_dispatch:
 
 concurrency:
