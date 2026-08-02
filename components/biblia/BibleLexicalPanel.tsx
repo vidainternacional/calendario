@@ -16,8 +16,6 @@ import { cargarPalabrasBiblicasVerificadas } from '@/app/actions/lexico-biblico'
 type Modo = 'claro' | 'oscuro' | 'sepia'
 type Resultado = Awaited<ReturnType<typeof cargarPalabrasBiblicasVerificadas>>
 
-type OcurrenciaDisponible = Extract<Resultado, { status: 'available' }>['occurrences'][number]
-
 const LANGUAGE_LABELS = {
   hebrew: 'Hebreo',
   aramaic: 'Arameo',
@@ -112,8 +110,9 @@ export default function BibleLexicalPanel({
     },
   }[modo]
 
-  const occurrence = resultado.occurrences.find((item) => item.wordIndex === seleccionada)
-    ?? resultado.occurrences[0]
+  const occurrence = seleccionada === null
+    ? null
+    : resultado.occurrences.find((item) => item.wordIndex === seleccionada) ?? null
 
   return (
     <section className={`rounded-3xl border p-4 font-sans sm:p-5 ${palette.shell}`} aria-labelledby="biblia-lexico-title">
@@ -133,7 +132,7 @@ export default function BibleLexicalPanel({
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {resultado.occurrences.map((item) => {
-          const active = item.wordIndex === occurrence.wordIndex
+          const active = item.wordIndex === seleccionada
           return (
             <button
               key={`${item.entry.lexicalId}-${item.wordIndex}`}
@@ -154,7 +153,7 @@ export default function BibleLexicalPanel({
         })}
       </div>
 
-      {seleccionada !== null && occurrence && (
+      {occurrence && (
         <article className={`mt-3 rounded-2xl border p-4 ${palette.detail}`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
