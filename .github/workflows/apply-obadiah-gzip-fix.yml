@@ -1,6 +1,11 @@
 name: Corregir compresión del paquete de Obadías
 
 on:
+  push:
+    branches:
+      - fase-d/paquete-tahot-obadias
+    paths:
+      - ".github/workflows/apply-obadiah-gzip-fix.yml"
   pull_request:
     branches:
       - main
