@@ -1,0 +1,160 @@
+name: Integrar visualización textual general
+
+on:
+  push:
+    branches:
+      - fase-d/visualizacion-textual-general
+    paths:
+      - .github/workflows/apply-general-textual-ui.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fase-d/visualizacion-textual-general
+          fetch-depth: 0
+
+      - name: Aplicar integración controlada
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str, label: str):
+              text = path.read_text(encoding='utf-8')
+              if new in text:
+                  return False
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: se esperaba un marcador y se encontraron {text.count(old)}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+              return True
+
+          textual = Path('lib/estudios/biblical-textual-study.ts')
+          replace_once(
+              textual,
+              "  analysisStatus: 'partial' | 'complete' | 'verified'\n  sourceLocator: string\n",
+              "  analysisStatus: 'partial' | 'complete' | 'verified'\n  baseEdition: string | null\n  usesFallbackEdition: boolean\n  sourceLocator: string\n",
+              'tipo de edición textual',
+          )
+          replace_once(
+              textual,
+              "  analysis_status: 'partial' | 'complete' | 'verified'\n  source_locator: string\n",
+              "  analysis_status: 'partial' | 'complete' | 'verified'\n  metadata: Record<string, unknown> | null\n  source_locator: string\n",
+              'fila del texto del versículo',
+          )
+          replace_once(
+              textual,
+              "      analysisStatus: verseText.analysis_status,\n      sourceLocator: verseText.source_locator,\n",
+              "      analysisStatus: verseText.analysis_status,\n      baseEdition: typeof verseText.metadata?.base_edition === 'string'\n        ? verseText.metadata.base_edition\n        : null,\n      usesFallbackEdition: verseText.metadata?.uses_fallback_edition === true\n        || verseText.metadata?.uses_fallback_edition === 'true',\n      sourceLocator: verseText.source_locator,\n",
+              'ensamblado de edición',
+          )
+          replace_once(
+              textual,
+              ".select('id, source_id, language, original_text, normalized_text, transliteration, literal_translation_es, text_direction, token_count, analysis_status, source_locator, provider_version, content_hash')",
+              ".select('id, source_id, language, original_text, normalized_text, transliteration, literal_translation_es, text_direction, token_count, analysis_status, metadata, source_locator, provider_version, content_hash')",
+              'consulta del texto del versículo',
+          )
+
+          resolver = Path('lib/estudios/resolved-biblical-textual-study.ts')
+          replace_once(
+              resolver,
+              "    analysisStatus: mergeAnalysisStatus(editions),\n    sourceLocator: editions.map(edition => edition.sourceLocator).join(' | '),\n",
+              "    analysisStatus: mergeAnalysisStatus(editions),\n    baseEdition: Array.from(new Set(\n      editions.map(edition => edition.baseEdition).filter((value): value is string => Boolean(value))\n    )).join(' + ') || null,\n    usesFallbackEdition: editions.some(edition => edition.usesFallbackEdition),\n    sourceLocator: editions.map(edition => edition.sourceLocator).join(' | '),\n",
+              'ensamblado de correspondencias',
+          )
+
+          action = Path('app/actions/estudio-interno.ts')
+          replace_once(
+              action,
+              "import type { BiblicalTextualStudyBundle } from '@/lib/estudios/biblical-textual-study'\nimport { getResolvedBiblicalTextualStudy } from '@/lib/estudios/resolved-biblical-textual-study'\n",
+              "import {\n  getResolvedBiblicalTextualStudy,\n  type ResolvedBiblicalTextualStudyBundle,\n} from '@/lib/estudios/resolved-biblical-textual-study'\n",
+              'tipo resuelto en acción',
+          )
+          replace_once(
+              action,
+              "      textualEvidence?: BiblicalTextualStudyBundle\n",
+              "      textualEvidence?: ResolvedBiblicalTextualStudyBundle\n",
+              'estado textual resuelto',
+          )
+
+          client = Path('components/estudios/EstudioProfundoClient.tsx')
+          import_marker = "} from '@/app/actions/estudio-interno'\n"
+          import_line = "import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'\n"
+          text = client.read_text(encoding='utf-8')
+          if import_line not in text:
+              if text.count(import_marker) != 1:
+                  raise SystemExit('No se encontró el marcador de importación del cliente')
+              text = text.replace(import_marker, import_marker + import_line, 1)
+
+          old_sections = """    return SECTIONS.filter(section => Boolean(state.resultado[section.key]))
+"""
+          new_sections = """    const replacedByTextualEvidence: Array<keyof EstudioResultado> = state.textualEvidence
+      ? ['texto_original', 'transliteracion', 'traduccion_literal']
+      : []
+    return SECTIONS.filter(section =>
+      Boolean(state.resultado[section.key]) && !replacedByTextualEvidence.includes(section.key)
+    )
+"""
+          if new_sections not in text:
+              if text.count(old_sections) != 1:
+                  raise SystemExit('No se encontró el bloque de secciones del estudio')
+              text = text.replace(old_sections, new_sections, 1)
+
+          old_render = """          </header>
+
+          <div className=\"divide-y divide-slate-100\">
+"""
+          new_render = """          </header>
+
+          {state.textualEvidence && <TextualEvidencePanel evidence={state.textualEvidence} />}
+
+          <div className=\"divide-y divide-slate-100\">
+"""
+          if new_render not in text:
+              if text.count(old_render) != 1:
+                  raise SystemExit('No se encontró el montaje del resultado textual')
+              text = text.replace(old_render, new_render, 1)
+          client.write_text(text, encoding='utf-8')
+
+          bible = Path('components/biblia/BibliaClient.tsx')
+          text = bible.read_text(encoding='utf-8')
+          bible_import = "import BibleTextualStudyPanel from '@/components/biblia/BibleTextualStudyPanel'\n"
+          historical_import = "import BibleHistoricalContextPanel from '@/components/biblia/BibleHistoricalContextPanel'\n"
+          if bible_import not in text:
+              if text.count(historical_import) != 1:
+                  raise SystemExit('No se encontró el import histórico de Biblia')
+              text = text.replace(historical_import, historical_import + bible_import, 1)
+
+          historical_panel = "            <BibleHistoricalContextPanel pasaje={pasajeEstudio} modo={esPastoral ? 'claro' : modoLectura} />\n"
+          panels = historical_panel + "            <BibleTextualStudyPanel pasaje={pasajeEstudio} translationId={trad} modo={esPastoral ? 'claro' : modoLectura} />\n"
+          if panels not in text:
+              if text.count(historical_panel) != 1:
+                  raise SystemExit('No se encontró el panel histórico dentro de Biblia')
+              text = text.replace(historical_panel, panels, 1)
+          bible.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+
+      - name: Confirmar integración
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            lib/estudios/biblical-textual-study.ts \
+            lib/estudios/resolved-biblical-textual-study.ts \
+            app/actions/estudio-interno.ts \
+            components/estudios/EstudioProfundoClient.tsx \
+            components/biblia/BibliaClient.tsx
+          git commit -m "feat(fase-d): integrar estudio textual en Biblia y Estudio Profundo"
+          git push origin HEAD:fase-d/visualizacion-textual-general
