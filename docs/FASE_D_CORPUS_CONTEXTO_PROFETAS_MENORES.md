@@ -2,24 +2,62 @@
 
 Fecha: 2026-08-02
 
+## Objetivo
+
+Extender Estudio Profundo a Oseas–Malaquías mediante contexto interno recuperable por referencia, sin depender de una llamada de IA durante la consulta y sin copiar traducciones bíblicas protegidas.
+
 ## Cobertura
 
-El lote incorpora los doce libros del Libro de los Doce:
+El lote cubre los doce libros del Libro de los Doce:
 
-- Oseas: 4 unidades;
-- Joel: 3;
-- Amós: 4;
-- Abdías: 2;
-- Jonás: 3;
-- Miqueas: 3;
-- Nahúm: 2;
-- Habacuc: 3;
-- Sofonías: 3;
-- Hageo: 3;
-- Zacarías: 4;
-- Malaquías: 3.
+- Oseas
+- Joel
+- Amós
+- Abdías
+- Jonás
+- Miqueas
+- Nahúm
+- Habacuc
+- Sofonías
+- Hageo
+- Zacarías
+- Malaquías
 
-Total: 37 unidades. Cobertura acumulada: 39 libros y 163 unidades contextuales activas.
+La base activa contiene:
+
+- 12 perfiles de libro;
+- 28 unidades seccionales;
+- 40 unidades contextuales canónicas;
+- 0 rangos exactos duplicados;
+- 0 secciones activas solapadas.
+
+## Contenido recuperable
+
+Cada perfil o sección puede aportar:
+
+- resumen del pasaje o bloque;
+- contexto histórico;
+- contexto judío y recepción canónica;
+- función literaria;
+- intención comunicativa;
+- reflexión teológica y espiritual;
+- cautelas contra usos anacrónicos, coercitivos o antijudíos;
+- términos, pueblos y lugares relevantes;
+- versión, localizador y hash.
+
+## Transparencia editorial
+
+El corpus `vida-contexto-editorial` es una síntesis editorial asistida por IA y sujeta a revisión humana.
+
+Todas sus unidades activas quedan marcadas con:
+
+- `generated_by_ai: true`;
+- `review_level: ai_assisted_editorial`;
+- `human_review_status: pending`;
+- `quality_tier: contextual_synthesis`;
+- `not_a_primary_source: true`.
+
+Esta clasificación no se aplica a STEPBible, Pleiades ni a otras fuentes externas verificables, que conservan su procedencia y licencia independiente.
 
 ## Criterios editoriales
 
@@ -35,42 +73,55 @@ Total: 37 unidades. Cobertura acumulada: 39 libros y 163 unidades contextuales a
 - Malaquías 2 no obliga a permanecer en relaciones peligrosas;
 - los símbolos de Zacarías no se convierten en códigos geopolíticos.
 
-## Integridad
+## Normalización
 
-- ninguna unidad activa marcada `generated_by_ai: true`;
-- rangos e hashes validados;
-- RLS de solo lectura;
-- fuente, versión y localizador obligatorios;
-- cero políticas de escritura desde clientes.
+Se añadió un índice parcial para impedir dos unidades activas con el mismo libro, tipo y rango exacto.
+
+También se retiraron:
+
+- duplicados exactos creados durante importaciones incrementales;
+- un solapamiento en Joel, reemplazado por la partición estable `Joel 1` y `Joel 2–3`.
+
+## Seguridad
+
+No se modificaron las políticas existentes del corpus:
+
+- RLS activo;
+- `anon` sin lectura;
+- cuenta activa obligatoria;
+- lectura autenticada únicamente de libros, fuentes y unidades aprobadas;
+- ninguna política de inserción, actualización o eliminación desde clientes;
+- importador alojado en el esquema `internal` y sin permisos para `anon` o `authenticated`.
+
+## Límites
+
+Este lote ofrece contexto general y seccional. No afirma tener todavía para cada versículo:
+
+- texto original completo;
+- transliteración palabra por palabra;
+- traducción literal propia;
+- variantes manuscritas exhaustivas;
+- comentario académico revisado por especialistas.
+
+Esos datos solo deben mostrarse cuando provengan de tablas y fuentes específicas aprobadas.
 
 ## Pruebas sugeridas
 
-- Oseas 6:6;
-- Oseas 11:8;
-- Joel 2:28;
-- Amós 5:24;
-- Abdías 1:11;
-- Jonás 4:2;
-- Miqueas 5:2;
-- Miqueas 6:8;
-- Nahúm 1:7;
-- Habacuc 2:4;
-- Habacuc 3:17;
-- Sofonías 3:17;
-- Hageo 1:5;
-- Zacarías 4:6;
-- Zacarías 9:9;
-- Malaquías 3:10;
-- Malaquías 4:6.
+- Oseas 6:6
+- Joel 2:28
+- Amós 5:24
+- Abdías 1:11
+- Jonás 4:2
+- Miqueas 6:8
+- Nahúm 1:7
+- Habacuc 2:4
+- Sofonías 3:17
+- Hageo 1:5
+- Zacarías 9:9
+- Malaquías 3:10
 
-## Estado de cobertura
+## Estado acumulado
 
-Con este lote, los 39 libros del Antiguo Testamento protestante poseen al menos un perfil general y una o más unidades contextuales por secciones.
+Los 39 libros del Antiguo Testamento protestante poseen al menos un perfil general y unidades contextuales por secciones.
 
-## Siguiente lote
-
-- Mateo;
-- Marcos;
-- Lucas;
-- Juan;
-- Hechos.
+La base ya contiene además contexto activo para Mateo, Marcos, Lucas, Juan, Hechos, Romanos, 1 Corintios y 2 Corintios. El primer libro todavía pendiente es Gálatas.
