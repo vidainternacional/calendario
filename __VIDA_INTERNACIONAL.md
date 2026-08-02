@@ -165,6 +165,63 @@ Documentación principal:
 - `docs/FASE_D_COBERTURA_CONTEXTUAL_BIBLIA_COMPLETA.md`;
 - documentos parciales del Pentateuco, históricos, poesía y sabiduría, profetas, Evangelios, cartas paulinas y cartas generales.
 
-El Bloque 4 continúa activo. Antes de cerrarlo todavía corresponde ampliar la cobertura específica de texto original, transliteración, morfología, traducción literal y variantes textuales desde fuentes compatibles, además de validar visualmente el resultado completo en producción.
+### Avance confirmado del Bloque 4 — corpus textual del Nuevo Testamento
+
+La extracción completa de los 27 libros del Nuevo Testamento desde TAGNT quedó validada y versionada.
+
+Fuente fijada:
+
+- repositorio `STEPBible/STEPBible-Data`;
+- commit `b86d26cdb1f51729e73b5b4eb7f7ccadc5dfba39`;
+- licencia CC BY 4.0;
+- hashes de los archivos Mateo–Juan y Hechos–Apocalipsis verificados.
+
+Conteos validados:
+
+- libros: 27;
+- capítulos: 260;
+- referencias TAGNT: 7,958;
+- palabras de lectura base: 138,096;
+- lecturas adicionales: 4,000;
+- filas textuales totales: 142,096;
+- referencias que utilizan una edición de respaldo porque NA28 no contiene el texto: 16.
+
+Se detectaron diferencias de versificación en 2 Corintios, 3 Juan y Apocalipsis. Estas referencias deberán resolverse mediante perfiles de versificación asociados a la traducción seleccionada en la Biblia general; no se aplicará una conversión global.
+
+Documentación:
+
+- `docs/FASE_D_IMPORTACION_TEXTUAL_NT.md`;
+- `docs/FASE_D_IMPORTACION_TEXTUAL_NT_CHECKLIST.md`.
+
+### Avance confirmado del Bloque 4 — Filemón textual completo
+
+Filemón es el primer libro completo importado mediante el proceso automático.
+
+Resultado validado:
+
+- textos de versículo: 25;
+- palabras base: 335;
+- lecturas adicionales: 14;
+- ocurrencias totales: 349;
+- variantes documentadas: 18;
+- hashes inválidos: 0;
+- edición base: NA28 en las 25 referencias.
+
+La importación se realiza mediante `internal.import_stepbible_tagnt_book`, que descarga la fuente oficial, verifica el SHA-256, extrae solamente el libro solicitado, crea las relaciones léxicas y cancela toda la transacción si un conteo no coincide.
+
+Seguridad confirmada:
+
+- `anon` sin acceso;
+- usuarios autenticados únicamente con `SELECT` sobre contenido aprobado;
+- importador sin permiso de ejecución desde clientes;
+- control de lotes en el esquema `internal`;
+- RLS activo;
+- sin proveedor de IA.
+
+Documentación:
+
+- `docs/FASE_D_IMPORTACION_TEXTUAL_FILEMON.md`.
+
+El Bloque 4 continúa activo. El siguiente recorrido es importar por lotes los libros del Nuevo Testamento con correspondencia directa, aprobar los mapas de 2 Corintios, 3 Juan y Apocalipsis, ampliar el corpus hebreo y arameo y, finalmente, publicar una visualización general dentro de **Biblia → Estudio**.
 
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
