@@ -6,6 +6,7 @@ on:
       - fase-d/esquema-columnas-tahot
     paths:
       - "scripts/stepbible/inspect_ot_schema.py"
+      - "scripts/stepbible/inspect_ot_semantics.py"
       - "scripts/stepbible/inspect_ot_sources.py"
       - ".github/workflows/validate-stepbible-ot-schema.yml"
       - "docs/FASE_D_ESQUEMA_TAHOT.md"
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - "scripts/stepbible/inspect_ot_schema.py"
+      - "scripts/stepbible/inspect_ot_semantics.py"
       - "scripts/stepbible/inspect_ot_sources.py"
       - ".github/workflows/validate-stepbible-ot-schema.yml"
       - "docs/FASE_D_ESQUEMA_TAHOT.md"
@@ -33,14 +35,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Ejecutar auto-test
-        run: python scripts/stepbible/inspect_ot_schema.py --self-test
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/inspect_ot_schema.py --self-test
+          python scripts/stepbible/inspect_ot_semantics.py --self-test
 
       - name: Inspeccionar encabezados y formas de fila
         run: python scripts/stepbible/inspect_ot_schema.py --output artifacts/stepbible-ot-schema --samples 5
 
-      - name: Mostrar resumen
-        run: cat artifacts/stepbible-ot-schema/schema-observation.md
+      - name: Clasificar estados, lenguas y documentación
+        run: python scripts/stepbible/inspect_ot_semantics.py --output artifacts/stepbible-ot-schema --samples 4
+
+      - name: Mostrar resúmenes
+        run: |
+          cat artifacts/stepbible-ot-schema/schema-observation.md
+          printf '\n'
+          cat artifacts/stepbible-ot-schema/schema-semantics.md
 
       - uses: actions/upload-artifact@v4
         with:
