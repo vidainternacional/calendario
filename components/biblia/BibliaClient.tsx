@@ -4,6 +4,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } 
 import Link from 'next/link'
 import {
   BookOpen,
+  BookOpenText,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -25,6 +27,7 @@ import {
 import { toggleFavorito, favoritosDelCapitulo } from '@/app/actions/biblia'
 import { agregarVersiculoAlProyecto } from '@/app/actions/pastoral-proyecto-versiculos'
 import BibleNotesWorkspace from '@/components/biblia/BibleNotesWorkspace'
+import { getBookAuthorship } from '@/lib/biblia/book-authorship'
 import { mostrarToast } from '@/lib/ui/toast'
 
 const API = 'https://bible.helloao.org/api'
@@ -53,9 +56,7 @@ function textoDeVerso(v: VersoApi): string {
   if (!Array.isArray(v.content)) return ''
   return v.content.map((c) => {
     if (typeof c === 'string') return c
-    if (c && typeof c === 'object' && 'text' in (c as Record<string, unknown>)) {
-      return String((c as Record<string, unknown>).text)
-    }
+    if (c && typeof c === 'object' && 'text' in (c as Record<string, unknown>)) return String((c as Record<string, unknown>).text)
     return ''
   }).join(' ').replace(/\s+/g, ' ').trim()
 }
@@ -74,12 +75,50 @@ function nombreTraduccion(t: Traduccion): string {
   return `${t.name} (${t.shortName})`
 }
 
-function etiquetaTraduccion(t: Traduccion): string {
-  return t.shortName || t.name
+function etiquetaTraduccion(t: Traduccion | undefined): string {
+  if (!t) return 'Biblia'
+  const corta = (t.shortName || '').trim()
+  if (corta && corta.length <= 12) return corta.toUpperCase()
+  const iniciales = t.name.split(/\s+/).filter(Boolean).map(p => p[0]).join('').replace(/[^a-z0-9]/gi, '')
+  return (iniciales.slice(0, 8) || t.name.slice(0, 10)).toUpperCase()
 }
 
 function esModoLectura(value: string | undefined): value is ModoLectura {
   return value === 'claro' || value === 'oscuro' || value === 'sepia'
+}
+
+function TranslationPicker({
+  label,
+  value,
+  translations,
+  onChange,
+  className,
+}: {
+  label: string
+  value: string
+  translations: Traduccion[]
+  onChange: (value: string) => void
+  className: string
+}) {
+  const selected = translations.find(t => t.id === value)
+  return (
+    <label className="block min-w-0">
+      <span className="mb-1 block text-[11px] font-black uppercase tracking-wide opacity-70">{label}</span>
+      <span className={`relative flex h-12 min-w-0 items-center justify-center rounded-2xl border px-9 text-center text-sm font-black ${className}`} title={selected ? nombreTraduccion(selected) : label}>
+        <span className="truncate">{etiquetaTraduccion(selected)}</span>
+        <ChevronDown className="absolute right-3 h-4 w-4 opacity-70" aria-hidden="true" />
+        <select
+          aria-label={label}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        >
+          {translations.map(t => <option key={t.id} value={t.id}>{nombreTraduccion(t)}</option>)}
+        </select>
+      </span>
+      <span className="mt-1 block truncate text-center text-[10px] opacity-60" title={selected ? nombreTraduccion(selected) : ''}>{selected?.name || 'Cargando…'}</span>
+    </label>
+  )
 }
 
 export default function BibliaClient({
@@ -111,6 +150,7 @@ export default function BibliaClient({
   const [tamanoFuente, setTamanoFuente] = useState(18)
   const [preferenciasListas, setPreferenciasListas] = useState(esPastoral)
   const [mostrarTamano, setMostrarTamano] = useState(false)
+  const [mostrarAutoria, setMostrarAutoria] = useState(false)
   const [vista, setVista] = useState<Vista>('leer')
   const [voces, setVoces] = useState<SpeechSynthesisVoice[]>([])
   const [vozSeleccionada, setVozSeleccionada] = useState('')
@@ -138,10 +178,7 @@ export default function BibliaClient({
     const cargarVoces = () => {
       const disponibles = window.speechSynthesis?.getVoices().filter(v => v.lang.toLowerCase().startsWith('es')) ?? []
       setVoces(disponibles)
-      setVozSeleccionada(prev => {
-        if (prev && disponibles.some(v => v.name === prev)) return prev
-        return disponibles.find(v => /paulina/i.test(v.name))?.name ?? disponibles[0]?.name ?? ''
-      })
+      setVozSeleccionada(prev => prev && disponibles.some(v => v.name === prev) ? prev : disponibles.find(v => /paulina/i.test(v.name))?.name ?? disponibles[0]?.name ?? '')
     }
     cargarVoces()
     window.speechSynthesis?.addEventListener('voiceschanged', cargarVoces)
@@ -155,17 +192,13 @@ export default function BibliaClient({
       return r.json()
     }).then(d => {
       const todas: Traduccion[] = d.translations ?? []
-      const espanolas = todas.filter(t => t.language === 'spa' || t.language === 'es')
-      const ingles = todas.filter(t => ['eng', 'en'].includes(t.language)).slice(0, 3)
-      const lista = [...espanolas, ...ingles]
+      const lista = [...todas.filter(t => t.language === 'spa' || t.language === 'es'), ...todas.filter(t => ['eng', 'en'].includes(t.language)).slice(0, 3)]
       setTraducciones(lista)
       const guardada = saltoRef.current
       const reinaValera = lista.find(t => /reina[ -]?valera.*1909|rv1909|rvr1909/i.test(`${t.name} ${t.shortName ?? ''} ${t.id}`))
-      const inicial = guardada && lista.some(t => t.id === guardada.trad)
-        ? guardada.trad
-        : reinaValera?.id ?? lista[0]?.id ?? ''
+      const inicial = guardada && lista.some(t => t.id === guardada.trad) ? guardada.trad : reinaValera?.id ?? lista[0]?.id ?? ''
       setTrad(inicial)
-      setTradComparada(lista.find(t => t.id !== inicial)?.id ?? inicial)
+      setTradComparada(lista.find(t => t.id !== inicial)?.id ?? '')
     }).catch(() => setError('No se pudo conectar con la biblioteca bíblica.'))
   }, [])
 
@@ -182,15 +215,19 @@ export default function BibliaClient({
         setLibro(salto.libro)
         setCapitulo(salto.capitulo)
         saltoRef.current = null
-      } else {
-        setLibro(prev => bs.some(b => b.id === prev) ? prev : bs[0]?.id ?? '')
-      }
+      } else setLibro(prev => bs.some(b => b.id === prev) ? prev : bs[0]?.id ?? '')
       setTimeout(() => { listoRef.current = true }, 0)
     }).catch(() => setError('No se pudieron cargar los libros.'))
   }, [trad])
 
+  useEffect(() => {
+    if (tradComparada === trad || !traducciones.some(t => t.id === tradComparada)) setTradComparada(traducciones.find(t => t.id !== trad)?.id ?? '')
+  }, [trad, tradComparada, traducciones])
+
   const libroActual = useMemo(() => libros.find(b => b.id === libro), [libros, libro])
   const traduccionActual = useMemo(() => traducciones.find(t => t.id === trad), [traducciones, trad])
+  const traduccionComparada = useMemo(() => traducciones.find(t => t.id === tradComparada), [traducciones, tradComparada])
+  const autoria = useMemo(() => getBookAuthorship(libroActual?.name), [libroActual?.name])
   const pasaje = `${libroActual?.name ?? ''} ${capitulo}`
 
   useEffect(() => {
@@ -202,7 +239,6 @@ export default function BibliaClient({
     setMostrarFavoritos(false)
     window.speechSynthesis?.cancel()
     setLeyendo(false)
-
     fetch(`${API}/${trad}/${libro}/${capitulo}.json`).then(r => {
       if (!r.ok) throw new Error('chapter')
       return r.json()
@@ -211,14 +247,8 @@ export default function BibliaClient({
       const contenido: VersoApi[] = d.chapter?.content ?? []
       setVersos(contenido.filter(c => c.type === 'verse' && typeof c.number === 'number').map(c => ({ n: c.number as number, t: textoDeVerso(c) })))
     }).catch(() => activo && setError('No se pudo cargar el capítulo.')).finally(() => activo && setCargando(false))
-
-    favoritosDelCapitulo(trad, libro, capitulo)
-      .then(favs => activo && setFavoritos(new Set(favs)))
-      .catch(() => activo && setFavoritos(new Set()))
-
-    if (listoRef.current) {
-      try { localStorage.setItem(POS_KEY, JSON.stringify({ trad, libro, capitulo })) } catch {}
-    }
+    favoritosDelCapitulo(trad, libro, capitulo).then(favs => activo && setFavoritos(new Set(favs))).catch(() => activo && setFavoritos(new Set()))
+    if (listoRef.current) try { localStorage.setItem(POS_KEY, JSON.stringify({ trad, libro, capitulo })) } catch {}
     return () => { activo = false }
   }, [trad, libro, capitulo])
 
@@ -226,7 +256,11 @@ export default function BibliaClient({
     if (vista !== 'comparar' || !tradComparada || !libro) return
     let activo = true
     setCargandoComparacion(true)
-    fetch(`${API}/${tradComparada}/${libro}/${capitulo}.json`).then(r => r.json()).then(d => {
+    setVersosComparados([])
+    fetch(`${API}/${tradComparada}/${libro}/${capitulo}.json`).then(r => {
+      if (!r.ok) throw new Error('comparison')
+      return r.json()
+    }).then(d => {
       if (!activo) return
       const contenido: VersoApi[] = d.chapter?.content ?? []
       setVersosComparados(contenido.filter(c => c.type === 'verse' && typeof c.number === 'number').map(c => ({ n: c.number as number, t: textoDeVerso(c) })))
@@ -253,17 +287,13 @@ export default function BibliaClient({
     setLeyendo(true)
   }
 
-  const detener = () => { window.speechSynthesis?.cancel(); setLeyendo(false) }
-  const cambiarLibro = (id: string) => { setLibro(id); setCapitulo(1) }
+  const cambiarLibro = (id: string) => { setLibro(id); setCapitulo(1); setMostrarAutoria(false) }
   const cambiarTrad = (id: string) => { setTrad(id); setCapitulo(1) }
-  const irAnterior = () => setCapitulo(c => Math.max(1, c - 1))
-  const irSiguiente = () => setCapitulo(c => Math.min(libroActual?.numberOfChapters ?? c, c + 1))
   const irAVersiculo = (numero: number) => {
     if (!numero) return
     setVersoSel(numero)
     requestAnimationFrame(() => document.getElementById(`versiculo-${numero}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
-
   const siguienteVoz = () => {
     if (!voces.length) return mostrarToast('No hay voces en español disponibles')
     const actual = Math.max(0, voces.findIndex(v => v.name === vozSeleccionada))
@@ -272,39 +302,23 @@ export default function BibliaClient({
     mostrarToast(siguiente.name)
   }
 
-  const siguienteTema = () => {
-    setModoLectura(actual => actual === 'claro' ? 'sepia' : actual === 'sepia' ? 'oscuro' : 'claro')
-  }
-
   const marcarFavorito = async (v: Verso) => {
     if (!libroActual || guardandoVerso !== null) return
     setGuardandoVerso(v.n)
     try {
       const resultado = await toggleFavorito({ traduccion: trad, libro_id: libro, libro_nombre: libroActual.name, capitulo, verso: v.n, texto: v.t })
       if ('error' in resultado) return mostrarToast(resultado.error || 'No se pudo guardar el favorito')
-      setFavoritos(prev => {
-        const siguiente = new Set(prev)
-        if (resultado.favorito) siguiente.add(v.n)
-        else siguiente.delete(v.n)
-        return siguiente
-      })
+      setFavoritos(prev => { const next = new Set(prev); resultado.favorito ? next.add(v.n) : next.delete(v.n); return next })
       mostrarToast(resultado.favorito ? 'Versículo guardado' : 'Versículo eliminado de favoritos')
-    } finally {
-      setGuardandoVerso(null)
-    }
+    } finally { setGuardandoVerso(null) }
   }
 
   const compartirVersiculo = async (referencia: string, texto: string) => {
     const contenido = `“${texto}”\n— ${referencia}\n\nCompartido desde Vida Internacional`
     try {
       if (navigator.share) await navigator.share({ title: referencia, text: contenido })
-      else {
-        await navigator.clipboard.writeText(contenido)
-        mostrarToast('Versículo copiado')
-      }
-    } catch (e) {
-      if ((e as Error)?.name !== 'AbortError') mostrarToast('No se pudo compartir')
-    }
+      else { await navigator.clipboard.writeText(contenido); mostrarToast('Versículo copiado') }
+    } catch (e) { if ((e as Error)?.name !== 'AbortError') mostrarToast('No se pudo compartir') }
   }
 
   const agregarAlProyecto = (v: Verso) => {
@@ -324,142 +338,47 @@ export default function BibliaClient({
   }
 
   const tema = {
-    claro: {
-      page: 'bg-[#f7f7f4]', panel: 'bg-white border-slate-200', text: 'text-slate-800', title: 'text-slate-950', muted: 'text-slate-500', selected: 'bg-violet-50 ring-1 ring-violet-200', control: 'border-slate-200 bg-white text-slate-900', soft: 'bg-slate-100 text-slate-700', circle: 'border-slate-200 bg-white text-slate-700', divider: 'border-slate-200',
-    },
-    oscuro: {
-      page: 'bg-slate-950', panel: 'bg-slate-900 border-slate-800', text: 'text-slate-100', title: 'text-white', muted: 'text-slate-400', selected: 'bg-violet-950/70 ring-1 ring-violet-700', control: 'border-slate-700 bg-slate-900 text-white', soft: 'bg-slate-800 text-slate-100', circle: 'border-slate-700 bg-slate-900 text-white', divider: 'border-slate-800',
-    },
-    sepia: {
-      page: 'bg-[#efe5d0]', panel: 'bg-[#fffaf0] border-[#dac8a5]', text: 'text-[#493c2d]', title: 'text-[#2d241b]', muted: 'text-[#7d6b54]', selected: 'bg-[#ead9b5] ring-1 ring-[#c9ad78]', control: 'border-[#cdb991] bg-[#fff8e8] text-[#382d21]', soft: 'bg-[#ead9b5] text-[#493c2d]', circle: 'border-[#cdb991] bg-[#fff8e8] text-[#493c2d]', divider: 'border-[#dac8a5]',
-    },
+    claro: { page: 'bg-[#f7f7f4]', panel: 'bg-white border-slate-200', text: 'text-slate-800', title: 'text-slate-950', muted: 'text-slate-500', selected: 'bg-violet-50 ring-1 ring-violet-200', control: 'border-slate-200 bg-white text-slate-900', soft: 'bg-slate-100 text-slate-700', circle: 'border-slate-200 bg-white text-slate-700', divider: 'border-slate-200' },
+    oscuro: { page: 'bg-slate-950', panel: 'bg-slate-900 border-slate-800', text: 'text-slate-100', title: 'text-white', muted: 'text-slate-400', selected: 'bg-violet-950/70 ring-1 ring-violet-700', control: 'border-slate-700 bg-slate-900 text-white', soft: 'bg-slate-800 text-slate-100', circle: 'border-slate-700 bg-slate-900 text-white', divider: 'border-slate-800' },
+    sepia: { page: 'bg-[#efe5d0]', panel: 'bg-[#fffaf0] border-[#dac8a5]', text: 'text-[#493c2d]', title: 'text-[#2d241b]', muted: 'text-[#7d6b54]', selected: 'bg-[#ead9b5] ring-1 ring-[#c9ad78]', control: 'border-[#cdb991] bg-[#fff8e8] text-[#382d21]', soft: 'bg-[#ead9b5] text-[#493c2d]', circle: 'border-[#cdb991] bg-[#fff8e8] text-[#493c2d]', divider: 'border-[#dac8a5]' },
   }[modoLectura]
 
-  const tabs: Array<[Vista, string, typeof BookOpen]> = [
-    ['leer', 'Leer', BookOpen],
-    ['estudio', 'Estudio', Sparkles],
-    ['comparar', 'Comparar', Copy],
-    ['notas', 'Notas', NotebookPen],
-  ]
-
+  const tabs: Array<[Vista, string, typeof BookOpen]> = [['leer', 'Leer', BookOpen], ['estudio', 'Estudio', Sparkles], ['comparar', 'Comparar', Copy], ['notas', 'Notas', NotebookPen]]
   const favoritosVisibles = versos.filter(v => favoritos.has(v.n))
   const vozActual = voces.find(v => v.name === vozSeleccionada)
+  const selectClass = esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control
 
   return (
     <section className={`${esPastoral ? '' : `min-h-screen ${tema.page}`} ${preferenciasListas ? 'transition-colors' : ''}`}>
       <div className={esPastoral ? '' : `mx-auto ${vista === 'notas' ? 'max-w-5xl' : 'max-w-4xl'} px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6`}>
-        {!esPastoral && (
-          <header className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#C0392B] text-white"><BookOpen className="h-5 w-5" /></span>
-              <div><h1 className={`text-xl font-bold ${tema.title}`}>Biblia</h1><p className={`text-xs ${tema.muted}`}>Leer, estudiar y guardar</p></div>
-            </div>
-            <button type="button" onClick={() => setMostrarFavoritos(v => !v)} aria-label="Favoritos" aria-expanded={mostrarFavoritos} className={`relative grid h-11 w-11 place-items-center rounded-full border ${tema.circle}`}>
-              <Star className={`h-5 w-5 ${favoritos.size ? 'fill-amber-400 text-amber-400' : ''}`} />
-              {favoritos.size > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">{favoritos.size}</span>}
-            </button>
-          </header>
-        )}
+        {!esPastoral && <header className="mb-4 flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#C0392B] text-white"><BookOpen className="h-5 w-5" /></span><div><h1 className={`text-xl font-bold ${tema.title}`}>Biblia</h1><p className={`text-xs ${tema.muted}`}>Leer, estudiar y guardar</p></div></div><button type="button" onClick={() => setMostrarFavoritos(v => !v)} aria-label="Favoritos" className={`relative grid h-11 w-11 place-items-center rounded-full border ${tema.circle}`}><Star className={`h-5 w-5 ${favoritos.size ? 'fill-amber-400 text-amber-400' : ''}`} />{favoritos.size > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">{favoritos.size}</span>}</button></header>}
 
         <div className={`overflow-hidden rounded-[26px] border shadow-sm ${esPastoral ? 'border-slate-200 bg-white' : tema.panel}`}>
           <div className={`sticky top-0 z-20 border-b p-3 backdrop-blur-xl ${esPastoral ? 'border-slate-200 bg-white/95' : `${tema.divider} ${tema.panel}`}`}>
-            <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2 text-center sm:grid-cols-4">
-              <select aria-label="Versión de la Biblia" title={traduccionActual ? nombreTraduccion(traduccionActual) : 'Versión'} value={trad} onChange={e => cambiarTrad(e.target.value)} className={`min-h-10 min-w-0 rounded-full border px-2 text-center text-xs font-bold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
-                {traducciones.map(t => <option key={t.id} value={t.id}>{nombreTraduccion(t)}</option>)}
-              </select>
-              <select aria-label="Libro de la Biblia" value={libro} onChange={e => cambiarLibro(e.target.value)} className={`min-h-10 min-w-0 rounded-full border px-2 text-center text-xs font-bold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
-                {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
-              <select aria-label="Capítulo" value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className={`min-h-10 rounded-full border px-2 text-center text-xs font-bold ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
-                {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Cap. {n}</option>)}
-              </select>
-              <select aria-label="Versículo" value={versoSel ?? ''} onChange={e => irAVersiculo(Number(e.target.value))} disabled={!versos.length} className={`min-h-10 rounded-full border px-2 text-center text-xs font-bold disabled:opacity-50 ${esPastoral ? 'border-slate-200 bg-white text-slate-900' : tema.control}`}>
-                <option value="">Versículo</option>
-                {versos.map(v => <option key={v.n} value={v.n}>Vers. {v.n}</option>)}
-              </select>
+            <div className="mx-auto grid h-[98px] max-w-2xl grid-cols-2 grid-rows-2 gap-2 text-center sm:h-[46px] sm:grid-cols-4 sm:grid-rows-1">
+              <TranslationPicker label="Versión" value={trad} translations={traducciones} onChange={cambiarTrad} className={selectClass} />
+              <select aria-label="Libro de la Biblia" value={libro} onChange={e => cambiarLibro(e.target.value)} className={`h-12 min-w-0 rounded-2xl border px-2 text-center text-xs font-bold ${selectClass}`}>{libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+              <select aria-label="Capítulo" value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className={`h-12 min-w-0 rounded-2xl border px-2 text-center text-xs font-bold ${selectClass}`}>{Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Cap. {n}</option>)}</select>
+              <select aria-label="Versículo" value={versoSel ?? ''} onChange={e => irAVersiculo(Number(e.target.value))} disabled={!versos.length} className={`h-12 min-w-0 rounded-2xl border px-2 text-center text-xs font-bold disabled:opacity-50 ${selectClass}`}><option value="">Versículo</option>{versos.map(v => <option key={v.n} value={v.n}>Vers. {v.n}</option>)}</select>
             </div>
-
-            <div className="mt-2 grid grid-cols-4 gap-1.5">
-              {tabs.map(([id, label, Icon]) => (
-                <button key={id} type="button" onClick={() => setVista(id)} className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-bold ${vista === id ? 'bg-violet-600 text-white' : esPastoral ? 'bg-slate-100 text-slate-600' : tema.soft}`}>
-                  <Icon className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{label}</span>
-                </button>
-              ))}
-            </div>
+            <div className="mt-3 grid grid-cols-4 gap-1.5">{tabs.map(([id, label, Icon]) => <button key={id} type="button" onClick={() => setVista(id)} className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-bold ${vista === id ? 'bg-violet-600 text-white' : esPastoral ? 'bg-slate-100 text-slate-600' : tema.soft}`}><Icon className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{label}</span></button>)}</div>
           </div>
 
-          {mostrarFavoritos && !esPastoral && (
-            <section className={`border-b p-4 ${tema.divider}`}>
-              <div className="mb-3 flex items-center gap-2"><Star className="h-5 w-5 fill-amber-400 text-amber-400" /><h2 className={`font-bold ${tema.title}`}>Favoritos</h2></div>
-              {favoritosVisibles.length ? (
-                <div className="max-h-72 space-y-2 overflow-y-auto overscroll-contain pr-1">
-                  {favoritosVisibles.map(v => (
-                    <button key={v.n} type="button" onClick={() => { irAVersiculo(v.n); setMostrarFavoritos(false) }} className={`block w-full rounded-xl p-3 text-left text-sm ${tema.soft}`}>
-                      <strong>{pasaje}:{v.n}</strong><span className="ml-2 opacity-80">{v.t}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : <p className={`text-sm ${tema.muted}`}>No hay favoritos guardados en este capítulo.</p>}
-            </section>
-          )}
+          {mostrarFavoritos && !esPastoral && <section className={`border-b p-4 ${tema.divider}`}><div className="mb-3 flex items-center gap-2"><Star className="h-5 w-5 fill-amber-400 text-amber-400" /><h2 className={`font-bold ${tema.title}`}>Favoritos</h2></div>{favoritosVisibles.length ? <div className="max-h-72 space-y-2 overflow-y-auto">{favoritosVisibles.map(v => <button key={v.n} type="button" onClick={() => { irAVersiculo(v.n); setMostrarFavoritos(false) }} className={`block w-full rounded-xl p-3 text-left text-sm ${tema.soft}`}><strong>{pasaje}:{v.n}</strong><span className="ml-2 opacity-80">{v.t}</span></button>)}</div> : <p className={`text-sm ${tema.muted}`}>No hay favoritos guardados en este capítulo.</p>}</section>}
 
-          {esPastoral && versiculosProyecto.length > 0 && (
-            <div className="border-b border-violet-100 bg-violet-50/70 p-4 sm:p-5">
-              <div className="flex items-center justify-between"><div><p className="text-sm font-bold text-violet-950">Versículos del proyecto</p><p className="mt-0.5 text-xs text-violet-700">Se actualizan automáticamente.</p></div><span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-violet-700">{versiculosProyecto.length}</span></div>
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1">{versiculosProyecto.map(v => <article key={v.id} className="min-w-[260px] rounded-2xl border border-violet-100 bg-white p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold text-violet-700">{v.referencia}</p><p className="mt-1 line-clamp-3 text-xs leading-5 text-slate-600">{v.texto}</p></div>{onEliminarVersiculo && <button type="button" onClick={() => onEliminarVersiculo(v.id)} disabled={eliminandoId === v.id} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-rose-50 text-rose-600">{eliminandoId === v.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>}</div></article>)}</div>
-            </div>
-          )}
+          {esPastoral && versiculosProyecto.length > 0 && <div className="border-b border-violet-100 bg-violet-50/70 p-4"><div className="flex items-center justify-between"><p className="text-sm font-bold text-violet-950">Versículos del proyecto</p><span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-violet-700">{versiculosProyecto.length}</span></div><div className="mt-3 flex gap-2 overflow-x-auto">{versiculosProyecto.map(v => <article key={v.id} className="min-w-[260px] rounded-2xl border border-violet-100 bg-white p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold text-violet-700">{v.referencia}</p><p className="mt-1 line-clamp-3 text-xs leading-5 text-slate-600">{v.texto}</p></div>{onEliminarVersiculo && <button type="button" onClick={() => onEliminarVersiculo(v.id)} disabled={eliminandoId === v.id} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-rose-50 text-rose-600">{eliminandoId === v.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>}</div></article>)}</div></div>}
 
-          {vista === 'leer' && (
-            <div className="p-4 sm:p-7">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <button type="button" onClick={irAnterior} disabled={capitulo <= 1} className={`grid h-11 w-11 place-items-center rounded-full border disabled:opacity-30 ${esPastoral ? 'border-slate-200' : tema.circle}`}><ChevronLeft className="h-5 w-5" /></button>
-                <div className="min-w-0 text-center"><h2 className={`text-2xl font-bold ${esPastoral ? 'text-slate-950' : tema.title}`}>{pasaje}</h2><p className={`mt-1 truncate text-xs ${esPastoral ? 'text-slate-500' : tema.muted}`} title={traduccionActual ? nombreTraduccion(traduccionActual) : ''}>{traduccionActual ? nombreTraduccion(traduccionActual) : ''}</p></div>
-                <button type="button" onClick={irSiguiente} disabled={capitulo >= (libroActual?.numberOfChapters ?? 1)} className={`grid h-11 w-11 place-items-center rounded-full border disabled:opacity-30 ${esPastoral ? 'border-slate-200' : tema.circle}`}><ChevronRight className="h-5 w-5" /></button>
-              </div>
+          {vista === 'leer' && <div className="p-4 sm:p-7">
+            <div className="mb-4 flex items-center justify-between gap-3"><button type="button" onClick={() => setCapitulo(c => Math.max(1, c - 1))} disabled={capitulo <= 1} className={`grid h-11 w-11 place-items-center rounded-full border disabled:opacity-30 ${esPastoral ? 'border-slate-200' : tema.circle}`}><ChevronLeft className="h-5 w-5" /></button><div className="min-w-0 text-center"><h2 className={`text-2xl font-bold ${esPastoral ? 'text-slate-950' : tema.title}`}>{pasaje}</h2><p className={`mt-1 truncate text-xs ${esPastoral ? 'text-slate-500' : tema.muted}`} title={traduccionActual ? nombreTraduccion(traduccionActual) : ''}>{traduccionActual ? nombreTraduccion(traduccionActual) : ''}</p></div><button type="button" onClick={() => setCapitulo(c => Math.min(libroActual?.numberOfChapters ?? c, c + 1))} disabled={capitulo >= (libroActual?.numberOfChapters ?? 1)} className={`grid h-11 w-11 place-items-center rounded-full border disabled:opacity-30 ${esPastoral ? 'border-slate-200' : tema.circle}`}><ChevronRight className="h-5 w-5" /></button></div>
+            {autoria && <section className={`mb-5 overflow-hidden rounded-2xl border ${selectClass}`}><button type="button" onClick={() => setMostrarAutoria(v => !v)} className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left"><span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-violet-600 text-white"><BookOpenText className="h-4 w-4" /></span><span className="min-w-0"><span className="block text-[10px] font-black uppercase tracking-wide text-violet-500">Autoría de {autoria.book}</span><span className="block text-sm font-bold leading-5">{autoria.attribution}</span></span></span><ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${mostrarAutoria ? 'rotate-180' : ''}`} /></button>{mostrarAutoria && <p className={`border-t px-4 py-3 text-xs leading-5 ${tema.divider}`}>{autoria.note}</p>}</section>}
+            <div className="mx-auto mb-5 grid max-w-sm grid-cols-4 gap-2"><button type="button" onClick={() => leyendo ? (window.speechSynthesis?.cancel(), setLeyendo(false)) : hablar()} className="grid h-12 place-items-center rounded-full bg-indigo-600 text-white">{leyendo ? <Square className="h-4 w-4" /> : <Headphones className="h-5 w-5" />}</button><button type="button" onClick={siguienteVoz} title={vozActual?.name ?? 'Cambiar voz'} className={`grid h-12 place-items-center rounded-full border ${tema.circle}`}><Volume2 className="h-5 w-5" /></button><button type="button" onClick={() => setMostrarTamano(v => !v)} className={`grid h-12 place-items-center rounded-full border ${mostrarTamano ? 'border-violet-500 bg-violet-600 text-white' : tema.circle}`}><Type className="h-5 w-5" /></button><button type="button" onClick={() => setModoLectura(actual => actual === 'claro' ? 'sepia' : actual === 'sepia' ? 'oscuro' : 'claro')} className={`grid h-12 place-items-center rounded-full border ${tema.circle}`}>{modoLectura === 'oscuro' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}</button></div>
+            {mostrarTamano && <div className={`mx-auto mb-5 flex max-w-[220px] items-center justify-between rounded-full border p-1.5 ${selectClass}`}><button type="button" onClick={() => setTamanoFuente(v => Math.max(15, v - 1))} className="grid h-10 w-10 place-items-center"><Minus className="h-4 w-4" /></button><span className="text-sm font-bold">{tamanoFuente}px</span><button type="button" onClick={() => setTamanoFuente(v => Math.min(28, v + 1))} className="grid h-10 w-10 place-items-center"><Plus className="h-4 w-4" /></button></div>}
+            {cargando && <div className="grid place-items-center py-16"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div>}{error && <p className="py-12 text-center text-sm font-semibold text-rose-600">{error}</p>}{!cargando && !error && <article className={`mx-auto max-w-[720px] ${esPastoral ? 'text-slate-800' : tema.text}`} style={{ fontSize: tamanoFuente, lineHeight: 1.95 }}>{versos.map(v => { const referencia = `${pasaje}:${v.n}`; const seleccionado = versoSel === v.n; return <div id={`versiculo-${v.n}`} key={v.n} className="relative scroll-mt-48"><p onClick={() => setVersoSel(seleccionado ? null : v.n)} className={`cursor-pointer rounded-xl px-2 py-1.5 ${seleccionado ? tema.selected : ''}`}><sup className="mr-1.5 text-[11px] font-black text-[#C0392B]">{v.n}</sup>{v.t}</p>{seleccionado && <div className="mb-3 mt-1 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-lg sm:grid-cols-4">{esPastoral ? <button type="button" onClick={() => agregarAlProyecto(v)} disabled={isPending} className="col-span-2 min-h-11 rounded-xl bg-violet-600 text-xs font-bold text-white">Agregar al proyecto</button> : <button type="button" onClick={() => marcarFavorito(v)} className="min-h-11 rounded-xl bg-amber-50 text-xs font-bold text-amber-700">{favoritos.has(v.n) ? 'Quitar' : 'Guardar'}</button>}<button type="button" onClick={() => hablar(v.n)} className="min-h-11 rounded-xl bg-indigo-50 text-xs font-bold text-indigo-700">Escuchar</button><button type="button" onClick={() => compartirVersiculo(referencia, v.t)} className="min-h-11 rounded-xl bg-slate-100 text-xs font-bold text-slate-700"><Share2 className="mr-1 inline h-3.5 w-3.5" />Compartir</button>{!esPastoral && <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(`${referencia} — ${v.t}`)}`} className="flex min-h-11 items-center justify-center rounded-xl bg-[#C0392B] text-xs font-bold text-white">Estudiar</Link>}</div>}</div> })}</article>}
+          </div>}
 
-              <div className="mx-auto mb-5 grid max-w-sm grid-cols-4 gap-2">
-                <button type="button" onClick={() => leyendo ? detener() : hablar()} aria-label={leyendo ? 'Detener audio' : 'Escuchar capítulo'} title={leyendo ? 'Detener' : 'Escuchar capítulo'} className="grid h-12 w-full place-items-center rounded-full bg-indigo-600 text-white">{leyendo ? <Square className="h-4 w-4" /> : <Headphones className="h-5 w-5" />}</button>
-                <button type="button" onClick={siguienteVoz} aria-label={`Cambiar voz. Actual: ${vozActual?.name ?? 'voz del sistema'}`} title={vozActual?.name ?? 'Cambiar voz'} className={`grid h-12 w-full place-items-center rounded-full border ${esPastoral ? 'border-slate-200 bg-white text-violet-700' : tema.circle}`}><Volume2 className="h-5 w-5" /></button>
-                <button type="button" onClick={() => setMostrarTamano(v => !v)} aria-label="Cambiar tamaño de letra" aria-expanded={mostrarTamano} title={`Tamaño ${tamanoFuente}`} className={`grid h-12 w-full place-items-center rounded-full border ${mostrarTamano ? 'border-violet-500 bg-violet-600 text-white' : esPastoral ? 'border-slate-200 bg-white text-slate-700' : tema.circle}`}><Type className="h-5 w-5" /></button>
-                {!esPastoral ? <button type="button" onClick={siguienteTema} aria-label="Cambiar tema" title={`Tema ${modoLectura}`} className={`grid h-12 w-full place-items-center rounded-full border ${tema.circle}`}>{modoLectura === 'oscuro' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}</button> : <button type="button" onClick={() => hablar(versoSel ?? 1)} aria-label="Escuchar desde el versículo seleccionado" className="grid h-12 w-full place-items-center rounded-full border border-slate-200 bg-white text-slate-700"><Volume2 className="h-5 w-5" /></button>}
-              </div>
+          {vista === 'estudio' && <div className="p-5 sm:p-7"><div className="rounded-2xl border border-violet-100 bg-violet-50 p-5"><Sparkles className="h-6 w-6 text-violet-600" /><h2 className="mt-3 text-xl font-bold text-violet-950">Estudio del capítulo</h2><p className="mt-2 text-sm leading-6 text-violet-800">Autoría, contexto y herramientas parten del mismo pasaje. Las palabras originales y concordancias se añadirán aquí con fuentes verificadas.</p><Link href={`/estudios/profundo?pasaje=${encodeURIComponent(versoSel ? `${pasaje}:${versoSel}` : pasaje)}`} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white"><Sparkles className="h-4 w-4" />Abrir estudio profundo</Link></div></div>}
 
-              {mostrarTamano && (
-                <div className={`mx-auto mb-5 flex max-w-[220px] items-center justify-between rounded-full border p-1.5 ${esPastoral ? 'border-slate-200 bg-white text-slate-700' : tema.control}`}>
-                  <button type="button" aria-label="Reducir letra" onClick={() => setTamanoFuente(v => Math.max(15, v - 1))} className="grid h-10 w-10 place-items-center rounded-full"><Minus className="h-4 w-4" /></button>
-                  <span className="text-sm font-bold">{tamanoFuente}px</span>
-                  <button type="button" aria-label="Aumentar letra" onClick={() => setTamanoFuente(v => Math.min(28, v + 1))} className="grid h-10 w-10 place-items-center rounded-full"><Plus className="h-4 w-4" /></button>
-                </div>
-              )}
-
-              {cargando && <div className="grid place-items-center py-16"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div>}
-              {error && <p className="py-12 text-center text-sm font-semibold text-rose-600">{error}</p>}
-              {!cargando && !error && <article className={`mx-auto max-w-[720px] ${esPastoral ? 'text-slate-800' : tema.text}`} style={{ fontSize: tamanoFuente, lineHeight: 1.95 }}>{versos.map(v => {
-                const referencia = `${pasaje}:${v.n}`
-                const seleccionado = versoSel === v.n
-                return <div id={`versiculo-${v.n}`} key={v.n} className="relative scroll-mt-48"><p onClick={() => setVersoSel(seleccionado ? null : v.n)} className={`cursor-pointer rounded-xl px-2 py-1.5 transition ${seleccionado ? (esPastoral ? 'bg-violet-50 ring-1 ring-violet-200' : tema.selected) : ''}`}><sup className="mr-1.5 text-[11px] font-black text-[#C0392B]">{v.n}</sup>{v.t}{favoritos.has(v.n) && <Star className="ml-1.5 inline h-3 w-3 fill-amber-400 text-amber-400" />}</p>{seleccionado && <div className="mb-3 mt-1 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-lg sm:grid-cols-4">{esPastoral ? <button type="button" onClick={() => agregarAlProyecto(v)} disabled={isPending} className="col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 text-xs font-bold text-white sm:col-span-2">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}Agregar al proyecto</button> : <button type="button" onClick={() => marcarFavorito(v)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-bold text-amber-700"><Star className="h-3.5 w-3.5" />{favoritos.has(v.n) ? 'Quitar' : 'Guardar'}</button>}<button type="button" onClick={() => hablar(v.n)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-50 px-3 text-xs font-bold text-indigo-700"><Volume2 className="h-3.5 w-3.5" />Escuchar</button><button type="button" onClick={() => compartirVersiculo(referencia, v.t)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-bold text-slate-700"><Share2 className="h-3.5 w-3.5" />Compartir</button>{!esPastoral && <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(`${referencia} — ${v.t}`)}`} className="flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#C0392B] px-3 text-xs font-bold text-white"><Sparkles className="h-3.5 w-3.5" />Estudiar</Link>}</div>}</div>
-              })}</article>}
-            </div>
-          )}
-
-          {vista === 'estudio' && (
-            <div className="p-5 sm:p-7">
-              <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5">
-                <Sparkles className="h-6 w-6 text-violet-600" />
-                <h2 className="mt-3 text-xl font-bold text-violet-950">Estudio del capítulo</h2>
-                <p className="mt-2 text-sm leading-6 text-violet-800">Abre el estudio profundo del capítulo actual o selecciona primero un versículo desde Leer.</p>
-                <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(versoSel ? `${pasaje}:${versoSel}` : pasaje)}`} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white"><Sparkles className="h-4 w-4" />Abrir estudio profundo</Link>
-              </div>
-            </div>
-          )}
-
-          {vista === 'comparar' && (
-            <div className="p-5 sm:p-7">
-              <label className="mb-4 block"><span className={`mb-1 block text-xs font-bold ${tema.muted}`}>Segunda traducción</span><select value={tradComparada} onChange={e => setTradComparada(e.target.value)} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.control}`}>{traducciones.filter(t => t.id !== trad).map(t => <option key={t.id} value={t.id}>{nombreTraduccion(t)}</option>)}</select></label>
-              {cargandoComparacion ? <div className="grid place-items-center py-14"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div> : <div className="space-y-3">{versos.map(v => { const otro = versosComparados.find(x => x.n === v.n); return <article key={v.n} className={`grid gap-3 rounded-2xl border p-4 sm:grid-cols-2 ${tema.control}`}><div><p className="text-[10px] font-bold uppercase text-violet-600">{traduccionActual ? etiquetaTraduccion(traduccionActual) : ''}</p><p className="mt-2 text-sm leading-6"><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{v.t}</p></div><div><p className="text-[10px] font-bold uppercase text-indigo-600">{traducciones.find(t => t.id === tradComparada) ? etiquetaTraduccion(traducciones.find(t => t.id === tradComparada) as Traduccion) : ''}</p><p className="mt-2 text-sm leading-6"><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{otro?.t || 'No disponible'}</p></div></article> })}</div>}
-            </div>
-          )}
+          {vista === 'comparar' && <div className="p-5 sm:p-7"><section className={`mb-5 rounded-3xl border p-4 ${selectClass}`}><p className="mb-3 text-center text-xs font-black uppercase tracking-wide opacity-70">Comparar el mismo pasaje en dos Biblias</p><div className="grid gap-4 sm:grid-cols-2"><TranslationPicker label="Biblia 1" value={trad} translations={traducciones} onChange={cambiarTrad} className={selectClass} /><TranslationPicker label="Biblia 2" value={tradComparada} translations={traducciones.filter(t => t.id !== trad)} onChange={setTradComparada} className={selectClass} /></div></section>{cargandoComparacion ? <div className="grid place-items-center py-14"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div> : <div className="space-y-3">{versos.map(v => { const otro = versosComparados.find(x => x.n === v.n); return <article key={v.n} className={`grid gap-3 rounded-2xl border p-3 sm:grid-cols-2 ${selectClass}`}><div className="rounded-xl bg-violet-500/10 p-4"><p className="text-[11px] font-black uppercase text-violet-600">{etiquetaTraduccion(traduccionActual)}</p><p className="mt-2 text-sm leading-6"><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{v.t}</p></div><div className="rounded-xl bg-indigo-500/10 p-4"><p className="text-[11px] font-black uppercase text-indigo-600">{etiquetaTraduccion(traduccionComparada)}</p><p className="mt-2 text-sm leading-6"><sup className="mr-1 font-bold text-[#C0392B]">{v.n}</sup>{otro?.t || 'No disponible'}</p></div></article> })}</div>}</div>}
 
           {vista === 'notas' && !esPastoral && <BibleNotesWorkspace modo={modoLectura} embedded />}
         </div>
