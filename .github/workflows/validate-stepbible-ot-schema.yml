@@ -25,6 +25,10 @@ on:
       - "__VIDA_INTERNACIONAL.md"
   workflow_dispatch:
 
+concurrency:
+  group: validate-stepbible-ot-schema-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
