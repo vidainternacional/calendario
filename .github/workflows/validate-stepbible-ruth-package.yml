@@ -6,6 +6,7 @@ on:
       - fase-d/paquete-tahot-rut
     paths:
       - "scripts/stepbible/generate_tahot_book_package.py"
+      - "scripts/stepbible/audit_tahot_ruth_qere.py"
       - "scripts/stepbible/tahot_schema.py"
       - "scripts/stepbible/inspect_ot_sources.py"
       - ".github/workflows/validate-stepbible-ruth-package.yml"
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - "scripts/stepbible/generate_tahot_book_package.py"
+      - "scripts/stepbible/audit_tahot_ruth_qere.py"
       - "scripts/stepbible/tahot_schema.py"
       - "scripts/stepbible/inspect_ot_sources.py"
       - ".github/workflows/validate-stepbible-ruth-package.yml"
@@ -39,12 +41,22 @@ jobs:
         run: |
           python scripts/stepbible/tahot_schema.py --self-test
           python scripts/stepbible/generate_tahot_book_package.py --self-test
+          python scripts/stepbible/audit_tahot_ruth_qere.py --self-test
 
       - name: Generar paquete de Rut
         run: python scripts/stepbible/generate_tahot_book_package.py --book Rut --output artifacts/tahot-ruth
 
-      - name: Mostrar validación
-        run: cat artifacts/tahot-ruth/rut-validation.md
+      - name: Auditar Qere y Ketiv
+        run: |
+          python scripts/stepbible/audit_tahot_ruth_qere.py \
+            --package artifacts/tahot-ruth/rut-package.json \
+            --output artifacts/tahot-ruth
+
+      - name: Mostrar validaciones
+        run: |
+          cat artifacts/tahot-ruth/rut-validation.md
+          printf '\n'
+          cat artifacts/tahot-ruth/rut-qere-audit.md
 
       - uses: actions/upload-artifact@v4
         with:
