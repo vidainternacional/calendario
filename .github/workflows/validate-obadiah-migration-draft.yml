@@ -1,0 +1,94 @@
+name: Validar borrador de migración de Obadías
+
+on:
+  push:
+    branches:
+      - fase-d/migracion-piloto-obadias
+    paths:
+      - "supabase/migration-drafts/20260802153000_importador_payload_tahot_obadias.sql"
+      - "scripts/stepbible/build_obadiah_import_payload.py"
+      - "scripts/stepbible/test_obadiah_migration_draft.py"
+      - "scripts/stepbible/obadiah_affix_lemma_policy.json"
+      - "tests/sql/obadiah_textual_schema_fixture.sql"
+      - ".github/workflows/validate-obadiah-migration-draft.yml"
+      - "docs/FASE_D_MIGRACION_PILOTO_OBADIAS.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "supabase/migration-drafts/20260802153000_importador_payload_tahot_obadias.sql"
+      - "scripts/stepbible/build_obadiah_import_payload.py"
+      - "scripts/stepbible/test_obadiah_migration_draft.py"
+      - "scripts/stepbible/obadiah_affix_lemma_policy.json"
+      - "tests/sql/obadiah_textual_schema_fixture.sql"
+      - ".github/workflows/validate-obadiah-migration-draft.yml"
+      - "docs/FASE_D_MIGRACION_PILOTO_OBADIAS.md"
+  workflow_dispatch:
+
+concurrency:
+  group: validate-obadiah-migration-draft-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rollback-and-idempotency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d vida_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar cliente PostgreSQL
+        run: pip install "psycopg[binary]==3.2.9"
+
+      - name: Generar paquete reproducible
+        run: python scripts/stepbible/extract_ot_book.py --book Oba --output artifacts/stepbible-obadiah
+
+      - name: Construir payload importable
+        run: |
+          python scripts/stepbible/build_obadiah_import_payload.py \
+            artifacts/stepbible-obadiah/oba.json.gz \
+            --policy scripts/stepbible/obadiah_affix_lemma_policy.json \
+            --output artifacts/stepbible-obadiah/import-payload.json
+
+      - name: Probar rollback e idempotencia
+        env:
+          TEST_DSN: postgresql://postgres:postgres@localhost:5432/vida_test
+        run: |
+          python scripts/stepbible/test_obadiah_migration_draft.py \
+            --dsn "$TEST_DSN" \
+            --fixture tests/sql/obadiah_textual_schema_fixture.sql \
+            --draft supabase/migration-drafts/20260802153000_importador_payload_tahot_obadias.sql \
+            --package artifacts/stepbible-obadiah/oba.json.gz \
+            --payload artifacts/stepbible-obadiah/import-payload.json
+
+      - name: Conservar evidencia
+        uses: actions/upload-artifact@v4
+        with:
+          name: obadiah-migration-draft-validation
+          path: |
+            artifacts/stepbible-obadiah/manifest.json
+            artifacts/stepbible-obadiah/audit.md
+            artifacts/stepbible-obadiah/import-payload.json
+          if-no-files-found: error
+          retention-days: 14
