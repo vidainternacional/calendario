@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { mostrarToast } from '@/lib/ui/toast'
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import {
@@ -40,8 +41,24 @@ const SECTIONS: { key: keyof EstudioResultado; label: string }[] = [
   { key: 'reflexion', label: '11. Reflexión espiritual' },
 ]
 
-export default function EstudioProfundoClient({ initialPasaje = '' }: { initialPasaje?: string }) {
+const RELATION_LABELS = {
+  direct: 'Mención directa',
+  conceptual: 'Relación temática',
+  cross_reference: 'Referencia relacionada',
+  original_language: 'Idioma original',
+} as const
+
+type Tab = 'study' | 'concordance'
+
+export default function EstudioProfundoClient({
+  initialPasaje = '',
+  initialTab = 'study',
+}: {
+  initialPasaje?: string
+  initialTab?: Tab
+}) {
   const [state, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [historial, setHistorial] = useState<{ pasaje: string; created_at: string }[]>([])
   const [nota, setNota] = useState('')
   const [notaGuardando, setNotaGuardando] = useState(false)
@@ -50,7 +67,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
   const [mensaje, setMensaje] = useState<string | null>(null)
 
   const sectionsWithContent = useMemo(() => {
-    if (state.status !== 'success') return []
+    if (state.status !== 'success' || state.kind !== 'study') return []
     return SECTIONS.filter(section => Boolean(state.resultado[section.key]))
   }, [state])
 
@@ -60,8 +77,12 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
 
   useEffect(() => {
     if (state.status !== 'success') return
-    obtenerHistorial().then(setHistorial).catch(() => {})
-    obtenerNota(state.pasaje).then(value => setNota(value || '')).catch(() => setNota(''))
+    setActiveTab(state.kind)
+
+    if (state.kind === 'study') {
+      obtenerHistorial().then(setHistorial).catch(() => {})
+      obtenerNota(state.pasaje).then(value => setNota(value || '')).catch(() => setNota(''))
+    }
   }, [state])
 
   const avisar = (texto: string) => {
@@ -70,7 +91,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
   }
 
   const handleSaveNota = async () => {
-    if (state.status !== 'success') return
+    if (state.status !== 'success' || state.kind !== 'study') return
     setNotaGuardando(true)
     setNotaSuccess(false)
     const response = await guardarNota(state.pasaje, nota)
@@ -84,11 +105,11 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
     }
   }
 
-  const loadFromHistory = (pasaje: string) => {
+  const loadQuery = (query: string) => {
     const form = document.getElementById('estudio-form') as HTMLFormElement | null
     const input = form?.elements.namedItem('pasaje') as HTMLInputElement | null
     if (!form || !input) return
-    input.value = pasaje
+    input.value = query
     form.requestSubmit()
   }
 
@@ -103,7 +124,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
   }
 
   const buildFullStudy = () => {
-    if (state.status !== 'success') return ''
+    if (state.status !== 'success' || state.kind !== 'study') return ''
     return [
       `Estudio Profundo: ${state.pasaje}`,
       '',
@@ -114,13 +135,12 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
   }
 
   const shareStudy = async () => {
-    if (state.status !== 'success') return
+    if (state.status !== 'success' || state.kind !== 'study') return
     const text = buildFullStudy()
 
     try {
-      if (navigator.share) {
-        await navigator.share({ title: `Estudio de ${state.pasaje}`, text })
-      } else {
+      if (navigator.share) await navigator.share({ title: `Estudio de ${state.pasaje}`, text })
+      else {
         await navigator.clipboard.writeText(text)
         avisar('Estudio copiado para compartir')
       }
@@ -131,12 +151,29 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
+      <nav className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1" aria-label="Herramientas de Estudio Profundo">
+        <button
+          type="button"
+          onClick={() => setActiveTab('study')}
+          className={`min-h-11 rounded-xl px-3 text-sm font-bold transition ${activeTab === 'study' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}
+        >
+          Estudio
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('concordance')}
+          className={`min-h-11 rounded-xl px-3 text-sm font-bold transition ${activeTab === 'concordance' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}
+        >
+          Concordancias
+        </button>
+      </nav>
+
       <form id="estudio-form" action={formAction} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <label htmlFor="pasaje" className="block text-sm font-bold text-slate-900">
-          ¿Qué pasaje desea estudiar?
+          Escriba un versículo, una palabra o una pregunta
         </label>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          El estudio se prepara desde la biblioteca interna, sin depender de IA.
+          La aplicación consulta únicamente estudios, concordancias y fuentes internas aprobadas.
         </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -148,7 +185,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
               name="pasaje"
               required
               disabled={isPending}
-              placeholder="Prueba: Salmos 23:1 o Juan 3:16"
+              placeholder="Ejemplo: Juan 3:16, perdón o ¿cómo vencer el miedo?"
               className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50"
               defaultValue={initialPasaje}
             />
@@ -158,7 +195,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
             disabled={isPending}
             className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-7 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#a93226] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isPending ? <><RefreshCw className="h-4 w-4 animate-spin" /> Preparando…</> : <><BookOpen className="h-4 w-4" /> Estudiar pasaje</>}
+            {isPending ? <><RefreshCw className="h-4 w-4 animate-spin" /> Buscando…</> : <><Search className="h-4 w-4" /> Buscar</>}
           </button>
         </div>
 
@@ -175,12 +212,12 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
           <RefreshCw className="mx-auto h-7 w-7 animate-spin text-[#C0392B]" aria-hidden="true" />
           <h2 className="mt-4 text-lg font-bold text-slate-900">Consultando la biblioteca interna</h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-            Organizando texto original, transliteración, contexto histórico y análisis del pasaje.
+            Buscando estudios completos, palabras clave, temas y referencias relacionadas.
           </p>
         </section>
       )}
 
-      {!isPending && state.status === 'success' && (
+      {!isPending && state.status === 'success' && state.kind === 'study' && activeTab === 'study' && (
         <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <header className="border-b border-slate-100 px-5 py-5 sm:px-7">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Estudio bíblico interno</p>
@@ -204,11 +241,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
                 <section key={section.key} className="px-5 py-6 sm:px-7">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-base font-bold text-slate-950">{section.label}</h3>
-                    <button
-                      type="button"
-                      onClick={() => copyText(String(section.key), content)}
-                      className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold text-slate-400 hover:bg-slate-50 hover:text-slate-700"
-                    >
+                    <button type="button" onClick={() => copyText(String(section.key), content)} className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold text-slate-400 hover:bg-slate-50 hover:text-slate-700">
                       {copiado === section.key ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                       {copiado === section.key ? 'Copiado' : 'Copiar'}
                     </button>
@@ -225,12 +258,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
               <span className="text-xs font-semibold text-slate-400">Abrir</span>
             </summary>
             <div className="border-t border-slate-100 px-5 py-5 sm:px-7">
-              <textarea
-                value={nota}
-                onChange={event => setNota(event.target.value)}
-                placeholder="Escriba reflexiones, preguntas o apuntes personales…"
-                className="min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-white p-4 text-base leading-7 text-slate-700 outline-none focus:ring-2 focus:ring-[#C0392B]/30"
-              />
+              <textarea value={nota} onChange={event => setNota(event.target.value)} placeholder="Escriba reflexiones, preguntas o apuntes personales…" className="min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-white p-4 text-base leading-7 text-slate-700 outline-none focus:ring-2 focus:ring-[#C0392B]/30" />
               <div className="mt-3 flex items-center justify-end gap-3">
                 {notaSuccess && <span className="text-xs font-semibold text-emerald-600">Nota guardada</span>}
                 <button type="button" onClick={handleSaveNota} disabled={notaGuardando} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white disabled:opacity-50">
@@ -243,7 +271,48 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
         </article>
       )}
 
-      {historial.length > 0 && state.status === 'idle' && !isPending && (
+      {!isPending && state.status === 'success' && state.kind === 'concordance' && activeTab === 'concordance' && (
+        <section className="space-y-4" aria-label="Resultados de concordancias">
+          <header className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-700">Concordancias internas</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-950">Resultados para “{state.query}”</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">Temas y pasajes ordenados según coincidencias revisadas en la biblioteca.</p>
+          </header>
+
+          {state.results.map(result => (
+            <article key={result.termId} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <header className="border-b border-slate-100 px-5 py-4 sm:px-6">
+                <h3 className="text-lg font-bold text-slate-950">{result.term}</h3>
+                {result.description && <p className="mt-1 text-sm leading-6 text-slate-500">{result.description}</p>}
+              </header>
+              <div className="divide-y divide-slate-100">
+                {result.matches.map(match => (
+                  <Link key={`${result.termId}-${match.bookCode}-${match.chapter}-${match.verse}-${match.relationKind}`} href={`/biblia?book=${encodeURIComponent(match.bookCode)}&chapter=${match.chapter}&verse=${match.verse}`} className="block px-5 py-4 hover:bg-slate-50 sm:px-6">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="font-bold text-slate-900">{match.reference}</h4>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">{RELATION_LABELS[match.relationKind]}</span>
+                    </div>
+                    {match.excerpt && <p className="mt-2 text-sm leading-6 text-slate-600">{match.excerpt}</p>}
+                  </Link>
+                ))}
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
+
+      {state.status === 'success' && state.kind !== activeTab && (
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <p className="text-sm leading-6 text-slate-500">
+            La última búsqueda produjo un resultado de {state.kind === 'study' ? 'Estudio' : 'Concordancias'}.
+          </p>
+          <button type="button" onClick={() => setActiveTab(state.kind)} className="mt-3 min-h-11 rounded-xl bg-slate-900 px-5 text-sm font-bold text-white">
+            Ver resultado
+          </button>
+        </section>
+      )}
+
+      {historial.length > 0 && state.status === 'idle' && !isPending && activeTab === 'study' && (
         <details className="rounded-3xl border border-slate-200 bg-white shadow-sm">
           <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
             <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-slate-400" /> Estudios recientes</span>
@@ -251,7 +320,7 @@ export default function EstudioProfundoClient({ initialPasaje = '' }: { initialP
           </summary>
           <div className="grid gap-2 border-t border-slate-100 p-4 sm:grid-cols-2">
             {historial.map((item, index) => (
-              <button key={`${item.pasaje}-${index}`} type="button" onClick={() => loadFromHistory(item.pasaje)} className="flex min-h-14 items-center gap-3 rounded-2xl p-3 text-left hover:bg-slate-50">
+              <button key={`${item.pasaje}-${index}`} type="button" onClick={() => loadQuery(item.pasaje)} className="flex min-h-14 items-center gap-3 rounded-2xl p-3 text-left hover:bg-slate-50">
                 <FileText className="h-4 w-4 shrink-0 text-[#C0392B]" aria-hidden="true" />
                 <span className="min-w-0">
                   <span className="block break-words text-sm font-semibold text-slate-800">{item.pasaje}</span>
