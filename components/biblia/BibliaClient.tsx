@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { toggleFavorito, favoritosDelCapitulo } from '@/app/actions/biblia'
 import { agregarVersiculoAlProyecto } from '@/app/actions/pastoral-proyecto-versiculos'
+import BibleHistoricalContextPanel from '@/components/biblia/BibleHistoricalContextPanel'
 import BibleNotesWorkspace from '@/components/biblia/BibleNotesWorkspace'
 import { getBookAuthorship } from '@/lib/biblia/book-authorship'
 import { mostrarToast } from '@/lib/ui/toast'
@@ -249,6 +250,7 @@ export default function BibliaClient({
   const traduccionComparada = useMemo(() => traducciones.find(t => t.id === tradComparada), [traducciones, tradComparada])
   const autoria = useMemo(() => getBookAuthorship(libroActual?.name), [libroActual?.name])
   const pasaje = `${libroActual?.name ?? ''} ${capitulo}`
+  const pasajeEstudio = versoSel ? `${pasaje}:${versoSel}` : pasaje
   const numeroComparacion = versoSel ?? versos[0]?.n ?? 1
 
   useEffect(() => {
@@ -438,7 +440,20 @@ export default function BibliaClient({
             {cargando && <div className="grid place-items-center py-16"><Loader2 className="h-6 w-6 animate-spin text-violet-500" /></div>}{error && <p className="py-12 text-center text-sm font-semibold text-rose-600">{error}</p>}{!cargando && !error && <article className={`mx-auto max-w-[720px] ${esPastoral ? 'text-slate-800' : tema.text}`} style={{ fontSize: tamanoFuente, lineHeight: 1.95 }}>{versos.map(v => { const referencia = `${pasaje}:${v.n}`; const seleccionado = versoSel === v.n; return <div id={`versiculo-${v.n}`} key={v.n} className="relative scroll-mt-48"><p onClick={() => setVersoSel(seleccionado ? null : v.n)} className={`cursor-pointer rounded-xl px-2 py-1.5 ${seleccionado ? tema.selected : ''}`}><sup className="mr-1.5 text-[11px] font-black text-[#C0392B]">{v.n}</sup>{v.t}</p>{seleccionado && <div className="mb-3 mt-1 grid grid-cols-2 gap-2 rounded-2xl border border-slate-200 bg-white p-2 text-slate-800 shadow-lg sm:grid-cols-4">{esPastoral ? <button type="button" onClick={() => agregarAlProyecto(v)} disabled={isPending} className="col-span-2 min-h-11 rounded-xl bg-violet-600 text-xs font-bold text-white">Agregar al proyecto</button> : <button type="button" onClick={() => marcarFavorito(v)} className="min-h-11 rounded-xl bg-amber-50 text-xs font-bold text-amber-700">{favoritos.has(v.n) ? 'Quitar' : 'Guardar'}</button>}<button type="button" onClick={() => hablar(v.n)} className="min-h-11 rounded-xl bg-indigo-50 text-xs font-bold text-indigo-700">Escuchar</button><button type="button" onClick={() => compartirVersiculo(referencia, v.t)} className="min-h-11 rounded-xl bg-slate-100 text-xs font-bold text-slate-700"><Share2 className="mr-1 inline h-3.5 w-3.5" />Compartir</button>{!esPastoral && <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(`${referencia} — ${v.t}`)}`} className="flex min-h-11 items-center justify-center rounded-xl bg-[#C0392B] text-xs font-bold text-white">Estudiar</Link>}</div>}</div> })}</article>}
           </div>}
 
-          {vista === 'estudio' && <div className="p-5 sm:p-7"><div className="rounded-2xl border border-violet-100 bg-violet-50 p-5"><Sparkles className="h-6 w-6 text-violet-600" /><h2 className="mt-3 text-xl font-bold text-violet-950">Estudio del capítulo</h2><p className="mt-2 text-sm leading-6 text-violet-800">Autoría, contexto y herramientas parten del mismo pasaje. Las palabras originales y concordancias se añadirán aquí con fuentes verificadas.</p><Link href={`/estudios/profundo?pasaje=${encodeURIComponent(versoSel ? `${pasaje}:${versoSel}` : pasaje)}`} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white"><Sparkles className="h-4 w-4" />Abrir estudio profundo</Link></div></div>}
+          {vista === 'estudio' && <div className="space-y-4 p-5 sm:p-7">
+            <div className={`rounded-2xl border p-5 ${selectClass}`}>
+              <Sparkles className="h-6 w-6 text-violet-600" />
+              <h2 className="mt-3 text-xl font-bold">Estudio del pasaje</h2>
+              <p className="mt-2 text-sm leading-6 opacity-75">
+                Autoría y contexto parten de {pasajeEstudio}. El contenido verificado permanece separado de cualquier respuesta generada por IA.
+              </p>
+            </div>
+            <BibleHistoricalContextPanel pasaje={pasajeEstudio} modo={esPastoral ? 'claro' : modoLectura} />
+            <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(pasajeEstudio)}`} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white">
+              <Sparkles className="h-4 w-4" />
+              Abrir estudio profundo
+            </Link>
+          </div>}
 
           {vista === 'comparar' && <div className="p-5 sm:p-7">
             <section className={`mb-5 rounded-3xl border p-4 ${selectClass}`}>
