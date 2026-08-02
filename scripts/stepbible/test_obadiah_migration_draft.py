@@ -77,8 +77,10 @@ def main() -> int:
     lowered = draft_text.lower()
     if "grant execute" in lowered and "to service_role" not in lowered:
         raise RuntimeError("El borrador concede ejecución fuera de service_role")
-    if "supabase/migrations" in lowered:
-        raise RuntimeError("El borrador no debe declararse como migración activa")
+    if args.draft.parent.name != "migration-drafts":
+        raise RuntimeError("El SQL piloto debe permanecer en supabase/migration-drafts")
+    if "-- borrador no activo" not in lowered:
+        raise RuntimeError("El SQL piloto debe declarar explícitamente que no está activo")
 
     with psycopg.connect(args.dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
