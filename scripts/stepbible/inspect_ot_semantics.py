@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -44,6 +43,10 @@ def suffix_family(suffix: str) -> str:
     return "missing"
 
 
+def non_empty_pattern(fields: list[str]) -> str:
+    return ",".join(str(index + 1) for index, value in enumerate(fields) if value != "")
+
+
 def sample_payload(line_number: int, fields: list[str], headers: list[str]) -> dict[str, Any]:
     named = {
         (headers[index] if index < len(headers) and headers[index] else f"column_{index + 1}"): clipped(value)
@@ -53,6 +56,9 @@ def sample_payload(line_number: int, fields: list[str], headers: list[str]) -> d
     return {
         "line": line_number,
         "reference": fields[0],
+        "field_count": len(fields),
+        "non_empty_pattern": non_empty_pattern(fields),
+        "fields": [clipped(value) for value in fields],
         "named_fields": named,
     }
 
@@ -72,6 +78,8 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
     grammar_prefix_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
     blank_separator_rows = 0
     empty_first_nonblank_rows = 0
+    empty_first_nonblank_patterns: Counter[str] = Counter()
+    empty_first_nonblank_samples: dict[str, list[dict[str, Any]]] = defaultdict(list)
     reserved_nonempty: Counter[int] = Counter()
 
     for line_number, line in enumerate(text.splitlines(), 1):
@@ -126,13 +134,15 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
                 blank_separator_rows += 1
             else:
                 empty_first_nonblank_rows += 1
+                pattern = non_empty_pattern(fields)
+                empty_first_nonblank_patterns[pattern] += 1
+                if len(empty_first_nonblank_samples[pattern]) < sample_limit:
+                    empty_first_nonblank_samples[pattern].append(
+                        sample_payload(line_number, fields, headers)
+                    )
 
     if not headers:
         raise RuntimeError(f"No se encontró encabezado en {source['key']}")
-    if empty_first_nonblank_rows:
-        raise RuntimeError(
-            f"{source['key']} contiene {empty_first_nonblank_rows} filas con primera columna vacía y datos no vacíos"
-        )
     if reserved_nonempty:
         raise RuntimeError(
             f"{source['key']} usa columnas reservadas inesperadas: {dict(reserved_nonempty)}"
@@ -153,6 +163,8 @@ def inspect_source(source: dict[str, object], sample_limit: int) -> dict[str, An
         "grammar_prefix_samples": dict(grammar_prefix_samples),
         "blank_separator_rows": blank_separator_rows,
         "empty_first_nonblank_rows": empty_first_nonblank_rows,
+        "empty_first_nonblank_patterns": dict(empty_first_nonblank_patterns.most_common()),
+        "empty_first_nonblank_samples": dict(empty_first_nonblank_samples),
         "reserved_nonempty": dict(reserved_nonempty),
     }
 
@@ -181,6 +193,7 @@ def write_markdown(output: Path, payload: dict[str, Any]) -> None:
                 f"## {source['key']}",
                 "",
                 f"- separadores vacíos: {source['blank_separator_rows']:,}",
+                f"- filas vacías de referencia con contenido: {source['empty_first_nonblank_rows']:,}",
                 f"- filas hebreas: {source['grammar_languages'].get('H', 0):,}",
                 f"- filas arameas: {source['grammar_languages'].get('A', 0):,}",
                 "",
@@ -193,6 +206,17 @@ def write_markdown(output: Path, payload: dict[str, Any]) -> None:
         lines.extend(["", "### Sufijos exactos principales", ""])
         for suffix, count in list(source["exact_suffixes"].items())[:20]:
             lines.append(f"- `{suffix}`: {count:,}")
+
+        if source["empty_first_nonblank_patterns"]:
+            lines.extend(["", "### Filas sin referencia explícita pero con contenido", ""])
+            for pattern, count in source["empty_first_nonblank_patterns"].items():
+                lines.append(f"- columnas `{pattern}`: {count:,}")
+                for sample in source["empty_first_nonblank_samples"].get(pattern, [])[:3]:
+                    values = "; ".join(
+                        f"{name}={value}" for name, value in sample["named_fields"].items()
+                    )
+                    lines.append(f"  - L{sample['line']}: `{values}`")
+
         lines.extend(["", "### Líneas documentales relevantes", ""])
         for item in source["keyword_lines"][:20]:
             lines.append(f"- L{item['line']}: `{item['text']}`")
@@ -251,6 +275,8 @@ def self_test() -> None:
     actual = {value: suffix_family(value) for value in expected}
     if actual != expected:
         raise RuntimeError(f"Familias inesperadas: {actual}")
+    if non_empty_pattern(["", "a", "", "b"]) != "2,4":
+        raise RuntimeError("El patrón de columnas no es estable")
     print("Auto-test semántico TAHOT: OK")
 
 
