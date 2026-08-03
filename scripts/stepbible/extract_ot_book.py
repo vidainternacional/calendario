@@ -26,6 +26,11 @@ BOOKS = {
         "name_es": "Obadías",
         "verse_counts": [21],
     },
+    "Rut": {
+        "internal_code": "RUT",
+        "name_es": "Rut",
+        "verse_counts": [22, 23, 18, 22],
+    },
 }
 
 
@@ -242,7 +247,7 @@ def write_gzip_json(path: Path, payload: dict[str, Any]) -> tuple[int, str]:
 def write_audit(path: Path, package: dict[str, Any], artifact: dict[str, Any]) -> None:
     counts = package["counts"]
     lines = [
-        "# Auditoría del paquete TAHOT — Obadías",
+        f"# Auditoría del paquete TAHOT — {package['book']['name_es']}",
         "",
         f"- Fuente: `{package['source']['key']}`",
         f"- Commit STEPBible: `{package['source']['commit']}`",
@@ -421,6 +426,8 @@ def self_test() -> None:
         raise RuntimeError("La superficie sintética no se reconstruyó correctamente")
     if source_index_parts("0501") != {"raw": "0501", "base": 5, "subindex": 1}:
         raise RuntimeError("El índice suplementario no se preservó")
+    if len(expected_references("Rut", BOOKS["Rut"]["verse_counts"])) != 85:
+        raise RuntimeError("El catálogo de versículos de Rut no contiene 85 referencias")
     print("Auto-test de paquete TAHOT: OK")
 
 

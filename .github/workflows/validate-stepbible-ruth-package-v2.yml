@@ -1,0 +1,103 @@
+name: Validar paquete TAHOT de Rut v2
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/extract_ot_book.py"
+      - "scripts/stepbible/audit_ruth_qere.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - ".github/workflows/validate-stepbible-ruth-package-v2.yml"
+      - "docs/FASE_D_PAQUETE_TAHOT_RUT_V2.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/audit_ruth_qere.py --self-test
+
+      - name: Generar paquete dos veces
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/tahot-ruth-a
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/tahot-ruth-b
+
+      - name: Comprobar reproducibilidad
+        run: |
+          cmp artifacts/tahot-ruth-a/rut.json.gz artifacts/tahot-ruth-b/rut.json.gz
+          cmp artifacts/tahot-ruth-a/manifest.json artifacts/tahot-ruth-b/manifest.json
+          sha256sum artifacts/tahot-ruth-a/rut.json.gz
+
+      - name: Auditar Qere y Ketiv
+        run: |
+          python scripts/stepbible/audit_ruth_qere.py \
+            --package artifacts/tahot-ruth-a/rut.json.gz \
+            --output artifacts/tahot-ruth-a
+
+      - name: Validar conteos y huellas
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path('artifacts/tahot-ruth-a/manifest.json').read_text(encoding='utf-8')
+          )
+          counts = manifest['counts']
+          expected = {
+              'chapters': 4,
+              'references': 85,
+              'source_rows': 1294,
+              'visible_words': 1293,
+              'qere_rows': 13,
+              'qere_omission_placeholders': 1,
+              'hebrew_rows': 1293,
+              'aramaic_rows': 0,
+              'unknown_language_rows': 0,
+              'invalid_line_hashes': 0,
+          }
+          mismatches = {
+              key: {'expected': value, 'actual': counts.get(key)}
+              for key, value in expected.items()
+              if counts.get(key) != value
+          }
+          if mismatches:
+              raise SystemExit(f'Conteos inesperados: {mismatches}')
+          digest = manifest['artifact']['sha256']
+          if len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest):
+              raise SystemExit(f'SHA-256 inválido: {digest}')
+          print(json.dumps({'counts': counts, 'artifact': manifest['artifact']}, indent=2))
+          PY
+
+      - name: Mostrar auditorías
+        run: |
+          cat artifacts/tahot-ruth-a/audit.md
+          printf '\n'
+          cat artifacts/tahot-ruth-a/ruth-qere-audit.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-tahot-ruth-package-v2
+          path: artifacts/tahot-ruth-a
+          if-no-files-found: error
+          retention-days: 14
