@@ -27,6 +27,7 @@ EXPECTED_COUNTS = {
     "invalid_line_hashes": 0,
 }
 EXPECTED_SOURCE_SHA256 = "f3ded203d2a74d6368932c97ae550d1d0754b271af491dc0dedf36fe3ba0bcc5"
+EXPECTED_TEXTUAL_STATUS = "leningrad"
 
 
 def expected_references() -> list[str]:
@@ -107,7 +108,7 @@ def audit(package: dict[str, Any]) -> dict[str, Any]:
             )
 
         for row in rows:
-            if row.get("textual_status") != "base":
+            if row.get("textual_status") != EXPECTED_TEXTUAL_STATUS:
                 raise RuntimeError(
                     f"Estado textual inesperado en {reference}: {row.get('textual_status')}"
                 )
@@ -151,6 +152,7 @@ def audit(package: dict[str, Any]) -> dict[str, Any]:
             "references": counts["references"],
             "visible_words": counts["visible_words"],
             "morpheme_components": component_total,
+            "textual_status": EXPECTED_TEXTUAL_STATUS,
             "variant_rows": 0,
             "qere_cases": 0,
             "qere_omissions": 0,
@@ -170,6 +172,7 @@ def write_markdown(path: Path, payload: dict[str, Any]) -> None:
         f"- Referencias: {summary['references']}",
         f"- Palabras visibles: {summary['visible_words']}",
         f"- Componentes morfológicos: {summary['morpheme_components']}",
+        f"- Estado textual base: {summary['textual_status']}",
         f"- Filas con variantes: {summary['variant_rows']}",
         f"- Casos Qere: {summary['qere_cases']}",
         f"- Omisiones Qere: {summary['qere_omissions']}",
@@ -190,6 +193,8 @@ def self_test() -> None:
         raise RuntimeError("Los límites del catálogo de Jonás son incorrectos")
     if not valid_sha256("a" * 64) or valid_sha256("z" * 64):
         raise RuntimeError("La validación SHA-256 sintética falló")
+    if EXPECTED_TEXTUAL_STATUS != "leningrad":
+        raise RuntimeError("El estado textual base de Jonás cambió")
     print("Auto-test de auditoría de Jonás: OK")
 
 
