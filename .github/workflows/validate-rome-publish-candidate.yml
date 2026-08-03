@@ -1,0 +1,44 @@
+name: Validar publicación candidata de Roma
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/FASE_D_BLOQUE_5_APROBACION_EDITORIAL_ROMA.md'
+      - 'docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_PUBLISH_CANDIDATE.sql'
+      - 'docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_UNPUBLISH_RECOVERY_CANDIDATE.sql'
+      - 'scripts/fase_d/validate_rome_publish_candidate.sql'
+      - '.github/workflows/validate-rome-publish-candidate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar publicación y recuperación exactas
+        run: psql -h 127.0.0.1 -U postgres -d vida_test -f scripts/fase_d/validate_rome_publish_candidate.sql
+      - name: Confirmar aislamiento fuera de migraciones activas
+        run: |
+          test ! -e supabase/migrations/20260803170000_publish_rome_pilot_v1.sql
+          grep -q 'NO APLICAR SIN AUTORIZACIÓN POSTERIOR' docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_PUBLISH_CANDIDATE.sql
+          git diff --check
