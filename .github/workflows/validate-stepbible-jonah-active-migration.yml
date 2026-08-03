@@ -1,0 +1,101 @@
+name: Validar migración activa TAHOT de Jonás
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/activate_jonah_migration.py"
+      - "scripts/stepbible/test_jonah_active_migration.py"
+      - "supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql"
+      - ".github/workflows/validate-stepbible-jonah-active-migration.yml"
+      - "docs/FASE_D_MIGRACION_ACTIVA_JONAS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_jonah_active_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_jonah_active_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_jonah_active_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar cliente PostgreSQL
+        run: python -m pip install --disable-pip-version-check "psycopg[binary]==3.2.9"
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/build_tahot_import_payload.py --self-test
+          python scripts/stepbible/test_jonah_active_migration.py --self-test
+          if test -f scripts/stepbible/activate_jonah_migration.py; then
+            python scripts/stepbible/activate_jonah_migration.py --self-test
+          fi
+      - name: Generar paquete y payload canónico
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Jon \
+            --output artifacts/jonah-active
+          test "$(sha256sum artifacts/jonah-active/jon.json.gz | cut -d' ' -f1)" = \
+            "083b869fe7d10493deaeee392babd9811e9dffb91f0db816d2f21a22b2135915"
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/jonah-active/jon.json.gz \
+            --policy scripts/stepbible/jonah_affix_lemma_policy.json \
+            --output artifacts/jonah-active/import-payload.json
+          test "$(sha256sum artifacts/jonah-active/import-payload.json | cut -d' ' -f1)" = \
+            "e6bd082a446d29becbafb35a22b94ef9e260e447fe7fc7cea4361d98c5bb835b"
+      - name: Verificar conversión mecánica cuando exista el borrador
+        run: |
+          if test -f supabase/migration-drafts/20260803060000_importador_payload_tahot_jonas.sql \
+             && test -f scripts/stepbible/activate_jonah_migration.py; then
+            python scripts/stepbible/activate_jonah_migration.py \
+              --draft supabase/migration-drafts/20260803060000_importador_payload_tahot_jonas.sql \
+              --output /tmp/jonah-active.sql
+            cmp /tmp/jonah-active.sql \
+              supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql
+          fi
+      - name: Validar migración activa
+        run: |
+          python scripts/stepbible/test_jonah_active_migration.py \
+            --dsn "$TEST_DATABASE_URL" \
+            --fixture tests/sql/obadiah_textual_schema_fixture.sql \
+            --base-migration supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql \
+            --ruth-migration supabase/migrations/20260803011000_generalizar_importador_payload_tahot_rut.sql \
+            --haggai-migration supabase/migrations/20260803023000_generalizar_importador_payload_tahot_hageo.sql \
+            --nahum-migration supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql \
+            --active-migration supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql \
+            --package artifacts/jonah-active/jon.json.gz \
+            --payload artifacts/jonah-active/import-payload.json \
+            --output artifacts/jonah-active/active-migration-validation.json
+          cat artifacts/jonah-active/active-migration-validation.json
+          git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-jonah-active-migration-validation
+          path: |
+            supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql
+            artifacts/jonah-active/manifest.json
+            artifacts/jonah-active/active-migration-validation.json
+          if-no-files-found: error
+          retention-days: 14
