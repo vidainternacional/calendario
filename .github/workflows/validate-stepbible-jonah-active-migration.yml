@@ -6,13 +6,14 @@ on:
       - main
     paths:
       - "scripts/stepbible/test_jonah_active_migration.py"
+      - "scripts/stepbible/register_jonah_active_migration_master.py"
       - "supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql"
       - ".github/workflows/validate-stepbible-jonah-active-migration.yml"
       - "docs/FASE_D_MIGRACION_ACTIVA_JONAS.md"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -36,6 +37,9 @@ jobs:
       TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_jonah_active_test
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -85,3 +89,21 @@ jobs:
             artifacts/jonah-active/active-migration-validation.json
           if-no-files-found: error
           retention-days: 14
+      - name: Registrar migración en el maestro
+        run: |
+          if [ ! -f scripts/stepbible/register_jonah_active_migration_master.py ]; then
+            echo "Auxiliar retirado; no hay actualización pendiente"
+            exit 0
+          fi
+          python scripts/stepbible/register_jonah_active_migration_master.py
+      - name: Versionar documento maestro
+        run: |
+          if git diff --quiet -- __VIDA_INTERNACIONAL.md; then
+            echo "Sin cambios pendientes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs(fase-d): registrar migración activa de Jonás"
+          git push
