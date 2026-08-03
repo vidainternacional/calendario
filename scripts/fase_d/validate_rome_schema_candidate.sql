@@ -32,10 +32,11 @@ create or replace function public.cuenta_activa()
 returns boolean language sql stable as $$ select true $$;
 
 grant usage on schema public to authenticated, service_role;
+grant select on public.biblical_sources, public.biblical_books to authenticated;
+grant all on public.biblical_sources, public.biblical_books to service_role;
 
 \ir ../../docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
 
--- Estructura
 select to_regclass('public.biblical_places') is not null as places_exists \gset
 \if :places_exists
 \else
@@ -57,7 +58,6 @@ select to_regclass('public.biblical_timeline_event_places') is not null as relat
   \quit 1
 \endif
 
--- RLS
 select bool_and(relrowsecurity) as all_rls
 from pg_class
 where oid in (
@@ -71,7 +71,6 @@ where oid in (
   \quit 1
 \endif
 
--- Privilegios
 select not has_table_privilege('anon', 'public.biblical_places', 'SELECT') as anon_blocked \gset
 \if :anon_blocked
 \else
@@ -88,7 +87,6 @@ select not has_table_privilege('authenticated', 'public.biblical_places', 'INSER
   \quit 1
 \endif
 
--- Datos mínimos válidos
 insert into public.biblical_sources
   (slug, provider, provider_ref, attribution, license_status, review_status, enabled)
 values
@@ -140,7 +138,6 @@ insert into public.biblical_timeline_event_places (
   :'source_id', 'Acts 28:16-31', repeat('d', 64), 'approved', true
 );
 
--- Trigger updated_at
 select pg_sleep(0.01);
 update public.biblical_places set canonical_name_es = 'Roma' where id = :'place_id';
 select updated_at > :'place_updated_at'::timestamptz as trigger_ok
@@ -150,31 +147,35 @@ from public.biblical_places where id = :'place_id' \gset
   \quit 1
 \endif
 
--- Restricciones inválidas deben fallar sin abortar la suite
-\set ON_ERROR_STOP off
-savepoint invalid_coordinate;
-insert into public.biblical_places (
-  slug, canonical_name_es, place_kind, latitude, longitude,
-  source_id, source_locator, content_hash
-) values ('invalid-coordinate', 'Inválido', 'city', 91, 10, :'source_id', 'x', repeat('e',64));
-\if :ERROR
-  rollback to savepoint invalid_coordinate;
-\else
-  \quit 1
-\endif
+-- Las restricciones inválidas deben rechazarse y capturarse sin abortar la suite.
+do $$
+begin
+  begin
+    insert into public.biblical_places (
+      slug, canonical_name_es, place_kind, latitude, longitude,
+      source_id, source_locator, content_hash
+    ) values (
+      'invalid-coordinate', 'Inválido', 'city', 91, 10,
+      :'source_id', 'x', repeat('e', 64)
+    );
+    raise exception 'La coordenada inválida fue aceptada';
+  exception when check_violation then
+    null;
+  end;
+end $$;
 
-savepoint invalid_hash;
-insert into public.biblical_timeline_periods (
-  slug, title, source_id, source_locator, content_hash
-) values ('invalid-hash', 'Inválido', :'source_id', 'x', 'bad');
-\if :ERROR
-  rollback to savepoint invalid_hash;
-\else
-  \quit 1
-\endif
-\set ON_ERROR_STOP on
+do $$
+begin
+  begin
+    insert into public.biblical_timeline_periods (
+      slug, title, source_id, source_locator, content_hash
+    ) values ('invalid-hash', 'Inválido', :'source_id', 'x', 'bad');
+    raise exception 'El hash inválido fue aceptado';
+  exception when check_violation then
+    null;
+  end;
+end $$;
 
--- RLS autenticada: solo aprobados/habilitados
 set role authenticated;
 select count(*) = 1 as auth_places_ok from public.biblical_places \gset
 \if :auth_places_ok
@@ -188,7 +189,6 @@ select count(*) = 1 as auth_events_ok from public.biblical_timeline_events \gset
 \endif
 reset role;
 
--- Ninguna tabla contiene datos no piloto inesperados
 select count(*) = 1 as place_count_ok from public.biblical_places \gset
 \if :place_count_ok
 \else
