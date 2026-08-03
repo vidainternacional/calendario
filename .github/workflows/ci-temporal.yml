@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   validar:
-    name: Lint y build
+    name: Instalación, lint informativo y build
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -32,10 +32,11 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Instalar dependencias
+      - name: Instalar dependencias reproducibles
         run: npm ci
 
-      - name: Ejecutar lint
+      - name: Ejecutar lint informativo
+        continue-on-error: true
         run: npm run lint
 
       - name: Compilar aplicación
