@@ -23,7 +23,7 @@ jobs:
       - name: Actualizar documento maestro
         run: python3 scripts/fase_d/register_rome_preapplication_master.py
       - name: Confirmar registro único
-        run: test "$(grep -c 'PR #142' __VIDA_INTERNACIONAL.md)" -eq 1
+        run: test "$(grep -c '936f1a1b1f06e4b3db7aca13e3e909e7c6c6aee6' __VIDA_INTERNACIONAL.md)" -eq 1
       - name: Retirar auxiliares y publicar rama final
         run: |
           git config user.name 'github-actions[bot]'
