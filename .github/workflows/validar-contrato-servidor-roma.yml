@@ -1,0 +1,24 @@
+name: Validar contrato servidor de Roma
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - lib/estudios/biblical-chronology-maps.ts
+      - lib/estudios/biblical-chronology-recovery.ts
+      - scripts/fase_d/validate_rome_server_contract.py
+      - docs/FASE_D_BLOQUE_5_CONTRATO_SERVIDOR_ROMA.md
+      - .github/workflows/validar-contrato-servidor-roma.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar aislamiento y controles
+        run: python3 scripts/fase_d/validate_rome_server_contract.py
+      - name: Verificar formato del diff
+        run: git diff --check
