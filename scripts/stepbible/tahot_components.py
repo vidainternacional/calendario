@@ -50,6 +50,50 @@ def derive_strong_number(lexical_id: str) -> str:
     return strong
 
 
+def is_structural_separator(
+    source_id: str,
+    expanded_tag: str,
+    aligned_component: dict[str, Any],
+) -> bool:
+    if source_id.strip() or expanded_tag.strip():
+        return False
+    semantic_values = (
+        aligned_component.get("hebrew"),
+        aligned_component.get("transliteration"),
+        aligned_component.get("translation"),
+        aligned_component.get("grammar"),
+    )
+    if any(str(value or "").strip() for value in semantic_values):
+        raise ValueError(
+            "Componente sin identificador conserva contenido lingüístico: "
+            f"{aligned_component}"
+        )
+    return True
+
+
+def split_segments(
+    dstrong_parts: list[str],
+    expanded_parts: list[str],
+    aligned: list[dict[str, Any]],
+) -> list[list[tuple[str, str, dict[str, Any]]]]:
+    segments: list[list[tuple[str, str, dict[str, Any]]]] = []
+    current: list[tuple[str, str, dict[str, Any]]] = []
+
+    for source_id, expanded_tag, aligned_component in zip(
+        dstrong_parts, expanded_parts, aligned, strict=True
+    ):
+        if is_structural_separator(source_id, expanded_tag, aligned_component):
+            if current:
+                segments.append(current)
+                current = []
+            continue
+        current.append((source_id, expanded_tag, aligned_component))
+
+    if current:
+        segments.append(current)
+    return segments
+
+
 def row_components(row: dict[str, Any]) -> list[dict[str, Any]]:
     raw = row["raw_fields"]
     dstrongs, punctuation_tag = split_punctuation_tag(raw["dstrongs"])
@@ -66,62 +110,76 @@ def row_components(row: dict[str, Any]) -> list[dict[str, Any]]:
             f"{row['source_index']['raw']}"
         )
 
-    root_positions = [
-        index for index, value in enumerate(dstrong_parts) if is_root_component(value)
-    ]
-    if len(root_positions) != 1:
+    segments = split_segments(dstrong_parts, expanded_parts, aligned)
+    if not segments:
         raise ValueError(
-            f"Se esperaba una raíz única en {row['reference']['english']}#"
-            f"{row['source_index']['raw']}: {dstrong_parts}"
+            f"Fila sin componentes léxicos en {row['reference']['english']}#"
+            f"{row['source_index']['raw']}"
         )
-    root_position = root_positions[0]
 
     result: list[dict[str, Any]] = []
-    for index, (source_id, expanded_tag, aligned_component) in enumerate(
-        zip(dstrong_parts, expanded_parts, aligned, strict=True)
-    ):
-        lexical_id = normalized_lexical_id(source_id)
-        expanded_id, lemma, source_gloss = parse_expanded_tag(expanded_tag)
-        if expanded_id != lexical_id:
+    morpheme_index = 0
+    for segment_index, segment in enumerate(segments, 1):
+        root_positions = [
+            index
+            for index, (value, _, _) in enumerate(segment)
+            if is_root_component(value)
+        ]
+        if len(root_positions) != 1:
             raise ValueError(
-                f"Identificador diferente en {row['reference']['english']}#"
-                f"{row['source_index']['raw']}: {lexical_id} != {expanded_id}"
+                f"Se esperaba una raíz única por segmento en "
+                f"{row['reference']['english']}#{row['source_index']['raw']} "
+                f"segmento {segment_index}: {[value for value, _, _ in segment]}"
             )
-        if not LEXICAL_ID_RE.fullmatch(lexical_id):
-            raise ValueError(f"Identificador no compatible con Supabase: {lexical_id}")
+        root_position = root_positions[0]
 
-        _, source_joins_next = strip_join_marker(source_id)
-        _, expanded_joins_next = strip_join_marker(expanded_tag)
-        if source_joins_next != expanded_joins_next:
-            raise ValueError(
-                f"Marca de unión diferente en {row['reference']['english']}#"
-                f"{row['source_index']['raw']}"
+        for index, (source_id, expanded_tag, aligned_component) in enumerate(segment):
+            lexical_id = normalized_lexical_id(source_id)
+            expanded_id, lemma, source_gloss = parse_expanded_tag(expanded_tag)
+            if expanded_id != lexical_id:
+                raise ValueError(
+                    f"Identificador diferente en {row['reference']['english']}#"
+                    f"{row['source_index']['raw']}: {lexical_id} != {expanded_id}"
+                )
+            if not LEXICAL_ID_RE.fullmatch(lexical_id):
+                raise ValueError(
+                    f"Identificador no compatible con Supabase: {lexical_id}"
+                )
+
+            _, source_joins_next = strip_join_marker(source_id)
+            _, expanded_joins_next = strip_join_marker(expanded_tag)
+            if source_joins_next != expanded_joins_next:
+                raise ValueError(
+                    f"Marca de unión diferente en {row['reference']['english']}#"
+                    f"{row['source_index']['raw']}"
+                )
+
+            token_kind = (
+                "prefix"
+                if index < root_position
+                else "word"
+                if index == root_position
+                else "suffix"
             )
-
-        token_kind = (
-            "prefix"
-            if index < root_position
-            else "word"
-            if index == root_position
-            else "suffix"
-        )
-        result.append(
-            {
-                "lexical_id": lexical_id,
-                "strong_number": derive_strong_number(lexical_id),
-                "source_lemma": lemma,
-                "source_gloss": source_gloss,
-                "token_kind": token_kind,
-                "surface_form": aligned_component["hebrew"],
-                "transliteration": aligned_component["transliteration"],
-                "occurrence_gloss_en": aligned_component["translation"],
-                "morphology_code": aligned_component["grammar"],
-                "morpheme_index": index + 1,
-                "joins_previous": index > 0,
-                "joins_next": index < len(dstrong_parts) - 1,
-                "source_joins_next_word": source_joins_next,
-            }
-        )
+            morpheme_index += 1
+            result.append(
+                {
+                    "lexical_id": lexical_id,
+                    "strong_number": derive_strong_number(lexical_id),
+                    "source_lemma": lemma,
+                    "source_gloss": source_gloss,
+                    "token_kind": token_kind,
+                    "surface_form": aligned_component["hebrew"],
+                    "transliteration": aligned_component["transliteration"],
+                    "occurrence_gloss_en": aligned_component["translation"],
+                    "morphology_code": aligned_component["grammar"],
+                    "morpheme_index": morpheme_index,
+                    "segment_index": segment_index,
+                    "joins_previous": index > 0,
+                    "joins_next": index < len(segment) - 1,
+                    "source_joins_next_word": source_joins_next,
+                }
+            )
 
     if (punctuation_tag is None) != (expanded_punctuation is None):
         raise ValueError(
@@ -138,6 +196,50 @@ def self_test() -> None:
         raise RuntimeError("No se reconoció una raíz con marca de unión")
     if parse_expanded_tag("{H1035G=בֵּית לֶחֶם=Bethlehem}+")[0] != "H1035G":
         raise RuntimeError("No se interpretó la etiqueta expandida con unión")
+
+    synthetic = {
+        "reference": {"english": "Rut.3.5"},
+        "source_index": {"raw": "05"},
+        "raw_fields": {
+            "dstrongs": "{H0559}/ /{H0413}/H9030",
+            "expanded_strong_tags": (
+                "{H0559=אָמַר=to say}/ /{H0413=אֵל=to}/H9030=Sp1c=me"
+            ),
+        },
+        "alignment": {
+            "components": [
+                {
+                    "hebrew": "תֹּאמְרִי",
+                    "transliteration": "tom.Ri",
+                    "translation": "you say",
+                    "grammar": "HVqi2fs",
+                },
+                {
+                    "hebrew": " ",
+                    "transliteration": " ",
+                    "translation": " ",
+                    "grammar": " ",
+                },
+                {
+                    "hebrew": "אֵלַ",
+                    "transliteration": "'e.La",
+                    "translation": "to",
+                    "grammar": "HR",
+                },
+                {
+                    "hebrew": "י",
+                    "transliteration": "i",
+                    "translation": "me",
+                    "grammar": "Sp1c",
+                },
+            ]
+        },
+    }
+    components = row_components(synthetic)
+    if [item["token_kind"] for item in components] != ["word", "word", "suffix"]:
+        raise RuntimeError(f"Segmentación multirraíz inesperada: {components}")
+    if components[1]["joins_previous"] or not components[2]["joins_previous"]:
+        raise RuntimeError("Las uniones entre segmentos no se preservaron")
     print("Auto-test de componentes TAHOT: OK")
 
 
