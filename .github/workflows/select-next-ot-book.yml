@@ -1,0 +1,44 @@
+name: Seleccionar tercer libro TAHOT
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/select_next_ot_book.py"
+      - ".github/workflows/select-next-ot-book.yml"
+      - "docs/FASE_D_SELECCION_TERCER_LIBRO.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/select_next_ot_book.py --self-test
+
+      - name: Auditar candidatos
+        run: |
+          python scripts/stepbible/select_next_ot_book.py \
+            --output artifacts/next-ot-book
+          git diff --check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-next-ot-book-selection
+          path: artifacts/next-ot-book/
+          if-no-files-found: error
+          retention-days: 14
