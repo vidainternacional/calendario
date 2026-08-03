@@ -27,6 +27,7 @@ import {
   type EstudioState,
 } from '@/app/actions/estudio-interno'
 import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'
+import ChronologyMapPanel from '@/components/estudios/ChronologyMapPanel'
 
 const SECTIONS: { key: keyof EstudioResultado; label: string }[] = [
   { key: 'texto_original', label: '1. Texto original' },
@@ -241,6 +242,7 @@ export default function EstudioProfundoClient({
           </header>
 
           {state.textualEvidence && <TextualEvidencePanel evidence={state.textualEvidence} />}
+          {state.chronology && <ChronologyMapPanel bundle={state.chronology} />}
 
           <div className="divide-y divide-slate-100">
             {sectionsWithContent.map(section => {

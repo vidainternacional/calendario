@@ -12,6 +12,10 @@ import {
   getResolvedBiblicalTextualStudy,
   type ResolvedBiblicalTextualStudyBundle,
 } from '@/lib/estudios/resolved-biblical-textual-study'
+import {
+  listarCronologiaBiblicaParaReferencia,
+  type PaqueteCronologicoBiblico,
+} from '@/lib/estudios/biblical-chronology-maps'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -30,6 +34,7 @@ export type EstudioState =
       pasaje: string
       resultado: EstudioResultado
       textualEvidence?: ResolvedBiblicalTextualStudyBundle
+      chronology?: PaqueteCronologicoBiblico
     }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
   | { status: 'error'; error: string }
@@ -134,6 +139,15 @@ export async function analizarPasaje(
   }
 
   const textualEvidence = await getResolvedBiblicalTextualStudy(query, translationId)
+  const contexto = await getInternalBiblicalContext(query)
+  const chronology = contexto
+    ? await listarCronologiaBiblicaParaReferencia({
+        bookCode: contexto.reference.book.code,
+        chapter: contexto.reference.chapter,
+        verse: contexto.reference.verse,
+      })
+    : undefined
+  const chronologyEvidence = chronology?.events.length ? chronology : undefined
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
@@ -144,10 +158,10 @@ export async function analizarPasaje(
       pasaje: estudio.pasaje,
       resultado: estudio.resultado,
       textualEvidence: textualEvidence ?? undefined,
+      chronology: chronologyEvidence,
     }
   }
 
-  const contexto = await getInternalBiblicalContext(query)
   if (contexto?.status === 'covered') {
     return {
       status: 'success',
@@ -156,6 +170,7 @@ export async function analizarPasaje(
       pasaje: contexto.reference.canonicalReference,
       resultado: ensamblarEstudioContextual(contexto),
       textualEvidence: textualEvidence ?? undefined,
+      chronology: chronologyEvidence,
     }
   }
 
