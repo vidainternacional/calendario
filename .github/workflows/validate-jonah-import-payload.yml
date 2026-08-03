@@ -1,0 +1,74 @@
+name: Validar payload de importación de Jonás
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/build_tahot_import_payload.py"
+      - "scripts/stepbible/audit_jonah_import_payload.py"
+      - "scripts/stepbible/jonah_affix_lemma_policy.json"
+      - ".github/workflows/validate-jonah-import-payload.yml"
+      - "docs/FASE_D_PAYLOAD_TAHOT_JONAS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/build_tahot_import_payload.py --self-test
+          python scripts/stepbible/audit_jonah_import_payload.py --self-test
+      - name: Generar paquete y payload A
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Jon \
+            --output artifacts/jonah-payload-a
+          test "$(sha256sum artifacts/jonah-payload-a/jon.json.gz | cut -d' ' -f1)" = \
+            "083b869fe7d10493deaeee392babd9811e9dffb91f0db816d2f21a22b2135915"
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/jonah-payload-a/jon.json.gz \
+            --policy scripts/stepbible/jonah_affix_lemma_policy.json \
+            --output artifacts/jonah-payload-a/import-payload.json
+      - name: Generar paquete y payload B
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Jon \
+            --output artifacts/jonah-payload-b
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/jonah-payload-b/jon.json.gz \
+            --policy scripts/stepbible/jonah_affix_lemma_policy.json \
+            --output artifacts/jonah-payload-b/import-payload.json
+      - name: Verificar reproducibilidad
+        run: |
+          cmp artifacts/jonah-payload-a/import-payload.json \
+            artifacts/jonah-payload-b/import-payload.json
+          test "$(stat -c%s artifacts/jonah-payload-a/import-payload.json)" = "1248309"
+          test "$(sha256sum artifacts/jonah-payload-a/import-payload.json | cut -d' ' -f1)" = \
+            "e6bd082a446d29becbafb35a22b94ef9e260e447fe7fc7cea4361d98c5bb835b"
+          sha256sum artifacts/jonah-payload-a/import-payload.json | \
+            tee artifacts/jonah-payload-a/payload-file-sha256.txt
+      - name: Auditar payload
+        run: |
+          python scripts/stepbible/audit_jonah_import_payload.py \
+            --payload artifacts/jonah-payload-a/import-payload.json \
+            --output artifacts/jonah-payload-a/payload-audit.json
+          git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-jonah-import-payload
+          path: artifacts/jonah-payload-a/
+          if-no-files-found: error
+          retention-days: 14
