@@ -21,7 +21,7 @@ Este archivo es el control oficial y versionado del proyecto. Antes de trabajar 
 | FASE A | Experiencia profesional mobile first | COMPLETADA |
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
-| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 4** |
+| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 5** |
 | FASE E | Optimización General: rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Cuaderno correlativo de prédicas y notas | PENDIENTE |
 
@@ -73,8 +73,8 @@ Construir herramientas avanzadas de estudio bíblico apoyadas por fuentes verifi
 - Bloque 1 — Diagnóstico y arquitectura: **COMPLETADO**.
 - Bloque 2 — Fuentes, atribución y privacidad: **COMPLETADO — 2026-07-31**.
 - Bloque 3 — Contexto histórico y cultural: **COMPLETADO — 2026-08-01**.
-- Bloque 4 — Comparaciones y herramientas ampliadas: **ACTIVO**.
-- Bloque 5 — Cronologías y mapas: PENDIENTE.
+- Bloque 4 — Comparaciones y herramientas ampliadas: **COMPLETADO — 2026-08-03**.
+- Bloque 5 — Cronologías y mapas: **ACTIVO**.
 - Bloque 6 — IA bíblica avanzada y proveedores: PENDIENTE.
 - Bloque 7 — Pruebas, documentación y cierre: PENDIENTE.
 
@@ -112,7 +112,7 @@ Construir herramientas avanzadas de estudio bíblico apoyadas por fuentes verifi
 - estado final validado en producción: commit `73f8458e316f1e0d4931456ccad02ef45cabc23e`, deployment `dpl_9iHrXP25gb2MG16DeTRNKiohmE6P` — `READY`;
 - confirmación visual y funcional recibida el 2026-08-01.
 
-### Bloque activo
+### Bloque 4 — objetivo cerrado
 
 **Bloque 4 — Comparaciones y herramientas ampliadas.**
 
@@ -1439,4 +1439,38 @@ Evidencia permanente:
 
 La selección, paquete reproducible, política de afijos, payload, importador, migración activa, importación productiva, auditoría técnica, recuperación autenticada y visualización funcional de Jonás están completas.
 
-El siguiente incremento autorizado es realizar una auditoría consolidada de cierre del Bloque 4 y documentar si todos sus objetivos quedaron satisfechos. No avanzar al Bloque 5 hasta registrar explícitamente el cierre del Bloque 4 en este documento maestro.
+### Cierre confirmado del Bloque 4 — Comparaciones y herramientas ampliadas
+
+La auditoría consolidada del Bloque 4 quedó aprobada y fusionada mediante el PR #132, commit de fusión `5826b544f703a3487f33e485a2fbc6f6c2de3215`.
+
+El cierre confirma:
+
+- cobertura contextual completa para 66 libros y 1,189 capítulos;
+- corpus textual completo del Nuevo Testamento, con 27 libros, 7,958 referencias TAGNT, 138,096 palabras base, 4,000 lecturas adicionales y 6,409 variantes documentadas;
+- cuatro fuentes TAHOT verificadas para los 39 libros del Antiguo Testamento y 23,261 referencias fuente;
+- cinco libros completos del Antiguo Testamento importados y validados: Abdías, Rut, Hageo, Nahúm y Jonás;
+- 239 textos, 3,430 palabras visibles, 5,279 ocurrencias y 43 variantes en ese piloto completo del Antiguo Testamento;
+- fuentes, atribuciones, licencias, hashes, importadores, idempotencia, RLS, permisos y recuperación segura documentados;
+- visualización funcional aprobada en **Biblia → Estudio** y **Estudio Profundo**;
+- ausencia de conexión de los datos textuales y léxicos a proveedores de IA;
+- ausencia de contenido editorial español presentado como revisado cuando no lo está.
+
+Evidencia permanente: `docs/FASE_D_AUDITORIA_CIERRE_BLOQUE_4.md`.
+
+El Bloque 4 queda oficialmente **COMPLETADO — 2026-08-03**.
+
+### Bloque activo
+
+**Bloque 5 — Cronologías y mapas.**
+
+El primer incremento autorizado debe:
+
+- inventariar las cronologías, mapas, coordenadas, componentes y fuentes geográficas ya existentes en el repositorio;
+- definir el modelo mínimo para eventos, periodos, lugares, relaciones bíblicas, fuentes y nivel de certeza;
+- evaluar fuentes compatibles con las reglas de atribución, licencia y privacidad del Bloque 2;
+- reutilizar la navegación de **Biblia → Estudio** y **Estudio Profundo**, sin crear una sección duplicada;
+- no importar todavía corpus geográficos o cronológicos completos;
+- no conectar estos datos a la IA;
+- no usar APIs externas de pago ni realizar escrituras en producción durante el diagnóstico inicial.
+
+No avanzar al Bloque 6 hasta que cronologías y mapas estén documentados, implementados, validados funcionalmente y registrados aquí.
