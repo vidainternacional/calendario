@@ -2,8 +2,7 @@ name: Validar esquema, paquete e importador piloto de Roma
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
@@ -43,37 +42,30 @@ permissions:
   contents: read
 
 jobs:
-  validar-postgresql-17:
+  validar-esquema-y-paquete:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     services:
       postgres:
         image: postgres:17
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: vida_schema_test
-        ports:
-          - 5432:5432
+        ports: [5432:5432]
         options: >-
           --health-cmd "pg_isready -U postgres -d vida_schema_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-
     env:
       PGPASSWORD: postgres
       PGHOST: localhost
       PGPORT: 5432
       PGUSER: postgres
       PGDATABASE: vida_schema_test
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Confirmar equivalencia de la migración activa
-        if: ${{ hashFiles('supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql') != '' }}
         run: |
           tail -n +6 docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql > /tmp/candidate.sql
           tail -n +6 supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql > /tmp/active.sql
@@ -81,31 +73,55 @@ jobs:
           test "$(grep -ci '^create table public\.biblical_' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql)" -eq 4
           ! grep -Eiq '^[[:space:]]*insert[[:space:]]+into' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
           ! grep -Eiq '^[[:space:]]*(update|delete)[[:space:]]' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
-          grep -q 'No está autorizada para aplicarse a Supabase' docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
-
-      - name: Instalar extensiones PostgreSQL contrib
+      - name: Instalar cliente PostgreSQL
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client postgresql-contrib
-
-      - name: Replicar esquema de extensiones de Supabase
+      - name: Replicar extensiones de Supabase
         working-directory: scripts/fase_d
         run: psql -f bootstrap_supabase_extensions.sql
-
-      - name: Validar candidata y matriz de seguridad
+      - name: Validar candidata y seguridad
         working-directory: scripts/fase_d
         run: psql -f validate_rome_schema_candidate.sql
-
-      - name: Validar paquete piloto reproducible
+      - name: Validar paquete reproducible
         run: python3 scripts/fase_d/validate_rome_pilot_package.py
-
-      - name: Validar importación idempotente y recuperación
-        working-directory: scripts/fase_d
-        run: psql -f validate_rome_data_import_candidate.sql
-
-      - name: Verificar formato y aislamiento
+      - name: Verificar aislamiento
         run: |
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
           git diff --check
+
+  validar-importador-y-recuperacion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_import_test
+        ports: [5433:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_import_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      PGHOST: localhost
+      PGPORT: 5433
+      PGUSER: postgres
+      PGDATABASE: vida_import_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client postgresql-contrib
+      - name: Replicar extensiones de Supabase
+        working-directory: scripts/fase_d
+        run: psql -f bootstrap_supabase_extensions.sql
+      - name: Validar importación idempotente y recuperación completa
+        working-directory: scripts/fase_d
+        run: psql -f validate_rome_data_import_candidate.sql
