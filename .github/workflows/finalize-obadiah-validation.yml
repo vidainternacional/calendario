@@ -1,11 +1,11 @@
 name: Cerrar validación documental de Abdías
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
-      - ".github/workflows/finalize-obadiah-validation.yml"
+      - "docs/trigger-finalize-obadiah.md"
 
 permissions:
   contents: write
@@ -76,8 +76,7 @@ El Bloque 4 continúa activo. El siguiente incremento autorizado es preparar una
           if replacement not in text:
               if text.count(marker) != 1:
                   raise SystemExit('No se encontró un único marcador pendiente de Abdías')
-              text = text.replace(marker, replacement, 1)
-              master.write_text(text, encoding='utf-8')
+              master.write_text(text.replace(marker, replacement, 1), encoding='utf-8')
 
           doc = Path('docs/FASE_D_APLICACION_OBADIAS_SUPABASE.md')
           doc_text = doc.read_text(encoding='utf-8')
