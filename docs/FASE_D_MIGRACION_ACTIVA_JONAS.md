@@ -2,24 +2,29 @@
 
 Fecha: 2026-08-02
 
-## Objetivo
+## Resultado
 
-Convertir mecánicamente el borrador transaccional validado de Jonás en una migración activa versionada y repetir la validación completa en PostgreSQL 16 antes de cualquier aplicación en Supabase.
+El borrador transaccional validado de Jonás fue convertido mecánicamente en una migración activa versionada y validado nuevamente en PostgreSQL 16.
 
-Migración versionada:
+Migración:
 
 `supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql`
 
-La migración no se ha aplicado a Supabase y Jonás no se ha importado en producción.
+La migración **no se ha aplicado a Supabase** y Jonás todavía no se ha importado en producción.
 
 ## Conversión mecánica
 
-La conversión cambia únicamente esta declaración:
+La conversión cambió únicamente esta declaración:
 
 - origen: `BORRADOR NO ACTIVO`;
 - destino: `MIGRACIÓN ACTIVA`.
 
-El cuerpo SQL permanece idéntico. El workflow generó la migración desde el borrador y la validación compara nuevamente ambos archivos byte a byte.
+El cuerpo SQL permaneció idéntico. La migración generada fue comparada byte a byte con el borrador activado antes de ejecutar PostgreSQL.
+
+- SHA-256 de la migración activa:
+  `2d1122d5fc2502365c28797e33cd6bc36e2cca1fe0a535e5be94527790fb09d9`;
+- marca activa: verificada;
+- marcas de borrador restantes: 0.
 
 ## Contrato fijado
 
@@ -34,24 +39,58 @@ El cuerpo SQL permanece idéntico. El workflow generó la migración desde el bo
 - huella canónica interna:
   `f986bdd833c86f9f239ddd26e4594aeb33d48a89f72fb05dcc853dbd1d512fc4`.
 
-## Validaciones requeridas
+## Validación PostgreSQL 16
 
-La prueba PostgreSQL 16 debe confirmar:
+La prueba instaló sucesivamente las migraciones activas de Abdías, Rut, Hageo y Nahúm antes de ejecutar la migración activa de Jonás.
 
-- archivo dentro de `supabase/migrations`;
-- una sola marca `MIGRACIÓN ACTIVA` y ausencia total de marcas de borrador;
-- conversión mecánica byte a byte;
+Controles aprobados:
+
 - instalación sin escrituras de datos;
 - payload adulterado rechazado sin residuos;
 - variante artificial rechazada sin residuos;
 - rollback forzado de una importación válida;
-- importación exacta con 48 textos, 1,080 ocurrencias, 0 variantes y 1 lote;
-- 288 entradas léxicas totales;
-- reutilización no destructiva de `H3068G` y `H9020`;
+- cero residuos después del rollback;
+- importación válida completa;
 - segunda ejecución idempotente;
 - permisos exclusivos de `service_role`;
-- función resultante con la huella fijada.
+- `anon` y `authenticated` sin `EXECUTE`;
+- reutilización no destructiva de `H3068G` y `H9020`;
+- campos editoriales españoles nulos para los datos nuevos;
+- función instalada con la huella esperada.
 
-## Estado
+Conteos comprometidos:
 
-La migración activa ya fue materializada. La validación PostgreSQL 16 del archivo versionado está en ejecución. Supabase permanece sin cambios.
+- entradas léxicas totales: 288;
+- textos: 48;
+- palabras visibles: 688;
+- ocurrencias: 1,080;
+- variantes: 0;
+- lotes: 1.
+
+## Evidencia reproducible
+
+- PR: #124;
+- workflow: `Validar migración activa TAHOT de Jonás`;
+- ejecución inicial: `30791049474` — `success`;
+- artefacto: `stepbible-jonah-active-migration-validation`;
+- ID: `8847053282`;
+- digest: `sha256:bdded51bb186f9bbea90ef7cb61d0f88befa3e7fbf0c80ba09dd4c28e24b9aaa`;
+- estado: `validated_outside_production`.
+
+## Limpieza prevista
+
+Antes de fusionar se retirarán:
+
+- el borrador de migración;
+- el activador mecánico;
+- el marcador de materialización;
+- el workflow temporal de materialización;
+- el workflow sustituido de validación del borrador.
+
+El repositorio conservará una única ruta activa: migración, prueba y workflow permanente.
+
+## Alcance y siguiente paso
+
+No se aplicó la migración a Supabase, no se importó Jonás y no se modificaron RLS, interfaz o producción.
+
+Después de validar el commit limpio, la migración activa podrá quedar autorizada para aplicación controlada en Supabase. No debe aplicarse hasta que `__VIDA_INTERNACIONAL.md` registre explícitamente esa autorización.
