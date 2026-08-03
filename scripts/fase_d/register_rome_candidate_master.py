@@ -36,4 +36,4 @@ La candidata permanece fuera de `supabase/migrations`. No se aplicó DDL, no se 
 **Siguiente punto autorizado:** preparar una migración activa revisable dentro del repositorio, conservando el esquema vacío y un plan de recuperación. No aplicarla a Supabase ni importar datos hasta completar una validación previa específica y registrar autorización posterior en este documento maestro. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
 '''
 
-path.write_text(text.rstrip() + block + '\n', encoding='utf-8')
+path.write_text(text.rstrip() + block.rstrip() + '\n', encoding='utf-8')
