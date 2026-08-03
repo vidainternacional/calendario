@@ -1,0 +1,43 @@
+name: Materializar integración visual de Roma
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'components/estudios/ChronologyMapPanel.tsx'
+      - 'scripts/fase_d/materialize_rome_visual_integration.py'
+      - '.github/workflows/materialize-rome-visual-integration.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materializar:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Materializar integración
+        run: python scripts/fase_d/materialize_rome_visual_integration.py
+      - name: Validar aislamiento
+        run: |
+          grep -q "listarCronologiaBiblicaParaReferencia" app/actions/estudio-interno.ts
+          grep -q "ChronologyMapPanel" components/estudios/EstudioProfundoClient.tsx
+          grep -q "review_status', 'approved'" lib/estudios/biblical-chronology-maps.ts
+          grep -q "enabled', true" lib/estudios/biblical-chronology-maps.ts
+          ! grep -R "service_role" components/estudios/ChronologyMapPanel.tsx components/estudios/EstudioProfundoClient.tsx
+      - name: Retirar auxiliares y confirmar diff
+        run: |
+          rm scripts/fase_d/materialize_rome_visual_integration.py
+          rm .github/workflows/materialize-rome-visual-integration.yml
+          git diff --check
+      - name: Guardar materialización
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/actions/estudio-interno.ts components/estudios/EstudioProfundoClient.tsx components/estudios/ChronologyMapPanel.tsx scripts/fase_d/materialize_rome_visual_integration.py .github/workflows/materialize-rome-visual-integration.yml
+          git commit -m 'feat(fase-d): integrar cronología y mapa de Roma' || exit 0
+          git push
