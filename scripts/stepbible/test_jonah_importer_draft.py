@@ -94,9 +94,12 @@ def assert_jonah_integrity(cur: psycopg.Cursor) -> None:
     assert cur.fetchone()[0] == 0
     cur.execute(
         """
-        select count(distinct display_word_index)
-        from public.biblical_word_occurrences
-        where book_code='JON'
+        select count(*)
+        from (
+          select distinct chapter,verse,display_word_index
+          from public.biblical_word_occurrences
+          where book_code='JON'
+        ) visible_words
         """
     )
     assert cur.fetchone()[0] == 688
