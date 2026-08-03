@@ -40,27 +40,67 @@ El workflow regenera el borrador en `/tmp` y exige identidad byte a byte con el 
 - filas fuente con variantes: 0;
 - variantes estructuradas: 0.
 
-## Controles PostgreSQL 16
+## Validación PostgreSQL 16
 
-La prueba debe partir del fixture textual mínimo e instalar sucesivamente las migraciones activas de Abdías, Rut, Hageo y Nahúm antes de ejecutar el borrador de Jonás.
+La prueba partió del fixture textual mínimo e instaló sucesivamente las migraciones activas de Abdías, Rut, Hageo y Nahúm antes de ejecutar el borrador de Jonás.
 
-Controles obligatorios:
+Controles aprobados:
 
-- función base exacta;
+- función base OBA/RUT/HAG/NAM exacta;
 - derivación byte a byte del borrador;
 - payload con huella adulterada rechazado sin escrituras;
 - variante artificial rechazada sin escrituras;
+- estado posterior a ambos rechazos: dos entradas léxicas del fixture y cero textos, ocurrencias, variantes o lotes;
 - rollback forzado de una importación válida;
-- importación exacta con 48 textos, 1,080 ocurrencias, 0 variantes y 1 lote;
-- 288 entradas léxicas totales por reutilización de `H3068G` y `H9020`;
-- preservación de las glosas editoriales preexistentes de esas dos entradas;
-- campos editoriales españoles nulos para datos nuevos;
+- importación exacta;
 - segunda ejecución idempotente;
 - `anon` y `authenticated` sin `EXECUTE`;
 - `service_role` como único rol con `EXECUTE`.
 
-## Estado
+Conteos después de la importación válida:
 
-La validación está en ejecución en el PR #123. La evidencia final, la huella de la función resultante y los conteos confirmados se registrarán únicamente después de que PostgreSQL 16 apruebe el mismo commit documentado.
+- entradas léxicas totales: 288;
+- ocurrencias: 1,080;
+- textos: 48;
+- variantes: 0;
+- lotes: 1.
 
-No crear migración activa ni tocar Supabase hasta completar esta validación.
+El total léxico permanece en 288 porque Jonás reutiliza las dos entradas preexistentes del fixture, `H3068G` y `H9020`, y añade únicamente las otras 286 entradas necesarias.
+
+## Integridad adicional
+
+- 688 palabras visibles reconstruidas mediante la combinación capítulo, versículo e índice visible;
+- cero variantes textuales almacenadas;
+- cero traducciones literales españolas añadidas;
+- cero glosas españolas de ocurrencia añadidas;
+- cero campos editoriales españoles en las entradas nuevas;
+- `H3068G` conserva `fixture:H3068G` y la glosa `Yahvé`;
+- `H9020` conserva `fixture:H9020` y la glosa `mi`;
+- metadata de los cuatro archivos fuente igual al contrato fijado;
+- permisos restringidos a `service_role`.
+
+La primera ejecución falló únicamente porque la prueba contaba `display_word_index` de forma global, aunque ese índice reinicia en cada versículo. La consulta fue corregida para contar combinaciones únicas de capítulo, versículo e índice visible. El importador, borrador y payload no cambiaron.
+
+## Huellas de función
+
+- función base OBA/RUT/HAG/NAM:
+  `69045240e658995cd0e1ba3557e54a2700b623078b36125e73ed1ada64f5139c`;
+- función resultante OBA/RUT/HAG/NAM/JON en PostgreSQL efímero:
+  `0d65c4d8e8ac81368cea6e5b6fd3fb104156cc3e3e3f299426b20752eef7f062`.
+
+## Evidencia reproducible
+
+- PR: #123;
+- workflow: `Validar importador transaccional de Jonás`;
+- primera ejecución con corrección pendiente: `30789738406`;
+- ejecución aprobada: `30789918273` — `success`;
+- artefacto: `stepbible-jonah-importer-validation`;
+- ID: `8846637524`;
+- digest: `sha256:3bec80fe68146513e52cd0fed9558b85996b1dcea24d7781f4e541eba6d3ca31`;
+- estado: `validated_outside_production`.
+
+## Alcance y siguiente paso
+
+No se creó una migración activa, no se aplicó el borrador y no se importó Jonás en Supabase.
+
+El siguiente incremento seguro es convertir mecánicamente este borrador validado en una migración activa versionada y repetir la prueba completa sobre ese archivo exacto. Solo después de una segunda validación podrá considerarse una aplicación controlada en Supabase.
