@@ -7,11 +7,12 @@ on:
     paths:
       - ".github/workflows/inspect-jonah-affix-policy.yml"
       - "scripts/stepbible/jonah_affix_lemma_policy.json"
+      - "scripts/stepbible/register_jonah_affix_policy_master.py"
       - "docs/FASE_D_POLITICA_AFIJOS_JONAS.md"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inspect:
@@ -19,6 +20,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -41,14 +45,12 @@ jobs:
           python scripts/stepbible/inspect_tahot_affix_policy.py \
             --package artifacts/jonah-affixes/jon.json.gz \
             --output artifacts/jonah-affixes
-      - name: Validar política cuando exista
+      - name: Validar política
         run: |
-          if test -f scripts/stepbible/jonah_affix_lemma_policy.json; then
-            python scripts/stepbible/validate_tahot_affix_policy.py \
-              --inspection artifacts/jonah-affixes/affix-policy-inspection.json \
-              --policy scripts/stepbible/jonah_affix_lemma_policy.json \
-              --output artifacts/jonah-affixes/affix-policy-validation.json
-          fi
+          python scripts/stepbible/validate_tahot_affix_policy.py \
+            --inspection artifacts/jonah-affixes/affix-policy-inspection.json \
+            --policy scripts/stepbible/jonah_affix_lemma_policy.json \
+            --output artifacts/jonah-affixes/affix-policy-validation.json
           git diff --check
       - uses: actions/upload-artifact@v4
         with:
@@ -56,3 +58,21 @@ jobs:
           path: artifacts/jonah-affixes/
           if-no-files-found: error
           retention-days: 14
+      - name: Registrar política en el maestro
+        run: |
+          if [ ! -f scripts/stepbible/register_jonah_affix_policy_master.py ]; then
+            echo "Auxiliar retirado; no hay actualización pendiente"
+            exit 0
+          fi
+          python scripts/stepbible/register_jonah_affix_policy_master.py
+      - name: Versionar documento maestro
+        run: |
+          if git diff --quiet -- __VIDA_INTERNACIONAL.md; then
+            echo "Sin cambios pendientes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs(fase-d): registrar política de Jonás"
+          git push
