@@ -1,4 +1,4 @@
-name: Validar esquema y paquete piloto de Roma
+name: Validar esquema, paquete e importador piloto de Roma
 
 on:
   pull_request:
@@ -6,12 +6,16 @@ on:
       - main
     paths:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
       - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
       - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+      - docs/FASE_D_BLOQUE_5_IMPORTADOR_CANDIDATO_ROMA.md
       - data/fase_d/rome_pilot/rome_pilot_v1.json
       - docs/FASE_D_BLOQUE_5_PAQUETE_PILOTO_ROMA.md
       - scripts/fase_d/bootstrap_supabase_extensions.sql
       - scripts/fase_d/validate_rome_schema_candidate.sql
+      - scripts/fase_d/validate_rome_data_import_candidate.sql
       - scripts/fase_d/validate_rome_pilot_package.py
       - .github/workflows/validar-esquema-candidato-roma.yml
   push:
@@ -19,14 +23,19 @@ on:
       - agent/fase-d-bloque-5-migracion-candidata-roma
       - agent/fase-d-bloque-5-migracion-activa-roma
       - agent/fase-d-bloque-5-paquete-piloto-roma
+      - agent/fase-d-bloque-5-importador-candidato-roma
     paths:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
       - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
       - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+      - docs/FASE_D_BLOQUE_5_IMPORTADOR_CANDIDATO_ROMA.md
       - data/fase_d/rome_pilot/rome_pilot_v1.json
       - docs/FASE_D_BLOQUE_5_PAQUETE_PILOTO_ROMA.md
       - scripts/fase_d/bootstrap_supabase_extensions.sql
       - scripts/fase_d/validate_rome_schema_candidate.sql
+      - scripts/fase_d/validate_rome_data_import_candidate.sql
       - scripts/fase_d/validate_rome_pilot_package.py
       - .github/workflows/validar-esquema-candidato-roma.yml
 
@@ -90,8 +99,13 @@ jobs:
       - name: Validar paquete piloto reproducible
         run: python3 scripts/fase_d/validate_rome_pilot_package.py
 
+      - name: Validar importación idempotente y recuperación
+        working-directory: scripts/fase_d
+        run: psql -f validate_rome_data_import_candidate.sql
+
       - name: Verificar formato y aislamiento
         run: |
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
-          ! grep -R -Eiq '^[[:space:]]*insert[[:space:]]+into[[:space:]]+public\.biblical_(places|timeline_)' data/fase_d/rome_pilot scripts/fase_d/validate_rome_pilot_package.py
+          test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
+          test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
           git diff --check
