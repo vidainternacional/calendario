@@ -1,0 +1,58 @@
+name: Inspeccionar política de afijos de Jonás
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/inspect-jonah-affix-policy.yml"
+      - "scripts/stepbible/jonah_affix_lemma_policy.json"
+      - "docs/FASE_D_POLITICA_AFIJOS_JONAS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/inspect_tahot_affix_policy.py --self-test
+          python scripts/stepbible/validate_tahot_affix_policy.py --self-test
+      - name: Generar paquete fijado de Jonás
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Jon \
+            --output artifacts/jonah-affixes
+          test "$(sha256sum artifacts/jonah-affixes/jon.json.gz | cut -d' ' -f1)" = \
+            "083b869fe7d10493deaeee392babd9811e9dffb91f0db816d2f21a22b2135915"
+      - name: Inspeccionar lemas faltantes
+        run: |
+          python scripts/stepbible/inspect_tahot_affix_policy.py \
+            --package artifacts/jonah-affixes/jon.json.gz \
+            --output artifacts/jonah-affixes
+      - name: Validar política cuando exista
+        run: |
+          if test -f scripts/stepbible/jonah_affix_lemma_policy.json; then
+            python scripts/stepbible/validate_tahot_affix_policy.py \
+              --inspection artifacts/jonah-affixes/affix-policy-inspection.json \
+              --policy scripts/stepbible/jonah_affix_lemma_policy.json \
+              --output artifacts/jonah-affixes/affix-policy-validation.json
+          fi
+          git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jonah-affix-policy-inspection
+          path: artifacts/jonah-affixes/
+          if-no-files-found: error
+          retention-days: 14
