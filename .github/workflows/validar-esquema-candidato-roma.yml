@@ -1,0 +1,64 @@
+name: Validar esquema candidato de Roma
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - scripts/fase_d/validate_rome_schema_candidate.sql
+      - .github/workflows/validar-esquema-candidato-roma.yml
+  push:
+    branches:
+      - agent/fase-d-bloque-5-migracion-candidata-roma
+    paths:
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - scripts/fase_d/validate_rome_schema_candidate.sql
+      - .github/workflows/validar-esquema-candidato-roma.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validar-postgresql-17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_schema_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_schema_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGPASSWORD: postgres
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: vida_schema_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar extensiones PostgreSQL contrib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client postgresql-contrib
+
+      - name: Validar candidata y matriz de seguridad
+        working-directory: scripts/fase_d
+        run: psql -f validate_rome_schema_candidate.sql
+
+      - name: Verificar que la candidata no esté en migraciones activas
+        run: |
+          test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+          git diff --check
