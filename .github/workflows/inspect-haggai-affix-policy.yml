@@ -1,0 +1,64 @@
+name: Inspeccionar política de afijos de Hageo
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/inspect-haggai-affix-policy.yml"
+      - "scripts/stepbible/haggai_affix_lemma_policy.json"
+      - "docs/FASE_D_POLITICA_AFIJOS_HAGEO.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/inspect_tahot_affix_policy.py --self-test
+          python scripts/stepbible/validate_tahot_affix_policy.py --self-test
+
+      - name: Generar paquete fijado de Hageo
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Hag \
+            --output artifacts/haggai-affixes
+          test "$(sha256sum artifacts/haggai-affixes/hag.json.gz | cut -d' ' -f1)" = \
+            "bc8e1caebce9a2e55d34b3be4770f3591e430b3aa217208324dee1bdbdd54e38"
+
+      - name: Inspeccionar lemas faltantes
+        run: |
+          python scripts/stepbible/inspect_tahot_affix_policy.py \
+            --package artifacts/haggai-affixes/hag.json.gz \
+            --output artifacts/haggai-affixes
+
+      - name: Validar política cuando exista
+        run: |
+          if test -f scripts/stepbible/haggai_affix_lemma_policy.json; then
+            python scripts/stepbible/validate_tahot_affix_policy.py \
+              --inspection artifacts/haggai-affixes/affix-policy-inspection.json \
+              --policy scripts/stepbible/haggai_affix_lemma_policy.json \
+              --output artifacts/haggai-affixes/affix-policy-validation.json
+          fi
+          git diff --check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: haggai-affix-policy-inspection
+          path: artifacts/haggai-affixes/
+          if-no-files-found: error
+          retention-days: 14
