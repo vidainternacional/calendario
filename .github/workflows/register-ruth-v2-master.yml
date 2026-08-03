@@ -1,0 +1,40 @@
+name: Registrar paquete TAHOT de Rut v2
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/register_ruth_v2_master.py"
+      - ".github/workflows/register-ruth-v2-master.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-master:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fase-d/registrar-paquete-rut-v2
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Actualizar documento maestro
+        run: |
+          python scripts/stepbible/register_ruth_v2_master.py
+          git diff --check
+
+      - name: Versionar actualización
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs(fase-d): registrar paquete TAHOT v2 de Rut"
+          git push origin HEAD:fase-d/registrar-paquete-rut-v2
