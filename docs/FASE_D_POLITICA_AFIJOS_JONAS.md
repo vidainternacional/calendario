@@ -45,9 +45,9 @@ Este incremento no construye payload, no modifica el importador y no escribe en 
 
 Las trece decisiones reutilizan lemas que ya estaban aprobados y habilitados en `biblical_lexical_entries`. No se introdujo ninguna decisión nueva ni se generalizó un identificador por semejanza visual.
 
-## Cobertura esperada
+## Cobertura validada
 
-La validación automática debe confirmar:
+La validación automática confirmó:
 
 - identificadores requeridos: 13;
 - identificadores proporcionados: 13;
@@ -69,7 +69,13 @@ Inspección inicial:
 - ID: `8846013025`;
 - digest: `sha256:490612130861d8673429915190ba87fb768ad886c14517951b1fc749c907c03c`.
 
-La validación final de cobertura se registrará después de que CI compruebe el archivo de política.
+Validación final de cobertura:
+
+- ejecución: `30788289087` — `success`;
+- artefacto: `jonah-affix-policy-inspection`;
+- ID: `8846060972`;
+- digest: `sha256:204af7ce019c01827f77eb1979f9feddb5b73df37ec94cb8c86caf9b74d18ea4`;
+- resultado: `approved_for_payload_build`.
 
 ## Alcance y siguiente paso
 
@@ -81,4 +87,4 @@ Todavía no se ha:
 - escrito en Supabase;
 - cambiado RLS, interfaz o producción.
 
-Cuando la cobertura exacta sea aprobada, el siguiente incremento seguro será construir fuera de producción un payload determinista de Jonás y auditar conteos, hashes y campos editoriales. No importar Jonás hasta validar ese payload y su importador.
+La política quedó aprobada para la construcción del payload. El siguiente incremento seguro es construir fuera de producción un payload determinista de Jonás y auditar conteos, hashes y campos editoriales. No importar Jonás hasta validar ese payload y su importador.
