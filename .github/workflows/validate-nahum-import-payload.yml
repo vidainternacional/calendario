@@ -67,6 +67,8 @@ jobs:
             artifacts/nahum-payload-a/nam.json.gz \
             --policy scripts/stepbible/nahum_affix_lemma_policy.json \
             --output artifacts/nahum-payload-a/import-payload.json
+          test "$(sha256sum artifacts/nahum-payload-a/import-payload.json | cut -d' ' -f1)" = \
+            "0c041041155152e1fb63cb568efa1530724bea7fa729b4ed8815dcbaaf666000"
       - name: Generar paquete y payload B
         run: |
           python scripts/stepbible/extract_ot_book.py \
