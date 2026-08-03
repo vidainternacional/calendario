@@ -40,6 +40,8 @@ def main() -> int:
 
     active_text = args.active_migration.read_text(encoding="utf-8")
     lowered = active_text.lower()
+    if 'strpos(v_definition,"' in active_text:
+        raise RuntimeError("La migración contiene una cadena SQL con comillas de identificador")
     if args.active_migration.parent.name != "migrations":
         raise RuntimeError("La migración activa debe residir en supabase/migrations")
     if "-- migración activa" not in lowered:

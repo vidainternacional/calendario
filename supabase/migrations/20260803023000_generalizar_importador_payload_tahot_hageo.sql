@@ -168,7 +168,7 @@ begin
   select pg_get_functiondef('internal.import_stepbible_tahot_payload(jsonb,jsonb)'::regprocedure)
     into v_definition;
 
-  if strpos(v_definition,"v_book_code='HAG'")=0
+  if strpos(v_definition,'v_book_code=''HAG''')=0
      or strpos(v_definition,'Variantes inválidas para Hageo')=0
      or strpos(v_definition,'Omisión Qere inválida para Rut 3:12')=0 then
     raise exception 'La ampliación del importador TAHOT para Hageo no quedó instalada';
