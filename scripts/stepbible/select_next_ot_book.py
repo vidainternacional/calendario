@@ -12,7 +12,8 @@ from typing import Any
 import inspect_ot_sources as sources
 from extract_ot_book import parse_row
 
-EXCLUDED_BOOKS = {"Oba", "Rut"}
+EXCLUDED_BOOKS = {"Oba", "Rut", "Hag"}
+SELECTION_ORDINAL = "cuarto"
 
 
 def risk_key(item: dict[str, Any]) -> tuple[int, ...]:
@@ -126,13 +127,14 @@ def inspect_all() -> dict[str, Any]:
     ranked = sorted(results, key=risk_key)
     eligible = [item for item in ranked if item["eligible"]]
     if not eligible:
-        raise RuntimeError("No existe un candidato íntegro para el tercer libro")
+        raise RuntimeError(f"No existe un candidato íntegro para el {SELECTION_ORDINAL} libro")
 
     winner = eligible[0]
     return {
         "schema_version": "vida-tahot-next-book-selection-v1",
         "source_commit": sources.COMMIT,
         "excluded_books": sorted(EXCLUDED_BOOKS),
+        "selection_ordinal": SELECTION_ORDINAL,
         "selection_policy": {
             "integrity_required": [
                 "alignment_mismatches=0",
@@ -167,10 +169,11 @@ def write_report(output: Path, result: dict[str, Any]) -> None:
     selected = result["selected"]
     counts = selected["counts"]
     lines = [
-        "# Selección auditada del tercer libro TAHOT",
+        f"# Selección auditada del {result['selection_ordinal']} libro TAHOT",
         "",
         f"- Commit STEPBible: `{result['source_commit']}`",
         f"- Libros evaluados: {result['candidate_count']}",
+        f"- Libros excluidos por importación aprobada: {', '.join(result['excluded_books'])}",
         f"- Seleccionado: `{selected['step_code']}`",
         f"- Fuente: `{selected['source_key']}`",
         f"- Referencias: {counts['references']}",
@@ -230,6 +233,8 @@ def self_test() -> None:
     }
     if not risk_key(safe_small) < risk_key(risky_smaller):
         raise RuntimeError("La política no prioriza seguridad sobre tamaño")
+    if EXCLUDED_BOOKS != {"Oba", "Rut", "Hag"}:
+        raise RuntimeError("La selección no excluye exactamente los tres libros aprobados")
     print("Auto-test de selección TAHOT: OK")
 
 
