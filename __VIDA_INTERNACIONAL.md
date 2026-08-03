@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-02
+Última actualización: 2026-08-03
 
 Fase activa: **FASE D — IA Bíblica Avanzada**
 
@@ -1419,6 +1419,24 @@ RLS permanece activo; `anon` y `authenticated` no pueden ejecutar el importador;
 
 Evidencia: `docs/FASE_D_JONAS_PRODUCCION.md`.
 
-El siguiente incremento autorizado es validar funcionalmente Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo, comprobar la recuperación segura y registrar evidencia visual puntual. No avanzar a otro libro ni al Bloque 5 hasta completar esa validación.
+### Avance confirmado del Bloque 4 — validación funcional de Jonás aprobada
 
-No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
+La validación manual de Jonás fue aprobada por el usuario el 2026-08-03.
+
+Cobertura confirmada:
+
+- Jonás 1:1, 2:1, 3:1 y 4:11 revisados en **Biblia → Estudio**;
+- las mismas referencias recuperadas correctamente en **Estudio Profundo**;
+- hebreo RTL, transliteración, números Strong, lemas, morfología, fuente STEPBible Data y licencia CC BY 4.0 visibles;
+- ausencia correcta del panel de variantes, porque el corpus importado de Jonás contiene 0 variantes y 0 casos Qere/Ketiv;
+- sin pantallas en blanco, cargas infinitas, errores visibles de hidratación, desbordamientos laterales ni regresiones de interfaz.
+
+Evidencia permanente:
+
+- PR #130 y commit de fusión `f38b8ef3da46f028f581007a72af00ed7db05ee6`;
+- `docs/FASE_D_VALIDACION_VISUAL_JONAS_2026-08-03.md`;
+- `docs/FASE_D_JONAS_PRODUCCION.md`.
+
+La selección, paquete reproducible, política de afijos, payload, importador, migración activa, importación productiva, auditoría técnica, recuperación autenticada y visualización funcional de Jonás están completas.
+
+El siguiente incremento autorizado es realizar una auditoría consolidada de cierre del Bloque 4 y documentar si todos sus objetivos quedaron satisfechos. No avanzar al Bloque 5 hasta registrar explícitamente el cierre del Bloque 4 en este documento maestro.
