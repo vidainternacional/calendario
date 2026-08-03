@@ -20,16 +20,20 @@ jobs:
           ref: agent/fase-d-registrar-candidata-roma
       - name: Actualizar documento maestro
         run: python3 scripts/fase_d/register_rome_candidate_master.py
-      - name: Confirmar diff limitado
-        run: |
-          git diff --check
-          git diff --name-only | grep -qx '__VIDA_INTERNACIONAL.md'
       - name: Confirmar registro único
         run: test "$(grep -c 'PR #137' __VIDA_INTERNACIONAL.md)" -eq 1
-      - name: Commit materializado
+      - name: Commit del maestro cuando corresponda
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add __VIDA_INTERNACIONAL.md
-          git commit -m 'docs(fase-d): registrar candidata validada de Roma'
+          if ! git diff --quiet -- __VIDA_INTERNACIONAL.md; then
+            git diff --check
+            git add __VIDA_INTERNACIONAL.md
+            git commit -m 'docs(fase-d): registrar candidata validada de Roma'
+          fi
+      - name: Retirar auxiliares temporales
+        run: |
+          git rm scripts/fase_d/register_rome_candidate_master.py
+          git rm .github/workflows/materializar-registro-candidata-roma.yml
+          git commit -m 'chore(fase-d): retirar registrador temporal de Roma'
           git push
