@@ -1,33 +1,32 @@
-name: Limpiar estado maestro de Jonás
+name: Validar estado maestro de Jonás
 
 on:
   pull_request:
     branches:
       - main
     paths:
-      - "docs/.cleanup-jonah-master-state"
+      - "__VIDA_INTERNACIONAL.md"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  cleanup:
+  validate:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python scripts/stepbible/cleanup_jonah_master_state.py
-      - name: Versionar documento maestro
+      - name: Rechazar instrucciones superadas de Jonás
         run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
+          obsolete = 'El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico'
+          if obsolete in text:
+              raise SystemExit('El documento maestro conserva una instrucción obsoleta de Jonás')
+          current = 'El siguiente incremento autorizado es validar funcionalmente Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo'
+          if text.count(current) != 1:
+              raise SystemExit('El documento maestro no contiene una única instrucción vigente de Jonás')
+          print('Estado maestro de Jonás: OK')
+          PY
           git diff --check
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add __VIDA_INTERNACIONAL.md
-          git commit -m "docs(fase-d): limpiar instrucción obsoleta de Jonás"
-          git push
