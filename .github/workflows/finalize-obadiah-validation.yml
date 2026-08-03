@@ -1,0 +1,118 @@
+name: Cerrar validación documental de Abdías
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/finalize-obadiah-validation.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Actualizar documento maestro y auditoría
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          master = Path('__VIDA_INTERNACIONAL.md')
+          text = master.read_text(encoding='utf-8')
+          marker = "El Bloque 4 continúa activo. El siguiente recorrido es convertir el borrador validado en migración activa, aplicarla de forma controlada a Supabase y realizar una auditoría posterior independiente de conteos, permisos, hashes y recuperación desde el servidor. No se ampliará a otros libros hasta validar Obadías en la aplicación."
+          replacement = """### Avance confirmado del Bloque 4 — Abdías aplicado y validado en la aplicación
+
+El primer libro completo del Antiguo Testamento quedó importado, recuperable desde el servidor y validado funcionalmente en la aplicación.
+
+Resultado técnico:
+
+- textos de versículo: 21;
+- palabras visibles: 291;
+- ocurrencias morfológicas: 434;
+- identificadores léxicos usados: 184;
+- variantes estructuradas: 3;
+- lotes: 1;
+- hashes inválidos: 0;
+- campos editoriales españoles inventados: 0;
+- segunda ejecución idempotente sin duplicados.
+
+Seguridad y recuperación:
+
+- recuperación únicamente mediante código `server-only` y Server Actions;
+- usuario autenticado y cuenta activa obligatorios;
+- RLS conserva lectura únicamente de contenido aprobado;
+- `anon` y `authenticated` no pueden ejecutar el importador;
+- `service_role` conserva el único permiso de ejecución.
+
+Validación funcional:
+
+- se corrigió la resolución entre el nombre canónico español `Abdías` y las denominaciones `Obadías`/`Obadias` usadas por la interfaz;
+- Abdías 1:1 fue confirmado en producción con texto hebreo RTL, transliteración, 18 palabras base, análisis palabra por palabra, fuente, licencia y contexto;
+- las 21 referencias del libro están disponibles para consulta;
+- Abdías 1:8 conserva la variante ortográfica;
+- Abdías 1:11 conserva Qere como lectura principal y Ketiv como variante separada;
+- el usuario confirmó la visualización funcional el 2026-08-02.
+
+Evidencia:
+
+- PR #67 y commit `8705ffd9044bacec0d15495ca0b82c186cf53455`;
+- PR #68 y commit `d4ce2f1f172bd8f178fcc5b8421bc76826977b4b`;
+- migraciones `importador_payload_tahot_obadias` y `agregar_alias_obadias_a_abdias`;
+- `docs/FASE_D_APLICACION_OBADIAS_SUPABASE.md`.
+
+El Bloque 4 continúa activo. El siguiente incremento autorizado es preparar una ampliación controlada del corpus textual del Antiguo Testamento reutilizando el importador validado, comenzando por un libro pequeño y sin avanzar todavía al Bloque 5."""
+          if replacement not in text:
+              if text.count(marker) != 1:
+                  raise SystemExit('No se encontró un único marcador pendiente de Abdías')
+              text = text.replace(marker, replacement, 1)
+              master.write_text(text, encoding='utf-8')
+
+          doc = Path('docs/FASE_D_APLICACION_OBADIAS_SUPABASE.md')
+          doc_text = doc.read_text(encoding='utf-8')
+          old = "## Siguiente paso\n\nValidar recuperación desde el servidor y visualización de Obadías en **Biblia → Estudio** y **Estudio Profundo**. El Bloque 4 permanece activo y no se debe avanzar al Bloque 5."
+          new = """## Validación funcional completada
+
+La recuperación desde servidor y la visualización fueron confirmadas en producción el 2026-08-02.
+
+- la diferencia entre el nombre canónico `Abdías` y las denominaciones `Obadías`/`Obadias` fue corregida mediante una migración idempotente de alias;
+- Abdías 1:1 muestra texto hebreo RTL, transliteración, 18 palabras base, análisis palabra por palabra, fuente, licencia y contexto;
+- las 21 referencias están disponibles;
+- Abdías 1:8 y 1:11 conservan sus variantes documentadas;
+- no se reimportaron datos ni se debilitó RLS.
+
+## Siguiente paso
+
+Preparar una ampliación controlada del corpus textual del Antiguo Testamento reutilizando el importador validado, comenzando por un libro pequeño. El Bloque 4 permanece activo y no se debe avanzar al Bloque 5."""
+          if new not in doc_text:
+              if old not in doc_text:
+                  raise SystemExit('No se encontró el siguiente paso pendiente en la auditoría')
+              doc.write_text(doc_text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          rm -f \
+            .github/workflows/apply-obadiah-master-milestone.yml \
+            .github/workflows/register-obadiah-applied-master.yml \
+            .github/workflows/finalize-obadiah-validation.yml
+
+          git diff --check
+
+      - name: Versionar cierre
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(fase-d): cerrar piloto textual de Abdías"
+          git push origin HEAD:main
