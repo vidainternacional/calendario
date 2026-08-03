@@ -84,17 +84,32 @@ Rut 3:12 conserva exactamente una variante `addition` con:
 
 El asesor de seguridad no produjo hallazgos asociados al importador TAHOT ni a sus tablas. Los avisos existentes pertenecen a otras áreas históricas del proyecto.
 
-## Estado pendiente
+## Validación funcional completada
 
-La importación y la auditoría técnica están completas. Falta la validación funcional manual en producción de:
+La validación manual fue aprobada por el usuario el 2026-08-02.
 
-- Biblia → Estudio;
-- Estudio Profundo;
-- texto hebreo RTL y transliteración;
-- agrupación palabra por palabra;
-- Strong, lemas y morfología;
-- variantes de muestra;
-- Rut 3:12 sin palabra visible artificial;
-- regresión de Abdías y Juan 3:16.
+Referencias verificadas en Biblia → Estudio:
 
-No ampliar a otro libro ni avanzar al Bloque 5 hasta registrar esa validación funcional.
+- Rut 1:1: texto hebreo RTL, 19 palabras base, transliteración, Strong, lema, morfología, fuente y licencia;
+- Rut 1:8: 18 palabras base, variante ortográfica y sustitución Ketiv sin duplicar el texto principal;
+- Rut 3:12: 11 palabras base y una adición Ketiv `אִם`, sin ancla ni palabra visible artificial;
+- Rut 4:22: 8 palabras base, análisis completo y ausencia correcta de variantes.
+
+También se aprobó:
+
+- recuperación de Rut 1:1, 1:8 y 3:12 en Estudio Profundo;
+- conservación de dirección RTL y análisis palabra por palabra;
+- visualización de fuente, licencia y variantes;
+- regresión de Abdías 1:1;
+- regresión del análisis griego de Juan 3:16 y sus variantes del Nuevo Testamento;
+- ausencia de pantallas en blanco, cargas infinitas o cambios no aprobados de interfaz.
+
+La indicación «Secuencia literal de glosas: No disponible» permanece deliberadamente cuando la capa editorial española no ha sido revisada.
+
+## Estado
+
+La importación, auditoría técnica, recuperación segura y validación funcional de Rut están completas.
+
+El Bloque 4 permanece activo. El siguiente incremento debe seleccionar y auditar fuera de producción un tercer libro pequeño del Antiguo Testamento con criterios explícitos de tamaño, variantes, Qere/Ketiv y compatibilidad con el importador. No generar payload, activar migraciones ni escribir en Supabase hasta que ese paquete haya sido reproducido y auditado.
+
+No avanzar al Bloque 5.
