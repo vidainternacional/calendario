@@ -5,9 +5,10 @@ on:
     branches:
       - main
     paths:
+      - "scripts/stepbible/tahot_components.py"
       - "scripts/stepbible/inspect_tahot_affix_policy.py"
       - ".github/workflows/inspect-ruth-affix-policy.yml"
-      - "docs/FASE_D_POLITICA_AFĲOS_RUT.md"
+      - "docs/FASE_D_POLITICA_AFIJOS_RUT.md"
   workflow_dispatch:
 
 permissions:
@@ -28,6 +29,7 @@ jobs:
         run: |
           python scripts/stepbible/tahot_schema.py --self-test
           python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
           python scripts/stepbible/inspect_tahot_affix_policy.py --self-test
 
       - name: Generar paquete de Rut
