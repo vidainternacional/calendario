@@ -1,0 +1,43 @@
+name: Registrar paquete reproducible de Jonás
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/.register-jonah-package-master"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-master:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Registrar paquete
+        run: |
+          if [ ! -f scripts/stepbible/register_jonah_package_master.py ]; then
+            echo "Auxiliar retirado; no hay actualización pendiente"
+            exit 0
+          fi
+          python scripts/stepbible/register_jonah_package_master.py
+      - name: Versionar documento maestro
+        run: |
+          if git diff --quiet -- __VIDA_INTERNACIONAL.md; then
+            echo "Sin cambios pendientes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs(fase-d): registrar paquete reproducible de Jonás"
+          git push
