@@ -1,5 +1,6 @@
 name: Validar payload de importación de Nahúm
 
+# Protege los payloads aprobados de Rut y Hageo mientras valida Nahúm.
 on:
   pull_request:
     branches:
