@@ -1680,3 +1680,30 @@ Evidencia:
 Las seis filas siguen `pending` y deshabilitadas en producción. No se conectó la interfaz y no se avanzó al Bloque 6.
 
 **Siguiente punto autorizado:** preparar una migración activa revisable para aprobar y habilitar exclusivamente las seis filas fijadas de `rome-pilot-v1`, junto con una recuperación operativa equivalente. No aplicar la migración a Supabase, no conectar la interfaz y no avanzar al Bloque 6 hasta completar CI, preflight de producción y una autorización explícita posterior. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
+
+### Avance confirmado del Bloque 5 — Roma publicada en producción
+
+El paquete `rome-pilot-v1` fue publicado en Supabase de producción el 2026-08-03 después de autorización explícita del usuario.
+
+Resultado auditado:
+
+- 1 lugar, 1 periodo, 2 eventos y 2 relaciones;
+- 6 filas totales;
+- todas con `review_status = approved`;
+- todas con `enabled = true`;
+- hashes individuales verificados;
+- RLS y privilegios intactos;
+- `anon` sin lectura;
+- `authenticated` con lectura y sin escritura.
+
+Evidencia:
+
+- PR #162 y commit de fusión `802f2d000203dfc29f9f5f4b12ec38eafbd6bafc`;
+- `docs/FASE_D_BLOQUE_5_PUBLICACION_ROMA_PRODUCCION.md`;
+- `supabase/migrations/20260803170000_publish_rome_pilot_v1.sql`;
+- `supabase/recovery/20260803170000_unpublish_rome_pilot_v1.sql`.
+
+La interfaz aún no está conectada y no se avanzó al Bloque 6.
+
+**Siguiente punto autorizado:** integrar el servicio de cronologías y mapas en una superficie visual limitada al piloto de Roma, manteniendo la atribución, precisión, certeza y controles de sesión/RLS. Realizar primero una implementación aislada y validarla en CI y preview. No ampliar todavía el catálogo de lugares ni avanzar al Bloque 6. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
+
