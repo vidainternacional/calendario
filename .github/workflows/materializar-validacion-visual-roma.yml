@@ -3,7 +3,7 @@ name: Materializar validación visual de Roma
 on:
   push:
     branches:
-      - agent/fase-d-maestro-validacion-visual-roma
+      - main
 
 permissions:
   contents: write
