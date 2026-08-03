@@ -1,4 +1,4 @@
-name: Renderizar estado productivo de Jonás
+name: Materializar estado productivo de Jonás
 
 on:
   pull_request:
@@ -11,25 +11,33 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  render:
+  materialize:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Renderizar documento maestro
+      - name: Actualizar documento maestro
         run: python scripts/stepbible/register_jonah_production_audit.py
       - name: Verificar resultado
         run: |
           grep -q "Jonás importado y auditado en producción" __VIDA_INTERNACIONAL.md
           git diff --check
-      - uses: actions/upload-artifact@v4
-        with:
-          name: vida-master-jonah-production
-          path: __VIDA_INTERNACIONAL.md
-          if-no-files-found: error
-          retention-days: 7
+      - name: Versionar maestro
+        run: |
+          if git diff --quiet -- __VIDA_INTERNACIONAL.md; then
+            echo "Documento maestro ya actualizado"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs(fase-d): registrar Jonás auditado en producción"
+          git push
