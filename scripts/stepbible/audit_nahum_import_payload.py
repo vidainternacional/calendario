@@ -15,9 +15,95 @@ EXPECTED_COUNTS = {
     "occurrences": 828,
     "lexical_ids": 387,
     "source_variant_rows": 4,
+    "variants": 8,
     "qere_omissions": 0,
 }
+EXPECTED_ROLES = {"prefix": 175, "suffix": 95, "word": 558}
+EXPECTED_VARIANT_TYPES = {"orthographic": 4, "substitution": 4}
 PACKAGE_SHA256 = "60e280a6d94abc8788b7cc9647e4dfa0f679e0a9708a1adf00be30abfc23b7f5"
+PAYLOAD_SHA256 = "43a5ab1b8c9cf773e218c73eab3def49715ac7c0511a04ee9cae3990be4a8a99"
+EXPECTED_VARIANTS = {
+    "nam-1-3-04=Q(K)-orthographic": {
+        "chapter": 1,
+        "verse": 3,
+        "anchor_word_index": 4,
+        "reading_type": "orthographic",
+        "base_reading": "וּגְדָל",
+        "variant_reading": "וּגְדָול־",
+        "witnesses": ["L"],
+        "content_hash": "9efe642d1d9a24992c94a52e80dc35d259c3faf9453875f976c25b3c20055d64",
+    },
+    "nam-1-3-04=Q(K)-substitution": {
+        "chapter": 1,
+        "verse": 3,
+        "anchor_word_index": 4,
+        "reading_type": "substitution",
+        "base_reading": "וּגְדָל",
+        "variant_reading": "וּגְדוֹל",
+        "witnesses": ["K"],
+        "content_hash": "768331bda59484864f4825dddfe73fcd814831ca06887015954888c266218cf8",
+    },
+    "nam-1-15-17=Q(k)-orthographic": {
+        "chapter": 1,
+        "verse": 15,
+        "anchor_word_index": 17,
+        "reading_type": "orthographic",
+        "base_reading": "לַֽעֲבָר",
+        "variant_reading": "לַֽעֲבָור־",
+        "witnesses": ["L"],
+        "content_hash": "dcec339d7811971e87221aaf0d5f572576deeaad3a398d1b885fbf4373efb762",
+    },
+    "nam-1-15-17=Q(k)-substitution": {
+        "chapter": 1,
+        "verse": 15,
+        "anchor_word_index": 17,
+        "reading_type": "substitution",
+        "base_reading": "לַֽעֲבָר",
+        "variant_reading": "לַעֲבוֹר",
+        "witnesses": ["K"],
+        "content_hash": "613a3dd58eb3ef5366b9c0e37b349381f4b78bc5941096612f407c76bb8b2540",
+    },
+    "nam-2-5-04=Q(K)-orthographic": {
+        "chapter": 2,
+        "verse": 5,
+        "anchor_word_index": 4,
+        "reading_type": "orthographic",
+        "base_reading": "בַּהֲלִֽיכָתָ֑ם",
+        "variant_reading": "בַּהֲלִֽכָותָ֑ם",
+        "witnesses": ["L"],
+        "content_hash": "eb49717fc623dfafd078f9d67574542ae9a41af22529d2b3e769fb55e634367d",
+    },
+    "nam-2-5-04=Q(K)-substitution": {
+        "chapter": 2,
+        "verse": 5,
+        "anchor_word_index": 4,
+        "reading_type": "substitution",
+        "base_reading": "בַּהֲלִֽיכָתָ֑ם",
+        "variant_reading": "בַהֲלִכוֹתָם",
+        "witnesses": ["K"],
+        "content_hash": "c60f300822ead99fb756d1427105eb9c00813db850d24187a9ad0f9137e99c46",
+    },
+    "nam-3-3-14=Q(K)-orthographic": {
+        "chapter": 3,
+        "verse": 3,
+        "anchor_word_index": 14,
+        "reading_type": "orthographic",
+        "base_reading": "וְכָשְׁל֖וּ",
+        "variant_reading": "יְכָשְׁל֖וּ",
+        "witnesses": ["L"],
+        "content_hash": "1b9369fc3a5e1d3b392f8dc14a0fb18fed6961aaf64efa8bb2d7c2c3e523d914",
+    },
+    "nam-3-3-14=Q(K)-substitution": {
+        "chapter": 3,
+        "verse": 3,
+        "anchor_word_index": 14,
+        "reading_type": "substitution",
+        "base_reading": "וְכָשְׁל֖וּ",
+        "variant_reading": "יִכְשְׁלוּ",
+        "witnesses": ["K"],
+        "content_hash": "b6b4657e955cd7c0097746d5dd2b0bd207772aa3fc7d5df37dcac4c5b0ac597c",
+    },
+}
 
 
 def canonical_json(value: Any) -> str:
@@ -63,7 +149,7 @@ def audit(payload: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError("El arreglo de ocurrencias no coincide con su conteo")
     if len(verse_texts) != counts["references"]:
         raise RuntimeError("El arreglo de textos no coincide con su conteo")
-    if len(variants) != counts.get("variants"):
+    if len(variants) != counts["variants"]:
         raise RuntimeError("El arreglo de variantes no coincide con su conteo")
 
     occurrence_keys = [
@@ -84,7 +170,7 @@ def audit(payload: dict[str, Any]) -> dict[str, Any]:
 
     payload_without_hash = dict(payload)
     expected_payload_sha = payload_without_hash.pop("payload_sha256", None)
-    if not valid_sha(expected_payload_sha) or sha(payload_without_hash) != expected_payload_sha:
+    if expected_payload_sha != PAYLOAD_SHA256 or sha(payload_without_hash) != PAYLOAD_SHA256:
         raise RuntimeError("La huella canónica interna del payload no coincide")
 
     if payload.get("spanish_editorial_fields_complete") is not False:
@@ -111,16 +197,30 @@ def audit(payload: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError(f"Campos editoriales no autorizados: {forbidden_values[:10]}")
 
     role_counts = dict(sorted(Counter(item["token_kind"] for item in occurrences).items()))
-    if sum(role_counts.values()) != counts["occurrences"]:
-        raise RuntimeError("La distribución de roles no suma las ocurrencias")
-    if role_counts != counts.get("roles"):
-        raise RuntimeError("La distribución de roles no coincide con metadata")
+    if role_counts != EXPECTED_ROLES or role_counts != counts.get("roles"):
+        raise RuntimeError(f"Distribución de roles inesperada: {role_counts}")
 
     type_counts = dict(sorted(Counter(item["reading_type"] for item in variants).items()))
-    if set(type_counts) - {"orthographic", "substitution"}:
-        raise RuntimeError(f"Tipos de variante inesperados: {type_counts}")
+    if type_counts != EXPECTED_VARIANT_TYPES:
+        raise RuntimeError(f"Distribución de variantes inesperada: {type_counts}")
     if any(item.get("anchor_word_index") is None for item in variants):
         raise RuntimeError("Nahúm contiene una variante sin ancla visible")
+
+    actual_variants = {
+        item["variant_key"]: {
+            "chapter": item["chapter"],
+            "verse": item["verse"],
+            "anchor_word_index": item["anchor_word_index"],
+            "reading_type": item["reading_type"],
+            "base_reading": item["base_reading"],
+            "variant_reading": item["variant_reading"],
+            "witnesses": item["witnesses"],
+            "content_hash": item["content_hash"],
+        }
+        for item in variants
+    }
+    if actual_variants != EXPECTED_VARIANTS:
+        raise RuntimeError("Las ocho variantes fijadas de Nahúm no coinciden")
 
     return {
         "schema_version": "vida-stepbible-nahum-import-payload-audit-v1",
@@ -128,8 +228,7 @@ def audit(payload: dict[str, Any]) -> dict[str, Any]:
         "package_sha256": payload["package_sha256"],
         "payload_sha256": payload["payload_sha256"],
         "summary": {
-            **{key: counts[key] for key in EXPECTED_COUNTS},
-            "variants": counts["variants"],
+            **EXPECTED_COUNTS,
             "roles": role_counts,
             "variant_types": type_counts,
             "duplicate_occurrences": 0,
@@ -138,20 +237,7 @@ def audit(payload: dict[str, Any]) -> dict[str, Any]:
             "unauthorized_spanish_editorial_fields": 0,
             "artificial_visible_words": 0,
         },
-        "variants": [
-            {
-                "variant_key": item["variant_key"],
-                "chapter": item["chapter"],
-                "verse": item["verse"],
-                "anchor_word_index": item["anchor_word_index"],
-                "reading_type": item["reading_type"],
-                "base_reading": item["base_reading"],
-                "variant_reading": item["variant_reading"],
-                "witnesses": item["witnesses"],
-                "content_hash": item["content_hash"],
-            }
-            for item in variants
-        ],
+        "variants": actual_variants,
     }
 
 
@@ -160,6 +246,10 @@ def self_test() -> None:
         raise RuntimeError("La serialización canónica no es estable")
     if not valid_sha("a" * 64) or valid_sha("z" * 64):
         raise RuntimeError("La validación de SHA-256 no funciona")
+    if sum(EXPECTED_ROLES.values()) != EXPECTED_COUNTS["occurrences"]:
+        raise RuntimeError("Los roles fijados no suman las ocurrencias")
+    if sum(EXPECTED_VARIANT_TYPES.values()) != EXPECTED_COUNTS["variants"]:
+        raise RuntimeError("Los tipos fijados no suman las variantes")
     print("Auto-test de auditoría de payload de Nahúm: OK")
 
 
