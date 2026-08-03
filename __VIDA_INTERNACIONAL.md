@@ -1664,3 +1664,19 @@ Vercel volvió a aceptar compilaciones y existen deployments de producción en e
 
 **Siguiente punto autorizado:** diseñar y validar fuera de producción la recuperación exclusivamente desde servidor y el contrato de lectura para cronologías y mapas, limitado inicialmente al piloto de Roma. No aprobar ni habilitar las seis filas, no exponerlas en la interfaz y no avanzar al Bloque 6 hasta que el servicio de recuperación, sus pruebas y la revisión editorial del piloto estén documentados y aprobados. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
 
+### Avance confirmado del Bloque 5 — publicación controlada de Roma validada
+
+La revisión editorial del paquete `rome-pilot-v1` fue aprobada por el usuario sin cambios el 2026-08-03. El candidato para aprobar y habilitar exactamente las seis filas fijadas fue validado en PostgreSQL 17 y permanece fuera de migraciones activas.
+
+Evidencia:
+
+- PR #158 y commit de fusión `3c0971d304e273311f6d9963233aa1fe8450e7a6`;
+- PR #159 y commit de fusión `ef8d4fce80f7973bb10da90f094aab710d29dc3c`;
+- PR #160 y commit de fusión `0aea9d6b56fb7c6df3d654ee7399df352dcaf1c1`;
+- `docs/FASE_D_BLOQUE_5_REVISION_EDITORIAL_ROMA.md`;
+- `docs/FASE_D_BLOQUE_5_APROBACION_EDITORIAL_ROMA.md`;
+- candidatos de publicación y recuperación aislados fuera de `supabase/migrations`.
+
+Las seis filas siguen `pending` y deshabilitadas en producción. No se conectó la interfaz y no se avanzó al Bloque 6.
+
+**Siguiente punto autorizado:** preparar una migración activa revisable para aprobar y habilitar exclusivamente las seis filas fijadas de `rome-pilot-v1`, junto con una recuperación operativa equivalente. No aplicar la migración a Supabase, no conectar la interfaz y no avanzar al Bloque 6 hasta completar CI, preflight de producción y una autorización explícita posterior. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
