@@ -23,7 +23,9 @@ EXPECTED_COUNTS = {
     "variants": 0,
     "qere_omissions": 0,
 }
+EXPECTED_ROLES = {"prefix": 310, "suffix": 82, "word": 688}
 EXPECTED_PACKAGE_SHA = "083b869fe7d10493deaeee392babd9811e9dffb91f0db816d2f21a22b2135915"
+EXPECTED_TEXTUAL_STATUS = "leningrad"
 
 
 def canonical_json(value: Any) -> str:
@@ -58,6 +60,8 @@ def audit(payload: dict[str, Any], file_sha256: str) -> dict[str, Any]:
     }
     if mismatches:
         raise RuntimeError(f"Conteos del payload inesperados: {mismatches}")
+    if counts.get("roles") != EXPECTED_ROLES:
+        raise RuntimeError(f"Roles inesperados: {counts.get('roles')}")
 
     arrays = {
         "references": payload.get("verse_texts", []),
@@ -124,8 +128,11 @@ def audit(payload: dict[str, Any], file_sha256: str) -> dict[str, Any]:
         for row in payload["occurrences"]
     ):
         raise RuntimeError("Índices de ocurrencia inválidos")
-    if any(row.get("textual_status") != "base" for row in payload["occurrences"]):
-        raise RuntimeError("El payload de Jonás contiene ocurrencias no base")
+    if any(
+        row.get("textual_status") != EXPECTED_TEXTUAL_STATUS
+        for row in payload["occurrences"]
+    ):
+        raise RuntimeError("El payload de Jonás contiene un estado textual inesperado")
 
     visible_by_verse: dict[tuple[int, int], set[int]] = defaultdict(set)
     for row in payload["occurrences"]:
@@ -170,7 +177,7 @@ def audit(payload: dict[str, Any], file_sha256: str) -> dict[str, Any]:
         )
 
     roles = Counter(row["token_kind"] for row in payload["occurrences"])
-    if dict(sorted(roles.items())) != counts.get("roles"):
+    if dict(sorted(roles.items())) != EXPECTED_ROLES:
         raise RuntimeError("El resumen de roles no coincide con las ocurrencias")
 
     return {
@@ -179,6 +186,7 @@ def audit(payload: dict[str, Any], file_sha256: str) -> dict[str, Any]:
         "file_sha256": file_sha256,
         "payload_sha256": payload["payload_sha256"],
         "package_sha256": payload["package_sha256"],
+        "textual_status": EXPECTED_TEXTUAL_STATUS,
         "counts": counts,
         "invalid_hashes": invalid_hashes,
         "duplicate_occurrences": 0,
@@ -194,6 +202,8 @@ def self_test() -> None:
     digest = canonical_payload_hash(sample)
     if not HASH_RE.fullmatch(digest):
         raise RuntimeError("La huella canónica sintética es inválida")
+    if EXPECTED_TEXTUAL_STATUS != "leningrad":
+        raise RuntimeError("El estado textual fijado de Jonás cambió")
     print("Auto-test de auditoría de payload de Jonás: OK")
 
 
