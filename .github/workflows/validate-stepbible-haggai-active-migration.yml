@@ -1,14 +1,13 @@
-name: Validar importador transaccional de Hageo
+name: Validar migración activa TAHOT de Hageo
 
 on:
   pull_request:
     branches:
       - main
     paths:
-      - "scripts/stepbible/test_haggai_importer_draft.py"
-      - "supabase/migration-drafts/20260803020000_importador_payload_tahot_hageo.sql"
-      - ".github/workflows/validate-haggai-importer-draft.yml"
-      - "docs/FASE_D_IMPORTADOR_TAHOT_HAGEO.md"
+      - "scripts/stepbible/test_haggai_active_migration.py"
+      - "supabase/migrations/20260803023000_generalizar_importador_payload_tahot_hageo.sql"
+      - ".github/workflows/validate-stepbible-haggai-active-migration.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,11 +23,11 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: vida_haggai_importer_test
+          POSTGRES_DB: vida_haggai_active_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d vida_haggai_importer_test"
+          --health-cmd "pg_isready -U postgres -d vida_haggai_active_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -55,37 +54,37 @@ jobs:
         run: |
           python scripts/stepbible/extract_ot_book.py \
             --book Hag \
-            --output artifacts/haggai-importer
-          test "$(sha256sum artifacts/haggai-importer/hag.json.gz | cut -d' ' -f1)" = \
+            --output artifacts/haggai-active
+          test "$(sha256sum artifacts/haggai-active/hag.json.gz | cut -d' ' -f1)" = \
             "bc8e1caebce9a2e55d34b3be4770f3591e430b3aa217208324dee1bdbdd54e38"
           python scripts/stepbible/build_tahot_import_payload.py \
-            artifacts/haggai-importer/hag.json.gz \
+            artifacts/haggai-active/hag.json.gz \
             --policy scripts/stepbible/haggai_affix_lemma_policy.json \
-            --output artifacts/haggai-importer/import-payload.json
-          test "$(sha256sum artifacts/haggai-importer/import-payload.json | cut -d' ' -f1)" = \
+            --output artifacts/haggai-active/import-payload.json
+          test "$(sha256sum artifacts/haggai-active/import-payload.json | cut -d' ' -f1)" = \
             "c24d50fbbe01ecb47ec5a818c8a0f8cbdebae1451f2c9cd2b446234f02516ec6"
 
-      - name: Validar rechazo, rollback e idempotencia
+      - name: Validar migración activa
         env:
-          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_haggai_importer_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_haggai_active_test
         run: |
-          python scripts/stepbible/test_haggai_importer_draft.py \
+          python scripts/stepbible/test_haggai_active_migration.py \
             --dsn "$TEST_DATABASE_URL" \
             --fixture tests/sql/obadiah_textual_schema_fixture.sql \
             --base-migration supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql \
             --ruth-migration supabase/migrations/20260803011000_generalizar_importador_payload_tahot_rut.sql \
-            --draft supabase/migration-drafts/20260803020000_importador_payload_tahot_hageo.sql \
-            --package artifacts/haggai-importer/hag.json.gz \
-            --payload artifacts/haggai-importer/import-payload.json \
-            | tee artifacts/haggai-importer/importer-validation.json
+            --active-migration supabase/migrations/20260803023000_generalizar_importador_payload_tahot_hageo.sql \
+            --package artifacts/haggai-active/hag.json.gz \
+            --payload artifacts/haggai-active/import-payload.json \
+            | tee artifacts/haggai-active/active-migration-validation.json
           git diff --check
 
       - uses: actions/upload-artifact@v4
         with:
-          name: stepbible-haggai-importer-validation
+          name: stepbible-haggai-active-migration-validation
           path: |
-            supabase/migration-drafts/20260803020000_importador_payload_tahot_hageo.sql
-            artifacts/haggai-importer/manifest.json
-            artifacts/haggai-importer/importer-validation.json
+            supabase/migrations/20260803023000_generalizar_importador_payload_tahot_hageo.sql
+            artifacts/haggai-active/manifest.json
+            artifacts/haggai-active/active-migration-validation.json
           if-no-files-found: error
           retention-days: 14

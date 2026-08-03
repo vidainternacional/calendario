@@ -1,6 +1,6 @@
 -- FASE D · Bloque 4
--- BORRADOR NO ACTIVO. Amplía el importador validado para aceptar exactamente Hageo.
--- No aplicar a Supabase hasta completar la validación externa y registrar el resultado.
+-- MIGRACIÓN ACTIVA. Amplía el importador validado para aceptar exactamente Hageo.
+-- Deriva la definición desde la función OBA/RUT validada y aborta si su huella cambió.
 
 do $migration$
 declare
