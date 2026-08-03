@@ -16,6 +16,13 @@ from tahot_components import row_components
 HEBREW_RE = re.compile(r"[\u0590-\u05ff]")
 WITNESS_RE = re.compile(r"(?:^|;)\s*([A-Za-z0-9]+)\s*=")
 
+# Rut ya fue importado y aprobado con el tratamiento histórico que conserva
+# K junto a los demás testigos ortográficos. La excepción se fija por la
+# huella exacta del paquete; cualquier paquete nuevo usa la separación correcta.
+LEGACY_COMBINED_QERE_SPELLING_PACKAGE_SHAS = {
+    "80a79abd038de9159a90e7aa572f1d4ff6a0c7f1ca8bfb4195875ffd5a7ca20c",
+}
+
 
 def canonical_json(value: Any) -> str:
     return json.dumps(
@@ -55,6 +62,22 @@ def witness_fragments(value: str) -> list[tuple[str, str]]:
         if separator and witness.strip():
             fragments.append((witness.strip(), body.strip()))
     return fragments
+
+
+def witness_summary_for(
+    value: str,
+    *,
+    include: set[str] | None = None,
+    exclude: set[str] | None = None,
+) -> str:
+    selected: list[str] = []
+    for witness, body in witness_fragments(value):
+        if include is not None and witness not in include:
+            continue
+        if exclude is not None and witness in exclude:
+            continue
+        selected.append(f"{witness}={body}")
+    return ";".join(selected)
 
 
 def witnesses(value: str) -> list[str]:
@@ -227,23 +250,50 @@ def build(
                 )
                 occurrences.append(occurrence)
 
-            if row["variants"]["spelling"]:
-                evidence = row["variants"]["spelling"]
-                variants.append(
-                    build_variant(
-                        package_sha=package_sha,
-                        book_code=book_code,
-                        row=row,
-                        reading_type="orthographic",
-                        base_reading=row["surface_form"],
-                        variant_reading=spelling_reading(evidence),
-                        witness_summary=evidence,
-                        anchor_word_index=row["display_word_index"],
-                    )
+            spelling_evidence = row["variants"]["spelling"]
+            meaning_evidence = row["variants"]["meaning"]
+            spelling_has_k = bool(
+                spelling_evidence
+                and any(
+                    witness == "K"
+                    for witness, _body in witness_fragments(spelling_evidence)
                 )
+            )
+            meaning_has_k = bool(
+                meaning_evidence
+                and any(
+                    witness == "K"
+                    for witness, _body in witness_fragments(meaning_evidence)
+                )
+            )
+            split_spelling_ketiv = (
+                row["textual_status"] == "qere"
+                and spelling_has_k
+                and package_sha
+                not in LEGACY_COMBINED_QERE_SPELLING_PACKAGE_SHAS
+            )
 
-            if row["variants"]["meaning"]:
-                evidence = row["variants"]["meaning"]
+            if spelling_evidence:
+                orthographic_evidence = (
+                    witness_summary_for(spelling_evidence, exclude={"K"})
+                    if split_spelling_ketiv
+                    else spelling_evidence
+                )
+                if orthographic_evidence:
+                    variants.append(
+                        build_variant(
+                            package_sha=package_sha,
+                            book_code=book_code,
+                            row=row,
+                            reading_type="orthographic",
+                            base_reading=row["surface_form"],
+                            variant_reading=spelling_reading(orthographic_evidence),
+                            witness_summary=orthographic_evidence,
+                            anchor_word_index=row["display_word_index"],
+                        )
+                    )
+
+            if meaning_evidence:
                 variants.append(
                     build_variant(
                         package_sha=package_sha,
@@ -251,8 +301,29 @@ def build(
                         row=row,
                         reading_type="substitution",
                         base_reading=row["surface_form"],
-                        variant_reading=meaning_reading(evidence),
-                        witness_summary=evidence,
+                        variant_reading=meaning_reading(meaning_evidence),
+                        witness_summary=meaning_evidence,
+                        anchor_word_index=row["display_word_index"],
+                    )
+                )
+
+            if split_spelling_ketiv and not meaning_has_k:
+                if meaning_evidence:
+                    raise ValueError(
+                        "Fila Qere con variante de significado no-K y Ketiv "
+                        "ortográfico no representable sin ampliar variant_key: "
+                        f"{row['reference']['english']}#{row['source_index']['raw']}"
+                    )
+                ketiv_evidence = witness_summary_for(spelling_evidence, include={"K"})
+                variants.append(
+                    build_variant(
+                        package_sha=package_sha,
+                        book_code=book_code,
+                        row=row,
+                        reading_type="substitution",
+                        base_reading=row["surface_form"],
+                        variant_reading=spelling_reading(ketiv_evidence, "K"),
+                        witness_summary=ketiv_evidence,
                         anchor_word_index=row["display_word_index"],
                     )
                 )
@@ -378,6 +449,17 @@ def build(
 def self_test() -> None:
     if spelling_reading("L= שְׁעָרָ֗/ו ¦ ;") != "שְׁעָרָ֗ו":
         raise RuntimeError("No se extrajo la lectura ortográfica")
+    if (
+        "80a79abd038de9159a90e7aa572f1d4ff6a0c7f1ca8bfb4195875ffd5a7ca20c"
+        not in LEGACY_COMBINED_QERE_SPELLING_PACKAGE_SHAS
+    ):
+        raise RuntimeError("No se preservó la compatibilidad del paquete de Rut")
+    mixed_spelling = "L= לַֽעֲבָור;K= לַעֲבוֹר"
+    if witness_summary_for(mixed_spelling, exclude={"K"}) != "L=לַֽעֲבָור":
+        raise RuntimeError("No se aisló la evidencia ortográfica no-K")
+    ketiv_only = witness_summary_for(mixed_spelling, include={"K"})
+    if ketiv_only != "K=לַעֲבוֹר" or spelling_reading(ketiv_only, "K") != "לַעֲבוֹר":
+        raise RuntimeError("No se aisló el Ketiv dentro de la evidencia ortográfica")
     if meaning_reading(
         'K= sha.ar/v (שַׁעֲר/וֹ) "gate/ his"'
     ) != "שַׁעֲרוֹ":

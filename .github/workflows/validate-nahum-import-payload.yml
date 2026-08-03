@@ -1,10 +1,13 @@
 name: Validar payload de importación de Nahúm
 
+# Protege los payloads aprobados de Rut y Hageo mientras valida Nahúm.
+# El commit final no conserva marcadores ni parches temporales.
 on:
   pull_request:
     branches:
       - main
     paths:
+      - "scripts/stepbible/build_tahot_import_payload.py"
       - "scripts/stepbible/audit_nahum_import_payload.py"
       - ".github/workflows/validate-nahum-import-payload.yml"
       - "docs/FASE_D_PAYLOAD_TAHOT_NAHUM.md"
@@ -16,7 +19,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,6 +32,31 @@ jobs:
           python scripts/stepbible/tahot_components.py
           python scripts/stepbible/build_tahot_import_payload.py --self-test
           python scripts/stepbible/audit_nahum_import_payload.py --self-test
+      - name: Verificar regresiones de Rut y Hageo
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/regression-ruth
+          test "$(sha256sum artifacts/regression-ruth/rut.json.gz | cut -d' ' -f1)" = \
+            "80a79abd038de9159a90e7aa572f1d4ff6a0c7f1ca8bfb4195875ffd5a7ca20c"
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/regression-ruth/rut.json.gz \
+            --policy scripts/stepbible/ruth_affix_lemma_policy.json \
+            --output artifacts/regression-ruth/import-payload.json
+          test "$(sha256sum artifacts/regression-ruth/import-payload.json | cut -d' ' -f1)" = \
+            "454d57e805cd55eaf59d1d7635eb2fe913858ff03f293b18d0db315222178913"
+
+          python scripts/stepbible/extract_ot_book.py \
+            --book Hag \
+            --output artifacts/regression-haggai
+          test "$(sha256sum artifacts/regression-haggai/hag.json.gz | cut -d' ' -f1)" = \
+            "bc8e1caebce9a2e55d34b3be4770f3591e430b3aa217208324dee1bdbdd54e38"
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/regression-haggai/hag.json.gz \
+            --policy scripts/stepbible/haggai_affix_lemma_policy.json \
+            --output artifacts/regression-haggai/import-payload.json
+          test "$(sha256sum artifacts/regression-haggai/import-payload.json | cut -d' ' -f1)" = \
+            "c24d50fbbe01ecb47ec5a818c8a0f8cbdebae1451f2c9cd2b446234f02516ec6"
       - name: Generar paquete y payload A
         run: |
           python scripts/stepbible/extract_ot_book.py \
@@ -40,6 +68,8 @@ jobs:
             artifacts/nahum-payload-a/nam.json.gz \
             --policy scripts/stepbible/nahum_affix_lemma_policy.json \
             --output artifacts/nahum-payload-a/import-payload.json
+          test "$(sha256sum artifacts/nahum-payload-a/import-payload.json | cut -d' ' -f1)" = \
+            "0c041041155152e1fb63cb568efa1530724bea7fa729b4ed8815dcbaaf666000"
       - name: Generar paquete y payload B
         run: |
           python scripts/stepbible/extract_ot_book.py \
