@@ -1162,6 +1162,32 @@ Evidencia permanente:
 
 La importación, auditoría técnica, recuperación segura y validación funcional de datos están completas.
 
-El Bloque 4 continúa activo. El único siguiente punto autorizado es la validación visual manual de Nahúm en Biblia → Estudio y Estudio Profundo, incluyendo Nahúm 1:1, 1:3, 1:15, 2:5 y 3:3, las ocho variantes y la regresión de Hageo 1:8, Rut 3:12, Abdías 1:1 y Juan 3:16. No ampliar a otro libro hasta registrar esa aprobación.
+### Avance confirmado del Bloque 4 — validación funcional de Nahúm aprobada
+
+La validación manual de Nahúm fue aprobada por el usuario el 2026-08-02.
+
+Cobertura confirmada:
+
+- Nahúm 1:1: 6 palabras base y ausencia correcta de variantes;
+- Nahúm 1:3: 15 palabras base y dos variantes en la posición 4;
+- Nahúm 1:15: 21 palabras base y dos variantes en la posición 17;
+- Nahúm 2:5: 8 palabras base y dos variantes en la posición 4;
+- Nahúm 3:3: 15 palabras base y dos variantes en la posición 14;
+- cuatro variantes ortográficas y cuatro sustituciones Qere/Ketiv visibles sin duplicación artificial;
+- hebreo RTL, transliteración, Strong, lemas, morfología, fuente, atribución y licencia visibles;
+- Nahúm 1:3 y 1:15 recuperados correctamente en Estudio Profundo;
+- regresión aprobada para Hageo 1:8, Rut 3:12, Abdías 1:1 y Juan 3:16;
+- sin pantallas en blanco, cargas infinitas, desbordamiento lateral ni cambios no aprobados de interfaz.
+
+La indicación «Secuencia literal de glosas: No disponible» permanece deliberadamente mientras esa capa editorial española no haya sido revisada.
+
+Evidencia permanente:
+
+- `docs/FASE_D_APLICACION_NAHUM_SUPABASE.md`;
+- validación funcional aprobada por el usuario el 2026-08-02.
+
+La importación, auditoría técnica, recuperación segura y visualización funcional de Nahúm están completas.
+
+El Bloque 4 continúa activo. El siguiente incremento autorizado es ejecutar una auditoría reproducible de solo lectura sobre los libros restantes de TAHOT y seleccionar el quinto libro según la política ya aprobada de integridad estructural y menor riesgo editorial. No generar paquete, payload o migración ni escribir en Supabase hasta registrar esa selección.
 
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.

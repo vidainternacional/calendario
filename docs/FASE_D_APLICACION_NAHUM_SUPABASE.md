@@ -206,19 +206,34 @@ Nahúm también dispone de un perfil de libro y dos unidades contextuales aproba
 
 La indicación «Secuencia literal de glosas: No disponible» es deliberada mientras esa capa editorial española no haya sido revisada.
 
-## Estado pendiente
+## Validación funcional aprobada
 
-Falta validar manualmente en producción:
+El usuario aprobó la validación visual completa el 2026-08-02.
 
-- Biblia → Estudio: Nahúm 1:1, 1:3, 1:15, 2:5 y 3:3;
-- Estudio Profundo: al menos Nahúm 1:1, 1:3 y 1:15;
-- texto hebreo RTL y transliteración;
-- agrupación palabra por palabra;
-- Strong, lemas y morfología;
-- las ocho variantes en sus cuatro referencias;
-- ausencia correcta de variantes en Nahúm 1:1;
-- fuente, atribución y licencia;
-- regresión de Hageo 1:8, Rut 3:12, Abdías 1:1 y Juan 3:16;
-- ausencia de pantallas en blanco, cargas infinitas, desbordamiento lateral o cambios no aprobados de interfaz.
+Cobertura confirmada en **Biblia → Estudio**:
 
-No ampliar a otro libro ni avanzar al Bloque 5 hasta registrar esa validación funcional.
+- Nahúm 1:1: 6 palabras base, texto hebreo RTL, transliteración, Strong, lemas y morfología; ausencia correcta de variantes;
+- Nahúm 1:3: 15 palabras base y dos variantes en la posición 4;
+- Nahúm 1:15: 21 palabras base y dos variantes en la posición 17;
+- Nahúm 2:5: 8 palabras base y dos variantes en la posición 4;
+- Nahúm 3:3: 15 palabras base y dos variantes en la posición 14;
+- cuatro variantes ortográficas y cuatro sustituciones Qere/Ketiv visibles sin duplicar palabras del texto principal;
+- fuente STEPBible, atribución y licencia CC BY 4.0 visibles.
+
+Cobertura confirmada en **Estudio Profundo**:
+
+- Nahúm 1:3 y 1:15 recuperados correctamente;
+- evidencia textual, contexto aprobado y variantes coincidentes con Biblia → Estudio;
+- texto original RTL, transliteración, Strong, lemas y morfología visibles.
+
+Regresiones aprobadas:
+
+- Hageo 1:8 conserva sus dos variantes;
+- Rut 3:12 conserva 11 palabras y la adición Ketiv `אִם` sin palabra artificial;
+- Abdías 1:1 conserva sus 18 palabras y análisis completo;
+- Juan 3:16 conserva el análisis griego y sus herramientas textuales;
+- no hubo pantallas en blanco, cargas infinitas, desbordamiento lateral ni cambios no aprobados de interfaz.
+
+La indicación «Secuencia literal de glosas: No disponible» permanece deliberadamente mientras esa capa editorial española no haya sido revisada.
+
+La importación, auditoría técnica, recuperación segura y visualización funcional de Nahúm están completas.
