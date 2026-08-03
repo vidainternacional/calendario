@@ -119,14 +119,15 @@ El workflow permanente verifica:
 - cero omisiones Qere o palabras artificiales;
 - cero desalineaciones e idiomas desconocidos.
 
-## Evidencia inicial
+## Evidencia
 
 - PR: #96;
 - workflow: `Validar paquete TAHOT de Nahúm`;
 - ejecución inicial: `30780593399` — `success`;
-- artefacto: `stepbible-nahum-package`;
-- ID: `8843486227`;
-- digest: `sha256:96f55ec57cac0999d1b0b84cfea121c2c6127d5e858e0d1e6e5a856517a9fe9e`.
+- ejecución final del contrato exacto: `30780858522` — `success`;
+- artefacto final: `stepbible-nahum-package`;
+- ID: `8843576939`;
+- digest: `sha256:afda8649db99fbfc0ebbd42bb4c3f5ce9f2f96463d43bfaac58b105fc176c29b`.
 
 ## Alcance y siguiente paso
 
@@ -139,4 +140,4 @@ Todavía no se ha:
 - creado o aplicado una migración;
 - escrito en Supabase.
 
-Después de que el commit final vuelva a aprobar esta auditoría exacta, el siguiente incremento seguro será inspeccionar los componentes léxicos de Nahúm y fijar únicamente los lemas canónicos de afijos que falten. No construir payload ni importar Nahúm hasta completar y registrar esa política.
+El siguiente incremento seguro será inspeccionar los componentes léxicos de Nahúm y fijar únicamente los lemas canónicos de afijos que falten. No construir payload ni importar Nahúm hasta completar y registrar esa política.
