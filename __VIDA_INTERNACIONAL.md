@@ -1421,6 +1421,4 @@ Evidencia: `docs/FASE_D_JONAS_PRODUCCION.md`.
 
 El siguiente incremento autorizado es validar funcionalmente Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo, comprobar la recuperación segura y registrar evidencia visual puntual. No avanzar a otro libro ni al Bloque 5 hasta completar esa validación.
 
-El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico y ejecutar una auditoría independiente de conteos, hashes, permisos, RLS, recuperación y seguridad. No solicitar validación visual hasta completar y registrar esa auditoría técnica.
-
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.

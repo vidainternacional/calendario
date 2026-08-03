@@ -1,0 +1,32 @@
+name: Validar estado maestro de Jonás
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "__VIDA_INTERNACIONAL.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rechazar instrucciones superadas de Jonás
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
+          obsolete = 'El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico'
+          if obsolete in text:
+              raise SystemExit('El documento maestro conserva una instrucción obsoleta de Jonás')
+          current = 'El siguiente incremento autorizado es validar funcionalmente Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo'
+          if text.count(current) != 1:
+              raise SystemExit('El documento maestro no contiene una única instrucción vigente de Jonás')
+          print('Estado maestro de Jonás: OK')
+          PY
+          git diff --check
