@@ -93,10 +93,11 @@ La primera ejecución falló únicamente porque la prueba contaba `display_word_
 - PR: #123;
 - workflow: `Validar importador transaccional de Jonás`;
 - primera ejecución con corrección pendiente: `30789738406`;
-- ejecución aprobada: `30789918273` — `success`;
-- artefacto: `stepbible-jonah-importer-validation`;
-- ID: `8846637524`;
-- digest: `sha256:3bec80fe68146513e52cd0fed9558b85996b1dcea24d7781f4e541eba6d3ca31`;
+- ejecución aprobada inicial: `30789918273` — `success`;
+- ejecución limpia sin materializadores: `30790108172` — `success`;
+- artefacto limpio: `stepbible-jonah-importer-validation`;
+- ID: `8846702429`;
+- digest: `sha256:ec6daf133ce112726d8d1ab017a4a386ba9c91240d40d453426cd52e1d770856`;
 - estado: `validated_outside_production`.
 
 ## Alcance y siguiente paso
