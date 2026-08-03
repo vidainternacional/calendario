@@ -1,3 +1,4 @@
+# Validación final del commit limpio antes de aplicar la migración.
 name: Validar migración activa TAHOT de Hageo
 
 on:
