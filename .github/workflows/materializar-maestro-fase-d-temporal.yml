@@ -1,0 +1,34 @@
+name: Materializar maestro FASE D temporal
+
+on:
+  push:
+    branches:
+      - agent/fase-d-registrar-candidata-roma-final
+    paths:
+      - scripts/fase_d/register_rome_candidate_master.py
+
+permissions:
+  contents: write
+
+jobs:
+  materializar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/fase-d-registrar-candidata-roma-final
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Actualizar documento maestro
+        run: python3 scripts/fase_d/register_rome_candidate_master.py
+      - name: Confirmar registro único
+        run: test "$(grep -c '1cbb740c94ab958da27c8ddcc572120efed087de' __VIDA_INTERNACIONAL.md)" -eq 1
+      - name: Retirar auxiliares y publicar rama final
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add __VIDA_INTERNACIONAL.md
+          git rm scripts/fase_d/register_rome_candidate_master.py
+          git rm .github/workflows/materializar-maestro-fase-d-temporal.yml
+          git diff --cached --check
+          git commit -m 'docs(fase-d): registrar candidata validada de Roma'
+          git push
