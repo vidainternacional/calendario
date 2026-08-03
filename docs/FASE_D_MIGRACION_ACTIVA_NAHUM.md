@@ -86,7 +86,7 @@ Las variantes permanecen distribuidas en:
   `69045240e658995cd0e1ba3557e54a2700b623078b36125e73ed1ada64f5139c`;
 - estado: `validated_outside_production`.
 
-La ejecución final sobre el commit limpio, sin borrador ni materializadores, se registrará antes de fusionar este PR.
+El commit final no contiene el borrador, el activador, el marcador, el materializador temporal ni el workflow sustituido del borrador. La validación permanente se ejecuta directamente sobre la migración activa.
 
 ## Alcance y siguiente paso
 
