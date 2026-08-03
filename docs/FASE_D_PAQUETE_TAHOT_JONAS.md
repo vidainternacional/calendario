@@ -98,10 +98,11 @@ El workflow permanente verifica:
 - PR: #120;
 - workflow: `Validar paquete TAHOT de Jonás`;
 - primera generación reproducible: ejecución `30787726852`;
-- validación corregida: ejecución `30787820694` — `success`;
-- artefacto: `stepbible-jonah-package`;
-- ID: `8845878474`;
-- digest: `sha256:10b71681dd4dda3ddfff617631998a34d105ffcaa208ffa04d40264fc0881ad0`.
+- validación del estado `leningrad`: ejecución `30787820694` — `success`;
+- validación final del contrato exacto: ejecución `30787900910` — `success`;
+- artefacto final: `stepbible-jonah-package`;
+- ID: `8845910270`;
+- digest: `sha256:a56a2e6f33e087dbd54728cbfff61bec99fc21c70b0cfde757cde2b535c31e1f`.
 
 ## Alcance y siguiente paso
 
