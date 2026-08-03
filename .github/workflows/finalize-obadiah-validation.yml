@@ -1,11 +1,11 @@
 name: Cerrar validación documental de Abdías
 
 on:
-  pull_request:
+  push:
     branches:
       - main
     paths:
-      - "docs/trigger-finalize-obadiah.md"
+      - ".github/workflows/finalize-obadiah-validation.yml"
 
 permissions:
   contents: write
@@ -103,7 +103,8 @@ Preparar una ampliación controlada del corpus textual del Antiguo Testamento re
           rm -f \
             .github/workflows/apply-obadiah-master-milestone.yml \
             .github/workflows/register-obadiah-applied-master.yml \
-            .github/workflows/finalize-obadiah-validation.yml
+            .github/workflows/finalize-obadiah-validation.yml \
+            docs/trigger-finalize-obadiah.md
 
           git diff --check
 
