@@ -1,0 +1,152 @@
+name: Validar payload de importación de Rut
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/build_tahot_import_payload.py"
+      - "scripts/stepbible/tahot_components.py"
+      - "scripts/stepbible/ruth_affix_lemma_policy.json"
+      - ".github/workflows/validate-ruth-import-payload.yml"
+      - "docs/FASE_D_PAYLOAD_TAHOT_RUT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/build_tahot_import_payload.py --self-test
+
+      - name: Generar paquetes de Rut
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/ruth-payload-a
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/ruth-payload-b
+
+      - name: Generar payloads
+        run: |
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/ruth-payload-a/rut.json.gz \
+            --policy scripts/stepbible/ruth_affix_lemma_policy.json \
+            --output artifacts/ruth-payload-a/import-payload.json
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/ruth-payload-b/rut.json.gz \
+            --policy scripts/stepbible/ruth_affix_lemma_policy.json \
+            --output artifacts/ruth-payload-b/import-payload.json
+
+      - name: Comprobar reproducibilidad
+        run: |
+          cmp artifacts/ruth-payload-a/rut.json.gz artifacts/ruth-payload-b/rut.json.gz
+          cmp artifacts/ruth-payload-a/import-payload.json artifacts/ruth-payload-b/import-payload.json
+          sha256sum artifacts/ruth-payload-a/rut.json.gz
+          sha256sum artifacts/ruth-payload-a/import-payload.json
+
+      - name: Auditar estructura del payload
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from collections import Counter
+          from pathlib import Path
+
+          path = Path('artifacts/ruth-payload-a/import-payload.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          counts = payload['counts']
+
+          if payload['book']['internal_code'] != 'RUT':
+              raise SystemExit('Código de libro inesperado')
+          if counts['references'] != 85 or counts['visible_words'] != 1293:
+              raise SystemExit(f'Conteos canónicos inesperados: {counts}')
+          if counts['lexical_ids'] != 373:
+              raise SystemExit(f'Identificadores léxicos inesperados: {counts}')
+          if counts['qere_omissions'] != 1:
+              raise SystemExit(f'Omisiones Qere inesperadas: {counts}')
+          if payload['spanish_editorial_fields_complete'] is not False:
+              raise SystemExit('La capa editorial española debe permanecer incompleta')
+
+          additions = [
+              item for item in payload['variants']
+              if item['chapter'] == 3
+              and item['verse'] == 12
+              and item['reading_type'] == 'addition'
+          ]
+          if len(additions) != 1:
+              raise SystemExit(f'Variante de omisión Qere inesperada: {additions}')
+          addition = additions[0]
+          if addition['base_reading'] is not None:
+              raise SystemExit('La omisión Qere recibió lectura base artificial')
+          if addition['variant_reading'] != 'אִם':
+              raise SystemExit(f'Ketiv inesperado: {addition}')
+          if addition['anchor_word_index'] is not None:
+              raise SystemExit('La omisión Qere recibió ancla visible artificial')
+
+          omitted_line = addition['source_line_sha256']
+          if any(
+              item['source_line_sha256'] == omitted_line
+              for item in payload['occurrences']
+          ):
+              raise SystemExit('La omisión Qere fue convertida en ocurrencia')
+
+          occurrence_keys = [
+              (item['chapter'], item['verse'], item['word_index'], item['morpheme_index'])
+              for item in payload['occurrences']
+          ]
+          if len(occurrence_keys) != len(set(occurrence_keys)):
+              duplicates = [key for key, count in Counter(occurrence_keys).items() if count > 1]
+              raise SystemExit(f'Ocurrencias duplicadas: {duplicates[:10]}')
+
+          hashes = []
+          hashes.extend(item['content_hash'] for item in payload['lexical_entries'])
+          hashes.extend(item['content_hash'] for item in payload['occurrences'])
+          hashes.extend(item['content_hash'] for item in payload['verse_texts'])
+          hashes.extend(item['content_hash'] for item in payload['variants'])
+          hashes.append(payload['payload_sha256'])
+          invalid = [value for value in hashes if not re.fullmatch(r'[0-9a-f]{64}', value)]
+          if invalid:
+              raise SystemExit(f'Hashes inválidos: {invalid[:5]}')
+
+          if len(payload['verse_texts']) != counts['references']:
+              raise SystemExit('Cantidad de textos inconsistente')
+          if len(payload['occurrences']) != counts['occurrences']:
+              raise SystemExit('Cantidad de ocurrencias inconsistente')
+          if len(payload['lexical_entries']) != counts['lexical_ids']:
+              raise SystemExit('Cantidad de entradas léxicas inconsistente')
+          if len(payload['variants']) != counts['variants']:
+              raise SystemExit('Cantidad de variantes inconsistente')
+
+          print(json.dumps({
+              'file_bytes': path.stat().st_size,
+              'counts': counts,
+              'payload_sha256': payload['payload_sha256'],
+              'qere_addition': addition,
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-ruth-import-payload
+          path: |
+            artifacts/ruth-payload-a/import-payload.json
+            artifacts/ruth-payload-a/manifest.json
+            artifacts/ruth-payload-a/audit.md
+          if-no-files-found: error
+          retention-days: 14
