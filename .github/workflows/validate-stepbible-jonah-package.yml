@@ -48,6 +48,9 @@ jobs:
           cmp artifacts/jonah-a/jon.json.gz artifacts/jonah-b/jon.json.gz
           cmp artifacts/jonah-a/manifest.json artifacts/jonah-b/manifest.json
           cmp artifacts/jonah-a/audit.md artifacts/jonah-b/audit.md
+          test "$(stat -c%s artifacts/jonah-a/jon.json.gz)" = "131092"
+          test "$(sha256sum artifacts/jonah-a/jon.json.gz | cut -d' ' -f1)" = \
+            "083b869fe7d10493deaeee392babd9811e9dffb91f0db816d2f21a22b2135915"
           sha256sum artifacts/jonah-a/jon.json.gz | tee artifacts/jonah-a/sha256.txt
 
       - name: Auditar integridad sin variantes
