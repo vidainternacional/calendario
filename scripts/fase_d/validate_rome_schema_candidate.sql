@@ -147,7 +147,6 @@ from public.biblical_places where id = :'place_id' \gset
   \quit 1
 \endif
 
--- Las restricciones inválidas deben rechazarse y capturarse sin abortar la suite.
 do $$
 begin
   begin
@@ -156,7 +155,8 @@ begin
       source_id, source_locator, content_hash
     ) values (
       'invalid-coordinate', 'Inválido', 'city', 91, 10,
-      :'source_id', 'x', repeat('e', 64)
+      (select id from public.biblical_sources where slug = 'pleiades'),
+      'x', repeat('e', 64)
     );
     raise exception 'La coordenada inválida fue aceptada';
   exception when check_violation then
@@ -169,7 +169,11 @@ begin
   begin
     insert into public.biblical_timeline_periods (
       slug, title, source_id, source_locator, content_hash
-    ) values ('invalid-hash', 'Inválido', :'source_id', 'x', 'bad');
+    ) values (
+      'invalid-hash', 'Inválido',
+      (select id from public.biblical_sources where slug = 'pleiades'),
+      'x', 'bad'
+    );
     raise exception 'El hash inválido fue aceptado';
   exception when check_violation then
     null;
