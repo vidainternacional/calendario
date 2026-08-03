@@ -1,0 +1,65 @@
+name: Validar paquete TAHOT de Hageo
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/extract_ot_book.py"
+      - "scripts/stepbible/audit_haggai_package.py"
+      - ".github/workflows/validate-stepbible-haggai-package.yml"
+      - "docs/FASE_D_PAQUETE_TAHOT_HAGEO.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/audit_haggai_package.py --self-test
+
+      - name: Generar paquete A
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Hag \
+            --output artifacts/haggai-a
+
+      - name: Generar paquete B
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Hag \
+            --output artifacts/haggai-b
+
+      - name: Verificar reproducibilidad byte a byte
+        run: |
+          cmp artifacts/haggai-a/hag.json.gz artifacts/haggai-b/hag.json.gz
+          cmp artifacts/haggai-a/manifest.json artifacts/haggai-b/manifest.json
+          cmp artifacts/haggai-a/audit.md artifacts/haggai-b/audit.md
+          sha256sum artifacts/haggai-a/hag.json.gz | tee artifacts/haggai-a/sha256.txt
+
+      - name: Auditar variantes y Qere
+        run: |
+          python scripts/stepbible/audit_haggai_package.py \
+            --package artifacts/haggai-a/hag.json.gz \
+            --output artifacts/haggai-a
+          git diff --check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-haggai-package
+          path: artifacts/haggai-a/
+          if-no-files-found: error
+          retention-days: 14
