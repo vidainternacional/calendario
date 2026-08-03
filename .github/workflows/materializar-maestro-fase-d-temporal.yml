@@ -1,9 +1,10 @@
 name: Materializar maestro FASE D temporal
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/fase-d-registrar-candidata-roma-final
+      - main
+    types: [opened, synchronize, reopened]
     paths:
       - scripts/fase_d/register_rome_candidate_master.py
 
@@ -12,11 +13,12 @@ permissions:
 
 jobs:
   materializar:
+    if: github.head_ref == 'agent/fase-d-registrar-candidata-roma-final-v2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/fase-d-registrar-candidata-roma-final
+          ref: agent/fase-d-registrar-candidata-roma-final-v2
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Actualizar documento maestro
         run: python3 scripts/fase_d/register_rome_candidate_master.py
