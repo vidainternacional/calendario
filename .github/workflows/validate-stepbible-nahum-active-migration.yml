@@ -1,0 +1,101 @@
+name: Validar migración activa TAHOT de Nahúm
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/activate_nahum_migration.py"
+      - "scripts/stepbible/test_nahum_active_migration.py"
+      - "supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql"
+      - ".github/workflows/validate-stepbible-nahum-active-migration.yml"
+      - "docs/FASE_D_MIGRACION_ACTIVA_NAHUM.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_nahum_active_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_nahum_active_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar cliente PostgreSQL
+        run: python -m pip install --disable-pip-version-check "psycopg[binary]==3.2.9"
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/build_tahot_import_payload.py --self-test
+          python scripts/stepbible/audit_nahum_import_payload.py --self-test
+          python scripts/stepbible/generate_nahum_importer_draft.py --self-test
+          python scripts/stepbible/activate_nahum_migration.py --self-test
+      - name: Verificar conversión mecánica
+        run: |
+          python scripts/stepbible/activate_nahum_migration.py \
+            --draft supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql \
+            --output /tmp/nahum-active.sql
+          cmp /tmp/nahum-active.sql \
+              supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql
+      - name: Generar paquete y payload fijados
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Nam \
+            --output artifacts/nahum-active
+          test "$(sha256sum artifacts/nahum-active/nam.json.gz | cut -d' ' -f1)" = \
+            "60e280a6d94abc8788b7cc9647e4dfa0f679e0a9708a1adf00be30abfc23b7f5"
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/nahum-active/nam.json.gz \
+            --policy scripts/stepbible/nahum_affix_lemma_policy.json \
+            --output artifacts/nahum-active/import-payload.json
+          test "$(sha256sum artifacts/nahum-active/import-payload.json | cut -d' ' -f1)" = \
+            "0c041041155152e1fb63cb568efa1530724bea7fa729b4ed8815dcbaaf666000"
+          python scripts/stepbible/audit_nahum_import_payload.py \
+            --payload artifacts/nahum-active/import-payload.json \
+            --output artifacts/nahum-active/import-payload-audit.json
+      - name: Validar migración activa
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_nahum_active_test
+        run: |
+          python scripts/stepbible/test_nahum_active_migration.py \
+            --dsn "$TEST_DATABASE_URL" \
+            --fixture tests/sql/obadiah_textual_schema_fixture.sql \
+            --base-migration supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql \
+            --ruth-migration supabase/migrations/20260803011000_generalizar_importador_payload_tahot_rut.sql \
+            --haggai-migration supabase/migrations/20260803023000_generalizar_importador_payload_tahot_hageo.sql \
+            --active-migration supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql \
+            --package artifacts/nahum-active/nam.json.gz \
+            --payload artifacts/nahum-active/import-payload.json \
+            --output artifacts/nahum-active/active-migration-validation.json
+          cat artifacts/nahum-active/active-migration-validation.json
+          git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-nahum-active-migration-validation
+          path: |
+            supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql
+            artifacts/nahum-active/manifest.json
+            artifacts/nahum-active/import-payload-audit.json
+            artifacts/nahum-active/active-migration-validation.json
+          if-no-files-found: error
+          retention-days: 14
