@@ -1,0 +1,39 @@
+name: Materializar publicación de Roma
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/FASE_D_BLOQUE_5_PUBLICACION_ROMA_PRODUCCION.md'
+      - '.github/workflows/materializar-publicacion-roma.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materializar:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Actualizar documento maestro y retirar materializador
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          master = Path('__VIDA_INTERNACIONAL.md')
+          text = master.read_text()
+          marker = '### Avance confirmado del Bloque 5 — Roma publicada en producción'
+          if marker not in text:
+              block = '''\n\n### Avance confirmado del Bloque 5 — Roma publicada en producción\n\nEl paquete `rome-pilot-v1` fue publicado en Supabase de producción el 2026-08-03 después de autorización explícita del usuario.\n\nResultado auditado:\n\n- 1 lugar, 1 periodo, 2 eventos y 2 relaciones;\n- 6 filas totales;\n- todas con `review_status = approved`;\n- todas con `enabled = true`;\n- hashes individuales verificados;\n- RLS y privilegios intactos;\n- `anon` sin lectura;\n- `authenticated` con lectura y sin escritura.\n\nEvidencia:\n\n- PR #162 y commit de fusión `802f2d000203dfc29f9f5f4b12ec38eafbd6bafc`;\n- `docs/FASE_D_BLOQUE_5_PUBLICACION_ROMA_PRODUCCION.md`;\n- `supabase/migrations/20260803170000_publish_rome_pilot_v1.sql`;\n- `supabase/recovery/20260803170000_unpublish_rome_pilot_v1.sql`.\n\nLa interfaz aún no está conectada y no se avanzó al Bloque 6.\n\n**Siguiente punto autorizado:** integrar el servicio de cronologías y mapas en una superficie visual limitada al piloto de Roma, manteniendo la atribución, precisión, certeza y controles de sesión/RLS. Realizar primero una implementación aislada y validarla en CI y preview. No ampliar todavía el catálogo de lugares ni avanzar al Bloque 6. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.\n'''
+              master.write_text(text.rstrip() + block + '\n')
+          Path('.github/workflows/materializar-publicacion-roma.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add __VIDA_INTERNACIONAL.md .github/workflows/materializar-publicacion-roma.yml
+          git commit -m 'docs(fase-d): registrar publicación de Roma en maestro' || exit 0
+          git push
