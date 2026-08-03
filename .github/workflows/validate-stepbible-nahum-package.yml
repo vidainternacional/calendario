@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/stepbible/extract_ot_book.py"
       - "scripts/stepbible/audit_nahum_package.py"
+      - "scripts/stepbible/verify_nahum_qere_cases.py"
       - ".github/workflows/validate-stepbible-nahum-package.yml"
       - "docs/FASE_D_PAQUETE_TAHOT_NAHUM.md"
   workflow_dispatch:
@@ -30,6 +31,7 @@ jobs:
           python scripts/stepbible/tahot_schema.py --self-test
           python scripts/stepbible/extract_ot_book.py --self-test
           python scripts/stepbible/audit_nahum_package.py --self-test
+          python scripts/stepbible/verify_nahum_qere_cases.py --self-test
 
       - name: Generar paquete A
         run: |
@@ -48,6 +50,9 @@ jobs:
           cmp artifacts/nahum-a/nam.json.gz artifacts/nahum-b/nam.json.gz
           cmp artifacts/nahum-a/manifest.json artifacts/nahum-b/manifest.json
           cmp artifacts/nahum-a/audit.md artifacts/nahum-b/audit.md
+          test "$(stat -c%s artifacts/nahum-a/nam.json.gz)" = "110590"
+          test "$(sha256sum artifacts/nahum-a/nam.json.gz | cut -d' ' -f1)" = \
+            "60e280a6d94abc8788b7cc9647e4dfa0f679e0a9708a1adf00be30abfc23b7f5"
           sha256sum artifacts/nahum-a/nam.json.gz | tee artifacts/nahum-a/sha256.txt
 
       - name: Auditar variantes y Qere
@@ -55,6 +60,9 @@ jobs:
           python scripts/stepbible/audit_nahum_package.py \
             --package artifacts/nahum-a/nam.json.gz \
             --output artifacts/nahum-a
+          python scripts/stepbible/verify_nahum_qere_cases.py \
+            --package artifacts/nahum-a/nam.json.gz \
+            --output artifacts/nahum-a/nahum-exact-qere.json
           git diff --check
 
       - uses: actions/upload-artifact@v4

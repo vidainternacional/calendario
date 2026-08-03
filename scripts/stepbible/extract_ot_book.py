@@ -36,6 +36,11 @@ BOOKS = {
         "name_es": "Hageo",
         "verse_counts": [15, 23],
     },
+    "Nam": {
+        "internal_code": "NAM",
+        "name_es": "Nahúm",
+        "verse_counts": [15, 13, 19],
+    },
 }
 
 
@@ -435,6 +440,8 @@ def self_test() -> None:
         raise RuntimeError("El catálogo de versículos de Rut no contiene 85 referencias")
     if len(expected_references("Hag", BOOKS["Hag"]["verse_counts"])) != 38:
         raise RuntimeError("El catálogo de versículos de Hageo no contiene 38 referencias")
+    if len(expected_references("Nam", BOOKS["Nam"]["verse_counts"])) != 47:
+        raise RuntimeError("El catálogo de versículos de Nahúm no contiene 47 referencias")
     print("Auto-test de paquete TAHOT: OK")
 
 
