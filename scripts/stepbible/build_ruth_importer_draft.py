@@ -22,7 +22,7 @@ NEW_CONTRACT = """  if not (
       and v_step_code='Oba'
       and v_dataset='TAHOT Isa-Mal'
       and v_source_sha256='f3ded203d2a74d6368932c97ae550d1d0754b271af491dc0dedf36fe3ba0bcc5'
-      and v_package_sha256='428b57160d81d08cc5df5f4d0df014755b452f267c758827917f87bd8b949fa6'
+      and v_package_sha256='b49dee68303e243c0c2ef4ff3366cbd955a4a8a9b14114eb761a8f174e25940e'
       and v_payload_sha256='502eade2003802940dd79d386073e4b9817ae5f0668fd341b84ae6ea9e828652'
       and v_reference_count=21 and v_visible_word_count=291
       and v_occurrence_count=434 and v_lexical_count=184
@@ -98,6 +98,7 @@ def self_test() -> None:
     sample = OLD_CONTRACT
     assert "Conteos piloto de Obadías" in sample
     assert "v_book_code='RUT'" in NEW_CONTRACT
+    assert "b49dee68303e243c0c2ef4ff3366cbd955a4a8a9b14114eb761a8f174e25940e" in NEW_CONTRACT
     assert "variant_reading'='אִם'" in RUTH_QERE_CHECK
     print("Auto-test del generador de importador: OK")
 
