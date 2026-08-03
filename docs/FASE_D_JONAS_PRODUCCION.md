@@ -47,4 +47,21 @@ Seguridad:
 
 La prueba de recuperación pasó y revirtió completamente al estado productivo.
 
-La auditoría técnica queda aprobada. El siguiente paso permitido es validar Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo. No avanzar a otro libro ni al Bloque 5 hasta registrar esa validación.
+## Lectura autenticada
+
+Se ejecutó una lectura controlada bajo el rol PostgreSQL `authenticated`, con `auth.uid()` asociado a una cuenta activa existente. La transacción fue de solo lectura y terminó con `ROLLBACK`.
+
+Jonás 1:1 quedó recuperable con:
+
+- libro `JON`, nombre `Jonás`, 4 capítulos;
+- texto hebreo completo;
+- transliteración del versículo;
+- 8 palabras visibles y 10 componentes morfológicos;
+- lemas, transliteraciones, números Strong, morfología y tipo de componente;
+- fuente STEPBible Data;
+- atribución CC BY 4.0;
+- versión fijada `STEPBible-Data@b86d26cdb1f51729e73b5b4eb7f7ccadc5dfba39`.
+
+La política RLS confirmó `cuenta_activa() = true` y permitió únicamente la lectura de filas aprobadas y habilitadas. No se alteraron usuarios, perfiles, sesiones ni datos bíblicos.
+
+La auditoría técnica y la lectura autenticada quedan aprobadas. El único requisito pendiente de este hito es la validación visual puntual en **Biblia → Estudio** y **Estudio Profundo**. No avanzar a otro libro ni al Bloque 5 hasta registrar esa evidencia.
