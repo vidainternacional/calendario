@@ -1,0 +1,198 @@
+{
+  "schema_version": "1.0.0",
+  "package_key": "rome-pilot-v1",
+  "generated_at": "2026-08-03T15:30:00Z",
+  "status": "candidate",
+  "enabled": false,
+  "source_snapshot": {
+    "slug": "pleiades-gazetteer",
+    "name": "Pleiades: A Gazetteer of Past Places",
+    "source_type": "historical",
+    "provider": "Pleiades",
+    "provider_ref": "gazetteer",
+    "provider_version": "accessed-2026-07-31",
+    "website": "https://pleiades.stoa.org/",
+    "license_url": "https://creativecommons.org/licenses/by/3.0/",
+    "license_status": "verified",
+    "attribution": "Pleiades: A Gazetteer of Past Places, Ancient World Mapping Center e Institute for the Study of the Ancient World. Licencia CC BY 3.0.",
+    "review_status": "approved",
+    "enabled": true,
+    "record_hash": "5e851b08f8a60f618687f131183fa145030da13084d683c45e013d673032024c"
+  },
+  "context_fragments": [
+    {
+      "slug": "roma-capital-romanos",
+      "book_code": "ROM",
+      "chapter_start": 1,
+      "chapter_end": 16,
+      "reference_label": "Romanos 1–16",
+      "content_hash": "a2f4808cb82111e86f5b4c56f22cb6266d501fae422562992c2965e02bc4767c",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31"
+    },
+    {
+      "slug": "roma-capital-hechos-28",
+      "book_code": "ACT",
+      "chapter_start": 28,
+      "verse_start": 14,
+      "chapter_end": 28,
+      "verse_end": 31,
+      "reference_label": "Hechos 28:14–31",
+      "content_hash": "fb892d134ef1edd6b4954d27e0c8495bc5ac5fdb808b79ddbc3ef3300ec98969",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31"
+    }
+  ],
+  "places": [
+    {
+      "slug": "roma",
+      "canonical_name_es": "Roma",
+      "alternate_names": [
+        "Rome",
+        "Roma"
+      ],
+      "place_kind": "city",
+      "external_provider": "Pleiades",
+      "external_ref": "423025",
+      "latitude": 41.889977,
+      "longitude": 12.491258,
+      "coordinate_precision": "approximate",
+      "certainty_level": "high",
+      "source_slug": "pleiades-gazetteer",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31",
+      "review_status": "pending",
+      "enabled": false,
+      "metadata": {
+        "api_uri": "https://pleiades.stoa.org/places/423025/json",
+        "coordinate_basis": "Pleiades reprPoint rounded to six decimals",
+        "source_description": "The capital of the Roman Republic and Empire.",
+        "place_types": [
+          "urban",
+          "settlement"
+        ]
+      },
+      "content_hash": "768fa98567a49be10e85ae29f748eea8a48fba471a56fbeb1b461f492cdd55ee"
+    }
+  ],
+  "periods": [
+    {
+      "slug": "roma-romanos-hechos-28",
+      "title": "Roma en el contexto de Romanos y Hechos 28",
+      "start_year": null,
+      "end_year": null,
+      "era": "relative",
+      "chronology_system": "biblical-relative",
+      "date_precision": "relative",
+      "certainty_level": "medium",
+      "source_slug": "pleiades-gazetteer",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31",
+      "review_status": "pending",
+      "enabled": false,
+      "metadata": {
+        "basis_fragments": [
+          "roma-capital-romanos",
+          "roma-capital-hechos-28"
+        ],
+        "date_policy": "No absolute year asserted by this package."
+      },
+      "content_hash": "968637654ac8aefa36ebb849b10a47b6e1ec62ec1b1aa56d66e35aa126e09a54"
+    }
+  ],
+  "events": [
+    {
+      "slug": "roma-destinatarios-romanos",
+      "title": "Roma como destino de la carta a los Romanos",
+      "summary": "Relación editorial entre Roma y el marco completo de Romanos 1–16, basada en el fragmento contextual aprobado.",
+      "period_slug": "roma-romanos-hechos-28",
+      "start_book_code": "ROM",
+      "start_chapter": 1,
+      "start_verse": null,
+      "end_book_code": "ROM",
+      "end_chapter": 16,
+      "end_verse": null,
+      "start_year": null,
+      "end_year": null,
+      "era": "relative",
+      "relative_order": 1,
+      "date_precision": "relative",
+      "certainty_level": "medium",
+      "controversy_note": null,
+      "source_slug": "pleiades-gazetteer",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31",
+      "review_status": "pending",
+      "enabled": false,
+      "metadata": {
+        "context_fragment_slug": "roma-capital-romanos",
+        "context_fragment_hash": "a2f4808cb82111e86f5b4c56f22cb6266d501fae422562992c2965e02bc4767c",
+        "relation_kind": "editorial_link"
+      },
+      "content_hash": "0ad8cbe5c8e4499022298e7446432f44892ed3dbad9a2514d209ff38b97d36c6"
+    },
+    {
+      "slug": "pablo-llega-a-roma-hechos-28",
+      "title": "Llegada de Pablo a Roma",
+      "summary": "Relación editorial entre Roma y Hechos 28:14–31, basada en el fragmento contextual aprobado.",
+      "period_slug": "roma-romanos-hechos-28",
+      "start_book_code": "ACT",
+      "start_chapter": 28,
+      "start_verse": 14,
+      "end_book_code": "ACT",
+      "end_chapter": 28,
+      "end_verse": 31,
+      "start_year": null,
+      "end_year": null,
+      "era": "relative",
+      "relative_order": 2,
+      "date_precision": "relative",
+      "certainty_level": "medium",
+      "controversy_note": null,
+      "source_slug": "pleiades-gazetteer",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31",
+      "review_status": "pending",
+      "enabled": false,
+      "metadata": {
+        "context_fragment_slug": "roma-capital-hechos-28",
+        "context_fragment_hash": "fb892d134ef1edd6b4954d27e0c8495bc5ac5fdb808b79ddbc3ef3300ec98969",
+        "relation_kind": "editorial_link"
+      },
+      "content_hash": "1c97d3f44fc5453830ee09e8910b2519519adc9a1f6f4c6f4cf6fb57d101cd2d"
+    }
+  ],
+  "event_places": [
+    {
+      "event_slug": "roma-destinatarios-romanos",
+      "place_slug": "roma",
+      "relation_type": "associated",
+      "sequence_order": 0,
+      "source_slug": "pleiades-gazetteer",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31",
+      "review_status": "pending",
+      "enabled": false,
+      "metadata": {
+        "context_fragment_slug": "roma-capital-romanos"
+      },
+      "content_hash": "c57f6ac09b54472138e6e7bd58919e204a8041c909ba7f4671894591ca4e6c1c"
+    },
+    {
+      "event_slug": "pablo-llega-a-roma-hechos-28",
+      "place_slug": "roma",
+      "relation_type": "destination",
+      "sequence_order": 0,
+      "source_slug": "pleiades-gazetteer",
+      "source_locator": "https://pleiades.stoa.org/places/423025",
+      "provider_version": "pleiades-place-423025-accessed-2026-07-31",
+      "review_status": "pending",
+      "enabled": false,
+      "metadata": {
+        "context_fragment_slug": "roma-capital-hechos-28"
+      },
+      "content_hash": "232666a1732c67ccef35f1ead5eda59d2399b234b1e25ff60ff279973e42b87f"
+    }
+  ],
+  "package_hash": "67efcaa4e4cae2ec6f908f60a97850a1b7fd6ee223496fbc17438a87ea3a0550"
+}
