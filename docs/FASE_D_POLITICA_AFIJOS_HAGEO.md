@@ -32,36 +32,46 @@ Este incremento no construye payload, no modifica el importador y no escribe en 
 | `H9020` | `־י` | decisión ya aprobada y forma observada `י` |
 | `H9023` | `־וֹ` | decisión ya aprobada y formas `ו`, `וֹ` |
 | `H9024` | `־הָ` | decisión ya aprobada y formas `הָ`, `הּ` |
-| `H9026` | `־כֶם` | sufijo 2mp; once ocurrencias con formas `כֶם` |
-| `H9028` | `־הֶם` | decisión ya aprobada y formas `הֶם` |
+| `H9026` | `־כֶם` | sufijo 2mp; once ocurrencias con forma `כֶם` |
+| `H9028` | `־הֶם` | decisión ya aprobada y forma `הֶם` |
 | `H9030` | `־נִי` | decisión ya aprobada; sufijo/objeto de primera persona |
 | `H9031` | `־ךָ` | decisión ya aprobada y forma `ךָ` |
 | `H9033` | `־וֹ` | decisión ya aprobada y formas `הוּ`, `וֹ` |
-| `H9036` | `־כֶם` | decisión ya aprobada y formas `כֶם` |
+| `H9036` | `־כֶם` | decisión ya aprobada y forma `כֶם` |
 | `H9046` | `־כֶם` | sufijo 2mp; una ocurrencia con forma `כֶם` y misma función canónica aprobada para `H9036` |
 | `H9048` | `־ם` | decisión ya aprobada y forma observada `ם` |
 
 Nueve decisiones ya existían en el catálogo léxico aprobado por los pilotos anteriores. Las dos decisiones nuevas, `H9026` y `H9046`, se restringen a la forma y función morfológica observadas en Hageo y no generalizan otros identificadores.
 
-## Cobertura exigida
+## Cobertura validada
 
-La validación automática debe comprobar:
+La validación automática confirmó:
 
-- 11 identificadores requeridos;
-- 11 identificadores proporcionados;
-- 0 claves faltantes;
-- 0 claves sobrantes;
-- 0 valores vacíos o no hebreos;
+- identificadores requeridos: 11;
+- identificadores proporcionados: 11;
+- claves faltantes: 0;
+- claves sobrantes: 0;
+- valores vacíos o no hebreos: 0;
+- estado: `approved_for_payload_build`;
 - paquete de entrada con la huella fijada;
 - ausencia de cambios en Supabase o producción.
 
-## Evidencia inicial
+## Evidencia reproducible
+
+Inspección inicial:
 
 - workflow: `Inspeccionar política de afijos de Hageo`;
-- ejecución de inspección: `30777462801` — `success`;
+- ejecución: `30777462801` — `success`;
 - artefacto: `haggai-affix-policy-inspection`;
 - ID: `8842514312`;
 - digest: `sha256:458e0db554af72b9ed061604c19dc42262902ff7e49e27e8bedc5c702bc72334`.
+
+Validación final de cobertura:
+
+- ejecución: `30777536703` — `success`;
+- artefacto: `haggai-affix-policy-inspection`;
+- ID: `8842543159`;
+- digest: `sha256:f845a51406148e8f5da171e7ffd242012fa6e20e8c8a54e9fa80c35c477d39d7`.
 
 ## Alcance y siguiente paso
 
@@ -73,4 +83,4 @@ Todavía no se ha:
 - escrito en Supabase;
 - cambiado RLS, interfaz o producción.
 
-Después de que CI confirme la cobertura exacta de esta política, el siguiente incremento seguro será construir fuera de producción un payload determinista de Hageo y auditar sus conteos, hashes, variantes y campos editoriales. No importar Hageo hasta validar ese payload y su importador.
+La política quedó aprobada para la construcción del payload. El siguiente incremento seguro es construir fuera de producción un payload determinista de Hageo y auditar sus conteos, hashes, variantes y campos editoriales. No importar Hageo hasta validar ese payload y su importador.
