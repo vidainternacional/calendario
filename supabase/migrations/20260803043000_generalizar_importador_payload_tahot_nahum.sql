@@ -1,5 +1,5 @@
 -- FASE D · Bloque 4
--- BORRADOR NO ACTIVO. Amplía el importador validado para aceptar exactamente Nahúm.
+-- MIGRACIÓN ACTIVA. Amplía el importador validado para aceptar exactamente Nahúm.
 -- Derivado de la migración activa de Hageo y protegido por SHA-256 de la función.
 
 do $migration$

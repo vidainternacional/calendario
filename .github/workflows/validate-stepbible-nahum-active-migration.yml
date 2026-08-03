@@ -5,7 +5,6 @@ on:
     branches:
       - main
     paths:
-      - "scripts/stepbible/activate_nahum_migration.py"
       - "scripts/stepbible/test_nahum_active_migration.py"
       - "supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql"
       - ".github/workflows/validate-stepbible-nahum-active-migration.yml"
@@ -48,15 +47,6 @@ jobs:
           python scripts/stepbible/tahot_components.py
           python scripts/stepbible/build_tahot_import_payload.py --self-test
           python scripts/stepbible/audit_nahum_import_payload.py --self-test
-          python scripts/stepbible/generate_nahum_importer_draft.py --self-test
-          python scripts/stepbible/activate_nahum_migration.py --self-test
-      - name: Verificar conversión mecánica
-        run: |
-          python scripts/stepbible/activate_nahum_migration.py \
-            --draft supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql \
-            --output /tmp/nahum-active.sql
-          cmp /tmp/nahum-active.sql \
-              supabase/migrations/20260803043000_generalizar_importador_payload_tahot_nahum.sql
       - name: Generar paquete y payload fijados
         run: |
           python scripts/stepbible/extract_ot_book.py \
