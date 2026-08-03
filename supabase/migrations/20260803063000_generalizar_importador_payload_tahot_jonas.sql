@@ -1,5 +1,5 @@
 -- FASE D · Bloque 4
--- BORRADOR NO ACTIVO. Amplía el importador validado para aceptar exactamente Jonás.
+-- MIGRACIÓN ACTIVA. Amplía el importador validado para aceptar exactamente Jonás.
 -- Derivado de la migración activa de Nahúm y protegido por SHA-256 de la función.
 
 do $migration$
