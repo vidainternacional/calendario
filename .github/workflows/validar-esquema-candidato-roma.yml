@@ -6,14 +6,19 @@ on:
       - main
     paths:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+      - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
       - scripts/fase_d/bootstrap_supabase_extensions.sql
       - scripts/fase_d/validate_rome_schema_candidate.sql
       - .github/workflows/validar-esquema-candidato-roma.yml
   push:
     branches:
       - agent/fase-d-bloque-5-migracion-candidata-roma
+      - agent/fase-d-bloque-5-migracion-activa-roma
     paths:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+      - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
       - scripts/fase_d/bootstrap_supabase_extensions.sql
       - scripts/fase_d/validate_rome_schema_candidate.sql
       - .github/workflows/validar-esquema-candidato-roma.yml
@@ -51,6 +56,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Confirmar equivalencia de la migración activa
+        if: ${{ hashFiles('supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql') != '' }}
+        run: |
+          tail -n +6 docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql > /tmp/candidate.sql
+          tail -n +6 supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql > /tmp/active.sql
+          diff -u /tmp/candidate.sql /tmp/active.sql
+          test "$(grep -ci '^create table public\.biblical_' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql)" -eq 4
+          ! grep -Eiq '^[[:space:]]*insert[[:space:]]+into' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+          ! grep -Eiq '^[[:space:]]*(update|delete)[[:space:]]' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+          grep -q 'No está autorizada para aplicarse a Supabase' docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+
       - name: Instalar extensiones PostgreSQL contrib
         run: |
           sudo apt-get update
@@ -64,7 +80,7 @@ jobs:
         working-directory: scripts/fase_d
         run: psql -f validate_rome_schema_candidate.sql
 
-      - name: Verificar que la candidata no esté en migraciones activas
+      - name: Verificar formato y aislamiento
         run: |
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
           git diff --check
