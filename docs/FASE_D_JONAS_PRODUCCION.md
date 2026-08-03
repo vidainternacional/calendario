@@ -64,4 +64,20 @@ Jonás 1:1 quedó recuperable con:
 
 La política RLS confirmó `cuenta_activa() = true` y permitió únicamente la lectura de filas aprobadas y habilitadas. No se alteraron usuarios, perfiles, sesiones ni datos bíblicos.
 
-La auditoría técnica y la lectura autenticada quedan aprobadas. El único requisito pendiente de este hito es la validación visual puntual en **Biblia → Estudio** y **Estudio Profundo**. No avanzar a otro libro ni al Bloque 5 hasta registrar esa evidencia.
+## Validación funcional y visual
+
+El usuario aprobó la validación manual en producción el 2026-08-03.
+
+Cobertura confirmada:
+
+- Biblia → Estudio: Jonás 1:1, 2:1, 3:1 y 4:11;
+- Estudio Profundo: recuperación correcta de las mismas referencias;
+- hebreo RTL, transliteración, Strong, lemas, morfología, fuente y licencia visibles;
+- ausencia correcta del panel de variantes, porque Jonás contiene cero variantes Qere/Ketiv;
+- sin pantallas en blanco, cargas infinitas, desbordamiento lateral ni cambios de interfaz no aprobados.
+
+La auditoría técnica, la recuperación autenticada y la validación funcional y visual quedan aprobadas. Jonás está completo dentro del Bloque 4.
+
+Evidencia complementaria: `docs/FASE_D_VALIDACION_VISUAL_JONAS_2026-08-03.md`.
+
+No se autoriza avanzar al Bloque 5 por inferencia. El siguiente punto deberá determinarse exclusivamente al actualizar y releer `__VIDA_INTERNACIONAL.md`.
