@@ -55,6 +55,9 @@ jobs:
         run: |
           cmp artifacts/jonah-payload-a/import-payload.json \
             artifacts/jonah-payload-b/import-payload.json
+          test "$(stat -c%s artifacts/jonah-payload-a/import-payload.json)" = "1248309"
+          test "$(sha256sum artifacts/jonah-payload-a/import-payload.json | cut -d' ' -f1)" = \
+            "e6bd082a446d29becbafb35a22b94ef9e260e447fe7fc7cea4361d98c5bb835b"
           sha256sum artifacts/jonah-payload-a/import-payload.json | \
             tee artifacts/jonah-payload-a/payload-file-sha256.txt
       - name: Auditar payload
