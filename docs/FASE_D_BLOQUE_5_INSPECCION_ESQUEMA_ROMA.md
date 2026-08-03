@@ -1,13 +1,13 @@
 # FASE D · Bloque 5 — Inspección de esquema para el piloto de Roma
 
 Fecha: 2026-08-03
-Estado: inspección de solo lectura
+Estado: inspección de solo lectura completada
 Proyecto observado: `calendariovida`
 PostgreSQL: 17.6
 
 ## Alcance
 
-Se inspeccionaron únicamente catálogos de PostgreSQL e `information_schema` para confirmar los tipos, claves y mecanismos reutilizables requeridos por el diseño del piloto de Roma. No se ejecutó DDL, no se insertaron datos y no se modificó Supabase ni producción.
+Se inspeccionaron únicamente catálogos de PostgreSQL e `information_schema` para confirmar los tipos, claves, políticas, privilegios, restricciones y mecanismos reutilizables requeridos por el diseño del piloto de Roma. No se ejecutó DDL, no se insertaron datos y no se modificó Supabase ni producción.
 
 ## Claves confirmadas
 
@@ -36,55 +36,123 @@ Se inspeccionaron únicamente catálogos de PostgreSQL e `information_schema` pa
 - `enabled boolean` usa por defecto `false`;
 - RLS está habilitada, pero no forzada.
 
+## Políticas RLS efectivas
+
+### `biblical_sources`
+
+La política `Usuarios activos leen fuentes bíblicas aprobadas` concede únicamente `SELECT` a `authenticated` cuando se cumplen simultáneamente:
+
+- `enabled = true`;
+- `review_status = 'approved'`;
+- `cuenta_activa()` devuelve verdadero.
+
+### `biblical_books`
+
+La política `Usuarios activos leen libros bíblicos aprobados` concede únicamente `SELECT` a `authenticated` cuando se cumplen simultáneamente:
+
+- el libro está habilitado;
+- el libro está aprobado;
+- `cuenta_activa()` devuelve verdadero;
+- la fuente relacionada está habilitada;
+- la fuente relacionada está aprobada.
+
+El patrón del piloto debe mantener esta doble validación de la entidad y de su fuente.
+
+## Privilegios efectivos
+
+- `anon`: sin privilegios de tabla observados sobre `biblical_sources` y `biblical_books`;
+- `authenticated`: únicamente `SELECT`;
+- `service_role`: privilegios completos de administración de tabla.
+
+Las nuevas tablas no deben conceder escritura a `anon` ni a `authenticated`. La recuperación para usuarios activos debe limitarse a `SELECT` y permanecer protegida por RLS.
+
+## Vocabularios exactos
+
+### `review_status`
+
+Valores permitidos:
+
+- `pending`;
+- `approved`;
+- `rejected`.
+
+### `license_status`
+
+Valores permitidos en `biblical_sources`:
+
+- `verified`;
+- `varies_by_item`;
+- `pending`;
+- `restricted`.
+
+### `source_type`
+
+Valores permitidos:
+
+- `provider_catalog`;
+- `translation`;
+- `commentary`;
+- `cross_reference`;
+- `profile`;
+- `historical`.
+
+Pleiades y cualquier fuente cronológica del piloto deben reutilizar `historical` mientras no se apruebe una ampliación explícita.
+
+## Funciones y extensiones reutilizables
+
+- `public.cuenta_activa()` existe y es el control usado por las políticas bíblicas actuales;
+- `extensions.moddatetime()` existe y es el mecanismo reutilizable para mantener `updated_at`;
+- `gen_random_uuid()` ya se usa en el esquema bíblico.
+
+La migración candidata debe referenciar `extensions.moddatetime()` de forma explícita o garantizar un `search_path` seguro. No debe crear una función duplicada para `updated_at`.
+
 ## Consecuencias para el DDL del piloto
 
 1. Las referencias del diseño son compatibles:
    - `source_id uuid references public.biblical_sources(id)`;
-   - `start_book_code text references public.biblical_books(code)`;
-   - `end_book_code text references public.biblical_books(code)`.
-2. PostgreSQL 17 admite `unique nulls not distinct`; la sintaxis propuesta para identidad externa es compatible con el motor observado.
-3. Para mantener consistencia con las tablas bíblicas existentes, el valor inicial de `review_status` debe ser `pending`, no `draft`, salvo que se apruebe expresamente ampliar el vocabulario.
-4. `provider_version` debería ser nullable en las nuevas tablas, porque la fuente canónica ya permite versiones no informadas.
-5. La publicación debe validar simultáneamente:
-   - fila aprobada;
-   - fila habilitada;
-   - fuente con `license_status` aprobado;
-   - fuente con `review_status` aprobado;
-   - fuente habilitada.
-6. No debe asumirse que `content_hash` de la fuente esté siempre presente, aunque los registros de lugares, periodos, eventos y relaciones sí deben exigir su propio hash.
-7. El diseño puede referenciar directamente códigos de libros, pero la validación del capítulo debe comparar también con `biblical_books.chapter_count` durante la importación, ya que una restricción `check` no puede consultar otra tabla.
+   - códigos de libros como `text references public.biblical_books(code)`.
+2. PostgreSQL 17 admite `unique nulls not distinct`.
+3. El valor inicial de `review_status` debe ser `pending`.
+4. `provider_version` debe ser nullable.
+5. Cada política de lectura debe exigir entidad aprobada y habilitada, fuente aprobada y habilitada, y cuenta activa.
+6. Para fuentes geográficas o cronológicas, la publicación debe exigir además `license_status in ('verified', 'varies_by_item')`; una fuente `pending` o `restricted` no debe alimentar resultados visibles.
+7. `content_hash` propio debe ser obligatorio para lugares, periodos, eventos y relaciones.
+8. La validación de capítulos debe comparar con `biblical_books.chapter_count` en el importador transaccional.
+9. `anon` no debe recibir privilegios.
+10. `authenticated` debe recibir únicamente `SELECT`.
+11. `service_role` conservará la capacidad de importación y administración.
+12. Los triggers `updated_at` deben usar `extensions.moddatetime('updated_at')`.
 
-## Funciones y triggers reutilizables
+## Contrato RLS propuesto
 
-No se encontró en el esquema `public` una función cuyo nombre indique manejo uniforme de `updated_at`, fuentes o entidades bíblicas.
-
-Existe al menos un trigger de otra tabla que usa la función de extensión:
+Para cada tabla principal del piloto, la política de lectura autenticada debe exigir:
 
 ```sql
-moddatetime('updated_at')
+enabled
+and review_status = 'approved'
+and (select public.cuenta_activa())
+and exists (
+  select 1
+  from public.biblical_sources source
+  where source.id = source_id
+    and source.enabled
+    and source.review_status = 'approved'
+    and source.license_status in ('verified', 'varies_by_item')
+)
 ```
 
-Por tanto, una migración candidata debe confirmar primero que la extensión que aporta `moddatetime` está instalada en el entorno de validación. No se diseñará una función duplicada mientras ese mecanismo pueda reutilizarse.
+Las tablas de relación deben comprobar también que sus entidades padre sean visibles. No se crearán políticas de inserción, actualización o eliminación para clientes.
 
-## Ajustes obligatorios al diseño documental
+## Resultado
 
-Antes de convertir el DDL en migración candidata:
+La inspección requerida quedó cerrada. El diseño puede avanzar a una migración candidata fuera de producción, siempre que:
 
-- sustituir el vocabulario de revisión por el ya existente en las tablas bíblicas;
-- hacer `provider_version` nullable;
-- conservar `content_hash` obligatorio para las nuevas entidades;
-- validar capítulos contra `chapter_count` en el importador transaccional;
-- usar `moddatetime('updated_at')` solo tras confirmar la extensión;
-- definir políticas RLS según los patrones reales del corpus bíblico, sin copiar automáticamente `force row level security`;
-- verificar políticas y privilegios actuales de tablas equivalentes antes de cerrar el contrato.
+- no se aplique al proyecto activo;
+- se valide en PostgreSQL 17;
+- incluya pruebas de rollback, RLS, privilegios, restricciones, hashes e idempotencia;
+- no importe datos de Roma todavía;
+- no conecte cronologías o mapas a IA.
 
-## Siguiente inspección segura
+## Siguiente incremento seguro
 
-Leer en modo de solo lectura:
-
-- las políticas RLS efectivas de `biblical_sources`, `biblical_books`, `biblical_context_units` y `biblical_context_fragments`;
-- los privilegios concedidos a `anon`, `authenticated` y `service_role`;
-- la extensión que proporciona `moddatetime`;
-- los valores `check` exactos de `review_status` y `license_status`.
-
-Con esos datos podrá generarse una migración candidata alineada con producción y probarse en PostgreSQL 17 fuera de producción, sin aplicarla todavía al proyecto activo.
+Construir una migración candidata versionada y una matriz automatizada de pruebas para PostgreSQL 17 fuera de producción. La migración debe crear únicamente la estructura vacía del piloto y permanecer sin aplicar a Supabase productivo hasta superar la auditoría técnica y quedar registrada en `__VIDA_INTERNACIONAL.md`.
