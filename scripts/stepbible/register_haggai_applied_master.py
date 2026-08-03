@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Registra la aplicación controlada de Hageo en el documento maestro."""
+# Cambio de sincronización para ejecutar el cierre documental del PR.
 from pathlib import Path
 
 MASTER = Path("__VIDA_INTERNACIONAL.md")
