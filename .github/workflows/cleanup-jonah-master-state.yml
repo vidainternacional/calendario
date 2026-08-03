@@ -1,4 +1,4 @@
-name: Validar estado maestro de Jonás
+name: Validar estado del documento maestro
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "__VIDA_INTERNACIONAL.md"
+      - ".github/workflows/cleanup-jonah-master-state.yml"
   workflow_dispatch:
 
 permissions:
@@ -16,17 +17,33 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Rechazar instrucciones superadas de Jonás
+      - name: Validar estado vigente de FASE D
         run: |
           python - <<'PY'
           from pathlib import Path
+
           text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
-          obsolete = 'El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico'
+
+          obsolete = (
+              'El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta '
+              'de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico'
+          )
           if obsolete in text:
               raise SystemExit('El documento maestro conserva una instrucción obsoleta de Jonás')
-          current = 'El siguiente incremento autorizado es validar funcionalmente Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo'
-          if text.count(current) != 1:
-              raise SystemExit('El documento maestro no contiene una única instrucción vigente de Jonás')
-          print('Estado maestro de Jonás: OK')
+
+          required = [
+              'Fase activa: **FASE D — IA Bíblica Avanzada**',
+              '| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 5** |',
+              '### Avance confirmado del Bloque 5 — piloto de Roma aplicado y auditado',
+              '**Siguiente punto autorizado:** diseñar y validar fuera de producción la recuperación exclusivamente desde servidor y el contrato de lectura para cronologías y mapas, limitado inicialmente al piloto de Roma.'
+          ]
+          missing = [value for value in required if text.count(value) != 1]
+          if missing:
+              raise SystemExit(f'Estado maestro inválido o duplicado: {missing}')
+
+          if 'Bloque 6 — IA bíblica avanzada y proveedores: **ACTIVO**' in text:
+              raise SystemExit('El Bloque 6 no está autorizado')
+
+          print('Documento maestro de FASE D: OK')
           PY
           git diff --check
