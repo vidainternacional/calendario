@@ -1,3 +1,4 @@
+# Ejecución temporal única; el PR #167 elimina este workflow.
 name: Materializar validación visual de Roma
 
 on:
