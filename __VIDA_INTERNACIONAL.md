@@ -1609,3 +1609,29 @@ Archivos:
 No se importaron datos, no se conectó la interfaz y no se avanzó al Bloque 6.
 
 **Siguiente punto autorizado:** diseñar y validar fuera de producción un importador idempotente para este paquete y un plan de recuperación de datos. El importador debe resolver relaciones por slugs, verificar fuente, licencia, hashes y conteos, mantener las entidades deshabilitadas durante la carga y abortar toda la transacción ante cualquier diferencia. No ejecutar todavía la importación en Supabase. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
+
+### Avance confirmado del Bloque 5 — importador candidato de Roma validado
+
+El importador candidato y su recuperación quedaron validados fuera de producción mediante el PR #152 y el commit de fusión `5c8e63d0d7218abba32f7e0aea1209430094d6f5`.
+
+Resultado:
+
+- importador SQL candidato aislado fuera de `supabase/migrations`;
+- recuperación condicionada a filas `pending` y deshabilitadas;
+- primera importación validada en PostgreSQL 17;
+- segunda ejecución idempotente, sin duplicados y con UUID estables;
+- filas invisibles mediante RLS mientras continúan pendientes y deshabilitadas;
+- recuperación completa validada;
+- fuente Pleiades y fragmentos históricos preservados;
+- CI temporal y workflow específico de Roma en `success`;
+- cero datos de Roma importados en Supabase.
+
+Archivos:
+
+- `docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql`;
+- `docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql`;
+- `scripts/fase_d/validate_rome_data_import_candidate.sql`;
+- `docs/FASE_D_BLOQUE_5_IMPORTADOR_CANDIDATO_ROMA.md`.
+
+**Siguiente punto autorizado:** preparar una migración activa revisable para importar exclusivamente el paquete piloto fijado de Roma, manteniendo todas las filas `pending` y deshabilitadas, junto con una migración de recuperación equivalente. No aplicar ninguna de las dos a Supabase, no habilitar filas, no conectar la interfaz y no avanzar al Bloque 6 hasta completar una validación específica y registrar una autorización posterior en este documento maestro. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
+
