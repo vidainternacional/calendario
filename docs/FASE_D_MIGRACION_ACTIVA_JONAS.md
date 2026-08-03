@@ -71,15 +71,18 @@ Conteos comprometidos:
 
 - PR: #124;
 - workflow: `Validar migración activa TAHOT de Jonás`;
-- ejecución inicial: `30791049474` — `success`;
-- artefacto: `stepbible-jonah-active-migration-validation`;
-- ID: `8847053282`;
-- digest: `sha256:bdded51bb186f9bbea90ef7cb61d0f88befa3e7fbf0c80ba09dd4c28e24b9aaa`;
+- ejecución inicial con conversión mecánica: `30791049474` — `success`;
+- artefacto inicial: ID `8847053282`;
+- digest inicial: `sha256:bdded51bb186f9bbea90ef7cb61d0f88befa3e7fbf0c80ba09dd4c28e24b9aaa`;
+- ejecución limpia sin borrador ni materializadores: `30791535253` — `success`;
+- artefacto limpio: `stepbible-jonah-active-migration-validation`;
+- ID limpio: `8847231985`;
+- digest limpio: `sha256:5e17db7a4f09591b7830eef85f6ce9056dae94fe4d3e2a21e7cfc98f37526392`;
 - estado: `validated_outside_production`.
 
-## Limpieza prevista
+## Limpieza completada
 
-Antes de fusionar se retirarán:
+Se retiraron:
 
 - el borrador de migración;
 - el activador mecánico;
@@ -87,10 +90,10 @@ Antes de fusionar se retirarán:
 - el workflow temporal de materialización;
 - el workflow sustituido de validación del borrador.
 
-El repositorio conservará una única ruta activa: migración, prueba y workflow permanente.
+El repositorio conserva una única ruta activa: migración, prueba y workflow permanente.
 
 ## Alcance y siguiente paso
 
 No se aplicó la migración a Supabase, no se importó Jonás y no se modificaron RLS, interfaz o producción.
 
-Después de validar el commit limpio, la migración activa podrá quedar autorizada para aplicación controlada en Supabase. No debe aplicarse hasta que `__VIDA_INTERNACIONAL.md` registre explícitamente esa autorización.
+La migración activa quedó aprobada para aplicación controlada. El siguiente incremento autorizado será aplicar esta migración exacta en Supabase, importar únicamente Jonás y realizar una auditoría independiente. No solicitar validación visual hasta completar y registrar esa auditoría técnica.
