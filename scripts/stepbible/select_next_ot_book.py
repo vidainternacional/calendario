@@ -12,8 +12,8 @@ from typing import Any
 import inspect_ot_sources as sources
 from extract_ot_book import parse_row
 
-EXCLUDED_BOOKS = {"Oba", "Rut", "Hag"}
-SELECTION_ORDINAL = "cuarto"
+EXCLUDED_BOOKS = {"Oba", "Rut", "Hag", "Nam"}
+SELECTION_ORDINAL = "quinto"
 
 
 def risk_key(item: dict[str, Any]) -> tuple[int, ...]:
@@ -233,8 +233,8 @@ def self_test() -> None:
     }
     if not risk_key(safe_small) < risk_key(risky_smaller):
         raise RuntimeError("La política no prioriza seguridad sobre tamaño")
-    if EXCLUDED_BOOKS != {"Oba", "Rut", "Hag"}:
-        raise RuntimeError("La selección no excluye exactamente los tres libros aprobados")
+    if EXCLUDED_BOOKS != {"Oba", "Rut", "Hag", "Nam"}:
+        raise RuntimeError("La selección no excluye exactamente los cuatro libros aprobados")
     print("Auto-test de selección TAHOT: OK")
 
 

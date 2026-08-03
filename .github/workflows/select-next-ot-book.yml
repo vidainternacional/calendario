@@ -1,4 +1,4 @@
-name: Seleccionar cuarto libro TAHOT
+name: Seleccionar quinto libro TAHOT
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
     paths:
       - "scripts/stepbible/select_next_ot_book.py"
       - ".github/workflows/select-next-ot-book.yml"
-      - "docs/FASE_D_SELECCION_CUARTO_LIBRO.md"
+      - "docs/FASE_D_SELECCION_QUINTO_LIBRO.md"
   workflow_dispatch:
 
 permissions:
@@ -33,12 +33,12 @@ jobs:
       - name: Auditar candidatos
         run: |
           python scripts/stepbible/select_next_ot_book.py \
-            --output artifacts/fourth-ot-book
+            --output artifacts/fifth-ot-book
           git diff --check
 
       - uses: actions/upload-artifact@v4
         with:
-          name: stepbible-fourth-ot-book-selection
-          path: artifacts/fourth-ot-book/
+          name: stepbible-fifth-ot-book-selection
+          path: artifacts/fifth-ot-book/
           if-no-files-found: error
           retention-days: 14
