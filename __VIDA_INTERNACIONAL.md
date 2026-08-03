@@ -426,6 +426,46 @@ Validación:
 
 El SQL continúa en `supabase/migration-drafts`; no se modificó Supabase, la interfaz ni producción durante esta validación.
 
-El Bloque 4 continúa activo. El siguiente recorrido es convertir el borrador validado en migración activa, aplicarla de forma controlada a Supabase y realizar una auditoría posterior independiente de conteos, permisos, hashes y recuperación desde el servidor. No se ampliará a otros libros hasta validar Obadías en la aplicación.
+### Avance confirmado del Bloque 4 — Abdías aplicado y validado en la aplicación
+
+El primer libro completo del Antiguo Testamento quedó importado, recuperable desde el servidor y validado funcionalmente en la aplicación.
+
+Resultado técnico:
+
+- textos de versículo: 21;
+- palabras visibles: 291;
+- ocurrencias morfológicas: 434;
+- identificadores léxicos usados: 184;
+- variantes estructuradas: 3;
+- lotes: 1;
+- hashes inválidos: 0;
+- campos editoriales españoles inventados: 0;
+- segunda ejecución idempotente sin duplicados.
+
+Seguridad y recuperación:
+
+- recuperación únicamente mediante código `server-only` y Server Actions;
+- usuario autenticado y cuenta activa obligatorios;
+- RLS conserva lectura únicamente de contenido aprobado;
+- `anon` y `authenticated` no pueden ejecutar el importador;
+- `service_role` conserva el único permiso de ejecución.
+
+Validación funcional:
+
+- se corrigió la resolución entre el nombre canónico español `Abdías` y las denominaciones `Obadías`/`Obadias` usadas por la interfaz;
+- Abdías 1:1 fue confirmado en producción con texto hebreo RTL, transliteración, 18 palabras base, análisis palabra por palabra, fuente, licencia y contexto;
+- las 21 referencias del libro están disponibles para consulta;
+- Abdías 1:8 conserva la variante ortográfica;
+- Abdías 1:11 conserva Qere como lectura principal y Ketiv como variante separada;
+- el usuario confirmó la visualización funcional el 2026-08-02.
+
+Evidencia:
+
+- PR #67 y commit `8705ffd9044bacec0d15495ca0b82c186cf53455`;
+- PR #68 y commit `d4ce2f1f172bd8f178fcc5b8421bc76826977b4b`;
+- migraciones `importador_payload_tahot_obadias` y `agregar_alias_obadias_a_abdias`;
+- `docs/FASE_D_APLICACION_OBADIAS_SUPABASE.md`.
+
+El Bloque 4 continúa activo. El siguiente incremento autorizado es preparar una ampliación controlada del corpus textual del Antiguo Testamento reutilizando el importador validado, comenzando por un libro pequeño y sin avanzar todavía al Bloque 5.
 
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
