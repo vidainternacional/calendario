@@ -16,6 +16,13 @@ from tahot_components import row_components
 HEBREW_RE = re.compile(r"[\u0590-\u05ff]")
 WITNESS_RE = re.compile(r"(?:^|;)\s*([A-Za-z0-9]+)\s*=")
 
+# Rut ya fue importado y aprobado con el tratamiento histórico que conserva
+# K junto a los demás testigos ortográficos. La excepción se fija por la
+# huella exacta del paquete; cualquier paquete nuevo usa la separación correcta.
+LEGACY_COMBINED_QERE_SPELLING_PACKAGE_SHAS = {
+    "80a79abd038de9159a90e7aa572f1d4ff6a0c7f1ca8bfb4195875ffd5a7ca20c",
+}
+
 
 def canonical_json(value: Any) -> str:
     return json.dumps(
@@ -259,11 +266,17 @@ def build(
                     for witness, _body in witness_fragments(meaning_evidence)
                 )
             )
+            split_spelling_ketiv = (
+                row["textual_status"] == "qere"
+                and spelling_has_k
+                and package_sha
+                not in LEGACY_COMBINED_QERE_SPELLING_PACKAGE_SHAS
+            )
 
             if spelling_evidence:
                 orthographic_evidence = (
                     witness_summary_for(spelling_evidence, exclude={"K"})
-                    if row["textual_status"] == "qere" and spelling_has_k
+                    if split_spelling_ketiv
                     else spelling_evidence
                 )
                 if orthographic_evidence:
@@ -294,11 +307,7 @@ def build(
                     )
                 )
 
-            if (
-                row["textual_status"] == "qere"
-                and spelling_has_k
-                and not meaning_has_k
-            ):
+            if split_spelling_ketiv and not meaning_has_k:
                 if meaning_evidence:
                     raise ValueError(
                         "Fila Qere con variante de significado no-K y Ketiv "
@@ -440,6 +449,11 @@ def build(
 def self_test() -> None:
     if spelling_reading("L= שְׁעָרָ֗/ו ¦ ;") != "שְׁעָרָ֗ו":
         raise RuntimeError("No se extrajo la lectura ortográfica")
+    if (
+        "80a79abd038de9159a90e7aa572f1d4ff6a0c7f1ca8bfb4195875ffd5a7ca20c"
+        not in LEGACY_COMBINED_QERE_SPELLING_PACKAGE_SHAS
+    ):
+        raise RuntimeError("No se preservó la compatibilidad del paquete de Rut")
     mixed_spelling = "L= לַֽעֲבָור;K= לַעֲבוֹר"
     if witness_summary_for(mixed_spelling, exclude={"K"}) != "L=לַֽעֲבָור":
         raise RuntimeError("No se aisló la evidencia ortográfica no-K")
