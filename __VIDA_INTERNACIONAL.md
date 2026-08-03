@@ -973,6 +973,34 @@ Evidencia:
 
 No se construyó payload, no se modificó el importador y no se escribió en Supabase, RLS, interfaz o producción.
 
-El Bloque 4 continúa activo. El siguiente incremento autorizado es inspeccionar los componentes léxicos de Nahúm y fijar únicamente los lemas canónicos de afijos que la fuente no expresa en hebreo. No construir payload ni importar Nahúm hasta completar y registrar esa política.
+### Avance confirmado del Bloque 4 — política canónica de afijos de Nahúm
+
+El paquete reproducible de Nahúm fue inspeccionado componente por componente antes de construir un payload.
+
+Resultado:
+
+- identificadores léxicos distintos: 387;
+- con lema hebreo explícito en la fuente: 373;
+- requieren política canónica explícita: 14;
+- conflictos de lema fuente: 0;
+- identificadores requeridos y proporcionados: 14 de 14;
+- claves faltantes: 0;
+- claves sobrantes: 0;
+- valores inválidos o no hebreos: 0;
+- estado: `approved_for_payload_build`.
+
+Trece decisiones reutilizan lemas ya aprobados y habilitados en el catálogo textual. `H9040 → ־נִי` es la única decisión nueva y se restringe a dos ocurrencias `Sp1bs`, ambas con forma `נִי`.
+
+Evidencia:
+
+- PR #100;
+- workflow `Inspeccionar política de afijos de Nahúm`;
+- ejecución final `30781392252` — `success`;
+- artefacto final `nahum-affix-policy-inspection`;
+- `docs/FASE_D_POLITICA_AFIJOS_NAHUM.md`.
+
+No se construyó payload, no se modificó el importador y no se escribió en Supabase, RLS, interfaz o producción.
+
+El Bloque 4 continúa activo. El siguiente incremento autorizado es construir fuera de producción un payload determinista de Nahúm y auditar conteos, hashes, variantes, Qere/Ketiv y campos editoriales. No importar Nahúm ni activar migraciones hasta validar ese payload y registrar el resultado.
 
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
