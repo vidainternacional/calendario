@@ -874,8 +874,29 @@ Evidencia:
 - digest `sha256:b6365795fd24f1828680bd68f649508fa177e68f7189dfbe75f37d18b90d2a02`;
 - `docs/FASE_D_APLICACION_HAGEO_SUPABASE.md`.
 
-El Bloque 4 continúa activo. El siguiente punto pendiente es la validación funcional manual de Hageo en Biblia → Estudio y Estudio Profundo, incluyendo texto hebreo RTL, transliteración, agrupación palabra por palabra, Strong, lemas, morfología y las variantes de Hageo 1:8 y 1:10. Después deberá verificarse la regresión de Abdías, Rut y Juan 3:16.
+### Avance confirmado del Bloque 4 — validación funcional de Hageo aprobada
 
-No ampliar a otro libro ni avanzar al Bloque 5 hasta registrar esa validación funcional.
+La validación manual de Hageo fue aprobada por el usuario el 2026-08-02.
+
+Cobertura confirmada:
+
+- Hageo 1:1: hebreo RTL, 28 palabras base, transliteración, Strong, lema, morfología, fuente y licencia;
+- Hageo 1:8: 11 palabras base, variante ortográfica y sustitución Qere/Ketiv en la palabra 9, sin duplicar el texto principal;
+- Hageo 1:10: 9 palabras base y una variante ortográfica en la palabra 5;
+- Hageo 2:23: 20 palabras base, análisis completo y ausencia correcta de variantes;
+- Hageo 1:1, 1:8 y 1:10 recuperados correctamente en Estudio Profundo;
+- regresión aprobada para Rut 3:12, Abdías 1:1 y Juan 3:16;
+- sin pantallas en blanco, cargas infinitas, desbordamiento lateral ni cambios no aprobados de interfaz.
+
+La indicación «Secuencia literal de glosas: No disponible» permanece deliberadamente cuando la capa editorial española no ha sido revisada.
+
+Evidencia permanente:
+
+- PR #89 y documento `docs/FASE_D_APLICACION_HAGEO_SUPABASE.md` para la aplicación y auditoría técnica;
+- validación funcional aprobada por el usuario el 2026-08-02.
+
+La importación, auditoría técnica, recuperación segura y visualización funcional de Hageo están completas.
+
+El Bloque 4 continúa activo. El siguiente incremento autorizado es ejecutar una auditoría reproducible de solo lectura sobre los libros restantes de TAHOT y seleccionar el cuarto libro según la política ya aprobada de integridad estructural y menor riesgo editorial. No generar paquete, payload o migración ni escribir en Supabase hasta registrar esa selección.
 
 No avanzar al Bloque 5 hasta que el modelo, las fuentes, la recuperación segura y la visualización funcional de las herramientas ampliadas estén documentados y validados en producción.
