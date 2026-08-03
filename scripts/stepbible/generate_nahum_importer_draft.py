@@ -71,7 +71,10 @@ def build_draft(active_text: str) -> str:
          'variant_reading',variant->>'variant_reading',
          'witnesses',variant->'witnesses',
          'content_hash',variant->>'content_hash'
-       ) order by variant->>'variant_key'
+       ) order by
+         (variant->>'chapter')::integer,
+         (variant->>'verse')::integer,
+         variant->>'reading_type'
      ) from jsonb_array_elements(p_payload->'variants') variant)
        <> $expected${EXPECTED_VARIANTS_JSON}$expected$::jsonb
     or (select count(*) from jsonb_array_elements(p_payload->'variants') variant
@@ -160,7 +163,13 @@ def self_test() -> None:
         "  if v_book_code='HAG' then null; end if;\n"
     ) + "$haggai$;\n"
     generated = build_draft(synthetic)
-    for required in ("BORRADOR NO ACTIVO", "v_book_code='NAM'", "Variantes inválidas para Nahúm", BASE_FUNCTION_SHA256):
+    for required in (
+        "BORRADOR NO ACTIVO",
+        "v_book_code='NAM'",
+        "Variantes inválidas para Nahúm",
+        "(variant->>'chapter')::integer",
+        BASE_FUNCTION_SHA256,
+    ):
         if required not in generated:
             raise RuntimeError(f"Borrador sintético incompleto: {required}")
     print("Auto-test del generador de importador de Nahúm: OK")

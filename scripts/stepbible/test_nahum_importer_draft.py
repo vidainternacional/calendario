@@ -150,6 +150,7 @@ def main() -> int:
     parser.add_argument("--draft", type=Path, required=True)
     parser.add_argument("--package", type=Path, required=True)
     parser.add_argument("--payload", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
     draft_text = args.draft.read_text(encoding="utf-8")
@@ -179,6 +180,8 @@ def main() -> int:
             cur.execute(args.haggai_migration.read_text(encoding="utf-8"))
             assert function_sha(cur) == BASE_FUNCTION_SHA256
             cur.execute(draft_text)
+            installed_function_sha = function_sha(cur)
+            assert installed_function_sha != BASE_FUNCTION_SHA256
             assert_permissions(cur)
             cur.execute(
                 "select strpos(pg_get_functiondef(%s::regprocedure),%s)>0",
@@ -244,17 +247,25 @@ def main() -> int:
             )
             assert cur.fetchone()[0] == SOURCE_FILES
 
-    print(json.dumps({
+    result = {
         "draft_migration": "passed",
         "invalid_payload_rejected": True,
         "rollback": "passed",
         "idempotency": "passed",
         "permissions": "service_role_only",
+        "base_function_sha256": BASE_FUNCTION_SHA256,
+        "installed_function_sha256": installed_function_sha,
         "committed_counts": committed,
         "package_sha256": PACKAGE_SHA256,
         "payload_file_sha256": PAYLOAD_FILE_SHA256,
         "payload_sha256": PAYLOAD_SHA256,
-    }, ensure_ascii=False, indent=2))
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 

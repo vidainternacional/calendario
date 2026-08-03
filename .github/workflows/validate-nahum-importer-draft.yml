@@ -85,7 +85,8 @@ jobs:
             --draft supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql \
             --package artifacts/nahum-importer/nam.json.gz \
             --payload artifacts/nahum-importer/import-payload.json \
-            | tee artifacts/nahum-importer/importer-validation.json
+            --output artifacts/nahum-importer/importer-validation.json
+          cat artifacts/nahum-importer/importer-validation.json
           git diff --check
       - uses: actions/upload-artifact@v4
         with:
