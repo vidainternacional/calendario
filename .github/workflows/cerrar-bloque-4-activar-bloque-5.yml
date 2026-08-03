@@ -1,0 +1,39 @@
+name: Cerrar Bloque 4 y activar Bloque 5
+
+on:
+  push:
+    branches:
+      - agent/fase-d-cerrar-bloque-4-activar-bloque-5
+    paths:
+      - scripts/fase_d/cerrar_bloque_4_activar_bloque_5.py
+      - .github/workflows/cerrar-bloque-4-activar-bloque-5.yml
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar-maestro:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Actualizar documento maestro
+        run: python3 scripts/fase_d/cerrar_bloque_4_activar_bloque_5.py
+
+      - name: Verificar estado esperado
+        run: |
+          grep -q "ACTIVA — BLOQUE 5" __VIDA_INTERNACIONAL.md
+          grep -q "Bloque 4 queda oficialmente" __VIDA_INTERNACIONAL.md
+          grep -q "Bloque 5 — Cronologías y mapas" __VIDA_INTERNACIONAL.md
+          git diff --check
+
+      - name: Commit del documento maestro
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs(fase-d): cerrar Bloque 4 y activar Bloque 5"
+          git push
