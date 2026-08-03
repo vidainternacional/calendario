@@ -1407,7 +1407,19 @@ Evidencia:
 - ejecuciones limpias `30791489223` y `30791535253` — `success`;
 - `docs/FASE_D_MIGRACION_ACTIVA_JONAS.md`.
 
-La migración todavía no se ha aplicado a Supabase y Jonás no se ha importado en producción.
+### Avance confirmado del Bloque 4 — Jonás importado y auditado en producción
+
+La migración activa fue aplicada de forma controlada y el payload canónico fue importado dos veces con resultado idempotente.
+
+Resultado: 48 textos, 688 palabras visibles, 1,080 ocurrencias, 288 identificadores léxicos, 0 variantes, 1 lote, 0 hashes inválidos y 0 campos editoriales españoles no revisados.
+
+La función activa conserva SHA-256 `0d65c4d8e8ac81368cea6e5b6fd3fb104156cc3e3e3f299426b20752eef7f062`. Abdías, Rut, Hageo y Nahúm conservaron sus conteos. Se reutilizaron 171 entradas sin modificación y se crearon 117 nuevas, sin duplicados.
+
+RLS permanece activo; `anon` y `authenticated` no pueden ejecutar el importador; `service_role` es el único rol autorizado. Los RPC temporales fueron retirados, la función temporal quedó inerte con JWT y la prueba de recuperación pasó con reversión completa.
+
+Evidencia: `docs/FASE_D_JONAS_PRODUCCION.md`.
+
+El siguiente incremento autorizado es validar funcionalmente Jonás con una sesión autenticada en Biblia → Estudio y Estudio Profundo, comprobar la recuperación segura y registrar evidencia visual puntual. No avanzar a otro libro ni al Bloque 5 hasta completar esa validación.
 
 El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico y ejecutar una auditoría independiente de conteos, hashes, permisos, RLS, recuperación y seguridad. No solicitar validación visual hasta completar y registrar esa auditoría técnica.
 
