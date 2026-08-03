@@ -8,6 +8,8 @@ on:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
       - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+      - supabase/migrations/20260803162000_import_rome_pilot_v1.sql
+      - supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
       - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
       - docs/FASE_D_BLOQUE_5_IMPORTADOR_CANDIDATO_ROMA.md
       - data/fase_d/rome_pilot/rome_pilot_v1.json
@@ -23,11 +25,14 @@ on:
       - agent/fase-d-bloque-5-migracion-activa-roma
       - agent/fase-d-bloque-5-paquete-piloto-roma
       - agent/fase-d-bloque-5-importador-candidato-roma
+      - agent/fase-d-migraciones-activas-roma
     paths:
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
       - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
       - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+      - supabase/migrations/20260803162000_import_rome_pilot_v1.sql
+      - supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
       - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
       - docs/FASE_D_BLOQUE_5_IMPORTADOR_CANDIDATO_ROMA.md
       - data/fase_d/rome_pilot/rome_pilot_v1.json
@@ -65,14 +70,18 @@ jobs:
       PGDATABASE: vida_schema_test
     steps:
       - uses: actions/checkout@v4
-      - name: Confirmar equivalencia de la migración activa
+      - name: Confirmar equivalencia de migraciones activas
         run: |
-          tail -n +6 docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql > /tmp/candidate.sql
-          tail -n +6 supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql > /tmp/active.sql
-          diff -u /tmp/candidate.sql /tmp/active.sql
+          tail -n +6 docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql > /tmp/schema-candidate.sql
+          tail -n +6 supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql > /tmp/schema-active.sql
+          diff -u /tmp/schema-candidate.sql /tmp/schema-active.sql
+          cmp docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql supabase/migrations/20260803162000_import_rome_pilot_v1.sql
+          cmp docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
           test "$(grep -ci '^create table public\.biblical_' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql)" -eq 4
           ! grep -Eiq '^[[:space:]]*insert[[:space:]]+into' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
           ! grep -Eiq '^[[:space:]]*(update|delete)[[:space:]]' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+          grep -q 'CANDIDATA DE IMPORTACIÓN NO AUTORIZADA PARA PRODUCCIÓN' supabase/migrations/20260803162000_import_rome_pilot_v1.sql
+          grep -q 'CANDIDATA DE RECUPERACIÓN NO AUTORIZADA PARA PRODUCCIÓN' supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
       - name: Instalar cliente PostgreSQL
         run: |
           sudo apt-get update
@@ -90,6 +99,7 @@ jobs:
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql
           test ! -e supabase/migrations/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql
+          test -e supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
           git diff --check
 
   validar-importador-y-recuperacion:
