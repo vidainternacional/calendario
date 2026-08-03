@@ -1,0 +1,38 @@
+name: Materializar migraciones activas de Roma
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .fase-d-materializar-migraciones-roma
+
+permissions:
+  contents: write
+
+jobs:
+  materializar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Crear copias exactas y retirar auxiliares
+        run: |
+          set -euo pipefail
+          mkdir -p supabase/migrations supabase/recovery
+          cp docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql \
+            supabase/migrations/20260803162000_import_rome_pilot_v1.sql
+          cp docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql \
+            supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
+          cmp docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_IMPORT_CANDIDATE.sql \
+            supabase/migrations/20260803162000_import_rome_pilot_v1.sql
+          cmp docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_DATA_RECOVERY_CANDIDATE.sql \
+            supabase/recovery/20260803162000_recover_rome_pilot_v1.sql
+          rm -f .fase-d-materializar-migraciones-roma
+          rm -f .github/workflows/materializar-migraciones-roma.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "feat(fase-d): materializar migraciones revisables de Roma"
+          git push
