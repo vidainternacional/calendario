@@ -151,7 +151,10 @@ $haggai$;
          'variant_reading',variant->>'variant_reading',
          'witnesses',variant->'witnesses',
          'content_hash',variant->>'content_hash'
-       ) order by variant->>'variant_key'
+       ) order by
+         (variant->>'chapter')::integer,
+         (variant->>'verse')::integer,
+         variant->>'reading_type'
      ) from jsonb_array_elements(p_payload->'variants') variant)
        <> $expected$[
   {"variant_key":"nam-1-3-04=Q(K)-orthographic","chapter":1,"verse":3,"anchor_word_index":4,"reading_type":"orthographic","base_reading":"וּגְדָל","variant_reading":"וּגְדָול־","witnesses":["L"],"content_hash":"9efe642d1d9a24992c94a52e80dc35d259c3faf9453875f976c25b3c20055d64"},
