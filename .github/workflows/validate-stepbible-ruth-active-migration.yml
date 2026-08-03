@@ -1,0 +1,78 @@
+name: Validar migración activa TAHOT de Rut
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/20260803011000_generalizar_importador_payload_tahot_rut.sql"
+      - "scripts/stepbible/test_ruth_active_migration.py"
+      - ".github/workflows/validate-stepbible-ruth-active-migration.yml"
+      - "scripts/stepbible/**"
+      - "tests/sql/obadiah_textual_schema_fixture.sql"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_ruth_active_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_ruth_active_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_ruth_active_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar cliente PostgreSQL
+        run: python -m pip install --disable-pip-version-check "psycopg[binary]==3.2.9"
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/build_tahot_import_payload.py --self-test
+      - name: Generar paquete y payload canónico de Rut
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/ruth-active
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/ruth-active/rut.json.gz \
+            --policy scripts/stepbible/ruth_affix_lemma_policy.json \
+            --output artifacts/ruth-active/import-payload.json
+          test "$(sha256sum artifacts/ruth-active/import-payload.json | cut -d' ' -f1)" = \
+            "454d57e805cd55eaf59d1d7635eb2fe913858ff03f293b18d0db315222178913"
+      - name: Validar migración, rechazo, rollback e idempotencia
+        run: |
+          python scripts/stepbible/test_ruth_active_migration.py \
+            --dsn "$TEST_DATABASE_URL" \
+            --fixture tests/sql/obadiah_textual_schema_fixture.sql \
+            --base-migration supabase/migrations/20260802232000_importador_payload_tahot_obadias.sql \
+            --active-migration supabase/migrations/20260803011000_generalizar_importador_payload_tahot_rut.sql \
+            --package artifacts/ruth-active/rut.json.gz \
+            --payload artifacts/ruth-active/import-payload.json \
+            | tee artifacts/ruth-active/active-migration-validation.json
+      - name: Subir evidencia
+        uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-ruth-active-migration-validation
+          path: |
+            supabase/migrations/20260803011000_generalizar_importador_payload_tahot_rut.sql
+            artifacts/ruth-active/manifest.json
+            artifacts/ruth-active/active-migration-validation.json
+          if-no-files-found: error
+          retention-days: 14
