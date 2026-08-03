@@ -81,6 +81,40 @@ type SolicitudCronologia = {
   limit?: number
 }
 
+type PeriodRow = {
+  slug: string
+  title: string
+  start_year: number | null
+  end_year: number | null
+  era: string
+  chronology_system: string
+  date_precision: PrecisionCronologica
+  certainty_level: CertezaCronologica
+  source_locator: string
+  provider_version: string | null
+  content_hash: string
+}
+
+type SourceRow = {
+  name: string
+  attribution: string
+  license_url: string | null
+}
+
+type PlaceRow = {
+  slug: string
+  canonical_name_es: string
+  alternate_names: string[] | null
+  place_kind: string
+  latitude: number | null
+  longitude: number | null
+  coordinate_precision: PrecisionCoordenada
+  certainty_level: CertezaCronologica
+  source_locator: string
+  provider_version: string | null
+  content_hash: string
+}
+
 type EventRow = {
   id: string
   slug: string
@@ -98,43 +132,15 @@ type EventRow = {
   source_locator: string
   provider_version: string | null
   content_hash: string
-  period: null | {
-    slug: string
-    title: string
-    start_year: number | null
-    end_year: number | null
-    era: string
-    chronology_system: string
-    date_precision: PrecisionCronologica
-    certainty_level: CertezaCronologica
-    source_locator: string
-    provider_version: string | null
-    content_hash: string
-  } | Array<Record<string, unknown>>
-  source: {
-    name: string
-    attribution: string
-    license_url: string | null
-  } | Array<Record<string, unknown>>
+  period: PeriodRow | PeriodRow[] | null
+  source: SourceRow | SourceRow[]
 }
 
 type RelationRow = {
   event_id: string
   relation_type: string
   sequence_order: number
-  place: {
-    slug: string
-    canonical_name_es: string
-    alternate_names: string[] | null
-    place_kind: string
-    latitude: number | null
-    longitude: number | null
-    coordinate_precision: PrecisionCoordenada
-    certainty_level: CertezaCronologica
-    source_locator: string
-    provider_version: string | null
-    content_hash: string
-  } | Array<Record<string, unknown>>
+  place: PlaceRow | PlaceRow[]
 }
 
 const EVENT_SELECT = `
@@ -161,9 +167,9 @@ const RELATION_SELECT = `
   )
 `
 
-function one<T>(value: T | Array<Record<string, unknown>> | null): T | null {
-  if (Array.isArray(value)) return (value[0] as T | undefined) ?? null
-  return value as T | null
+function one<T>(value: T | T[] | null): T | null {
+  if (Array.isArray(value)) return value[0] ?? null
+  return value
 }
 
 function normalizeBookCode(value: string) {
@@ -254,12 +260,12 @@ export async function listarCronologiaBiblicaParaReferencia(
   }
 
   const events = eventRows.slice(0, limit).flatMap((row): EventoCronologicoBiblico[] => {
-    const period = one<NonNullable<EventRow['period']>>(row.period)
-    const source = one<NonNullable<EventRow['source']>>(row.source)
+    const period = one(row.period)
+    const source = one(row.source)
     if (!source) return []
 
     const places = (relationsByEvent.get(row.id) ?? []).flatMap((relation) => {
-      const place = one<NonNullable<RelationRow['place']>>(relation.place)
+      const place = one(relation.place)
       if (!place) return []
       return [{
         relationType: relation.relation_type,
