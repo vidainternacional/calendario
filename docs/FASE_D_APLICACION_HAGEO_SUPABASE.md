@@ -120,17 +120,31 @@ No existen variantes de adición, omisión o transposición para este paquete.
 
 El asesor de seguridad no produjo hallazgos asociados al importador TAHOT, a sus tablas ni a los puentes temporales. Los avisos restantes pertenecen a áreas históricas fuera del alcance de este incremento.
 
-## Estado pendiente
+## Validación funcional aprobada
 
-Falta validar manualmente en producción:
+El usuario aprobó la validación manual completa el 2026-08-02.
 
-- Biblia → Estudio;
-- Estudio Profundo;
-- texto hebreo RTL y transliteración;
-- agrupación palabra por palabra;
-- Strong, lemas y morfología;
-- Hageo 1:8 con dos variantes;
-- Hageo 1:10 con su variante ortográfica;
-- regresión de Abdías, Rut y Juan 3:16.
+Cobertura confirmada en **Biblia → Estudio**:
 
-No ampliar a otro libro ni avanzar al Bloque 5 hasta registrar esa validación funcional.
+- Hageo 1:1: hebreo RTL, 28 palabras base, transliteración, Strong, lema, morfología, fuente y licencia;
+- Hageo 1:8: 11 palabras base, variante ortográfica y sustitución Qere/Ketiv ancladas en la palabra 9, sin duplicar el texto principal;
+- Hageo 1:10: 9 palabras base y una variante ortográfica anclada en la palabra 5;
+- Hageo 2:23: 20 palabras base, análisis completo y ausencia correcta de variantes.
+
+Cobertura confirmada en **Estudio Profundo**:
+
+- Hageo 1:1, 1:8 y 1:10 recuperados correctamente;
+- texto hebreo RTL, transliteración, agrupación palabra por palabra, Strong, lemas y morfología visibles;
+- las dos variantes de Hageo 1:8 y la variante de Hageo 1:10 coinciden con la evidencia aprobada;
+- fuente y licencia visibles.
+
+Regresiones aprobadas:
+
+- Rut 3:12 conserva 11 palabras y la adición Ketiv `אִם` sin palabra artificial;
+- Abdías 1:1 conserva sus 18 palabras y análisis completo;
+- Juan 3:16 conserva el análisis griego y sus herramientas textuales;
+- no hubo pantallas en blanco, cargas infinitas, desbordamiento lateral ni cambios no aprobados de interfaz.
+
+La indicación «Secuencia literal de glosas: No disponible» permanece deliberadamente cuando la capa editorial española todavía no ha sido revisada.
+
+La importación, auditoría técnica, recuperación segura y visualización funcional de Hageo están completas.
