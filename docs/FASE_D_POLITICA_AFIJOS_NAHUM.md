@@ -46,9 +46,9 @@ Este incremento no construye payload, no modifica el importador y no escribe en 
 
 Trece decisiones reutilizan lemas ya aprobados y habilitados en `biblical_lexical_entries`. La única decisión nueva, `H9040`, se limita a la forma y función morfológica observadas en Nahúm y no generaliza otros identificadores.
 
-## Cobertura requerida
+## Cobertura validada
 
-La validación automática debe confirmar:
+La validación automática confirmó:
 
 - identificadores requeridos: 14;
 - identificadores proporcionados: 14;
@@ -70,7 +70,13 @@ Inspección inicial:
 - ID: `8843700436`;
 - digest: `sha256:bd003decafd406eaca7f002055c050e86826e6b1bd5fcd588941f969d70c9cf1`.
 
-La ejecución final de cobertura se documentará después de validar el archivo `nahum_affix_lemma_policy.json` sobre el mismo paquete fijado.
+Validación final de cobertura:
+
+- ejecución: `30781338248` — `success`;
+- artefacto: `nahum-affix-policy-inspection`;
+- ID: `8843741189`;
+- digest: `sha256:7641c71b53fb1ae247e3e9a564a13bf358cfae7811181e3b13f6ebf5917ca9e8`;
+- resultado: `approved_for_payload_build`.
 
 ## Alcance y siguiente paso
 
@@ -82,4 +88,4 @@ Todavía no se ha:
 - escrito en Supabase;
 - cambiado RLS, interfaz o producción.
 
-Después de que la cobertura exacta apruebe, el siguiente incremento seguro será construir fuera de producción un payload determinista de Nahúm y auditar sus conteos, hashes, variantes y campos editoriales. No importar Nahúm hasta validar ese payload y su importador.
+La política quedó aprobada para la construcción del payload. El siguiente incremento seguro es construir fuera de producción un payload determinista de Nahúm y auditar sus conteos, hashes, variantes y campos editoriales. No importar Nahúm hasta validar ese payload y su importador.
