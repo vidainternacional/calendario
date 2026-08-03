@@ -1,0 +1,58 @@
+name: Inspeccionar política de afijos de Nahúm
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/inspect-nahum-affix-policy.yml"
+      - "scripts/stepbible/nahum_affix_lemma_policy.json"
+      - "docs/FASE_D_POLITICA_AFIJOS_NAHUM.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/inspect_tahot_affix_policy.py --self-test
+          python scripts/stepbible/validate_tahot_affix_policy.py --self-test
+      - name: Generar paquete fijado de Nahúm
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Nam \
+            --output artifacts/nahum-affixes
+          test "$(sha256sum artifacts/nahum-affixes/nam.json.gz | cut -d' ' -f1)" = \
+            "60e280a6d94abc8788b7cc9647e4dfa0f679e0a9708a1adf00be30abfc23b7f5"
+      - name: Inspeccionar lemas faltantes
+        run: |
+          python scripts/stepbible/inspect_tahot_affix_policy.py \
+            --package artifacts/nahum-affixes/nam.json.gz \
+            --output artifacts/nahum-affixes
+      - name: Validar política cuando exista
+        run: |
+          if test -f scripts/stepbible/nahum_affix_lemma_policy.json; then
+            python scripts/stepbible/validate_tahot_affix_policy.py \
+              --inspection artifacts/nahum-affixes/affix-policy-inspection.json \
+              --policy scripts/stepbible/nahum_affix_lemma_policy.json \
+              --output artifacts/nahum-affixes/affix-policy-validation.json
+          fi
+          git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nahum-affix-policy-inspection
+          path: artifacts/nahum-affixes/
+          if-no-files-found: error
+          retention-days: 14
