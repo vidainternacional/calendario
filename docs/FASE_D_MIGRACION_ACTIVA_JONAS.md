@@ -6,7 +6,7 @@ Fecha: 2026-08-02
 
 Convertir mecánicamente el borrador transaccional validado de Jonás en una migración activa versionada y repetir la validación completa en PostgreSQL 16 antes de cualquier aplicación en Supabase.
 
-Migración prevista:
+Migración versionada:
 
 `supabase/migrations/20260803063000_generalizar_importador_payload_tahot_jonas.sql`
 
@@ -19,7 +19,7 @@ La conversión cambia únicamente esta declaración:
 - origen: `BORRADOR NO ACTIVO`;
 - destino: `MIGRACIÓN ACTIVA`.
 
-El cuerpo SQL debe permanecer idéntico. El workflow genera una copia temporal desde el borrador y exige identidad byte a byte con la migración versionada.
+El cuerpo SQL permanece idéntico. El workflow generó la migración desde el borrador y la validación compara nuevamente ambos archivos byte a byte.
 
 ## Contrato fijado
 
@@ -54,4 +54,4 @@ La prueba PostgreSQL 16 debe confirmar:
 
 ## Estado
 
-La validación está en ejecución. La migración seguirá fuera de Supabase hasta que el mismo archivo versionado apruebe todos los controles anteriores y el documento maestro registre la autorización correspondiente.
+La migración activa ya fue materializada. La validación PostgreSQL 16 del archivo versionado está en ejecución. Supabase permanece sin cambios.
