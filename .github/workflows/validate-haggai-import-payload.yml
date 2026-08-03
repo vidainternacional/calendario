@@ -1,0 +1,80 @@
+name: Validar payload de importación de Hageo
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/audit_haggai_import_payload.py"
+      - ".github/workflows/validate-haggai-import-payload.yml"
+      - "docs/FASE_D_PAYLOAD_TAHOT_HAGEO.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/tahot_components.py
+          python scripts/stepbible/build_tahot_import_payload.py --self-test
+          python scripts/stepbible/audit_haggai_import_payload.py --self-test
+
+      - name: Generar paquete y payload A
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Hag \
+            --output artifacts/haggai-payload-a
+          test "$(sha256sum artifacts/haggai-payload-a/hag.json.gz | cut -d' ' -f1)" = \
+            "bc8e1caebce9a2e55d34b3be4770f3591e430b3aa217208324dee1bdbdd54e38"
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/haggai-payload-a/hag.json.gz \
+            --policy scripts/stepbible/haggai_affix_lemma_policy.json \
+            --output artifacts/haggai-payload-a/import-payload.json
+
+      - name: Generar paquete y payload B
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Hag \
+            --output artifacts/haggai-payload-b
+          python scripts/stepbible/build_tahot_import_payload.py \
+            artifacts/haggai-payload-b/hag.json.gz \
+            --policy scripts/stepbible/haggai_affix_lemma_policy.json \
+            --output artifacts/haggai-payload-b/import-payload.json
+
+      - name: Verificar reproducibilidad byte a byte
+        run: |
+          cmp artifacts/haggai-payload-a/import-payload.json \
+              artifacts/haggai-payload-b/import-payload.json
+          sha256sum artifacts/haggai-payload-a/import-payload.json \
+            | tee artifacts/haggai-payload-a/payload-file-sha256.txt
+
+      - name: Auditar payload
+        run: |
+          python scripts/stepbible/audit_haggai_import_payload.py \
+            --payload artifacts/haggai-payload-a/import-payload.json \
+            --output artifacts/haggai-payload-a/import-payload-audit.json
+          git diff --check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-haggai-import-payload
+          path: |
+            artifacts/haggai-payload-a/manifest.json
+            artifacts/haggai-payload-a/import-payload.json
+            artifacts/haggai-payload-a/import-payload-audit.json
+            artifacts/haggai-payload-a/payload-file-sha256.txt
+          if-no-files-found: error
+          retention-days: 14
