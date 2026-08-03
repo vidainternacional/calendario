@@ -1,6 +1,7 @@
 name: Validar payload de importación de Nahúm
 
 # Protege los payloads aprobados de Rut y Hageo mientras valida Nahúm.
+# El commit final no conserva marcadores ni parches temporales.
 on:
   pull_request:
     branches:
