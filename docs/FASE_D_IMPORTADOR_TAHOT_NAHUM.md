@@ -133,6 +133,8 @@ Ambos problemas fueron corregidos:
 - digest: `sha256:36559375e0893609faabf955593aa406c9c93abd0ddb5a407dcf2c8a34a066c5`;
 - estado: `validated_outside_production`.
 
+El marcador y el workflow usados para materializar el borrador fueron retirados antes de la validación final del PR.
+
 ## Alcance y siguiente paso
 
 No se creó una migración activa, no se aplicó el borrador y no se importó Nahúm en Supabase.
