@@ -1,0 +1,56 @@
+name: Inspeccionar política de afijos de Rut
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/inspect_tahot_affix_policy.py"
+      - ".github/workflows/inspect-ruth-affix-policy.yml"
+      - "docs/FASE_D_POLITICA_AFĲOS_RUT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/extract_ot_book.py --self-test
+          python scripts/stepbible/inspect_tahot_affix_policy.py --self-test
+
+      - name: Generar paquete de Rut
+        run: |
+          python scripts/stepbible/extract_ot_book.py \
+            --book Rut \
+            --output artifacts/tahot-ruth-policy
+
+      - name: Inspeccionar lemas que requieren política
+        run: |
+          python scripts/stepbible/inspect_tahot_affix_policy.py \
+            --package artifacts/tahot-ruth-policy/rut.json.gz \
+            --output artifacts/tahot-ruth-policy
+
+      - name: Mostrar informe
+        run: cat artifacts/tahot-ruth-policy/affix-policy-inspection.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ruth-affix-policy-inspection
+          path: |
+            artifacts/tahot-ruth-policy/affix-policy-inspection.json
+            artifacts/tahot-ruth-policy/affix-policy-inspection.md
+            artifacts/tahot-ruth-policy/manifest.json
+          if-no-files-found: error
+          retention-days: 14
