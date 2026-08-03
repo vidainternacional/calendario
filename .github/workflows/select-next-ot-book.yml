@@ -6,12 +6,13 @@ on:
       - main
     paths:
       - "scripts/stepbible/select_next_ot_book.py"
+      - "scripts/stepbible/enable_jonah_package.py"
       - ".github/workflows/select-next-ot-book.yml"
       - "docs/FASE_D_SELECCION_QUINTO_LIBRO.md"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -19,10 +20,21 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Habilitar Jonás en el extractor
+        run: |
+          if [ ! -f scripts/stepbible/enable_jonah_package.py ]; then
+            echo "Auxiliar retirado; no hay cambio pendiente"
+            exit 0
+          fi
+          python scripts/stepbible/enable_jonah_package.py
 
       - name: Ejecutar auto-tests
         run: |
@@ -42,3 +54,15 @@ jobs:
           path: artifacts/fifth-ot-book/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Versionar extractor
+        run: |
+          if git diff --quiet -- scripts/stepbible/extract_ot_book.py; then
+            echo "Sin cambios pendientes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/stepbible/extract_ot_book.py
+          git commit -m "feat(fase-d): habilitar paquete TAHOT de Jonás"
+          git push
