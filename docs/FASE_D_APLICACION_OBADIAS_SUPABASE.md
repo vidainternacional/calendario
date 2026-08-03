@@ -47,8 +47,20 @@ La segunda ejecución produjo los mismos conteos, confirmando idempotencia.
 
 - PR #67;
 - commit de fusión `8705ffd9044bacec0d15495ca0b82c186cf53455`;
-- migración Supabase `importador_payload_tahot_obadias` aplicada correctamente.
+- PR #68;
+- commit de fusión `d4ce2f1f172bd8f178fcc5b8421bc76826977b4b`;
+- migraciones Supabase `importador_payload_tahot_obadias` y `agregar_alias_obadias_a_abdias` aplicadas correctamente.
+
+## Validación funcional completada
+
+La recuperación desde servidor y la visualización fueron confirmadas en producción el 2026-08-02.
+
+- la diferencia entre el nombre canónico `Abdías` y las denominaciones `Obadías`/`Obadias` fue corregida mediante una migración idempotente de alias;
+- Abdías 1:1 muestra texto hebreo RTL, transliteración, 18 palabras base, análisis palabra por palabra, fuente, licencia y contexto;
+- las 21 referencias están disponibles;
+- Abdías 1:8 y 1:11 conservan sus variantes documentadas;
+- no se reimportaron datos ni se debilitó RLS.
 
 ## Siguiente paso
 
-Validar recuperación desde el servidor y visualización de Obadías en **Biblia → Estudio** y **Estudio Profundo**. El Bloque 4 permanece activo y no se debe avanzar al Bloque 5.
+Preparar una ampliación controlada del corpus textual del Antiguo Testamento reutilizando el importador validado, comenzando por un libro pequeño. El Bloque 4 permanece activo y no se debe avanzar al Bloque 5.
