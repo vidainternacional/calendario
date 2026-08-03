@@ -1,25 +1,24 @@
 name: Materializar validación visual de Roma
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - agent/fase-d-maestro-validacion-visual-roma
 
 permissions:
   contents: write
 
 jobs:
   materializar:
-    if: github.head_ref == 'agent/fase-d-maestro-validacion-visual-roma'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: agent/fase-d-maestro-validacion-visual-roma
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Registrar hito y retirar auxiliar
+      - name: Registrar hito y retirar auxiliares
         shell: bash
         run: |
           python - <<'PY'
@@ -59,12 +58,13 @@ No se amplió el catálogo de lugares y no se avanzó al Bloque 6.
 '''
           master.write_text(text.rstrip() + '\n', encoding='utf-8')
           PY
-          rm .github/workflows/materializar-validacion-visual-roma.yml
+          rm -f .github/workflows/materializar-validacion-visual-roma.yml
+          rm -f docs/.materializar-validacion-visual-roma
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add __VIDA_INTERNACIONAL.md .github/workflows/materializar-validacion-visual-roma.yml
+          git add __VIDA_INTERNACIONAL.md .github/workflows/materializar-validacion-visual-roma.yml docs/.materializar-validacion-visual-roma
           if git diff --cached --quiet; then
             exit 0
           fi
           git commit -m "docs(fase-d): registrar validación visual de Roma en maestro"
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin HEAD:agent/fase-d-maestro-validacion-visual-roma
