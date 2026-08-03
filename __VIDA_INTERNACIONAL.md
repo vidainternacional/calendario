@@ -1527,3 +1527,27 @@ Archivos:
 La candidata permanece fuera de `supabase/migrations`. No se aplicó DDL, no se importaron datos de Roma y no se modificó producción.
 
 **Siguiente punto autorizado:** preparar una migración activa revisable dentro del repositorio, conservando el esquema vacío y un plan de recuperación. No aplicarla a Supabase ni importar datos hasta completar una validación previa específica y registrar autorización posterior en este documento maestro. Las instrucciones anteriores del Bloque 5 quedan subordinadas a este estado más reciente.
+
+### Avance confirmado del Bloque 5 — migración activa y preaplicación de Roma
+
+La migración activa revisable del esquema vacío quedó fusionada mediante el PR #142 y el commit `936f1a1b1f06e4b3db7aca13e3e909e7c6c6aee6`.
+
+Resultado:
+
+- archivo activo: `supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql`;
+- plan de recuperación: `docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md`;
+- equivalencia con la candidata auditada confirmada;
+- CI temporal y PostgreSQL 17 en `success`;
+- cuatro tablas vacías y sin datos embebidos;
+- inspección de producción realizada exclusivamente en modo lectura;
+- PostgreSQL 17.6 confirmado;
+- las cuatro tablas aún no existen en producción;
+- `extensions.moddatetime` y `public.cuenta_activa` disponibles.
+
+Evidencia:
+
+- `docs/FASE_D_BLOQUE_5_PREAPLICACION_ROMA.md`.
+
+No se ejecutó DDL, no se aplicó la migración y no se importaron datos.
+
+**Bloqueo actual:** aplicar el esquema vacío a Supabase es una escritura de producción. No ejecutar la migración, `supabase db push` ni SQL equivalente sin autorización explícita del usuario. Una vez autorizada, aplicar únicamente esta migración, auditar inmediatamente tablas, RLS, privilegios, triggers y recuperación, y detenerse si cualquier validación falla. No importar todavía datos de Roma ni avanzar al Bloque 6.
