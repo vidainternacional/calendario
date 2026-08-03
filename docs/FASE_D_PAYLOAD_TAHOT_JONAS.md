@@ -91,11 +91,10 @@ La auditoría confirmó:
 - workflow: `Validar payload de importación de Jonás`;
 - primera ejecución: `30788630807`;
 - corrección del estado textual: ejecución `30788708776` — `success`;
-- artefacto: `stepbible-jonah-import-payload`;
-- ID: `8846214468`;
-- digest: `sha256:95f0f39b306c95d4792c1347d7144928fbe0f2d88ed6a1dddb07eed0db6150de`.
-
-La ejecución final que exige tamaño y SHA-256 exactos se registrará sobre el commit documentado.
+- validación exacta documentada: ejecución `30788854404` — `success`;
+- artefacto final: `stepbible-jonah-import-payload`;
+- ID: `8846266421`;
+- digest: `sha256:517574fa159fb46a39b951d1fdd90e7e4b2d19554932e24111491065137c3026`.
 
 ## Alcance y siguiente paso
 
