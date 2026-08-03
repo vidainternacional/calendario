@@ -1,0 +1,49 @@
+name: Validar migración activa de Roma
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+      - .github/workflows/validar-migracion-activa-roma.yml
+  push:
+    branches:
+      - agent/fase-d-bloque-5-migracion-activa-roma
+    paths:
+      - supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+      - docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql
+      - docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+      - .github/workflows/validar-migracion-activa-roma.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confirmar equivalencia con candidata aprobada
+        run: |
+          tail -n +6 docs/sql-candidates/FASE_D_BLOQUE_5_ROMA_SCHEMA_CANDIDATE.sql > /tmp/candidate.sql
+          tail -n +6 supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql > /tmp/active.sql
+          diff -u /tmp/candidate.sql /tmp/active.sql
+
+      - name: Confirmar esquema vacío y sin datos embebidos
+        run: |
+          test "$(grep -ci '^create table public\.biblical_' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql)" -eq 4
+          ! grep -Eiq '^[[:space:]]*insert[[:space:]]+into' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+          ! grep -Eiq '^[[:space:]]*(update|delete)[[:space:]]' supabase/migrations/20260803150000_biblical_chronologies_maps_schema.sql
+
+      - name: Confirmar plan de recuperación y prohibición de despliegue
+        run: |
+          grep -q 'No está autorizada para aplicarse a Supabase' docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+          grep -q 'drop table if exists public.biblical_timeline_event_places' docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+          grep -q 'queda prohibido ejecutar `supabase db push`' docs/FASE_D_BLOQUE_5_PLAN_RECUPERACION_MIGRACION_ROMA.md
+
+      - name: Verificar formato
+        run: git diff --check
