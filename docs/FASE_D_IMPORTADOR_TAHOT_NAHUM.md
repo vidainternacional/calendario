@@ -127,13 +127,13 @@ Ambos problemas fueron corregidos:
 
 - PR: #109;
 - workflow: `Validar importador transaccional de Nahúm`;
-- ejecución final: `30783024562` — `success`;
+- ejecución limpia: `30783144402` — `success`;
 - artefacto: `stepbible-nahum-importer-validation`;
-- ID: `8844300567`;
-- digest: `sha256:36559375e0893609faabf955593aa406c9c93abd0ddb5a407dcf2c8a34a066c5`;
+- ID: `8844339116`;
+- digest: `sha256:5ab2dcd687706b4d6ae05dcf4912f77086fdac6f627dc0b3a38a19518f0857ea`;
 - estado: `validated_outside_production`.
 
-El marcador y el workflow usados para materializar el borrador fueron retirados antes de la validación final del PR.
+El marcador y el workflow usados para materializar el borrador fueron retirados antes de esta ejecución limpia.
 
 ## Alcance y siguiente paso
 
