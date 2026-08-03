@@ -1,0 +1,43 @@
+name: Registrar aprobación funcional de Nahúm
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/.register-nahum-functional-approval"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Registrar aprobación
+        run: |
+          if [ ! -f scripts/stepbible/register_nahum_functional_approval.py ]; then
+            echo "Auxiliar retirado; no hay actualización pendiente"
+            exit 0
+          fi
+          python scripts/stepbible/register_nahum_functional_approval.py
+      - name: Versionar documentos
+        run: |
+          if git diff --quiet -- __VIDA_INTERNACIONAL.md docs/FASE_D_APLICACION_NAHUM_SUPABASE.md; then
+            echo "Sin cambios pendientes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md docs/FASE_D_APLICACION_NAHUM_SUPABASE.md
+          git commit -m "docs(fase-d): aprobar validación funcional de Nahúm"
+          git push
