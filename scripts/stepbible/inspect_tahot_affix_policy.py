@@ -10,7 +10,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from audit_obadiah_model import row_components
+from tahot_components import row_components
 
 HEBREW_RE = re.compile(r"[\u0590-\u05ff]")
 
