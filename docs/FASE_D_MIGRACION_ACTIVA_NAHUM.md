@@ -79,9 +79,12 @@ Las variantes permanecen distribuidas en:
 - PR: #113;
 - workflow: `Validar migración activa TAHOT de Nahúm`;
 - ejecución inicial con comprobación mecánica: `30783726966` — `success`;
-- artefacto: `stepbible-nahum-active-migration-validation`;
-- ID: `8844524932`;
-- digest: `sha256:2ddf30acf9901842992d50bf9ac3ae316472ab254b154ae3c2a852cec56c5586`;
+- artefacto inicial: ID `8844524932`;
+- digest inicial: `sha256:2ddf30acf9901842992d50bf9ac3ae316472ab254b154ae3c2a852cec56c5586`;
+- ejecución limpia sin borrador ni materializadores: `30784026725` — `success`;
+- artefacto limpio: `stepbible-nahum-active-migration-validation`;
+- ID limpio: `8844622756`;
+- digest limpio: `sha256:6d177970ef2bf6811a00eaeab392b8592c38e26737bf21dcb9360ae7352cc380`;
 - función instalada en PostgreSQL efímero:
   `69045240e658995cd0e1ba3557e54a2700b623078b36125e73ed1ada64f5139c`;
 - estado: `validated_outside_production`.
@@ -92,4 +95,4 @@ El commit final no contiene el borrador, el activador, el marcador, el materiali
 
 No se aplicó la migración a Supabase, no se importó Nahúm y no se modificaron RLS, interfaz o producción.
 
-Después de que el commit limpio vuelva a aprobar, el siguiente incremento autorizado será aplicar esta migración exacta de forma controlada en Supabase, importar únicamente Nahúm y realizar una auditoría independiente. No se solicitará validación visual hasta completar esa auditoría técnica.
+La migración activa quedó aprobada para aplicación controlada. El siguiente incremento autorizado será aplicar esta migración exacta en Supabase, importar únicamente Nahúm y realizar una auditoría independiente. No se solicitará validación visual hasta completar esa auditoría técnica.
