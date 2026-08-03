@@ -4,7 +4,8 @@ path = Path('__VIDA_INTERNACIONAL.md')
 text = path.read_text(encoding='utf-8')
 marker = 'PR #137'
 if marker in text:
-    raise SystemExit('El hito de la candidata de Roma ya está registrado')
+    print('El hito de la candidata de Roma ya está registrado')
+    raise SystemExit(0)
 
 block = '''
 
