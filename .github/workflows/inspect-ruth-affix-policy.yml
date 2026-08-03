@@ -7,6 +7,8 @@ on:
     paths:
       - "scripts/stepbible/tahot_components.py"
       - "scripts/stepbible/inspect_tahot_affix_policy.py"
+      - "scripts/stepbible/validate_tahot_affix_policy.py"
+      - "scripts/stepbible/ruth_affix_lemma_policy.json"
       - ".github/workflows/inspect-ruth-affix-policy.yml"
       - "docs/FASE_D_POLITICA_AFIJOS_RUT.md"
   workflow_dispatch:
@@ -31,6 +33,7 @@ jobs:
           python scripts/stepbible/extract_ot_book.py --self-test
           python scripts/stepbible/tahot_components.py
           python scripts/stepbible/inspect_tahot_affix_policy.py --self-test
+          python scripts/stepbible/validate_tahot_affix_policy.py --self-test
 
       - name: Generar paquete de Rut
         run: |
@@ -44,8 +47,18 @@ jobs:
             --package artifacts/tahot-ruth-policy/rut.json.gz \
             --output artifacts/tahot-ruth-policy
 
+      - name: Validar política canónica explícita
+        run: |
+          python scripts/stepbible/validate_tahot_affix_policy.py \
+            --inspection artifacts/tahot-ruth-policy/affix-policy-inspection.json \
+            --policy scripts/stepbible/ruth_affix_lemma_policy.json \
+            --output artifacts/tahot-ruth-policy/affix-policy-validation.json
+
       - name: Mostrar informe
-        run: cat artifacts/tahot-ruth-policy/affix-policy-inspection.md
+        run: |
+          cat artifacts/tahot-ruth-policy/affix-policy-inspection.md
+          printf '\n'
+          cat artifacts/tahot-ruth-policy/affix-policy-validation.json
 
       - uses: actions/upload-artifact@v4
         with:
@@ -53,6 +66,7 @@ jobs:
           path: |
             artifacts/tahot-ruth-policy/affix-policy-inspection.json
             artifacts/tahot-ruth-policy/affix-policy-inspection.md
+            artifacts/tahot-ruth-policy/affix-policy-validation.json
             artifacts/tahot-ruth-policy/manifest.json
           if-no-files-found: error
           retention-days: 14
