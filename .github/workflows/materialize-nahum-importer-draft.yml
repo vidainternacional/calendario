@@ -1,0 +1,47 @@
+name: Materializar borrador del importador de Nahúm
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/.materialize-nahum-importer-draft"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generar borrador exacto
+        run: |
+          if [ ! -f scripts/stepbible/generate_nahum_importer_draft.py ]; then
+            echo "Generador retirado; no hay borrador pendiente"
+            exit 0
+          fi
+          python scripts/stepbible/generate_nahum_importer_draft.py --self-test
+          python scripts/stepbible/generate_nahum_importer_draft.py \
+            --active supabase/migrations/20260803023000_generalizar_importador_payload_tahot_hageo.sql \
+            --output supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql
+      - name: Versionar borrador
+        run: |
+          if git diff --quiet -- supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql \
+             && git ls-files --error-unmatch supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql >/dev/null 2>&1; then
+            echo "Borrador ya materializado"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/migration-drafts/20260803040000_importador_payload_tahot_nahum.sql
+          git commit -m "feat(fase-d): materializar borrador del importador de Nahúm"
+          git push
