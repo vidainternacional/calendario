@@ -72,51 +72,40 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
 
   if (asignaciones === null) {
     return (
-      <main className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4">
-        <SkeletonPage cards={4} />
+      <main className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]">
+        <div className="px-4 pt-4">
+          <SkeletonPage cards={4} />
+        </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      <div
-        className="sticky top-0 z-40 border-b border-slate-100/70 bg-[#f4f5f9]/95 px-4 pb-4 backdrop-blur-md"
-        style={{
-          paddingTop: 'max(1rem, env(safe-area-inset-top))',
-          paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-          paddingRight: 'max(1rem, env(safe-area-inset-right))',
-        }}
-      >
-        <header className="mx-auto min-w-0 max-w-2xl">
-          <h1 className="break-words text-2xl font-bold text-[#171923]">Mi Calendario</h1>
-          <p className="mt-1 break-words text-sm text-gray-500">
-            Tus eventos y turnos asignados
-            {isRefreshing && <span className="ml-2 text-xs text-gray-400">Actualizando…</span>}
-          </p>
-        </header>
-      </div>
-
-      <div
-        className="mx-auto min-w-0 max-w-2xl px-4"
-        style={{
-          paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-          paddingRight: 'max(1rem, env(safe-area-inset-right))',
-        }}
-      >
-        {asignaciones.length > 0 ? (
-          <CalendarioPilotoViews asignaciones={asignaciones} />
-        ) : (
+    <main className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f9] pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+      {asignaciones.length > 0 ? (
+        <CalendarioPilotoViews asignaciones={asignaciones} isRefreshing={isRefreshing} />
+      ) : (
+        <div
+          className="px-4"
+          style={{
+            paddingTop: 'max(1rem, env(safe-area-inset-top))',
+            paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+            paddingRight: 'max(1rem, env(safe-area-inset-right))',
+          }}
+        >
+          <header className="pb-5">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Calendario</h1>
+            <p className="mt-1 text-sm text-slate-500">Tus eventos y turnos asignados</p>
+          </header>
           <EmptyState
             icon={CalendarDays}
             title="Aún no tienes eventos asignados"
             description="Cuando te asignen un turno o una actividad, aparecerá aquí con su fecha, horario y ministerio. Mientras tanto, puedes revisar los ministerios en los que participas."
             action={{ label: 'Ver mis ministerios', href: '/ministerios' }}
             compact
-            className="mt-4"
           />
-        )}
-      </div>
+        </div>
+      )}
     </main>
   )
 }
