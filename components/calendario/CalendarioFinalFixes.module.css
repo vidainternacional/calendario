@@ -1,0 +1,36 @@
+.eventMainFix {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.eventTitleFix,
+.eventMetaFix,
+.eventLocationFix {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.eventTimeFix {
+  align-self: center;
+  padding-left: 4px;
+}
+
+:global(button[aria-label='Guardar evento']) {
+  background: #e6e7ec !important;
+  color: #111829 !important;
+}
+
+:global(button[aria-label='Guardar evento']:disabled) {
+  color: #6b7280 !important;
+}
+
+:global([role='dialog'][aria-label='Buscar eventos'] > header > button:last-child) {
+  color: #111829 !important;
+  opacity: 1 !important;
+}
