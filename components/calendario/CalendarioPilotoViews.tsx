@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   addMonths,
   addWeeks,
@@ -60,6 +60,23 @@ export default function CalendarioPilotoViews({
   const [fechaActiva, setFechaActiva] = useState(new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState(new Date())
   const [detalle, setDetalle] = useState<Evento | null>(null)
+
+  useEffect(() => {
+    if (!detalle) return
+
+    const bodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDetalle(null)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [detalle])
 
   const eventos = useMemo<Evento[]>(
     () =>
@@ -331,41 +348,76 @@ export default function CalendarioPilotoViews({
       {vista === 'agenda' && renderAgenda()}
 
       {detalle && (
-        <>
-          <button aria-label="Cerrar detalle" className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[2px]" onClick={() => setDetalle(null)} />
-          <section className="fixed bottom-0 left-0 right-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] bg-white px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl">
-            <div className="mx-auto h-1 w-10 rounded-full bg-slate-200" />
-            <div className="mt-5 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-950">{detalle.titulo}</h2>
-                <p className="mt-1 text-sm font-semibold text-slate-500">{detalle.ministerios?.nombre || 'Evento general'}</p>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 py-[max(1rem,env(safe-area-inset-top))] backdrop-blur-[3px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDetalle(null)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="detalle-evento-titulo"
+            className="flex max-h-[min(78dvh,680px)] w-full max-w-md flex-col overflow-hidden rounded-[26px] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] ring-1 ring-black/5"
+          >
+            <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+              <div className="min-w-0">
+                <h2 id="detalle-evento-titulo" className="break-words text-xl font-bold leading-snug text-slate-950">
+                  {detalle.titulo}
+                </h2>
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  {detalle.ministerios?.nombre || 'Evento general'}
+                </p>
               </div>
-              <button onClick={() => setDetalle(null)} className="rounded-full bg-slate-100 p-2 text-slate-500" aria-label="Cerrar">
+              <button
+                onClick={() => setDetalle(null)}
+                className="shrink-0 rounded-full bg-slate-100 p-2.5 text-slate-600 active:bg-slate-200"
+                aria-label="Cerrar detalle del evento"
+              >
                 <X className="h-4 w-4" />
               </button>
-            </div>
-            <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-3 border-y border-slate-100 py-4">
-                <Clock3 className="mt-0.5 h-5 w-5 text-indigo-500" />
-                <div>
-                  <p className="font-bold capitalize text-slate-900">{format(new Date(detalle.fecha_inicio), "EEEE d 'de' MMMM", { locale: es })}</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {detalle.todo_el_dia
-                      ? 'Todo el día'
-                      : `${format(new Date(detalle.fecha_inicio), 'h:mm a')}${detalle.fecha_fin ? ` – ${format(new Date(detalle.fecha_fin), 'h:mm a')}` : ''}`}
-                  </p>
-                </div>
-              </div>
-              {detalle.ubicacion && (
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+              <div className="space-y-4">
                 <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
-                  <MapPin className="mt-0.5 h-5 w-5 text-emerald-500" />
-                  <p className="font-semibold text-slate-700">{detalle.ubicacion}</p>
+                  <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-indigo-500" />
+                  <div>
+                    <p className="font-bold capitalize text-slate-900">
+                      {format(new Date(detalle.fecha_inicio), "EEEE d 'de' MMMM", { locale: es })}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {detalle.todo_el_dia
+                        ? 'Todo el día'
+                        : `${format(new Date(detalle.fecha_inicio), 'h:mm a')}${detalle.fecha_fin ? ` – ${format(new Date(detalle.fecha_fin), 'h:mm a')}` : ''}`}
+                    </p>
+                  </div>
                 </div>
-              )}
-              {detalle.descripcion && <div className="text-sm leading-relaxed text-slate-600">{detalle.descripcion}</div>}
+                {detalle.ubicacion && (
+                  <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
+                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+                    <p className="break-words font-semibold text-slate-700">{detalle.ubicacion}</p>
+                  </div>
+                )}
+                {detalle.descripcion && (
+                  <div className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                    {detalle.descripcion}
+                  </div>
+                )}
+              </div>
             </div>
+
+            <footer className="shrink-0 border-t border-slate-100 bg-white px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+              <button
+                onClick={() => setDetalle(null)}
+                className="w-full rounded-2xl bg-slate-950 px-4 py-3.5 text-sm font-bold text-white active:bg-slate-800"
+              >
+                Listo
+              </button>
+            </footer>
           </section>
-        </>
+        </div>
       )}
     </div>
   )
