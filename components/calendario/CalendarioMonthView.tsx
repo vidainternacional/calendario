@@ -13,7 +13,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import {
   eventColor,
   eventosDelDia,
@@ -22,11 +22,7 @@ import {
   type EventoCalendario,
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
-
-const TODAY_RING_STYLE: CSSProperties = {
-  boxShadow: 'inset 0 0 0 2px #5b3df5',
-  color: '#5b3df5',
-}
+import selection from './CalendarioSelection.module.css'
 
 export function MonthWeekdayHeader() {
   return (
@@ -34,6 +30,12 @@ export function MonthWeekdayHeader() {
       {WEEKDAY_LABELS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
     </div>
   )
+}
+
+function dayNumberClass(today: boolean, selected: boolean) {
+  if (today) return `${styles.dayNumber} ${selection.todayFilled}`
+  if (selected) return `${styles.dayNumber} ${selection.selectedRing}`
+  return styles.dayNumber
 }
 
 export function MonthGrid({
@@ -63,23 +65,28 @@ export function MonthGrid({
           const selected = belongs && isSameDay(day, selectedDay)
           const today = belongs && isToday(day)
           const items = belongs ? eventosDelDia(events, day) : []
+
           return (
             <button
               key={day.toISOString()}
-              className={`${styles.compactDay} ${selected ? styles.compactSelected : ''}`}
+              className={`${styles.compactDay} ${selection.compactDayLayout}`}
               onClick={() => belongs && onSelectDay(day)}
               aria-pressed={belongs ? selected : undefined}
             >
               {belongs && (
-                <span
-                  className={`${styles.dayNumber} ${selected ? styles.dayNumberToday : ''}`}
-                  style={!selected && today ? TODAY_RING_STYLE : undefined}
-                >
-                  {format(day, 'd')}
-                </span>
-              )}
-              {items.length > 0 && (
-                <span className={styles.compactDot} style={{ backgroundColor: eventColor(items[0]) }} />
+                <>
+                  <span className={dayNumberClass(today, selected)}>
+                    {format(day, 'd')}
+                  </span>
+                  <span className={selection.compactEventSlot} aria-hidden="true">
+                    {items.length > 0 && (
+                      <span
+                        className={selection.compactEventDot}
+                        style={{ backgroundColor: eventColor(items[0]) }}
+                      />
+                    )}
+                  </span>
+                </>
               )}
             </button>
           )
@@ -95,23 +102,21 @@ export function MonthGrid({
         const selected = belongs && isSameDay(day, selectedDay)
         const today = belongs && isToday(day)
         const items = belongs ? eventosDelDia(events, day) : []
+
         return (
           <button
             key={day.toISOString()}
-            className={`${styles.monthDay} ${!belongs ? styles.monthDayOutside : ''} ${selected ? styles.monthDaySelected : ''}`}
+            className={`${styles.monthDay} ${!belongs ? styles.monthDayOutside : ''}`}
             onClick={() => belongs && onSelectDay(day)}
             onDoubleClick={() => belongs && onOpenDay?.(day)}
             aria-pressed={belongs ? selected : undefined}
           >
             {belongs && (
               <>
-                <span
-                  className={`${styles.dayNumber} ${selected ? styles.dayNumberToday : ''}`}
-                  style={!selected && today ? TODAY_RING_STYLE : undefined}
-                >
+                <span className={dayNumberClass(today, selected)}>
                   {format(day, 'd')}
                 </span>
-                <span className={styles.eventMarks}>
+                <span className={`${styles.eventMarks} ${selection.monthEventSlot}`} aria-hidden="true">
                   {items.length === 1 && (
                     <span className={styles.eventMarkDot} style={{ backgroundColor: eventColor(items[0]) }} />
                   )}
