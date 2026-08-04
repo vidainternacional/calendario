@@ -49,7 +49,7 @@ async function resolverOrigenAviso(
     }
   }
 
-  return 'Vida Internacional'
+  return 'Anuncio general'
 }
 
 async function enviarNotificacionAviso(input: AvisoPushInput): Promise<number> {
