@@ -1,4 +1,5 @@
 import webpush from 'web-push'
+import { createServiceClient } from '@/lib/supabase/service'
 
 webpush.setVapidDetails(
   process.env.VAPID_SUBJECT!,
@@ -73,11 +74,12 @@ export async function sendPushNotification(
 }
 
 export async function notifyUser(
-  supabase: any,
+  _supabase: any,
   profileId: string,
   payload: PushPayload
 ): Promise<number> {
-  const { data: subs, error } = await supabase
+  const service = createServiceClient()
+  const { data: subs, error } = await service
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
     .eq('profile_id', profileId)
@@ -102,21 +104,22 @@ export async function notifyUser(
   )
 
   if (expiredIds.length > 0) {
-    await supabase.from('push_subscriptions').delete().in('id', expiredIds)
+    await service.from('push_subscriptions').delete().in('id', expiredIds)
   }
 
   return results.reduce((total, value) => total + value, 0)
 }
 
 export async function notifyMultipleUsers(
-  supabase: any,
+  _supabase: any,
   profileIds: string[],
   payload: PushPayload
 ): Promise<number> {
   const uniqueProfileIds = [...new Set(profileIds.filter(Boolean))]
   if (!uniqueProfileIds.length) return 0
 
-  const { data: subs, error } = await supabase
+  const service = createServiceClient()
+  const { data: subs, error } = await service
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
     .in('profile_id', uniqueProfileIds)
@@ -141,7 +144,7 @@ export async function notifyMultipleUsers(
   )
 
   if (expiredIds.length > 0) {
-    await supabase.from('push_subscriptions').delete().in('id', expiredIds)
+    await service.from('push_subscriptions').delete().in('id', expiredIds)
   }
 
   return results.reduce((total, value) => total + value, 0)
