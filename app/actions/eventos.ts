@@ -9,6 +9,20 @@ export type CrearEventoCalendarioResult = {
   eventoId?: string
 }
 
+type PerfilPermisosEvento = {
+  rol: string
+  activo: boolean
+  estado_cuenta: string
+}
+
+type FilaProfileId = {
+  profile_id: string
+}
+
+type FilaId = {
+  id: string
+}
+
 function texto(formData: FormData, nombre: string) {
   return String(formData.get(nombre) || '').trim()
 }
@@ -17,6 +31,7 @@ export async function crearEventoCalendario(
   formData: FormData,
 ): Promise<CrearEventoCalendarioResult> {
   const supabase = await createClient()
+  const db = supabase as any
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -48,12 +63,13 @@ export async function crearEventoCalendario(
     return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
   }
 
-  const { data: perfil } = await supabase
+  const { data: perfilRaw } = await db
     .from('profiles')
     .select('rol, activo, estado_cuenta')
     .eq('id', user.id)
     .single()
 
+  const perfil = perfilRaw as PerfilPermisosEvento | null
   if (!perfil?.activo || perfil.estado_cuenta !== 'activo') {
     return { success: false, error: 'Tu cuenta no tiene permiso para crear eventos.' }
   }
@@ -65,7 +81,7 @@ export async function crearEventoCalendario(
   }
 
   if (ministerioId && !esPastorAdmin) {
-    const { data: liderazgo } = await supabase
+    const { data: liderazgo } = await db
       .from('ministerio_miembros')
       .select('id')
       .eq('profile_id', user.id)
@@ -90,27 +106,29 @@ export async function crearEventoCalendario(
   let participantesPermitidos = participantesSolicitados
 
   if (ministerioId && participantesSolicitados.length > 0) {
-    const { data: membresias } = await supabase
+    const { data: membresiasRaw } = await db
       .from('ministerio_miembros')
       .select('profile_id')
       .eq('ministerio_id', ministerioId)
       .in('profile_id', participantesSolicitados)
 
-    const permitidos = new Set((membresias || []).map((item) => item.profile_id))
+    const membresias = (membresiasRaw || []) as FilaProfileId[]
+    const permitidos = new Set(membresias.map((item) => item.profile_id))
     participantesPermitidos = participantesSolicitados.filter((id) => permitidos.has(id))
   } else if (!ministerioId && participantesSolicitados.length > 0) {
-    const { data: perfilesActivos } = await supabase
+    const { data: perfilesActivosRaw } = await db
       .from('profiles')
       .select('id')
       .eq('activo', true)
       .eq('estado_cuenta', 'activo')
       .in('id', participantesSolicitados)
 
-    const permitidos = new Set((perfilesActivos || []).map((item) => item.id))
+    const perfilesActivos = (perfilesActivosRaw || []) as FilaId[]
+    const permitidos = new Set(perfilesActivos.map((item) => item.id))
     participantesPermitidos = participantesSolicitados.filter((id) => permitidos.has(id))
   }
 
-  const { data: evento, error: eventoError } = await supabase
+  const { data: eventoRaw, error: eventoError } = await db
     .from('eventos')
     .insert({
       titulo,
@@ -125,13 +143,14 @@ export async function crearEventoCalendario(
     .select('id')
     .single()
 
+  const evento = eventoRaw as FilaId | null
   if (eventoError || !evento) {
     console.error('[crearEventoCalendario] evento', eventoError)
     return { success: false, error: 'No fue posible guardar el evento.' }
   }
 
   const asignados = Array.from(new Set([user.id, ...participantesPermitidos]))
-  const { error: asignacionesError } = await supabase.from('evento_asignaciones').insert(
+  const { error: asignacionesError } = await db.from('evento_asignaciones').insert(
     asignados.map((profileId) => ({
       evento_id: evento.id,
       profile_id: profileId,
@@ -143,7 +162,7 @@ export async function crearEventoCalendario(
 
   if (asignacionesError) {
     console.error('[crearEventoCalendario] asignaciones', asignacionesError)
-    await supabase.from('eventos').delete().eq('id', evento.id)
+    await db.from('eventos').delete().eq('id', evento.id)
     return { success: false, error: 'El evento no pudo asignarse a los participantes.' }
   }
 
