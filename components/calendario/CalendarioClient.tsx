@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { readUserCache, writeUserCache } from '@/lib/cache/userCache'
-import CalendarioViews from '@/components/calendario/CalendarioViews'
+import CalendarioPilotoViews from '@/components/calendario/CalendarioPilotoViews'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 
@@ -105,7 +105,7 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
         }}
       >
         {asignaciones.length > 0 ? (
-          <CalendarioViews asignaciones={asignaciones} />
+          <CalendarioPilotoViews asignaciones={asignaciones} />
         ) : (
           <EmptyState
             icon={CalendarDays}
