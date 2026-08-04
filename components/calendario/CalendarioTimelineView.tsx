@@ -10,7 +10,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
   eventColor,
@@ -19,6 +19,11 @@ import {
   type EventoCalendario,
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
+
+const TODAY_RING_STYLE: CSSProperties = {
+  boxShadow: 'inset 0 0 0 2px #5b3df5',
+  color: '#5b3df5',
+}
 
 export function WeekStrip({
   selectedDay,
@@ -32,18 +37,27 @@ export function WeekStrip({
 
   return (
     <div className={styles.weekStrip}>
-      {days.map((day) => (
-        <button
-          key={day.toISOString()}
-          className={`${styles.weekDay} ${isSameDay(day, selectedDay) ? styles.weekDaySelected : ''}`}
-          onClick={() => onSelectDay(day)}
-        >
-          <span className={styles.weekDayName}>{format(day, 'EEEEE', { locale: es })}</span>
-          <span className={`${styles.weekDayNumber} ${isToday(day) ? styles.weekDayToday : ''}`}>
-            {format(day, 'd')}
-          </span>
-        </button>
-      ))}
+      {days.map((day) => {
+        const selected = isSameDay(day, selectedDay)
+        const today = isToday(day)
+
+        return (
+          <button
+            key={day.toISOString()}
+            className={`${styles.weekDay} ${selected ? styles.weekDaySelected : ''}`}
+            onClick={() => onSelectDay(day)}
+            aria-pressed={selected}
+          >
+            <span className={styles.weekDayName}>{format(day, 'EEEEE', { locale: es })}</span>
+            <span
+              className={`${styles.weekDayNumber} ${selected ? styles.weekDayToday : ''}`}
+              style={!selected && today ? TODAY_RING_STYLE : undefined}
+            >
+              {format(day, 'd')}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
