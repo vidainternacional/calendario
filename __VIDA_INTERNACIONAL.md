@@ -105,7 +105,7 @@ No debe registrar:
 
 ### Bloque P1 — Base de análisis y acompañamiento
 
-Estado: **EN VALIDACIÓN TÉCNICA — PR #180**.
+Estado: **FUSIONADO — DESPLIEGUE FINAL PENDIENTE POR LÍMITE TEMPORAL DE VERCEL**.
 
 Incluye:
 
@@ -123,13 +123,16 @@ Validación confirmada:
 - migraciones `piloto_analitica_onboarding` y `piloto_revoke_anon_manager` aplicadas;
 - RLS habilitada en las cuatro tablas nuevas;
 - ejecución anónima revocada en el helper de gestión;
-- build completo de Next.js y TypeScript aprobado en GitHub Actions, ejecución `30939370609`;
-- Vercel preview no ejecutado por límite temporal de frecuencia de builds, no por error de código.
+- build completo de Next.js y TypeScript aprobado en GitHub Actions;
+- ejecución inicial `30939370609` — `success`;
+- ejecución final del head `c12f8246a102c7080097c20de32c65bc6dcf848e`, run `30939906829` — `success`;
+- PR #180 fusionado mediante commit `4c1dffcb67f0623c53c8808fd42b5958f2dee8ab`;
+- varios previews intermedios del bloque en estado `READY`;
+- el deployment automático del commit fusionado fue rechazado únicamente por `build-rate-limit` de Vercel, no por error de compilación.
 
-Criterio de cierre:
+Criterio pendiente de cierre:
 
-- PR fusionado;
-- producción en estado `READY`;
+- producción en estado `READY` con el commit fusionado o uno posterior que lo contenga;
 - acceso a `/admin/analisis` confirmado para pastor/administrador;
 - una cuenta de cada rol añadida y recorrido inicial comprobado;
 - reporte de prueba visible en el Centro de Análisis.
@@ -198,13 +201,13 @@ Cuando este documento reactive la FASE D, el siguiente punto autorizado será in
 
 - `docs/PILOTO_IGLESIA_ACTIVO_2026-08-04.md`;
 - `docs/MANUAL_PILOTO_POR_ROLES_2026-08-04.md`;
-- PR #180 — Centro de Análisis y recorrido por roles;
+- PR #180 y commit `4c1dffcb67f0623c53c8808fd42b5958f2dee8ab`;
 - migraciones `20260804121700_piloto_analitica_onboarding.sql` y `20260804122500_piloto_revoke_anon_manager.sql`;
 - historial completo anterior en `docs/VIDA_INTERNACIONAL_HISTORICO_2026-08-03.md`.
 
 # Siguiente punto autorizado
 
-1. Fusionar y desplegar el Bloque P1.
+1. Confirmar el despliegue productivo del Bloque P1 cuando Vercel permita el siguiente build.
 2. Entrar en Administración → Centro de Análisis.
 3. Seleccionar las primeras cuentas de pastor, líder y servidor.
 4. Validar onboarding, notificaciones y reporte de problemas en esas cuentas.
