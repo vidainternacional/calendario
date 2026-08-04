@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import AdminPilotAnalyticsShortcut from '@/components/pilot/AdminPilotAnalyticsShortcut'
 
 export const metadata: Metadata = {
   title: 'Administración',
@@ -19,17 +20,18 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('rol')
+    .select('rol, es_pastor_general')
     .eq('id', user.id)
     .single()
 
   const prof = profile as any
-  if (prof?.rol !== 'pastor' && prof?.rol !== 'administrador') {
+  if (prof?.rol !== 'pastor' && prof?.rol !== 'administrador' && !prof?.es_pastor_general) {
     redirect('/inicio')
   }
 
   return (
     <div className="min-h-screen bg-[#f4f5f9]">
+      <AdminPilotAnalyticsShortcut />
       {children}
     </div>
   )
