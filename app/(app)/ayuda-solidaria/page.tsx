@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import BackButton from '@/components/navigation/BackButton'
 import SolidarityHub from '@/components/solidaridad/SolidarityHub'
 
 export const metadata: Metadata = {
@@ -27,5 +28,14 @@ export default async function AyudaSolidariaPage() {
       .order('created_at', { ascending: false }),
   ])
 
-  return <SolidarityHub requests={requests || []} contributions={contributions || []} />
+  return (
+    <div className="min-h-screen bg-[#f5f5f7]">
+      <div className="bg-[#302072] px-4 pb-1 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6">
+        <div className="mx-auto max-w-2xl">
+          <BackButton />
+        </div>
+      </div>
+      <SolidarityHub requests={requests || []} contributions={contributions || []} />
+    </div>
+  )
 }
