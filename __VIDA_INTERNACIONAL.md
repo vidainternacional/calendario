@@ -88,7 +88,9 @@ Las solicitudes de Ayuda Solidaria son información sensible. El Centro de Anál
 
 ## Bloque P1 — Base de análisis y acompañamiento
 
-Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO; EXTENSIÓN INTERACTIVA PENDIENTE DE DESPLIEGUE**.
+Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.
+
+Extensión interactiva implementada y pendiente de despliegue productivo.
 
 Incluye:
 
