@@ -27,10 +27,12 @@ jobs:
           required = [
               'Fase activa: **PILOTO OPERATIVO — Validación funcional con cuentas reales**',
               '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **EN PAUSA OPERATIVA — BLOQUE 5 CONSERVADO** |',
-              'Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO; EXTENSIÓN INTERACTIVA PENDIENTE DE DESPLIEGUE**.',
+              'Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.',
+              'Extensión interactiva implementada y pendiente de despliegue productivo.',
               '- PR #185 abierto y listo para revisión final y fusión.',
               '- migraciones `ayuda_solidaria_solicitudes_aportes` y `optimizar_ayuda_solidaria_rls_indices` aplicadas en Supabase;',
               'No iniciar P2 hasta cerrar P1.',
+              '6. Define qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.',
               'No reanudar el estudio bíblico avanzado, no iniciar P2 y no crear un cuaderno separado durante este bloque.'
           ]
           missing = [value for value in required if text.count(value) != 1]
