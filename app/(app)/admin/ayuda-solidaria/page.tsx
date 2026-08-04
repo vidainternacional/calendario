@@ -29,21 +29,30 @@ export default async function AdminAyudaSolidariaPage() {
   if (!allowed) redirect('/inicio')
 
   const service = createServiceClient()
-  const [{ data: requests }, { data: contributions }] = await Promise.all([
+  const [{ data: requestRows }, { data: contributionRows }] = await Promise.all([
     (service as any)
       .from('solicitudes_ayuda_solidaria')
-      .select('id, hogar_personas, urgencia, necesidad, telefono, contacto_preferido, estado, respuesta, created_at, profiles(nombre_completo, email)')
+      .select('id, hogar_personas, urgencia, necesidad, telefono, contacto_preferido, estado, respuesta, created_at, solicitante:profiles!solicitudes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
       .order('created_at', { ascending: false })
       .limit(200),
     (service as any)
       .from('aportes_ayuda_solidaria')
-      .select('id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, created_at, profiles(nombre_completo, email)')
+      .select('id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, created_at, aportante:profiles!aportes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
       .order('created_at', { ascending: false })
       .limit(200),
   ])
 
-  const openRequests = (requests || []).filter((item: any) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length
-  const availableContributions = (contributions || []).filter((item: any) => !['completado', 'cancelado'].includes(item.estado)).length
+  const requests = (requestRows || []).map((item: any) => ({
+    ...item,
+    profiles: item.solicitante || null,
+  }))
+  const contributions = (contributionRows || []).map((item: any) => ({
+    ...item,
+    profiles: item.aportante || null,
+  }))
+
+  const openRequests = requests.filter((item: any) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length
+  const availableContributions = contributions.filter((item: any) => !['completado', 'cancelado'].includes(item.estado)).length
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]">
@@ -72,7 +81,7 @@ export default async function AdminAyudaSolidariaPage() {
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
           <p className="text-xs leading-5 text-slate-600">Los motivos, teléfonos y nombres solo están disponibles para pastores y administradores autorizados. El Centro de Análisis muestra únicamente cantidades agregadas.</p>
         </div>
-        <SolidarityAdminBoard requests={requests || []} contributions={contributions || []} />
+        <SolidarityAdminBoard requests={requests} contributions={contributions} />
       </div>
     </main>
   )
