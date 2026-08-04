@@ -13,6 +13,7 @@ export interface PushPayload {
   badge?: string
   url?: string
   tag?: string
+  renotify?: boolean
 }
 
 export interface PushSubscriptionData {
@@ -21,10 +22,16 @@ export interface PushSubscriptionData {
   auth: string
 }
 
+export function composePushBody(subject: string, message: string, maxLength = 300) {
+  const cleanSubject = subject.trim()
+  const cleanMessage = message.trim().slice(0, maxLength)
+  return cleanSubject ? `${cleanSubject}\n${cleanMessage}` : cleanMessage
+}
+
 export async function sendPushNotification(
   subscription: PushSubscriptionData,
   payload: PushPayload
-): Promise<{ success: boolean; expired: boolean }> {
+): Promise<{ success: boolean; expired: boolean; statusCode?: number }> {
   const sub: webpush.PushSubscription = {
     endpoint: subscription.endpoint,
     keys: {
@@ -39,22 +46,29 @@ export async function sendPushNotification(
     icon: payload.icon ?? '/icons/icon-192.png',
     badge: payload.badge ?? '/icons/icon-maskable-192.png',
     url: payload.url ?? '/inicio',
-    tag: payload.tag ?? 'default',
+    tag: payload.tag ?? `vida-${Date.now()}`,
+    renotify: payload.renotify ?? true,
   })
 
   try {
-    console.log(`[webpush] Sending notification to: ${sub.endpoint.substring(0, 50)}...`)
-    const response = await webpush.sendNotification(sub, body)
-    console.log(`[webpush] SUCCESS. Status code: ${response.statusCode}`)
-    return { success: true, expired: false }
+    const response = await webpush.sendNotification(sub, body, {
+      TTL: 24 * 60 * 60,
+      urgency: 'high',
+    })
+    console.log('[webpush] Entrega aceptada', {
+      statusCode: response.statusCode,
+      endpoint: sub.endpoint.substring(0, 50),
+    })
+    return { success: true, expired: false, statusCode: response.statusCode }
   } catch (err: any) {
     const expired = err?.statusCode === 410 || err?.statusCode === 404
-    console.error('[webpush] ERROR sending notification:')
-    console.error(`- Status Code: ${err?.statusCode}`)
-    console.error(`- Error Body: ${err?.body}`)
-    console.error(`- Error Message: ${err?.message}`)
-    console.error(`- Endpoint: ${sub.endpoint.substring(0, 50)}...`)
-    return { success: false, expired }
+    console.error('[webpush] Error de entrega', {
+      statusCode: err?.statusCode,
+      body: err?.body,
+      message: err?.message,
+      endpoint: sub.endpoint.substring(0, 50),
+    })
+    return { success: false, expired, statusCode: err?.statusCode }
   }
 }
 
@@ -69,24 +83,21 @@ export async function notifyUser(
     .eq('profile_id', profileId)
 
   if (error) {
-    console.error('[webpush] Error reading user subscriptions:', error)
+    console.error('[webpush] Error leyendo suscripciones del usuario:', error)
     return 0
   }
 
-  console.log(`[webpush] notifyUser: found ${subs?.length || 0} subscriptions for user ${profileId}`)
   if (!subs?.length) return 0
 
   const expiredIds: string[] = []
-  let sent = 0
-
-  await Promise.all(
+  const results = await Promise.all(
     subs.map(async (sub: any) => {
       const result = await sendPushNotification(
         { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
         payload
       )
-      if (result.success) sent += 1
       if (result.expired) expiredIds.push(sub.id)
+      return result.success ? 1 : 0
     })
   )
 
@@ -94,7 +105,7 @@ export async function notifyUser(
     await supabase.from('push_subscriptions').delete().in('id', expiredIds)
   }
 
-  return sent
+  return results.reduce((total, value) => total + value, 0)
 }
 
 export async function notifyMultipleUsers(
@@ -102,32 +113,30 @@ export async function notifyMultipleUsers(
   profileIds: string[],
   payload: PushPayload
 ): Promise<number> {
-  if (!profileIds.length) return 0
+  const uniqueProfileIds = [...new Set(profileIds.filter(Boolean))]
+  if (!uniqueProfileIds.length) return 0
 
   const { data: subs, error } = await supabase
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
-    .in('profile_id', profileIds)
+    .in('profile_id', uniqueProfileIds)
 
   if (error) {
-    console.error('[webpush] Error reading subscriptions:', error)
+    console.error('[webpush] Error leyendo suscripciones:', error)
     return 0
   }
 
-  console.log(`[webpush] notifyMultipleUsers: found ${subs?.length || 0} subscriptions for ${profileIds.length} users`)
   if (!subs?.length) return 0
 
   const expiredIds: string[] = []
-  let sent = 0
-
-  await Promise.all(
+  const results = await Promise.all(
     subs.map(async (sub: any) => {
       const result = await sendPushNotification(
         { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
         payload
       )
-      if (result.success) sent += 1
       if (result.expired) expiredIds.push(sub.id)
+      return result.success ? 1 : 0
     })
   )
 
@@ -135,5 +144,5 @@ export async function notifyMultipleUsers(
     await supabase.from('push_subscriptions').delete().in('id', expiredIds)
   }
 
-  return sent
+  return results.reduce((total, value) => total + value, 0)
 }
