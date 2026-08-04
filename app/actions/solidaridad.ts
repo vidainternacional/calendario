@@ -155,7 +155,7 @@ export async function registrarAporteSolidario(input: {
         tipo: input.type,
         monto: amount,
         moneda: 'USD',
-        detalle,
+        detalle: detail,
         telefono: phone,
         anonimo: Boolean(input.anonymous),
       })
