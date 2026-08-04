@@ -88,7 +88,9 @@ Las solicitudes de Ayuda Solidaria son información sensible. El Centro de Anál
 
 ## Bloque P1 — Base de análisis y acompañamiento
 
-Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO; EXTENSIÓN INTERACTIVA PENDIENTE DE DESPLIEGUE**.
+Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.
+
+Extensión interactiva implementada y pendiente de despliegue productivo.
 
 Incluye:
 
@@ -114,7 +116,7 @@ Incluye:
 - corrección inicial de selección de fechas: PR #182 y commit `40723b45abbb300c027d544ec9aca8d5f80df541`;
 - build de esa corrección: run `30946777843` — `success`;
 - preview `dpl_2UsVhUkPcWuPMSfeKj9ubHxVzP9m` — `READY`;
-- producción base `dpl_2UN2e4eiCvPo9gMVrrhqiYfoTZKF` — `READY`;
+- producción `dpl_2UN2e4eiCvPo9gMVrrhqiYfoTZKF` — `READY`;
 - errores runtime observados después del despliegue base: 0;
 - ajuste visual definitivo del calendario fusionado en PR #184, commit `1e5763a304a937097cb41dc6394f34281337a4d9`;
 - build del ajuste definitivo: run `30948092161` — `success`;
@@ -265,8 +267,7 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 2. Esperar o ejecutar el despliegue productivo cuando Vercel libere el límite diario.
 3. Comprobar en iPhone el dashboard, sus paneles y la selección definitiva del calendario.
 4. Enviar una solicitud y un aporte de prueba; verificar aislamiento y gestión administrativa.
-5. Completar o avanzar el recorrido inicial.
-6. Verificar la cohorte y enviar un reporte de prueba.
-7. Definir qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.
+5. Completar o avanzar el recorrido inicial, verificar la cohorte y enviar un reporte de prueba.
+6. Define qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.
 
 No reanudar el estudio bíblico avanzado, no iniciar P2 y no crear un cuaderno separado durante este bloque.
