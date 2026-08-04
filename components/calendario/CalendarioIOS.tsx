@@ -40,14 +40,15 @@ import NuevoEventoCalendarioModal from './NuevoEventoCalendarioModal'
 import ProponerIntercambioModal from './ProponerIntercambioModal'
 import {
   eventosDelDia,
-  monthKey,
   type EventoCalendario,
   type MinisterioGestionado,
   type VistaCalendario,
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
+import motion from './CalendarioMotionFix.module.css'
 
-type ZoomState = { phase: 'hold' | 'in' | 'out'; month: Date; rect: DOMRect }
+type ZoomState = { month: Date; rect: DOMRect }
+type ScreenTransition = 'month-out' | 'year-in' | null
 
 const VIEW_OPTIONS: Array<{ id: VistaCalendario; label: string; icon: typeof CalendarDays }> = [
   { id: 'anio', label: 'Año', icon: Grid3X3 },
@@ -84,14 +85,17 @@ export default function CalendarioIOS({
   const [query, setQuery] = useState('')
   const [newEventOpen, setNewEventOpen] = useState(false)
   const [zoom, setZoom] = useState<ZoomState | null>(null)
+  const [screenTransition, setScreenTransition] = useState<ScreenTransition>(null)
   const [swap, setSwap] = useState({ isOpen: false, asignacion_id: '', titulo: '', ministerio_id: null as string | null })
   const touchStartX = useRef<number | null>(null)
   const zoomTimer = useRef<number | null>(null)
+  const screenTimer = useRef<number | null>(null)
 
   useEffect(() => {
     setMounted(true)
     return () => {
       if (zoomTimer.current) window.clearTimeout(zoomTimer.current)
+      if (screenTimer.current) window.clearTimeout(screenTimer.current)
     }
   }, [])
 
@@ -133,7 +137,7 @@ export default function CalendarioIOS({
   }
 
   const openMonth = (month: Date, element: HTMLElement) => {
-    setZoom({ phase: 'in', month, rect: element.getBoundingClientRect() })
+    setZoom({ month, rect: element.getBoundingClientRect() })
     setActiveDate(month)
     setSelectedDay(month)
     finishZoom(485, () => setView('mes'))
@@ -144,13 +148,15 @@ export default function CalendarioIOS({
       setView('anio')
       return
     }
-    setZoom({ phase: 'hold', month: activeDate, rect: new DOMRect(0, 0, window.innerWidth, window.innerHeight) })
-    setView('anio')
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const target = document.querySelector<HTMLElement>(`[data-calendar-mini="${monthKey(activeDate)}"]`)
-      setZoom({ phase: 'out', month: activeDate, rect: target?.getBoundingClientRect() || new DOMRect(16, 150, 110, 140) })
-      finishZoom(455)
-    }))
+
+    if (screenTimer.current) window.clearTimeout(screenTimer.current)
+    setScreenTransition('month-out')
+
+    screenTimer.current = window.setTimeout(() => {
+      setView('anio')
+      setScreenTransition('year-in')
+      screenTimer.current = window.setTimeout(() => setScreenTransition(null), 270)
+    }, 150)
   }
 
   const changeView = (next: VistaCalendario) => {
@@ -353,7 +359,7 @@ export default function CalendarioIOS({
 
       {zoom && createPortal(
         <div
-          className={`${styles.zoomLayer} ${zoom.phase === 'in' ? styles.zoomEnter : zoom.phase === 'out' ? styles.zoomExit : ''}`}
+          className={`${styles.zoomLayer} ${styles.zoomEnter}`}
           style={{
             '--zoom-x': `${zoom.rect.left}px`,
             '--zoom-y': `${zoom.rect.top}px`,
@@ -368,8 +374,14 @@ export default function CalendarioIOS({
     </>
   ) : null
 
+  const transitionClass = screenTransition === 'month-out'
+    ? motion.monthToYearOut
+    : screenTransition === 'year-in'
+      ? motion.yearReveal
+      : ''
+
   return (
-    <div className={styles.calendarScreen} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div className={`${styles.calendarScreen} ${transitionClass}`} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {view === 'anio' && <CalendarioYearView fecha={activeDate} eventos={events} isRefreshing={isRefreshing} topChrome={topChrome('anio')} onOpenMonth={openMonth} />}
       {view === 'mes' && <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={events} topChrome={topChrome('mes')} isRefreshing={isRefreshing} onSelectDay={selectDay} onOpenDay={openDay} />}
       {view === 'agenda' && agendaView()}
