@@ -1,13 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { notifyUser } from '@/lib/webpush'
-import { revalidatePath } from 'next/cache'
+import { createServiceClient } from '@/lib/supabase/service'
+import { composePushBody, notifyUser } from '@/lib/webpush'
 
-/**
- * Saves or updates a push subscription for the current user.
- * Called from the client after Notification.requestPermission() + pushManager.subscribe().
- */
 export async function guardarSuscripcionPush(subscriptionJson: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -33,20 +29,17 @@ export async function guardarSuscripcionPush(subscriptionJson: string) {
         p256dh: sub.keys.p256dh,
         auth: sub.keys.auth,
       },
-      { onConflict: 'endpoint' }
+      { onConflict: 'endpoint' },
     )
 
   if (error) {
-    console.error('[push] Error saving subscription:', error)
+    console.error('[push] Error guardando suscripción:', error)
     return { error: 'No se pudo guardar la suscripción' }
   }
 
   return { success: true }
 }
 
-/**
- * Removes the current push subscription (e.g. when user revokes permission).
- */
 export async function eliminarSuscripcionPush(endpoint: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -61,30 +54,40 @@ export async function eliminarSuscripcionPush(endpoint: string) {
   return { success: true }
 }
 
-/**
- * TEST ACTION: Sends a test push notification to the current user.
- * Only accessible to pastors/admins.
- */
 export async function enviarNotificacionPrueba(profileId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
 
-  // Verify the caller is pastor/admin
-  const { data: caller } = await (supabase as any)
-    .from('profiles')
-    .select('rol')
-    .eq('id', user.id)
-    .single()
-
   const targetId = profileId || user.id
 
-  await notifyUser(supabase, targetId, {
-    title: '🔔 Centro Cristiano Vida',
-    body: '¡Las notificaciones push están funcionando correctamente!',
-    url: '/inicio',
-    tag: 'test',
+  if (targetId !== user.id) {
+    const { data: caller } = await (supabase as any)
+      .from('profiles')
+      .select('rol, es_pastor_general')
+      .eq('id', user.id)
+      .single()
+
+    if (!['pastor', 'administrador'].includes(caller?.rol) && !caller?.es_pastor_general) {
+      return { error: 'No tienes permiso para enviar una prueba a otra persona.' }
+    }
+  }
+
+  const service = createServiceClient()
+  const enviadas = await notifyUser(service, targetId, {
+    title: 'Vida Internacional',
+    body: composePushBody('Prueba de notificación', 'Las notificaciones están conectadas correctamente.'),
+    url: '/perfil',
+    tag: `prueba-${targetId}-${Date.now()}`,
+    renotify: true,
   })
 
-  return { success: true }
+  if (enviadas === 0) {
+    return {
+      error: 'No encontramos un dispositivo activo. Abre VIDA desde el icono de inicio y vuelve a activar las notificaciones.',
+      enviadas: 0,
+    }
+  }
+
+  return { success: true, enviadas }
 }
