@@ -50,10 +50,11 @@ export default function NuevoAvisoForm({ ministerioId }: { ministerioId: string 
           id="titulo"
           name="titulo"
           type="text"
-          placeholder="Ej: Reunión general este sábado"
+          placeholder="Ej. PRUEBA — Recordatorio de reunión"
           required
           className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm"
         />
+        <p className="text-xs leading-5 text-slate-400">El ejemplo desaparece al escribir y nunca se publica automáticamente.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -64,7 +65,7 @@ export default function NuevoAvisoForm({ ministerioId }: { ministerioId: string 
           id="cuerpo"
           name="cuerpo"
           rows={6}
-          placeholder="Escribe aquí los detalles del aviso..."
+          placeholder="Ej. Este sábado tendremos reunión a las 4:00 p. m. Por favor confirma que recibiste este aviso."
           required
           className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm"
         />
