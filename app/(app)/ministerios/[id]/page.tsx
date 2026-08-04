@@ -1,7 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Megaphone, Users, ClipboardList, UserPlus, Send } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  Megaphone,
+  Send,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import NotificarMinisterioForm from '@/components/ministerios/NotificarMinisterioForm'
 
 export const dynamic = 'force-dynamic'
@@ -46,73 +54,218 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   const esMiembro = !!mem || esLider
   const fuenteTitulo = TITULO_FONT[min.fuente_titulo] || TITULO_FONT.moderna
   const fuenteCuerpo = CUERPO_FONT[min.fuente_cuerpo] || CUERPO_FONT.clasica
+  const color = min.color_primario || '#5b3df5'
+  const colorSecundario = min.color_secundario || '#7c3aed'
+
+  const accesos = [
+    {
+      href: `/ministerios/${id}/avisos`,
+      label: 'Avisos',
+      detail: 'Noticias y recordatorios',
+      icon: Megaphone,
+      visible: true,
+    },
+    {
+      href: `/ministerios/${id}/miembros`,
+      label: 'Miembros',
+      detail: `${miembros ?? 0} ${miembros === 1 ? 'servidor' : 'servidores'}`,
+      icon: Users,
+      visible: true,
+    },
+    {
+      href: `/ministerios/${id}/solicitudes`,
+      label: 'Solicitudes',
+      detail: 'Peticiones del equipo',
+      icon: ClipboardList,
+      visible: esMiembro,
+    },
+    {
+      href: `/ministerios/${id}/solicitudes-ingreso`,
+      label: 'Ingresos',
+      detail: ingresosPendientes
+        ? `${ingresosPendientes} ${ingresosPendientes === 1 ? 'pendiente' : 'pendientes'}`
+        : 'Sin pendientes',
+      icon: UserPlus,
+      visible: esLider,
+    },
+  ].filter((item) => item.visible)
 
   return (
-    <main className="pb-28" style={{ fontFamily: fuenteCuerpo }}>
-      <section className="relative isolate min-h-[330px] overflow-hidden rounded-b-[30px] text-white shadow-[0_14px_36px_rgba(15,23,42,0.16)] sm:min-h-[370px] sm:rounded-b-[36px]">
+    <main className="min-h-screen bg-[#f5f5f7] pb-28" style={{ fontFamily: fuenteCuerpo }}>
+      <section className="relative isolate min-h-[320px] overflow-hidden rounded-b-[30px] text-white sm:min-h-[360px] sm:rounded-b-[36px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: min.portada_url
-              ? `linear-gradient(180deg, rgba(15,23,42,.08), rgba(15,23,42,.68)), url("${min.portada_url}")`
-              : `linear-gradient(145deg, ${min.color_primario}, ${min.color_secundario})`,
+              ? `linear-gradient(180deg, rgba(15,23,42,.12), rgba(15,23,42,.74)), url("${min.portada_url}")`
+              : `linear-gradient(145deg, ${color}, ${colorSecundario})`,
           }}
         />
         {!min.portada_url && (
           <>
-            <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-30 blur-2xl" style={{ backgroundColor: min.color_secundario }} />
+            <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-30 blur-2xl" style={{ backgroundColor: colorSecundario }} />
             <div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-white/15 blur-2xl" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.24),transparent_28%),radial-gradient(circle_at_84%_74%,rgba(255,255,255,0.12),transparent_24%)]" />
-            <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:28px_28px]" />
             <div className="absolute right-5 top-20 select-none text-[7rem] leading-none opacity-[0.12] sm:right-10 sm:text-[9rem]" aria-hidden="true">{min.emoji}</div>
           </>
         )}
-        <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-950/65 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
 
-        <div className="relative mx-auto flex min-h-[330px] max-w-2xl flex-col justify-end px-4 pb-9 pt-[calc(7rem+env(safe-area-inset-top))] sm:min-h-[370px] sm:pb-10">
-          <div className="flex min-w-0 items-end gap-3 sm:gap-4">
-            <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-white/90 bg-white/18 text-3xl shadow-[0_10px_30px_rgba(0,0,0,0.24)] backdrop-blur-md sm:h-24 sm:w-24 sm:text-4xl" aria-hidden="true">
+        <div className="relative mx-auto flex min-h-[320px] max-w-2xl flex-col justify-end px-4 pb-8 pt-[calc(7rem+env(safe-area-inset-top))] sm:min-h-[360px] sm:pb-9">
+          <div className="flex min-w-0 items-end gap-3.5">
+            <div className="grid h-[76px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-white/90 bg-white/18 text-3xl shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md sm:h-24 sm:w-24 sm:text-4xl" aria-hidden="true">
               {min.avatar_url ? <img src={min.avatar_url} alt="" className="h-full w-full object-cover" /> : min.emoji}
             </div>
-            <div className="min-w-0 flex-1 pb-1">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75">Ministerio</p>
-              <h1 className="break-words text-2xl font-bold leading-tight drop-shadow-sm sm:text-3xl" style={{ fontFamily: fuenteTitulo }}>{min.nombre}</h1>
-              <p className="mt-1 break-words text-sm leading-relaxed text-white/90">
+            <div className="min-w-0 flex-1 pb-0.5">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.19em] text-white/70">Ministerio</p>
+              <h1 className="break-words text-[27px] font-bold leading-[1.05] tracking-[-0.035em] drop-shadow-sm sm:text-4xl" style={{ fontFamily: fuenteTitulo }}>
+                {min.nombre}
+              </h1>
+              <p className="mt-1.5 break-words text-[13px] leading-relaxed text-white/88">
                 {miembros ?? 0} {miembros === 1 ? 'servidor' : 'servidores'}
-                {esLider ? ' · Eres líder aquí' : esMiembro ? ' · Eres parte de este ministerio' : ''}
+                {esLider ? ' · Eres líder aquí' : esMiembro ? ' · Eres parte del equipo' : ''}
               </p>
             </div>
           </div>
-          {min.descripcion && <p className="mt-4 max-w-xl break-words text-sm leading-relaxed text-white/90 drop-shadow-sm">{min.descripcion}</p>}
+          {min.descripcion && (
+            <p className="mt-4 max-w-xl break-words text-[13px] leading-5 text-white/88 drop-shadow-sm">
+              {min.descripcion}
+            </p>
+          )}
         </div>
       </section>
 
-      <div className="mx-auto mt-5 max-w-2xl space-y-5 px-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Link href={`/ministerios/${id}/avisos`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><Megaphone className="h-5 w-5 shrink-0" style={{ color: min.color_primario }} /><span className="break-words text-sm font-semibold text-[#171923]">Avisos</span></Link>
-          <Link href={`/ministerios/${id}/miembros`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><Users className="h-5 w-5 shrink-0" style={{ color: min.color_primario }} /><span className="break-words text-sm font-semibold text-[#171923]">Miembros</span></Link>
-          {esMiembro && <Link href={`/ministerios/${id}/solicitudes`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"><ClipboardList className="h-5 w-5 shrink-0" style={{ color: min.color_primario }} /><span className="break-words text-sm font-semibold text-[#171923]">Solicitudes</span></Link>}
-          {esLider && (ingresosPendientes || 0) > 0 && <Link href={`/ministerios/${id}/solicitudes-ingreso`} className="flex min-h-14 items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 shadow-sm"><UserPlus className="h-5 w-5 shrink-0" style={{ color: min.color_primario }} /><span className="break-words text-sm font-semibold text-[#171923]">{ingresosPendientes === 1 ? '1 nuevo servidor' : `${ingresosPendientes} nuevos servidores`}</span></Link>}
-        </div>
+      <div className="relative z-10 mx-auto -mt-3 max-w-2xl space-y-7 px-4">
+        <section>
+          <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+            Herramientas
+          </h2>
+          <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
+            {accesos.map((item, index) => {
+              const Icon = item.icon
+              const isLeft = index % 2 === 0
+              const hasRowBelow = index < accesos.length - 2
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}
+                >
+                  <span
+                    className="grid h-9 w-9 place-items-center rounded-full"
+                    style={{ backgroundColor: `${color}13`, color }}
+                  >
+                    <Icon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span>
+                    <span className="mt-0.5 block truncate text-[11px] text-slate-400">{item.detail}</span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
 
         {esLider && (
-          <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-bold text-[#171923]" style={{ fontFamily: fuenteTitulo }}><Send className="h-4 w-4 shrink-0" style={{ color: min.color_primario }} /> Panel del líder</h2>
-            <div className="mb-4"><Link href={`/ministerios/${id}/avisos/nuevo`} className="flex min-h-11 w-full items-center justify-center rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-white" style={{ background: min.color_primario }}>✍️ Publicar aviso</Link></div>
-            <NotificarMinisterioForm ministerioId={id} color={min.color_primario} />
+          <section>
+            <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Panel del líder
+            </h2>
+            <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
+              <Link
+                href={`/ministerios/${id}/avisos/nuevo`}
+                className="flex min-h-[58px] items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 active:bg-slate-50"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white" style={{ backgroundColor: color }}>
+                    <Send className="h-[17px] w-[17px]" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-[#171923]">Publicar un aviso</span>
+                    <span className="block truncate text-xs text-slate-400">Comunicar al equipo</span>
+                  </span>
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />
+              </Link>
+              <div className="p-4">
+                <NotificarMinisterioForm ministerioId={id} color={color} />
+              </div>
+            </div>
           </section>
         )}
 
         <section>
-          <h2 className="mb-3 break-words text-xs font-bold uppercase tracking-wide text-slate-400" style={{ fontFamily: fuenteTitulo }}>Próximos eventos de {min.nombre}</h2>
-          {(!eventosMin || eventosMin.length === 0) && <p className="rounded-2xl border border-slate-100 bg-white px-4 py-6 text-center text-sm text-slate-400">Sin eventos próximos.</p>}
-          <div className="space-y-3">{(eventosMin ?? []).map((e: any) => <div key={e.id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-l-4 border-slate-100 bg-white p-4 shadow-sm sm:gap-4" style={{ borderLeftColor: min.color_primario }}><div className="min-w-[52px] shrink-0 rounded-xl px-1 py-2 text-center text-white" style={{ background: min.color_primario }}><p className="text-[10px] font-bold uppercase">{new Date(e.fecha_inicio).toLocaleDateString('es', { month: 'short' })}</p><p className="text-xl font-bold leading-none">{new Date(e.fecha_inicio).getDate()}</p></div><div className="min-w-0"><p className="break-words text-sm font-bold text-[#171923]">{e.titulo}</p><p className="mt-0.5 break-words text-xs leading-relaxed text-slate-500">{new Date(e.fecha_inicio).toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', hour12: true })}{e.ubicacion ? ` · ${e.ubicacion}` : ''}</p></div></div>)}</div>
+          <div className="mb-2.5 flex items-center justify-between px-1">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Próximos eventos
+            </h2>
+            <CalendarDays className="h-4 w-4 text-slate-300" />
+          </div>
+          {(!eventosMin || eventosMin.length === 0) ? (
+            <div className="rounded-[25px] bg-white px-5 py-8 text-center text-sm text-slate-400 ring-1 ring-black/[0.045]">
+              Sin eventos próximos.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
+              {(eventosMin ?? []).map((evento: any, index: number) => {
+                const fecha = new Date(evento.fecha_inicio)
+                return (
+                  <div
+                    key={evento.id}
+                    className={`flex min-w-0 items-center gap-3 px-4 py-3.5 ${index < eventosMin.length - 1 ? 'border-b border-slate-100' : ''}`}
+                  >
+                    <div className="w-11 shrink-0 text-center">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wide" style={{ color }}>
+                        {fecha.toLocaleDateString('es', { month: 'short' })}
+                      </p>
+                      <p className="mt-0.5 text-[22px] font-extrabold leading-none text-[#171923]">{fecha.getDate()}</p>
+                    </div>
+                    <div className="min-w-0 flex-1 border-l border-slate-100 pl-3">
+                      <p className="truncate text-sm font-bold text-[#171923]">{evento.titulo}</p>
+                      <p className="mt-1 truncate text-xs text-slate-400">
+                        {fecha.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                        {evento.ubicacion ? ` · ${evento.ubicacion}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         <section>
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400" style={{ fontFamily: fuenteTitulo }}>Publicaciones recientes</h2>
-          {(!pubs || pubs.length === 0) && <p className="rounded-2xl border border-slate-100 bg-white px-4 py-6 text-center text-sm text-slate-400">Aún no hay publicaciones.</p>}
-          <div className="space-y-3">{(pubs ?? []).map((p: any) => <div key={p.id} className="overflow-hidden rounded-2xl border border-l-4 border-slate-100 bg-white p-4 shadow-sm" style={{ borderLeftColor: min.color_primario }}><p className="break-words text-sm font-bold text-[#171923]">{p.titulo}</p>{p.cuerpo && <p className="mt-1 line-clamp-3 break-words text-sm leading-relaxed text-slate-500">{p.cuerpo}</p>}<p className="mt-2 break-words text-[11px] text-slate-400">{p.autor?.nombre_completo} · {new Date(p.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}</p></div>)}</div>
+          <div className="mb-2.5 flex items-center justify-between px-1">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Publicaciones recientes
+            </h2>
+            <Megaphone className="h-4 w-4 text-slate-300" />
+          </div>
+          {(!pubs || pubs.length === 0) ? (
+            <div className="rounded-[25px] bg-white px-5 py-8 text-center text-sm text-slate-400 ring-1 ring-black/[0.045]">
+              Aún no hay publicaciones.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
+              {(pubs ?? []).map((pub: any, index: number) => (
+                <article
+                  key={pub.id}
+                  className={`px-4 py-4 ${index < pubs.length - 1 ? 'border-b border-slate-100' : ''}`}
+                >
+                  <p className="break-words text-sm font-bold leading-snug text-[#171923]">{pub.titulo}</p>
+                  {pub.cuerpo && (
+                    <p className="mt-1.5 line-clamp-3 break-words text-[13px] leading-5 text-slate-500">
+                      {pub.cuerpo}
+                    </p>
+                  )}
+                  <p className="mt-2.5 break-words text-[11px] text-slate-400">
+                    {pub.autor?.nombre_completo || 'Usuario'} · {new Date(pub.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>
