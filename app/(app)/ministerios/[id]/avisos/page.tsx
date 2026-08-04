@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { PlusCircle, Megaphone } from 'lucide-react'
+import { Megaphone, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -20,12 +20,19 @@ export default async function AvisosPage({
 
   if (!user) return null
 
-  const { data: membresia } = await supabase
-    .from('ministerio_miembros')
-    .select('es_lider')
-    .eq('ministerio_id', id)
-    .eq('profile_id', user.id)
-    .maybeSingle()
+  const [{ data: membresia }, { data: ministerio }] = await Promise.all([
+    supabase
+      .from('ministerio_miembros')
+      .select('es_lider')
+      .eq('ministerio_id', id)
+      .eq('profile_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('ministerios')
+      .select('nombre, color_primario')
+      .eq('id', id)
+      .single(),
+  ])
 
   let esPastor = false
   if (!(membresia as any)?.es_lider) {
@@ -37,7 +44,8 @@ export default async function AvisosPage({
     esPastor = (profile as any)?.rol === 'pastor' || (profile as any)?.rol === 'administrador'
   }
 
-  const puedePublicar = (membresia as any)?.es_lider || esPastor
+  const puedePublicar = Boolean((membresia as any)?.es_lider || esPastor)
+  const color = (ministerio as any)?.color_primario || '#5b3df5'
 
   const { data: avisos } = await supabase
     .from('publicaciones')
@@ -55,51 +63,88 @@ export default async function AvisosPage({
     .order('created_at', { ascending: false })
 
   return (
-    <div className="space-y-5 px-4 pb-28 sm:px-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-bold text-[#171923]">Avisos y noticias</h2>
-        {puedePublicar && (
-          <Link
-            href={`/ministerios/${id}/avisos/nuevo`}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 sm:w-auto"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Nuevo aviso
-          </Link>
-        )}
-      </div>
-
-      {!avisos || avisos.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-12 text-center">
-          <Megaphone className="mx-auto mb-3 h-10 w-10 text-slate-400" />
-          <p className="text-sm leading-relaxed text-slate-500">No hay avisos recientes en este ministerio.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {avisos.map((aviso: any) => (
-            <article
-              key={aviso.id}
-              className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5"
+    <main className="min-h-screen bg-[#f5f5f7] pb-28 pt-[calc(env(safe-area-inset-top)+5.75rem)]">
+      <header className="mx-auto max-w-2xl px-4 pb-5">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+          {(ministerio as any)?.nombre || 'Ministerio'}
+        </p>
+        <div className="mt-1 flex min-w-0 items-end justify-between gap-3">
+          <h1 className="min-w-0 break-words text-[32px] font-extrabold leading-[1.04] tracking-[-0.04em] text-[#111827] sm:text-[38px]">
+            Avisos y noticias
+          </h1>
+          {puedePublicar && (
+            <Link
+              href={`/ministerios/${id}/avisos/nuevo`}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-transform active:scale-95"
+              style={{ backgroundColor: color }}
+              aria-label="Nuevo aviso"
             >
-              <h3 className="break-words text-base font-semibold text-[#171923] sm:text-lg">{aviso.titulo}</h3>
-              <p className="mt-2 break-words whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-                {aviso.cuerpo}
-              </p>
-              <div className="mt-4 flex flex-col gap-1 border-t border-slate-100 pt-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-                <span className="break-words font-medium">
-                  {aviso.profiles?.nombre_completo || 'Usuario'}
-                </span>
-                <span>
-                  {formatDistanceToNow(new Date(aviso.created_at), {
-                    addSuffix: true,
-                    locale: es,
-                  })}
-                </span>
-              </div>
-            </article>
-          ))}
+              <Plus className="h-6 w-6" />
+            </Link>
+          )}
         </div>
-      )}
-    </div>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-500">
+          Comunicación oficial, recordatorios y novedades del equipo.
+        </p>
+      </header>
+
+      <section className="mx-auto max-w-2xl px-4">
+        {!avisos || avisos.length === 0 ? (
+          <div className="rounded-[24px] bg-white px-5 py-14 text-center ring-1 ring-black/[0.045]">
+            <span
+              className="mx-auto grid h-12 w-12 place-items-center rounded-full"
+              style={{ backgroundColor: `${color}14`, color }}
+            >
+              <Megaphone className="h-6 w-6" />
+            </span>
+            <h2 className="mt-4 text-base font-bold text-[#171923]">Aún no hay avisos</h2>
+            <p className="mx-auto mt-1 max-w-xs text-sm leading-relaxed text-slate-500">
+              Los avisos publicados para este ministerio aparecerán aquí.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
+            {avisos.map((aviso: any, index: number) => (
+              <article
+                key={aviso.id}
+                className={`relative px-4 py-4 sm:px-5 ${index < avisos.length - 1 ? 'border-b border-slate-100' : ''}`}
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full"
+                    style={{ backgroundColor: `${color}12`, color }}
+                    aria-hidden="true"
+                  >
+                    <Megaphone className="h-[18px] w-[18px]" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="break-words text-[16px] font-bold leading-snug text-[#171923]">
+                      {aviso.titulo}
+                    </h2>
+                    {aviso.cuerpo && (
+                      <p className="mt-1.5 break-words whitespace-pre-wrap text-[14px] leading-6 text-slate-600">
+                        {aviso.cuerpo}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-slate-400">
+                      <span className="font-semibold text-slate-500">
+                        {aviso.profiles?.nombre_completo || 'Usuario'}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <time dateTime={aviso.created_at}>
+                        {formatDistanceToNow(new Date(aviso.created_at), {
+                          addSuffix: true,
+                          locale: es,
+                        })}
+                      </time>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   )
 }
