@@ -3,6 +3,7 @@
 import { format } from 'date-fns'
 import { eventColor, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
+import fixes from './CalendarioFinalFixes.module.css'
 
 export default function CalendarioEventRow({
   evento,
@@ -18,14 +19,18 @@ export default function CalendarioEventRow({
   return (
     <button className={styles.eventRow} onClick={() => onOpen(evento)}>
       <span className={styles.eventColor} style={{ backgroundColor: color }} />
-      <span className={styles.eventMain}>
-        <span className={styles.eventTitle}>{evento.titulo}</span>
-        <span className={styles.eventMeta} style={{ color }}>
+      <span className={`${styles.eventMain} ${fixes.eventMainFix}`}>
+        <span className={`${styles.eventTitle} ${fixes.eventTitleFix}`}>{evento.titulo}</span>
+        <span className={`${styles.eventMeta} ${fixes.eventMetaFix}`} style={{ color }}>
           {evento.ministerios?.nombre || 'General'}
         </span>
-        {evento.ubicacion && <span className={styles.eventLocation}>{evento.ubicacion}</span>}
+        {evento.ubicacion && (
+          <span className={`${styles.eventLocation} ${fixes.eventLocationFix}`}>
+            {evento.ubicacion}
+          </span>
+        )}
       </span>
-      <span className={styles.eventTime}>
+      <span className={`${styles.eventTime} ${fixes.eventTimeFix}`}>
         {evento.todo_el_dia
           ? 'Todo el día'
           : fin
