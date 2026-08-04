@@ -22,12 +22,22 @@ type PermisosCalendario = {
   ministerios: MinisterioGestionado[]
 }
 
+type PerfilCalendario = {
+  rol: 'servidor' | 'lider' | 'pastor' | 'administrador'
+  activo: boolean
+  estado_cuenta: string
+}
+
+type LiderazgoCalendario = {
+  ministerios: MinisterioGestionado | null
+}
+
 const CACHE_SCOPE = 'calendario:v4'
 const CACHE_TTL = 10 * 60 * 1000
 
 export default function CalendarioClient({ userId }: CalendarioClientProps) {
-  const [asignaciones, setAsignaciones] = useState<any[] | null>(() =>
-    readUserCache<any[]>(userId, CACHE_SCOPE),
+  const [asignaciones, setAsignaciones] = useState<unknown[] | null>(() =>
+    readUserCache<unknown[]>(userId, CACHE_SCOPE),
   )
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [permisos, setPermisos] = useState<PermisosCalendario>({
@@ -45,13 +55,14 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
     async function cargarCalendario() {
       setIsRefreshing(true)
       const supabase = createClient()
+      const db = supabase as any
       const ahora = new Date()
       const desde = new Date(ahora.getFullYear() - 1, 0, 1)
       const hasta = new Date(ahora.getFullYear() + 2, 0, 1)
 
       try {
-        const [{ data: eventos }, { data: perfil }, { data: liderazgos }] = await Promise.all([
-          supabase
+        const [eventosResult, perfilResult, liderazgosResult] = await Promise.all([
+          db
             .from('evento_asignaciones')
             .select(`
               id,
@@ -75,37 +86,39 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
             .gte('eventos.fecha_inicio', desde.toISOString())
             .lt('eventos.fecha_inicio', hasta.toISOString())
             .order('fecha_inicio', { referencedTable: 'eventos', ascending: true }),
-          supabase
+          db
             .from('profiles')
             .select('rol, activo, estado_cuenta')
             .eq('id', userId)
             .single(),
-          supabase
+          db
             .from('ministerio_miembros')
             .select('ministerio_id, es_lider, ministerios(id, nombre, color_primario)')
             .eq('profile_id', userId)
             .eq('es_lider', true),
         ])
 
+        const perfil = perfilResult.data as PerfilCalendario | null
+        const liderazgos = (liderazgosResult.data || []) as LiderazgoCalendario[]
         const rol = perfil?.rol
         const esPastorAdmin = rol === 'pastor' || rol === 'administrador'
         let ministerios: MinisterioGestionado[] = []
 
         if (esPastorAdmin) {
-          const { data } = await supabase
+          const { data } = await db
             .from('ministerios')
             .select('id, nombre, color_primario')
             .eq('activo', true)
             .order('orden')
           ministerios = (data || []) as MinisterioGestionado[]
         } else {
-          ministerios = (liderazgos || [])
-            .map((item: any) => item.ministerios)
-            .filter(Boolean) as MinisterioGestionado[]
+          ministerios = liderazgos
+            .map((item) => item.ministerios)
+            .filter((item): item is MinisterioGestionado => Boolean(item))
         }
 
         if (!cancelled) {
-          const fresh = eventos || []
+          const fresh = (eventosResult.data || []) as unknown[]
           setAsignaciones(fresh)
           writeUserCache(userId, CACHE_SCOPE, fresh, CACHE_TTL)
           setPermisos({
