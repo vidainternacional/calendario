@@ -38,19 +38,27 @@ El calendario fue aprobado visualmente por el usuario el 2026-08-04 con:
 - intercambio de turnos;
 - superficie edge-to-edge inspirada en iOS.
 
-El único ajuste pendiente identificado en esa aprobación fue evitar que la transición Mes → Año mostrara la vista mensual comprimida.
+El ajuste Mes → Año quedó implementado sin reducir físicamente la pantalla mensual: ahora utiliza una salida breve y una aparición limpia de la vista anual.
 
 ## Ministerios — bloque actual
 
-Primer bloque autorizado:
+Primer bloque autorizado e integrado:
 
-- corregir safe area y jerarquía de **Avisos y noticias**;
-- rediseñar el dashboard compartido de ministerios con estilo minimalista tipo iOS;
-- conservar portada, avatar, colores, fuentes, accesos, eventos, publicaciones y panel del líder;
-- no modificar permisos, RLS, flujos de ingreso ni lógica de publicación.
+- safe area y jerarquía corregidas en **Avisos y noticias**;
+- encabezado grande y lista agrupada inspirada en iOS;
+- dashboard compartido de ministerios con composición minimalista;
+- portada, avatar, colores, fuentes, accesos, eventos, publicaciones y panel del líder conservados;
+- permisos, RLS, flujos de ingreso y lógica de publicación sin cambios.
 
 ## Permisos que deben conservarse
 
 - Administrador y pastor: gestión global según las reglas existentes.
 - Líder: administración únicamente de sus ministerios.
 - Servidor y congregante: acceso de consulta y participación según membresía, sin controles administrativos.
+
+## Evidencia del bloque
+
+- PR #175;
+- commit funcional fusionado `a2bd80c5e3bc36640cd68aee20df77975a222c57`;
+- preview Vercel `dpl_AzehFAXu93irfAQZtK9GZPNa2hbz` — `READY`;
+- cambio limitado a calendario, avisos, dashboard compartido y documentación del piloto.
