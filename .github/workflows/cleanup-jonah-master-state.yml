@@ -17,33 +17,34 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validar estado vigente de FASE D
+      - name: Validar prioridad vigente del piloto
         run: |
           python - <<'PY'
           from pathlib import Path
 
           text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
 
-          obsolete = (
-              'El Bloque 4 continúa activo. El siguiente incremento autorizado es aplicar esta migración exacta '
-              'de forma controlada en Supabase, importar únicamente Jonás desde el payload canónico'
-          )
-          if obsolete in text:
-              raise SystemExit('El documento maestro conserva una instrucción obsoleta de Jonás')
-
           required = [
-              'Fase activa: **FASE D — IA Bíblica Avanzada**',
-              '| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 5** |',
-              '### Avance confirmado del Bloque 5 — piloto de Roma aplicado y auditado',
-              '**Siguiente punto autorizado:** diseñar y validar fuera de producción la recuperación exclusivamente desde servidor y el contrato de lectura para cronologías y mapas, limitado inicialmente al piloto de Roma.'
+              'Fase activa: **PILOTO OPERATIVO — Validación funcional con cuentas reales**',
+              '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **EN PAUSA OPERATIVA — BLOQUE 5 CONSERVADO** |',
+              'Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.',
+              'producción `dpl_2UN2e4eiCvPo9gMVrrhqiYfoTZKF` — `READY`;',
+              '6. Define qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.'
           ]
           missing = [value for value in required if text.count(value) != 1]
           if missing:
-              raise SystemExit(f'Estado maestro inválido o duplicado: {missing}')
+              raise SystemExit(f'Estado maestro del piloto inválido o duplicado: {missing}')
 
-          if 'Bloque 6 — IA bíblica avanzada y proveedores: **ACTIVO**' in text:
-              raise SystemExit('El Bloque 6 no está autorizado')
+          forbidden = [
+              'Fase activa: **FASE D — IA Bíblica Avanzada**',
+              '**ACTIVA — BLOQUE 5**',
+              'Bloque 6 — IA bíblica avanzada y proveedores: **ACTIVO**',
+              '## Bloque P2 — Recorridos operativos por rol\n\nEstado: **ACTIVO**',
+          ]
+          present = [value for value in forbidden if value in text]
+          if present:
+              raise SystemExit(f'El documento maestro reactivó un bloque no autorizado: {present}')
 
-          print('Documento maestro de FASE D: OK')
+          print('Documento maestro del piloto operativo: OK')
           PY
           git diff --check
