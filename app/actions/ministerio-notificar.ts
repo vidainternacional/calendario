@@ -36,12 +36,16 @@ export async function notificarMinisterio(ministerioId: string, titulo: string, 
     return { error: 'No se pudo preparar el envío.' }
   }
 
-  const desactivados = new Set((preferencias || []).map((item: any) => item.profile_id))
-  const destinatarios = [...new Set(
-    (miembros || [])
-      .map((item: any) => item.profile_id as string)
-      .filter((profileId: string) => !desactivados.has(profileId))
-  )]
+  const desactivados = new Set<string>(
+    (preferencias || []).map((item: any) => String(item.profile_id)),
+  )
+  const destinatarios: string[] = Array.from(
+    new Set<string>(
+      (miembros || [])
+        .map((item: any) => String(item.profile_id))
+        .filter((profileId: string) => !desactivados.has(profileId)),
+    ),
+  )
 
   const enviadas = await notifyMultipleUsers(service, destinatarios, {
     title: min?.nombre || 'Ministerio',
@@ -51,12 +55,17 @@ export async function notificarMinisterio(ministerioId: string, titulo: string, 
     renotify: true,
   })
 
+  if (enviadas === 0) {
+    return {
+      error: 'No encontramos dispositivos activos. Pide a los miembros abrir VIDA para reconectar sus notificaciones.',
+      enviadas: 0,
+      destinatarios: destinatarios.length,
+    }
+  }
+
   return {
     success: true,
     enviadas,
     destinatarios: destinatarios.length,
-    error: enviadas === 0
-      ? 'El mensaje se guardó, pero no encontramos dispositivos activos. Pide a los miembros abrir VIDA para reconectar las notificaciones.'
-      : undefined,
   }
 }
