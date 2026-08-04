@@ -5,6 +5,7 @@ import { UserPlus } from 'lucide-react'
 import BackButton from '@/components/navigation/BackButton'
 import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDashboardSwitcher'
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
+import styles from './MinisterioLayout.module.css'
 
 export default async function MinisterioLayout({
   children,
@@ -106,7 +107,7 @@ export default async function MinisterioLayout({
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#f4f5f9]">
+    <div className={`${styles.shell} relative min-h-screen overflow-x-hidden bg-[#f4f5f9]`}>
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-30 mx-auto max-w-2xl px-4"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
