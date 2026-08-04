@@ -1,0 +1,152 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
+
+export type CrearEventoCalendarioResult = {
+  success: boolean
+  error?: string
+  eventoId?: string
+}
+
+function texto(formData: FormData, nombre: string) {
+  return String(formData.get(nombre) || '').trim()
+}
+
+export async function crearEventoCalendario(
+  formData: FormData,
+): Promise<CrearEventoCalendarioResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return { success: false, error: 'Tu sesión ha vencido.' }
+
+  const titulo = texto(formData, 'titulo')
+  const ubicacion = texto(formData, 'ubicacion')
+  const descripcion = texto(formData, 'descripcion')
+  const ministerioId = texto(formData, 'ministerio_id') || null
+  const fechaInicioRaw = texto(formData, 'fecha_inicio')
+  const fechaFinRaw = texto(formData, 'fecha_fin')
+  const todoElDia = texto(formData, 'todo_el_dia') === 'true'
+  const notif1d = texto(formData, 'notif_1d') === 'true'
+  const notif1h = texto(formData, 'notif_1h') === 'true'
+
+  if (!titulo || titulo.length > 140) {
+    return { success: false, error: 'Escribe un título válido para el evento.' }
+  }
+
+  const fechaInicio = new Date(fechaInicioRaw)
+  const fechaFin = new Date(fechaFinRaw)
+
+  if (
+    Number.isNaN(fechaInicio.getTime()) ||
+    Number.isNaN(fechaFin.getTime()) ||
+    fechaFin <= fechaInicio
+  ) {
+    return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
+  }
+
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('rol, activo, estado_cuenta')
+    .eq('id', user.id)
+    .single()
+
+  if (!perfil?.activo || perfil.estado_cuenta !== 'activo') {
+    return { success: false, error: 'Tu cuenta no tiene permiso para crear eventos.' }
+  }
+
+  const esPastorAdmin = perfil.rol === 'pastor' || perfil.rol === 'administrador'
+
+  if (!ministerioId && !esPastorAdmin) {
+    return { success: false, error: 'Solo un pastor o administrador puede crear eventos generales.' }
+  }
+
+  if (ministerioId && !esPastorAdmin) {
+    const { data: liderazgo } = await supabase
+      .from('ministerio_miembros')
+      .select('id')
+      .eq('profile_id', user.id)
+      .eq('ministerio_id', ministerioId)
+      .eq('es_lider', true)
+      .maybeSingle()
+
+    if (!liderazgo) {
+      return { success: false, error: 'No tienes permiso para crear eventos en ese ministerio.' }
+    }
+  }
+
+  const participantesSolicitados = Array.from(
+    new Set(
+      formData
+        .getAll('participantes')
+        .map((valor) => String(valor))
+        .filter((valor) => /^[0-9a-f-]{36}$/i.test(valor)),
+    ),
+  )
+
+  let participantesPermitidos = participantesSolicitados
+
+  if (ministerioId && participantesSolicitados.length > 0) {
+    const { data: membresias } = await supabase
+      .from('ministerio_miembros')
+      .select('profile_id')
+      .eq('ministerio_id', ministerioId)
+      .in('profile_id', participantesSolicitados)
+
+    const permitidos = new Set((membresias || []).map((item) => item.profile_id))
+    participantesPermitidos = participantesSolicitados.filter((id) => permitidos.has(id))
+  } else if (!ministerioId && participantesSolicitados.length > 0) {
+    const { data: perfilesActivos } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('activo', true)
+      .eq('estado_cuenta', 'activo')
+      .in('id', participantesSolicitados)
+
+    const permitidos = new Set((perfilesActivos || []).map((item) => item.id))
+    participantesPermitidos = participantesSolicitados.filter((id) => permitidos.has(id))
+  }
+
+  const { data: evento, error: eventoError } = await supabase
+    .from('eventos')
+    .insert({
+      titulo,
+      ubicacion: ubicacion || null,
+      descripcion: descripcion || null,
+      ministerio_id: ministerioId,
+      fecha_inicio: fechaInicio.toISOString(),
+      fecha_fin: fechaFin.toISOString(),
+      todo_el_dia: todoElDia,
+      creado_por: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (eventoError || !evento) {
+    console.error('[crearEventoCalendario] evento', eventoError)
+    return { success: false, error: 'No fue posible guardar el evento.' }
+  }
+
+  const asignados = Array.from(new Set([user.id, ...participantesPermitidos]))
+  const { error: asignacionesError } = await supabase.from('evento_asignaciones').insert(
+    asignados.map((profileId) => ({
+      evento_id: evento.id,
+      profile_id: profileId,
+      estado: profileId === user.id ? 'confirmado' : 'asignado',
+      notif_1d: notif1d,
+      notif_1h: notif1h,
+    })),
+  )
+
+  if (asignacionesError) {
+    console.error('[crearEventoCalendario] asignaciones', asignacionesError)
+    await supabase.from('eventos').delete().eq('id', evento.id)
+    return { success: false, error: 'El evento no pudo asignarse a los participantes.' }
+  }
+
+  revalidatePath('/calendario')
+  return { success: true, eventoId: evento.id }
+}
