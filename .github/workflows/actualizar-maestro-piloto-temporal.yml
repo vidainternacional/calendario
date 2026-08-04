@@ -1,0 +1,107 @@
+name: Actualizar maestro del piloto
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/actualizar-maestro-piloto-temporal.yml
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Actualizar estado oficial
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('__VIDA_INTERNACIONAL.md')
+          text = path.read_text(encoding='utf-8')
+
+          text = text.replace(
+              'Última actualización: 2026-08-03',
+              'Última actualización: 2026-08-04',
+              1,
+          )
+          text = text.replace(
+              'Fase activa: **FASE D — IA Bíblica Avanzada**',
+              'Fase activa: **PILOTO OPERATIVO — Preparación para pruebas reales en la iglesia**',
+              1,
+          )
+          text = text.replace(
+              '| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **ACTIVA — BLOQUE 5** |',
+              '| FASE D | IA Bíblica Avanzada, nuevas fuentes, contexto histórico, comparaciones, cronologías, mapas y herramientas de estudio | **EN PAUSA OPERATIVA — BLOQUE 5 CONSERVADO** |',
+              1,
+          )
+          text = text.replace(
+              '## FASE D — Objetivo activo',
+              '## FASE D — Objetivo conservado en pausa',
+              1,
+          )
+          text = text.replace(
+              '- Bloque 5 — Cronologías y mapas: **ACTIVO**.',
+              '- Bloque 5 — Cronologías y mapas: **EN PAUSA OPERATIVA**.',
+              1,
+          )
+
+          anchor = '| FASE F | Cuaderno correlativo de prédicas y notas | PENDIENTE |\n\n## Cierre confirmado de FASE C'
+          section = '''| FASE F | Cuaderno correlativo de prédicas y notas | PENDIENTE |
+
+## Prioridad operativa temporal — Piloto en iglesia
+
+El usuario autorizó el 2026-08-04 pausar temporalmente la ampliación de IA Bíblica Avanzada para preparar VIDA para una prueba real con pastores, líderes y servidores seleccionados.
+
+### Objetivos activos
+
+1. Centro de Análisis del piloto.
+2. Selección explícita de participantes.
+3. Recorrido inicial diferente para pastor, líder, servidor y congregante.
+4. Activación y validación de notificaciones push.
+5. Pruebas completas de calendario, asignaciones, avisos, ministerios e intercambios.
+6. Reporte de problemas y clasificación de incidencias.
+7. Manual de prueba por jerarquía y ejemplos que desaparecen al escribir.
+
+### Reglas de esta prioridad
+
+- No reanudar el Bloque 5 ni avanzar al Bloque 6 mientras este documento no cambie expresamente el estado.
+- No registrar contraseñas, contenido de notas bíblicas, búsquedas privadas, textos pastorales ni contenido escrito en formularios.
+- La analítica se limita a sesiones, pantallas visitadas, finalización del recorrido y reportes voluntarios.
+- Los permisos existentes por jerarquía deben conservarse y verificarse mediante cuentas reales de prueba.
+- El piloto debe cerrarse con evidencia funcional en iPhone y Android y con los errores críticos resueltos.
+
+### Cuaderno y Notas
+
+La futura FASE F no debe crear un segundo cuaderno. **Biblia → Notas** ya es la base funcional para versículos, estudios, predicaciones y notas personales. La fase futura se redefine como evolución del espacio existente con sincronización entre dispositivos, respaldo, numeración correlativa, fecha, serie, lugar, predicador, estado y exportación.
+
+### Documentación activa
+
+- `docs/PILOTO_IGLESIA_ACTIVO_2026-08-04.md`;
+- `docs/MANUAL_PILOTO_POR_ROLES_2026-08-04.md`.
+
+## Cierre confirmado de FASE C'''
+
+          if '## Prioridad operativa temporal — Piloto en iglesia' not in text:
+              if anchor not in text:
+                  raise SystemExit('No se encontró el punto de inserción del estado del piloto')
+              text = text.replace(anchor, section, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Retirar workflow temporal y guardar
+        run: |
+          git config user.name "vidainternacional"
+          git config user.email "publiartsv.info@gmail.com"
+          git rm .github/workflows/actualizar-maestro-piloto-temporal.yml
+          git add __VIDA_INTERNACIONAL.md
+          git commit -m "docs: activar oficialmente el piloto operativo"
+          git push origin HEAD:main
