@@ -32,7 +32,7 @@ export default function NotificarMinisterioForm({ ministerioId, color }: { minis
       <input
         name="titulo"
         required
-        placeholder="Título (ej: Cambio de horario)"
+        placeholder="Ej. PRUEBA — Cambio de horario"
         className="w-full min-w-0 text-sm px-3 py-2.5 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none"
         style={{ colorScheme: 'light' }}
       />
@@ -40,10 +40,11 @@ export default function NotificarMinisterioForm({ ministerioId, color }: { minis
         name="mensaje"
         required
         rows={3}
-        placeholder="Mensaje para todos los del ministerio..."
+        placeholder="Ej. El ensayo será mañana a las 6:00 p. m. en el auditorio principal. Confirma que recibiste este mensaje."
         className="w-full min-w-0 text-sm px-3 py-2.5 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none resize-none"
         style={{ colorScheme: 'light' }}
       />
+      <p className="text-[11px] leading-4 text-slate-400">Los ejemplos son solo una guía y desaparecen al comenzar a escribir.</p>
       <div className="flex flex-col sm:flex-row gap-2">
         <button
           disabled={pending}
