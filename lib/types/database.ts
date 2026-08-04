@@ -15,6 +15,7 @@ export type Database = {
           nombre_completo: string
           rol: 'servidor' | 'lider' | 'pastor' | 'administrador'
           activo: boolean
+          estado_cuenta: 'pendiente' | 'activo' | 'suspendido'
           created_at: string
           telefono: string | null
           es_pastor_general: boolean
@@ -24,6 +25,7 @@ export type Database = {
           nombre_completo: string
           rol?: 'servidor' | 'lider' | 'pastor' | 'administrador'
           activo?: boolean
+          estado_cuenta?: 'pendiente' | 'activo' | 'suspendido'
           created_at?: string
           telefono?: string | null
           es_pastor_general?: boolean
@@ -33,6 +35,7 @@ export type Database = {
           nombre_completo?: string
           rol?: 'servidor' | 'lider' | 'pastor' | 'administrador'
           activo?: boolean
+          estado_cuenta?: 'pendiente' | 'activo' | 'suspendido'
           telefono?: string | null
           es_pastor_general?: boolean
         }
@@ -114,10 +117,32 @@ export type Database = {
           descripcion: string | null
           ubicacion: string | null
           fecha_inicio: string
-          fecha_fin: string
+          fecha_fin: string | null
           todo_el_dia: boolean
           creado_por: string
           created_at: string
+        }
+        Insert: {
+          id?: string
+          ministerio_id?: string | null
+          titulo: string
+          descripcion?: string | null
+          ubicacion?: string | null
+          fecha_inicio: string
+          fecha_fin?: string | null
+          todo_el_dia?: boolean
+          creado_por: string
+          created_at?: string
+        }
+        Update: {
+          ministerio_id?: string | null
+          titulo?: string
+          descripcion?: string | null
+          ubicacion?: string | null
+          fecha_inicio?: string
+          fecha_fin?: string | null
+          todo_el_dia?: boolean
+          creado_por?: string
         }
       }
       preguntas_congregacion: {
@@ -160,11 +185,24 @@ export type Database = {
           evento_id: string
           profile_id: string
           estado: 'asignado' | 'confirmado' | 'declinado'
+          notif_1d: boolean
+          notif_1h: boolean
           created_at: string
+        }
+        Insert: {
+          id?: string
+          evento_id: string
+          profile_id: string
+          estado?: 'asignado' | 'confirmado' | 'declinado'
+          notif_1d?: boolean
+          notif_1h?: boolean
+          created_at?: string
         }
         Update: {
           profile_id?: string
           estado?: 'asignado' | 'confirmado' | 'declinado'
+          notif_1d?: boolean
+          notif_1h?: boolean
         }
       }
       intercambios: {
