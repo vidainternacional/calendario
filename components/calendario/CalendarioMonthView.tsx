@@ -13,7 +13,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import {
   eventColor,
   eventosDelDia,
@@ -22,6 +22,11 @@ import {
   type EventoCalendario,
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
+
+const TODAY_RING_STYLE: CSSProperties = {
+  boxShadow: 'inset 0 0 0 2px #5b3df5',
+  color: '#5b3df5',
+}
 
 export function MonthWeekdayHeader() {
   return (
@@ -56,14 +61,23 @@ export function MonthGrid({
         {days.map((day) => {
           const belongs = isSameMonth(day, month)
           const selected = belongs && isSameDay(day, selectedDay)
+          const today = belongs && isToday(day)
           const items = belongs ? eventosDelDia(events, day) : []
           return (
             <button
               key={day.toISOString()}
               className={`${styles.compactDay} ${selected ? styles.compactSelected : ''}`}
               onClick={() => belongs && onSelectDay(day)}
+              aria-pressed={belongs ? selected : undefined}
             >
-              {belongs ? format(day, 'd') : ''}
+              {belongs && (
+                <span
+                  className={`${styles.dayNumber} ${selected ? styles.dayNumberToday : ''}`}
+                  style={!selected && today ? TODAY_RING_STYLE : undefined}
+                >
+                  {format(day, 'd')}
+                </span>
+              )}
               {items.length > 0 && (
                 <span className={styles.compactDot} style={{ backgroundColor: eventColor(items[0]) }} />
               )}
@@ -87,10 +101,14 @@ export function MonthGrid({
             className={`${styles.monthDay} ${!belongs ? styles.monthDayOutside : ''} ${selected ? styles.monthDaySelected : ''}`}
             onClick={() => belongs && onSelectDay(day)}
             onDoubleClick={() => belongs && onOpenDay?.(day)}
+            aria-pressed={belongs ? selected : undefined}
           >
             {belongs && (
               <>
-                <span className={`${styles.dayNumber} ${today ? styles.dayNumberToday : ''}`}>
+                <span
+                  className={`${styles.dayNumber} ${selected ? styles.dayNumberToday : ''}`}
+                  style={!selected && today ? TODAY_RING_STYLE : undefined}
+                >
                   {format(day, 'd')}
                 </span>
                 <span className={styles.eventMarks}>
