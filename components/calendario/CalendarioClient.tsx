@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { readUserCache, writeUserCache } from '@/lib/cache/userCache'
-import CalendarioPilotoViews from '@/components/calendario/CalendarioPilotoViews'
+import CalendarioPolishShell from '@/components/calendario/CalendarioPolishShell'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 
@@ -73,7 +73,7 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
 
   if (asignaciones === null) {
     return (
-      <main className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]">
+      <main className="min-h-screen min-w-0 overflow-x-hidden bg-white pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]">
         <div className="px-4 pt-4">
           <SkeletonPage cards={4} />
         </div>
@@ -82,9 +82,9 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
   }
 
   return (
-    <main className="min-h-screen min-w-0 overflow-x-hidden bg-[#f4f5f9] pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+    <main className="min-h-screen min-w-0 overflow-x-hidden bg-white pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
       {asignaciones.length > 0 ? (
-        <CalendarioPilotoViews asignaciones={asignaciones} isRefreshing={isRefreshing} />
+        <CalendarioPolishShell asignaciones={asignaciones} isRefreshing={isRefreshing} />
       ) : (
         <div
           className="px-4"
