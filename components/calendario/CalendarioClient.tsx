@@ -12,7 +12,7 @@ type CalendarioClientProps = {
   userId: string
 }
 
-const CACHE_SCOPE = 'calendario:v1'
+const CACHE_SCOPE = 'calendario:v2'
 const CACHE_TTL = 10 * 60 * 1000
 
 export default function CalendarioClient({ userId }: CalendarioClientProps) {
@@ -44,6 +44,7 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
               fecha_inicio,
               fecha_fin,
               todo_el_dia,
+              ministerio_id,
               ministerios (
                 nombre,
                 color_primario
