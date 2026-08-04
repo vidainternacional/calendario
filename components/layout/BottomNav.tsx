@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Calendar, Megaphone, User, BookOpen } from 'lucide-react'
 
@@ -31,6 +32,11 @@ export default function BottomNav() {
   const router = useRouter()
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
+  const [portalReady, setPortalReady] = useState(false)
+
+  useEffect(() => {
+    setPortalReady(true)
+  }, [])
 
   useEffect(() => {
     const timeoutId = globalThis.setTimeout(() => {
@@ -65,41 +71,53 @@ export default function BottomNav() {
     oscuro: { nav: 'border-slate-800 bg-slate-950', inactive: 'text-slate-400', active: 'text-violet-300', activeBg: 'bg-violet-950/70', shadow: 'shadow-[0_-4px_18px_rgba(0,0,0,0.35)]' },
   }[modo]
 
+  const navigation = (
+    <div
+      className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
+      style={{
+        position: 'fixed',
+        insetInline: 0,
+        bottom: 0,
+        width: '100%',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden',
+        isolation: 'isolate',
+      }}
+    >
+      <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              prefetch
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.name}
+              onPointerEnter={() => router.prefetch(item.href)}
+              onTouchStart={() => router.prefetch(item.href)}
+              className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}
+            >
+              <span className={`flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
+                <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? 'fill-current opacity-90' : ''}`} />
+              </span>
+              <span className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
+            </Link>
+          )
+        })}
+      </nav>
+    </div>
+  )
+
   return (
     <>
       <div aria-hidden="true" className="h-[calc(4rem+env(safe-area-inset-bottom,0px))] shrink-0" />
-      <div
-        className={`app-bottom-nav fixed bottom-0 left-0 right-0 z-[100] w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
-        style={{
-          position: 'fixed', insetInline: 0, bottom: 0, width: '100%',
-          paddingRight: 'env(safe-area-inset-right, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)', paddingLeft: 'env(safe-area-inset-left, 0px)',
-          transform: 'none', WebkitTransform: 'none', contain: 'layout paint',
-        }}
-      >
-        <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                prefetch
-                aria-current={isActive ? 'page' : undefined}
-                aria-label={item.name}
-                onPointerEnter={() => router.prefetch(item.href)}
-                onTouchStart={() => router.prefetch(item.href)}
-                className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}
-              >
-                <span className={`flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
-                  <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? 'fill-current opacity-90' : ''}`} />
-                </span>
-                <span className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
+      {portalReady ? createPortal(navigation, document.body) : null}
     </>
   )
 }
