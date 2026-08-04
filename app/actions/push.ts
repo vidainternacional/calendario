@@ -75,8 +75,8 @@ export async function enviarNotificacionPrueba(profileId?: string) {
 
   const service = createServiceClient()
   const enviadas = await notifyUser(service, targetId, {
-    title: 'Vida Internacional',
-    body: composePushBody('Prueba de notificación', 'Las notificaciones están conectadas correctamente.'),
+    title: 'Prueba de notificación',
+    body: composePushBody('Sistema de avisos', 'Las notificaciones están conectadas correctamente.'),
     url: '/perfil',
     tag: `prueba-${targetId}-${Date.now()}`,
     renotify: true,
