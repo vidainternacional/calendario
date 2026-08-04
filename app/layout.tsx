@@ -71,8 +71,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js')
+                window.addEventListener('load', async () => {
+                  try {
+                    const registration = await navigator.serviceWorker.register('/sw.js', {
+                      updateViaCache: 'none'
+                    })
+                    await registration.update()
+                  } catch (error) {
+                    console.error('[service-worker] No se pudo registrar o actualizar:', error)
+                  }
                 })
               }
             `,
