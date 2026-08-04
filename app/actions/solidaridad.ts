@@ -138,11 +138,11 @@ export async function registrarAporteSolidario(input: {
 }) {
   const detail = cleanText(input.detail, 2000)
   const phone = cleanText(input.phone, 40) || null
-  const amount = input.type === 'monetario' ? Number(input.amount) : null
+  const amount: number | null = input.type === 'monetario' ? Number(input.amount) : null
 
   if (!CONTRIBUTION_TYPES.includes(input.type)) return { success: false, error: 'Tipo de aporte inválido.' }
   if (detail.length < 5) return { success: false, error: 'Describa brevemente cómo desea colaborar.' }
-  if (input.type === 'monetario' && (!Number.isFinite(amount) || Number(amount) <= 0)) {
+  if (input.type === 'monetario' && (amount === null || !Number.isFinite(amount) || amount <= 0)) {
     return { success: false, error: 'Ingrese un monto válido para la siembra.' }
   }
 
