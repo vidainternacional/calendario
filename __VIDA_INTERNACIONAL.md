@@ -50,12 +50,16 @@ Validar VIDA con personas reales antes de ampliar funciones, midiendo adopción,
 - Textos de ejemplo que desaparecen al escribir y nunca se guardan automáticamente.
 - Manuales y tareas de prueba por jerarquía.
 - Validación en iPhone y Android.
+- Centro de Análisis interactivo con detalle real por período, participante, pantalla y operación.
+- Ayuda Solidaria para solicitar bolsa alimenticia, registrar donaciones o siembras y dar seguimiento privado.
 
 ## Privacidad de la analítica
 
 Puede registrarse únicamente sesión piloto, ruta visitada, finalización del recorrido, estado de notificaciones, acciones operativas agregadas y reportes voluntarios.
 
 No debe registrarse contenido de notas bíblicas, búsquedas privadas, contraseñas, mensajes pastorales, conversaciones ni textos escritos en formularios.
+
+Las solicitudes de Ayuda Solidaria son información sensible. El Centro de Análisis únicamente puede mostrar cantidades agregadas. Los nombres, motivos, teléfonos y respuestas quedan limitados al solicitante y al equipo pastoral o administrativo autorizado.
 
 ## Permisos que deben conservarse
 
@@ -65,23 +69,28 @@ No debe registrarse contenido de notas bíblicas, búsquedas privadas, contrase�
 - Acceso al Centro de Análisis.
 - Selección de participantes.
 - Revisión y clasificación de reportes.
+- Gestión privada de solicitudes y aportes de Ayuda Solidaria.
 
 ### Líder
 
 - Administración únicamente de los ministerios donde figura como líder.
 - Creación de eventos y avisos dentro de esos ministerios.
 - Sin acceso al análisis global.
+- Sin acceso al detalle privado de Ayuda Solidaria, salvo autorización pastoral futura expresamente documentada.
 
 ### Servidor y congregante
 
 - Consulta y participación según membresía y asignaciones.
 - Sin creación administrativa, gestión de miembros ni aprobación de solicitudes.
+- Puede enviar una solicitud propia o registrar un aporte propio y consultar únicamente su seguimiento.
 
 # Bloques del piloto
 
 ## Bloque P1 — Base de análisis y acompañamiento
 
 Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.
+
+Extensión interactiva implementada y pendiente de despliegue productivo.
 
 Incluye:
 
@@ -92,30 +101,82 @@ Incluye:
 - repetición del recorrido desde Perfil;
 - reporte de problemas;
 - ejemplos en avisos y notificaciones;
-- manual por jerarquía.
+- manual por jerarquía;
+- dashboard interactivo con filtros de 7, 30 y 90 días;
+- paneles detallados de participantes, onboarding, dispositivos, rutas, problemas, eventos, asignaciones, avisos e intercambios;
+- Ayuda Solidaria con solicitud, aporte, seguimiento y administración privada.
 
 ### Evidencia técnica confirmada
 
 - migraciones `piloto_analitica_onboarding` y `piloto_revoke_anon_manager` aplicadas;
-- RLS habilitada en las cuatro tablas nuevas;
+- RLS habilitada en las cuatro tablas del piloto;
 - ejecución anónima revocada en el helper de gestión;
 - PR #180 fusionado mediante commit `4c1dffcb67f0623c53c8808fd42b5958f2dee8ab`;
-- build final del bloque: run `30939906829` — `success`;
-- corrección de selección de fechas: PR #182 y commit `40723b45abbb300c027d544ec9aca8d5f80df541`;
-- build de la corrección: run `30946777843` — `success`;
+- build final del bloque base: run `30939906829` — `success`;
+- corrección inicial de selección de fechas: PR #182 y commit `40723b45abbb300c027d544ec9aca8d5f80df541`;
+- build de esa corrección: run `30946777843` — `success`;
 - preview `dpl_2UsVhUkPcWuPMSfeKj9ubHxVzP9m` — `READY`;
 - producción `dpl_2UN2e4eiCvPo9gMVrrhqiYfoTZKF` — `READY`;
-- errores runtime observados después del despliegue: 0.
+- errores runtime observados después del despliegue base: 0;
+- ajuste visual definitivo del calendario fusionado en PR #184, commit `1e5763a304a937097cb41dc6394f34281337a4d9`;
+- build del ajuste definitivo: run `30948092161` — `success`;
+- despliegue del ajuste definitivo pendiente por límite diario temporal de Vercel;
+- migraciones `ayuda_solidaria_solicitudes_aportes` y `optimizar_ayuda_solidaria_rls_indices` aplicadas en Supabase;
+- build del dashboard interactivo y Ayuda Solidaria: run `30951024758` — `success`;
+- PR #185 abierto y listo para revisión final y fusión.
 
-### Corrección confirmada del calendario
+### Contrato visual definitivo del calendario
 
-El contrato visual de selección quedó unificado:
+Implementado en código y pendiente de validación productiva:
 
-- fecha seleccionada: círculo morado sólido;
-- hoy no seleccionado: aro morado;
+- hoy: círculo morado relleno de forma permanente;
+- cualquier otro día seleccionado: aro morado sin relleno;
+- seleccionar hoy conserva el relleno;
+- puntos o barras de eventos en una franja independiente debajo del número;
+- sin fondo completo de celda ni sobreposición entre el aro y el indicador del evento;
 - aplicación en Mes, Agenda, Semana y Día;
-- fondo tenue conservado como señal secundaria;
-- `aria-pressed` incorporado.
+- `aria-pressed` conservado.
+
+### Extensión interactiva del Centro de Análisis
+
+Implementada en PR #185:
+
+- jerarquía visual oscura inspirada en la referencia entregada, adaptada a mobile first y legibilidad real;
+- filtros de 7, 30 y 90 días;
+- índice agregado de adopción;
+- tarjetas interactivas para participantes, actividad, recorrido y notificaciones;
+- detalle de operaciones reales: eventos, asignaciones, avisos e intercambios;
+- panel de rutas más visitadas con visitas y personas únicas;
+- detalle de problemas reportados;
+- enlace a Gestión Solidaria;
+- conservación de la gestión de participantes y clasificación de incidencias existentes.
+
+No se implementó un mapa de calor que capture gestos o contenido sensible. Las métricas se construyen únicamente con rutas, acciones permitidas y datos operativos agregados.
+
+### Ayuda Solidaria
+
+Implementada en PR #185:
+
+- ruta personal `/ayuda-solidaria`;
+- solicitud privada de bolsa alimenticia;
+- registro de donación de alimentos, siembra económica, voluntariado u otro aporte;
+- seguimiento personal de estados y respuestas;
+- cancelación por el usuario mientras el registro siga en etapa inicial;
+- panel privado `/admin/ayuda-solidaria` para pastor o administrador;
+- filtros, búsqueda, respuestas y cambios de estado;
+- acceso desde Perfil y Administración;
+- no procesa pagos dentro de VIDA: registra la intención y permite coordinación posterior.
+
+Seguridad validada:
+
+- usuario autenticado puede insertar y leer únicamente sus propios registros;
+- prueba transaccional: servidor vio 1 de 2 solicitudes temporales;
+- prueba transaccional: administrador vio las 2 solicitudes temporales;
+- las pruebas se ejecutaron con rollback y no dejaron datos falsos;
+- RLS activa en ambas tablas;
+- políticas optimizadas con `(select auth.uid())`;
+- índices añadidos para responsables de revisión;
+- nombres y detalles nunca se exponen en el dashboard agregado.
 
 ### Cohorte inicial
 
@@ -135,13 +196,19 @@ No cambiar roles o liderazgo sin decisión explícita del usuario, porque eso mo
 
 ### Criterio pendiente de cierre
 
+- PR #185 fusionado;
+- despliegue productivo del dashboard interactivo y Ayuda Solidaria en estado `READY`;
 - recorrido inicial comprobado en la cuenta administradora;
 - acceso manual a Administración → Centro de Análisis;
+- paneles de detalle comprobados en iPhone;
 - aparición de las tres cuentas de la cohorte;
 - reporte de prueba visible y clasificable;
+- envío y cancelación de una solicitud de Ayuda Solidaria de prueba;
+- registro y cancelación de un aporte de prueba;
+- gestión pastoral o administrativa de ambos registros;
 - recorrido comprobado en las dos cuentas de servidor;
 - al menos una cuenta de líder o pastor disponible y validada;
-- comprobación visual de la selección de fechas en iPhone.
+- comprobación visual del contrato definitivo de fechas y puntos de eventos en iPhone.
 
 ## Bloque P2 — Recorridos operativos por rol
 
@@ -189,16 +256,18 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 - `docs/MANUAL_PILOTO_POR_ROLES_2026-08-04.md`;
 - `docs/PILOTO_P1_PRODUCCION_Y_CALENDARIO_2026-08-04.md`;
 - PR #180 — Centro de Análisis y onboarding;
-- PR #182 — selección consistente de fechas;
+- PR #182 — selección inicial consistente de fechas;
+- PR #184 — contrato definitivo de hoy, selección y puntos de eventos;
+- PR #185 — dashboard interactivo y Ayuda Solidaria;
 - historial anterior en `docs/VIDA_INTERNACIONAL_HISTORICO_2026-08-03.md`.
 
 # Siguiente punto autorizado
 
-1. El usuario cierra y vuelve a abrir la aplicación con su cuenta administradora.
-2. Completa o avanza el recorrido inicial.
-3. Entra en Administración → Centro de Análisis y verifica la cohorte.
-4. Comprueba Mes, Agenda, Semana y Día seleccionando una fecha distinta de hoy.
-5. Envía un reporte de prueba desde Perfil.
+1. Fusionar PR #185 después de confirmar sus checks.
+2. Esperar o ejecutar el despliegue productivo cuando Vercel libere el límite diario.
+3. Comprobar en iPhone el dashboard, sus paneles y la selección definitiva del calendario.
+4. Enviar una solicitud y un aporte de prueba; verificar aislamiento y gestión administrativa.
+5. Completar o avanzar el recorrido inicial, verificar la cohorte y enviar un reporte de prueba.
 6. Define qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.
 
 No reanudar el estudio bíblico avanzado, no iniciar P2 y no crear un cuaderno separado durante este bloque.

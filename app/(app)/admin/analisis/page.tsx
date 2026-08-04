@@ -1,28 +1,14 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import {
-  Activity,
-  ArrowLeft,
-  BellRing,
-  CalendarCheck2,
-  CheckCircle2,
-  ClipboardList,
-  Eye,
-  MessageSquareWarning,
-  Repeat2,
-  Users,
-} from 'lucide-react'
+import { ArrowLeft, MessageSquareWarning } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import PilotAnalyticsDashboard from '@/components/pilot/PilotAnalyticsDashboard'
 import PilotParticipantsManager from '@/components/pilot/PilotParticipantsManager'
 import PilotIssueStatusControls from '@/components/pilot/PilotIssueStatusControls'
 import type { PilotIssueStatus } from '@/lib/pilot/types'
 
 export const dynamic = 'force-dynamic'
-
-function percentage(value: number, total: number) {
-  return total > 0 ? Math.round((value / total) * 100) : 0
-}
 
 export default async function PilotAnalyticsPage() {
   const supabase = await createClient()
@@ -41,7 +27,7 @@ export default async function PilotAnalyticsPage() {
   if (!allowed) redirect('/inicio')
 
   const service = createServiceClient()
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const since90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
 
   const [
     profilesResult,
@@ -54,163 +40,167 @@ export default async function PilotAnalyticsPage() {
     assignmentsResult,
     noticesResult,
     exchangesResult,
-    pendingExchangesResult,
+    solidarityRequestsResult,
+    solidarityContributionsResult,
   ] = await Promise.all([
     service.from('profiles').select('id, nombre_completo, email, rol').eq('activo', true).eq('estado_cuenta', 'activo').order('nombre_completo'),
     service.from('pilot_participants').select('profile_id, active, invited_at, profiles(id, nombre_completo, email, rol)').order('invited_at', { ascending: false }),
-    service.from('pilot_onboarding_progress').select('profile_id, completed, current_step, notifications_enabled, completed_at'),
-    service.from('pilot_usage_events').select('profile_id, event_name, route, occurred_at, profiles(nombre_completo)').gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(600),
-    service.from('pilot_issue_reports').select('id, profile_id, role_snapshot, route, description, expected_result, status, created_at, profiles(nombre_completo)').order('created_at', { ascending: false }).limit(40),
+    service.from('pilot_onboarding_progress').select('profile_id, completed, current_step, notifications_enabled, completed_at, last_seen_at'),
+    service.from('pilot_usage_events').select('profile_id, event_name, route, occurred_at, profiles(nombre_completo)').gte('occurred_at', since90).order('occurred_at', { ascending: false }).limit(2500),
+    service.from('pilot_issue_reports').select('id, profile_id, role_snapshot, route, description, expected_result, status, created_at, profiles(nombre_completo)').order('created_at', { ascending: false }).limit(120),
     service.from('push_subscriptions').select('profile_id'),
-    service.from('eventos').select('id', { count: 'exact', head: true }).gte('created_at', since),
-    service.from('evento_asignaciones').select('id', { count: 'exact', head: true }).gte('created_at', since),
-    service.from('publicaciones').select('id', { count: 'exact', head: true }).gte('created_at', since),
-    service.from('intercambios').select('id', { count: 'exact', head: true }).gte('created_at', since),
-    service.from('intercambios').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+    service.from('eventos').select('id, titulo, created_at, ministerios(nombre)').gte('created_at', since90).order('created_at', { ascending: false }).limit(500),
+    service.from('evento_asignaciones').select('id, estado, created_at, profiles(nombre_completo), eventos(titulo)').gte('created_at', since90).order('created_at', { ascending: false }).limit(1000),
+    service.from('publicaciones').select('id, titulo, estado, created_at, ministerios(nombre)').gte('created_at', since90).order('created_at', { ascending: false }).limit(500),
+    service.from('intercambios').select('id, estado, created_at').gte('created_at', since90).order('created_at', { ascending: false }).limit(500),
+    service.from('solicitudes_ayuda_solidaria').select('id, estado'),
+    service.from('aportes_ayuda_solidaria').select('id, estado'),
   ])
 
   const profiles = (profilesResult.data || []) as any[]
   const participants = (participantsResult.data || []) as any[]
   const activeParticipants = participants.filter((participant) => participant.active)
   const activeIds = new Set(activeParticipants.map((participant) => participant.profile_id))
-  const onboarding = (onboardingResult.data || []).filter((item: any) => activeIds.has(item.profile_id))
-  const usage = (usageResult.data || []).filter((item: any) => activeIds.has(item.profile_id))
-  const issues = (issuesResult.data || []).filter((item: any) => activeIds.has(item.profile_id))
-  const pushProfiles = new Set((pushesResult.data || []).map((item: any) => item.profile_id).filter((id: string) => activeIds.has(id)))
-  const activeLast7Days = new Set(usage.map((item: any) => item.profile_id))
-  const completed = onboarding.filter((item: any) => item.completed).length
-  const openIssues = issues.filter((item: any) => item.status !== 'resuelto').length
+  const onboarding = (onboardingResult.data || []) as any[]
+  const usage = ((usageResult.data || []) as any[]).filter((item) => activeIds.has(item.profile_id))
+  const issues = ((issuesResult.data || []) as any[]).filter((item) => activeIds.has(item.profile_id))
+  const pushProfiles = new Set((pushesResult.data || []).map((item: any) => item.profile_id))
 
-  const routeCounts = new Map<string, number>()
-  usage.filter((item: any) => item.event_name === 'page_view' && item.route).forEach((item: any) => {
-    routeCounts.set(item.route, (routeCounts.get(item.route) || 0) + 1)
+  const onboardingByProfile = new Map(onboarding.map((item) => [item.profile_id, item]))
+  const usageByProfile = new Map<string, any[]>()
+  usage.forEach((item) => usageByProfile.set(item.profile_id, [...(usageByProfile.get(item.profile_id) || []), item]))
+
+  const participantSnapshots = activeParticipants.map((participant) => {
+    const profile = participant.profiles || {}
+    const progress = onboardingByProfile.get(participant.profile_id)
+    const participantUsage = usageByProfile.get(participant.profile_id) || []
+    const lastUsage = participantUsage[0]?.occurred_at || progress?.last_seen_at || null
+
+    return {
+      id: participant.profile_id,
+      name: profile.nombre_completo || 'Participante',
+      email: profile.email || null,
+      role: profile.rol || 'servidor',
+      completed: Boolean(progress?.completed),
+      hasPush: pushProfiles.has(participant.profile_id),
+      lastSeenAt: lastUsage,
+      pageViews: participantUsage.filter((item) => item.event_name === 'page_view').length,
+      actions: participantUsage.filter((item) => item.event_name !== 'page_view').length,
+    }
   })
-  const topRoutes = [...routeCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
-  const maxRoute = Math.max(1, ...topRoutes.map(([, count]) => count))
 
-  const adoptionCards = [
-    { label: 'Participantes', value: activeParticipants.length, detail: 'seleccionados', icon: Users, className: 'bg-violet-50 text-violet-600' },
-    { label: 'Recorrido completo', value: completed, detail: `${percentage(completed, activeParticipants.length)}% del piloto`, icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Activos en 7 días', value: activeLast7Days.size, detail: `${percentage(activeLast7Days.size, activeParticipants.length)}% del piloto`, icon: Activity, className: 'bg-sky-50 text-sky-600' },
-    { label: 'Notificaciones', value: pushProfiles.size, detail: `${percentage(pushProfiles.size, activeParticipants.length)}% con dispositivo`, icon: BellRing, className: 'bg-amber-50 text-amber-600' },
-    { label: 'Problemas abiertos', value: openIssues, detail: 'requieren revisión', icon: MessageSquareWarning, className: openIssues ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500' },
+  const usageSnapshots = usage.map((item) => ({
+    profileId: item.profile_id,
+    name: item.profiles?.nombre_completo || 'Participante',
+    eventName: item.event_name,
+    route: item.route || null,
+    occurredAt: item.occurred_at,
+  }))
+
+  const operations = [
+    ...((eventsResult.data || []) as any[]).map((item) => ({
+      id: item.id,
+      kind: 'evento' as const,
+      title: item.titulo,
+      detail: item.ministerios?.nombre || 'Evento general',
+      status: null,
+      occurredAt: item.created_at,
+    })),
+    ...((assignmentsResult.data || []) as any[]).map((item) => ({
+      id: item.id,
+      kind: 'asignacion' as const,
+      title: item.eventos?.titulo || 'Asignación',
+      detail: item.profiles?.nombre_completo || 'Servidor',
+      status: item.estado || null,
+      occurredAt: item.created_at,
+    })),
+    ...((noticesResult.data || []) as any[]).map((item) => ({
+      id: item.id,
+      kind: 'aviso' as const,
+      title: item.titulo,
+      detail: item.ministerios?.nombre || 'Anuncio general',
+      status: item.estado || null,
+      occurredAt: item.created_at,
+    })),
+    ...((exchangesResult.data || []) as any[]).map((item) => ({
+      id: item.id,
+      kind: 'intercambio' as const,
+      title: 'Solicitud de intercambio',
+      detail: null,
+      status: item.estado || null,
+      occurredAt: item.created_at,
+    })),
   ]
 
-  const operationCards = [
-    { label: 'Eventos creados', value: eventsResult.count || 0, icon: CalendarCheck2 },
-    { label: 'Asignaciones', value: assignmentsResult.count || 0, icon: ClipboardList },
-    { label: 'Avisos publicados', value: noticesResult.count || 0, icon: Eye },
-    { label: 'Intercambios', value: exchangesResult.count || 0, icon: Repeat2 },
-  ]
+  const issueSnapshots = issues.map((item) => ({
+    id: item.id,
+    name: item.profiles?.nombre_completo || 'Participante',
+    role: item.role_snapshot,
+    route: item.route || null,
+    description: item.description,
+    status: item.status,
+    occurredAt: item.created_at,
+  }))
+
+  const solidarityRequests = (solidarityRequestsResult.data || []) as any[]
+  const solidarityContributions = (solidarityContributionsResult.data || []) as any[]
+  const solidarity = {
+    totalRequests: solidarityRequests.length,
+    openRequests: solidarityRequests.filter((item) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length,
+    totalContributions: solidarityContributions.length,
+    availableContributions: solidarityContributions.filter((item) => !['completado', 'cancelado'].includes(item.estado)).length,
+  }
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-6 flex items-start gap-3">
-          <Link href="/admin" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-black/[0.05]" aria-label="Volver a Administración">
-            <ArrowLeft className="h-5 w-5" />
+    <main className="min-h-screen bg-[#eef0f6] pb-[calc(7rem+env(safe-area-inset-bottom))]">
+      <PilotAnalyticsDashboard
+        participants={participantSnapshots}
+        usage={usageSnapshots}
+        operations={operations}
+        issues={issueSnapshots}
+        solidarity={solidarity}
+      />
+
+      <div className="mx-auto max-w-4xl space-y-7 px-4 py-7 sm:px-6">
+        <div>
+          <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-black/[0.05]">
+            <ArrowLeft className="h-4 w-4" /> Volver a Administración
           </Link>
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-violet-500">Piloto operativo</p>
-            <h1 className="mt-1 text-[30px] font-extrabold leading-tight tracking-[-0.04em] text-[#151923]">Centro de Análisis</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Adopción, actividad operativa y problemas reportados durante los últimos siete días.</p>
-          </div>
-        </header>
-
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {adoptionCards.map(({ label, value, detail, icon: Icon, className }) => (
-            <article key={label} className="min-w-0 rounded-[22px] bg-white p-4 ring-1 ring-black/[0.045]">
-              <span className={`grid h-9 w-9 place-items-center rounded-full ${className}`}><Icon className="h-[18px] w-[18px]" /></span>
-              <p className="mt-4 text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-              <p className="mt-1 text-3xl font-extrabold tracking-[-0.04em] text-[#171923]">{value}</p>
-              <p className="mt-1 text-[11px] leading-4 text-slate-400">{detail}</p>
-            </article>
-          ))}
-        </section>
-
-        <section className="mt-7">
-          <div className="mb-3 px-1">
-            <h2 className="text-sm font-extrabold text-[#171923]">Actividad operativa</h2>
-            <p className="mt-1 text-xs text-slate-400">Datos creados durante los últimos siete días.</p>
-          </div>
-          <div className="grid grid-cols-2 overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
-            {operationCards.map(({ label, value, icon: Icon }, index) => (
-              <article key={label} className={`min-h-24 p-4 ${index % 2 === 0 ? 'border-r border-slate-100' : ''} ${index < 2 ? 'border-b border-slate-100' : ''}`}>
-                <Icon className="h-5 w-5 text-violet-500" />
-                <p className="mt-3 text-2xl font-extrabold text-[#171923]">{value}</p>
-                <p className="mt-1 text-xs text-slate-400">{label}</p>
-              </article>
-            ))}
-          </div>
-          {(pendingExchangesResult.count || 0) > 0 && (
-            <p className="mt-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
-              {pendingExchangesResult.count} intercambio{pendingExchangesResult.count === 1 ? '' : 's'} pendiente{pendingExchangesResult.count === 1 ? '' : 's'} de resolver.
-            </p>
-          )}
-        </section>
-
-        <section className="mt-7">
-          <h2 className="mb-3 px-1 text-sm font-extrabold text-[#171923]">Pantallas más visitadas</h2>
-          <div className="rounded-[24px] bg-white p-4 ring-1 ring-black/[0.045]">
-            {topRoutes.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">La actividad aparecerá cuando los participantes comiencen a usar VIDA.</p>
-            ) : (
-              <div className="space-y-4">
-                {topRoutes.map(([route, count]) => (
-                  <div key={route}>
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="min-w-0 truncate font-semibold text-slate-600">{route}</span>
-                      <span className="shrink-0 font-bold text-slate-400">{count}</span>
-                    </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-violet-500" style={{ width: `${Math.max(7, Math.round((count / maxRoute) * 100))}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <div className="mt-7">
-          <PilotParticipantsManager profiles={profiles} participants={participants} />
         </div>
 
-        <section className="mt-7">
+        <PilotParticipantsManager profiles={profiles} participants={participants} />
+
+        <section>
           <div className="mb-3 flex items-end justify-between gap-3 px-1">
             <div>
-              <h2 className="text-sm font-extrabold text-[#171923]">Problemas reportados</h2>
-              <p className="mt-1 text-xs text-slate-400">No incluye contraseñas, notas bíblicas ni contenido pastoral.</p>
+              <h2 className="text-base font-extrabold text-[#171923]">Gestión de problemas reportados</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">Los paneles superiores resumen la información; aquí puedes cambiar el estado de cada reporte.</p>
             </div>
-            <span className="text-xs font-bold text-slate-400">{issues.length}</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-500 ring-1 ring-black/[0.05]"><MessageSquareWarning className="h-3.5 w-3.5" /> {issues.length}</span>
           </div>
 
-          <div className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
+          <div className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.05]">
             {issues.length === 0 ? (
-              <p className="px-5 py-10 text-center text-sm text-slate-400">Todavía no se han enviado reportes.</p>
-            ) : (
-              issues.map((issue: any, index: number) => (
-                <article key={issue.id} className={`p-4 sm:p-5 ${index < issues.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-extrabold text-[#171923]">{issue.profiles?.nombre_completo || 'Participante'}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">{issue.role_snapshot} · {new Date(issue.created_at).toLocaleString('es-SV')}</p>
-                    </div>
-                    <span className="max-w-full truncate rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">{issue.route || 'Ruta no disponible'}</span>
+              <p className="px-5 py-12 text-center text-sm text-slate-400">Todavía no se han enviado reportes.</p>
+            ) : issues.map((issue: any, index: number) => (
+              <article key={issue.id} className={`p-4 sm:p-5 ${index < issues.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-extrabold text-[#171923]">{issue.profiles?.nombre_completo || 'Participante'}</p>
+                    <p className="mt-1 text-[11px] text-slate-400">{issue.role_snapshot} · {new Date(issue.created_at).toLocaleString('es-SV')}</p>
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{issue.description}</p>
-                  {issue.expected_result && (
-                    <div className="mt-3 rounded-2xl bg-slate-50 px-3 py-2.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Esperaba</p>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600">{issue.expected_result}</p>
-                    </div>
-                  )}
-                  <div className="mt-4">
-                    <PilotIssueStatusControls reportId={issue.id} status={issue.status as PilotIssueStatus} />
+                  <span className="max-w-full truncate rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">{issue.route || 'Ruta no disponible'}</span>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{issue.description}</p>
+                {issue.expected_result && (
+                  <div className="mt-3 rounded-2xl bg-slate-50 px-3 py-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Esperaba</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600">{issue.expected_result}</p>
                   </div>
-                </article>
-              ))
-            )}
+                )}
+                <div className="mt-4"><PilotIssueStatusControls reportId={issue.id} status={issue.status as PilotIssueStatus} /></div>
+              </article>
+            ))}
           </div>
         </section>
       </div>
