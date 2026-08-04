@@ -2,11 +2,11 @@
 
 Última actualización: 2026-08-04
 
-Fase activa: **PILOTO OPERATIVO — Preparación para pruebas reales en la iglesia**
+Fase activa: **PILOTO OPERATIVO — Validación funcional con cuentas reales**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
-El registro detallado acumulado hasta el 2026-08-03 se conserva íntegro en:
+El registro técnico acumulado hasta el 2026-08-03 se conserva íntegro en:
 
 - `docs/VIDA_INTERNACIONAL_HISTORICO_2026-08-03.md`.
 
@@ -17,7 +17,7 @@ El registro detallado acumulado hasta el 2026-08-03 se conserva íntegro en:
 3. Cada cierre debe incluir evidencia técnica, validación funcional y documentación.
 4. Los hallazgos fuera de alcance se documentan para una fase posterior, sin ampliar el bloque activo.
 5. No declarar una función lista para el piloto sin build aprobado y validación en producción.
-6. Los cambios de permisos, datos sensibles o producción requieren validación aislada y recuperación definida.
+6. Los cambios de permisos, roles, liderazgo o datos sensibles requieren una decisión explícita y recuperación definida.
 
 ## Estado de fases
 
@@ -51,35 +51,11 @@ Validar VIDA con personas reales antes de ampliar funciones, midiendo adopción,
 - Manuales y tareas de prueba por jerarquía.
 - Validación en iPhone y Android.
 
-## Fuera de alcance durante el piloto
-
-- Reanudar Cronologías y Mapas.
-- Avanzar al Bloque 6 de IA bíblica.
-- Ampliar el corpus bíblico o conectar datos textuales a proveedores de IA.
-- Crear un segundo cuaderno separado de Biblia → Notas.
-- Auditoría global de rendimiento o seguridad correspondiente a la FASE E, salvo un riesgo crítico que bloquee el piloto.
-- Registrar contenido privado para fines analíticos.
-
 ## Privacidad de la analítica
 
-La analítica del piloto puede registrar únicamente:
+Puede registrarse únicamente sesión piloto, ruta visitada, finalización del recorrido, estado de notificaciones, acciones operativas agregadas y reportes voluntarios.
 
-- inicio de una sesión piloto;
-- pantalla o ruta visitada;
-- finalización del recorrido inicial;
-- estado de activación de notificaciones;
-- acciones operativas agregadas y no sensibles;
-- reportes enviados voluntariamente.
-
-No debe registrar:
-
-- contraseñas;
-- contenido de notas bíblicas;
-- búsquedas o textos bíblicos privados;
-- contenido pastoral;
-- mensajes escritos en formularios;
-- contenido de conversaciones;
-- información de otras personas que no sea necesaria para la operación.
+No debe registrarse contenido de notas bíblicas, búsquedas privadas, contraseñas, mensajes pastorales, conversaciones ni textos escritos en formularios.
 
 ## Permisos que deben conservarse
 
@@ -87,7 +63,7 @@ No debe registrar:
 
 - Gestión global según las reglas existentes.
 - Acceso al Centro de Análisis.
-- Selección de participantes del piloto.
+- Selección de participantes.
 - Revisión y clasificación de reportes.
 
 ### Líder
@@ -99,17 +75,17 @@ No debe registrar:
 ### Servidor y congregante
 
 - Consulta y participación según membresía y asignaciones.
-- Sin creación de eventos, publicación administrativa, gestión de miembros ni aprobación de solicitudes.
+- Sin creación administrativa, gestión de miembros ni aprobación de solicitudes.
 
-## Bloques del piloto
+# Bloques del piloto
 
-### Bloque P1 — Base de análisis y acompañamiento
+## Bloque P1 — Base de análisis y acompañamiento
 
-Estado: **FUSIONADO — DESPLIEGUE FINAL PENDIENTE POR LÍMITE TEMPORAL DE VERCEL**.
+Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.
 
 Incluye:
 
-- tablas con RLS para participantes, onboarding, eventos mínimos de uso y reportes;
+- cuatro tablas con RLS para participantes, onboarding, eventos mínimos de uso y reportes;
 - Centro de Análisis;
 - selección de participantes;
 - onboarding por rol;
@@ -118,72 +94,82 @@ Incluye:
 - ejemplos en avisos y notificaciones;
 - manual por jerarquía.
 
-Validación confirmada:
+### Evidencia técnica confirmada
 
 - migraciones `piloto_analitica_onboarding` y `piloto_revoke_anon_manager` aplicadas;
 - RLS habilitada en las cuatro tablas nuevas;
 - ejecución anónima revocada en el helper de gestión;
-- build completo de Next.js y TypeScript aprobado en GitHub Actions;
-- ejecución inicial `30939370609` — `success`;
-- ejecución final del head `c12f8246a102c7080097c20de32c65bc6dcf848e`, run `30939906829` — `success`;
 - PR #180 fusionado mediante commit `4c1dffcb67f0623c53c8808fd42b5958f2dee8ab`;
-- varios previews intermedios del bloque en estado `READY`;
-- el deployment automático del commit fusionado fue rechazado únicamente por `build-rate-limit` de Vercel, no por error de compilación.
+- build final del bloque: run `30939906829` — `success`;
+- corrección de selección de fechas: PR #182 y commit `40723b45abbb300c027d544ec9aca8d5f80df541`;
+- build de la corrección: run `30946777843` — `success`;
+- preview `dpl_2UsVhUkPcWuPMSfeKj9ubHxVzP9m` — `READY`;
+- producción `dpl_2UN2e4eiCvPo9gMVrrhqiYfoTZKF` — `READY`;
+- errores runtime observados después del despliegue: 0.
 
-Criterio pendiente de cierre:
+### Corrección confirmada del calendario
 
-- producción en estado `READY` con el commit fusionado o uno posterior que lo contenga;
-- acceso a `/admin/analisis` confirmado para pastor/administrador;
-- una cuenta de cada rol añadida y recorrido inicial comprobado;
-- reporte de prueba visible en el Centro de Análisis.
+El contrato visual de selección quedó unificado:
 
-### Bloque P2 — Recorridos operativos por rol
+- fecha seleccionada: círculo morado sólido;
+- hoy no seleccionado: aro morado;
+- aplicación en Mes, Agenda, Semana y Día;
+- fondo tenue conservado como señal secundaria;
+- `aria-pressed` incorporado.
+
+### Cohorte inicial
+
+Se activaron tres cuentas existentes dentro de `piloto-inicial`:
+
+- 1 administrador;
+- 2 servidores;
+- 5 suscripciones push acumuladas.
+
+El onboarding, los eventos de uso y los reportes comenzarán cuando estas personas vuelvan a abrir la aplicación.
+
+### Bloqueo pendiente
+
+No existe actualmente una cuenta activa de pastor ni una cuenta de líder distinta del administrador.
+
+No cambiar roles o liderazgo sin decisión explícita del usuario, porque eso modifica permisos reales. Para completar P1 debe definirse qué cuenta será pastor o líder, o registrarse una nueva cuenta de prueba.
+
+### Criterio pendiente de cierre
+
+- recorrido inicial comprobado en la cuenta administradora;
+- acceso manual a Administración → Centro de Análisis;
+- aparición de las tres cuentas de la cohorte;
+- reporte de prueba visible y clasificable;
+- recorrido comprobado en las dos cuentas de servidor;
+- al menos una cuenta de líder o pastor disponible y validada;
+- comprobación visual de la selección de fechas en iPhone.
+
+## Bloque P2 — Recorridos operativos por rol
 
 Estado: PENDIENTE.
 
 Debe validar:
 
-1. Pastor o administrador crea un evento general y un mensaje pastoral.
+1. Administrador o pastor crea un evento general y un mensaje pastoral.
 2. Líder crea un evento ministerial, asigna un servidor y publica un aviso.
 3. Servidor recibe la notificación, abre el evento y prueba Intercambio.
 4. Congregante consulta avisos y calendario sin controles administrativos.
 5. Los accesos directos escritos manualmente no permiten saltar permisos.
 
-### Bloque P3 — Prueba controlada de siete días
+No iniciar P2 hasta cerrar P1.
+
+## Bloque P3 — Prueba controlada de siete días
 
 Estado: PENDIENTE.
 
-Debe incluir:
+Debe incluir grupo reducido, revisión diaria de errores críticos, métricas de adopción y notificaciones, correcciones limitadas a bloqueos reales y cierre documentado.
 
-- grupo reducido de pastores, líderes y servidores;
-- revisión diaria de errores críticos;
-- métricas de adopción y notificaciones;
-- correcciones limitadas a bloqueos reales;
-- cierre documentado con resultados y pendientes.
+# Notas bíblicas y futura FASE F
 
-## Notas bíblicas y futura FASE F
-
-**Biblia → Notas** ya cubre la base funcional del cuaderno:
-
-- notas de versículo, estudio, predicación o uso personal;
-- título, contenido y referencia;
-- relación con paquetes pastorales;
-- búsqueda, filtros, listas, tareas y fechas;
-- guardado automático local.
-
-La FASE F no debe crear otro cuaderno. Se redefine como evolución del espacio existente con:
-
-- sincronización segura entre dispositivos;
-- respaldo en Supabase;
-- número correlativo de prédica;
-- fecha, serie, lugar, predicador y estado;
-- exportación o impresión.
+**Biblia → Notas** ya es la base funcional del cuaderno. La FASE F no debe crear otro cuaderno; se redefine como evolución del espacio existente con sincronización entre dispositivos, respaldo en Supabase, número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación.
 
 Esta evolución permanece fuera del piloto actual.
 
 # FASE D — ESTADO CONSERVADO EN PAUSA
-
-## Punto exacto de reanudación
 
 La FASE D permanece detenida en **Bloque 5 — Cronologías y Mapas**.
 
@@ -195,22 +181,24 @@ Estado preservado:
 - interfaz todavía no conectada;
 - Bloque 6 no iniciado.
 
-Cuando este documento reactive la FASE D, el siguiente punto autorizado será integrar el servicio de cronologías y mapas en una superficie visual limitada al piloto de Roma, con atribución, precisión, certeza, sesión y RLS. No ampliar el catálogo antes de validar ese piloto.
+Cuando este documento reactive FASE D, el siguiente punto será integrar el servicio de cronologías y mapas en una superficie visual limitada a Roma. No ampliar el catálogo antes de validar ese piloto.
 
 # Evidencia activa
 
 - `docs/PILOTO_IGLESIA_ACTIVO_2026-08-04.md`;
 - `docs/MANUAL_PILOTO_POR_ROLES_2026-08-04.md`;
-- PR #180 y commit `4c1dffcb67f0623c53c8808fd42b5958f2dee8ab`;
-- migraciones `20260804121700_piloto_analitica_onboarding.sql` y `20260804122500_piloto_revoke_anon_manager.sql`;
-- historial completo anterior en `docs/VIDA_INTERNACIONAL_HISTORICO_2026-08-03.md`.
+- `docs/PILOTO_P1_PRODUCCION_Y_CALENDARIO_2026-08-04.md`;
+- PR #180 — Centro de Análisis y onboarding;
+- PR #182 — selección consistente de fechas;
+- historial anterior en `docs/VIDA_INTERNACIONAL_HISTORICO_2026-08-03.md`.
 
 # Siguiente punto autorizado
 
-1. Confirmar el despliegue productivo del Bloque P1 cuando Vercel permita el siguiente build.
-2. Entrar en Administración → Centro de Análisis.
-3. Seleccionar las primeras cuentas de pastor, líder y servidor.
-4. Validar onboarding, notificaciones y reporte de problemas en esas cuentas.
-5. Documentar resultados antes de iniciar el Bloque P2.
+1. El usuario cierra y vuelve a abrir la aplicación con su cuenta administradora.
+2. Completa o avanza el recorrido inicial.
+3. Entra en Administración → Centro de Análisis y verifica la cohorte.
+4. Comprueba Mes, Agenda, Semana y Día seleccionando una fecha distinta de hoy.
+5. Envía un reporte de prueba desde Perfil.
+6. Define qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.
 
-No reanudar el estudio bíblico avanzado ni iniciar un cuaderno separado durante este bloque.
+No reanudar el estudio bíblico avanzado, no iniciar P2 y no crear un cuaderno separado durante este bloque.
