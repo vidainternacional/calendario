@@ -92,8 +92,8 @@ export async function notifyUser(
   if (!subs?.length) return 0
 
   const expiredIds: string[] = []
-  const results = await Promise.all(
-    subs.map(async (sub: any) => {
+  const results: number[] = await Promise.all(
+    subs.map(async (sub: any): Promise<number> => {
       const result = await sendPushNotification(
         { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
         payload
@@ -107,7 +107,7 @@ export async function notifyUser(
     await service.from('push_subscriptions').delete().in('id', expiredIds)
   }
 
-  return results.reduce((total, value) => total + value, 0)
+  return results.reduce<number>((total, value) => total + value, 0)
 }
 
 export async function notifyMultipleUsers(
@@ -132,8 +132,8 @@ export async function notifyMultipleUsers(
   if (!subs?.length) return 0
 
   const expiredIds: string[] = []
-  const results = await Promise.all(
-    subs.map(async (sub: any) => {
+  const results: number[] = await Promise.all(
+    subs.map(async (sub: any): Promise<number> => {
       const result = await sendPushNotification(
         { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
         payload
@@ -147,5 +147,5 @@ export async function notifyMultipleUsers(
     await service.from('push_subscriptions').delete().in('id', expiredIds)
   }
 
-  return results.reduce((total, value) => total + value, 0)
+  return results.reduce<number>((total, value) => total + value, 0)
 }
