@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, Check, Info, Loader2, X } from 'lucide-react'
+import { Check, Info, Loader2, X } from 'lucide-react'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { createClient } from '@/lib/supabase/client'
