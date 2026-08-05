@@ -14,7 +14,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Fragment, useMemo, useRef, type CSSProperties, type ReactNode, type TouchEvent } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent } from 'react'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
   eventColor,
@@ -29,6 +29,7 @@ import flow from './CalendarioFlow.module.css'
 import spec from './CalendarioSpecCompletion.module.css'
 
 export type MonthPresentation = 'compact' | 'stacked' | 'details'
+type MonthMotion = 'forward' | 'backward' | null
 
 export function MonthWeekdayHeader() {
   return (
@@ -299,32 +300,58 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
+  const previousMonthRef = useRef(month.getFullYear() * 12 + month.getMonth())
+  const motionTimerRef = useRef<number | null>(null)
+  const [monthMotion, setMonthMotion] = useState<MonthMotion>(null)
+
+  useEffect(() => {
+    const nextIndex = month.getFullYear() * 12 + month.getMonth()
+    const previousIndex = previousMonthRef.current
+    previousMonthRef.current = nextIndex
+    if (nextIndex === previousIndex) return
+
+    setMonthMotion(nextIndex > previousIndex ? 'forward' : 'backward')
+    if (motionTimerRef.current) window.clearTimeout(motionTimerRef.current)
+    motionTimerRef.current = window.setTimeout(() => setMonthMotion(null), 360)
+
+    return () => {
+      if (motionTimerRef.current) window.clearTimeout(motionTimerRef.current)
+    }
+  }, [month])
+
   const presentationClass = presentation === 'compact'
     ? styles.monthSectionCompact
     : presentation === 'details'
       ? styles.monthSectionDetails
       : styles.monthSectionStacked
+  const motionClass = monthMotion === 'forward'
+    ? flow.monthSlideForward
+    : monthMotion === 'backward'
+      ? flow.monthSlideBackward
+      : ''
 
   return (
     <div className={`${styles.calendarScreen} ${flow.monthFlow} ${!overlay ? flow.elasticMonth : ''}`} aria-hidden={overlay || undefined}>
       {topChrome}
-      <div className={styles.headerBlock}>
-        <h1 className={styles.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
-        {isRefreshing && !overlay && <span className={styles.inlineStatus}>Actualizando…</span>}
-      </div>
-      <MonthWeekdayHeader />
-      <div className={styles.monthScroll}>
-        <section className={`${styles.monthSection} ${presentationClass}`}>
-          <MonthGrid
-            month={month}
-            selectedDay={selectedDay}
-            events={events}
-            presentation={presentation}
-            dayPanelOpen={!overlay && dayPanelOpen}
-            onSelectDay={onOpenDay}
-            onOpenEvent={onOpenEvent}
-          />
-        </section>
+      <div className={`${flow.monthMotionStage} ${motionClass}`}>
+        <div className={styles.headerBlock}>
+          <h1 className={styles.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
+          {isRefreshing && !overlay && <span className={styles.inlineStatus}>Actualizando…</span>}
+        </div>
+        <MonthWeekdayHeader />
+        <div className={styles.monthScroll}>
+          <section className={`${styles.monthSection} ${presentationClass}`}>
+            <MonthGrid
+              month={month}
+              selectedDay={selectedDay}
+              events={events}
+              presentation={presentation}
+              dayPanelOpen={!overlay && dayPanelOpen}
+              onSelectDay={onOpenDay}
+              onOpenEvent={onOpenEvent}
+            />
+          </section>
+        </div>
       </div>
     </div>
   )
