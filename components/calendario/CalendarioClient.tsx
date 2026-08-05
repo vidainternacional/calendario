@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import CalendarioIOS from '@/components/calendario/CalendarioIOS'
 import CalendarioSourcesPanel from '@/components/calendario/CalendarioSourcesPanel'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import appearance from './CalendarioAppearance.module.css'
 import { useCalendarEvents } from './useCalendarEvents'
 import type { EventoCalendario } from './calendario-ios-types'
 
@@ -33,14 +34,14 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
 
   if (isRefreshing && events.length === 0) {
     return (
-      <div className="min-h-screen w-full overflow-x-hidden bg-white pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]">
+      <div className={`${appearance.root} min-h-screen w-full overflow-x-hidden pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]`}>
         <div className="px-4 pt-4"><SkeletonPage cards={4} /></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-white">
+    <div className={`${appearance.root} min-h-screen w-full min-w-0 overflow-x-hidden`}>
       {error && (
         <div className="mx-4 mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700" role="status">
           {error}
