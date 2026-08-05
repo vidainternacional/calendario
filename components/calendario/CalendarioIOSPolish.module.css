@@ -10,6 +10,41 @@
   width: min(254px, calc(100vw - 24px));
 }
 
+:global(body:has([data-calendar-shell]) [class*="timelineTitle"]) {
+  text-transform: none !important;
+}
+
+:global(body:has([data-calendar-shell]) [class*="timelineTitle"])::first-letter {
+  text-transform: uppercase;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="monthDay"]) {
+  min-height: 104px;
+  padding-top: 7px;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventSlot"]) {
+  min-height: 57px;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventChip"]) {
+  height: 24px;
+  border-left-width: 3px;
+  border-radius: 5px;
+  padding: 0 4px;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventTitle"]) {
+  font-size: 9px;
+  line-height: 1.1;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventMore"]) {
+  font-size: 9px;
+}
+
 :global(body:has([data-calendar-shell]) [class*="detailFooter"]) {
   align-items: center;
 }
@@ -85,6 +120,10 @@
 
   .root :global([class*="chromeIconButton"]) {
     width: 47px;
+  }
+
+  .root :global([class*="monthSectionDetails"] [class*="monthDay"]) {
+    min-height: 96px;
   }
 
   :global(body:has([data-calendar-shell]) [class*="viewPopover"]) {
