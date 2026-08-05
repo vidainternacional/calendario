@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import CalendarioEventRow from './CalendarioEventRow'
 import CalendarioMonthView from './CalendarioMonthView'
+import CalendarioMultiDayView from './CalendarioMultiDayView'
 import CalendarioYearView from './CalendarioYearView'
 import NuevoEventoCalendarioModal from './NuevoEventoCalendarioModal'
 import {
@@ -16,7 +17,7 @@ import {
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
 
-type BasicView = 'anio' | 'mes'
+type BasicView = 'anio' | 'mes' | 'dia'
 
 export default function CalendarioIOS({
   events,
@@ -86,13 +87,25 @@ export default function CalendarioIOS({
     setView('mes')
   }
 
-  const backToYear = () => setView('anio')
+  const openDay = (day: Date) => {
+    setSelectedDay(day)
+    setActiveDate(day)
+    setView('dia')
+  }
+
+  const goBack = () => {
+    if (view === 'dia') {
+      setView('mes')
+      return
+    }
+    if (view === 'mes') setView('anio')
+  }
 
   const goToday = () => {
     const today = new Date()
     setActiveDate(today)
     setSelectedDay(today)
-    setView('mes')
+    setView(view === 'dia' ? 'dia' : 'mes')
   }
 
   const selectDay = (day: Date) => {
@@ -100,12 +113,16 @@ export default function CalendarioIOS({
     setActiveDate(day)
   }
 
+  const backLabel = view === 'dia'
+    ? format(activeDate, 'MMMM', { locale: es })
+    : format(activeDate, 'yyyy')
+
   const topChrome = (
     <div className={styles.topChrome}>
       <div>
-        {view === 'mes' && (
-          <button className={styles.chromePill} onClick={backToYear} aria-label="Volver al año">
-            <ChevronLeft size={19} /> {format(activeDate, 'yyyy')}
+        {view !== 'anio' && (
+          <button className={styles.chromePill} onClick={goBack} aria-label={view === 'dia' ? 'Volver al mes' : 'Volver al año'}>
+            <ChevronLeft size={19} /> {backLabel}
           </button>
         )}
       </div>
@@ -124,7 +141,7 @@ export default function CalendarioIOS({
 
   return (
     <div className={styles.calendarScreen}>
-      {view === 'anio' ? (
+      {view === 'anio' && (
         <CalendarioYearView
           fecha={activeDate}
           eventos={sortedEvents}
@@ -136,7 +153,9 @@ export default function CalendarioIOS({
             setActiveDate(next)
           }}
         />
-      ) : (
+      )}
+
+      {view === 'mes' && (
         <CalendarioMonthView
           month={activeDate}
           selectedDay={selectedDay}
@@ -145,9 +164,25 @@ export default function CalendarioIOS({
           isRefreshing={isRefreshing}
           dayPanelOpen={false}
           onSelectDay={selectDay}
-          onOpenDay={selectDay}
+          onOpenDay={openDay}
           onOpenEvent={() => {}}
         />
+      )}
+
+      {view === 'dia' && (
+        <>
+          {topChrome}
+          <div className={styles.headerBlock}>
+            <h1 className={styles.periodTitle}>{format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}</h1>
+          </div>
+          <CalendarioMultiDayView
+            selectedDay={selectedDay}
+            events={sortedEvents}
+            daysVisible={1}
+            onSelectDay={selectDay}
+            onOpenEvent={() => {}}
+          />
+        </>
       )}
 
       <div className={styles.floatingBar}>
