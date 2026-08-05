@@ -23,7 +23,9 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type TouchEvent,
   type UIEvent,
+  type WheelEvent,
 } from 'react'
 import {
   eventColor,
@@ -38,7 +40,7 @@ import native from './CalendarioNativeUX.module.css'
 const YEAR_MIN = 1800
 const YEAR_MAX = 2200
 const WINDOW_STEP = 3
-const INITIAL_RADIUS = 3
+const INITIAL_FORWARD_YEARS = 3
 
 function weekCalendarColors(days: Date[], month: Date, events: EventoCalendario[]) {
   const byCalendar = new Map<string, string>()
@@ -142,13 +144,16 @@ export default function CalendarioYearView({
 }) {
   const initialYear = fecha.getFullYear()
   const [bounds, setBounds] = useState(() => ({
-    start: Math.max(YEAR_MIN, initialYear - INITIAL_RADIUS),
-    end: Math.min(YEAR_MAX, initialYear + INITIAL_RADIUS),
+    start: Math.max(YEAR_MIN, initialYear),
+    end: Math.min(YEAR_MAX, initialYear + INITIAL_FORWARD_YEARS),
   }))
   const scrollRef = useRef<HTMLDivElement>(null)
   const prependHeightRef = useRef<number | null>(null)
+  const pendingScrollYearRef = useRef<number | null>(null)
   const lastReportedYearRef = useRef(initialYear)
-  const mountedRef = useRef(false)
+  const previousScrollTopRef = useRef(0)
+  const touchStartYRef = useRef<number | null>(null)
+  const prependLockedRef = useRef(false)
 
   const years = useMemo(
     () => Array.from({ length: bounds.end - bounds.start + 1 }, (_, index) => bounds.start + index),
@@ -159,63 +164,52 @@ export default function CalendarioYearView({
     const container = scrollRef.current
     const target = container?.querySelector<HTMLElement>(`[data-calendar-year="${year}"]`)
     if (!container || !target) return
-    container.scrollTo({ top: target.offsetTop, behavior })
+    container.scrollTo({ top: Math.max(target.offsetTop, 0), behavior })
   }, [])
 
-  const scheduleScrollToYear = useCallback((year: number, behavior: ScrollBehavior = 'auto') => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => scrollToYear(year, behavior))
-    })
-  }, [scrollToYear])
+  const prependYears = useCallback(() => {
+    const container = scrollRef.current
+    if (!container || bounds.start <= YEAR_MIN || prependLockedRef.current) return
+    prependLockedRef.current = true
+    prependHeightRef.current = container.scrollHeight
+    setBounds((current) => ({
+      ...current,
+      start: Math.max(YEAR_MIN, current.start - WINDOW_STEP),
+    }))
+  }, [bounds.start])
 
   useLayoutEffect(() => {
     const container = scrollRef.current
-    if (!container || prependHeightRef.current === null) return
-    const previousHeight = prependHeightRef.current
-    prependHeightRef.current = null
-    container.scrollTop += container.scrollHeight - previousHeight
-  }, [bounds.start])
+    if (!container) return
+
+    if (prependHeightRef.current !== null) {
+      const previousHeight = prependHeightRef.current
+      prependHeightRef.current = null
+      container.scrollTop += container.scrollHeight - previousHeight
+      previousScrollTopRef.current = container.scrollTop
+      prependLockedRef.current = false
+    }
+
+    if (pendingScrollYearRef.current !== null) {
+      const year = pendingScrollYearRef.current
+      pendingScrollYearRef.current = null
+      window.requestAnimationFrame(() => scrollToYear(year))
+    }
+  }, [bounds.start, bounds.end, scrollToYear])
 
   useEffect(() => {
     const year = fecha.getFullYear()
-    if (year < bounds.start || year > bounds.end) {
-      setBounds({
-        start: Math.max(YEAR_MIN, year - INITIAL_RADIUS),
-        end: Math.min(YEAR_MAX, year + INITIAL_RADIUS),
-      })
-      scheduleScrollToYear(year)
-      return
-    }
+    if (year >= bounds.start && year <= bounds.end) return
 
-    if (!mountedRef.current) {
-      mountedRef.current = true
-      scheduleScrollToYear(year)
-      return
-    }
+    pendingScrollYearRef.current = year
+    setBounds({
+      start: Math.max(YEAR_MIN, year),
+      end: Math.min(YEAR_MAX, year + INITIAL_FORWARD_YEARS),
+    })
+    lastReportedYearRef.current = year
+  }, [fecha, bounds.start, bounds.end])
 
-    if (lastReportedYearRef.current !== year) {
-      scheduleScrollToYear(year, 'smooth')
-    }
-  }, [fecha, bounds.start, bounds.end, scheduleScrollToYear])
-
-  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
-    const container = event.currentTarget
-
-    if (container.scrollTop < 320 && bounds.start > YEAR_MIN && prependHeightRef.current === null) {
-      prependHeightRef.current = container.scrollHeight
-      setBounds((current) => ({
-        ...current,
-        start: Math.max(YEAR_MIN, current.start - WINDOW_STEP),
-      }))
-    }
-
-    if (container.scrollTop + container.clientHeight > container.scrollHeight - 620 && bounds.end < YEAR_MAX) {
-      setBounds((current) => ({
-        ...current,
-        end: Math.min(YEAR_MAX, current.end + WINDOW_STEP),
-      }))
-    }
-
+  const reportVisibleYear = (container: HTMLDivElement) => {
     const probe = container.scrollTop + Math.min(160, container.clientHeight * 0.2)
     const sections = Array.from(container.querySelectorAll<HTMLElement>('[data-calendar-year]'))
     let visibleYear = Number(sections[0]?.dataset.calendarYear || fecha.getFullYear())
@@ -231,6 +225,41 @@ export default function CalendarioYearView({
     }
   }
 
+  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget
+    const movingUp = container.scrollTop < previousScrollTopRef.current
+    previousScrollTopRef.current = container.scrollTop
+
+    if (movingUp && container.scrollTop < 300) prependYears()
+
+    if (container.scrollTop + container.clientHeight > container.scrollHeight - 620 && bounds.end < YEAR_MAX) {
+      setBounds((current) => ({
+        ...current,
+        end: Math.min(YEAR_MAX, current.end + WINDOW_STEP),
+      }))
+    }
+
+    reportVisibleYear(container)
+  }
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    touchStartYRef.current = event.touches[0]?.clientY ?? null
+  }
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const container = scrollRef.current
+    const currentY = event.touches[0]?.clientY
+    if (!container || touchStartYRef.current === null || currentY === undefined) return
+    if (container.scrollTop <= 2 && currentY - touchStartYRef.current > 24) {
+      touchStartYRef.current = currentY
+      prependYears()
+    }
+  }
+
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (event.currentTarget.scrollTop <= 2 && event.deltaY < 0) prependYears()
+  }
+
   return (
     <>
       {topChrome}
@@ -238,6 +267,9 @@ export default function CalendarioYearView({
         ref={scrollRef}
         className={native.yearScroller}
         onScroll={handleScroll}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onWheel={handleWheel}
         aria-busy={isRefreshing}
         aria-label="Calendario por años"
       >
