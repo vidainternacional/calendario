@@ -1,6 +1,7 @@
 'use client'
 
 import CalendarioIOS from '@/components/calendario/CalendarioIOS'
+import appearance from '@/components/calendario/CalendarioAppearance.module.css'
 import type { CalendarioOrigen, EventoCalendario } from '@/components/calendario/calendario-ios-types'
 
 const calendars: CalendarioOrigen[] = [
@@ -76,7 +77,7 @@ const events: EventoCalendario[] = [
 
 export default function CalendarVisualQaPage() {
   return (
-    <main style={{ minHeight: '100dvh', background: 'var(--calendar-qa-bg, #fff)' }}>
+    <main data-calendar-shell className={appearance.root}>
       <CalendarioIOS
         events={events}
         editableCalendars={calendars}
