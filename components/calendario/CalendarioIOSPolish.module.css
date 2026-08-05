@@ -10,6 +10,51 @@
   width: min(254px, calc(100vw - 24px));
 }
 
+:global(body:has([data-calendar-shell]) .calendar-exit-nav) {
+  position: fixed;
+  top: max(8px, calc(env(safe-area-inset-top, 0px) + 8px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  z-index: 46;
+  display: inline-flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0.5px solid rgba(255, 255, 255, 0.78);
+  border-radius: 23px;
+  background: rgba(242, 242, 247, 0.76);
+  padding: 0 14px 0 10px;
+  color: #17171a;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-decoration: none;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.09), inset 0 0 0 0.5px rgba(60, 60, 67, 0.08);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  backdrop-filter: saturate(180%) blur(28px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+:global(body:has([data-calendar-shell]) .calendar-exit-nav:active) {
+  transform: scale(0.94);
+}
+
+:global(body:has([data-calendar-shell] [class*="chromePill"]) .calendar-exit-nav) {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-8px) scale(0.94);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(body:has([data-calendar-shell]) .calendar-exit-nav) {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(44, 44, 46, 0.78);
+    color: #fff;
+    box-shadow: 0 7px 24px rgba(0, 0, 0, 0.34), inset 0 0 0 0.5px rgba(255, 255, 255, 0.05);
+  }
+}
+
 @media (max-width: 360px) {
   .root :global([class*="chromePill"]) {
     min-width: 90px;
