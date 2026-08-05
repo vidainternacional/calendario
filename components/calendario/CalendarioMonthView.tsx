@@ -7,7 +7,7 @@ import {
   endOfMonth,
   endOfWeek,
   format,
-  getISOWeek,
+  getWeek,
   isSameDay,
   isSameMonth,
   isToday,
@@ -164,20 +164,12 @@ function DayReveal({
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const touchStart = useRef<number | null>(null)
-  const revealRef = useRef<HTMLElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const dayEvents = eventosDelDia(events, selectedDay)
   const railDays = useMemo(
     () => Array.from({ length: 9 }, (_, index) => addDays(selectedDay, index - 4)),
     [selectedDay],
   )
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      revealRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    })
-    return () => window.cancelAnimationFrame(frame)
-  }, [])
 
   useEffect(() => {
     const rail = railRef.current
@@ -202,7 +194,6 @@ function DayReveal({
 
   return (
     <section
-      ref={revealRef}
       className={flow.dayReveal}
       data-day-column={selectedDay.getDay()}
       onTouchStart={touchStartHandler}
@@ -272,7 +263,7 @@ export function MonthGrid({
         return (
           <Fragment key={`${format(month, 'yyyy-MM')}-${weekIndex}`}>
             <div className={`${spec.monthWeek} ${selectedWeek ? spec.monthWeekSelected : ''}`}>
-              <span className={spec.weekNumber}>{getISOWeek(week[0])}</span>
+              <span className={spec.weekNumber}>{getWeek(week[0], { weekStartsOn: 0, firstWeekContainsDate: 1 })}</span>
               <div className={spec.monthWeekContent}>
                 <div className={spec.monthWeekDays}>
                   {week.map((day) => (
