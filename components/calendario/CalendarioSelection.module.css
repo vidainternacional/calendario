@@ -12,7 +12,7 @@
 
 .compactDayLayout {
   display: flex;
-  min-height: 60px;
+  min-height: 56px;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
@@ -20,22 +20,53 @@
 
 .compactEventSlot {
   display: flex;
-  height: 10px;
-  align-items: flex-end;
+  min-width: 14px;
+  height: 7px;
+  align-items: center;
   justify-content: center;
-  margin-top: 5px;
+  gap: 2px;
+  margin-top: 2px;
 }
 
 .compactEventDot {
   display: block;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   flex: 0 0 auto;
   border-radius: 999px;
 }
 
+.compactEventBar {
+  display: flex;
+  height: 5px;
+  min-width: 12px;
+  max-width: 24px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.compactEventSegment {
+  display: block;
+  min-width: 5px;
+  flex: 1 1 0;
+}
+
 .monthEventSlot {
-  margin-top: 7px;
+  margin-top: 3px;
+}
+
+.monthEventBar {
+  display: flex;
+  width: 18px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.monthEventSegment {
+  display: block;
+  min-width: 5px;
+  flex: 1 1 0;
 }
 
 .weekNumberSelectedRing {
