@@ -20,12 +20,10 @@ import {
   Check,
   ChevronLeft,
   Clock3,
-  Columns3,
   Grid3X3,
   List,
   MapPin,
   Plus,
-  Rows3,
   Search,
   SlidersHorizontal,
   X,
@@ -52,9 +50,7 @@ type ScreenTransition = 'month-out' | 'year-in' | null
 
 const VIEW_OPTIONS: Array<{ id: VistaCalendario; label: string; icon: typeof CalendarDays }> = [
   { id: 'anio', label: 'Año', icon: Grid3X3 },
-  { id: 'mes', label: 'Mes', icon: CalendarDays },
-  { id: 'semana', label: 'Semana', icon: Rows3 },
-  { id: 'dia', label: 'Día', icon: Columns3 },
+  { id: 'mes', label: 'Mes y día', icon: CalendarDays },
   { id: 'agenda', label: 'Agenda', icon: List },
 ]
 
@@ -141,6 +137,11 @@ export default function CalendarioIOS({
     setActiveDate(month)
     setSelectedDay(month)
     finishZoom(485, () => setView('mes'))
+  }
+
+  const changeYear = (year: number) => {
+    const safeYear = Math.min(2200, Math.max(1800, year))
+    setActiveDate((date) => new Date(safeYear, date.getMonth(), 1))
   }
 
   const backToYear = () => {
@@ -382,7 +383,7 @@ export default function CalendarioIOS({
 
   return (
     <div className={`${styles.calendarScreen} ${transitionClass}`} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      {view === 'anio' && <CalendarioYearView fecha={activeDate} eventos={events} isRefreshing={isRefreshing} topChrome={topChrome('anio')} onOpenMonth={openMonth} />}
+      {view === 'anio' && <CalendarioYearView fecha={activeDate} eventos={events} isRefreshing={isRefreshing} topChrome={topChrome('anio')} onOpenMonth={openMonth} onChangeYear={changeYear} />}
       {view === 'mes' && <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={events} topChrome={topChrome('mes')} isRefreshing={isRefreshing} onSelectDay={selectDay} onOpenDay={openDay} />}
       {view === 'agenda' && agendaView()}
       {view === 'dia' && dayView()}
