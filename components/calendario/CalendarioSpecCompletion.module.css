@@ -15,7 +15,7 @@
 .miniWeekDays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  min-height: 15px;
+  min-height: 14px;
 }
 
 .miniWeekBars {
@@ -27,55 +27,28 @@
 }
 
 .miniWeekBar {
-  height: 2px;
+  height: 3px;
   min-width: 0;
   flex: 1 1 0;
   border-radius: 999px;
-  opacity: 0.92;
-}
-
-.weekNumberHeader {
-  color: rgba(60, 60, 67, 0.38);
-  font-size: 9px;
-  font-weight: 600;
 }
 
 .monthWeeks {
   display: flex;
   width: 100%;
   flex-direction: column;
-  border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.11);
 }
 
 .monthWeek {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
+  display: flex;
   width: 100%;
-  border-bottom: 0.5px solid rgba(60, 60, 67, 0.16);
-  background: #fff;
-  transition: background-color 160ms ease;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.075);
 }
 
 .monthWeek:last-child {
   border-bottom: 0;
-}
-
-.monthWeekSelected {
-  background: rgba(91, 61, 245, 0.025);
-}
-
-.weekNumber {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 10px;
-  color: rgba(60, 60, 67, 0.46);
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.monthWeekContent {
-  min-width: 0;
 }
 
 .monthWeekDays {
@@ -86,42 +59,23 @@
 
 .monthWeekBars {
   display: flex;
-  min-height: 8px;
+  min-height: 7px;
   align-items: center;
   gap: 3px;
-  padding: 0 7px 5px;
+  padding: 0 8px 5px;
 }
 
 .monthWeekBar {
-  height: 4px;
-  min-width: 13px;
-  max-width: 70px;
+  height: 5px;
+  min-width: 14px;
+  max-width: 72px;
   flex: 1 1 0;
   border-radius: 999px;
-}
-
-.monthWeeksCompact .monthWeekBars {
-  display: none;
-}
-
-.monthWeeksCompact .weekNumber {
-  padding-top: 7px;
-  font-size: 9px;
-}
-
-.monthWeekReveal {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  overflow: hidden;
-  border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
-  background: rgba(248, 248, 250, 0.98);
 }
 
 .reminderMarker {
   width: 7px;
   height: 7px;
-  flex: 0 0 7px;
   border: 2px solid currentColor;
   border-radius: 2px;
   background: transparent;
@@ -138,38 +92,9 @@
   justify-content: center;
   border: 2px solid white;
   border-radius: 999px;
-  background: #ff3b30;
+  background: #ef4444;
   padding: 0 4px;
   color: white;
   font-size: 9px;
-  font-weight: 700;
-}
-
-@media (prefers-color-scheme: dark) {
-  .weekNumberHeader,
-  .weekNumber {
-    color: rgba(235, 235, 245, 0.42);
-  }
-
-  .monthWeeks {
-    border-color: rgba(84, 84, 88, 0.65);
-  }
-
-  .monthWeek {
-    border-color: rgba(84, 84, 88, 0.55);
-    background: #000;
-  }
-
-  .monthWeekSelected {
-    background: rgba(91, 61, 245, 0.045);
-  }
-
-  .monthWeekReveal {
-    border-color: rgba(84, 84, 88, 0.6);
-    background: #1c1c1e;
-  }
-
-  .sourceBadge {
-    border-color: #000;
-  }
+  font-weight: 800;
 }
