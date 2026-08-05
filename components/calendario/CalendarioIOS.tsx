@@ -6,7 +6,7 @@ import {
   endOfMonth,
   format,
   getDaysInMonth,
-  getISOWeek,
+  getWeek,
   isSameMonth,
   startOfMonth,
   subMonths,
@@ -308,6 +308,14 @@ export default function CalendarioIOS({
     setMonthDayOpen(true)
   }
 
+  const openTimelineDay = (day: Date) => {
+    setSelectedDay(day)
+    setActiveDate(day)
+    setTimelineDays(1)
+    setMonthDayOpen(false)
+    setView('dia')
+  }
+
   const onTouchStart = (event: TouchEvent) => {
     if (view === 'anio' || viewMenuOpen || detail) return
     touchStartX.current = event.changedTouches[0]?.clientX ?? null
@@ -426,7 +434,7 @@ export default function CalendarioIOS({
           <section key={group.key}>
             <header className={styles.agendaHeader}>
               <h2 className={styles.agendaDate}>{format(group.day, "EEEE d 'de' MMMM", { locale: es })}</h2>
-              <span className={styles.agendaCount}>S{getISOWeek(group.day)}</span>
+              <span className={styles.agendaCount}>S{getWeek(group.day, { weekStartsOn: 0, firstWeekContainsDate: 1 })}</span>
             </header>
             {group.events.map((event) => (
               <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={openDetail} />
@@ -622,6 +630,7 @@ export default function CalendarioIOS({
             onSelectDay={() => {}}
             onOpenDay={() => {}}
             onOpenEvent={() => {}}
+            onOpenTimelineDay={() => {}}
           />
         </div>,
         document.body,
@@ -656,6 +665,7 @@ export default function CalendarioIOS({
             onSelectDay={openMonthDay}
             onOpenDay={openMonthDay}
             onOpenEvent={openDetail}
+            onOpenTimelineDay={openTimelineDay}
           />
         </div>
       )}
