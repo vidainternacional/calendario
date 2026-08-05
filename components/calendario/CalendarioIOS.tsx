@@ -3,14 +3,14 @@
 import {
   addDays,
   addMonths,
-  addWeeks,
   addYears,
-  endOfWeek,
+  endOfMonth,
   format,
-  startOfWeek,
+  getISOWeek,
+  isSameMonth,
+  startOfMonth,
   subDays,
   subMonths,
-  subWeeks,
   subYears,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -20,24 +20,24 @@ import {
   Check,
   ChevronLeft,
   Clock3,
+  Columns3,
   Grid3X3,
   List,
   MapPin,
   Plus,
   Search,
-  SlidersHorizontal,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import CalendarioEventRow from './CalendarioEventRow'
-import CalendarioMonthView, { MonthGrid, MonthWeekdayHeader } from './CalendarioMonthView'
-import { Timeline, WeekStrip } from './CalendarioTimelineView'
+import CalendarioMonthView from './CalendarioMonthView'
+import CalendarioMultiDayView from './CalendarioMultiDayView'
 import CalendarioYearView from './CalendarioYearView'
 import NuevoEventoCalendarioModal from './NuevoEventoCalendarioModal'
 import ProponerIntercambioModal from './ProponerIntercambioModal'
 import {
-  eventosDelDia,
+  eventColor,
   type EventoCalendario,
   type MinisterioGestionado,
   type VistaCalendario,
@@ -50,8 +50,9 @@ type ScreenTransition = 'month-out' | 'year-in' | null
 
 const VIEW_OPTIONS: Array<{ id: VistaCalendario; label: string; icon: typeof CalendarDays }> = [
   { id: 'anio', label: 'Año', icon: Grid3X3 },
-  { id: 'mes', label: 'Mes y día', icon: CalendarDays },
-  { id: 'agenda', label: 'Agenda', icon: List },
+  { id: 'mes', label: 'Mes', icon: CalendarDays },
+  { id: 'multiday', label: 'Varios días', icon: Columns3 },
+  { id: 'lista', label: 'Lista', icon: List },
 ]
 
 export default function CalendarioIOS({
@@ -118,25 +119,36 @@ export default function CalendarioIOS({
     const needle = query.trim().toLocaleLowerCase('es')
     if (!needle) return events
     return events.filter((event) =>
-      [event.titulo, event.ubicacion, event.descripcion, event.ministerios?.nombre]
+      [event.titulo, event.ubicacion, event.descripcion, event.calendars?.nombre, event.ministerios?.nombre]
         .filter(Boolean)
         .some((value) => String(value).toLocaleLowerCase('es').includes(needle)),
     )
   }, [events, query])
 
-  const finishZoom = (delay: number, callback?: () => void) => {
-    if (zoomTimer.current) window.clearTimeout(zoomTimer.current)
-    zoomTimer.current = window.setTimeout(() => {
-      callback?.()
-      setZoom(null)
-    }, delay)
-  }
+  const monthListGroups = useMemo(() => {
+    const start = startOfMonth(activeDate)
+    const end = endOfMonth(activeDate)
+    const monthEvents = events.filter((event) => {
+      const date = new Date(event.fecha_inicio)
+      return date >= start && date <= end
+    })
+    return [...new Set(monthEvents.map((event) => format(new Date(event.fecha_inicio), 'yyyy-MM-dd')))]
+      .map((key) => ({
+        key,
+        day: new Date(`${key}T12:00:00`),
+        events: monthEvents.filter((event) => format(new Date(event.fecha_inicio), 'yyyy-MM-dd') === key),
+      }))
+  }, [activeDate, events])
 
   const openMonth = (month: Date, element: HTMLElement) => {
     setZoom({ month, rect: element.getBoundingClientRect() })
     setActiveDate(month)
     setSelectedDay(month)
-    finishZoom(485, () => setView('mes'))
+    if (zoomTimer.current) window.clearTimeout(zoomTimer.current)
+    zoomTimer.current = window.setTimeout(() => {
+      setView('mes')
+      setZoom(null)
+    }, 485)
   }
 
   const changeYear = (year: number) => {
@@ -145,14 +157,8 @@ export default function CalendarioIOS({
   }
 
   const backToYear = () => {
-    if (view !== 'mes') {
-      setView('anio')
-      return
-    }
-
     if (screenTimer.current) window.clearTimeout(screenTimer.current)
     setScreenTransition('month-out')
-
     screenTimer.current = window.setTimeout(() => {
       setView('anio')
       setScreenTransition('year-in')
@@ -168,15 +174,14 @@ export default function CalendarioIOS({
 
   const movePeriod = (direction: -1 | 1) => {
     if (view === 'anio') setActiveDate((date) => direction > 0 ? addYears(date, 1) : subYears(date, 1))
-    else if (view === 'mes' || view === 'agenda') {
-      setActiveDate((date) => direction > 0 ? addMonths(date, 1) : subMonths(date, 1))
-      setSelectedDay((date) => direction > 0 ? addMonths(date, 1) : subMonths(date, 1))
-    } else if (view === 'semana') {
-      setActiveDate((date) => direction > 0 ? addWeeks(date, 1) : subWeeks(date, 1))
-      setSelectedDay((date) => direction > 0 ? addWeeks(date, 1) : subWeeks(date, 1))
+    else if (view === 'multiday') {
+      const next = direction > 0 ? addDays(selectedDay, 3) : subDays(selectedDay, 3)
+      setSelectedDay(next)
+      setActiveDate(next)
     } else {
-      setActiveDate((date) => direction > 0 ? addDays(date, 1) : subDays(date, 1))
-      setSelectedDay((date) => direction > 0 ? addDays(date, 1) : subDays(date, 1))
+      const next = direction > 0 ? addMonths(activeDate, 1) : subMonths(activeDate, 1)
+      setActiveDate(next)
+      setSelectedDay(next)
     }
   }
 
@@ -192,11 +197,6 @@ export default function CalendarioIOS({
     setActiveDate(day)
   }
 
-  const openDay = (day: Date) => {
-    selectDay(day)
-    setView('dia')
-  }
-
   const onTouchStart = (event: TouchEvent) => {
     touchStartX.current = event.changedTouches[0]?.clientX ?? null
   }
@@ -209,8 +209,8 @@ export default function CalendarioIOS({
   }
 
   function topChrome(context: VistaCalendario, overlay = false) {
-    const backYear = context === 'mes'
-    const backMonth = context === 'semana' || context === 'dia' || context === 'agenda'
+    const backYear = context !== 'anio'
+    const ActiveIcon = VIEW_OPTIONS.find((option) => option.id === view)?.icon || CalendarDays
     return (
       <div className={styles.topChrome}>
         <div>
@@ -219,16 +219,11 @@ export default function CalendarioIOS({
               <ChevronLeft size={19} /> {format(activeDate, 'yyyy')}
             </button>
           )}
-          {backMonth && (
-            <button className={styles.chromePill} onClick={() => setView('mes')}>
-              <ChevronLeft size={19} /> {format(activeDate, 'MMM', { locale: es })}
-            </button>
-          )}
         </div>
         <div className={styles.chromeGroup}>
           {context !== 'anio' && (
             <button className={styles.chromeIconButton} onClick={() => !overlay && setViewMenuOpen(true)} aria-label="Cambiar vista" tabIndex={overlay ? -1 : undefined}>
-              <SlidersHorizontal size={20} />
+              <ActiveIcon size={21} />
             </button>
           )}
           <button className={styles.chromeIconButton} onClick={() => !overlay && setSearchOpen(true)} aria-label="Buscar eventos" tabIndex={overlay ? -1 : undefined}>
@@ -244,59 +239,35 @@ export default function CalendarioIOS({
     )
   }
 
-  const agendaView = () => {
-    const dayEvents = eventosDelDia(events, selectedDay)
-    return (
-      <>
-        {topChrome('agenda')}
-        <div className={styles.headerBlock}><h1 className={styles.monthTitle}>{format(activeDate, 'MMMM', { locale: es })}</h1></div>
-        <MonthWeekdayHeader />
-        <section className={styles.compactMonth}>
-          <MonthGrid month={activeDate} selectedDay={selectedDay} events={events} compact onSelectDay={selectDay} />
-        </section>
-        <header className={styles.agendaHeader}>
-          <h2 className={styles.agendaDate}>{format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}</h2>
-          <span className={styles.agendaCount}>{dayEvents.length}</span>
-        </header>
-        <div className={styles.eventList}>
-          {dayEvents.length > 0
-            ? dayEvents.map((event) => <CalendarioEventRow key={event.asignacion_id} evento={event} onOpen={setDetail} />)
-            : <div className={styles.emptyState}>No tienes eventos asignados este día.</div>}
-        </div>
-      </>
-    )
-  }
-
-  const dayView = () => (
+  const listView = () => (
     <>
-      {topChrome('dia')}
-      <WeekStrip selectedDay={selectedDay} onSelectDay={selectDay} />
-      <div className={styles.dayHeading}>{format(selectedDay, "EEEE — d 'de' MMMM", { locale: es })}</div>
-      <Timeline day={selectedDay} events={events} onOpenEvent={setDetail} />
+      {topChrome('lista')}
+      <div className={styles.headerBlock}>
+        <h1 className={styles.monthTitle}>{format(activeDate, 'MMMM yyyy', { locale: es })}</h1>
+        <p className={styles.subTitle}>Eventos agrupados por día</p>
+      </div>
+      <div className={styles.eventList}>
+        {monthListGroups.length > 0 ? monthListGroups.map((group) => (
+          <section key={group.key}>
+            <header className={styles.agendaHeader}>
+              <h2 className={styles.agendaDate}>{format(group.day, "EEEE d 'de' MMMM", { locale: es })}</h2>
+              <span className={styles.agendaCount}>W{getISOWeek(group.day)}</span>
+            </header>
+            {group.events.map((event) => (
+              <CalendarioEventRow key={event.asignacion_id} evento={event} onOpen={setDetail} />
+            ))}
+          </section>
+        )) : <div className={styles.emptyState}>No hay eventos visibles en este mes.</div>}
+      </div>
     </>
   )
-
-  const weekView = () => {
-    const start = startOfWeek(selectedDay, { weekStartsOn: 0 })
-    const end = endOfWeek(selectedDay, { weekStartsOn: 0 })
-    return (
-      <>
-        {topChrome('semana')}
-        <div className={styles.headerBlock}>
-          <h1 className={styles.periodTitle}>{format(start, 'd MMM', { locale: es })} – {format(end, 'd MMM', { locale: es })}</h1>
-        </div>
-        <WeekStrip selectedDay={selectedDay} onSelectDay={selectDay} />
-        <Timeline day={selectedDay} events={events} onOpenEvent={setDetail} />
-      </>
-    )
-  }
 
   const floatingBar = (
     <div className={styles.floatingBar}>
       <button className={styles.floatingPill} onClick={goToday}>Hoy</button>
       <div className={styles.floatingGroup}>
         <button className={styles.floatingIcon} onClick={() => setViewMenuOpen(true)} aria-label="Cambiar vista"><CalendarDays size={22} /></button>
-        <button className={styles.floatingIcon} onClick={() => setView('agenda')} aria-label="Ver agenda"><List size={22} /></button>
+        <button className={styles.floatingIcon} onClick={() => setView('lista')} aria-label="Ver lista"><List size={22} /></button>
       </div>
     </div>
   )
@@ -336,12 +307,15 @@ export default function CalendarioIOS({
         <div className={styles.detailOverlay} onMouseDown={(event) => event.target === event.currentTarget && setDetail(null)}>
           <section className={styles.detailCard} role="dialog" aria-modal="true" aria-labelledby="evento-detalle-titulo">
             <header className={styles.detailHeader}>
-              <div><h2 id="evento-detalle-titulo" className={styles.detailTitle}>{detail.titulo}</h2><p className={styles.detailMinistry}>{detail.ministerios?.nombre || 'Evento general'}</p></div>
+              <div>
+                <h2 id="evento-detalle-titulo" className={styles.detailTitle}>{detail.titulo}</h2>
+                <p className={styles.detailMinistry} style={{ color: eventColor(detail) }}>{detail.calendars?.nombre || 'Vida Internacional'}</p>
+              </div>
               <button className={styles.detailClose} onClick={() => setDetail(null)} aria-label="Cerrar"><X size={19} /></button>
             </header>
             <div className={styles.detailBody}>
               <div className={styles.detailLine}>
-                <Clock3 size={21} color="#5b3df5" />
+                <Clock3 size={21} color={eventColor(detail)} />
                 <div><strong>{format(new Date(detail.fecha_inicio), "EEEE d 'de' MMMM", { locale: es })}</strong><p className={styles.detailText}>{detail.todo_el_dia ? 'Todo el día' : `${format(new Date(detail.fecha_inicio), 'h:mm a')}${detail.fecha_fin ? ` – ${format(new Date(detail.fecha_fin), 'h:mm a')}` : ''}`}</p></div>
               </div>
               {detail.ubicacion && <div className={styles.detailLine}><MapPin size={21} color="#13a06f" /><span>{detail.ubicacion}</span></div>}
@@ -384,10 +358,15 @@ export default function CalendarioIOS({
   return (
     <div className={`${styles.calendarScreen} ${transitionClass}`} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {view === 'anio' && <CalendarioYearView fecha={activeDate} eventos={events} isRefreshing={isRefreshing} topChrome={topChrome('anio')} onOpenMonth={openMonth} onChangeYear={changeYear} />}
-      {view === 'mes' && <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={events} topChrome={topChrome('mes')} isRefreshing={isRefreshing} onSelectDay={selectDay} onOpenDay={openDay} />}
-      {view === 'agenda' && agendaView()}
-      {view === 'dia' && dayView()}
-      {view === 'semana' && weekView()}
+      {view === 'mes' && <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={events} topChrome={topChrome('mes')} isRefreshing={isRefreshing} onSelectDay={selectDay} onOpenDay={selectDay} />}
+      {view === 'multiday' && (
+        <>
+          {topChrome('multiday')}
+          <div className={styles.headerBlock}><h1 className={styles.periodTitle}>{format(selectedDay, 'd MMM', { locale: es })} – {format(addDays(selectedDay, 2), 'd MMM', { locale: es })}</h1></div>
+          <CalendarioMultiDayView selectedDay={selectedDay} events={events} onSelectDay={selectDay} onOpenEvent={setDetail} />
+        </>
+      )}
+      {view === 'lista' && listView()}
       {floatingBar}
       {portals}
 
