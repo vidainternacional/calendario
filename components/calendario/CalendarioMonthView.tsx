@@ -164,11 +164,28 @@ function DayReveal({
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const touchStart = useRef<number | null>(null)
+  const revealRef = useRef<HTMLElement>(null)
+  const railRef = useRef<HTMLDivElement>(null)
   const dayEvents = eventosDelDia(events, selectedDay)
   const railDays = useMemo(
     () => Array.from({ length: 9 }, (_, index) => addDays(selectedDay, index - 4)),
     [selectedDay],
   )
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      revealRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+
+  useEffect(() => {
+    const rail = railRef.current
+    const active = rail?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (!rail || !active) return
+    const left = active.offsetLeft - rail.clientWidth / 2 + active.offsetWidth / 2
+    rail.scrollTo({ left: Math.max(left, 0), behavior: 'smooth' })
+  }, [selectedDay])
 
   const touchStartHandler = (event: TouchEvent) => {
     event.stopPropagation()
@@ -185,6 +202,7 @@ function DayReveal({
 
   return (
     <section
+      ref={revealRef}
       className={flow.dayReveal}
       data-day-column={selectedDay.getDay()}
       onTouchStart={touchStartHandler}
@@ -192,7 +210,7 @@ function DayReveal({
       aria-label="Elementos del día seleccionado"
     >
       <span className={flow.dayRevealGrabber} aria-hidden="true" />
-      <div className={flow.dayRail}>
+      <div ref={railRef} className={flow.dayRail}>
         {railDays.map((day) => {
           const active = isSameDay(day, selectedDay)
           const today = isToday(day)
