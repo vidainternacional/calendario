@@ -7,13 +7,13 @@
 
 .yearHeader,
 .monthHeader {
-  padding: 8px 20px 14px;
+  padding: 2px 18px 12px;
 }
 
 .yearTitle {
   margin: 0;
   color: #ff453a;
-  font-size: clamp(34px, 10vw, 44px);
+  font-size: clamp(34px, 9vw, 42px);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -31,8 +31,9 @@
 .yearGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px 14px;
-  padding: 0 18px 120px;
+  align-items: start;
+  gap: 20px 12px;
+  padding: 0 14px calc(112px + env(safe-area-inset-bottom, 0px));
 }
 
 .miniMonth {
@@ -45,18 +46,42 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.miniMonthName {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: capitalize;
+.miniMonth:active {
+  opacity: 0.62;
 }
 
+.miniMonthName {
+  display: block;
+  min-height: 18px;
+  margin-bottom: 3px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.miniWeekdays,
 .miniGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px 2px;
+}
+
+.miniWeekdays {
+  margin-bottom: 2px;
+  color: #737378;
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+}
+
+.miniGrid {
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 2px 1px;
 }
 
 .miniDay {
@@ -67,7 +92,7 @@
   aspect-ratio: 1;
   border-radius: 999px;
   color: #b7b7bd;
-  font-size: 9px;
+  font-size: 8px;
   line-height: 1;
 }
 
@@ -79,7 +104,7 @@
 
 .miniDot {
   position: absolute;
-  bottom: -2px;
+  bottom: -1px;
   width: 2px;
   height: 2px;
   border-radius: 999px;
@@ -159,16 +184,24 @@
 
 @media (max-width: 380px) {
   .yearGrid {
-    gap: 18px 10px;
-    padding-inline: 12px;
+    gap: 17px 9px;
+    padding-inline: 10px;
+  }
+
+  .miniMonthName {
+    font-size: 12px;
+  }
+
+  .miniWeekdays {
+    font-size: 6px;
   }
 
   .miniGrid {
-    gap: 3px 1px;
+    gap: 2px 0;
   }
 
   .miniDay {
-    font-size: 8px;
+    font-size: 7px;
   }
 
   .monthDay {
@@ -181,6 +214,14 @@
   .monthView {
     background: #fff;
     color: #000;
+  }
+
+  .miniMonthName {
+    color: #111;
+  }
+
+  .miniWeekdays {
+    color: #8e8e93;
   }
 
   .miniDay {

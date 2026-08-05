@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  addDays,
   eachDayOfInterval,
   eachMonthOfInterval,
   endOfMonth,
@@ -17,6 +18,8 @@ import { es } from 'date-fns/locale'
 import type { ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
+
+const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
 export default function CalendarioYearView({
   fecha,
@@ -49,6 +52,7 @@ export default function CalendarioYearView({
           const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
           const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
           const days = eachDayOfInterval({ start, end })
+          while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
           return (
             <button
@@ -57,7 +61,10 @@ export default function CalendarioYearView({
               onClick={(event) => onOpenMonth(month, event.currentTarget)}
               aria-label={`Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
             >
-              <span className={basic.miniMonthName}>{format(month, 'MMM', { locale: es })}</span>
+              <span className={basic.miniMonthName}>{format(month, 'MMMM', { locale: es })}</span>
+              <span className={basic.miniWeekdays} aria-hidden="true">
+                {MINI_WEEKDAYS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+              </span>
               <span className={basic.miniGrid}>
                 {days.map((day) => {
                   const belongs = isSameMonth(day, month)
