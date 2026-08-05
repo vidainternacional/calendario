@@ -6,7 +6,9 @@ import { Check, Info, Loader2, X } from 'lucide-react'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { createClient } from '@/lib/supabase/client'
+import type { EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioSourcesPanel.module.css'
+import native from './CalendarioNativeUX.module.css'
 
 type CalendarSource = {
   calendar_id: string
@@ -24,6 +26,7 @@ type CalendarSource = {
 
 type CalendarChange = {
   id: string
+  event_id?: string | null
   summary: string
   change_type: 'created' | 'updated' | 'deleted'
   created_at: string
@@ -61,15 +64,23 @@ function initials(name?: string | null) {
     .join('') || 'VI'
 }
 
+function titleFromSummary(summary: string) {
+  return summary.match(/[“"]([^”"]+)[”"]/u)?.[1]?.trim() || ''
+}
+
 export default function CalendarioSourcesPanel({
   isOpen,
   onClose,
   userId,
+  items,
+  onOpenItem,
   onVisibilityChanged,
 }: {
   isOpen: boolean
   onClose: () => void
   userId: string
+  items: EventoCalendario[]
+  onOpenItem: (item: EventoCalendario) => void
   onVisibilityChanged: () => void
 }) {
   const [mounted, setMounted] = useState(false)
@@ -82,6 +93,7 @@ export default function CalendarioSourcesPanel({
   const [detailLoading, setDetailLoading] = useState(false)
   const [tab, setTab] = useState<'calendars' | 'changes'>('calendars')
   const [error, setError] = useState('')
+  const [itemNotice, setItemNotice] = useState('')
 
   useEffect(() => setMounted(true), [])
 
@@ -89,6 +101,7 @@ export default function CalendarioSourcesPanel({
     if (!isOpen) return
     setLoading(true)
     setError('')
+    setItemNotice('')
     const db = createClient() as any
 
     const [subscriptionsResult, changesResult] = await Promise.all([
@@ -101,6 +114,7 @@ export default function CalendarioSourcesPanel({
         .from('calendar_changes')
         .select(`
           id,
+          event_id,
           summary,
           change_type,
           created_at,
@@ -200,6 +214,37 @@ export default function CalendarioSourcesPanel({
     }
   }
 
+  function resolveChangeItem(change: CalendarChange) {
+    if (change.event_id) {
+      const event = items.find((item) => item.kind === 'event' && item.id === change.event_id)
+      if (event) return event
+    }
+
+    const title = titleFromSummary(change.summary)
+    if (!title) return null
+
+    return items.find(
+      (item) => item.calendar_id === change.calendar_id && item.titulo.trim() === title,
+    ) || null
+  }
+
+  function openChange(change: CalendarChange) {
+    const item = resolveChangeItem(change)
+    if (!item) {
+      setItemNotice(
+        change.change_type === 'deleted'
+          ? 'Este elemento fue eliminado y ya no tiene una ficha disponible.'
+          : 'El elemento relacionado no está dentro del rango cargado actualmente.',
+      )
+      return
+    }
+
+    if (!change.change_reads || change.change_reads.length === 0) {
+      void markRead(change)
+    }
+    onOpenItem(item)
+  }
+
   if (!mounted || !isOpen) return null
 
   return createPortal(
@@ -208,7 +253,7 @@ export default function CalendarioSourcesPanel({
         <header className={styles.header}>
           <div>
             <h2 id="calendar-sources-title">Calendarios</h2>
-            <p>Elige qué fuentes aparecen en las cuatro vistas.</p>
+            <p>Elige qué fuentes aparecen en todas las vistas.</p>
           </div>
           <button className={styles.close} onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
         </header>
@@ -220,16 +265,18 @@ export default function CalendarioSourcesPanel({
           </button>
         </div>
 
+        {itemNotice && <p className={native.feedUnavailable}>{itemNotice}</p>}
+
         <div className={styles.body}>
           {loading ? (
             <div className={styles.loading}><Loader2 size={22} className="animate-spin" /> Cargando…</div>
           ) : error ? (
             <p className={styles.error}>{error}</p>
           ) : tab === 'calendars' ? (
-            groups.map(([group, items]) => (
+            groups.map(([group, groupItems]) => (
               <section key={group} className={styles.group}>
                 <h3>{GROUP_LABELS[group] || group}</h3>
-                {items.map((source) => (
+                {groupItems.map((source) => (
                   <div key={source.calendar_id} className={styles.sourceRow}>
                     <button className={styles.visibility} onClick={() => toggleVisibility(source)} disabled={savingId === source.calendar_id} aria-label={`${source.visible ? 'Ocultar' : 'Mostrar'} ${source.calendars?.nombre || 'calendario'}`}>
                       <span className={styles.colorDot} style={{ backgroundColor: source.calendars?.color || '#5B3DF5' }}>
@@ -251,7 +298,17 @@ export default function CalendarioSourcesPanel({
                 const unread = !change.change_reads || change.change_reads.length === 0
                 const actor = change.changed_by_profile?.nombre_completo || 'Vida Internacional'
                 return (
-                  <article key={change.id} className={`${styles.changeRow} ${unread ? styles.unread : ''}`}>
+                  <article
+                    key={change.id}
+                    className={`${styles.changeRow} ${unread ? styles.unread : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openChange(change)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') openChange(change)
+                    }}
+                    aria-label={`Abrir cambio: ${change.summary}`}
+                  >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: change.calendars?.color || '#5B3DF5' }}>
                       {initials(actor)}
                     </span>
@@ -259,7 +316,16 @@ export default function CalendarioSourcesPanel({
                       <strong>{change.summary}</strong>
                       <small>{actor} · {formatDistanceToNowStrict(new Date(change.created_at), { addSuffix: true, locale: es })}</small>
                     </div>
-                    {unread && <button onClick={() => markRead(change)}>OK</button>}
+                    {unread && (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void markRead(change)
+                        }}
+                      >
+                        OK
+                      </button>
+                    )}
                   </article>
                 )
               })}

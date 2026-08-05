@@ -4,114 +4,195 @@ import { addDays, differenceInMinutes, format, isSameDay, startOfDay } from 'dat
 import { es } from 'date-fns/locale'
 import { BellRing } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { eventColor, eventKey, type EventoCalendario } from './calendario-ios-types'
+import {
+  eventColor,
+  eventKey,
+  type EventoCalendario,
+  type TimelineDayCount,
+} from './calendario-ios-types'
 import styles from './CalendarioMultiDayView.module.css'
 
 const HOUR_HEIGHT = 64
-const DAYS_VISIBLE = 3
+const MIN_EVENT_MINUTES = 30
+const MIN_DAY_WIDTH = 112
+const TIME_COLUMN_WIDTH = 58
+
+type PositionedItem = {
+  event: EventoCalendario
+  start: Date
+  end: Date
+  column: number
+  columns: number
+}
+
+function itemEnd(event: EventoCalendario) {
+  const start = new Date(event.fecha_inicio)
+  if (!event.fecha_fin) return new Date(start.getTime() + MIN_EVENT_MINUTES * 60 * 1000)
+  const end = new Date(event.fecha_fin)
+  if (Number.isNaN(end.getTime()) || end <= start) {
+    return new Date(start.getTime() + MIN_EVENT_MINUTES * 60 * 1000)
+  }
+  return end
+}
+
+function layoutOverlaps(items: EventoCalendario[]): PositionedItem[] {
+  const sorted = items
+    .map((event) => ({ event, start: new Date(event.fecha_inicio), end: itemEnd(event) }))
+    .sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime())
+
+  const groups: Array<typeof sorted> = []
+  let current: typeof sorted = []
+  let currentEnd = 0
+
+  for (const item of sorted) {
+    const startTime = item.start.getTime()
+    if (current.length > 0 && startTime >= currentEnd) {
+      groups.push(current)
+      current = []
+      currentEnd = 0
+    }
+    current.push(item)
+    currentEnd = Math.max(currentEnd, item.end.getTime())
+  }
+  if (current.length > 0) groups.push(current)
+
+  return groups.flatMap((group) => {
+    const columnEnds: number[] = []
+    const assigned = group.map((item) => {
+      let column = columnEnds.findIndex((end) => end <= item.start.getTime())
+      if (column === -1) column = columnEnds.length
+      columnEnds[column] = item.end.getTime()
+      return { ...item, column }
+    })
+    const columns = Math.max(columnEnds.length, 1)
+    return assigned.map((item) => ({ ...item, columns }))
+  })
+}
 
 export default function CalendarioMultiDayView({
   selectedDay,
   events,
+  daysVisible,
   onSelectDay,
   onOpenEvent,
 }: {
   selectedDay: Date
   events: EventoCalendario[]
+  daysVisible: TimelineDayCount
   onSelectDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const days = useMemo(
-    () => Array.from({ length: DAYS_VISIBLE }, (_, index) => addDays(selectedDay, index)),
-    [selectedDay],
+    () => Array.from({ length: daysVisible }, (_, index) => addDays(selectedDay, index)),
+    [selectedDay, daysVisible],
   )
 
   useEffect(() => {
     if (!viewportRef.current) return
     const hour = isSameDay(selectedDay, new Date()) ? Math.max(new Date().getHours() - 2, 0) : 7
     viewportRef.current.scrollTop = hour * HOUR_HEIGHT
-  }, [selectedDay])
+  }, [selectedDay, daysVisible])
 
-  const allDay = events.filter((event) => event.todo_el_dia && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)))
+  const allDay = events.filter(
+    (event) => Boolean(event.todo_el_dia) && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)),
+  )
+  const minimumWidth = daysVisible >= 5 ? TIME_COLUMN_WIDTH + daysVisible * MIN_DAY_WIDTH : undefined
+  const gridTemplate = `${TIME_COLUMN_WIDTH}px repeat(${daysVisible}, minmax(0, 1fr))`
 
   return (
-    <section className={styles.surface} aria-label="Vista de varios días">
-      <header className={styles.daysHeader}>
-        <div className={styles.timeSpacer} />
-        {days.map((day) => (
-          <button key={day.toISOString()} className={styles.dayHeader} onClick={() => onSelectDay(day)}>
-            <span>{format(day, 'EEE', { locale: es })}</span>
-            <strong className={isSameDay(day, new Date()) ? styles.today : ''}>{format(day, 'd')}</strong>
-          </button>
-        ))}
-      </header>
-
-      {allDay.length > 0 && (
-        <div className={styles.allDayBand}>
-          <span className={styles.allDayLabel}>Todo el día</span>
-          <div className={styles.allDayColumns}>
+    <section className={styles.surface} aria-label={daysVisible === 1 ? 'Vista de un día' : `Vista de ${daysVisible} días`}>
+      <div className={styles.horizontalScroller}>
+        <div className={styles.canvas} style={{ minWidth: minimumWidth ? `${minimumWidth}px` : '100%' }}>
+          <header className={styles.daysHeader} style={{ gridTemplateColumns: gridTemplate }}>
+            <div className={styles.timeSpacer} />
             {days.map((day) => (
-              <div key={day.toISOString()} className={styles.allDayColumn}>
-                {allDay.filter((event) => isSameDay(new Date(event.fecha_inicio), day)).map((event) => (
-                  <button
-                    key={eventKey(event)}
-                    className={styles.allDayEvent}
-                    style={{ borderColor: eventColor(event), color: eventColor(event) }}
-                    onClick={() => onOpenEvent(event)}
-                  >
-                    {event.kind === 'reminder' && <BellRing size={12} className="mr-1 inline" />}
-                    {event.titulo}
-                  </button>
-                ))}
-              </div>
+              <button key={day.toISOString()} className={styles.dayHeader} onClick={() => onSelectDay(day)}>
+                <span>{format(day, 'EEE', { locale: es })}</span>
+                <strong className={isSameDay(day, new Date()) ? styles.today : ''}>{format(day, 'd')}</strong>
+              </button>
             ))}
-          </div>
-        </div>
-      )}
+          </header>
 
-      <div ref={viewportRef} className={styles.viewport}>
-        <div className={styles.timeline} style={{ height: `${24 * HOUR_HEIGHT}px` }}>
-          <div className={styles.hours}>
-            {Array.from({ length: 24 }, (_, hour) => (
-              <span key={hour} className={styles.hour} style={{ top: `${hour * HOUR_HEIGHT - 8}px` }}>
-                {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-              </span>
-            ))}
-          </div>
-          <div className={styles.columns}>
-            {days.map((day) => (
-              <div key={day.toISOString()} className={styles.dayColumn}>
-                {Array.from({ length: 24 }, (_, hour) => (
-                  <span key={hour} className={styles.hourLine} style={{ top: `${hour * HOUR_HEIGHT}px` }} />
-                ))}
-                {events
-                  .filter((event) => !event.todo_el_dia && isSameDay(new Date(event.fecha_inicio), day))
-                  .map((event) => {
-                    const start = new Date(event.fecha_inicio)
-                    const end = event.fecha_fin ? new Date(event.fecha_fin) : addDays(start, 0)
-                    const startMinutes = differenceInMinutes(start, startOfDay(start))
-                    const duration = Math.max(differenceInMinutes(end, start), 30)
-                    const color = eventColor(event)
-                    return (
+          {allDay.length > 0 && (
+            <div className={styles.allDayBand} style={{ gridTemplateColumns: `${TIME_COLUMN_WIDTH}px 1fr` }}>
+              <span className={styles.allDayLabel}>Todo el día</span>
+              <div className={styles.allDayColumns} style={{ gridTemplateColumns: `repeat(${daysVisible}, minmax(0, 1fr))` }}>
+                {days.map((day) => (
+                  <div key={day.toISOString()} className={styles.allDayColumn}>
+                    {allDay.filter((event) => isSameDay(new Date(event.fecha_inicio), day)).map((event) => (
                       <button
                         key={eventKey(event)}
-                        className={styles.timedEvent}
-                        style={{
-                          top: `${(startMinutes / 60) * HOUR_HEIGHT + 2}px`,
-                          height: `${Math.max((duration / 60) * HOUR_HEIGHT - 4, 34)}px`,
-                          borderColor: color,
-                          backgroundColor: `${color}1F`,
-                        }}
+                        className={styles.allDayEvent}
+                        style={{ borderColor: eventColor(event), color: eventColor(event) }}
                         onClick={() => onOpenEvent(event)}
                       >
-                        <strong style={{ color }}>{event.titulo}</strong>
-                        <span>{format(start, 'h:mm a')}</span>
+                        {event.kind === 'reminder' && <BellRing size={12} className="mr-1 inline" />}
+                        {event.titulo}
                       </button>
-                    )
-                  })}
+                    ))}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+          )}
+
+          <div ref={viewportRef} className={styles.viewport}>
+            <div className={styles.timeline} style={{ height: `${24 * HOUR_HEIGHT}px`, gridTemplateColumns: `${TIME_COLUMN_WIDTH}px 1fr` }}>
+              <div className={styles.hours}>
+                {Array.from({ length: 24 }, (_, hour) => (
+                  <span key={hour} className={styles.hour} style={{ top: `${hour * HOUR_HEIGHT - 8}px` }}>
+                    {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                  </span>
+                ))}
+              </div>
+
+              <div className={styles.columns} style={{ gridTemplateColumns: `repeat(${daysVisible}, minmax(0, 1fr))` }}>
+                {days.map((day) => {
+                  const positioned = layoutOverlaps(
+                    events.filter((event) => !event.todo_el_dia && isSameDay(new Date(event.fecha_inicio), day)),
+                  )
+
+                  return (
+                    <div key={day.toISOString()} className={styles.dayColumn}>
+                      {Array.from({ length: 24 }, (_, hour) => (
+                        <span key={hour} className={styles.hourLine} style={{ top: `${hour * HOUR_HEIGHT}px` }} />
+                      ))}
+
+                      {positioned.map(({ event, start, end, column, columns }) => {
+                        const startMinutes = differenceInMinutes(start, startOfDay(start))
+                        const duration = Math.max(differenceInMinutes(end, start), MIN_EVENT_MINUTES)
+                        const color = eventColor(event)
+                        const width = 100 / columns
+                        const left = column * width
+
+                        return (
+                          <button
+                            key={eventKey(event)}
+                            className={styles.timedEvent}
+                            style={{
+                              top: `${(startMinutes / 60) * HOUR_HEIGHT + 2}px`,
+                              height: `${Math.max((duration / 60) * HOUR_HEIGHT - 4, 34)}px`,
+                              left: `calc(${left}% + 3px)`,
+                              width: `calc(${width}% - 6px)`,
+                              borderColor: color,
+                              backgroundColor: `${color}1F`,
+                            }}
+                            onClick={() => onOpenEvent(event)}
+                          >
+                            <strong style={{ color }}>
+                              {event.kind === 'reminder' && <BellRing size={11} className="mr-1 inline" />}
+                              {event.titulo}
+                            </strong>
+                            <span>{format(start, 'h:mm a')}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>

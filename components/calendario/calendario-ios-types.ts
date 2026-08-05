@@ -1,7 +1,8 @@
 import { format, isSameDay } from 'date-fns'
 
-export type VistaCalendario = 'anio' | 'mes' | 'multiday' | 'lista'
+export type VistaCalendario = 'anio' | 'mes' | 'dia' | 'multiday' | 'lista'
 export type CalendarItemKind = 'event' | 'reminder'
+export type TimelineDayCount = 1 | 2 | 3 | 5 | 7
 
 export type CalendarioOrigen = {
   id: string
