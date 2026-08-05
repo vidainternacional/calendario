@@ -2,19 +2,47 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import type { PilotContext } from '@/lib/pilot/types'
 
 const SESSION_KEY = 'vida-pilot-session-id'
-const SESSION_STARTED_KEY = 'vida-pilot-session-started'
+const SESSION_STARTED_KEY = 'vida-pilot-session-started-v2'
 
 function sessionId() {
-  let value = sessionStorage.getItem(SESSION_KEY)
-  if (!value) {
-    value = crypto.randomUUID()
-    sessionStorage.setItem(SESSION_KEY, value)
+  try {
+    let value = sessionStorage.getItem(SESSION_KEY)
+    if (!value) {
+      value = crypto.randomUUID()
+      sessionStorage.setItem(SESSION_KEY, value)
+    }
+    return value
+  } catch {
+    return crypto.randomUUID()
   }
-  return value
+}
+
+async function sendTelemetry(eventName: 'session_started' | 'page_view', route: string | null) {
+  try {
+    const response = await fetch('/api/pilot/telemetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      keepalive: true,
+      body: JSON.stringify({
+        eventName,
+        route,
+        sessionId: sessionId(),
+        standalone: window.matchMedia('(display-mode: standalone)').matches,
+      }),
+    })
+
+    if (!response.ok && process.env.NODE_ENV !== 'production') {
+      console.warn('No se pudo registrar telemetría del piloto', response.status)
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Error enviando telemetría del piloto', error)
+    }
+  }
 }
 
 export default function PilotTelemetry({ context }: { context: PilotContext | null }) {
@@ -23,36 +51,22 @@ export default function PilotTelemetry({ context }: { context: PilotContext | nu
 
   useEffect(() => {
     if (!context?.active) return
-    const supabase = createClient()
-    const id = sessionId()
 
-    if (!sessionStorage.getItem(SESSION_STARTED_KEY)) {
-      sessionStorage.setItem(SESSION_STARTED_KEY, '1')
-      void (supabase as any).from('pilot_usage_events').insert({
-        profile_id: context.profileId,
-        event_name: 'session_started',
-        route: pathname,
-        session_id: id,
-        metadata: {
-          role: context.role,
-          standalone: window.matchMedia('(display-mode: standalone)').matches,
-        },
-      })
+    let started = false
+    try {
+      started = sessionStorage.getItem(SESSION_STARTED_KEY) === '1'
+      if (!started) sessionStorage.setItem(SESSION_STARTED_KEY, '1')
+    } catch {
+      started = false
     }
+
+    if (!started) void sendTelemetry('session_started', pathname || null)
   }, [context, pathname])
 
   useEffect(() => {
     if (!context?.active || !pathname || lastPath.current === pathname) return
     lastPath.current = pathname
-    const supabase = createClient()
-
-    void (supabase as any).from('pilot_usage_events').insert({
-      profile_id: context.profileId,
-      event_name: 'page_view',
-      route: pathname,
-      session_id: sessionId(),
-      metadata: { role: context.role },
-    })
+    void sendTelemetry('page_view', pathname)
   }, [context, pathname])
 
   return null
