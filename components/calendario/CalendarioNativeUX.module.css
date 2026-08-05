@@ -86,6 +86,40 @@
   font-weight: 600;
 }
 
+@media (prefers-color-scheme: dark) {
+  .yearScroller {
+    background: #000;
+  }
+
+  .yearHeading {
+    background: linear-gradient(180deg, rgba(0,0,0,0.98), rgba(0,0,0,0.9) 78%, rgba(0,0,0,0));
+  }
+
+  .yearTitleInactive {
+    color: #fff !important;
+  }
+
+  .detailEditButton {
+    background: rgba(91, 61, 245, 0.2);
+    color: #a996ff;
+  }
+
+  .detailDeleteButton {
+    background: rgba(255, 69, 58, 0.16);
+    color: #ff6961;
+  }
+
+  .detailError {
+    background: rgba(255, 69, 58, 0.14);
+    color: #ffb3ad;
+  }
+
+  .feedUnavailable {
+    background: rgba(255, 159, 10, 0.14);
+    color: #ffd08a;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .yearScroller {
     scroll-behavior: auto;
