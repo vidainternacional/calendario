@@ -15,6 +15,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { ChevronRight } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
@@ -157,11 +158,13 @@ function DayReveal({
   events,
   onSelectDay,
   onOpenEvent,
+  onOpenTimelineDay,
 }: {
   selectedDay: Date
   events: EventoCalendario[]
   onSelectDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
+  onOpenTimelineDay: (day: Date) => void
 }) {
   const touchStart = useRef<number | null>(null)
   const railRef = useRef<HTMLDivElement>(null)
@@ -216,10 +219,18 @@ function DayReveal({
         })}
       </div>
 
-      <header className={flow.dayRevealHeader}>
+      <button
+        type="button"
+        className={flow.dayRevealHeader}
+        onClick={() => onOpenTimelineDay(selectedDay)}
+        aria-label={`Abrir vista horaria de ${format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}`}
+      >
         <h2 className={flow.dayRevealTitle}>{format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}</h2>
-        <span className={flow.dayRevealCount}>{dayEvents.length === 1 ? '1 evento' : `${dayEvents.length} eventos`}</span>
-      </header>
+        <span className={flow.dayRevealMeta}>
+          <span className={flow.dayRevealCount}>{dayEvents.length === 1 ? '1 evento' : `${dayEvents.length} eventos`}</span>
+          <ChevronRight size={18} aria-hidden="true" />
+        </span>
+      </button>
 
       <div className={flow.dayEventsViewport}>
         {dayEvents.length > 0
@@ -238,6 +249,7 @@ export function MonthGrid({
   dayPanelOpen,
   onSelectDay,
   onOpenEvent,
+  onOpenTimelineDay,
 }: {
   month: Date
   selectedDay: Date
@@ -246,6 +258,7 @@ export function MonthGrid({
   dayPanelOpen: boolean
   onSelectDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
+  onOpenTimelineDay: (day: Date) => void
 }) {
   const inicio = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
   const fin = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
@@ -295,6 +308,7 @@ export function MonthGrid({
                   events={events}
                   onSelectDay={onSelectDay}
                   onOpenEvent={onOpenEvent}
+                  onOpenTimelineDay={onOpenTimelineDay}
                 />
               </div>
             )}
@@ -317,6 +331,7 @@ export default function CalendarioMonthView({
   onSelectDay,
   onOpenDay,
   onOpenEvent,
+  onOpenTimelineDay,
 }: {
   month: Date
   selectedDay: Date
@@ -329,6 +344,7 @@ export default function CalendarioMonthView({
   onSelectDay: (day: Date) => void
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
+  onOpenTimelineDay: (day: Date) => void
 }) {
   const monthIndex = month.getFullYear() * 12 + month.getMonth()
   const previousMonthRef = useRef(monthIndex)
@@ -405,6 +421,7 @@ export default function CalendarioMonthView({
                 dayPanelOpen={!overlay && dayPanelOpen && userOpenedDay && isSameMonth(selectedDay, visibleMonth)}
                 onSelectDay={handleGridDay}
                 onOpenEvent={onOpenEvent}
+                onOpenTimelineDay={onOpenTimelineDay}
               />
             </section>
           ))}
