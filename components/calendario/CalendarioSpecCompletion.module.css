@@ -52,10 +52,16 @@
   grid-template-columns: 28px minmax(0, 1fr);
   width: 100%;
   border-bottom: 0.5px solid rgba(60, 60, 67, 0.16);
+  background: #fff;
+  transition: background-color 160ms ease;
 }
 
 .monthWeek:last-child {
   border-bottom: 0;
+}
+
+.monthWeekSelected {
+  background: rgba(91, 61, 245, 0.035);
 }
 
 .weekNumber {
@@ -103,9 +109,19 @@
   font-size: 9px;
 }
 
+.monthWeekReveal {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+  background: rgba(248, 248, 250, 0.98);
+}
+
 .reminderMarker {
   width: 7px;
   height: 7px;
+  flex: 0 0 7px;
   border: 2px solid currentColor;
   border-radius: 2px;
   background: transparent;
@@ -127,4 +143,33 @@
   color: white;
   font-size: 9px;
   font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+  .weekNumberHeader,
+  .weekNumber {
+    color: rgba(235, 235, 245, 0.42);
+  }
+
+  .monthWeeks {
+    border-color: rgba(84, 84, 88, 0.65);
+  }
+
+  .monthWeek {
+    border-color: rgba(84, 84, 88, 0.55);
+    background: #000;
+  }
+
+  .monthWeekSelected {
+    background: rgba(91, 61, 245, 0.11);
+  }
+
+  .monthWeekReveal {
+    border-color: rgba(84, 84, 88, 0.6);
+    background: #1c1c1e;
+  }
+
+  .sourceBadge {
+    border-color: #000;
+  }
 }
