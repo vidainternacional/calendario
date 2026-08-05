@@ -6,6 +6,7 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  getISOWeek,
   isSameDay,
   isSameMonth,
   isToday,
@@ -27,9 +28,12 @@ import selection from './CalendarioSelection.module.css'
 import flow from './CalendarioFlow.module.css'
 import spec from './CalendarioSpecCompletion.module.css'
 
+export type MonthPresentation = 'compact' | 'stacked' | 'details'
+
 export function MonthWeekdayHeader() {
   return (
     <div className={styles.weekdayHeader}>
+      <span className={spec.weekNumberHeader}>S</span>
       {WEEKDAY_LABELS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
     </div>
   )
@@ -86,7 +90,6 @@ function DayButton({
   events,
   compact,
   onSelectDay,
-  onOpenDay,
 }: {
   day: Date
   month: Date
@@ -94,7 +97,6 @@ function DayButton({
   events: EventoCalendario[]
   compact: boolean
   onSelectDay: (day: Date) => void
-  onOpenDay?: (day: Date) => void
 }) {
   const belongs = isSameMonth(day, month)
   const selected = belongs && isSameDay(day, selectedDay)
@@ -107,8 +109,8 @@ function DayButton({
         ? `${styles.compactDay} ${selection.compactDayLayout}`
         : `${styles.monthDay} ${!belongs ? styles.monthDayOutside : ''}`}
       onClick={() => belongs && onSelectDay(day)}
-      onDoubleClick={() => belongs && onOpenDay?.(day)}
       aria-pressed={belongs ? selected : undefined}
+      tabIndex={belongs ? 0 : -1}
     >
       {belongs && (
         <>
@@ -124,66 +126,50 @@ export function MonthGrid({
   month,
   selectedDay,
   events,
-  compact = false,
+  presentation,
   onSelectDay,
-  onOpenDay,
 }: {
   month: Date
   selectedDay: Date
   events: EventoCalendario[]
-  compact?: boolean
+  presentation: MonthPresentation
   onSelectDay: (day: Date) => void
-  onOpenDay?: (day: Date) => void
 }) {
   const inicio = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
   const fin = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
   const days = eachDayOfInterval({ start: inicio, end: fin })
   const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
-
-  if (compact) {
-    return (
-      <div className={styles.compactGrid}>
-        {days.map((day) => (
-          <DayButton
-            key={day.toISOString()}
-            day={day}
-            month={month}
-            selectedDay={selectedDay}
-            events={events}
-            compact
-            onSelectDay={onSelectDay}
-            onOpenDay={onOpenDay}
-          />
-        ))}
-      </div>
-    )
-  }
+  const compact = presentation === 'compact'
 
   return (
-    <div className={spec.monthWeeks}>
+    <div className={`${spec.monthWeeks} ${compact ? spec.monthWeeksCompact : ''}`}>
       {weeks.map((week, weekIndex) => {
         const weekItems = week.flatMap((day) => isSameMonth(day, month) ? eventosDelDia(events, day) : [])
         const colors = uniqueEventColors(weekItems)
         return (
           <div key={`${format(month, 'yyyy-MM')}-${weekIndex}`} className={spec.monthWeek}>
-            <div className={spec.monthWeekDays}>
-              {week.map((day) => (
-                <DayButton
-                  key={day.toISOString()}
-                  day={day}
-                  month={month}
-                  selectedDay={selectedDay}
-                  events={events}
-                  compact={false}
-                  onSelectDay={onSelectDay}
-                  onOpenDay={onOpenDay}
-                />
-              ))}
-            </div>
-            <div className={spec.monthWeekBars} aria-hidden="true">
-              {colors.map((color, index) => (
-                <span key={`${color}-${index}`} className={spec.monthWeekBar} style={{ backgroundColor: color }} />
-              ))}
+            <span className={spec.weekNumber}>{getISOWeek(week[0])}</span>
+            <div className={spec.monthWeekContent}>
+              <div className={spec.monthWeekDays}>
+                {week.map((day) => (
+                  <DayButton
+                    key={day.toISOString()}
+                    day={day}
+                    month={month}
+                    selectedDay={selectedDay}
+                    events={events}
+                    compact={compact}
+                    onSelectDay={onSelectDay}
+                  />
+                ))}
+              </div>
+              {!compact && (
+                <div className={spec.monthWeekBars} aria-hidden="true">
+                  {colors.map((color, index) => (
+                    <span key={`${color}-${index}`} className={spec.monthWeekBar} style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )
@@ -231,29 +217,32 @@ function DayReveal({
       onTouchEnd={touchEndHandler}
       aria-label="Elementos del día seleccionado"
     >
-      <header className={flow.dayRevealHeader}>
-        <h2 className={flow.dayRevealTitle}>{format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}</h2>
-        <span className={flow.dayRevealCount}>{dayEvents.length}</span>
-      </header>
-
+      <span className={flow.dayRevealGrabber} aria-hidden="true" />
       <div className={flow.dayRail}>
         {railDays.map((day) => {
           const active = isSameDay(day, selectedDay)
+          const today = isToday(day)
           return (
-            <button key={day.toISOString()} className={`${flow.dayChip} ${active ? flow.dayChipActive : ''}`} onClick={() => onSelectDay(day)} aria-pressed={active}>
+            <button key={day.toISOString()} className={flow.dayChip} onClick={() => onSelectDay(day)} aria-pressed={active}>
               <span className={flow.dayChipName}>{format(day, 'EEE', { locale: es })}</span>
-              <span className={flow.dayChipNumber}>{format(day, 'd')}</span>
+              <span className={`${flow.dayChipNumber} ${today ? flow.dayChipToday : ''} ${active && !today ? flow.dayChipSelected : ''}`}>
+                {format(day, 'd')}
+              </span>
             </button>
           )
         })}
       </div>
+
+      <header className={flow.dayRevealHeader}>
+        <h2 className={flow.dayRevealTitle}>{format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}</h2>
+        <span className={flow.dayRevealCount}>{dayEvents.length === 1 ? '1 evento' : `${dayEvents.length} eventos`}</span>
+      </header>
 
       <div className={flow.dayEventsViewport}>
         {dayEvents.length > 0
           ? dayEvents.map((event) => <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={onOpenEvent} />)
           : <div className={styles.emptyState}>No hay eventos ni recordatorios visibles este día.</div>}
       </div>
-      <p className={flow.daySwipeHint}>Desliza horizontalmente para cambiar de día y verticalmente para recorrer la lista.</p>
     </section>
   )
 }
@@ -264,6 +253,7 @@ export default function CalendarioMonthView({
   events,
   topChrome,
   isRefreshing,
+  presentation,
   dayPanelOpen,
   overlay = false,
   onSelectDay,
@@ -275,27 +265,35 @@ export default function CalendarioMonthView({
   events: EventoCalendario[]
   topChrome: ReactNode
   isRefreshing: boolean
+  presentation: MonthPresentation
   dayPanelOpen: boolean
   overlay?: boolean
   onSelectDay: (day: Date) => void
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
+  const selectDay = (day: Date) => {
+    onSelectDay(day)
+    onOpenDay(day)
+  }
+
   return (
     <div className={`${styles.calendarScreen} ${flow.monthFlow} ${!overlay ? flow.elasticMonth : ''}`} aria-hidden={overlay || undefined}>
       {topChrome}
       <div className={styles.headerBlock}>
         <h1 className={styles.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
-        {!overlay && (
-          <p className={styles.subTitle}>
-            Toca un día para abrir sus eventos{isRefreshing ? ' · Actualizando…' : ''}
-          </p>
-        )}
+        {isRefreshing && !overlay && <span className={styles.inlineStatus}>Actualizando…</span>}
       </div>
       <MonthWeekdayHeader />
       <div className={styles.monthScroll}>
-        <section className={styles.monthSection}>
-          <MonthGrid month={month} selectedDay={selectedDay} events={events} onSelectDay={onSelectDay} onOpenDay={onOpenDay} />
+        <section className={`${styles.monthSection} ${styles[`monthSection${presentation.charAt(0).toUpperCase()}${presentation.slice(1)}`] || ''}`}>
+          <MonthGrid
+            month={month}
+            selectedDay={selectedDay}
+            events={events}
+            presentation={presentation}
+            onSelectDay={selectDay}
+          />
         </section>
         {!overlay && dayPanelOpen && (
           <DayReveal
