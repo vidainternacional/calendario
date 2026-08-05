@@ -1,0 +1,174 @@
+.root {
+  min-height: 100dvh;
+  background: #fff;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .root {
+    background: #000;
+    color-scheme: dark;
+  }
+
+  .root :global([class*="calendarScreen"]) {
+    --calendar-label: #fff !important;
+    --calendar-secondary: rgba(235, 235, 245, 0.62) !important;
+    --calendar-tertiary: rgba(235, 235, 245, 0.3) !important;
+    --calendar-separator: rgba(84, 84, 88, 0.65) !important;
+    --calendar-system-bg: #000 !important;
+    --calendar-secondary-bg: #1c1c1e !important;
+    background: #000 !important;
+    color: #fff !important;
+  }
+
+  .root :global([class*="topChrome"]) {
+    background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.86) 72%, rgba(0,0,0,0) 100%) !important;
+  }
+
+  .root :global([class*="chromePill"]),
+  .root :global([class*="chromeGroup"]),
+  .root :global([class*="floatingPill"]),
+  .root :global([class*="floatingGroup"]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(44, 44, 46, 0.78) !important;
+    color: #fff !important;
+    box-shadow: 0 7px 24px rgba(0, 0, 0, 0.34), inset 0 0 0 0.5px rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .root :global([class*="chromeIconButton"]),
+  .root :global([class*="floatingIcon"]) {
+    color: #fff !important;
+  }
+
+  .root :global([class*="chromeIconButton"] + [class*="chromeIconButton"]),
+  .root :global([class*="floatingIcon"] + [class*="floatingIcon"]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .root :global([class*="headerBlock"]),
+  .root :global([class*="yearSurface"]),
+  .root :global([class*="monthScroll"]),
+  .root :global([class*="monthSection"]),
+  .root :global([class*="eventList"]),
+  .root :global([class*="agendaHeader"]),
+  .root :global([class*="emptyState"]),
+  .root :global([class*="weekdayHeader"]),
+  .root :global([class*="eventRow"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: #000 !important;
+  }
+
+  .root :global([class*="weekdayHeader"]),
+  .root :global([class*="eventTime"]),
+  .root :global([class*="eventMeta"]),
+  .root :global([class*="eventLocation"]),
+  .root :global([class*="agendaCount"]),
+  .root :global([class*="inlineStatus"]),
+  .root :global([class*="subTitle"]) {
+    color: rgba(235, 235, 245, 0.58) !important;
+  }
+
+  .root :global([class*="monthTitle"]),
+  .root :global([class*="periodTitle"]),
+  .root :global([class*="agendaDate"]),
+  .root :global([class*="eventTitle"]),
+  .root :global([class*="miniMonthName"]),
+  .root :global([class*="dayNumber"]) {
+    color: #fff;
+  }
+
+  .root :global([class*="miniDay"]) {
+    color: rgba(235, 235, 245, 0.78);
+  }
+
+  .root :global([class*="miniDayOutside"]),
+  .root :global([class*="monthDayOutside"]) {
+    color: transparent !important;
+  }
+
+  .root :global([class*="viewPopover"]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(44, 44, 46, 0.82) !important;
+    box-shadow: 0 26px 72px rgba(0, 0, 0, 0.56), inset 0 0 0 0.5px rgba(255,255,255,0.04) !important;
+  }
+
+  .root :global([class*="viewOption"]),
+  .root :global([class*="viewOptionIcon"]),
+  .root :global([class*="viewOptionLabel"]) {
+    color: #fff !important;
+  }
+
+  .root :global([class*="viewOptionCheck"]) {
+    color: #8d78ff !important;
+  }
+
+  .root :global([class*="viewDivider"]) {
+    background: rgba(255, 255, 255, 0.14) !important;
+  }
+
+  .root :global([class*="popoverBackdrop"]) {
+    background: rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .root :global([class*="searchOverlay"]),
+  .root :global([class*="searchHeader"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: rgba(0, 0, 0, 0.92) !important;
+  }
+
+  .root :global([class*="searchField"]) {
+    background: rgba(118, 118, 128, 0.24) !important;
+    color: #fff !important;
+  }
+
+  .root :global([class*="detailCard"]) {
+    background: rgba(28, 28, 30, 0.98) !important;
+    box-shadow: 0 -20px 68px rgba(0, 0, 0, 0.64) !important;
+  }
+
+  .root :global([class*="detailHeader"]),
+  .root :global([class*="detailFooter"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: rgba(28, 28, 30, 0.98) !important;
+  }
+
+  .root :global([class*="detailBody"]) {
+    background: #000 !important;
+  }
+
+  .root :global([class*="detailTitle"]),
+  .root :global([class*="detailLine"]) {
+    color: #fff !important;
+  }
+
+  .root :global([class*="detailClose"]),
+  .root :global([class*="roundAction"]) {
+    background: rgba(118, 118, 128, 0.24) !important;
+    color: rgba(235, 235, 245, 0.72) !important;
+  }
+
+  .root :global([class*="newEventOverlay"]),
+  .root :global([class*="newEventTopbar"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: rgba(28, 28, 30, 0.98) !important;
+  }
+
+  .root :global([class*="newEventTitle"]),
+  .root :global([class*="formLabel"]),
+  .root :global([class*="formInput"]),
+  .root :global([class*="formSelect"]),
+  .root :global([class*="formTextarea"]) {
+    color: #fff !important;
+  }
+
+  .root :global([class*="formGroup"]),
+  .root :global([class*="formRow"]),
+  .root :global([class*="formColumn"]) {
+    border-color: rgba(84, 84, 88, 0.58) !important;
+    background: #1c1c1e !important;
+  }
+
+  .root :global([class*="zoomLayer"]) {
+    background: #000 !important;
+  }
+}
