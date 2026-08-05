@@ -15,6 +15,7 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   eventColor,
@@ -23,6 +24,11 @@ import {
   type EventoCalendario,
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
+import flow from './CalendarioFlow.module.css'
+
+const YEAR_MIN = 1800
+const YEAR_MAX = 2200
+const YEARS = Array.from({ length: YEAR_MAX - YEAR_MIN + 1 }, (_, index) => YEAR_MIN + index)
 
 export default function CalendarioYearView({
   fecha,
@@ -30,14 +36,17 @@ export default function CalendarioYearView({
   isRefreshing,
   topChrome,
   onOpenMonth,
+  onChangeYear,
 }: {
   fecha: Date
   eventos: EventoCalendario[]
   isRefreshing: boolean
   topChrome: ReactNode
   onOpenMonth: (month: Date, element: HTMLElement) => void
+  onChangeYear: (year: number) => void
 }) {
   const meses = eachMonthOfInterval({ start: startOfYear(fecha), end: endOfYear(fecha) })
+  const currentYear = fecha.getFullYear()
 
   return (
     <>
@@ -48,6 +57,34 @@ export default function CalendarioYearView({
           Tus eventos y turnos asignados{isRefreshing ? ' · Actualizando…' : ''}
         </p>
       </div>
+
+      <div className={flow.yearNavigator} aria-label="Navegación por años">
+        <button
+          type="button"
+          className={flow.yearArrow}
+          onClick={() => onChangeYear(currentYear - 1)}
+          aria-label="Año anterior"
+        >
+          <ChevronLeft size={21} />
+        </button>
+        <select
+          className={flow.yearSelect}
+          value={currentYear}
+          onChange={(event) => onChangeYear(Number(event.target.value))}
+          aria-label="Elegir año"
+        >
+          {YEARS.map((year) => <option key={year} value={year}>{year}</option>)}
+        </select>
+        <button
+          type="button"
+          className={flow.yearArrow}
+          onClick={() => onChangeYear(currentYear + 1)}
+          aria-label="Año siguiente"
+        >
+          <ChevronRight size={21} />
+        </button>
+      </div>
+
       <section className={styles.yearSurface}>
         <div className={styles.yearGrid}>
           {meses.map((mes) => {
