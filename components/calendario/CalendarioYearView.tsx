@@ -85,6 +85,7 @@ function YearBlock({
                 data-calendar-mini={monthKey(month)}
                 className={`${styles.miniMonth} ${isSameMonth(month, new Date()) ? styles.miniMonthCurrent : ''}`}
                 onClick={(event) => onOpenMonth(month, event.currentTarget)}
+                aria-label={`Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
               >
                 <span className={styles.miniMonthName}>{format(month, 'MMM', { locale: es })}</span>
                 <span className={spec.miniWeeks}>
@@ -158,7 +159,7 @@ export default function CalendarioYearView({
     const container = scrollRef.current
     const target = container?.querySelector<HTMLElement>(`[data-calendar-year="${year}"]`)
     if (!container || !target) return
-    container.scrollTo({ top: Math.max(target.offsetTop - 8, 0), behavior })
+    container.scrollTo({ top: Math.max(target.offsetTop - 4, 0), behavior })
   }, [])
 
   useLayoutEffect(() => {
@@ -227,10 +228,13 @@ export default function CalendarioYearView({
   return (
     <>
       {topChrome}
-      <div className={native.yearStatus} aria-live="polite">
-        Desliza verticalmente entre años{isRefreshing ? ' · Actualizando…' : ''}
-      </div>
-      <div ref={scrollRef} className={native.yearScroller} onScroll={handleScroll}>
+      <div
+        ref={scrollRef}
+        className={native.yearScroller}
+        onScroll={handleScroll}
+        aria-busy={isRefreshing}
+        aria-label="Calendario por años"
+      >
         {years.map((year) => (
           <YearBlock key={year} year={year} events={eventos} onOpenMonth={onOpenMonth} />
         ))}
