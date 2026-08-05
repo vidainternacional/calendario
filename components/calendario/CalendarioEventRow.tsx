@@ -22,7 +22,7 @@ export default function CalendarioEventRow({
       <span className={`${styles.eventMain} ${fixes.eventMainFix}`}>
         <span className={`${styles.eventTitle} ${fixes.eventTitleFix}`}>{evento.titulo}</span>
         <span className={`${styles.eventMeta} ${fixes.eventMetaFix}`} style={{ color }}>
-          {evento.ministerios?.nombre || 'General'}
+          {evento.kind === 'reminder' ? 'Recordatorio' : evento.calendars?.nombre || 'Vida Internacional'}
         </span>
         {evento.ubicacion && (
           <span className={`${styles.eventLocation} ${fixes.eventLocationFix}`}>
@@ -31,11 +31,13 @@ export default function CalendarioEventRow({
         )}
       </span>
       <span className={`${styles.eventTime} ${fixes.eventTimeFix}`}>
-        {evento.todo_el_dia
-          ? 'Todo el día'
-          : fin
-            ? `${format(inicio, 'h:mm a')}\n${format(fin, 'h:mm a')}`
-            : format(inicio, 'h:mm a')}
+        {evento.kind === 'reminder'
+          ? 'Recordatorio'
+          : evento.todo_el_dia
+            ? 'Todo el día'
+            : fin
+              ? `${format(inicio, 'h:mm a')}\n${format(fin, 'h:mm a')}`
+              : format(inicio, 'h:mm a')}
       </span>
     </button>
   )
