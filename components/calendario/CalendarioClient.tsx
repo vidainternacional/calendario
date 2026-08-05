@@ -32,7 +32,7 @@ type LiderazgoCalendario = {
   ministerios: MinisterioGestionado | null
 }
 
-const CACHE_SCOPE = 'calendario:v4'
+const CACHE_SCOPE = 'calendario:v5:calendar-source'
 const CACHE_TTL = 10 * 60 * 1000
 
 export default function CalendarioClient({ userId }: CalendarioClientProps) {
@@ -61,7 +61,7 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
       const hasta = new Date(ahora.getFullYear() + 2, 0, 1)
 
       try {
-        const [eventosResult, perfilResult, liderazgosResult] = await Promise.all([
+        const [eventosResult, perfilResult, liderazgosResult, suscripcionesResult] = await Promise.all([
           db
             .from('evento_asignaciones')
             .select(`
@@ -75,10 +75,19 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
                 fecha_inicio,
                 fecha_fin,
                 todo_el_dia,
+                tiempo_viaje_minutos,
+                calendar_id,
                 ministerio_id,
-                ministerios (
+                calendars!inner (
+                  id,
                   nombre,
-                  color_primario
+                  color,
+                  tipo_cuenta,
+                  es_publico,
+                  ministerio_id
+                ),
+                ministerios (
+                  nombre
                 )
               )
             `)
@@ -96,12 +105,19 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
             .select('ministerio_id, es_lider, ministerios(id, nombre, color_primario)')
             .eq('profile_id', userId)
             .eq('es_lider', true),
+          db
+            .from('calendar_subscriptions')
+            .select('calendar_id, visible, can_edit')
+            .eq('user_id', userId),
         ])
 
         const perfil = perfilResult.data as PerfilCalendario | null
         const liderazgos = (liderazgosResult.data || []) as LiderazgoCalendario[]
         const rol = perfil?.rol
         const esPastorAdmin = rol === 'pastor' || rol === 'administrador'
+        const subscriptionMap = new Map(
+          (suscripcionesResult.data || []).map((item: any) => [item.calendar_id, item]),
+        )
         let ministerios: MinisterioGestionado[] = []
 
         if (esPastorAdmin) {
@@ -118,7 +134,30 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
         }
 
         if (!cancelled) {
-          const fresh = (eventosResult.data || []) as unknown[]
+          const fresh = ((eventosResult.data || []) as any[])
+            .filter((assignment) => {
+              const calendarId = assignment?.eventos?.calendar_id
+              const subscription = calendarId ? subscriptionMap.get(calendarId) as any : null
+              return subscription?.visible !== false
+            })
+            .map((assignment) => {
+              const calendarId = assignment?.eventos?.calendar_id
+              const subscription = calendarId ? subscriptionMap.get(calendarId) as any : null
+              return {
+                ...assignment,
+                eventos: {
+                  ...assignment.eventos,
+                  calendars: assignment.eventos?.calendars
+                    ? {
+                        ...assignment.eventos.calendars,
+                        visible: subscription?.visible ?? true,
+                        can_edit: subscription?.can_edit ?? false,
+                      }
+                    : null,
+                },
+              }
+            })
+
           setAsignaciones(fresh)
           writeUserCache(userId, CACHE_SCOPE, fresh, CACHE_TTL)
           setPermisos({
