@@ -159,8 +159,14 @@ export default function CalendarioYearView({
     const container = scrollRef.current
     const target = container?.querySelector<HTMLElement>(`[data-calendar-year="${year}"]`)
     if (!container || !target) return
-    container.scrollTo({ top: Math.max(target.offsetTop - 4, 0), behavior })
+    container.scrollTo({ top: target.offsetTop, behavior })
   }, [])
+
+  const scheduleScrollToYear = useCallback((year: number, behavior: ScrollBehavior = 'auto') => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => scrollToYear(year, behavior))
+    })
+  }, [scrollToYear])
 
   useLayoutEffect(() => {
     const container = scrollRef.current
@@ -177,25 +183,25 @@ export default function CalendarioYearView({
         start: Math.max(YEAR_MIN, year - INITIAL_RADIUS),
         end: Math.min(YEAR_MAX, year + INITIAL_RADIUS),
       })
-      window.requestAnimationFrame(() => scrollToYear(year))
+      scheduleScrollToYear(year)
       return
     }
 
     if (!mountedRef.current) {
       mountedRef.current = true
-      window.requestAnimationFrame(() => scrollToYear(year))
+      scheduleScrollToYear(year)
       return
     }
 
     if (lastReportedYearRef.current !== year) {
-      window.requestAnimationFrame(() => scrollToYear(year, 'smooth'))
+      scheduleScrollToYear(year, 'smooth')
     }
-  }, [fecha, bounds.start, bounds.end, scrollToYear])
+  }, [fecha, bounds.start, bounds.end, scheduleScrollToYear])
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget
 
-    if (container.scrollTop < 360 && bounds.start > YEAR_MIN && prependHeightRef.current === null) {
+    if (container.scrollTop < 320 && bounds.start > YEAR_MIN && prependHeightRef.current === null) {
       prependHeightRef.current = container.scrollHeight
       setBounds((current) => ({
         ...current,
@@ -210,7 +216,7 @@ export default function CalendarioYearView({
       }))
     }
 
-    const probe = container.scrollTop + Math.min(180, container.clientHeight * 0.22)
+    const probe = container.scrollTop + Math.min(160, container.clientHeight * 0.2)
     const sections = Array.from(container.querySelectorAll<HTMLElement>('[data-calendar-year]'))
     let visibleYear = Number(sections[0]?.dataset.calendarYear || fecha.getFullYear())
 
