@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Calendar, Megaphone, User, BookOpen, ChevronLeft } from 'lucide-react'
+import { Home, Calendar, Megaphone, User, BookOpen } from 'lucide-react'
 
 const PREF_KEY = 'vida-biblia-preferencias'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
@@ -31,7 +31,6 @@ export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const dentroBiblia = pathname.startsWith('/biblia')
-  const dentroCalendario = pathname.startsWith('/calendario') || pathname === '/material/qa-calendario'
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
 
@@ -63,24 +62,6 @@ export default function BottomNav() {
       window.removeEventListener('storage', actualizarStorage)
     }
   }, [dentroBiblia])
-
-  if (dentroCalendario) {
-    const calendarExit = (
-      <Link
-        href="/inicio"
-        prefetch
-        aria-label="Volver a Vida"
-        onPointerEnter={() => router.prefetch('/inicio')}
-        onTouchStart={() => router.prefetch('/inicio')}
-        className="calendar-exit-nav"
-      >
-        <ChevronLeft aria-hidden="true" size={20} strokeWidth={2.25} />
-        <span>Vida</span>
-      </Link>
-    )
-
-    return portalReady ? createPortal(calendarExit, document.body) : null
-  }
 
   const tema = !dentroBiblia ? {
     nav: 'border-slate-200 bg-white', inactive: 'text-slate-500', active: 'text-indigo-600', activeBg: 'bg-indigo-50', shadow: 'shadow-[0_-4px_18px_rgba(20,24,40,0.08)]',
