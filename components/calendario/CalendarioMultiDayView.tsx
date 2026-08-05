@@ -2,8 +2,9 @@
 
 import { addDays, differenceInMinutes, format, isSameDay, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { BellRing } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
-import { eventColor, type EventoCalendario } from './calendario-ios-types'
+import { eventColor, eventKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioMultiDayView.module.css'
 
 const HOUR_HEIGHT = 64
@@ -54,11 +55,12 @@ export default function CalendarioMultiDayView({
               <div key={day.toISOString()} className={styles.allDayColumn}>
                 {allDay.filter((event) => isSameDay(new Date(event.fecha_inicio), day)).map((event) => (
                   <button
-                    key={event.asignacion_id}
+                    key={eventKey(event)}
                     className={styles.allDayEvent}
                     style={{ borderColor: eventColor(event), color: eventColor(event) }}
                     onClick={() => onOpenEvent(event)}
                   >
+                    {event.kind === 'reminder' && <BellRing size={12} className="mr-1 inline" />}
                     {event.titulo}
                   </button>
                 ))}
@@ -93,7 +95,7 @@ export default function CalendarioMultiDayView({
                     const color = eventColor(event)
                     return (
                       <button
-                        key={event.asignacion_id}
+                        key={eventKey(event)}
                         className={styles.timedEvent}
                         style={{
                           top: `${(startMinutes / 60) * HOUR_HEIGHT + 2}px`,

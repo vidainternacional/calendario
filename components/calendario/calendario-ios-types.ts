@@ -1,11 +1,13 @@
 import { format, isSameDay } from 'date-fns'
 
 export type VistaCalendario = 'anio' | 'mes' | 'multiday' | 'lista'
+export type CalendarItemKind = 'event' | 'reminder'
 
 export type CalendarioOrigen = {
   id: string
   nombre: string
   color: string
+  owner_id?: string | null
   tipo_cuenta: 'interno' | 'gmail' | 'icloud' | 'other'
   es_publico: boolean
   ministerio_id?: string | null
@@ -14,6 +16,7 @@ export type CalendarioOrigen = {
 }
 
 export type EventoCalendario = {
+  kind: CalendarItemKind
   id: string
   titulo: string
   descripcion?: string | null
@@ -26,14 +29,8 @@ export type EventoCalendario = {
   calendars?: CalendarioOrigen | null
   ministerio_id?: string | null
   ministerios?: { nombre: string } | null
-  asignacion_id: string
-  estadoAsignacion: string
-}
-
-export type MinisterioGestionado = {
-  id: string
-  nombre: string
-  color_primario?: string | null
+  asignacion_id?: string | null
+  estadoAsignacion?: string | null
 }
 
 export const WEEKDAY_LABELS = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
@@ -45,6 +42,10 @@ export function monthKey(date: Date) {
 
 export function eventColor(evento: EventoCalendario) {
   return evento.calendars?.color || '#5B3DF5'
+}
+
+export function eventKey(evento: EventoCalendario) {
+  return `${evento.kind}:${evento.id}`
 }
 
 export function eventosDelDia(eventos: EventoCalendario[], dia: Date) {

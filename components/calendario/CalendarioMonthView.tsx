@@ -13,12 +13,13 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { MapPin, X } from 'lucide-react'
+import { BellRing, MapPin, X } from 'lucide-react'
 import { useMemo, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
   eventColor,
+  eventKey,
   eventosDelDia,
   WEEKDAY_LABELS,
   type EventoCalendario,
@@ -26,6 +27,7 @@ import {
 import styles from './CalendarioIOS.module.css'
 import selection from './CalendarioSelection.module.css'
 import flow from './CalendarioFlow.module.css'
+import spec from './CalendarioSpecCompletion.module.css'
 
 export function MonthWeekdayHeader() {
   return (
@@ -42,7 +44,11 @@ function dayNumberClass(today: boolean, selected: boolean) {
 }
 
 function uniqueEventColors(items: EventoCalendario[]) {
-  return [...new Set(items.map((item) => eventColor(item)))].slice(0, 3)
+  const byCalendar = new Map<string, string>()
+  for (const item of items) {
+    if (!byCalendar.has(item.calendar_id)) byCalendar.set(item.calendar_id, eventColor(item))
+  }
+  return [...byCalendar.values()].slice(0, 5)
 }
 
 function EventIndicator({ items, compact }: { items: EventoCalendario[]; compact: boolean }) {
@@ -51,9 +57,15 @@ function EventIndicator({ items, compact }: { items: EventoCalendario[]; compact
   const colors = uniqueEventColors(items)
 
   if (items.length === 1) {
+    const item = items[0]
     return (
       <span className={slot} aria-hidden="true">
-        <span className={compact ? selection.compactEventDot : styles.eventMarkDot} style={{ backgroundColor: colors[0] }} />
+        <span
+          className={item.kind === 'reminder'
+            ? spec.reminderMarker
+            : compact ? selection.compactEventDot : styles.eventMarkDot}
+          style={{ backgroundColor: item.kind === 'reminder' ? 'transparent' : colors[0], color: colors[0] }}
+        />
       </span>
     )
   }
@@ -66,6 +78,47 @@ function EventIndicator({ items, compact }: { items: EventoCalendario[]; compact
         ))}
       </span>
     </span>
+  )
+}
+
+function DayButton({
+  day,
+  month,
+  selectedDay,
+  events,
+  compact,
+  onSelectDay,
+  onOpenDay,
+}: {
+  day: Date
+  month: Date
+  selectedDay: Date
+  events: EventoCalendario[]
+  compact: boolean
+  onSelectDay: (day: Date) => void
+  onOpenDay?: (day: Date) => void
+}) {
+  const belongs = isSameMonth(day, month)
+  const selected = belongs && isSameDay(day, selectedDay)
+  const today = belongs && isToday(day)
+  const items = belongs ? eventosDelDia(events, day) : []
+
+  return (
+    <button
+      className={compact
+        ? `${styles.compactDay} ${selection.compactDayLayout}`
+        : `${styles.monthDay} ${!belongs ? styles.monthDayOutside : ''}`}
+      onClick={() => belongs && onSelectDay(day)}
+      onDoubleClick={() => belongs && onOpenDay?.(day)}
+      aria-pressed={belongs ? selected : undefined}
+    >
+      {belongs && (
+        <>
+          <span className={dayNumberClass(today, selected)}>{format(day, 'd')}</span>
+          <EventIndicator items={items} compact={compact} />
+        </>
+      )}
+    </button>
   )
 }
 
@@ -87,34 +140,54 @@ export function MonthGrid({
   const inicio = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
   const fin = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
   const days = eachDayOfInterval({ start: inicio, end: fin })
+  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
 
-  const className = compact ? styles.compactGrid : styles.monthWeeks
+  if (compact) {
+    return (
+      <div className={styles.compactGrid}>
+        {days.map((day) => (
+          <DayButton
+            key={day.toISOString()}
+            day={day}
+            month={month}
+            selectedDay={selectedDay}
+            events={events}
+            compact
+            onSelectDay={onSelectDay}
+            onOpenDay={onOpenDay}
+          />
+        ))}
+      </div>
+    )
+  }
 
   return (
-    <div className={className}>
-      {days.map((day) => {
-        const belongs = isSameMonth(day, month)
-        const selected = belongs && isSameDay(day, selectedDay)
-        const today = belongs && isToday(day)
-        const items = belongs ? eventosDelDia(events, day) : []
-
+    <div className={spec.monthWeeks}>
+      {weeks.map((week, weekIndex) => {
+        const weekItems = week.flatMap((day) => isSameMonth(day, month) ? eventosDelDia(events, day) : [])
+        const colors = uniqueEventColors(weekItems)
         return (
-          <button
-            key={day.toISOString()}
-            className={compact
-              ? `${styles.compactDay} ${selection.compactDayLayout}`
-              : `${styles.monthDay} ${!belongs ? styles.monthDayOutside : ''}`}
-            onClick={() => belongs && onSelectDay(day)}
-            onDoubleClick={() => belongs && onOpenDay?.(day)}
-            aria-pressed={belongs ? selected : undefined}
-          >
-            {belongs && (
-              <>
-                <span className={dayNumberClass(today, selected)}>{format(day, 'd')}</span>
-                <EventIndicator items={items} compact={compact} />
-              </>
-            )}
-          </button>
+          <div key={`${format(month, 'yyyy-MM')}-${weekIndex}`} className={spec.monthWeek}>
+            <div className={spec.monthWeekDays}>
+              {week.map((day) => (
+                <DayButton
+                  key={day.toISOString()}
+                  day={day}
+                  month={month}
+                  selectedDay={selectedDay}
+                  events={events}
+                  compact={false}
+                  onSelectDay={onSelectDay}
+                  onOpenDay={onOpenDay}
+                />
+              ))}
+            </div>
+            <div className={spec.monthWeekBars} aria-hidden="true">
+              {colors.map((color, index) => (
+                <span key={`${color}-${index}`} className={spec.monthWeekBar} style={{ backgroundColor: color }} />
+              ))}
+            </div>
+          </div>
         )
       })}
     </div>
@@ -157,7 +230,7 @@ function DayReveal({
       className={flow.dayReveal}
       onTouchStart={touchStartHandler}
       onTouchEnd={touchEndHandler}
-      aria-label="Eventos del día seleccionado"
+      aria-label="Elementos del día seleccionado"
     >
       <header className={flow.dayRevealHeader}>
         <h2 className={flow.dayRevealTitle}>{format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}</h2>
@@ -168,12 +241,7 @@ function DayReveal({
         {railDays.map((day) => {
           const active = isSameDay(day, selectedDay)
           return (
-            <button
-              key={day.toISOString()}
-              className={`${flow.dayChip} ${active ? flow.dayChipActive : ''}`}
-              onClick={() => onSelectDay(day)}
-              aria-pressed={active}
-            >
+            <button key={day.toISOString()} className={`${flow.dayChip} ${active ? flow.dayChipActive : ''}`} onClick={() => onSelectDay(day)} aria-pressed={active}>
               <span className={flow.dayChipName}>{format(day, 'EEE', { locale: es })}</span>
               <span className={flow.dayChipNumber}>{format(day, 'd')}</span>
             </button>
@@ -183,12 +251,10 @@ function DayReveal({
 
       <div className={flow.dayEventsViewport}>
         {dayEvents.length > 0
-          ? dayEvents.map((event) => (
-              <CalendarioEventRow key={event.asignacion_id} evento={event} onOpen={setDetail} />
-            ))
-          : <div className={styles.emptyState}>No tienes eventos asignados este día.</div>}
+          ? dayEvents.map((event) => <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setDetail} />)
+          : <div className={styles.emptyState}>No hay eventos ni recordatorios visibles este día.</div>}
       </div>
-      <p className={flow.daySwipeHint}>Desliza horizontalmente para cambiar de día y verticalmente para recorrer los eventos.</p>
+      <p className={flow.daySwipeHint}>Desliza horizontalmente para cambiar de día y verticalmente para recorrer la lista.</p>
 
       {detail && typeof document !== 'undefined' && createPortal(
         <div className={flow.eventDetailOverlay} onMouseDown={(event) => event.target === event.currentTarget && setDetail(null)}>
@@ -196,13 +262,19 @@ function DayReveal({
             <header className={flow.eventDetailHeader}>
               <div>
                 <h3 id="month-event-title" className={flow.eventDetailTitle}>{detail.titulo}</h3>
-                <p className={flow.eventDetailMeta}>{detail.ministerios?.nombre || 'Evento general'}</p>
+                <p className={flow.eventDetailMeta}>{detail.calendars?.nombre || 'Vida Internacional'}</p>
               </div>
               <button className={flow.eventDetailClose} onClick={() => setDetail(null)} aria-label="Cerrar ficha"><X size={19} /></button>
             </header>
             <div className={flow.eventDetailBody}>
               <p><strong>{format(new Date(detail.fecha_inicio), "EEEE d 'de' MMMM", { locale: es })}</strong></p>
-              <p>{detail.todo_el_dia ? 'Todo el día' : `${format(new Date(detail.fecha_inicio), 'h:mm a')}${detail.fecha_fin ? ` – ${format(new Date(detail.fecha_fin), 'h:mm a')}` : ''}`}</p>
+              <p>
+                {detail.kind === 'reminder'
+                  ? <><BellRing size={16} className="inline mr-2" />Recordatorio · {format(new Date(detail.fecha_inicio), 'h:mm a')}</>
+                  : detail.todo_el_dia
+                    ? 'Todo el día'
+                    : `${format(new Date(detail.fecha_inicio), 'h:mm a')}${detail.fecha_fin ? ` – ${format(new Date(detail.fecha_fin), 'h:mm a')}` : ''}`}
+              </p>
               {detail.ubicacion && <p><MapPin size={17} className="inline mr-2" />{detail.ubicacion}</p>}
               {detail.descripcion && <p>{detail.descripcion}</p>}
             </div>
@@ -243,7 +315,7 @@ export default function CalendarioMonthView({
         <h1 className={styles.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
         {!overlay && (
           <p className={styles.subTitle}>
-            Selecciona un día para ver sus eventos{isRefreshing ? ' · Actualizando…' : ''}
+            Barras semanales y detalle diario por calendario{isRefreshing ? ' · Actualizando…' : ''}
           </p>
         )}
       </div>

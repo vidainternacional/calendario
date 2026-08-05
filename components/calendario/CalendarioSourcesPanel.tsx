@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, Check, ChevronRight, Info, Loader2, X } from 'lucide-react'
+import { Check, Info, Loader2, X } from 'lucide-react'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { createClient } from '@/lib/supabase/client'
@@ -29,7 +29,20 @@ type CalendarChange = {
   created_at: string
   calendar_id: string
   calendars: { nombre: string; color: string } | null
+  changed_by_profile?: { nombre_completo: string; avatar_url?: string | null } | null
   change_reads?: Array<{ read_at: string }> | null
+}
+
+type AccessPerson = {
+  id: string
+  name: string
+  avatar_url?: string | null
+  can_edit?: boolean
+}
+
+type CalendarAccessDetails = {
+  owner: AccessPerson | null
+  members: AccessPerson[]
 }
 
 const GROUP_LABELS: Record<string, string> = {
@@ -37,6 +50,15 @@ const GROUP_LABELS: Record<string, string> = {
   gmail: 'Gmail',
   icloud: 'iCloud',
   other: 'Otros',
+}
+
+function initials(name?: string | null) {
+  return String(name || 'VI')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'VI'
 }
 
 export default function CalendarioSourcesPanel({
@@ -56,6 +78,8 @@ export default function CalendarioSourcesPanel({
   const [loading, setLoading] = useState(false)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [selectedSource, setSelectedSource] = useState<CalendarSource | null>(null)
+  const [accessDetails, setAccessDetails] = useState<CalendarAccessDetails | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [tab, setTab] = useState<'calendars' | 'changes'>('calendars')
   const [error, setError] = useState('')
 
@@ -75,7 +99,16 @@ export default function CalendarioSourcesPanel({
         .order('created_at'),
       db
         .from('calendar_changes')
-        .select('id, summary, change_type, created_at, calendar_id, calendars(nombre, color), change_reads!left(read_at)')
+        .select(`
+          id,
+          summary,
+          change_type,
+          created_at,
+          calendar_id,
+          calendars(nombre, color),
+          changed_by_profile:profiles!calendar_changes_changed_by_fkey(nombre_completo, avatar_url),
+          change_reads!left(read_at)
+        `)
         .order('created_at', { ascending: false })
         .limit(50),
     ])
@@ -116,13 +149,13 @@ export default function CalendarioSourcesPanel({
 
   async function toggleVisibility(source: CalendarSource) {
     setSavingId(source.calendar_id)
+    setError('')
     const db = createClient() as any
     const next = !source.visible
-    const { error: updateError } = await db
-      .from('calendar_subscriptions')
-      .update({ visible: next })
-      .eq('user_id', userId)
-      .eq('calendar_id', source.calendar_id)
+    const { error: updateError } = await db.rpc('set_calendar_visibility', {
+      p_calendar_id: source.calendar_id,
+      p_visible: next,
+    })
 
     if (updateError) {
       console.error('[CalendarioSourcesPanel] visibility', updateError)
@@ -132,6 +165,28 @@ export default function CalendarioSourcesPanel({
       onVisibilityChanged()
     }
     setSavingId(null)
+  }
+
+  async function openDetails(source: CalendarSource) {
+    setSelectedSource(source)
+    setAccessDetails(null)
+    setDetailLoading(true)
+    const db = createClient() as any
+    const { data, error: detailsError } = await db.rpc('get_calendar_access_details', {
+      p_calendar_id: source.calendar_id,
+    })
+
+    if (detailsError) {
+      console.error('[CalendarioSourcesPanel] details', detailsError)
+      setError('No fue posible cargar los detalles del calendario.')
+    } else {
+      const raw = data || {}
+      setAccessDetails({
+        owner: raw.owner || null,
+        members: Array.isArray(raw.members) ? raw.members : [],
+      })
+    }
+    setDetailLoading(false)
   }
 
   async function markRead(change: CalendarChange) {
@@ -153,7 +208,7 @@ export default function CalendarioSourcesPanel({
         <header className={styles.header}>
           <div>
             <h2 id="calendar-sources-title">Calendarios</h2>
-            <p>Elige qué fuentes aparecen en tus vistas.</p>
+            <p>Elige qué fuentes aparecen en las cuatro vistas.</p>
           </div>
           <button className={styles.close} onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
         </header>
@@ -185,7 +240,7 @@ export default function CalendarioSourcesPanel({
                         <small>{source.can_edit ? 'Puede editar' : 'Solo lectura'}</small>
                       </span>
                     </button>
-                    <button className={styles.infoButton} onClick={() => setSelectedSource(source)} aria-label="Información del calendario"><Info size={18} /></button>
+                    <button className={styles.infoButton} onClick={() => openDetails(source)} aria-label="Información del calendario"><Info size={18} /></button>
                   </div>
                 ))}
               </section>
@@ -194,12 +249,15 @@ export default function CalendarioSourcesPanel({
             <div className={styles.changeList}>
               {changes.map((change) => {
                 const unread = !change.change_reads || change.change_reads.length === 0
+                const actor = change.changed_by_profile?.nombre_completo || 'Vida Internacional'
                 return (
                   <article key={change.id} className={`${styles.changeRow} ${unread ? styles.unread : ''}`}>
-                    <span className={styles.changeIcon} style={{ color: change.calendars?.color || '#5B3DF5' }}><Bell size={18} /></span>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: change.calendars?.color || '#5B3DF5' }}>
+                      {initials(actor)}
+                    </span>
                     <div>
                       <strong>{change.summary}</strong>
-                      <small>{formatDistanceToNowStrict(new Date(change.created_at), { addSuffix: true, locale: es })}</small>
+                      <small>{actor} · {formatDistanceToNowStrict(new Date(change.created_at), { addSuffix: true, locale: es })}</small>
                     </div>
                     {unread && <button onClick={() => markRead(change)}>OK</button>}
                   </article>
@@ -213,11 +271,39 @@ export default function CalendarioSourcesPanel({
 
         {selectedSource && (
           <div className={styles.detailCard}>
-            <button className={styles.detailClose} onClick={() => setSelectedSource(null)}><X size={17} /></button>
+            <button className={styles.detailClose} onClick={() => { setSelectedSource(null); setAccessDetails(null) }} aria-label="Cerrar detalles"><X size={17} /></button>
             <span className={styles.largeDot} style={{ backgroundColor: selectedSource.calendars?.color || '#5B3DF5' }} />
             <h3>{selectedSource.calendars?.nombre}</h3>
-            <p>{selectedSource.can_edit ? 'Tiene permiso para crear y editar eventos.' : 'Este calendario es de solo lectura para su cuenta.'}</p>
-            <button onClick={() => setSelectedSource(null)}>Listo <ChevronRight size={16} /></button>
+            <p>{selectedSource.can_edit ? 'Puede crear y editar eventos y recordatorios.' : 'Este calendario es de solo lectura para su cuenta.'}</p>
+
+            {detailLoading ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500"><Loader2 size={17} className="animate-spin" /> Cargando acceso…</div>
+            ) : accessDetails ? (
+              <div className="mt-4 space-y-4 text-left">
+                <section>
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Propietario</h4>
+                  {accessDetails.owner ? (
+                    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">{initials(accessDetails.owner.name)}</span>
+                      <div><strong className="block text-sm text-slate-900">{accessDetails.owner.name}</strong><small className="text-slate-500">Propietario del calendario</small></div>
+                    </div>
+                  ) : <p className="text-sm text-slate-500">Sin propietario asignado.</p>}
+                </section>
+
+                <section>
+                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Personas con acceso</h4>
+                  <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+                    {accessDetails.members.map((member) => (
+                      <div key={member.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-2.5">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">{initials(member.name)}</span>
+                        <strong className="min-w-0 flex-1 truncate text-sm text-slate-800">{member.name}</strong>
+                        <small className="text-xs text-slate-500">{member.can_edit ? 'Edita' : 'Lee'}</small>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            ) : null}
           </div>
         )}
       </section>

@@ -1,0 +1,100 @@
+.miniWeeks {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+}
+
+.miniWeek {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.miniWeekDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-height: 14px;
+}
+
+.miniWeekBars {
+  display: flex;
+  min-height: 3px;
+  align-items: center;
+  gap: 1px;
+  padding: 0 1px;
+}
+
+.miniWeekBar {
+  height: 3px;
+  min-width: 0;
+  flex: 1 1 0;
+  border-radius: 999px;
+}
+
+.monthWeeks {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.11);
+}
+
+.monthWeek {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.075);
+}
+
+.monthWeek:last-child {
+  border-bottom: 0;
+}
+
+.monthWeekDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+}
+
+.monthWeekBars {
+  display: flex;
+  min-height: 7px;
+  align-items: center;
+  gap: 3px;
+  padding: 0 8px 5px;
+}
+
+.monthWeekBar {
+  height: 5px;
+  min-width: 14px;
+  max-width: 72px;
+  flex: 1 1 0;
+  border-radius: 999px;
+}
+
+.reminderMarker {
+  width: 7px;
+  height: 7px;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.sourceBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: inline-flex;
+  min-width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  border-radius: 999px;
+  background: #ef4444;
+  padding: 0 4px;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+}

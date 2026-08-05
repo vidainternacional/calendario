@@ -7,6 +7,7 @@ export type CrearEventoCalendarioResult = {
   success: boolean
   error?: string
   eventoId?: string
+  itemType?: 'event' | 'reminder'
 }
 
 type PerfilPermisosEvento = {
@@ -17,10 +18,22 @@ type PerfilPermisosEvento = {
 
 type FilaProfileId = { profile_id: string }
 type FilaId = { id: string }
-type FilaCalendario = { id: string }
+
+type SuscripcionCalendario = {
+  can_edit: boolean
+  calendars: {
+    id: string
+    nombre: string
+    ministerio_id: string | null
+  } | null
+}
 
 function texto(formData: FormData, nombre: string) {
   return String(formData.get(nombre) || '').trim()
+}
+
+function uuidValido(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
 export async function crearEventoCalendario(
@@ -28,33 +41,24 @@ export async function crearEventoCalendario(
 ): Promise<CrearEventoCalendarioResult> {
   const supabase = await createClient()
   const db = supabase as any
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) return { success: false, error: 'Tu sesión ha vencido.' }
 
+  const itemType = texto(formData, 'item_type') === 'reminder' ? 'reminder' : 'event'
   const titulo = texto(formData, 'titulo')
-  const ubicacion = texto(formData, 'ubicacion')
+  const calendarId = texto(formData, 'calendar_id')
   const descripcion = texto(formData, 'descripcion')
-  const ministerioId = texto(formData, 'ministerio_id') || null
   const fechaInicioRaw = texto(formData, 'fecha_inicio')
-  const fechaFinRaw = texto(formData, 'fecha_fin')
-  const todoElDia = texto(formData, 'todo_el_dia') === 'true'
-  const notif1d = texto(formData, 'notif_1d') === 'true'
-  const notif1h = texto(formData, 'notif_1h') === 'true'
-  const tiempoViaje = Number(texto(formData, 'tiempo_viaje_minutos') || '0')
 
   if (!titulo || titulo.length > 140) {
-    return { success: false, error: 'Escribe un título válido para el evento.' }
+    return { success: false, error: 'Escribe un título válido.' }
   }
 
-  if (![0, 15, 30, 45, 60].includes(tiempoViaje)) {
-    return { success: false, error: 'Selecciona un tiempo de viaje válido.' }
-  }
-
-  const fechaInicio = new Date(fechaInicioRaw)
-  const fechaFin = new Date(fechaFinRaw)
-  if (Number.isNaN(fechaInicio.getTime()) || Number.isNaN(fechaFin.getTime()) || fechaFin <= fechaInicio) {
-    return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
+  if (!uuidValido(calendarId)) {
+    return { success: false, error: 'Selecciona un calendario válido.' }
   }
 
   const { data: perfilRaw } = await db
@@ -65,49 +69,72 @@ export async function crearEventoCalendario(
 
   const perfil = perfilRaw as PerfilPermisosEvento | null
   if (!perfil?.activo || perfil.estado_cuenta !== 'activo') {
-    return { success: false, error: 'Tu cuenta no tiene permiso para crear eventos.' }
+    return { success: false, error: 'Tu cuenta no tiene permiso para crear elementos.' }
   }
 
   const esPastorAdmin = perfil.rol === 'pastor' || perfil.rol === 'administrador'
+  const { data: subscriptionRaw, error: subscriptionError } = await db
+    .from('calendar_subscriptions')
+    .select('can_edit, calendars(id, nombre, ministerio_id)')
+    .eq('user_id', user.id)
+    .eq('calendar_id', calendarId)
+    .maybeSingle()
 
-  if (!ministerioId && !esPastorAdmin) {
-    return { success: false, error: 'Solo un pastor o administrador puede crear eventos generales.' }
+  const subscription = subscriptionRaw as SuscripcionCalendario | null
+  if (subscriptionError || !subscription?.calendars || (!subscription.can_edit && !esPastorAdmin)) {
+    return { success: false, error: 'No tienes permiso para escribir en ese calendario.' }
   }
 
-  if (ministerioId && !esPastorAdmin) {
-    const { data: liderazgo } = await db
-      .from('ministerio_miembros')
+  const fechaInicio = new Date(fechaInicioRaw)
+  if (Number.isNaN(fechaInicio.getTime())) {
+    return { success: false, error: 'Selecciona una fecha válida.' }
+  }
+
+  if (itemType === 'reminder') {
+    const { data: reminderRaw, error: reminderError } = await db
+      .from('calendar_reminders')
+      .insert({
+        calendar_id: calendarId,
+        title: titulo,
+        notes: descripcion || null,
+        remind_at: fechaInicio.toISOString(),
+        created_by: user.id,
+      })
       .select('id')
-      .eq('profile_id', user.id)
-      .eq('ministerio_id', ministerioId)
-      .eq('es_lider', true)
-      .maybeSingle()
+      .single()
 
-    if (!liderazgo) {
-      return { success: false, error: 'No tienes permiso para crear eventos en ese ministerio.' }
+    const reminder = reminderRaw as FilaId | null
+    if (reminderError || !reminder) {
+      console.error('[crearEventoCalendario] reminder', reminderError)
+      return { success: false, error: 'No fue posible guardar el recordatorio.' }
     }
+
+    revalidatePath('/calendario')
+    return { success: true, eventoId: reminder.id, itemType }
   }
 
-  const calendarQuery = db
-    .from('calendars')
-    .select('id')
-    .eq('tipo_cuenta', 'interno')
+  const ubicacion = texto(formData, 'ubicacion')
+  const fechaFinRaw = texto(formData, 'fecha_fin')
+  const fechaFin = new Date(fechaFinRaw)
+  const todoElDia = texto(formData, 'todo_el_dia') === 'true'
+  const notif1d = texto(formData, 'notif_1d') === 'true'
+  const notif1h = texto(formData, 'notif_1h') === 'true'
+  const travelRaw = Number(texto(formData, 'tiempo_viaje_minutos') || 0)
+  const tiempoViaje = [0, 15, 30, 45, 60].includes(travelRaw) ? travelRaw : 0
 
-  const { data: calendarioRaw, error: calendarioError } = ministerioId
-    ? await calendarQuery.eq('ministerio_id', ministerioId).maybeSingle()
-    : await calendarQuery.is('ministerio_id', null).maybeSingle()
-
-  const calendario = calendarioRaw as FilaCalendario | null
-  if (calendarioError || !calendario) {
-    console.error('[crearEventoCalendario] calendario', calendarioError)
-    return { success: false, error: 'No se encontró el calendario de destino.' }
+  if (Number.isNaN(fechaFin.getTime()) || fechaFin <= fechaInicio) {
+    return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
   }
 
-  const participantesSolicitados = Array.from(new Set(
-    formData.getAll('participantes')
-      .map((valor) => String(valor))
-      .filter((valor) => /^[0-9a-f-]{36}$/i.test(valor)),
-  ))
+  const ministerioId = subscription.calendars.ministerio_id || null
+  const participantesSolicitados = Array.from(
+    new Set(
+      formData
+        .getAll('participantes')
+        .map((valor) => String(valor))
+        .filter(uuidValido),
+    ),
+  )
 
   let participantesPermitidos = participantesSolicitados
 
@@ -141,7 +168,7 @@ export async function crearEventoCalendario(
       ubicacion: ubicacion || null,
       descripcion: descripcion || null,
       ministerio_id: ministerioId,
-      calendar_id: calendario.id,
+      calendar_id: calendarId,
       fecha_inicio: fechaInicio.toISOString(),
       fecha_fin: fechaFin.toISOString(),
       todo_el_dia: todoElDia,
@@ -175,5 +202,5 @@ export async function crearEventoCalendario(
   }
 
   revalidatePath('/calendario')
-  return { success: true, eventoId: evento.id }
+  return { success: true, eventoId: evento.id, itemType }
 }
