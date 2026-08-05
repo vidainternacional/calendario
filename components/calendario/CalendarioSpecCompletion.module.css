@@ -61,7 +61,7 @@
 }
 
 .monthWeekSelected {
-  background: rgba(91, 61, 245, 0.035);
+  background: rgba(91, 61, 245, 0.025);
 }
 
 .weekNumber {
@@ -161,7 +161,7 @@
   }
 
   .monthWeekSelected {
-    background: rgba(91, 61, 245, 0.11);
+    background: rgba(91, 61, 245, 0.045);
   }
 
   .monthWeekReveal {
