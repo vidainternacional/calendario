@@ -3,7 +3,7 @@
 import { addDays, differenceInMinutes, format, isSameDay, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { BellRing } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   eventColor,
   eventKey,
@@ -14,7 +14,6 @@ import styles from './CalendarioMultiDayView.module.css'
 
 const HOUR_HEIGHT = 64
 const MIN_EVENT_MINUTES = 30
-const MIN_DAY_WIDTH = 112
 const TIME_COLUMN_WIDTH = 58
 
 type PositionedItem = {
@@ -69,6 +68,13 @@ function layoutOverlaps(items: EventoCalendario[]): PositionedItem[] {
   })
 }
 
+function minimumDayWidth(daysVisible: TimelineDayCount) {
+  if (daysVisible === 7) return 56
+  if (daysVisible === 5) return 76
+  if (daysVisible === 3) return 104
+  return 132
+}
+
 export default function CalendarioMultiDayView({
   selectedDay,
   events,
@@ -83,35 +89,53 @@ export default function CalendarioMultiDayView({
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const viewportRef = useRef<HTMLDivElement>(null)
+  const [now, setNow] = useState(() => new Date())
   const days = useMemo(
     () => Array.from({ length: daysVisible }, (_, index) => addDays(selectedDay, index)),
     [selectedDay, daysVisible],
   )
 
   useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
     if (!viewportRef.current) return
     const hour = isSameDay(selectedDay, new Date()) ? Math.max(new Date().getHours() - 2, 0) : 7
-    viewportRef.current.scrollTop = hour * HOUR_HEIGHT
+    viewportRef.current.scrollTo({ top: hour * HOUR_HEIGHT, behavior: 'auto' })
   }, [selectedDay, daysVisible])
 
   const allDay = events.filter(
     (event) => Boolean(event.todo_el_dia) && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)),
   )
-  const minimumWidth = daysVisible >= 5 ? TIME_COLUMN_WIDTH + daysVisible * MIN_DAY_WIDTH : undefined
+  const minimumWidth = TIME_COLUMN_WIDTH + daysVisible * minimumDayWidth(daysVisible)
   const gridTemplate = `${TIME_COLUMN_WIDTH}px repeat(${daysVisible}, minmax(0, 1fr))`
+  const todayVisible = days.some((day) => isSameDay(day, now))
+  const nowMinutes = differenceInMinutes(now, startOfDay(now))
+  const rangeLabel = daysVisible === 1
+    ? format(selectedDay, "EEEE — d 'de' MMMM", { locale: es })
+    : `${format(days[0], 'd MMM', { locale: es })} – ${format(days[days.length - 1], 'd MMM', { locale: es })}`
 
   return (
     <section className={styles.surface} aria-label={daysVisible === 1 ? 'Vista de un día' : `Vista de ${daysVisible} días`}>
+      <div className={styles.timelineTitle}>{rangeLabel}</div>
       <div className={styles.horizontalScroller}>
-        <div className={styles.canvas} style={{ minWidth: minimumWidth ? `${minimumWidth}px` : '100%' }}>
+        <div className={styles.canvas} style={{ minWidth: `${minimumWidth}px` }}>
           <header className={styles.daysHeader} style={{ gridTemplateColumns: gridTemplate }}>
-            <div className={styles.timeSpacer} />
-            {days.map((day) => (
-              <button key={day.toISOString()} className={styles.dayHeader} onClick={() => onSelectDay(day)}>
-                <span>{format(day, 'EEE', { locale: es })}</span>
-                <strong className={isSameDay(day, new Date()) ? styles.today : ''}>{format(day, 'd')}</strong>
-              </button>
-            ))}
+            <div className={styles.timeSpacer}>
+              <span>{format(selectedDay, 'MMM', { locale: es })}</span>
+            </div>
+            {days.map((day) => {
+              const today = isSameDay(day, now)
+              const selected = isSameDay(day, selectedDay)
+              return (
+                <button key={day.toISOString()} className={styles.dayHeader} onClick={() => onSelectDay(day)}>
+                  <span>{format(day, 'EEE', { locale: es })}</span>
+                  <strong className={today ? styles.today : selected ? styles.selected : ''}>{format(day, 'd')}</strong>
+                </button>
+              )
+            })}
           </header>
 
           {allDay.length > 0 && (
@@ -142,7 +166,7 @@ export default function CalendarioMultiDayView({
               <div className={styles.hours}>
                 {Array.from({ length: 24 }, (_, hour) => (
                   <span key={hour} className={styles.hour} style={{ top: `${hour * HOUR_HEIGHT - 8}px` }}>
-                    {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                    {hour === 0 ? '12 a. m.' : hour < 12 ? `${hour} a. m.` : hour === 12 ? '12 p. m.' : `${hour - 12} p. m.`}
                   </span>
                 ))}
               </div>
@@ -176,7 +200,7 @@ export default function CalendarioMultiDayView({
                               left: `calc(${left}% + 3px)`,
                               width: `calc(${width}% - 6px)`,
                               borderColor: color,
-                              backgroundColor: `${color}1F`,
+                              backgroundColor: `${color}24`,
                             }}
                             onClick={() => onOpenEvent(event)}
                           >
@@ -192,6 +216,13 @@ export default function CalendarioMultiDayView({
                   )
                 })}
               </div>
+
+              {todayVisible && (
+                <span className={styles.currentTimeLine} style={{ top: `${(nowMinutes / 60) * HOUR_HEIGHT}px` }} aria-hidden="true">
+                  <span className={styles.currentTimeLabel}>{format(now, 'h:mm')}</span>
+                  <span className={styles.currentTimeDot} />
+                </span>
+              )}
             </div>
           </div>
         </div>

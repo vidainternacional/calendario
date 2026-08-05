@@ -1,0 +1,277 @@
+.root {
+  min-height: 100dvh;
+  background: #fff;
+  color-scheme: light;
+}
+
+.errorBanner {
+  margin: 12px 16px 0;
+  border-radius: 14px;
+  background: #fff0f0;
+  padding: 12px 14px;
+  color: #b42333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav) {
+  right: auto !important;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  width: min(292px, calc(100vw - 32px)) !important;
+  overflow: hidden;
+  border: 0.5px solid rgba(255, 255, 255, 0.84) !important;
+  border-radius: 29px !important;
+  background: rgba(246, 246, 248, 0.8) !important;
+  padding: 0 !important;
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.17),
+    inset 0 0 0 0.5px rgba(60, 60, 67, 0.08) !important;
+  transform: translateX(-50%) translateZ(0) !important;
+  -webkit-backdrop-filter: saturate(190%) blur(32px);
+  backdrop-filter: saturate(190%) blur(32px);
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav-inner) {
+  height: 54px !important;
+  max-width: none !important;
+  padding: 0 5px !important;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav a) {
+  height: 54px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  color: rgba(60, 60, 67, 0.64) !important;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav a > span:first-child) {
+  width: 43px !important;
+  min-width: 43px !important;
+  height: 38px !important;
+  border-radius: 19px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  transition: background-color 160ms ease, color 160ms ease, transform 120ms ease !important;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav a:active > span:first-child) {
+  transform: scale(0.9);
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav a[aria-current="page"]) {
+  color: #5b3df5 !important;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav a[aria-current="page"] > span:first-child) {
+  background: rgba(91, 61, 245, 0.13) !important;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav-label) {
+  display: none !important;
+}
+
+:global(body:has([data-calendar-shell]) .app-bottom-nav-spacer) {
+  height: calc(4.55rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .root {
+    background: #000;
+    color-scheme: dark;
+  }
+
+  .errorBanner {
+    background: rgba(255, 69, 58, 0.15);
+    color: #ffb3ad;
+  }
+
+  :global(body:has([data-calendar-shell]) .app-bottom-nav) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(34, 34, 36, 0.82) !important;
+    box-shadow:
+      0 14px 38px rgba(0, 0, 0, 0.55),
+      inset 0 0 0 0.5px rgba(255, 255, 255, 0.04) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) .app-bottom-nav a) {
+    color: rgba(235, 235, 245, 0.56) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) .app-bottom-nav a[aria-current="page"]) {
+    color: #9b8aff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) .app-bottom-nav a[aria-current="page"] > span:first-child) {
+    background: rgba(141, 120, 255, 0.18) !important;
+  }
+
+  .root :global([class*="calendarScreen"]) {
+    --calendar-label: #fff !important;
+    --calendar-secondary: rgba(235, 235, 245, 0.62) !important;
+    --calendar-tertiary: rgba(235, 235, 245, 0.3) !important;
+    --calendar-separator: rgba(84, 84, 88, 0.65) !important;
+    --calendar-system-bg: #000 !important;
+    --calendar-secondary-bg: #1c1c1e !important;
+    background: #000 !important;
+    color: #fff !important;
+  }
+
+  .root :global([class*="topChrome"]) {
+    background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.86) 72%, rgba(0,0,0,0) 100%) !important;
+  }
+
+  .root :global([class*="chromePill"]),
+  .root :global([class*="chromeGroup"]),
+  .root :global([class*="floatingPill"]),
+  .root :global([class*="floatingGroup"]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(44, 44, 46, 0.78) !important;
+    color: #fff !important;
+    box-shadow: 0 7px 24px rgba(0, 0, 0, 0.34), inset 0 0 0 0.5px rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .root :global([class*="chromeIconButton"]),
+  .root :global([class*="floatingIcon"]) {
+    color: #fff !important;
+  }
+
+  .root :global([class*="chromeIconButton"] + [class*="chromeIconButton"]),
+  .root :global([class*="floatingIcon"] + [class*="floatingIcon"]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .root :global([class*="headerBlock"]),
+  .root :global([class*="yearSurface"]),
+  .root :global([class*="monthScroll"]),
+  .root :global([class*="monthSection"]),
+  .root :global([class*="eventList"]),
+  .root :global([class*="agendaHeader"]),
+  .root :global([class*="emptyState"]),
+  .root :global([class*="weekdayHeader"]),
+  .root :global([class*="eventRow"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: #000 !important;
+  }
+
+  .root :global([class*="weekdayHeader"]),
+  .root :global([class*="eventTime"]),
+  .root :global([class*="eventMeta"]),
+  .root :global([class*="eventLocation"]),
+  .root :global([class*="agendaCount"]),
+  .root :global([class*="inlineStatus"]),
+  .root :global([class*="subTitle"]) {
+    color: rgba(235, 235, 245, 0.58) !important;
+  }
+
+  .root :global([class*="monthTitle"]),
+  .root :global([class*="periodTitle"]),
+  .root :global([class*="agendaDate"]),
+  .root :global([class*="eventTitle"]),
+  .root :global([class*="miniMonthName"]),
+  .root :global([class*="dayNumber"]) {
+    color: #fff;
+  }
+
+  .root :global([class*="miniDay"]) {
+    color: rgba(235, 235, 245, 0.78);
+  }
+
+  .root :global([class*="miniDayOutside"]),
+  .root :global([class*="monthDayOutside"]) {
+    color: transparent !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="viewPopover"]) {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(44, 44, 46, 0.82) !important;
+    box-shadow: 0 26px 72px rgba(0, 0, 0, 0.56), inset 0 0 0 0.5px rgba(255,255,255,0.04) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="viewOption"]),
+  :global(body:has([data-calendar-shell]) [class*="viewOptionIcon"]),
+  :global(body:has([data-calendar-shell]) [class*="viewOptionLabel"]) {
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="viewOptionCheck"]) {
+    color: #8d78ff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="viewDivider"]) {
+    background: rgba(255, 255, 255, 0.14) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="popoverBackdrop"]) {
+    background: rgba(0, 0, 0, 0.34) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="searchOverlay"]),
+  :global(body:has([data-calendar-shell]) [class*="searchHeader"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: rgba(0, 0, 0, 0.94) !important;
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="searchField"]) {
+    background: rgba(118, 118, 128, 0.24) !important;
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="detailOverlay"]) {
+    background: rgba(0, 0, 0, 0.48) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="detailCard"]) {
+    background: rgba(28, 28, 30, 0.99) !important;
+    box-shadow: 0 -20px 68px rgba(0, 0, 0, 0.7) !important;
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="detailHeader"]),
+  :global(body:has([data-calendar-shell]) [class*="detailFooter"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: rgba(28, 28, 30, 0.99) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="detailBody"]) {
+    background: #000 !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="detailTitle"]),
+  :global(body:has([data-calendar-shell]) [class*="detailLine"]) {
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="detailClose"]),
+  :global(body:has([data-calendar-shell]) [class*="roundAction"]) {
+    background: rgba(118, 118, 128, 0.24) !important;
+    color: rgba(235, 235, 245, 0.72) !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="newEventOverlay"]),
+  :global(body:has([data-calendar-shell]) [class*="newEventTopbar"]) {
+    border-color: rgba(84, 84, 88, 0.62) !important;
+    background: rgba(28, 28, 30, 0.99) !important;
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="newEventTitle"]),
+  :global(body:has([data-calendar-shell]) [class*="formLabel"]),
+  :global(body:has([data-calendar-shell]) [class*="formInput"]),
+  :global(body:has([data-calendar-shell]) [class*="formSelect"]),
+  :global(body:has([data-calendar-shell]) [class*="formTextarea"]) {
+    color: #fff !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="formGroup"]),
+  :global(body:has([data-calendar-shell]) [class*="formRow"]),
+  :global(body:has([data-calendar-shell]) [class*="formColumn"]) {
+    border-color: rgba(84, 84, 88, 0.58) !important;
+    background: #1c1c1e !important;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="zoomLayer"]) {
+    background: #000 !important;
+  }
+}

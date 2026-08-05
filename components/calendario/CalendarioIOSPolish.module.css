@@ -1,0 +1,132 @@
+.root :global([class*="chromePill"]) {
+  min-width: 96px;
+}
+
+.root :global([class*="chromeIconButton"]) {
+  width: 50px;
+}
+
+:global(body:has([data-calendar-shell]) [class*="viewPopover"]) {
+  width: min(254px, calc(100vw - 24px));
+}
+
+:global(body:has([data-calendar-shell]) [class*="timelineTitle"]) {
+  text-transform: none !important;
+}
+
+:global(body:has([data-calendar-shell]) [class*="timelineTitle"])::first-letter {
+  text-transform: uppercase;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="monthDay"]) {
+  min-height: 104px;
+  padding-top: 7px;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventSlot"]) {
+  min-height: 57px;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventChip"]) {
+  height: 24px;
+  border-left-width: 3px;
+  border-radius: 5px;
+  padding: 0 4px;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventTitle"]) {
+  font-size: 9px;
+  line-height: 1.1;
+}
+
+.root :global([class*="monthSectionDetails"] [class*="detailsEventMore"]) {
+  font-size: 9px;
+}
+
+:global(body:has([data-calendar-shell]) [class*="detailFooter"]) {
+  align-items: center;
+}
+
+:global(body:has([data-calendar-shell]) [class*="primaryButton"]) {
+  display: inline-flex;
+  min-width: 72px;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: 22px;
+  background: #5b3df5 !important;
+  color: #fff !important;
+  box-shadow: 0 5px 16px rgba(91, 61, 245, 0.24);
+  opacity: 1 !important;
+}
+
+:global(body:has([data-calendar-shell]) .calendar-exit-nav) {
+  position: fixed;
+  top: max(8px, calc(env(safe-area-inset-top, 0px) + 8px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  z-index: 46;
+  display: inline-flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0.5px solid rgba(255, 255, 255, 0.78);
+  border-radius: 23px;
+  background: rgba(242, 242, 247, 0.76);
+  padding: 0 14px 0 10px;
+  color: #17171a;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-decoration: none;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.09), inset 0 0 0 0.5px rgba(60, 60, 67, 0.08);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  backdrop-filter: saturate(180%) blur(28px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+:global(body:has([data-calendar-shell]) .calendar-exit-nav:active) {
+  transform: scale(0.94);
+}
+
+:global(body:has([data-calendar-shell] [class*="chromePill"]) .calendar-exit-nav) {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-8px) scale(0.94);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(body:has([data-calendar-shell]) [class*="primaryButton"]) {
+    background: #7157ff !important;
+    box-shadow: 0 5px 18px rgba(113, 87, 255, 0.28);
+  }
+
+  :global(body:has([data-calendar-shell]) .calendar-exit-nav) {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(44, 44, 46, 0.78);
+    color: #fff;
+    box-shadow: 0 7px 24px rgba(0, 0, 0, 0.34), inset 0 0 0 0.5px rgba(255, 255, 255, 0.05);
+  }
+}
+
+@media (max-width: 360px) {
+  .root :global([class*="chromePill"]) {
+    min-width: 90px;
+  }
+
+  .root :global([class*="chromeIconButton"]) {
+    width: 47px;
+  }
+
+  .root :global([class*="monthSectionDetails"] [class*="monthDay"]) {
+    min-height: 96px;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="viewPopover"]) {
+    width: min(246px, calc(100vw - 20px));
+  }
+}
