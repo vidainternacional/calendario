@@ -14,7 +14,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
   eventColor,
@@ -185,7 +185,7 @@ function DayReveal({
   return (
     <section
       className={flow.dayReveal}
-      style={{ '--day-column': selectedDay.getDay() } as CSSProperties}
+      data-day-column={selectedDay.getDay()}
       onTouchStart={touchStartHandler}
       onTouchEnd={touchEndHandler}
       aria-label="Elementos del día seleccionado"
