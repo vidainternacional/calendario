@@ -38,6 +38,33 @@ function dayNumberClass(today: boolean, selected: boolean) {
   return styles.dayNumber
 }
 
+function uniqueEventColors(items: EventoCalendario[]) {
+  return [...new Set(items.map((item) => eventColor(item)))].slice(0, 3)
+}
+
+function EventIndicator({ items, compact }: { items: EventoCalendario[]; compact: boolean }) {
+  if (items.length === 0) return <span className={compact ? selection.compactEventSlot : `${styles.eventMarks} ${selection.monthEventSlot}`} />
+  const colors = uniqueEventColors(items)
+
+  if (items.length === 1) {
+    return (
+      <span className={compact ? selection.compactEventSlot : `${styles.eventMarks} ${selection.monthEventSlot}`} aria-hidden="true">
+        <span className={compact ? selection.compactEventDot : styles.eventMarkDot} style={{ backgroundColor: colors[0] }} />
+      </span>
+    )
+  }
+
+  return (
+    <span className={compact ? selection.compactEventSlot : `${styles.eventMarks} ${selection.monthEventSlot}`} aria-hidden="true">
+      <span className={compact ? selection.compactEventBar : selection.monthEventBar}>
+        {colors.map((color) => (
+          <span key={color} className={compact ? selection.compactEventSegment : selection.monthEventSegment} style={{ backgroundColor: color }} />
+        ))}
+      </span>
+    </span>
+  )
+}
+
 export function MonthGrid({
   month,
   selectedDay,
@@ -75,17 +102,8 @@ export function MonthGrid({
             >
               {belongs && (
                 <>
-                  <span className={dayNumberClass(today, selected)}>
-                    {format(day, 'd')}
-                  </span>
-                  <span className={selection.compactEventSlot} aria-hidden="true">
-                    {items.length > 0 && (
-                      <span
-                        className={selection.compactEventDot}
-                        style={{ backgroundColor: eventColor(items[0]) }}
-                      />
-                    )}
-                  </span>
+                  <span className={dayNumberClass(today, selected)}>{format(day, 'd')}</span>
+                  <EventIndicator items={items} compact />
                 </>
               )}
             </button>
@@ -113,17 +131,8 @@ export function MonthGrid({
           >
             {belongs && (
               <>
-                <span className={dayNumberClass(today, selected)}>
-                  {format(day, 'd')}
-                </span>
-                <span className={`${styles.eventMarks} ${selection.monthEventSlot}`} aria-hidden="true">
-                  {items.length === 1 && (
-                    <span className={styles.eventMarkDot} style={{ backgroundColor: eventColor(items[0]) }} />
-                  )}
-                  {items.length > 1 && (
-                    <span className={styles.eventMarkBar} style={{ backgroundColor: eventColor(items[0]) }} />
-                  )}
-                </span>
+                <span className={dayNumberClass(today, selected)}>{format(day, 'd')}</span>
+                <EventIndicator items={items} compact={false} />
               </>
             )}
           </button>
@@ -170,13 +179,7 @@ export default function CalendarioMonthView({
         {months.map((item, index) => (
           <section key={monthKey(item)} className={styles.monthSection}>
             {index > 0 && <h2 className={styles.followingMonthTitle}>{format(item, 'MMM', { locale: es })}</h2>}
-            <MonthGrid
-              month={item}
-              selectedDay={selectedDay}
-              events={events}
-              onSelectDay={onSelectDay}
-              onOpenDay={onOpenDay}
-            />
+            <MonthGrid month={item} selectedDay={selectedDay} events={events} onSelectDay={onSelectDay} onOpenDay={onOpenDay} />
           </section>
         ))}
       </div>
