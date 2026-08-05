@@ -15,7 +15,7 @@
 .miniWeekDays {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  min-height: 14px;
+  min-height: 15px;
 }
 
 .miniWeekBars {
@@ -27,28 +27,49 @@
 }
 
 .miniWeekBar {
-  height: 3px;
+  height: 2px;
   min-width: 0;
   flex: 1 1 0;
   border-radius: 999px;
+  opacity: 0.92;
+}
+
+.weekNumberHeader {
+  color: rgba(60, 60, 67, 0.38);
+  font-size: 9px;
+  font-weight: 600;
 }
 
 .monthWeeks {
   display: flex;
   width: 100%;
   flex-direction: column;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.11);
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
 }
 
 .monthWeek {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
   width: 100%;
-  flex-direction: column;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.075);
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.16);
 }
 
 .monthWeek:last-child {
   border-bottom: 0;
+}
+
+.weekNumber {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10px;
+  color: rgba(60, 60, 67, 0.46);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.monthWeekContent {
+  min-width: 0;
 }
 
 .monthWeekDays {
@@ -59,18 +80,27 @@
 
 .monthWeekBars {
   display: flex;
-  min-height: 7px;
+  min-height: 8px;
   align-items: center;
   gap: 3px;
-  padding: 0 8px 5px;
+  padding: 0 7px 5px;
 }
 
 .monthWeekBar {
-  height: 5px;
-  min-width: 14px;
-  max-width: 72px;
+  height: 4px;
+  min-width: 13px;
+  max-width: 70px;
   flex: 1 1 0;
   border-radius: 999px;
+}
+
+.monthWeeksCompact .monthWeekBars {
+  display: none;
+}
+
+.monthWeeksCompact .weekNumber {
+  padding-top: 7px;
+  font-size: 9px;
 }
 
 .reminderMarker {
@@ -92,9 +122,9 @@
   justify-content: center;
   border: 2px solid white;
   border-radius: 999px;
-  background: #ef4444;
+  background: #ff3b30;
   padding: 0 4px;
   color: white;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
 }
