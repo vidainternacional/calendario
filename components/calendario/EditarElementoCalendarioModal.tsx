@@ -65,6 +65,7 @@ export default function EditarElementoCalendarioModal({
 
   async function guardar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!item) return
     setError('')
 
     const startDate = new Date(inicio)
@@ -99,6 +100,7 @@ export default function EditarElementoCalendarioModal({
   }
 
   async function eliminar() {
+    if (!item) return
     const confirmed = window.confirm(
       item.kind === 'reminder'
         ? '¿Eliminar este recordatorio?'
