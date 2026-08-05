@@ -382,7 +382,7 @@ export default function CalendarioIOS({
   )
 
   const timelineView = (context: 'dia' | 'multiday') => {
-    const count = context === 'dia' ? 1 : timelineDays
+    const count: TimelineDayCount = context === 'dia' ? 1 : timelineDays
     const end = addDays(selectedDay, count - 1)
     const title = count === 1
       ? format(selectedDay, "EEEE d 'de' MMMM", { locale: es })
