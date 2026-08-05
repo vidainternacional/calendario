@@ -1,18 +1,6 @@
 'use client'
 
-import {
-  addDays,
-  addMonths,
-  addWeeks,
-  addYears,
-  endOfWeek,
-  format,
-  startOfWeek,
-  subDays,
-  subMonths,
-  subWeeks,
-  subYears,
-} from 'date-fns'
+import { addDays, addMonths, addYears, format, subDays, subMonths, subYears } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   ArrowLeftRight,
@@ -20,19 +8,18 @@ import {
   Check,
   ChevronLeft,
   Clock3,
-  Grid3X3,
+  Columns3,
   List,
   MapPin,
   Plus,
+  Rows3,
   Search,
-  SlidersHorizontal,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import CalendarioEventRow from './CalendarioEventRow'
 import CalendarioMonthView, { MonthGrid, MonthWeekdayHeader } from './CalendarioMonthView'
-import { Timeline, WeekStrip } from './CalendarioTimelineView'
 import CalendarioYearView from './CalendarioYearView'
 import NuevoEventoCalendarioModal from './NuevoEventoCalendarioModal'
 import ProponerIntercambioModal from './ProponerIntercambioModal'
@@ -40,18 +27,21 @@ import {
   eventosDelDia,
   type EventoCalendario,
   type MinisterioGestionado,
+  type ModoVisualCalendario,
   type VistaCalendario,
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
+import modeStyles from './CalendarioDisplayModes.module.css'
 import motion from './CalendarioMotionFix.module.css'
 
 type ZoomState = { month: Date; rect: DOMRect }
 type ScreenTransition = 'month-out' | 'year-in' | null
 
-const VIEW_OPTIONS: Array<{ id: VistaCalendario; label: string; icon: typeof CalendarDays }> = [
-  { id: 'anio', label: 'Año', icon: Grid3X3 },
-  { id: 'mes', label: 'Mes y día', icon: CalendarDays },
-  { id: 'agenda', label: 'Agenda', icon: List },
+const DISPLAY_MODES: Array<{ id: ModoVisualCalendario; label: string; icon: typeof CalendarDays }> = [
+  { id: 'compacta', label: 'Compacta', icon: Columns3 },
+  { id: 'apilada', label: 'Apilada', icon: Rows3 },
+  { id: 'detalles', label: 'Detalles', icon: CalendarDays },
+  { id: 'lista', label: 'Lista', icon: List },
 ]
 
 export default function CalendarioIOS({
@@ -73,6 +63,7 @@ export default function CalendarioIOS({
 }) {
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<VistaCalendario>('anio')
+  const [displayMode, setDisplayMode] = useState<ModoVisualCalendario>('detalles')
   const [activeDate, setActiveDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState(new Date())
   const [detail, setDetail] = useState<EventoCalendario | null>(null)
@@ -124,6 +115,8 @@ export default function CalendarioIOS({
     )
   }, [events, query])
 
+  const ActiveModeIcon = DISPLAY_MODES.find((item) => item.id === displayMode)?.icon || CalendarDays
+
   const finishZoom = (delay: number, callback?: () => void) => {
     if (zoomTimer.current) window.clearTimeout(zoomTimer.current)
     zoomTimer.current = window.setTimeout(() => {
@@ -149,10 +142,8 @@ export default function CalendarioIOS({
       setView('anio')
       return
     }
-
     if (screenTimer.current) window.clearTimeout(screenTimer.current)
     setScreenTransition('month-out')
-
     screenTimer.current = window.setTimeout(() => {
       setView('anio')
       setScreenTransition('year-in')
@@ -160,10 +151,10 @@ export default function CalendarioIOS({
     }, 150)
   }
 
-  const changeView = (next: VistaCalendario) => {
+  const chooseDisplayMode = (mode: ModoVisualCalendario) => {
+    setDisplayMode(mode)
+    setView('mes')
     setViewMenuOpen(false)
-    if (next === 'anio') backToYear()
-    else setView(next)
   }
 
   const movePeriod = (direction: -1 | 1) => {
@@ -171,9 +162,6 @@ export default function CalendarioIOS({
     else if (view === 'mes' || view === 'agenda') {
       setActiveDate((date) => direction > 0 ? addMonths(date, 1) : subMonths(date, 1))
       setSelectedDay((date) => direction > 0 ? addMonths(date, 1) : subMonths(date, 1))
-    } else if (view === 'semana') {
-      setActiveDate((date) => direction > 0 ? addWeeks(date, 1) : subWeeks(date, 1))
-      setSelectedDay((date) => direction > 0 ? addWeeks(date, 1) : subWeeks(date, 1))
     } else {
       setActiveDate((date) => direction > 0 ? addDays(date, 1) : subDays(date, 1))
       setSelectedDay((date) => direction > 0 ? addDays(date, 1) : subDays(date, 1))
@@ -192,11 +180,6 @@ export default function CalendarioIOS({
     setActiveDate(day)
   }
 
-  const openDay = (day: Date) => {
-    selectDay(day)
-    setView('dia')
-  }
-
   const onTouchStart = (event: TouchEvent) => {
     touchStartX.current = event.changedTouches[0]?.clientX ?? null
   }
@@ -210,7 +193,7 @@ export default function CalendarioIOS({
 
   function topChrome(context: VistaCalendario, overlay = false) {
     const backYear = context === 'mes'
-    const backMonth = context === 'semana' || context === 'dia' || context === 'agenda'
+    const backMonth = context === 'agenda'
     return (
       <div className={styles.topChrome}>
         <div>
@@ -227,8 +210,8 @@ export default function CalendarioIOS({
         </div>
         <div className={styles.chromeGroup}>
           {context !== 'anio' && (
-            <button className={styles.chromeIconButton} onClick={() => !overlay && setViewMenuOpen(true)} aria-label="Cambiar vista" tabIndex={overlay ? -1 : undefined}>
-              <SlidersHorizontal size={20} />
+            <button className={`${styles.chromeIconButton} ${modeStyles.activeModeButton}`} onClick={() => !overlay && setViewMenuOpen(true)} aria-label="Cambiar representación del calendario" tabIndex={overlay ? -1 : undefined}>
+              <ActiveModeIcon size={21} />
             </button>
           )}
           <button className={styles.chromeIconButton} onClick={() => !overlay && setSearchOpen(true)} aria-label="Buscar eventos" tabIndex={overlay ? -1 : undefined}>
@@ -267,35 +250,11 @@ export default function CalendarioIOS({
     )
   }
 
-  const dayView = () => (
-    <>
-      {topChrome('dia')}
-      <WeekStrip selectedDay={selectedDay} onSelectDay={selectDay} />
-      <div className={styles.dayHeading}>{format(selectedDay, "EEEE — d 'de' MMMM", { locale: es })}</div>
-      <Timeline day={selectedDay} events={events} onOpenEvent={setDetail} />
-    </>
-  )
-
-  const weekView = () => {
-    const start = startOfWeek(selectedDay, { weekStartsOn: 0 })
-    const end = endOfWeek(selectedDay, { weekStartsOn: 0 })
-    return (
-      <>
-        {topChrome('semana')}
-        <div className={styles.headerBlock}>
-          <h1 className={styles.periodTitle}>{format(start, 'd MMM', { locale: es })} – {format(end, 'd MMM', { locale: es })}</h1>
-        </div>
-        <WeekStrip selectedDay={selectedDay} onSelectDay={selectDay} />
-        <Timeline day={selectedDay} events={events} onOpenEvent={setDetail} />
-      </>
-    )
-  }
-
   const floatingBar = (
     <div className={styles.floatingBar}>
       <button className={styles.floatingPill} onClick={goToday}>Hoy</button>
       <div className={styles.floatingGroup}>
-        <button className={styles.floatingIcon} onClick={() => setViewMenuOpen(true)} aria-label="Cambiar vista"><CalendarDays size={22} /></button>
+        <button className={styles.floatingIcon} onClick={() => setViewMenuOpen(true)} aria-label="Cambiar representación"><ActiveModeIcon size={22} /></button>
         <button className={styles.floatingIcon} onClick={() => setView('agenda')} aria-label="Ver agenda"><List size={22} /></button>
       </div>
     </div>
@@ -306,11 +265,16 @@ export default function CalendarioIOS({
       {viewMenuOpen && createPortal(
         <>
           <button className={styles.popoverBackdrop} onClick={() => setViewMenuOpen(false)} aria-label="Cerrar menú" />
-          <div className={styles.viewPopover} role="menu" aria-label="Vista del calendario">
-            {VIEW_OPTIONS.map(({ id, label, icon: Icon }) => (
-              <button key={id} role="menuitem" className={`${styles.viewOption} ${view === id ? styles.viewOptionActive : ''}`} onClick={() => changeView(id)}>
-                <Icon size={19} /> {label}{view === id && <Check size={17} className="ml-auto" />}
-              </button>
+          <div className={modeStyles.modePopover} role="menu" aria-label="Representación del calendario">
+            {DISPLAY_MODES.map(({ id, label, icon: Icon }, index) => (
+              <div key={id}>
+                {index === 3 && <div className={modeStyles.modeDivider} />}
+                <button role="menuitemradio" aria-checked={displayMode === id} className={`${modeStyles.modeOption} ${displayMode === id ? modeStyles.modeOptionActive : ''}`} onClick={() => chooseDisplayMode(id)}>
+                  <span className={modeStyles.modeCheck}>{displayMode === id && <Check size={19} />}</span>
+                  <span className={modeStyles.modeIcon}><Icon size={22} /></span>
+                  <span>{label}</span>
+                </button>
+              </div>
             ))}
           </div>
         </>,
@@ -359,35 +323,26 @@ export default function CalendarioIOS({
       )}
 
       {zoom && createPortal(
-        <div
-          className={`${styles.zoomLayer} ${styles.zoomEnter}`}
-          style={{
-            '--zoom-x': `${zoom.rect.left}px`,
-            '--zoom-y': `${zoom.rect.top}px`,
-            '--zoom-scale-x': String(Math.max(zoom.rect.width / Math.max(window.innerWidth, 1), 0.05)),
-            '--zoom-scale-y': String(Math.max(zoom.rect.height / Math.max(window.innerHeight, 1), 0.05)),
-          } as CSSProperties}
-        >
-          <CalendarioMonthView month={zoom.month} selectedDay={zoom.month} events={events} topChrome={topChrome('mes', true)} isRefreshing={false} overlay onSelectDay={() => {}} onOpenDay={() => {}} />
+        <div className={`${styles.zoomLayer} ${styles.zoomEnter}`} style={{
+          '--zoom-x': `${zoom.rect.left}px`,
+          '--zoom-y': `${zoom.rect.top}px`,
+          '--zoom-scale-x': String(Math.max(zoom.rect.width / Math.max(window.innerWidth, 1), 0.05)),
+          '--zoom-scale-y': String(Math.max(zoom.rect.height / Math.max(window.innerHeight, 1), 0.05)),
+        } as CSSProperties}>
+          <CalendarioMonthView month={zoom.month} selectedDay={zoom.month} events={events} displayMode={displayMode} topChrome={topChrome('mes', true)} isRefreshing={false} overlay onSelectDay={() => {}} onOpenDay={() => {}} />
         </div>,
         document.body,
       )}
     </>
   ) : null
 
-  const transitionClass = screenTransition === 'month-out'
-    ? motion.monthToYearOut
-    : screenTransition === 'year-in'
-      ? motion.yearReveal
-      : ''
+  const transitionClass = screenTransition === 'month-out' ? motion.monthToYearOut : screenTransition === 'year-in' ? motion.yearReveal : ''
 
   return (
     <div className={`${styles.calendarScreen} ${transitionClass}`} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {view === 'anio' && <CalendarioYearView fecha={activeDate} eventos={events} isRefreshing={isRefreshing} topChrome={topChrome('anio')} onOpenMonth={openMonth} onChangeYear={changeYear} />}
-      {view === 'mes' && <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={events} topChrome={topChrome('mes')} isRefreshing={isRefreshing} onSelectDay={selectDay} onOpenDay={openDay} />}
+      {view === 'mes' && <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={events} displayMode={displayMode} topChrome={topChrome('mes')} isRefreshing={isRefreshing} onSelectDay={selectDay} onOpenDay={selectDay} />}
       {view === 'agenda' && agendaView()}
-      {view === 'dia' && dayView()}
-      {view === 'semana' && weekView()}
       {floatingBar}
       {portals}
 
