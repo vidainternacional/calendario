@@ -23,6 +23,9 @@ jobs:
     name: Capturas iPhone claro y oscuro
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: qa-visual-anon-key
 
     steps:
       - name: Checkout
