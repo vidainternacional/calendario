@@ -191,23 +191,26 @@ export function useCalendarEvents({
           }
         })
 
-        const reminderItems: EventoCalendario[] = (remindersResult.data || []).map((row: any) => ({
-          kind: 'reminder',
-          id: String(row.id),
-          titulo: String(row.title),
-          descripcion: row.notes || null,
-          ubicacion: null,
-          fecha_inicio: String(row.remind_at),
-          fecha_fin: null,
-          todo_el_dia: true,
-          tiempo_viaje_minutos: 0,
-          calendar_id: String(row.calendar_id),
-          calendars: asCalendar(row.calendars),
-          ministerio_id: row.calendars?.ministerio_id || null,
-          ministerios: null,
-          asignacion_id: null,
-          estadoAsignacion: null,
-        }))
+        const reminderItems: EventoCalendario[] = (remindersResult.data || []).map((row: any) => {
+          const remindAt = new Date(row.remind_at)
+          return {
+            kind: 'reminder',
+            id: String(row.id),
+            titulo: String(row.title),
+            descripcion: row.notes || null,
+            ubicacion: null,
+            fecha_inicio: remindAt.toISOString(),
+            fecha_fin: new Date(remindAt.getTime() + 30 * 60 * 1000).toISOString(),
+            todo_el_dia: false,
+            tiempo_viaje_minutos: 0,
+            calendar_id: String(row.calendar_id),
+            calendars: asCalendar(row.calendars),
+            ministerio_id: row.calendars?.ministerio_id || null,
+            ministerios: null,
+            asignacion_id: null,
+            estadoAsignacion: null,
+          }
+        })
 
         if (!cancelled) {
           setEvents([...eventItems, ...reminderItems].sort(

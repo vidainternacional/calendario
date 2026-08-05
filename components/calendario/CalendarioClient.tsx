@@ -5,6 +5,7 @@ import CalendarioIOS from '@/components/calendario/CalendarioIOS'
 import CalendarioSourcesPanel from '@/components/calendario/CalendarioSourcesPanel'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { useCalendarEvents } from './useCalendarEvents'
+import type { EventoCalendario } from './calendario-ios-types'
 
 type CalendarioClientProps = {
   userId: string
@@ -13,9 +14,10 @@ type CalendarioClientProps = {
 export default function CalendarioClient({ userId }: CalendarioClientProps) {
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [rangeYear, setRangeYear] = useState(() => new Date().getFullYear())
+  const [externalDetail, setExternalDetail] = useState<EventoCalendario | null>(null)
 
-  const rangeStart = useMemo(() => new Date(rangeYear, 0, 1), [rangeYear])
-  const rangeEnd = useMemo(() => new Date(rangeYear + 1, 0, 1), [rangeYear])
+  const rangeStart = useMemo(() => new Date(rangeYear - 3, 0, 1), [rangeYear])
+  const rangeEnd = useMemo(() => new Date(rangeYear + 4, 0, 1), [rangeYear])
 
   const {
     events,
@@ -53,12 +55,19 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
         onRefresh={reload}
         onOpenCalendars={() => setSourcesOpen(true)}
         onRangeYearChange={setRangeYear}
+        externalDetail={externalDetail}
+        onExternalDetailConsumed={() => setExternalDetail(null)}
       />
 
       <CalendarioSourcesPanel
         isOpen={sourcesOpen}
         onClose={() => setSourcesOpen(false)}
         userId={userId}
+        items={events}
+        onOpenItem={(item) => {
+          setSourcesOpen(false)
+          setExternalDetail({ ...item })
+        }}
         onVisibilityChanged={reload}
       />
     </div>

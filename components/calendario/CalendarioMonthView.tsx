@@ -13,9 +13,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { BellRing, MapPin, X } from 'lucide-react'
-import { useMemo, useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useRef, type ReactNode, type TouchEvent } from 'react'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
   eventColor,
@@ -198,12 +196,13 @@ function DayReveal({
   selectedDay,
   events,
   onSelectDay,
+  onOpenEvent,
 }: {
   selectedDay: Date
   events: EventoCalendario[]
   onSelectDay: (day: Date) => void
+  onOpenEvent: (event: EventoCalendario) => void
 }) {
-  const [detail, setDetail] = useState<EventoCalendario | null>(null)
   const touchStart = useRef<number | null>(null)
   const dayEvents = eventosDelDia(events, selectedDay)
   const railDays = useMemo(
@@ -251,40 +250,10 @@ function DayReveal({
 
       <div className={flow.dayEventsViewport}>
         {dayEvents.length > 0
-          ? dayEvents.map((event) => <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setDetail} />)
+          ? dayEvents.map((event) => <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={onOpenEvent} />)
           : <div className={styles.emptyState}>No hay eventos ni recordatorios visibles este día.</div>}
       </div>
       <p className={flow.daySwipeHint}>Desliza horizontalmente para cambiar de día y verticalmente para recorrer la lista.</p>
-
-      {detail && typeof document !== 'undefined' && createPortal(
-        <div className={flow.eventDetailOverlay} onMouseDown={(event) => event.target === event.currentTarget && setDetail(null)}>
-          <article className={flow.eventDetailCard} role="dialog" aria-modal="true" aria-labelledby="month-event-title">
-            <header className={flow.eventDetailHeader}>
-              <div>
-                <h3 id="month-event-title" className={flow.eventDetailTitle}>{detail.titulo}</h3>
-                <p className={flow.eventDetailMeta}>{detail.calendars?.nombre || 'Vida Internacional'}</p>
-              </div>
-              <button className={flow.eventDetailClose} onClick={() => setDetail(null)} aria-label="Cerrar ficha"><X size={19} /></button>
-            </header>
-            <div className={flow.eventDetailBody}>
-              <p><strong>{format(new Date(detail.fecha_inicio), "EEEE d 'de' MMMM", { locale: es })}</strong></p>
-              <p>
-                {detail.kind === 'reminder'
-                  ? <><BellRing size={16} className="inline mr-2" />Recordatorio · {format(new Date(detail.fecha_inicio), 'h:mm a')}</>
-                  : detail.todo_el_dia
-                    ? 'Todo el día'
-                    : `${format(new Date(detail.fecha_inicio), 'h:mm a')}${detail.fecha_fin ? ` – ${format(new Date(detail.fecha_fin), 'h:mm a')}` : ''}`}
-              </p>
-              {detail.ubicacion && <p><MapPin size={17} className="inline mr-2" />{detail.ubicacion}</p>}
-              {detail.descripcion && <p>{detail.descripcion}</p>}
-            </div>
-            <footer className={flow.eventDetailFooter}>
-              <button className={flow.eventDetailDone} onClick={() => setDetail(null)}>Listo</button>
-            </footer>
-          </article>
-        </div>,
-        document.body,
-      )}
     </section>
   )
 }
@@ -295,18 +264,22 @@ export default function CalendarioMonthView({
   events,
   topChrome,
   isRefreshing,
+  dayPanelOpen,
   overlay = false,
   onSelectDay,
   onOpenDay,
+  onOpenEvent,
 }: {
   month: Date
   selectedDay: Date
   events: EventoCalendario[]
   topChrome: ReactNode
   isRefreshing: boolean
+  dayPanelOpen: boolean
   overlay?: boolean
   onSelectDay: (day: Date) => void
   onOpenDay: (day: Date) => void
+  onOpenEvent: (event: EventoCalendario) => void
 }) {
   return (
     <div className={`${styles.calendarScreen} ${flow.monthFlow} ${!overlay ? flow.elasticMonth : ''}`} aria-hidden={overlay || undefined}>
@@ -315,7 +288,7 @@ export default function CalendarioMonthView({
         <h1 className={styles.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
         {!overlay && (
           <p className={styles.subTitle}>
-            Barras semanales y detalle diario por calendario{isRefreshing ? ' · Actualizando…' : ''}
+            Toca un día para abrir sus eventos{isRefreshing ? ' · Actualizando…' : ''}
           </p>
         )}
       </div>
@@ -324,7 +297,14 @@ export default function CalendarioMonthView({
         <section className={styles.monthSection}>
           <MonthGrid month={month} selectedDay={selectedDay} events={events} onSelectDay={onSelectDay} onOpenDay={onOpenDay} />
         </section>
-        {!overlay && <DayReveal selectedDay={selectedDay} events={events} onSelectDay={onSelectDay} />}
+        {!overlay && dayPanelOpen && (
+          <DayReveal
+            selectedDay={selectedDay}
+            events={events}
+            onSelectDay={onSelectDay}
+            onOpenEvent={onOpenEvent}
+          />
+        )}
       </div>
     </div>
   )
