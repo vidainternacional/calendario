@@ -1,0 +1,25 @@
+.root :global([class*="chromePill"]) {
+  min-width: 96px;
+}
+
+.root :global([class*="chromeIconButton"]) {
+  width: 50px;
+}
+
+:global(body:has([data-calendar-shell]) [class*="viewPopover"]) {
+  width: min(254px, calc(100vw - 24px));
+}
+
+@media (max-width: 360px) {
+  .root :global([class*="chromePill"]) {
+    min-width: 90px;
+  }
+
+  .root :global([class*="chromeIconButton"]) {
+    width: 47px;
+  }
+
+  :global(body:has([data-calendar-shell]) [class*="viewPopover"]) {
+    width: min(246px, calc(100vw - 20px));
+  }
+}
