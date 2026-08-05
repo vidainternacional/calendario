@@ -1,7 +1,5 @@
 .dayReveal {
   position: relative;
-  scroll-margin-top: 82px;
-  scroll-margin-bottom: 108px;
   transform-origin: 50% 0;
   border-top: 0.5px solid rgba(60, 60, 67, 0.18);
   background: rgba(248, 248, 250, 0.98);
@@ -126,7 +124,10 @@
   font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.035em;
-  text-transform: capitalize;
+}
+
+.dayRevealTitle::first-letter {
+  text-transform: uppercase;
 }
 
 .dayRevealCount {
