@@ -4,6 +4,7 @@ import CalendarioIOS from '@/components/calendario/CalendarioIOS'
 import appearance from '@/components/calendario/CalendarioAppearance.module.css'
 import polish from '@/components/calendario/CalendarioIOSPolish.module.css'
 import type { CalendarioOrigen, EventoCalendario } from '@/components/calendario/calendario-ios-types'
+import BottomNav from '@/components/layout/BottomNav'
 
 const calendars: CalendarioOrigen[] = [
   {
@@ -87,6 +88,7 @@ export default function CalendarVisualQaPage() {
         onOpenCalendars={() => {}}
         onRangeYearChange={() => {}}
       />
+      <BottomNav />
     </main>
   )
 }
