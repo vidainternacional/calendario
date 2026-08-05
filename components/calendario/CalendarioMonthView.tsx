@@ -2,6 +2,7 @@
 
 import {
   addDays,
+  addMonths,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
@@ -323,6 +324,7 @@ export default function CalendarioMonthView({
   const monthIndex = month.getFullYear() * 12 + month.getMonth()
   const previousMonthRef = useRef(monthIndex)
   const motionTimerRef = useRef<number | null>(null)
+  const pendingDayOpenRef = useRef(false)
   const [monthMotion, setMonthMotion] = useState<MonthMotion>(null)
   const [userOpenedDay, setUserOpenedDay] = useState(false)
 
@@ -331,7 +333,13 @@ export default function CalendarioMonthView({
     previousMonthRef.current = monthIndex
     if (monthIndex === previousIndex) return
 
-    setUserOpenedDay(false)
+    if (pendingDayOpenRef.current) {
+      pendingDayOpenRef.current = false
+      setUserOpenedDay(true)
+    } else {
+      setUserOpenedDay(false)
+    }
+
     setMonthMotion(monthIndex > previousIndex ? 'forward' : 'backward')
     if (motionTimerRef.current) window.clearTimeout(motionTimerRef.current)
     motionTimerRef.current = window.setTimeout(() => setMonthMotion(null), 360)
@@ -355,8 +363,12 @@ export default function CalendarioMonthView({
     : monthMotion === 'backward'
       ? flow.monthSlideBackward
       : ''
+  const visibleMonths = overlay || (dayPanelOpen && userOpenedDay)
+    ? [month]
+    : [month, addMonths(month, 1), addMonths(month, 2)]
 
   const handleGridDay = (day: Date) => {
+    pendingDayOpenRef.current = !isSameMonth(day, month)
     setUserOpenedDay(true)
     onOpenDay(day)
   }
@@ -371,17 +383,22 @@ export default function CalendarioMonthView({
         </div>
         <MonthWeekdayHeader />
         <div className={styles.monthScroll}>
-          <section className={`${styles.monthSection} ${presentationClass}`}>
-            <MonthGrid
-              month={month}
-              selectedDay={selectedDay}
-              events={events}
-              presentation={presentation}
-              dayPanelOpen={!overlay && dayPanelOpen && userOpenedDay}
-              onSelectDay={handleGridDay}
-              onOpenEvent={onOpenEvent}
-            />
-          </section>
+          {visibleMonths.map((visibleMonth, index) => (
+            <section key={format(visibleMonth, 'yyyy-MM')} className={`${styles.monthSection} ${presentationClass}`}>
+              {index > 0 && (
+                <h2 className={styles.followingMonthTitle}>{format(visibleMonth, 'MMM', { locale: es })}</h2>
+              )}
+              <MonthGrid
+                month={visibleMonth}
+                selectedDay={selectedDay}
+                events={events}
+                presentation={presentation}
+                dayPanelOpen={!overlay && dayPanelOpen && userOpenedDay && isSameMonth(selectedDay, visibleMonth)}
+                onSelectDay={handleGridDay}
+                onOpenEvent={onOpenEvent}
+              />
+            </section>
+          ))}
         </div>
       </div>
     </div>
