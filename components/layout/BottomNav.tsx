@@ -116,7 +116,7 @@ export default function BottomNav() {
 
   return (
     <>
-      <div aria-hidden="true" className="app-bottom-nav-spacer h-[calc(4rem+env(safe-area-inset-bottom,0px))] shrink-0" />
+      <div aria-hidden="true" className="h-[calc(4rem+env(safe-area-inset-bottom,0px))] shrink-0" />
       {portalReady ? createPortal(navigation, document.body) : null}
     </>
   )
