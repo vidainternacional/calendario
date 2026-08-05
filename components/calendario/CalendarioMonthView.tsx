@@ -78,6 +78,26 @@ function EventIndicator({
     )
   }
 
+  if (presentation === 'details') {
+    return (
+      <span className={selection.detailsEventSlot} aria-hidden="true">
+        {items.slice(0, 2).map((item) => {
+          const color = eventColor(item)
+          return (
+            <span
+              key={eventKey(item)}
+              className={selection.detailsEventChip}
+              style={{ borderColor: color, backgroundColor: `${color}1F` }}
+            >
+              <span className={selection.detailsEventTitle}>{item.titulo}</span>
+            </span>
+          )
+        })}
+        {items.length > 2 && <span className={selection.detailsEventMore}>+{items.length - 2}</span>}
+      </span>
+    )
+  }
+
   return (
     <span className={selection.compactEventSlot} aria-hidden="true">
       {items.slice(0, 3).map((item) => (
@@ -110,7 +130,7 @@ function DayButton({
   const selected = belongs && isSameDay(day, selectedDay)
   const today = belongs && isToday(day)
   const items = belongs ? eventosDelDia(events, day) : []
-  const compact = presentation !== 'stacked'
+  const compact = presentation === 'compact'
 
   return (
     <button
@@ -221,7 +241,7 @@ export function MonthGrid({
   const fin = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
   const days = eachDayOfInterval({ start: inicio, end: fin })
   const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
-  const compact = presentation !== 'stacked'
+  const compact = presentation === 'compact'
 
   return (
     <div className={`${spec.monthWeeks} ${compact ? spec.monthWeeksCompact : ''}`}>
