@@ -64,6 +64,52 @@
   font-weight: 600;
 }
 
+.detailsEventSlot {
+  display: flex;
+  width: calc(100% - 5px);
+  min-height: 28px;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px auto 0;
+  overflow: hidden;
+}
+
+.detailsEventChip {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 17px;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  border-left: 3px solid;
+  border-radius: 4px;
+  background: rgba(118, 118, 128, 0.1);
+  padding: 0 3px;
+}
+
+.detailsEventTitle {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: #2c2c2e;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailsEventMore {
+  display: block;
+  color: rgba(60, 60, 67, 0.58);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: left;
+}
+
 .compactEventBar {
   display: flex;
   height: 5px;
@@ -109,8 +155,17 @@
     background: #000;
   }
 
-  .stackedEventMore {
+  .stackedEventMore,
+  .detailsEventMore {
     color: rgba(235, 235, 245, 0.55);
+  }
+
+  .detailsEventChip {
+    background: rgba(118, 118, 128, 0.24);
+  }
+
+  .detailsEventTitle {
+    color: #fff;
   }
 }
 
