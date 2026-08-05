@@ -1,12 +1,6 @@
 import { format, isSameDay } from 'date-fns'
 
-/**
- * Las vistas principales definidas por la especificación Apple Calendar.
- * `VistaCalendario` conserva temporalmente los identificadores anteriores
- * mientras se completa la migración visual sin romper producción.
- */
-export type VistaCalendarioPrincipal = 'anio' | 'mes' | 'multiday' | 'lista'
-export type VistaCalendario = 'anio' | 'mes' | 'semana' | 'dia' | 'agenda'
+export type VistaCalendario = 'anio' | 'mes' | 'multiday' | 'lista'
 
 export type CalendarioOrigen = {
   id: string
@@ -49,11 +43,6 @@ export function monthKey(date: Date) {
   return format(date, 'yyyy-MM')
 }
 
-/**
- * Regla de la especificación: el color vive en calendars.color.
- * El fallback morado solo protege registros transitorios o respuestas incompletas;
- * no se persiste ni se toma desde eventos o ministerios.
- */
 export function eventColor(evento: EventoCalendario) {
   return evento.calendars?.color || '#5B3DF5'
 }

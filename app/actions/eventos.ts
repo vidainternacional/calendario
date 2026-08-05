@@ -15,13 +15,9 @@ type PerfilPermisosEvento = {
   estado_cuenta: string
 }
 
-type FilaProfileId = {
-  profile_id: string
-}
-
-type FilaId = {
-  id: string
-}
+type FilaProfileId = { profile_id: string }
+type FilaId = { id: string }
+type FilaCalendario = { id: string }
 
 function texto(formData: FormData, nombre: string) {
   return String(formData.get(nombre) || '').trim()
@@ -32,9 +28,7 @@ export async function crearEventoCalendario(
 ): Promise<CrearEventoCalendarioResult> {
   const supabase = await createClient()
   const db = supabase as any
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) return { success: false, error: 'Tu sesión ha vencido.' }
 
@@ -47,19 +41,19 @@ export async function crearEventoCalendario(
   const todoElDia = texto(formData, 'todo_el_dia') === 'true'
   const notif1d = texto(formData, 'notif_1d') === 'true'
   const notif1h = texto(formData, 'notif_1h') === 'true'
+  const tiempoViaje = Number(texto(formData, 'tiempo_viaje_minutos') || '0')
 
   if (!titulo || titulo.length > 140) {
     return { success: false, error: 'Escribe un título válido para el evento.' }
   }
 
+  if (![0, 15, 30, 45, 60].includes(tiempoViaje)) {
+    return { success: false, error: 'Selecciona un tiempo de viaje válido.' }
+  }
+
   const fechaInicio = new Date(fechaInicioRaw)
   const fechaFin = new Date(fechaFinRaw)
-
-  if (
-    Number.isNaN(fechaInicio.getTime()) ||
-    Number.isNaN(fechaFin.getTime()) ||
-    fechaFin <= fechaInicio
-  ) {
+  if (Number.isNaN(fechaInicio.getTime()) || Number.isNaN(fechaFin.getTime()) || fechaFin <= fechaInicio) {
     return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
   }
 
@@ -94,14 +88,26 @@ export async function crearEventoCalendario(
     }
   }
 
-  const participantesSolicitados = Array.from(
-    new Set(
-      formData
-        .getAll('participantes')
-        .map((valor) => String(valor))
-        .filter((valor) => /^[0-9a-f-]{36}$/i.test(valor)),
-    ),
-  )
+  const calendarQuery = db
+    .from('calendars')
+    .select('id')
+    .eq('tipo_cuenta', 'interno')
+
+  const { data: calendarioRaw, error: calendarioError } = ministerioId
+    ? await calendarQuery.eq('ministerio_id', ministerioId).maybeSingle()
+    : await calendarQuery.is('ministerio_id', null).maybeSingle()
+
+  const calendario = calendarioRaw as FilaCalendario | null
+  if (calendarioError || !calendario) {
+    console.error('[crearEventoCalendario] calendario', calendarioError)
+    return { success: false, error: 'No se encontró el calendario de destino.' }
+  }
+
+  const participantesSolicitados = Array.from(new Set(
+    formData.getAll('participantes')
+      .map((valor) => String(valor))
+      .filter((valor) => /^[0-9a-f-]{36}$/i.test(valor)),
+  ))
 
   let participantesPermitidos = participantesSolicitados
 
@@ -135,9 +141,11 @@ export async function crearEventoCalendario(
       ubicacion: ubicacion || null,
       descripcion: descripcion || null,
       ministerio_id: ministerioId,
+      calendar_id: calendario.id,
       fecha_inicio: fechaInicio.toISOString(),
       fecha_fin: fechaFin.toISOString(),
       todo_el_dia: todoElDia,
+      tiempo_viaje_minutos: tiempoViaje,
       creado_por: user.id,
     })
     .select('id')

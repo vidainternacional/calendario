@@ -45,6 +45,7 @@ export default function NuevoEventoCalendarioModal({
   const [error, setError] = useState('')
   const [alertaDia, setAlertaDia] = useState(true)
   const [alertaHora, setAlertaHora] = useState(true)
+  const [tiempoViaje, setTiempoViaje] = useState('0')
 
   const inicioPredeterminado = useMemo(() => {
     const base = new Date(fechaInicial)
@@ -136,6 +137,7 @@ export default function NuevoEventoCalendarioModal({
     base.setHours(Math.max(ahora.getHours() + 1, 8), 0, 0, 0)
     setInicio(format(base, "yyyy-MM-dd'T'HH:mm"))
     setFin(format(addHours(base, 1), "yyyy-MM-dd'T'HH:mm"))
+    setTiempoViaje('0')
     setError('')
   }, [isOpen, fechaInicial])
 
@@ -156,11 +158,18 @@ export default function NuevoEventoCalendarioModal({
       return
     }
 
+    if (finDate <= inicioDate) {
+      setError('La fecha de finalización debe ser posterior al inicio.')
+      setGuardando(false)
+      return
+    }
+
     formData.set('fecha_inicio', inicioDate.toISOString())
     formData.set('fecha_fin', finDate.toISOString())
     formData.set('todo_el_dia', todoElDia ? 'true' : 'false')
     formData.set('notif_1d', alertaDia ? 'true' : 'false')
     formData.set('notif_1h', alertaHora ? 'true' : 'false')
+    formData.set('tiempo_viaje_minutos', tiempoViaje)
 
     const result = await crearEventoCalendario(formData)
     setGuardando(false)
@@ -182,12 +191,7 @@ export default function NuevoEventoCalendarioModal({
             <X size={23} />
           </button>
           <h2 id="nuevo-evento-titulo" className={styles.newEventTitle}>Nuevo evento</h2>
-          <button
-            type="submit"
-            disabled={guardando}
-            className={`${styles.roundAction} ${styles.roundActionPrimary}`}
-            aria-label="Guardar evento"
-          >
+          <button type="submit" disabled={guardando} className={`${styles.roundAction} ${styles.roundActionPrimary}`} aria-label="Guardar evento">
             {guardando ? <Loader2 size={21} className="animate-spin" /> : <Check size={23} />}
           </button>
         </header>
@@ -205,13 +209,7 @@ export default function NuevoEventoCalendarioModal({
           <section className={styles.formGroup}>
             <div className={styles.formRow}>
               <span className={styles.formLabel}>Todo el día</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={todoElDia}
-                onClick={() => setTodoElDia((actual) => !actual)}
-                className={`${styles.switch} ${todoElDia ? styles.switchOn : ''}`}
-              >
+              <button type="button" role="switch" aria-checked={todoElDia} onClick={() => setTodoElDia((actual) => !actual)} className={`${styles.switch} ${todoElDia ? styles.switchOn : ''}`}>
                 <span className={styles.switchThumb} />
               </button>
             </div>
@@ -240,19 +238,25 @@ export default function NuevoEventoCalendarioModal({
                 className={styles.formInput}
               />
             </label>
+            {!todoElDia && (
+              <label className={styles.formRow}>
+                <span className={styles.formLabel}>Tiempo de viaje</span>
+                <select name="tiempo_viaje_minutos" value={tiempoViaje} onChange={(event) => setTiempoViaje(event.target.value)} className={styles.formSelect}>
+                  <option value="0">Ninguno</option>
+                  <option value="15">15 minutos</option>
+                  <option value="30">30 minutos</option>
+                  <option value="45">45 minutos</option>
+                  <option value="60">1 hora</option>
+                </select>
+              </label>
+            )}
           </section>
 
           <section className={styles.formGroup}>
             <label className={styles.formColumn}>
-              <span className={styles.formLabel}>Ministerio</span>
-              <select
-                name="ministerio_id"
-                value={ministerioId}
-                onChange={(event) => setMinisterioId(event.target.value)}
-                className={styles.formSelect}
-                required={!puedeCrearGlobal}
-              >
-                {puedeCrearGlobal && <option value="">Evento general</option>}
+              <span className={styles.formLabel}>Calendario</span>
+              <select name="ministerio_id" value={ministerioId} onChange={(event) => setMinisterioId(event.target.value)} className={styles.formSelect} required={!puedeCrearGlobal}>
+                {puedeCrearGlobal && <option value="">Vida Internacional</option>}
                 {ministerios.map((ministerio) => (
                   <option key={ministerio.id} value={ministerio.id}>{ministerio.nombre}</option>
                 ))}
@@ -262,9 +266,7 @@ export default function NuevoEventoCalendarioModal({
             <div className={styles.formColumn}>
               <span className={styles.formLabel}>Participantes</span>
               {cargandoMiembros ? (
-                <span className="flex items-center gap-2 text-sm text-slate-500">
-                  <Loader2 size={16} className="animate-spin" /> Cargando miembros…
-                </span>
+                <span className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" /> Cargando miembros…</span>
               ) : miembros.length > 0 ? (
                 <div className={styles.membersList}>
                   {miembros.map((miembro) => (
@@ -283,25 +285,13 @@ export default function NuevoEventoCalendarioModal({
           <section className={styles.formGroup}>
             <div className={styles.formRow}>
               <span className={styles.formLabel}>Avisar un día antes</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={alertaDia}
-                onClick={() => setAlertaDia((actual) => !actual)}
-                className={`${styles.switch} ${alertaDia ? styles.switchOn : ''}`}
-              >
+              <button type="button" role="switch" aria-checked={alertaDia} onClick={() => setAlertaDia((actual) => !actual)} className={`${styles.switch} ${alertaDia ? styles.switchOn : ''}`}>
                 <span className={styles.switchThumb} />
               </button>
             </div>
             <div className={styles.formRow}>
               <span className={styles.formLabel}>Avisar una hora antes</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={alertaHora}
-                onClick={() => setAlertaHora((actual) => !actual)}
-                className={`${styles.switch} ${alertaHora ? styles.switchOn : ''}`}
-              >
+              <button type="button" role="switch" aria-checked={alertaHora} onClick={() => setAlertaHora((actual) => !actual)} className={`${styles.switch} ${alertaHora ? styles.switchOn : ''}`}>
                 <span className={styles.switchThumb} />
               </button>
             </div>
@@ -310,12 +300,7 @@ export default function NuevoEventoCalendarioModal({
           <section className={styles.formGroup}>
             <label className={styles.formColumn}>
               <span className={styles.formLabel}>Notas</span>
-              <textarea
-                name="descripcion"
-                maxLength={4000}
-                className={styles.formTextarea}
-                placeholder="Descripción o indicaciones del evento"
-              />
+              <textarea name="descripcion" maxLength={4000} className={styles.formTextarea} placeholder="Descripción o indicaciones del evento" />
             </label>
           </section>
 
