@@ -272,10 +272,11 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
-  const selectDay = (day: Date) => {
-    onSelectDay(day)
-    onOpenDay(day)
-  }
+  const presentationClass = presentation === 'compact'
+    ? styles.monthSectionCompact
+    : presentation === 'details'
+      ? styles.monthSectionDetails
+      : styles.monthSectionStacked
 
   return (
     <div className={`${styles.calendarScreen} ${flow.monthFlow} ${!overlay ? flow.elasticMonth : ''}`} aria-hidden={overlay || undefined}>
@@ -286,13 +287,13 @@ export default function CalendarioMonthView({
       </div>
       <MonthWeekdayHeader />
       <div className={styles.monthScroll}>
-        <section className={`${styles.monthSection} ${styles[`monthSection${presentation.charAt(0).toUpperCase()}${presentation.slice(1)}`] || ''}`}>
+        <section className={`${styles.monthSection} ${presentationClass}`}>
           <MonthGrid
             month={month}
             selectedDay={selectedDay}
             events={events}
             presentation={presentation}
-            onSelectDay={selectDay}
+            onSelectDay={onOpenDay}
           />
         </section>
         {!overlay && dayPanelOpen && (
