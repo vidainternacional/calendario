@@ -1,6 +1,7 @@
 import { format, isSameDay } from 'date-fns'
 
 export type VistaCalendario = 'anio' | 'mes' | 'semana' | 'dia' | 'agenda'
+export type ModoVisualCalendario = 'compacta' | 'apilada' | 'detalles' | 'lista'
 
 export type EventoCalendario = {
   id: string
