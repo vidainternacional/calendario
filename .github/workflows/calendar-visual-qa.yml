@@ -126,11 +126,20 @@ jobs:
             await page.waitForTimeout(650)
             await page.screenshot({ path: `calendar-visual-qa/06-day-panel-${prefix}.png`, fullPage: false })
 
+            await page.getByRole('button', { name: /Abrir vista horaria de/i }).click()
+            await page.waitForTimeout(520)
+            await page.screenshot({ path: `calendar-visual-qa/07-day-timeline-${prefix}.png`, fullPage: false })
+
+            await page.getByRole('button', { name: 'Cambiar vista' }).click()
+            await page.waitForTimeout(250)
+            await page.screenshot({ path: `calendar-visual-qa/08-timeline-menu-${prefix}.png`, fullPage: false })
+            await page.getByRole('button', { name: 'Cerrar menú' }).click()
+
             const firstEvent = page.getByRole('button', { name: /Ensayo general/i }).last()
             if (await firstEvent.count()) {
               await firstEvent.click()
               await page.waitForTimeout(400)
-              await page.screenshot({ path: `calendar-visual-qa/07-event-sheet-${prefix}.png`, fullPage: false })
+              await page.screenshot({ path: `calendar-visual-qa/09-event-sheet-${prefix}.png`, fullPage: false })
             }
 
             const report = await page.evaluate(() => {
