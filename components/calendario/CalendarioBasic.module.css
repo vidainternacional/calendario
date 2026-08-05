@@ -28,6 +28,15 @@
   text-transform: capitalize;
 }
 
+.selectedDate {
+  margin: 6px 0 0;
+  color: #8e8e93;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  text-transform: capitalize;
+}
+
 .yearGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -127,15 +136,22 @@
 }
 
 .monthGrid {
-  padding: 0 8px 120px;
+  grid-template-rows: repeat(6, minmax(68px, 1fr));
+  padding: 0 8px calc(120px + env(safe-area-inset-bottom, 0px));
+}
+
+.monthDay,
+.monthDayEmpty {
+  min-height: 68px;
+  border-bottom: 1px solid #242426;
 }
 
 .monthDay {
   position: relative;
-  min-height: 76px;
-  padding: 10px 3px 5px;
-  border: 0;
-  border-bottom: 1px solid #242426;
+  padding: 9px 3px 5px;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
   background: transparent;
   color: #fff;
   font: inherit;
@@ -143,8 +159,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.monthDayOutside {
-  color: #444448;
+.monthDay:active {
+  opacity: 0.62;
+}
+
+.monthDayEmpty {
+  display: block;
 }
 
 .dayNumber {
@@ -158,14 +178,14 @@
 }
 
 .daySelected {
-  outline: 2px solid #0a84ff;
-  outline-offset: -2px;
+  background: #636366;
+  color: #fff;
 }
 
 .dayToday {
   background: #ff453a;
   color: #fff;
-  outline: 0;
+  font-weight: 600;
 }
 
 .eventDots {
@@ -204,8 +224,13 @@
     font-size: 7px;
   }
 
-  .monthDay {
-    min-height: 68px;
+  .monthGrid {
+    grid-template-rows: repeat(6, minmax(62px, 1fr));
+  }
+
+  .monthDay,
+  .monthDayEmpty {
+    min-height: 62px;
   }
 }
 
@@ -220,7 +245,8 @@
     color: #111;
   }
 
-  .miniWeekdays {
+  .miniWeekdays,
+  .selectedDate {
     color: #8e8e93;
   }
 
@@ -229,11 +255,17 @@
   }
 
   .weekdays,
-  .monthDay {
+  .monthDay,
+  .monthDayEmpty {
     border-color: #e5e5ea;
   }
 
-  .monthDayOutside {
-    color: #c7c7cc;
+  .monthDay {
+    color: #111;
+  }
+
+  .daySelected {
+    background: #d1d1d6;
+    color: #111;
   }
 }

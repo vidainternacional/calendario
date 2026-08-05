@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  addDays,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
@@ -39,12 +40,16 @@ export default function CalendarioMonthView({
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
   const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
   const days = eachDayOfInterval({ start, end })
+  while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
   return (
     <div className={basic.monthView} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
       {topChrome}
       <header className={basic.monthHeader}>
         <h1 className={basic.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
+        <p className={basic.selectedDate} aria-live="polite">
+          {format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}
+        </p>
       </header>
 
       <div className={basic.weekdays} aria-hidden="true">
@@ -59,17 +64,20 @@ export default function CalendarioMonthView({
           const dayEvents = belongs ? eventosDelDia(events, day) : []
           const colors = [...new Map(dayEvents.map((event) => [event.calendar_id, eventColor(event)])).values()].slice(0, 3)
 
+          if (!belongs) {
+            return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
+          }
+
           return (
             <button
               key={day.toISOString()}
               type="button"
-              className={`${basic.monthDay} ${!belongs ? basic.monthDayOutside : ''}`}
-              onClick={() => belongs && onSelectDay(day)}
-              disabled={!belongs}
-              aria-pressed={belongs ? selected : undefined}
-              aria-label={belongs ? format(day, "EEEE d 'de' MMMM", { locale: es }) : undefined}
+              className={basic.monthDay}
+              onClick={() => onSelectDay(day)}
+              aria-pressed={selected}
+              aria-label={format(day, "EEEE d 'de' MMMM", { locale: es })}
             >
-              <span className={`${basic.dayNumber} ${selected ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
+              <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                 {format(day, 'd')}
               </span>
               <span className={basic.eventDots} aria-hidden="true">
