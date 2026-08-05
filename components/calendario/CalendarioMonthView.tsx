@@ -14,7 +14,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useMemo, useRef, type ReactNode, type TouchEvent } from 'react'
+import { Fragment, useMemo, useRef, type ReactNode, type TouchEvent } from 'react'
 import CalendarioEventRow from './CalendarioEventRow'
 import {
   eventColor,
@@ -53,32 +53,39 @@ function uniqueEventColors(items: EventoCalendario[]) {
   return [...byCalendar.values()].slice(0, 5)
 }
 
-function EventIndicator({ items, compact }: { items: EventoCalendario[]; compact: boolean }) {
-  const slot = compact ? selection.compactEventSlot : `${styles.eventMarks} ${selection.monthEventSlot}`
-  if (items.length === 0) return <span className={slot} />
-  const colors = uniqueEventColors(items)
+function EventIndicator({
+  items,
+  presentation,
+}: {
+  items: EventoCalendario[]
+  presentation: MonthPresentation
+}) {
+  if (items.length === 0) return <span className={selection.compactEventSlot} />
 
-  if (items.length === 1) {
-    const item = items[0]
+  if (presentation === 'stacked') {
     return (
-      <span className={slot} aria-hidden="true">
-        <span
-          className={item.kind === 'reminder'
-            ? spec.reminderMarker
-            : compact ? selection.compactEventDot : styles.eventMarkDot}
-          style={{ backgroundColor: item.kind === 'reminder' ? 'transparent' : colors[0], color: colors[0] }}
-        />
+      <span className={selection.stackedEventSlot} aria-hidden="true">
+        {items.slice(0, 3).map((item) => (
+          <span
+            key={eventKey(item)}
+            className={selection.stackedEventBar}
+            style={{ backgroundColor: eventColor(item) }}
+          />
+        ))}
+        {items.length > 3 && <span className={selection.stackedEventMore}>+{items.length - 3}</span>}
       </span>
     )
   }
 
   return (
-    <span className={slot} aria-hidden="true">
-      <span className={compact ? selection.compactEventBar : selection.monthEventBar}>
-        {colors.map((color) => (
-          <span key={color} className={compact ? selection.compactEventSegment : selection.monthEventSegment} style={{ backgroundColor: color }} />
-        ))}
-      </span>
+    <span className={selection.compactEventSlot} aria-hidden="true">
+      {items.slice(0, 3).map((item) => (
+        <span
+          key={eventKey(item)}
+          className={item.kind === 'reminder' ? spec.reminderMarker : selection.compactEventDot}
+          style={{ backgroundColor: item.kind === 'reminder' ? 'transparent' : eventColor(item), color: eventColor(item) }}
+        />
+      ))}
     </span>
   )
 }
@@ -88,20 +95,21 @@ function DayButton({
   month,
   selectedDay,
   events,
-  compact,
+  presentation,
   onSelectDay,
 }: {
   day: Date
   month: Date
   selectedDay: Date
   events: EventoCalendario[]
-  compact: boolean
+  presentation: MonthPresentation
   onSelectDay: (day: Date) => void
 }) {
   const belongs = isSameMonth(day, month)
   const selected = belongs && isSameDay(day, selectedDay)
   const today = belongs && isToday(day)
   const items = belongs ? eventosDelDia(events, day) : []
+  const compact = presentation !== 'stacked'
 
   return (
     <button
@@ -115,66 +123,10 @@ function DayButton({
       {belongs && (
         <>
           <span className={dayNumberClass(today, selected)}>{format(day, 'd')}</span>
-          <EventIndicator items={items} compact={compact} />
+          <EventIndicator items={items} presentation={presentation} />
         </>
       )}
     </button>
-  )
-}
-
-export function MonthGrid({
-  month,
-  selectedDay,
-  events,
-  presentation,
-  onSelectDay,
-}: {
-  month: Date
-  selectedDay: Date
-  events: EventoCalendario[]
-  presentation: MonthPresentation
-  onSelectDay: (day: Date) => void
-}) {
-  const inicio = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
-  const fin = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
-  const days = eachDayOfInterval({ start: inicio, end: fin })
-  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
-  const compact = presentation === 'compact'
-
-  return (
-    <div className={`${spec.monthWeeks} ${compact ? spec.monthWeeksCompact : ''}`}>
-      {weeks.map((week, weekIndex) => {
-        const weekItems = week.flatMap((day) => isSameMonth(day, month) ? eventosDelDia(events, day) : [])
-        const colors = uniqueEventColors(weekItems)
-        return (
-          <div key={`${format(month, 'yyyy-MM')}-${weekIndex}`} className={spec.monthWeek}>
-            <span className={spec.weekNumber}>{getISOWeek(week[0])}</span>
-            <div className={spec.monthWeekContent}>
-              <div className={spec.monthWeekDays}>
-                {week.map((day) => (
-                  <DayButton
-                    key={day.toISOString()}
-                    day={day}
-                    month={month}
-                    selectedDay={selectedDay}
-                    events={events}
-                    compact={compact}
-                    onSelectDay={onSelectDay}
-                  />
-                ))}
-              </div>
-              {!compact && (
-                <div className={spec.monthWeekBars} aria-hidden="true">
-                  {colors.map((color, index) => (
-                    <span key={`${color}-${index}`} className={spec.monthWeekBar} style={{ backgroundColor: color }} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
   )
 }
 
@@ -247,6 +199,81 @@ function DayReveal({
   )
 }
 
+export function MonthGrid({
+  month,
+  selectedDay,
+  events,
+  presentation,
+  dayPanelOpen,
+  onSelectDay,
+  onOpenEvent,
+}: {
+  month: Date
+  selectedDay: Date
+  events: EventoCalendario[]
+  presentation: MonthPresentation
+  dayPanelOpen: boolean
+  onSelectDay: (day: Date) => void
+  onOpenEvent: (event: EventoCalendario) => void
+}) {
+  const inicio = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
+  const fin = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
+  const days = eachDayOfInterval({ start: inicio, end: fin })
+  const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
+  const compact = presentation !== 'stacked'
+
+  return (
+    <div className={`${spec.monthWeeks} ${compact ? spec.monthWeeksCompact : ''}`}>
+      {weeks.map((week, weekIndex) => {
+        const weekItems = week.flatMap((day) => isSameMonth(day, month) ? eventosDelDia(events, day) : [])
+        const colors = uniqueEventColors(weekItems)
+        const selectedWeek = dayPanelOpen && presentation === 'details' && week.some((day) => isSameDay(day, selectedDay))
+
+        return (
+          <Fragment key={`${format(month, 'yyyy-MM')}-${weekIndex}`}>
+            <div className={`${spec.monthWeek} ${selectedWeek ? spec.monthWeekSelected : ''}`}>
+              <span className={spec.weekNumber}>{getISOWeek(week[0])}</span>
+              <div className={spec.monthWeekContent}>
+                <div className={spec.monthWeekDays}>
+                  {week.map((day) => (
+                    <DayButton
+                      key={day.toISOString()}
+                      day={day}
+                      month={month}
+                      selectedDay={selectedDay}
+                      events={events}
+                      presentation={presentation}
+                      onSelectDay={onSelectDay}
+                    />
+                  ))}
+                </div>
+                {presentation === 'stacked' && (
+                  <div className={spec.monthWeekBars} aria-hidden="true">
+                    {colors.map((color, index) => (
+                      <span key={`${color}-${index}`} className={spec.monthWeekBar} style={{ backgroundColor: color }} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedWeek && (
+              <div className={spec.monthWeekReveal}>
+                <DayReveal
+                  selectedDay={selectedDay}
+                  events={events}
+                  onSelectDay={onSelectDay}
+                  onOpenEvent={onOpenEvent}
+                />
+              </div>
+            )}
+          </Fragment>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function CalendarioMonthView({
   month,
   selectedDay,
@@ -293,17 +320,11 @@ export default function CalendarioMonthView({
             selectedDay={selectedDay}
             events={events}
             presentation={presentation}
+            dayPanelOpen={!overlay && dayPanelOpen}
             onSelectDay={onOpenDay}
-          />
-        </section>
-        {!overlay && dayPanelOpen && (
-          <DayReveal
-            selectedDay={selectedDay}
-            events={events}
-            onSelectDay={onSelectDay}
             onOpenEvent={onOpenEvent}
           />
-        )}
+        </section>
       </div>
     </div>
   )
