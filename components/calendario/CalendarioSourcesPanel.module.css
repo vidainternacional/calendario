@@ -345,6 +345,94 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@media (prefers-color-scheme: dark) {
+  .overlay {
+    background: rgba(0, 0, 0, 0.42);
+  }
+
+  .sheet {
+    background: rgba(28, 28, 30, 0.98);
+    box-shadow: 0 -20px 70px rgba(0, 0, 0, 0.7);
+  }
+
+  .sheet::before {
+    background: rgba(235, 235, 245, 0.28);
+  }
+
+  .header h2,
+  .sourceText strong,
+  .changeRow strong,
+  .detailCard h3 {
+    color: #fff;
+  }
+
+  .header p,
+  .sourceText small,
+  .changeRow small,
+  .detailCard p,
+  .loading,
+  .empty {
+    color: rgba(235, 235, 245, 0.58);
+  }
+
+  .close,
+  .detailClose {
+    background: rgba(118, 118, 128, 0.24);
+    color: rgba(235, 235, 245, 0.72);
+  }
+
+  .tabs {
+    background: rgba(118, 118, 128, 0.28);
+  }
+
+  .tabs button {
+    color: rgba(235, 235, 245, 0.62);
+  }
+
+  .tabs .tabActive {
+    background: #3a3a3c;
+    color: #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+  }
+
+  .group,
+  .changeList {
+    border-color: rgba(84, 84, 88, 0.55);
+    background: #1c1c1e;
+  }
+
+  .group h3 {
+    background: #2c2c2e;
+    color: rgba(235, 235, 245, 0.52);
+  }
+
+  .sourceRow,
+  .changeRow {
+    border-color: rgba(84, 84, 88, 0.56);
+  }
+
+  .visibility:active,
+  .infoButton:active,
+  .changeRow:active {
+    background: rgba(118, 118, 128, 0.16);
+  }
+
+  .changeRow.unread {
+    background: rgba(91, 61, 245, 0.13);
+  }
+
+  .detailCard {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(44, 44, 46, 0.9);
+    box-shadow: 0 22px 64px rgba(0, 0, 0, 0.66);
+  }
+
+  .error {
+    background: rgba(255, 69, 58, 0.14);
+    color: #ffb3ad;
+  }
+}
+
 @media (min-width: 700px) {
   .overlay {
     align-items: center;
