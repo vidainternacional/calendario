@@ -300,24 +300,30 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
-  const previousMonthRef = useRef(month.getFullYear() * 12 + month.getMonth())
+  const monthIndex = month.getFullYear() * 12 + month.getMonth()
+  const previousMonthRef = useRef(monthIndex)
   const motionTimerRef = useRef<number | null>(null)
   const [monthMotion, setMonthMotion] = useState<MonthMotion>(null)
+  const [userOpenedDay, setUserOpenedDay] = useState(false)
 
   useEffect(() => {
-    const nextIndex = month.getFullYear() * 12 + month.getMonth()
     const previousIndex = previousMonthRef.current
-    previousMonthRef.current = nextIndex
-    if (nextIndex === previousIndex) return
+    previousMonthRef.current = monthIndex
+    if (monthIndex === previousIndex) return
 
-    setMonthMotion(nextIndex > previousIndex ? 'forward' : 'backward')
+    setUserOpenedDay(false)
+    setMonthMotion(monthIndex > previousIndex ? 'forward' : 'backward')
     if (motionTimerRef.current) window.clearTimeout(motionTimerRef.current)
     motionTimerRef.current = window.setTimeout(() => setMonthMotion(null), 360)
 
     return () => {
       if (motionTimerRef.current) window.clearTimeout(motionTimerRef.current)
     }
-  }, [month])
+  }, [monthIndex])
+
+  useEffect(() => {
+    if (presentation !== 'details') setUserOpenedDay(false)
+  }, [presentation])
 
   const presentationClass = presentation === 'compact'
     ? styles.monthSectionCompact
@@ -329,6 +335,11 @@ export default function CalendarioMonthView({
     : monthMotion === 'backward'
       ? flow.monthSlideBackward
       : ''
+
+  const handleGridDay = (day: Date) => {
+    setUserOpenedDay(true)
+    onOpenDay(day)
+  }
 
   return (
     <div className={`${styles.calendarScreen} ${flow.monthFlow} ${!overlay ? flow.elasticMonth : ''}`} aria-hidden={overlay || undefined}>
@@ -346,8 +357,8 @@ export default function CalendarioMonthView({
               selectedDay={selectedDay}
               events={events}
               presentation={presentation}
-              dayPanelOpen={!overlay && dayPanelOpen}
-              onSelectDay={onOpenDay}
+              dayPanelOpen={!overlay && dayPanelOpen && userOpenedDay}
+              onSelectDay={handleGridDay}
               onOpenEvent={onOpenEvent}
             />
           </section>
