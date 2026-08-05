@@ -204,15 +204,15 @@ export default function CalendarioIOS({
     const nextSelectedDay = selectedDayForMonth(month)
     const rect = element.getBoundingClientRect()
     setMonthOrigin({ month, rect })
-    setZoom({ month, selectedDay: nextSelectedDay, rect, direction: 'in' })
     setActiveDate(nextSelectedDay)
     setSelectedDay(nextSelectedDay)
     setMonthPresentation('stacked')
     setMonthDayOpen(false)
+    setView('mes')
+    setZoom({ month, selectedDay: nextSelectedDay, rect, direction: 'in' })
 
     if (zoomTimer.current) window.clearTimeout(zoomTimer.current)
     zoomTimer.current = window.setTimeout(() => {
-      setView('mes')
       setZoom(null)
     }, 560)
   }
