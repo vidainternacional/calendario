@@ -25,6 +25,7 @@ import {
 } from './calendario-ios-types'
 import styles from './CalendarioIOS.module.css'
 import flow from './CalendarioFlow.module.css'
+import spec from './CalendarioSpecCompletion.module.css'
 
 const YEAR_MIN = 1800
 const YEAR_MAX = 2200
@@ -98,12 +99,12 @@ export default function CalendarioYearView({
                 onClick={(event) => onOpenMonth(mes, event.currentTarget)}
               >
                 <span className={styles.miniMonthName}>{format(mes, 'MMM', { locale: es })}</span>
-                <span className={styles.miniWeeks}>
+                <span className={spec.miniWeeks}>
                   {weeks.map((week, weekIndex) => {
                     const colors = weekCalendarColors(week, mes, eventos)
                     return (
-                      <span key={`${monthKey(mes)}-${weekIndex}`} className={styles.miniWeek}>
-                        <span className={styles.miniWeekDays}>
+                      <span key={`${monthKey(mes)}-${weekIndex}`} className={spec.miniWeek}>
+                        <span className={spec.miniWeekDays}>
                           {week.map((dia) => {
                             const pertenece = isSameMonth(dia, mes)
                             const today = pertenece && isToday(dia)
@@ -117,9 +118,9 @@ export default function CalendarioYearView({
                             )
                           })}
                         </span>
-                        <span className={styles.miniWeekBars} aria-hidden="true">
+                        <span className={spec.miniWeekBars} aria-hidden="true">
                           {colors.map((color, colorIndex) => (
-                            <span key={`${color}-${colorIndex}`} className={styles.miniWeekBar} style={{ backgroundColor: color }} />
+                            <span key={`${color}-${colorIndex}`} className={spec.miniWeekBar} style={{ backgroundColor: color }} />
                           ))}
                         </span>
                       </span>
