@@ -404,7 +404,7 @@ export default function CalendarioMonthView({
           {visibleMonths.map((visibleMonth, index) => (
             <section key={format(visibleMonth, 'yyyy-MM')} className={`${styles.monthSection} ${presentationClass}`}>
               {index > 0 && (
-                <h2 className={styles.followingMonthTitle}>{format(visibleMonth, 'MMM', { locale: es })}</h2>
+                <h2 className={flow.followingMonthTitle}>{format(visibleMonth, 'MMM', { locale: es })}</h2>
               )}
               <MonthGrid
                 month={visibleMonth}
