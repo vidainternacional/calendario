@@ -49,7 +49,7 @@ export default function CalendarioMonthView({
       <header className={basic.monthHeader}>
         <h1 className={basic.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
         <p className={basic.selectedDate} aria-live="polite">
-          {format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}
+          Toca una fecha para abrir su día
         </p>
       </header>
 
@@ -74,9 +74,12 @@ export default function CalendarioMonthView({
               key={day.toISOString()}
               type="button"
               className={basic.monthDay}
-              onClick={() => selected ? onOpenDay(day) : onSelectDay(day)}
+              onClick={() => {
+                onSelectDay(day)
+                onOpenDay(day)
+              }}
               aria-pressed={selected}
-              aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${selected ? ', abrir vista del día' : ''}`}
+              aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}, abrir vista del día`}
             >
               <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                 {format(day, 'd')}
