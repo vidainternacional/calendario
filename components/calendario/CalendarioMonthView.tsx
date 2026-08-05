@@ -25,6 +25,7 @@ export default function CalendarioMonthView({
   isRefreshing,
   overlay = false,
   onSelectDay,
+  onOpenDay,
 }: {
   month: Date
   selectedDay: Date
@@ -73,9 +74,9 @@ export default function CalendarioMonthView({
               key={day.toISOString()}
               type="button"
               className={basic.monthDay}
-              onClick={() => onSelectDay(day)}
+              onClick={() => selected ? onOpenDay(day) : onSelectDay(day)}
               aria-pressed={selected}
-              aria-label={format(day, "EEEE d 'de' MMMM", { locale: es })}
+              aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${selected ? ', abrir vista del día' : ''}`}
             >
               <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                 {format(day, 'd')}
