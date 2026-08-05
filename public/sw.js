@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vida-shell-v1.4'
+const CACHE_NAME = 'vida-shell-v1.5'
 const SHELL_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
