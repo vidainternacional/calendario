@@ -25,6 +25,7 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 18
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const MAX_COMPACT_EVENTS = 6
 
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
@@ -34,23 +35,11 @@ function weeksForMonth(month: Date) {
   return Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
 }
 
-function compactEventSegments(events: EventoCalendario[]) {
-  const grouped = new Map<string, { color: string; count: number }>()
-
-  events.forEach((event) => {
-    const color = eventColor(event)
-    const key = event.calendar_id || color
-    const existing = grouped.get(key)
-
-    if (existing) {
-      existing.count += 1
-      return
-    }
-
-    grouped.set(key, { color, count: 1 })
-  })
-
-  return [...grouped.values()]
+function compactEventUnits(events: EventoCalendario[]) {
+  return events.slice(0, MAX_COMPACT_EVENTS).map((event, index) => ({
+    key: `${event.id || event.fecha_inicio}-${index}`,
+    color: eventColor(event),
+  }))
 }
 
 export default function CalendarioMonthView({
@@ -138,6 +127,7 @@ export default function CalendarioMonthView({
       className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`}
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
+      data-display-mode={displayMode}
     >
       <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
 
@@ -166,12 +156,9 @@ export default function CalendarioMonthView({
                 <h1 className={basic.monthTitle}>{format(visibleMonth, 'MMMM', { locale: es })}</h1>
               </header>
 
-              <div className={`${basic.monthGrid} ${displayMode === 'details' ? basic.monthGridDetails : ''}`}>
+              <div className={basic.monthGrid}>
                 {weeks.map((week) => (
-                  <div
-                    key={week[0].toISOString()}
-                    className={`${basic.monthWeekRow} ${displayMode === 'details' ? basic.monthWeekRowDetails : ''}`}
-                  >
+                  <div key={week[0].toISOString()} className={basic.monthWeekRow}>
                     <span className={basic.weekNumber} aria-hidden="true">
                       {getWeek(week[0], { weekStartsOn: 0, firstWeekContainsDate: 1 })}
                     </span>
@@ -181,7 +168,7 @@ export default function CalendarioMonthView({
                       const selected = belongs && isSameDay(day, selectedDay)
                       const today = belongs && isToday(day)
                       const dayEvents = belongs ? eventosDelDia(events, day) : []
-                      const compactSegments = compactEventSegments(dayEvents)
+                      const compactUnits = compactEventUnits(dayEvents)
 
                       if (!belongs) {
                         return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
@@ -200,7 +187,7 @@ export default function CalendarioMonthView({
                         <button
                           key={day.toISOString()}
                           type="button"
-                          className={`${basic.monthDay} ${displayMode === 'details' ? basic.monthDayDetails : ''}`}
+                          className={basic.monthDay}
                           onClick={handleDayPress}
                           aria-pressed={selected}
                           aria-current={today ? 'date' : undefined}
@@ -213,17 +200,17 @@ export default function CalendarioMonthView({
                           {displayMode === 'compact' && dayEvents.length > 0 && (
                             <span className={indicator.eventCompact} aria-hidden="true">
                               {dayEvents.length === 1 ? (
-                                <span className={indicator.eventSingleDot} style={{ backgroundColor: compactSegments[0]?.color }} />
+                                <span className={indicator.eventSingleDot} style={{ backgroundColor: compactUnits[0]?.color }} />
                               ) : (
                                 <span
                                   className={indicator.eventFusion}
-                                  style={{ width: `${Math.min(34, 12 + Math.min(dayEvents.length, 5) * 4)}px` }}
+                                  style={{ '--event-count': Math.min(dayEvents.length, MAX_COMPACT_EVENTS) } as React.CSSProperties}
                                 >
-                                  {compactSegments.slice(0, 5).map((segment, index) => (
+                                  {compactUnits.map((unit) => (
                                     <span
-                                      key={`${segment.color}-${index}`}
+                                      key={unit.key}
                                       className={indicator.eventFusionSegment}
-                                      style={{ backgroundColor: segment.color, flexGrow: segment.count }}
+                                      style={{ backgroundColor: unit.color }}
                                     />
                                   ))}
                                 </span>
@@ -231,7 +218,7 @@ export default function CalendarioMonthView({
                             </span>
                           )}
 
-                          {displayMode === 'stacked' && (
+                          {displayMode === 'stacked' && dayEvents.length > 0 && (
                             <span className={basic.eventBars} aria-hidden="true">
                               {dayEvents.slice(0, 3).map((event, index) => (
                                 <span
@@ -244,7 +231,7 @@ export default function CalendarioMonthView({
                             </span>
                           )}
 
-                          {displayMode === 'details' && (
+                          {displayMode === 'details' && dayEvents.length > 0 && (
                             <span className={basic.eventDetails} aria-hidden="true">
                               {dayEvents.slice(0, 2).map((event, index) => {
                                 const color = eventColor(event)
