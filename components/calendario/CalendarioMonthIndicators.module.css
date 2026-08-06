@@ -15,14 +15,13 @@
 }
 
 .eventFusion {
-  --unit-size: 5px;
-  --unit-gap: 1px;
-  display: grid;
-  grid-template-columns: repeat(var(--event-count), var(--unit-size));
-  gap: var(--unit-gap);
-  width: calc((var(--event-count) * var(--unit-size)) + ((var(--event-count) - 1) * var(--unit-gap)));
+  display: inline-flex;
+  width: fit-content;
   max-width: 35px;
   height: 5px;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
   overflow: hidden;
   border-radius: 999px;
 }
@@ -31,6 +30,7 @@
   display: block;
   width: 5px;
   height: 5px;
+  flex: 0 0 5px;
   border-radius: 999px;
 }
 
@@ -167,8 +167,6 @@
   }
 
   .eventFusion {
-    --unit-size: 4px;
-    --unit-gap: 1px;
     max-width: 29px;
     height: 4px;
   }
@@ -176,6 +174,7 @@
   .eventFusionSegment {
     width: 4px;
     height: 4px;
+    flex-basis: 4px;
   }
 }
 
