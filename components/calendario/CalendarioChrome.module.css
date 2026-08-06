@@ -1,19 +1,45 @@
+.rootTheme {
+  min-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 0px));
+  background: #000 !important;
+  color: #f5f5f7 !important;
+  color-scheme: dark;
+}
+
 .topChrome {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px !important;
-  padding-right: max(10px, env(safe-area-inset-right, 0px)) !important;
-  padding-left: max(10px, env(safe-area-inset-left, 0px)) !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px !important;
+  min-height: 64px !important;
+  padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
+  padding-right: max(18px, env(safe-area-inset-right, 0px)) !important;
+  padding-left: max(18px, env(safe-area-inset-left, 0px)) !important;
+  background: #000 !important;
 }
 
 .leftSlot {
   min-width: 0;
 }
 
+.backButton,
+.actionsGroup,
+.floatingPill,
+.floatingGroup {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(34, 34, 36, 0.94) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.34) !important;
+  color: #f5f5f7 !important;
+  -webkit-backdrop-filter: saturate(160%) blur(24px);
+  backdrop-filter: saturate(160%) blur(24px);
+}
+
 .backButton {
-  max-width: 100% !important;
+  max-width: 150px !important;
   min-width: 0 !important;
-  padding-inline: 11px !important;
+  min-height: 48px !important;
+  border-radius: 25px !important;
+  padding-inline: 13px !important;
+  font-size: 17px !important;
 }
 
 .backText {
@@ -24,174 +50,228 @@
   text-transform: capitalize;
 }
 
-.periodGroup,
 .actionsGroup {
-  flex: 0 0 auto;
+  min-height: 48px !important;
+  border-radius: 25px !important;
 }
 
 .chromeIconButton {
-  width: 40px !important;
+  width: 52px !important;
+  height: 48px !important;
+  border: 0 !important;
+  border-left-color: rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  color: #f5f5f7 !important;
+}
+
+.headerBlockTheme {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+.periodTitleTheme {
+  color: #fff !important;
+}
+
+.subTitleTheme {
+  color: #8e8e93 !important;
+}
+
+.eventListTheme {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+.agendaHeaderTheme {
+  border-color: #2c2c2e !important;
+  background: #000 !important;
+}
+
+.agendaDateTheme {
+  color: #f5f5f7 !important;
+}
+
+.mutedTheme {
+  color: #8e8e93 !important;
+}
+
+.emptyTheme {
+  border-color: #2c2c2e !important;
+  background: #000 !important;
+  color: #8e8e93 !important;
 }
 
 .floatingBar {
   gap: 10px !important;
 }
 
+.floatingPill {
+  min-height: 50px !important;
+  border-radius: 26px !important;
+  padding-inline: 20px !important;
+  font-size: 16px !important;
+}
+
 .floatingGroup {
-  max-width: calc(100vw - 92px);
+  min-height: 50px !important;
+  border-radius: 26px !important;
 }
 
-.viewTrigger {
-  width: auto !important;
-  min-width: 92px;
-  gap: 7px;
-  padding: 0 13px !important;
+.floatingIcon {
+  width: 58px !important;
+  height: 50px !important;
+  border-left-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f5f5f7 !important;
 }
 
-.viewTriggerLabel {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.popoverBackdrop {
+  background: rgba(0, 0, 0, 0.08) !important;
 }
 
 .viewPopover {
-  width: min(248px, calc(100vw - 24px)) !important;
-  max-height: min(70dvh, 560px);
+  position: fixed !important;
+  top: max(76px, calc(env(safe-area-inset-top, 0px) + 64px)) !important;
+  right: max(22px, env(safe-area-inset-right, 0px)) !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: min(250px, calc(100vw - 44px)) !important;
+  max-height: min(70dvh, 520px);
   overflow-y: auto !important;
-  padding: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 28px !important;
+  background: rgba(28, 28, 30, 0.98) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58) !important;
+  padding: 12px !important;
+  color: #fff !important;
   overscroll-behavior: contain;
+  -webkit-backdrop-filter: saturate(160%) blur(30px);
+  backdrop-filter: saturate(160%) blur(30px);
   -webkit-overflow-scrolling: touch;
-}
-
-.viewPopoverHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 8px 10px;
-}
-
-.viewPopoverHeading {
-  min-width: 0;
-}
-
-.viewPopoverHeading h2,
-.viewPopoverHeading p {
-  margin: 0;
-}
-
-.viewPopoverHeading h2 {
-  color: #171d2d;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.viewPopoverHeading p {
-  margin-top: 3px;
-  color: #7a8496;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.viewPopoverClose {
-  display: inline-flex;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 50%;
-  background: #eef0f4;
-  color: #596378;
 }
 
 .viewOptions {
   display: grid;
-  gap: 5px;
+  gap: 2px;
 }
 
 .viewOption {
-  position: relative;
-  min-width: 0;
+  display: grid !important;
+  grid-template-columns: 24px 28px minmax(0, 1fr);
+  gap: 10px !important;
+  min-height: 58px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  padding: 0 10px !important;
+  color: #f5f5f7 !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+}
+
+.viewOption:active {
+  background: #2c2c2e !important;
+}
+
+.viewOptionActive {
+  background: transparent !important;
+  color: #fff !important;
 }
 
 .viewCheck {
-  margin-left: auto;
-  flex: 0 0 auto;
+  width: 20px;
+  color: #fff;
 }
 
-.viewPopoverClose:focus-visible,
-.viewTrigger:focus-visible,
-.viewOption:focus-visible,
+.viewCheckHidden {
+  width: 20px;
+}
+
+.viewSeparator {
+  height: 1px;
+  margin: 7px 10px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.searchOverlayTheme {
+  background: #000 !important;
+  color: #fff !important;
+  color-scheme: dark;
+}
+
+.searchHeaderTheme {
+  border-color: #2c2c2e !important;
+  background: rgba(0, 0, 0, 0.96) !important;
+}
+
+.searchFieldTheme {
+  background: #1c1c1e !important;
+  color: #fff !important;
+}
+
+.searchFieldTheme::placeholder {
+  color: #8e8e93;
+}
+
+.searchCancelTheme {
+  color: #ff453a !important;
+}
+
 .backButton:focus-visible,
-.chromeIconButton:focus-visible {
-  outline: 3px solid rgba(91, 61, 245, 0.35);
+.chromeIconButton:focus-visible,
+.viewOption:focus-visible,
+.floatingPill:focus-visible,
+.floatingIcon:focus-visible {
+  outline: 3px solid rgba(255, 69, 58, 0.42);
   outline-offset: 2px;
 }
 
-@media (max-width: 480px) {
-  .viewPopover {
-    top: auto !important;
-    right: max(12px, env(safe-area-inset-right, 0px)) !important;
-    bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 12px) !important;
-    left: max(12px, env(safe-area-inset-left, 0px)) !important;
-    width: auto !important;
-    max-height: min(62dvh, 520px);
-    border-radius: 24px !important;
-    padding: 10px !important;
+@media (max-width: 390px) {
+  .topChrome {
+    gap: 7px !important;
+    padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
   }
 
-  .viewOptions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+  .backButton {
+    max-width: 132px !important;
+    min-height: 44px !important;
+    font-size: 15px !important;
+  }
+
+  .actionsGroup {
+    min-height: 44px !important;
+  }
+
+  .chromeIconButton {
+    width: 46px !important;
+    height: 44px !important;
+  }
+
+  .viewPopover {
+    top: max(70px, calc(env(safe-area-inset-top, 0px) + 58px)) !important;
+    right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    width: min(238px, calc(100vw - 24px)) !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .backButton {
+    max-width: 105px !important;
+    padding-inline: 9px !important;
+  }
+
+  .chromeIconButton {
+    width: 42px !important;
   }
 
   .viewOption {
     min-height: 52px !important;
-    border: 1px solid rgba(15, 23, 42, 0.07) !important;
-    border-radius: 16px !important;
+    font-size: 16px !important;
   }
 }
 
-@media (max-width: 360px) {
-  .topChrome {
-    gap: 5px !important;
-    padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
-    padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
-  }
-
-  .backButton {
-    min-height: 40px !important;
-    padding-inline: 8px !important;
-    font-size: 13px !important;
-  }
-
-  .chromeIconButton {
-    width: 38px !important;
-    height: 40px !important;
-  }
-
-  .viewTrigger {
-    width: 48px !important;
-    min-width: 48px;
-    padding: 0 !important;
-  }
-
-  .viewTriggerLabel {
-    display: none;
-  }
-
-  .viewOptions {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-height: 560px) and (max-width: 480px) {
+@media (max-height: 560px) {
   .viewPopover {
-    max-height: 54dvh;
+    max-height: 66dvh;
   }
 }
