@@ -30,6 +30,7 @@ export default function CalendarioYearView({
   isRefreshing,
   topChrome,
   onOpenMonth,
+  onChangeYear,
 }: {
   fecha: Date
   eventos: EventoCalendario[]
@@ -39,7 +40,6 @@ export default function CalendarioYearView({
   onChangeYear: (year: number) => void
 }) {
   const activeYearRef = useRef<HTMLElement | null>(null)
-  const hasPositionedRef = useRef(false)
   const activeYear = fecha.getFullYear()
 
   const years = useMemo(
@@ -51,10 +51,26 @@ export default function CalendarioYearView({
   )
 
   useEffect(() => {
-    if (hasPositionedRef.current || !activeYearRef.current) return
-    hasPositionedRef.current = true
-    activeYearRef.current.scrollIntoView({ block: 'start' })
-  }, [])
+    activeYearRef.current?.scrollIntoView({ block: 'start' })
+  }, [fecha])
+
+  useEffect(() => {
+    const todayButton = Array.from(document.querySelectorAll('button'))
+      .find((button) => button.textContent?.trim() === 'Hoy')
+
+    if (!todayButton) return
+
+    const handleToday = (event: Event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const currentYear = new Date().getFullYear()
+      if (currentYear !== activeYear) onChangeYear(currentYear)
+      requestAnimationFrame(() => activeYearRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+    }
+
+    todayButton.addEventListener('click', handleToday, true)
+    return () => todayButton.removeEventListener('click', handleToday, true)
+  }, [activeYear, onChangeYear])
 
   return (
     <div className={styles.yearView} aria-busy={isRefreshing || undefined}>
