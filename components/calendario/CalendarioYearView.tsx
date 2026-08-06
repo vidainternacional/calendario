@@ -8,6 +8,7 @@ import {
   endOfWeek,
   endOfYear,
   format,
+  isSameDay,
   isSameMonth,
   isToday,
   startOfMonth,
@@ -17,7 +18,7 @@ import {
 import { es } from 'date-fns/locale'
 import type { ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
-import basic from './CalendarioBasic.module.css'
+import styles from './CalendarioYearView.module.css'
 
 const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
@@ -41,43 +42,55 @@ export default function CalendarioYearView({
   })
 
   return (
-    <div className={basic.yearView} aria-busy={isRefreshing || undefined}>
+    <div className={styles.yearView} aria-busy={isRefreshing || undefined}>
       {topChrome}
-      <header className={basic.yearHeader}>
-        <h1 className={basic.yearTitle}>{format(fecha, 'yyyy')}</h1>
+      <header className={styles.yearHeader}>
+        <h1 className={styles.yearTitle}>{format(fecha, 'yyyy')}</h1>
       </header>
 
-      <div className={basic.yearGrid}>
+      <div className={styles.yearGrid}>
         {months.map((month) => {
           const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
           const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
           const days = eachDayOfInterval({ start, end })
+          const isCurrentMonth = isSameMonth(month, new Date())
           while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
           return (
             <button
               key={monthKey(month)}
-              className={basic.miniMonth}
+              className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
               onClick={(event) => onOpenMonth(month, event.currentTarget)}
               aria-label={`Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
             >
-              <span className={basic.miniMonthName}>{format(month, 'MMMM', { locale: es })}</span>
-              <span className={basic.miniWeekdays} aria-hidden="true">
+              <span className={styles.miniMonthName}>{format(month, 'MMMM', { locale: es })}</span>
+              <span className={styles.miniWeekdays} aria-hidden="true">
                 {MINI_WEEKDAYS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
               </span>
-              <span className={basic.miniGrid}>
+              <span className={styles.miniGrid}>
                 {days.map((day) => {
                   const belongs = isSameMonth(day, month)
-                  const hasEvents = belongs && eventosDelDia(eventos, day).length > 0
+                  const dayEvents = belongs ? eventosDelDia(eventos, day) : []
                   const today = belongs && isToday(day)
+                  const selected = belongs && isSameDay(day, fecha) && !today
+                  const visibleMarks = dayEvents.slice(0, 3)
 
                   return (
                     <span
                       key={day.toISOString()}
-                      className={`${basic.miniDay} ${today ? basic.miniToday : ''}`}
+                      className={`${styles.miniDay} ${selected ? styles.miniSelected : ''} ${today ? styles.miniToday : ''}`}
                     >
                       {belongs ? format(day, 'd') : ''}
-                      {hasEvents && <span className={basic.miniDot} aria-hidden="true" />}
+                      {visibleMarks.length > 0 && (
+                        <span className={styles.eventMarks} aria-hidden="true">
+                          {visibleMarks.map((_, index) => (
+                            <span
+                              key={index}
+                              className={`${styles.eventMark} ${dayEvents.length > 3 && index === 2 ? styles.moreMark : ''}`}
+                            />
+                          ))}
+                        </span>
+                      )}
                     </span>
                   )
                 })}
