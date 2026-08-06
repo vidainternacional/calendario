@@ -2,8 +2,6 @@
 
 import {
   addDays,
-  addMonths,
-  addYears,
   format,
   getDaysInMonth,
   isSameMonth,
@@ -13,7 +11,6 @@ import {
   CalendarDays,
   Check,
   ChevronLeft,
-  ChevronRight,
   Clock3,
   Columns3,
   Grid3X3,
@@ -22,18 +19,18 @@ import {
   Rows3,
   Search,
   SlidersHorizontal,
-  X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
-import CalendarioMonthView from './CalendarioMonthView'
+import CalendarioMonthView, { type MonthDisplayMode } from './CalendarioMonthView'
 import CalendarioMultiDayView from './CalendarioMultiDayView'
 import CalendarioYearView from './CalendarioYearView'
 import NuevoEventoCalendarioModal from './NuevoEventoCalendarioModal'
 import {
   eventKey,
+  eventosDelDia,
   type CalendarioOrigen,
   type EventoCalendario,
   type TimelineDayCount,
@@ -42,18 +39,27 @@ import chrome from './CalendarioChrome.module.css'
 import styles from './CalendarioIOS.module.css'
 
 type CalendarView = 'anio' | 'mes' | 'dia' | 'tres-dias' | 'semana' | 'lista'
+type MonthMenuMode = MonthDisplayMode | 'list'
 
-const VIEW_OPTIONS: Array<{
-  id: CalendarView
+type MenuOption<T extends string> = {
+  id: T
   label: string
   icon: typeof Grid3X3
-}> = [
-  { id: 'anio', label: 'Año', icon: Grid3X3 },
-  { id: 'mes', label: 'Mes', icon: CalendarDays },
+  separated?: boolean
+}
+
+const MONTH_VIEW_OPTIONS: Array<MenuOption<MonthMenuMode>> = [
+  { id: 'compact', label: 'Compacto', icon: SlidersHorizontal },
+  { id: 'stacked', label: 'Apilado', icon: Rows3 },
+  { id: 'details', label: 'Detalles', icon: Grid3X3 },
+  { id: 'list', label: 'Lista', icon: List, separated: true },
+]
+
+const TIMELINE_VIEW_OPTIONS: Array<MenuOption<Exclude<CalendarView, 'anio' | 'lista'>>> = [
   { id: 'dia', label: 'Día', icon: Clock3 },
   { id: 'tres-dias', label: '3 días', icon: Columns3 },
   { id: 'semana', label: 'Semana', icon: Rows3 },
-  { id: 'lista', label: 'Lista', icon: List },
+  { id: 'mes', label: 'Mes', icon: CalendarDays, separated: true },
 ]
 
 export default function CalendarioIOS({
@@ -79,6 +85,7 @@ export default function CalendarioIOS({
 }) {
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<CalendarView>('anio')
+  const [monthDisplay, setMonthDisplay] = useState<MonthMenuMode>('compact')
   const [activeDate, setActiveDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState(new Date())
   const [searchOpen, setSearchOpen] = useState(false)
@@ -88,7 +95,7 @@ export default function CalendarioIOS({
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
 
   const puedeCrear = editableCalendars.length > 0
-  const currentView = VIEW_OPTIONS.find((option) => option.id === view) ?? VIEW_OPTIONS[0]
+  const isMonthContext = view === 'mes' || view === 'lista'
 
   useEffect(() => setMounted(true), [])
 
@@ -146,15 +153,17 @@ export default function CalendarioIOS({
       const date = new Date(event.fecha_inicio)
       const key = format(date, 'yyyy-MM-dd')
       const group = groups.get(key)
-      if (group) {
-        group.events.push(event)
-      } else {
-        groups.set(key, { date, events: [event] })
-      }
+      if (group) group.events.push(event)
+      else groups.set(key, { date, events: [event] })
     }
 
     return [...groups.values()]
   }, [monthEvents])
+
+  const selectedDayEvents = useMemo(
+    () => eventosDelDia(sortedEvents, selectedDay),
+    [selectedDay, sortedEvents],
+  )
 
   const selectedDayForMonth = (month: Date) => {
     if (isSameMonth(selectedDay, month)) return selectedDay
@@ -171,7 +180,7 @@ export default function CalendarioIOS({
     const next = selectedDayForMonth(month)
     setActiveDate(next)
     setSelectedDay(next)
-    setView('mes')
+    setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
   const openDay = (day: Date) => {
@@ -180,58 +189,41 @@ export default function CalendarioIOS({
     setView('dia')
   }
 
-  const changeView = (nextView: CalendarView) => {
-    if (nextView !== 'anio') setActiveDate(selectedDay)
+  const selectDay = (day: Date) => {
+    setSelectedDay(day)
+    setActiveDate(day)
+  }
+
+  const changeMonthView = (nextMode: MonthMenuMode) => {
+    setMonthDisplay(nextMode)
+    setActiveDate(selectedDay)
+    setView(nextMode === 'list' ? 'lista' : 'mes')
+    setViewMenuOpen(false)
+  }
+
+  const changeTimelineView = (nextView: Exclude<CalendarView, 'anio' | 'lista'>) => {
+    setActiveDate(selectedDay)
     setView(nextView)
     setViewMenuOpen(false)
   }
 
   const goBack = () => {
-    if (view === 'mes') {
+    if (view === 'mes' || view === 'lista') {
       setView('anio')
       return
     }
 
-    if (view !== 'anio') setView('mes')
-  }
-
-  const movePeriod = (direction: -1 | 1) => {
-    if (view === 'anio') {
-      setActiveDate((current) => addYears(current, direction))
-      return
-    }
-
-    if (view === 'mes' || view === 'lista') {
-      const nextMonth = addMonths(activeDate, direction)
-      const nextDay = new Date(
-        nextMonth.getFullYear(),
-        nextMonth.getMonth(),
-        Math.min(selectedDay.getDate(), getDaysInMonth(nextMonth)),
-      )
-      setActiveDate(nextDay)
-      setSelectedDay(nextDay)
-      return
-    }
-
-    const step = view === 'dia' ? 1 : view === 'tres-dias' ? 3 : 7
-    const nextDay = addDays(selectedDay, direction * step)
-    setActiveDate(nextDay)
-    setSelectedDay(nextDay)
+    setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
   const goToday = () => {
     const today = new Date()
     setActiveDate(today)
     setSelectedDay(today)
-    if (view === 'anio') setView('mes')
+    if (view === 'anio') setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
-  const selectDay = (day: Date) => {
-    setSelectedDay(day)
-    setActiveDate(day)
-  }
-
-  const backLabel = view === 'mes'
+  const backLabel = view === 'mes' || view === 'lista'
     ? format(activeDate, 'yyyy')
     : format(activeDate, 'MMMM', { locale: es })
 
@@ -249,6 +241,10 @@ export default function CalendarioIOS({
       ? `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 2), 'd MMM', { locale: es })}`
       : `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 6), 'd MMM', { locale: es })}`
 
+  const currentMenuLabel = isMonthContext
+    ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)?.label || 'Compacto'
+    : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)?.label || 'Día'
+
   const topChrome = (
     <div className={`${styles.topChrome} ${chrome.topChrome}`}>
       <div className={chrome.leftSlot}>
@@ -257,41 +253,34 @@ export default function CalendarioIOS({
             type="button"
             className={`${styles.chromePill} ${chrome.backButton}`}
             onClick={goBack}
-            aria-label={view === 'mes' ? 'Volver al año' : 'Volver al mes'}
+            aria-label={view === 'mes' || view === 'lista' ? 'Volver al año' : 'Volver al mes'}
           >
-            <ChevronLeft size={19} />
+            <ChevronLeft size={23} />
             <span className={chrome.backText}>{backLabel}</span>
           </button>
         )}
       </div>
 
-      <div className={`${styles.chromeGroup} ${chrome.periodGroup}`} role="group" aria-label="Cambiar período">
-        <button
-          type="button"
-          className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
-          onClick={() => movePeriod(-1)}
-          aria-label="Período anterior"
-        >
-          <ChevronLeft size={21} />
-        </button>
-        <button
-          type="button"
-          className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
-          onClick={() => movePeriod(1)}
-          aria-label="Período siguiente"
-        >
-          <ChevronRight size={21} />
-        </button>
-      </div>
-
       <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`} role="group" aria-label="Acciones del calendario">
+        {view !== 'anio' && (
+          <button
+            type="button"
+            className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
+            onClick={() => setViewMenuOpen((open) => !open)}
+            aria-label={`Cambiar vista. Vista actual: ${currentMenuLabel}`}
+            aria-expanded={viewMenuOpen}
+            aria-controls="calendar-view-selector"
+          >
+            <SlidersHorizontal size={24} />
+          </button>
+        )}
         <button
           type="button"
           className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
           onClick={() => setSearchOpen(true)}
           aria-label="Buscar eventos"
         >
-          <Search size={22} />
+          <Search size={25} />
         </button>
         {puedeCrear && (
           <button
@@ -300,7 +289,7 @@ export default function CalendarioIOS({
             onClick={() => setNewEventOpen(true)}
             aria-label="Crear evento o recordatorio"
           >
-            <Plus size={25} />
+            <Plus size={28} />
           </button>
         )}
       </div>
@@ -308,14 +297,14 @@ export default function CalendarioIOS({
   )
 
   return (
-    <div className={styles.calendarScreen}>
+    <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
       {view === 'anio' && (
         <CalendarioYearView
           fecha={activeDate}
           eventos={sortedEvents}
           isRefreshing={isRefreshing}
           topChrome={topChrome}
-          onOpenMonth={(month) => openMonth(month)}
+          onOpenMonth={openMonth}
           onChangeYear={(year) => {
             const next = new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28))
             setActiveDate(next)
@@ -328,6 +317,7 @@ export default function CalendarioIOS({
           month={activeDate}
           selectedDay={selectedDay}
           events={sortedEvents}
+          displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
           topChrome={topChrome}
           isRefreshing={isRefreshing}
           dayPanelOpen={false}
@@ -340,8 +330,8 @@ export default function CalendarioIOS({
       {timelineDays && (
         <>
           {topChrome}
-          <div className={styles.headerBlock}>
-            <h1 className={styles.periodTitle}>{timelineTitle}</h1>
+          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme}`}>
+            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme}`}>{timelineTitle}</h1>
           </div>
           <CalendarioMultiDayView
             selectedDay={selectedDay}
@@ -356,106 +346,92 @@ export default function CalendarioIOS({
       {view === 'lista' && (
         <>
           {topChrome}
-          <div className={styles.headerBlock}>
-            <h1 className={styles.periodTitle}>{format(activeDate, 'MMMM yyyy', { locale: es })}</h1>
-            <p className={styles.subTitle}>Eventos y recordatorios del mes</p>
+          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme}`}>
+            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme}`}>{format(activeDate, 'MMMM yyyy', { locale: es })}</h1>
+            <p className={`${styles.subTitle} ${chrome.subTitleTheme}`}>
+              {format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}
+            </p>
           </div>
-          <div className={styles.eventList}>
-            {listGroups.length > 0 ? (
+          <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
+            {selectedDayEvents.length > 0 ? (
+              <section>
+                <div className={`${styles.agendaHeader} ${chrome.agendaHeaderTheme}`}>
+                  <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>Eventos del día</h2>
+                  <span className={`${styles.agendaCount} ${chrome.mutedTheme}`}>{selectedDayEvents.length}</span>
+                </div>
+                {selectedDayEvents.map((event) => (
+                  <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
+                ))}
+              </section>
+            ) : listGroups.length > 0 ? (
               listGroups.map((group) => (
                 <section key={format(group.date, 'yyyy-MM-dd')}>
-                  <div className={styles.agendaHeader}>
-                    <h2 className={styles.agendaDate}>{format(group.date, 'EEEE d', { locale: es })}</h2>
-                    <span className={styles.agendaCount}>{group.events.length}</span>
+                  <div className={`${styles.agendaHeader} ${chrome.agendaHeaderTheme}`}>
+                    <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>{format(group.date, 'EEEE d', { locale: es })}</h2>
+                    <span className={`${styles.agendaCount} ${chrome.mutedTheme}`}>{group.events.length}</span>
                   </div>
                   {group.events.map((event) => (
-                    <CalendarioEventRow
-                      key={eventKey(event)}
-                      evento={event}
-                      onOpen={setSelectedEvent}
-                    />
+                    <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
                   ))}
                 </section>
               ))
             ) : (
-              <div className={styles.emptyState}>No hay eventos ni recordatorios en este mes.</div>
+              <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No hay eventos ni recordatorios en este mes.</div>
             )}
           </div>
         </>
       )}
 
       <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>
-        <button type="button" className={styles.floatingPill} onClick={goToday}>Hoy</button>
+        <button type="button" className={`${styles.floatingPill} ${chrome.floatingPill}`} onClick={goToday}>Hoy</button>
         <div className={`${styles.floatingGroup} ${chrome.floatingGroup}`}>
           <button
             type="button"
-            className={`${styles.floatingIcon} ${chrome.viewTrigger}`}
-            onClick={() => setViewMenuOpen(true)}
-            aria-label={`Cambiar vista. Vista actual: ${currentView.label}`}
-            aria-expanded={viewMenuOpen}
-            aria-controls="calendar-view-selector"
-          >
-            <SlidersHorizontal size={21} />
-            <span className={chrome.viewTriggerLabel}>{currentView.label}</span>
-          </button>
-          <button
-            type="button"
-            className={styles.floatingIcon}
+            className={`${styles.floatingIcon} ${chrome.floatingIcon}`}
             onClick={onOpenCalendars}
             aria-label="Abrir calendarios"
           >
-            <CalendarDays size={22} />
+            <CalendarDays size={24} />
           </button>
         </div>
       </div>
 
-      {mounted && viewMenuOpen && createPortal(
+      {mounted && viewMenuOpen && view !== 'anio' && createPortal(
         <>
           <button
             type="button"
-            className={styles.popoverBackdrop}
+            className={`${styles.popoverBackdrop} ${chrome.popoverBackdrop}`}
             onClick={() => setViewMenuOpen(false)}
             aria-label="Cerrar selector de vista"
           />
           <div
             id="calendar-view-selector"
             className={`${styles.viewPopover} ${chrome.viewPopover}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="calendar-view-selector-title"
+            role="menu"
+            aria-label="Vistas del calendario"
           >
-            <header className={chrome.viewPopoverHeader}>
-              <div className={chrome.viewPopoverHeading}>
-                <h2 id="calendar-view-selector-title">Vista del calendario</h2>
-                <p>Actual: {currentView.label}</p>
-              </div>
-              <button
-                type="button"
-                className={chrome.viewPopoverClose}
-                onClick={() => setViewMenuOpen(false)}
-                aria-label="Cerrar selector de vista"
-              >
-                <X size={20} />
-              </button>
-            </header>
-
-            <div className={chrome.viewOptions} role="menu" aria-label="Vistas disponibles">
-              {VIEW_OPTIONS.map((option) => {
+            <div className={chrome.viewOptions}>
+              {(isMonthContext ? MONTH_VIEW_OPTIONS : TIMELINE_VIEW_OPTIONS).map((option) => {
                 const Icon = option.icon
-                const active = option.id === view
+                const active = isMonthContext ? option.id === monthDisplay : option.id === view
                 return (
-                  <button
-                    type="button"
-                    key={option.id}
-                    className={`${styles.viewOption} ${chrome.viewOption} ${active ? styles.viewOptionActive : ''}`}
-                    onClick={() => changeView(option.id)}
-                    role="menuitemradio"
-                    aria-checked={active}
-                  >
-                    <Icon size={19} />
-                    <span>{option.label}</span>
-                    {active && <Check size={18} className={chrome.viewCheck} aria-hidden="true" />}
-                  </button>
+                  <div key={option.id}>
+                    {option.separated && <div className={chrome.viewSeparator} aria-hidden="true" />}
+                    <button
+                      type="button"
+                      className={`${styles.viewOption} ${chrome.viewOption} ${active ? `${styles.viewOptionActive} ${chrome.viewOptionActive}` : ''}`}
+                      onClick={() => {
+                        if (isMonthContext) changeMonthView(option.id as MonthMenuMode)
+                        else changeTimelineView(option.id as Exclude<CalendarView, 'anio' | 'lista'>)
+                      }}
+                      role="menuitemradio"
+                      aria-checked={active}
+                    >
+                      {active ? <Check size={20} className={chrome.viewCheck} /> : <span className={chrome.viewCheckHidden} />}
+                      <Icon size={24} />
+                      <span>{option.label}</span>
+                    </button>
+                  </div>
                 )
               })}
             </div>
@@ -465,12 +441,24 @@ export default function CalendarioIOS({
       )}
 
       {mounted && searchOpen && createPortal(
-        <div className={styles.searchOverlay} role="dialog" aria-modal="true" aria-label="Buscar eventos y recordatorios">
-          <header className={styles.searchHeader}>
-            <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} className={styles.searchField} placeholder="Buscar" />
-            <button className={styles.searchCancel} onClick={() => setSearchOpen(false)}>Cancelar</button>
+        <div className={`${styles.searchOverlay} ${chrome.searchOverlayTheme}`} role="dialog" aria-modal="true" aria-label="Buscar eventos y recordatorios">
+          <header className={`${styles.searchHeader} ${chrome.searchHeaderTheme}`}>
+            <input
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className={`${styles.searchField} ${chrome.searchFieldTheme}`}
+              placeholder="Buscar"
+            />
+            <button
+              type="button"
+              className={`${styles.searchCancel} ${chrome.searchCancelTheme}`}
+              onClick={() => setSearchOpen(false)}
+            >
+              Cancelar
+            </button>
           </header>
-          <div className={styles.eventList}>
+          <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
             {searchResults.length > 0
               ? searchResults.map((event) => (
                   <CalendarioEventRow
@@ -482,16 +470,13 @@ export default function CalendarioIOS({
                     }}
                   />
                 ))
-              : <div className={styles.emptyState}>No se encontraron resultados.</div>}
+              : <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No se encontraron resultados.</div>}
           </div>
         </div>,
         document.body,
       )}
 
-      <CalendarioEventDetail
-        event={selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-      />
+      <CalendarioEventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />
 
       <NuevoEventoCalendarioModal
         isOpen={newEventOpen}
