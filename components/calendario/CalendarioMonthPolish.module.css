@@ -8,7 +8,6 @@
   background: #fff;
   color: #111827;
   color-scheme: light;
-  scroll-snap-type: y proximity;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -20,8 +19,6 @@
   height: calc(64px + env(safe-area-inset-top, 0px));
   min-height: calc(64px + env(safe-area-inset-top, 0px));
   background: #fff;
-  -webkit-backdrop-filter: saturate(180%) blur(22px);
-  backdrop-filter: saturate(180%) blur(22px);
 }
 
 .monthPolish :global([class*='topChrome']) {
@@ -47,6 +44,8 @@
   border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
   background: #fff !important;
   color: #6f7787 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .monthPolish :global([class*='actionsGroup']),
@@ -102,18 +101,17 @@
 
 .activeMonthSection {
   scroll-margin-top: 0;
-  scroll-snap-align: center;
-  scroll-snap-stop: normal;
 }
 
 .monthPolish :global([class*='monthScroll']) {
   padding-top: 0 !important;
   padding-bottom: calc(156px + env(safe-area-inset-bottom, 0px));
+  scroll-behavior: auto !important;
 }
 
 .monthPolish :global([class*='monthSection']) {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 620px;
+  content-visibility: visible !important;
+  contain: layout paint style;
 }
 
 .monthPolish :global([class*='monthHeader']) {
@@ -198,6 +196,15 @@
   opacity: 1 !important;
 }
 
+.monthPolish :global([class*='dayNumber']) {
+  box-sizing: border-box !important;
+  display: inline-grid !important;
+  place-content: center !important;
+  line-height: 1 !important;
+  vertical-align: top !important;
+  transform: translateZ(0);
+}
+
 .monthPolish :global([class*='daySelected']) {
   border: 2px solid rgba(91, 61, 245, 0.75) !important;
   background: transparent !important;
@@ -218,6 +225,14 @@
   background: #5b3df5 !important;
   box-shadow: none !important;
   color: #fff !important;
+}
+
+.monthPolish :global([class*='monthDay']) {
+  will-change: auto !important;
+}
+
+.monthPolish :global([class*='monthDay']):active {
+  transform: none !important;
 }
 
 .monthPolish ~ :global([class*='floatingBar']) {
@@ -256,6 +271,5 @@
 @media (prefers-reduced-motion: reduce) {
   .monthPolish {
     scroll-behavior: auto;
-    scroll-snap-type: none;
   }
 }
