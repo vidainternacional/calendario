@@ -8,6 +8,7 @@
   background: #fff;
   color: #111827;
   color-scheme: light;
+  scroll-snap-type: y proximity;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -101,6 +102,8 @@
 
 .activeMonthSection {
   scroll-margin-top: 0;
+  scroll-snap-align: center;
+  scroll-snap-stop: normal;
 }
 
 .monthPolish :global([class*='monthScroll']) {
@@ -125,10 +128,18 @@
 }
 
 .monthPolish :global([class*='eventList']),
+.monthPolish :global([class*='eventList']) section,
 .monthPolish :global([class*='agendaHeader']),
-.monthPolish :global([class*='eventRow']) {
+.monthPolish :global([class*='eventRow']),
+.monthPolish :global([class*='emptyState']) {
   background: #fff !important;
   color: #111827 !important;
+  color-scheme: light !important;
+}
+
+.monthPolish :global([class*='eventList']) *,
+.monthPolish :global([class*='agendaHeader']) * {
+  color-scheme: light !important;
 }
 
 .monthPolish :global([class*='agendaHeader']) {
@@ -153,6 +164,18 @@
   min-height: 72px;
   padding: 12px max(24px, env(safe-area-inset-right, 0px)) 12px max(24px, env(safe-area-inset-left, 0px)) !important;
   border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+.monthPolish :global([class*='eventTitle']),
+.monthPolish :global([class*='eventTime']),
+.monthPolish :global([class*='eventLocation']) {
+  color: #111827 !important;
+}
+
+.monthPolish :global([class*='eventMeta']) {
+  opacity: 1 !important;
 }
 
 .monthPolish ~ :global([class*='floatingBar']) {
@@ -191,5 +214,6 @@
 @media (prefers-reduced-motion: reduce) {
   .monthPolish {
     scroll-behavior: auto;
+    scroll-snap-type: none;
   }
 }
