@@ -141,25 +141,6 @@ export default function CalendarioIOS({
     )
   }, [sortedEvents, query])
 
-  const monthEvents = useMemo(
-    () => sortedEvents.filter((event) => isSameMonth(new Date(event.fecha_inicio), activeDate)),
-    [activeDate, sortedEvents],
-  )
-
-  const listGroups = useMemo(() => {
-    const groups = new Map<string, { date: Date; events: EventoCalendario[] }>()
-
-    for (const event of monthEvents) {
-      const date = new Date(event.fecha_inicio)
-      const key = format(date, 'yyyy-MM-dd')
-      const group = groups.get(key)
-      if (group) group.events.push(event)
-      else groups.set(key, { date, events: [event] })
-    }
-
-    return [...groups.values()]
-  }, [monthEvents])
-
   const selectedDayEvents = useMemo(
     () => eventosDelDia(sortedEvents, selectedDay),
     [selectedDay, sortedEvents],
@@ -236,7 +217,7 @@ export default function CalendarioIOS({
         : null
 
   const timelineTitle = view === 'dia'
-    ? format(selectedDay, "EEEE d 'de' MMMM", { locale: es })
+    ? format(selectedDay, 'EEEE – d MMM yyyy', { locale: es })
     : view === 'tres-dias'
       ? `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 2), 'd MMM', { locale: es })}`
       : `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 6), 'd MMM', { locale: es })}`
@@ -244,6 +225,26 @@ export default function CalendarioIOS({
   const currentMenuLabel = isMonthContext
     ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)?.label || 'Compacto'
     : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)?.label || 'Día'
+
+  const listFooter = (
+    <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
+      <section>
+        <div className={`${styles.agendaHeader} ${chrome.agendaHeaderTheme}`}>
+          <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>
+            {format(selectedDay, 'EEEE d', { locale: es })}
+          </h2>
+          <span className={`${styles.agendaCount} ${chrome.mutedTheme}`}>{selectedDayEvents.length}</span>
+        </div>
+        {selectedDayEvents.length > 0 ? (
+          selectedDayEvents.map((event) => (
+            <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
+          ))
+        ) : (
+          <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No hay eventos ni recordatorios para esta fecha.</div>
+        )}
+      </section>
+    </div>
+  )
 
   const topChrome = (
     <div className={`${styles.topChrome} ${chrome.topChrome}`}>
@@ -330,8 +331,10 @@ export default function CalendarioIOS({
       {timelineDays && (
         <>
           {topChrome}
-          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme}`}>
-            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme}`}>{timelineTitle}</h1>
+          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme} ${view === 'dia' ? chrome.dayHeaderBlock : ''}`}>
+            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme} ${view === 'dia' ? chrome.dayPeriodTitle : ''}`}>
+              {timelineTitle}
+            </h1>
           </div>
           <CalendarioMultiDayView
             selectedDay={selectedDay}
@@ -344,42 +347,21 @@ export default function CalendarioIOS({
       )}
 
       {view === 'lista' && (
-        <>
-          {topChrome}
-          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme}`}>
-            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme}`}>{format(activeDate, 'MMMM yyyy', { locale: es })}</h1>
-            <p className={`${styles.subTitle} ${chrome.subTitleTheme}`}>
-              {format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}
-            </p>
-          </div>
-          <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
-            {selectedDayEvents.length > 0 ? (
-              <section>
-                <div className={`${styles.agendaHeader} ${chrome.agendaHeaderTheme}`}>
-                  <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>Eventos del día</h2>
-                  <span className={`${styles.agendaCount} ${chrome.mutedTheme}`}>{selectedDayEvents.length}</span>
-                </div>
-                {selectedDayEvents.map((event) => (
-                  <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
-                ))}
-              </section>
-            ) : listGroups.length > 0 ? (
-              listGroups.map((group) => (
-                <section key={format(group.date, 'yyyy-MM-dd')}>
-                  <div className={`${styles.agendaHeader} ${chrome.agendaHeaderTheme}`}>
-                    <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>{format(group.date, 'EEEE d', { locale: es })}</h2>
-                    <span className={`${styles.agendaCount} ${chrome.mutedTheme}`}>{group.events.length}</span>
-                  </div>
-                  {group.events.map((event) => (
-                    <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
-                  ))}
-                </section>
-              ))
-            ) : (
-              <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No hay eventos ni recordatorios en este mes.</div>
-            )}
-          </div>
-        </>
+        <CalendarioMonthView
+          month={activeDate}
+          selectedDay={selectedDay}
+          events={sortedEvents}
+          displayMode="compact"
+          topChrome={topChrome}
+          isRefreshing={isRefreshing}
+          dayPanelOpen={false}
+          showFollowingMonth={false}
+          openDayOnSelect={false}
+          footer={listFooter}
+          onSelectDay={selectDay}
+          onOpenDay={openDay}
+          onOpenEvent={setSelectedEvent}
+        />
       )}
 
       <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>

@@ -1,9 +1,9 @@
 'use client'
 
-import { addDays, differenceInMinutes, format, isSameDay, startOfDay } from 'date-fns'
+import { addDays, differenceInMinutes, format, isSameDay, startOfDay, startOfWeek } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { BellRing } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   eventColor,
   eventKey,
@@ -83,10 +83,21 @@ export default function CalendarioMultiDayView({
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const viewportRef = useRef<HTMLDivElement>(null)
+  const [now, setNow] = useState(() => new Date())
   const days = useMemo(
     () => Array.from({ length: daysVisible }, (_, index) => addDays(selectedDay, index)),
     [selectedDay, daysVisible],
   )
+  const headerDays = useMemo(() => {
+    if (daysVisible !== 1) return days
+    const weekStart = startOfWeek(selectedDay, { weekStartsOn: 0 })
+    return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index))
+  }, [days, daysVisible, selectedDay])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     if (!viewportRef.current) return
@@ -98,17 +109,19 @@ export default function CalendarioMultiDayView({
     (event) => Boolean(event.todo_el_dia) && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)),
   )
   const minimumWidth = daysVisible >= 5 ? TIME_COLUMN_WIDTH + daysVisible * MIN_DAY_WIDTH : undefined
-  const gridTemplate = `${TIME_COLUMN_WIDTH}px repeat(${daysVisible}, minmax(0, 1fr))`
+  const headerGridTemplate = `${TIME_COLUMN_WIDTH}px repeat(${headerDays.length}, minmax(0, 1fr))`
+  const currentMinutes = differenceInMinutes(now, startOfDay(now))
+  const showCurrentTime = days.some((day) => isSameDay(day, now))
 
   return (
     <section className={styles.surface} aria-label={daysVisible === 1 ? 'Vista de un día' : `Vista de ${daysVisible} días`}>
       <div className={styles.horizontalScroller}>
         <div className={styles.canvas} style={{ minWidth: minimumWidth ? `${minimumWidth}px` : '100%' }}>
-          <header className={styles.daysHeader} style={{ gridTemplateColumns: gridTemplate }}>
+          <header className={styles.daysHeader} style={{ gridTemplateColumns: headerGridTemplate }}>
             <div className={styles.timeSpacer} />
-            {days.map((day) => {
+            {headerDays.map((day) => {
               const isSelected = isSameDay(day, selectedDay)
-              const isCurrentDay = isSameDay(day, new Date())
+              const isCurrentDay = isSameDay(day, now)
 
               return (
                 <button
@@ -160,6 +173,17 @@ export default function CalendarioMultiDayView({
                   </span>
                 ))}
               </div>
+
+              {showCurrentTime && (
+                <div
+                  className={styles.currentTimeLine}
+                  style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px` }}
+                  aria-hidden="true"
+                >
+                  <span className={styles.currentTimeLabel}>{format(now, 'h:mm')}</span>
+                  <span className={styles.currentTimeDot} />
+                </div>
+              )}
 
               <div className={styles.columns} style={{ gridTemplateColumns: `repeat(${daysVisible}, minmax(0, 1fr))` }}>
                 {days.map((day) => {
