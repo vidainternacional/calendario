@@ -1,14 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Check, Info, Loader2, X } from 'lucide-react'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { Check, Info, Loader2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import type { EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioSourcesPanel.module.css'
-import native from './CalendarioNativeUX.module.css'
 
 type CalendarSource = {
   calendar_id: string
@@ -97,6 +96,18 @@ export default function CalendarioSourcesPanel({
 
   useEffect(() => setMounted(true), [])
 
+  const closeDetails = useCallback(() => {
+    setSelectedSource(null)
+    setAccessDetails(null)
+    setDetailLoading(false)
+  }, [])
+
+  const closePanel = useCallback(() => {
+    closeDetails()
+    setItemNotice('')
+    onClose()
+  }, [closeDetails, onClose])
+
   const load = useCallback(async () => {
     if (!isOpen) return
     setLoading(true)
@@ -143,12 +154,22 @@ export default function CalendarioSourcesPanel({
 
   useEffect(() => {
     if (!isOpen) return
+
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      if (selectedSource) closeDetails()
+      else closePanel()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
       document.body.style.overflow = overflow
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen])
+  }, [closeDetails, closePanel, isOpen, selectedSource])
 
   const groups = useMemo(() => {
     const map = new Map<string, CalendarSource[]>()
@@ -160,6 +181,7 @@ export default function CalendarioSourcesPanel({
   }, [sources])
 
   const unreadCount = changes.filter((change) => !change.change_reads || change.change_reads.length === 0).length
+  const visibleCount = sources.filter((source) => source.visible).length
 
   async function toggleVisibility(source: CalendarSource) {
     setSavingId(source.calendar_id)
@@ -175,7 +197,9 @@ export default function CalendarioSourcesPanel({
       console.error('[CalendarioSourcesPanel] visibility', updateError)
       setError('No fue posible cambiar la visibilidad.')
     } else {
-      setSources((current) => current.map((item) => item.calendar_id === source.calendar_id ? { ...item, visible: next } : item))
+      setSources((current) => current.map((item) => (
+        item.calendar_id === source.calendar_id ? { ...item, visible: next } : item
+      )))
       onVisibilityChanged()
     }
     setSavingId(null)
@@ -210,7 +234,11 @@ export default function CalendarioSourcesPanel({
       .upsert({ user_id: userId, change_id: change.id }, { onConflict: 'user_id,change_id' })
 
     if (!readError) {
-      setChanges((current) => current.map((item) => item.id === change.id ? { ...item, change_reads: [{ read_at: new Date().toISOString() }] } : item))
+      setChanges((current) => current.map((item) => (
+        item.id === change.id
+          ? { ...item, change_reads: [{ read_at: new Date().toISOString() }] }
+          : item
+      )))
     }
   }
 
@@ -248,50 +276,116 @@ export default function CalendarioSourcesPanel({
   if (!mounted || !isOpen) return null
 
   return createPortal(
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="calendar-sources-title" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <div
+      className={styles.overlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="calendar-sources-title"
+      onMouseDown={(event) => event.target === event.currentTarget && closePanel()}
+    >
       <section className={styles.sheet}>
+        <span className={styles.grabber} aria-hidden="true" />
+
         <header className={styles.header}>
-          <div>
-            <h2 id="calendar-sources-title">Calendarios</h2>
-            <p>Elige qué fuentes aparecen en todas las vistas.</p>
-          </div>
-          <button className={styles.close} onClick={onClose} aria-label="Cerrar"><X size={20} /></button>
+          <span className={styles.headerSpacer} aria-hidden="true" />
+          <h2 id="calendar-sources-title">Calendarios</h2>
+          <button type="button" className={styles.doneButton} onClick={closePanel}>Listo</button>
         </header>
 
-        <div className={styles.tabs}>
-          <button className={tab === 'calendars' ? styles.tabActive : ''} onClick={() => setTab('calendars')}>Calendarios</button>
-          <button className={tab === 'changes' ? styles.tabActive : ''} onClick={() => setTab('changes')}>
-            Cambios {unreadCount > 0 && <span>{unreadCount}</span>}
+        <p className={styles.intro}>
+          {sources.length > 0
+            ? `${visibleCount} de ${sources.length} calendarios visibles`
+            : 'Elige los calendarios que aparecerán en todas las vistas.'}
+        </p>
+
+        <div className={styles.tabs} role="tablist" aria-label="Contenido del panel">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'calendars'}
+            className={tab === 'calendars' ? styles.tabActive : ''}
+            onClick={() => {
+              setTab('calendars')
+              setItemNotice('')
+            }}
+          >
+            Calendarios
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'changes'}
+            className={tab === 'changes' ? styles.tabActive : ''}
+            onClick={() => {
+              setTab('changes')
+              setItemNotice('')
+            }}
+          >
+            Actividad {unreadCount > 0 && <span>{unreadCount}</span>}
           </button>
         </div>
 
-        {itemNotice && <p className={native.feedUnavailable}>{itemNotice}</p>}
+        {itemNotice && <p className={styles.notice} role="status">{itemNotice}</p>}
 
         <div className={styles.body}>
           {loading ? (
-            <div className={styles.loading}><Loader2 size={22} className="animate-spin" /> Cargando…</div>
+            <div className={styles.loading} role="status">
+              <Loader2 size={22} className="animate-spin" aria-hidden="true" />
+              Cargando calendarios…
+            </div>
           ) : error ? (
-            <p className={styles.error}>{error}</p>
+            <p className={styles.error} role="alert">{error}</p>
           ) : tab === 'calendars' ? (
-            groups.map(([group, groupItems]) => (
+            groups.length > 0 ? groups.map(([group, groupItems]) => (
               <section key={group} className={styles.group}>
                 <h3>{GROUP_LABELS[group] || group}</h3>
-                {groupItems.map((source) => (
-                  <div key={source.calendar_id} className={styles.sourceRow}>
-                    <button className={styles.visibility} onClick={() => toggleVisibility(source)} disabled={savingId === source.calendar_id} aria-label={`${source.visible ? 'Ocultar' : 'Mostrar'} ${source.calendars?.nombre || 'calendario'}`}>
-                      <span className={styles.colorDot} style={{ backgroundColor: source.calendars?.color || '#5B3DF5' }}>
-                        {source.visible && <Check size={13} />}
-                      </span>
-                      <span className={styles.sourceText}>
-                        <strong>{source.calendars?.nombre || 'Calendario'}</strong>
-                        <small>{source.can_edit ? 'Puede editar' : 'Solo lectura'}</small>
-                      </span>
-                    </button>
-                    <button className={styles.infoButton} onClick={() => openDetails(source)} aria-label="Información del calendario"><Info size={18} /></button>
-                  </div>
-                ))}
+                {groupItems.map((source) => {
+                  const sourceName = source.calendars?.nombre || 'Calendario'
+                  const sourceColor = source.calendars?.color || '#5B3DF5'
+                  const saving = savingId === source.calendar_id
+
+                  return (
+                    <div key={source.calendar_id} className={styles.sourceRow}>
+                      <button
+                        type="button"
+                        className={styles.visibility}
+                        onClick={() => toggleVisibility(source)}
+                        disabled={saving}
+                        aria-pressed={source.visible}
+                        aria-label={`${source.visible ? 'Ocultar' : 'Mostrar'} ${sourceName}`}
+                      >
+                        <span
+                          className={`${styles.colorDot} ${!source.visible ? styles.colorDotHidden : ''}`}
+                          style={{ backgroundColor: sourceColor }}
+                          aria-hidden="true"
+                        >
+                          {saving
+                            ? <Loader2 size={13} className="animate-spin" />
+                            : source.visible && <Check size={14} />}
+                        </span>
+                        <span className={styles.sourceText}>
+                          <strong>{sourceName}</strong>
+                          <small>
+                            {source.can_edit ? 'Puede crear y editar' : 'Solo lectura'}
+                            {!source.visible ? ' · Oculto' : ''}
+                          </small>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.infoButton}
+                        onClick={() => openDetails(source)}
+                        aria-label={`Información de ${sourceName}`}
+                      >
+                        <Info size={20} aria-hidden="true" />
+                      </button>
+                    </div>
+                  )
+                })}
               </section>
-            ))
+            )) : (
+              <div className={styles.empty}>No hay calendarios disponibles para esta cuenta.</div>
+            )
           ) : changes.length > 0 ? (
             <div className={styles.changeList}>
               {changes.map((change) => {
@@ -305,25 +399,36 @@ export default function CalendarioSourcesPanel({
                     tabIndex={0}
                     onClick={() => openChange(change)}
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') openChange(change)
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        openChange(change)
+                      }
                     }}
                     aria-label={`Abrir cambio: ${change.summary}`}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ backgroundColor: change.calendars?.color || '#5B3DF5' }}>
+                    <span
+                      className={styles.avatar}
+                      style={{ backgroundColor: change.calendars?.color || '#5B3DF5' }}
+                      aria-hidden="true"
+                    >
                       {initials(actor)}
                     </span>
-                    <div>
+                    <div className={styles.changeCopy}>
                       <strong>{change.summary}</strong>
-                      <small>{actor} · {formatDistanceToNowStrict(new Date(change.created_at), { addSuffix: true, locale: es })}</small>
+                      <small>
+                        {actor} · {formatDistanceToNowStrict(new Date(change.created_at), { addSuffix: true, locale: es })}
+                      </small>
                     </div>
                     {unread && (
                       <button
+                        type="button"
+                        className={styles.readButton}
                         onClick={(event) => {
                           event.stopPropagation()
                           void markRead(change)
                         }}
                       >
-                        OK
+                        Leído
                       </button>
                     )}
                   </article>
@@ -331,45 +436,84 @@ export default function CalendarioSourcesPanel({
               })}
             </div>
           ) : (
-            <div className={styles.empty}>Todavía no hay cambios compartidos.</div>
+            <div className={styles.empty}>Todavía no hay actividad compartida.</div>
           )}
         </div>
 
         {selectedSource && (
-          <div className={styles.detailCard}>
-            <button className={styles.detailClose} onClick={() => { setSelectedSource(null); setAccessDetails(null) }} aria-label="Cerrar detalles"><X size={17} /></button>
-            <span className={styles.largeDot} style={{ backgroundColor: selectedSource.calendars?.color || '#5B3DF5' }} />
-            <h3>{selectedSource.calendars?.nombre}</h3>
-            <p>{selectedSource.can_edit ? 'Puede crear y editar eventos y recordatorios.' : 'Este calendario es de solo lectura para su cuenta.'}</p>
+          <div
+            className={styles.detailBackdrop}
+            onMouseDown={(event) => event.target === event.currentTarget && closeDetails()}
+          >
+            <section
+              className={styles.detailCard}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="calendar-detail-title"
+            >
+              <header className={styles.detailHeader}>
+                <span aria-hidden="true" />
+                <h3 id="calendar-detail-title">Información</h3>
+                <button type="button" className={styles.detailClose} onClick={closeDetails}>Listo</button>
+              </header>
 
-            {detailLoading ? (
-              <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500"><Loader2 size={17} className="animate-spin" /> Cargando acceso…</div>
-            ) : accessDetails ? (
-              <div className="mt-4 space-y-4 text-left">
-                <section>
-                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Propietario</h4>
-                  {accessDetails.owner ? (
-                    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">{initials(accessDetails.owner.name)}</span>
-                      <div><strong className="block text-sm text-slate-900">{accessDetails.owner.name}</strong><small className="text-slate-500">Propietario del calendario</small></div>
-                    </div>
-                  ) : <p className="text-sm text-slate-500">Sin propietario asignado.</p>}
-                </section>
-
-                <section>
-                  <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Personas con acceso</h4>
-                  <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
-                    {accessDetails.members.map((member) => (
-                      <div key={member.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-2.5">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">{initials(member.name)}</span>
-                        <strong className="min-w-0 flex-1 truncate text-sm text-slate-800">{member.name}</strong>
-                        <small className="text-xs text-slate-500">{member.can_edit ? 'Edita' : 'Lee'}</small>
-                      </div>
-                    ))}
+              <div className={styles.detailBody}>
+                <div className={styles.detailSummary}>
+                  <span
+                    className={styles.largeDot}
+                    style={{ backgroundColor: selectedSource.calendars?.color || '#5B3DF5' }}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <strong>{selectedSource.calendars?.nombre || 'Calendario'}</strong>
+                    <p>
+                      {selectedSource.can_edit
+                        ? 'Puede crear y editar eventos y recordatorios.'
+                        : 'Este calendario es de solo lectura para su cuenta.'}
+                    </p>
                   </div>
-                </section>
+                </div>
+
+                {detailLoading ? (
+                  <div className={styles.loading} role="status">
+                    <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+                    Cargando acceso…
+                  </div>
+                ) : accessDetails ? (
+                  <>
+                    <section className={styles.accessSection}>
+                      <h4>Propietario</h4>
+                      {accessDetails.owner ? (
+                        <div className={styles.accessPerson}>
+                          <span className={styles.accessAvatar} aria-hidden="true">
+                            {initials(accessDetails.owner.name)}
+                          </span>
+                          <strong>{accessDetails.owner.name}</strong>
+                          <small>Propietario</small>
+                        </div>
+                      ) : (
+                        <p className={styles.accessEmpty}>Sin propietario asignado.</p>
+                      )}
+                    </section>
+
+                    <section className={styles.accessSection}>
+                      <h4>Personas con acceso</h4>
+                      {accessDetails.members.length > 0 ? accessDetails.members.map((member) => (
+                        <div key={member.id} className={styles.accessPerson}>
+                          <span className={styles.accessAvatar} aria-hidden="true">
+                            {initials(member.name)}
+                          </span>
+                          <strong>{member.name}</strong>
+                          <small>{member.can_edit ? 'Puede editar' : 'Solo lectura'}</small>
+                        </div>
+                      )) : (
+                        <p className={styles.accessEmpty}>No hay otras personas con acceso.</p>
+                      )}
+                    </section>
+                  </>
+                ) : null}
               </div>
-            ) : null}
+            </section>
           </div>
         )}
       </section>
