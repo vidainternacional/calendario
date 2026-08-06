@@ -1,32 +1,52 @@
 .eventCompact {
   display: flex;
-  min-height: 8px;
+  min-height: 7px;
   align-items: center;
   justify-content: center;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .eventSingleDot {
   display: block;
   width: 5px;
   height: 5px;
+  flex: 0 0 5px;
   border-radius: 50%;
 }
 
 .eventFusion {
-  display: flex;
+  display: inline-flex;
+  width: auto;
+  max-width: 30px;
   height: 5px;
-  min-width: 18px;
-  max-width: 34px;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.08);
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .eventFusionSegment {
   display: block;
-  min-width: 3px;
-  height: 100%;
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.eventFusionSegment:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.eventFusionSegment:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+.eventFusionSegment:only-child {
+  border-radius: 50%;
 }
 
 .monthDensity :global([class*='weekdays']) {
@@ -51,6 +71,9 @@
 }
 
 .monthDensity :global([class*='monthDay']) {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
   padding: 5px 2px 3px !important;
 }
 
@@ -75,13 +98,73 @@
 
 .monthDensity :global([class*='eventBars']),
 .monthDensity :global([class*='eventDetails']) {
-  margin-top: 3px !important;
+  box-sizing: border-box !important;
+  width: calc(100% - 8px) !important;
+  max-width: calc(100% - 8px) !important;
+  min-width: 0 !important;
+  margin: 3px 4px 0 !important;
+  overflow: hidden !important;
   gap: 2px !important;
 }
 
-.monthDensity :global([class*='monthWeekRowDetails']),
-.monthDensity :global([class*='monthDayDetails']) {
-  min-height: 96px !important;
+.monthDensity :global([class*='eventBars']) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.monthDensity :global([class*='eventBar']) {
+  display: block !important;
+  width: 100% !important;
+  height: 3px !important;
+  min-height: 3px !important;
+  flex: 0 0 3px !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+.monthDensity :global([class*='eventDetails']) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.monthDensity :global([class*='eventChip']) {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  padding: 3px 3px 3px 4px !important;
+  font-size: 8px !important;
+  line-height: 1.05 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.monthDensity :global([class*='eventMore']) {
+  display: block !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.monthDensity[data-display-mode='compact'] :global([class*='monthWeekRow']),
+.monthDensity[data-display-mode='compact'] :global([class*='monthDay']),
+.monthDensity[data-display-mode='compact'] :global([class*='monthDayEmpty']),
+.monthDensity[data-display-mode='stacked'] :global([class*='monthWeekRow']),
+.monthDensity[data-display-mode='stacked'] :global([class*='monthDay']),
+.monthDensity[data-display-mode='stacked'] :global([class*='monthDayEmpty']),
+.monthDensity[data-display-mode='details'] :global([class*='monthWeekRow']),
+.monthDensity[data-display-mode='details'] :global([class*='monthDay']),
+.monthDensity[data-display-mode='details'] :global([class*='monthDayEmpty']) {
+  min-height: 68px !important;
+  height: 68px !important;
 }
 
 @media (max-width: 390px) {
@@ -89,6 +172,7 @@
   .monthDensity :global([class*='monthDay']),
   .monthDensity :global([class*='monthDayEmpty']) {
     min-height: 64px !important;
+    height: 64px !important;
   }
 
   .monthDensity :global([class*='dayNumber']) {
@@ -98,9 +182,15 @@
     line-height: 30px !important;
   }
 
-  .monthDensity :global([class*='monthWeekRowDetails']),
-  .monthDensity :global([class*='monthDayDetails']) {
-    min-height: 92px !important;
+  .eventFusion {
+    max-width: 24px;
+    height: 4px;
+  }
+
+  .eventFusionSegment {
+    width: 4px;
+    height: 4px;
+    flex-basis: 4px;
   }
 }
 
@@ -109,6 +199,7 @@
   .monthDensity :global([class*='monthDay']),
   .monthDensity :global([class*='monthDayEmpty']) {
     min-height: 60px !important;
+    height: 60px !important;
   }
 
   .monthDensity :global([class*='dayNumber']) {

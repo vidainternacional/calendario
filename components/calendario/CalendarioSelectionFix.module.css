@@ -2,6 +2,7 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
+  justify-content: flex-start !important;
 }
 
 .selectionFix :global([class*='dayNumber']) {
@@ -35,11 +36,99 @@
   font-weight: 750 !important;
 }
 
+/* Las vistas de mes comparten la misma geometría para evitar saltos. */
+.selectionFix :global([class*='monthWeekRow']),
+.selectionFix :global([class*='monthWeekRowDetails']) {
+  min-height: 82px !important;
+  transition: min-height 190ms cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+}
+
+.selectionFix :global([class*='monthDay']),
+.selectionFix :global([class*='monthDayDetails']),
+.selectionFix :global([class*='monthDayEmpty']) {
+  min-height: 82px !important;
+  transition: background-color 160ms ease, opacity 160ms ease !important;
+}
+
+/* Compacto: indicadores pegados al número, como iOS. */
+.selectionFix :global([class*='eventCompact']) {
+  min-height: 8px !important;
+  margin-top: 5px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Apilado: barras uniformes y sin cambiar la altura de la semana. */
+.selectionFix :global([class*='eventBars']) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 24px !important;
+  max-height: 30px !important;
+  margin-top: 6px !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+  opacity: 1 !important;
+}
+
+.selectionFix :global([class*='eventBar']) {
+  width: 100% !important;
+  height: 5px !important;
+  flex: 0 0 5px !important;
+  border-radius: 999px !important;
+}
+
+/* Detalles: tarjetas compactas dentro de la misma cuadrícula. */
+.selectionFix :global([class*='eventDetails']) {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 28px !important;
+  max-height: 34px !important;
+  margin-top: 5px !important;
+  gap: 2px !important;
+  overflow: hidden !important;
+  opacity: 1 !important;
+}
+
+.selectionFix :global([class*='eventChip']) {
+  box-sizing: border-box !important;
+  min-height: 14px !important;
+  max-height: 15px !important;
+  padding: 2px 3px 2px 4px !important;
+  border-left-width: 3px !important;
+  border-radius: 4px !important;
+  font-size: 8px !important;
+  line-height: 1.05 !important;
+}
+
+/* Menú visual más próximo a iOS. */
+.selectionFix :global([class*='viewPopover']) {
+  width: min(84vw, 410px) !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+.selectionFix :global([class*='viewOption']) {
+  min-height: 62px !important;
+  transition: background-color 140ms ease, opacity 140ms ease !important;
+}
+
+.selectionFix :global([class*='viewOption']):active {
+  background: rgba(91, 61, 245, 0.08) !important;
+}
+
 @media (max-width: 390px) {
   .selectionFix :global([class*='dayNumber']) {
     width: 34px !important;
     height: 34px !important;
     flex-basis: 34px !important;
+  }
+
+  .selectionFix :global([class*='monthWeekRow']),
+  .selectionFix :global([class*='monthWeekRowDetails']),
+  .selectionFix :global([class*='monthDay']),
+  .selectionFix :global([class*='monthDayDetails']),
+  .selectionFix :global([class*='monthDayEmpty']) {
+    min-height: 76px !important;
   }
 }
 
@@ -48,5 +137,13 @@
     width: 31px !important;
     height: 31px !important;
     flex-basis: 31px !important;
+  }
+
+  .selectionFix :global([class*='monthWeekRow']),
+  .selectionFix :global([class*='monthWeekRowDetails']),
+  .selectionFix :global([class*='monthDay']),
+  .selectionFix :global([class*='monthDayDetails']),
+  .selectionFix :global([class*='monthDayEmpty']) {
+    min-height: 70px !important;
   }
 }
