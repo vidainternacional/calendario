@@ -1,3 +1,52 @@
-.selectionFix {
-  display: contents;
+.selectionFix :global([class*='monthDay']) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.selectionFix :global([class*='dayNumber']) {
+  box-sizing: border-box !important;
+  display: grid !important;
+  width: 36px !important;
+  height: 36px !important;
+  flex: 0 0 36px !important;
+  margin: 0 auto !important;
+  place-items: center !important;
+  border: 2px solid transparent !important;
+  border-radius: 50% !important;
+  line-height: 1 !important;
+  vertical-align: initial !important;
+  transform: none !important;
+}
+
+.selectionFix :global([class*='daySelected']) {
+  border-color: rgba(91, 61, 245, 0.75) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(91, 61, 245, 0.75) !important;
+  font-weight: 750 !important;
+}
+
+.selectionFix :global([class*='dayToday']) {
+  border-color: transparent !important;
+  background: #5b3df5 !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-weight: 750 !important;
+}
+
+@media (max-width: 390px) {
+  .selectionFix :global([class*='dayNumber']) {
+    width: 34px !important;
+    height: 34px !important;
+    flex-basis: 34px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .selectionFix :global([class*='dayNumber']) {
+    width: 31px !important;
+    height: 31px !important;
+    flex-basis: 31px !important;
+  }
 }
