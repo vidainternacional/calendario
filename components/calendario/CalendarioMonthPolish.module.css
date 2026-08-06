@@ -7,6 +7,7 @@
   overscroll-behavior-y: contain;
   background: #fff;
   color: #111827;
+  color-scheme: light;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -123,6 +124,37 @@
   letter-spacing: -0.055em;
 }
 
+.monthPolish :global([class*='eventList']),
+.monthPolish :global([class*='agendaHeader']),
+.monthPolish :global([class*='eventRow']) {
+  background: #fff !important;
+  color: #111827 !important;
+}
+
+.monthPolish :global([class*='agendaHeader']) {
+  min-height: 68px;
+  align-items: center !important;
+  padding: 14px max(24px, env(safe-area-inset-right, 0px)) 12px max(24px, env(safe-area-inset-left, 0px)) !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
+}
+
+.monthPolish :global([class*='agendaDate']) {
+  color: #111827 !important;
+  font-size: 22px !important;
+  line-height: 1.15 !important;
+}
+
+.monthPolish :global([class*='agendaCount']) {
+  color: #7a8496 !important;
+}
+
+.monthPolish :global([class*='eventRow']) {
+  min-height: 72px;
+  padding: 12px max(24px, env(safe-area-inset-right, 0px)) 12px max(24px, env(safe-area-inset-left, 0px)) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+}
+
 .monthPolish ~ :global([class*='floatingBar']) {
   background: transparent !important;
 }
@@ -147,6 +179,12 @@
   .monthPolish :global([class*='backButton']) {
     min-width: 66px !important;
     font-size: 16px !important;
+  }
+
+  .monthPolish :global([class*='agendaHeader']),
+  .monthPolish :global([class*='eventRow']) {
+    padding-right: max(18px, env(safe-area-inset-right, 0px)) !important;
+    padding-left: max(18px, env(safe-area-inset-left, 0px)) !important;
   }
 }
 
