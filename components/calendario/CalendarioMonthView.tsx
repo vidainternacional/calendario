@@ -14,7 +14,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
 
@@ -57,11 +57,44 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
+  const monthViewRef = useRef<HTMLDivElement | null>(null)
+  const positionedMonthRef = useRef<string | null>(null)
   const baseMonth = startOfMonth(month)
+  const baseMonthKey = format(baseMonth, 'yyyy-MM')
   const visibleMonths = showFollowingMonth ? [baseMonth, addMonths(baseMonth, 1)] : [baseMonth]
 
+  useLayoutEffect(() => {
+    if (positionedMonthRef.current === baseMonthKey) return
+    positionedMonthRef.current = baseMonthKey
+
+    const html = document.documentElement
+    const previousBehavior = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+
+    const align = () => {
+      const root = monthViewRef.current
+      if (!root) return
+      const top = Math.max(0, window.scrollY + root.getBoundingClientRect().top)
+      window.scrollTo({ top, behavior: 'auto' })
+    }
+
+    align()
+    const firstFrame = window.requestAnimationFrame(() => {
+      align()
+      window.requestAnimationFrame(align)
+    })
+    const settleTimer = window.setTimeout(align, 120)
+    void document.fonts?.ready.then(align)
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      window.clearTimeout(settleTimer)
+      html.style.scrollBehavior = previousBehavior
+    }
+  }, [baseMonthKey])
+
   return (
-    <div className={basic.monthView} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+    <div ref={monthViewRef} className={basic.monthView} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
       {topChrome}
       <header className={basic.monthHeader}>
         <h1 className={basic.monthTitle}>{format(baseMonth, 'MMMM', { locale: es })}</h1>
