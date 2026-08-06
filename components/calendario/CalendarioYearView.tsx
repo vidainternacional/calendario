@@ -16,7 +16,7 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 
@@ -59,14 +59,14 @@ export default function CalendarioYearView({
     [activeYear],
   )
 
-  const cancelAnimatedScroll = () => {
+  const cancelAnimatedScroll = useCallback(() => {
     if (scrollFrameRef.current !== null) {
       window.cancelAnimationFrame(scrollFrameRef.current)
       scrollFrameRef.current = null
     }
-  }
+  }, [])
 
-  const animateToActiveYear = () => {
+  const animateToActiveYear = useCallback(() => {
     const target = activeYearRef.current
     if (!target) return
 
@@ -101,7 +101,7 @@ export default function CalendarioYearView({
     }
 
     scrollFrameRef.current = window.requestAnimationFrame(step)
-  }
+  }, [cancelAnimatedScroll])
 
   useEffect(() => {
     if (hasPositionedRef.current || !activeYearRef.current) return
@@ -140,9 +140,9 @@ export default function CalendarioYearView({
       window.removeEventListener('touchstart', cancelAnimatedScroll)
       window.removeEventListener('pointerdown', cancelAnimatedScroll)
     }
-  }, [activeYear, onChangeYear])
+  }, [activeYear, animateToActiveYear, cancelAnimatedScroll, onChangeYear])
 
-  useEffect(() => () => cancelAnimatedScroll(), [])
+  useEffect(() => () => cancelAnimatedScroll(), [cancelAnimatedScroll])
 
   return (
     <div className={styles.yearView} aria-busy={isRefreshing || undefined}>
