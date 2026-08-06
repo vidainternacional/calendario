@@ -21,8 +21,8 @@ import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios
 import styles from './CalendarioYearView.module.css'
 
 const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
-const YEARS_BEFORE = 5
-const YEARS_AFTER = 5
+const YEARS_BEFORE = 20
+const YEARS_AFTER = 20
 
 export default function CalendarioYearView({
   fecha,
