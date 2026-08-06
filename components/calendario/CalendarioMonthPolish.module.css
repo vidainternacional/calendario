@@ -8,7 +8,9 @@
 .monthStickyChrome {
   position: sticky;
   top: 0;
-  z-index: 60;
+  z-index: 80;
+  box-sizing: border-box;
+  height: calc(64px + env(safe-area-inset-top, 0px));
   min-height: calc(64px + env(safe-area-inset-top, 0px));
   background: #fff;
   -webkit-backdrop-filter: saturate(180%) blur(22px);
@@ -16,35 +18,77 @@
 }
 
 .monthPolish :global([class*='topChrome']) {
+  box-sizing: border-box !important;
+  height: calc(64px + env(safe-area-inset-top, 0px)) !important;
   min-height: calc(64px + env(safe-area-inset-top, 0px)) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
   background: #fff !important;
   color: #111827 !important;
 }
 
+.monthWeekdays,
 .monthPolish :global([class*='weekdays']) {
+  position: sticky !important;
   top: calc(64px + env(safe-area-inset-top, 0px)) !important;
-  z-index: 55 !important;
+  z-index: 75 !important;
+  display: grid !important;
+  min-height: 29px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   background: #fff !important;
+  color: #6f7787 !important;
 }
 
 .monthPolish :global([class*='actionsGroup']),
-.monthPolish :global([class*='chromeIconButton']),
-.monthPolish :global([class*='backButton']) {
+.monthPolish :global([class*='chromeIconButton']) {
   border-color: rgba(15, 23, 42, 0.08) !important;
-  background: rgba(255, 255, 255, 0.98) !important;
+  background: rgba(246, 247, 250, 0.98) !important;
   color: #253047 !important;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.09) !important;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.09) !important;
+}
+
+.monthPolish :global([class*='backButton']) {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 72px !important;
+  max-width: 132px !important;
+  min-height: 44px !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 4px 0 0 !important;
+  color: #5b3df5 !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+}
+
+.monthPolish :global([class*='backButton']) svg {
+  width: 27px !important;
+  height: 27px !important;
+  margin-left: -5px;
+  color: #5b3df5 !important;
+  stroke: currentColor !important;
+}
+
+.monthPolish :global([class*='leftSlot']) {
+  display: flex !important;
+  min-width: 78px !important;
+  align-items: center !important;
+  overflow: visible !important;
 }
 
 .monthPolish :global([class*='actionsGroup']) svg,
-.monthPolish :global([class*='chromeIconButton']) svg,
-.monthPolish :global([class*='backButton']) svg {
+.monthPolish :global([class*='chromeIconButton']) svg {
   color: #253047 !important;
   stroke: currentColor !important;
 }
 
 .activeMonthSection {
-  scroll-margin-top: calc(104px + env(safe-area-inset-top, 0px));
+  scroll-margin-top: calc(124px + env(safe-area-inset-top, 0px));
 }
 
 .monthPolish :global([class*='monthScroll']) {
@@ -86,6 +130,11 @@
 
   .monthPolish :global([class*='monthScroll']) {
     padding-bottom: calc(166px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .monthPolish :global([class*='backButton']) {
+    min-width: 66px !important;
+    font-size: 16px !important;
   }
 }
 
