@@ -14,11 +14,16 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
+import polish from './CalendarioMonthPolish.module.css'
 
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
+
+const MONTHS_BEFORE = 6
+const MONTHS_AFTER = 18
+const MONTH_TOP_OFFSET = 116
 
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
@@ -57,14 +62,22 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
-  const monthViewRef = useRef<HTMLDivElement | null>(null)
+  const activeMonthRef = useRef<HTMLElement | null>(null)
   const positionedMonthRef = useRef<string | null>(null)
   const baseMonth = startOfMonth(month)
   const baseMonthKey = format(baseMonth, 'yyyy-MM')
-  const visibleMonths = showFollowingMonth ? [baseMonth, addMonths(baseMonth, 1)] : [baseMonth]
+
+  const visibleMonths = useMemo(() => {
+    if (!showFollowingMonth) return [baseMonth]
+
+    return Array.from(
+      { length: MONTHS_BEFORE + MONTHS_AFTER + 1 },
+      (_, index) => addMonths(baseMonth, index - MONTHS_BEFORE),
+    )
+  }, [baseMonthKey, showFollowingMonth])
 
   useLayoutEffect(() => {
-    if (positionedMonthRef.current === baseMonthKey) return
+    if (positionedMonthRef.current === baseMonthKey || !activeMonthRef.current) return
     positionedMonthRef.current = baseMonthKey
 
     const html = document.documentElement
@@ -72,9 +85,9 @@ export default function CalendarioMonthView({
     html.style.scrollBehavior = 'auto'
 
     const align = () => {
-      const root = monthViewRef.current
-      if (!root) return
-      const top = Math.max(0, window.scrollY + root.getBoundingClientRect().top)
+      const target = activeMonthRef.current
+      if (!target) return
+      const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - MONTH_TOP_OFFSET)
       window.scrollTo({ top, behavior: 'auto' })
     }
 
@@ -83,7 +96,7 @@ export default function CalendarioMonthView({
       align()
       window.requestAnimationFrame(align)
     })
-    const settleTimer = window.setTimeout(align, 120)
+    const settleTimer = window.setTimeout(align, 140)
     void document.fonts?.ready.then(align)
 
     return () => {
@@ -94,11 +107,8 @@ export default function CalendarioMonthView({
   }, [baseMonthKey])
 
   return (
-    <div ref={monthViewRef} className={basic.monthView} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
-      {topChrome}
-      <header className={basic.monthHeader}>
-        <h1 className={basic.monthTitle}>{format(baseMonth, 'MMMM', { locale: es })}</h1>
-      </header>
+    <div className={`${basic.monthView} ${polish.monthPolish}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+      <div className={polish.monthStickyChrome}>{topChrome}</div>
 
       <div className={basic.weekdays} aria-hidden="true">
         <span className={basic.weekNumberHeader} />
@@ -106,14 +116,20 @@ export default function CalendarioMonthView({
       </div>
 
       <div className={basic.monthScroll}>
-        {visibleMonths.map((visibleMonth, monthIndex) => {
+        {visibleMonths.map((visibleMonth) => {
           const weeks = weeksForMonth(visibleMonth)
+          const isBaseMonth = isSameMonth(visibleMonth, baseMonth)
 
           return (
-            <section key={visibleMonth.toISOString()} className={basic.monthSection}>
-              {monthIndex > 0 && (
-                <h2 className={basic.followingMonthTitle}>{format(visibleMonth, 'MMMM', { locale: es })}</h2>
-              )}
+            <section
+              key={visibleMonth.toISOString()}
+              ref={isBaseMonth ? activeMonthRef : undefined}
+              className={`${basic.monthSection} ${isBaseMonth ? polish.activeMonthSection : ''}`}
+              aria-label={format(visibleMonth, 'MMMM yyyy', { locale: es })}
+            >
+              <header className={basic.monthHeader}>
+                <h1 className={basic.monthTitle}>{format(visibleMonth, 'MMMM', { locale: es })}</h1>
+              </header>
 
               <div className={`${basic.monthGrid} ${displayMode === 'details' ? basic.monthGridDetails : ''}`}>
                 {weeks.map((week) => (

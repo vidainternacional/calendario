@@ -19,6 +19,7 @@ import { es } from 'date-fns/locale'
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
+import polish from './CalendarioYearPolish.module.css'
 
 const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 const YEARS_BEFORE = 20
@@ -119,7 +120,7 @@ export default function CalendarioYearView({
   }, [activeYear, onChangeYear])
 
   return (
-    <div className={styles.yearView} aria-busy={isRefreshing || undefined}>
+    <div className={`${styles.yearView} ${polish.yearPolish}`} aria-busy={isRefreshing || undefined}>
       <div className={styles.stickyChrome}>{topChrome}</div>
 
       <div className={styles.yearsScroller}>
