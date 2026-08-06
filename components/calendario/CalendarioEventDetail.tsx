@@ -2,9 +2,17 @@
 
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { BellRing, CalendarDays, Clock3, MapPin, NotebookText, Users, X } from 'lucide-react'
+import {
+  BellRing,
+  CalendarDays,
+  CarFront,
+  Clock3,
+  MapPin,
+  NotebookText,
+  Users,
+} from 'lucide-react'
 import { useEffect } from 'react'
-import type { EventoCalendario } from './calendario-ios-types'
+import { eventColor, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioEventDetail.module.css'
 
 export default function CalendarioEventDetail({
@@ -35,6 +43,8 @@ export default function CalendarioEventDetail({
 
   const start = new Date(event.fecha_inicio)
   const end = event.fecha_fin ? new Date(event.fecha_fin) : null
+  const color = eventColor(event)
+  const calendarName = event.calendars?.nombre || 'Vida Internacional'
   const dateText = format(start, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })
   const timeText = event.todo_el_dia
     ? 'Todo el día'
@@ -43,42 +53,70 @@ export default function CalendarioEventDetail({
       : format(start, 'h:mm a')
 
   return (
-    <div className={styles.backdrop} role="presentation" onClick={onClose}>
+    <div
+      className={styles.backdrop}
+      role="presentation"
+      onMouseDown={(mouseEvent) => mouseEvent.target === mouseEvent.currentTarget && onClose()}
+    >
       <section
         className={styles.sheet}
         role="dialog"
         aria-modal="true"
         aria-labelledby="calendar-event-detail-title"
-        onClick={(clickEvent) => clickEvent.stopPropagation()}
       >
-        <header className={styles.header}>
-          <div className={styles.heading}>
-            <p className={styles.eyebrow}>
-              {event.kind === 'reminder' ? 'Recordatorio' : 'Evento'}
-            </p>
-            <h2 id="calendar-event-detail-title" className={styles.title}>{event.titulo}</h2>
-          </div>
-          <button className={styles.close} onClick={onClose} aria-label="Cerrar detalle">
-            <X size={21} />
-          </button>
+        <span className={styles.grabber} aria-hidden="true" />
+
+        <header className={styles.topbar}>
+          <span aria-hidden="true" />
+          <p className={styles.topbarTitle}>
+            {event.kind === 'reminder' ? 'Recordatorio' : 'Evento'}
+          </p>
+          <button type="button" className={styles.doneButton} onClick={onClose}>Listo</button>
         </header>
 
         <div className={styles.body}>
-          <DetailRow icon={event.kind === 'reminder' ? BellRing : CalendarDays} label="Fecha" value={dateText} />
-          <DetailRow icon={Clock3} label="Hora" value={timeText} />
-          <DetailRow
-            icon={CalendarDays}
-            label="Calendario"
-            value={event.calendars?.nombre || 'Vida Internacional'}
-          />
-          {event.ministerios?.nombre && (
-            <DetailRow icon={Users} label="Ministerio" value={event.ministerios.nombre} />
+          <div className={styles.summary}>
+            <span className={styles.colorBar} style={{ backgroundColor: color }} aria-hidden="true" />
+            <div className={styles.summaryCopy}>
+              <p className={styles.kind} style={{ color }}>
+                {event.kind === 'reminder' ? 'Recordatorio' : 'Evento'}
+              </p>
+              <h2 id="calendar-event-detail-title" className={styles.title}>{event.titulo}</h2>
+              <p className={styles.calendarName}>{calendarName}</p>
+            </div>
+          </div>
+
+          <section className={styles.group} aria-label="Fecha y hora">
+            <DetailRow
+              icon={event.kind === 'reminder' ? BellRing : CalendarDays}
+              label="Fecha"
+              value={dateText}
+            />
+            <DetailRow icon={Clock3} label="Hora" value={timeText} />
+            {Boolean(event.tiempo_viaje_minutos) && (
+              <DetailRow
+                icon={CarFront}
+                label="Tiempo de viaje"
+                value={`${event.tiempo_viaje_minutos} minutos`}
+              />
+            )}
+          </section>
+
+          {(event.ministerios?.nombre || event.ubicacion) && (
+            <section className={styles.group} aria-label="Información adicional">
+              {event.ministerios?.nombre && (
+                <DetailRow icon={Users} label="Ministerio" value={event.ministerios.nombre} />
+              )}
+              {event.ubicacion && (
+                <DetailRow icon={MapPin} label="Ubicación" value={event.ubicacion} />
+              )}
+            </section>
           )}
-          {event.ubicacion && (
-            <DetailRow icon={MapPin} label="Ubicación" value={event.ubicacion} />
-          )}
+
           {event.descripcion && (
-            <DetailRow icon={NotebookText} label="Descripción" value={event.descripcion} />
+            <section className={`${styles.group} ${styles.descriptionGroup}`} aria-label="Notas">
+              <DetailRow icon={NotebookText} label="Notas" value={event.descripcion} />
+            </section>
           )}
         </div>
       </section>
@@ -98,7 +136,7 @@ function DetailRow({
   return (
     <div className={styles.row}>
       <span className={styles.icon} aria-hidden="true"><Icon size={18} /></span>
-      <span>
+      <span className={styles.rowCopy}>
         <span className={styles.label}>{label}</span>
         <span className={styles.value}>{value}</span>
       </span>
