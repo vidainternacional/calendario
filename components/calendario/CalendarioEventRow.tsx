@@ -18,22 +18,22 @@ export default function CalendarioEventRow({
   const color = eventColor(evento)
 
   return (
-    <button type="button" className={`${styles.eventRow} ${fixes.eventRowDark}`} onClick={() => onOpen(evento)}>
+    <button className={styles.eventRow} onClick={() => onOpen(evento)}>
       <span className={styles.eventColor} style={{ backgroundColor: color }} />
       <span className={`${styles.eventMain} ${fixes.eventMainFix}`}>
-        <span className={`${styles.eventTitle} ${fixes.eventTitleFix} ${fixes.eventTitleDark}`}>{evento.titulo}</span>
-        <span className={`${styles.eventMeta} ${fixes.eventMetaFix} ${fixes.eventMetaDark}`} style={{ color }}>
+        <span className={`${styles.eventTitle} ${fixes.eventTitleFix}`}>{evento.titulo}</span>
+        <span className={`${styles.eventMeta} ${fixes.eventMetaFix}`} style={{ color }}>
           {evento.kind === 'reminder'
             ? <><BellRing size={12} className="mr-1 inline" />Recordatorio</>
             : evento.calendars?.nombre || 'Vida Internacional'}
         </span>
         {evento.ubicacion && (
-          <span className={`${styles.eventLocation} ${fixes.eventLocationFix} ${fixes.eventLocationDark}`}>
+          <span className={`${styles.eventLocation} ${fixes.eventLocationFix}`}>
             {evento.ubicacion}
           </span>
         )}
       </span>
-      <span className={`${styles.eventTime} ${fixes.eventTimeFix} ${fixes.eventTimeDark}`}>
+      <span className={`${styles.eventTime} ${fixes.eventTimeFix}`}>
         {evento.kind === 'reminder'
           ? format(inicio, 'h:mm a')
           : evento.todo_el_dia
