@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import CalendarioIOS from '@/components/calendario/CalendarioIOS'
 import CalendarioSourcesPanel from '@/components/calendario/CalendarioSourcesPanel'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import selectionFix from './CalendarioSelectionFix.module.css'
 import { useCalendarEvents } from './useCalendarEvents'
 import type { EventoCalendario } from './calendario-ios-types'
 
@@ -40,7 +41,7 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
   }
 
   return (
-    <div className="min-h-screen w-full min-w-0 overflow-x-hidden bg-white">
+    <div className={`${selectionFix.selectionFix} min-h-screen w-full min-w-0 overflow-x-hidden bg-white`}>
       {error && (
         <div className="mx-4 mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700" role="status">
           {error}
