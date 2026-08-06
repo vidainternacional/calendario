@@ -103,17 +103,24 @@ export default function CalendarioMonthView({
                         return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
                       }
 
+                      const handleDayPress = () => {
+                        if (selected && openDayOnSelect) {
+                          onOpenDay(day)
+                          return
+                        }
+
+                        onSelectDay(day)
+                      }
+
                       return (
                         <button
                           key={day.toISOString()}
                           type="button"
                           className={`${basic.monthDay} ${displayMode === 'details' ? basic.monthDayDetails : ''}`}
-                          onClick={() => {
-                            onSelectDay(day)
-                            if (openDayOnSelect) onOpenDay(day)
-                          }}
+                          onClick={handleDayPress}
                           aria-pressed={selected}
-                          aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${openDayOnSelect ? ', abrir vista del día' : ''}`}
+                          aria-current={today ? 'date' : undefined}
+                          aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${selected && openDayOnSelect ? ', volver a tocar para abrir vista del día' : ''}`}
                         >
                           <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                             {format(day, 'd')}
