@@ -6,18 +6,20 @@
   align-items: flex-end;
   justify-content: center;
   padding: 16px max(12px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
-  background: rgba(15, 23, 42, 0.34);
-  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(7px);
 }
 
 .sheet {
   width: min(100%, 520px);
   max-height: min(82dvh, 720px);
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 26px;
-  background: #fff;
-  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.28);
+  background: #1c1c1e;
+  color: #f5f5f7;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58);
+  color-scheme: dark;
 }
 
 .header {
@@ -26,7 +28,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 18px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .heading {
@@ -35,7 +37,7 @@
 
 .eyebrow {
   margin: 0 0 5px;
-  color: #5b3df5;
+  color: #ff453a;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -44,7 +46,7 @@
 
 .title {
   margin: 0;
-  color: #111827;
+  color: #f5f5f7;
   font-size: 22px;
   font-weight: 800;
   line-height: 1.16;
@@ -59,8 +61,8 @@
   justify-content: center;
   border: 0;
   border-radius: 50%;
-  background: #f1f3f6;
-  color: #334155;
+  background: #3a3a3c;
+  color: #f5f5f7;
 }
 
 .body {
@@ -76,7 +78,7 @@
   grid-template-columns: 32px minmax(0, 1fr);
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .icon {
@@ -86,14 +88,14 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: rgba(91, 61, 245, 0.09);
-  color: #5b3df5;
+  background: rgba(255, 69, 58, 0.13);
+  color: #ff6961;
 }
 
 .label {
   display: block;
   margin-bottom: 3px;
-  color: #7c8799;
+  color: #9b9ba1;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -102,7 +104,7 @@
 
 .value {
   display: block;
-  color: #1e293b;
+  color: #f5f5f7;
   font-size: 14px;
   font-weight: 650;
   line-height: 1.45;
@@ -112,31 +114,5 @@
 @media (min-width: 700px) {
   .backdrop {
     align-items: center;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .sheet {
-    border-color: rgba(255, 255, 255, 0.08);
-    background: #111214;
-  }
-
-  .header,
-  .row {
-    border-color: rgba(255, 255, 255, 0.09);
-  }
-
-  .title,
-  .value {
-    color: #f5f5f7;
-  }
-
-  .close {
-    background: #2c2c2e;
-    color: #f5f5f7;
-  }
-
-  .label {
-    color: #9b9ba1;
   }
 }
