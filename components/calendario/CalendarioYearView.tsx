@@ -16,7 +16,7 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 
@@ -40,6 +40,10 @@ export default function CalendarioYearView({
   onChangeYear: (year: number) => void
 }) {
   const activeYearRef = useRef<HTMLElement | null>(null)
+  const hasPositionedRef = useRef(false)
+  const transitionTimerRef = useRef<number | null>(null)
+  const revealTimerRef = useRef<number | null>(null)
+  const [isRepositioning, setIsRepositioning] = useState(false)
   const activeYear = fecha.getFullYear()
 
   const years = useMemo(
@@ -51,8 +55,10 @@ export default function CalendarioYearView({
   )
 
   useEffect(() => {
-    activeYearRef.current?.scrollIntoView({ block: 'start' })
-  }, [fecha])
+    if (hasPositionedRef.current || !activeYearRef.current) return
+    hasPositionedRef.current = true
+    activeYearRef.current.scrollIntoView({ block: 'start', behavior: 'auto' })
+  }, [])
 
   useEffect(() => {
     const todayButton = Array.from(document.querySelectorAll('button'))
@@ -63,20 +69,37 @@ export default function CalendarioYearView({
     const handleToday = (event: Event) => {
       event.preventDefault()
       event.stopPropagation()
+      if (isRepositioning) return
+
       const currentYear = new Date().getFullYear()
-      if (currentYear !== activeYear) onChangeYear(currentYear)
-      requestAnimationFrame(() => activeYearRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+      setIsRepositioning(true)
+
+      transitionTimerRef.current = window.setTimeout(() => {
+        if (currentYear !== activeYear) onChangeYear(currentYear)
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            activeYearRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' })
+            revealTimerRef.current = window.setTimeout(() => setIsRepositioning(false), 90)
+          })
+        })
+      }, 120)
     }
 
     todayButton.addEventListener('click', handleToday, true)
     return () => todayButton.removeEventListener('click', handleToday, true)
-  }, [activeYear, onChangeYear])
+  }, [activeYear, isRepositioning, onChangeYear])
+
+  useEffect(() => () => {
+    if (transitionTimerRef.current !== null) window.clearTimeout(transitionTimerRef.current)
+    if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current)
+  }, [])
 
   return (
     <div className={styles.yearView} aria-busy={isRefreshing || undefined}>
       <div className={styles.stickyChrome}>{topChrome}</div>
 
-      <div className={styles.yearsScroller}>
+      <div className={`${styles.yearsScroller} ${isRepositioning ? styles.repositioning : ''}`}>
         {years.map((year) => {
           const yearDate = new Date(year, 0, 1)
           const months = eachMonthOfInterval({
