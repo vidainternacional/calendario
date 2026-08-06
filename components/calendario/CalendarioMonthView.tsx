@@ -102,7 +102,7 @@ export default function CalendarioMonthView({
   }, [baseMonthKey, showFollowingMonth])
 
   useLayoutEffect(() => {
-    const positionKey = `${baseMonthKey}:${scrollRequest}`
+    const positionKey = `${baseMonthKey}:${scrollRequest}:${displayMode}:${showFollowingMonth}`
     const root = scrollRootRef.current
     const target = activeMonthRef.current
     if (positionedMonthRef.current === positionKey || !root || !target) return
@@ -122,19 +122,15 @@ export default function CalendarioMonthView({
 
     let timer: number | undefined
     const frame = window.requestAnimationFrame(() => {
-      const behavior: ScrollBehavior = scrollRequest > 0 ? 'smooth' : 'auto'
-      align(behavior)
-
-      if (behavior === 'auto') {
-        timer = window.setTimeout(() => align('auto'), 140)
-      }
+      align(scrollRequest > 0 ? 'smooth' : 'auto')
+      timer = window.setTimeout(() => align('auto'), 180)
     })
 
     return () => {
       window.cancelAnimationFrame(frame)
       if (timer !== undefined) window.clearTimeout(timer)
     }
-  }, [baseMonthKey, scrollRequest])
+  }, [baseMonthKey, displayMode, scrollRequest, showFollowingMonth])
 
   return (
     <div
