@@ -106,12 +106,25 @@ export default function CalendarioMultiDayView({
         <div className={styles.canvas} style={{ minWidth: minimumWidth ? `${minimumWidth}px` : '100%' }}>
           <header className={styles.daysHeader} style={{ gridTemplateColumns: gridTemplate }}>
             <div className={styles.timeSpacer} />
-            {days.map((day) => (
-              <button key={day.toISOString()} className={styles.dayHeader} onClick={() => onSelectDay(day)}>
-                <span>{format(day, 'EEE', { locale: es })}</span>
-                <strong className={isSameDay(day, new Date()) ? styles.today : ''}>{format(day, 'd')}</strong>
-              </button>
-            ))}
+            {days.map((day) => {
+              const isSelected = isSameDay(day, selectedDay)
+              const isCurrentDay = isSameDay(day, new Date())
+
+              return (
+                <button
+                  type="button"
+                  key={day.toISOString()}
+                  className={styles.dayHeader}
+                  onClick={() => onSelectDay(day)}
+                  aria-label={format(day, "EEEE d 'de' MMMM", { locale: es })}
+                  aria-pressed={isSelected}
+                  aria-current={isCurrentDay ? 'date' : undefined}
+                >
+                  <span>{format(day, 'EEE', { locale: es })}</span>
+                  <strong className={isCurrentDay ? styles.today : ''}>{format(day, 'd')}</strong>
+                </button>
+              )
+            })}
           </header>
 
           {allDay.length > 0 && (
@@ -122,6 +135,7 @@ export default function CalendarioMultiDayView({
                   <div key={day.toISOString()} className={styles.allDayColumn}>
                     {allDay.filter((event) => isSameDay(new Date(event.fecha_inicio), day)).map((event) => (
                       <button
+                        type="button"
                         key={eventKey(event)}
                         className={styles.allDayEvent}
                         style={{ borderColor: eventColor(event), color: eventColor(event) }}
@@ -168,6 +182,7 @@ export default function CalendarioMultiDayView({
 
                         return (
                           <button
+                            type="button"
                             key={eventKey(event)}
                             className={styles.timedEvent}
                             style={{
@@ -179,6 +194,7 @@ export default function CalendarioMultiDayView({
                               backgroundColor: `${color}1F`,
                             }}
                             onClick={() => onOpenEvent(event)}
+                            aria-label={`${event.titulo}, ${format(start, 'h:mm a')}`}
                           >
                             <strong style={{ color }}>
                               {event.kind === 'reminder' && <BellRing size={11} className="mr-1 inline" />}
