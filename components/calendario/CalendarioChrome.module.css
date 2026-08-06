@@ -1,8 +1,8 @@
 .rootTheme {
-  min-height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 0px));
-  background: #000 !important;
-  color: #f5f5f7 !important;
-  color-scheme: dark;
+  --calendar-accent: #5b3df5;
+  --calendar-accent-soft: rgba(91, 61, 245, 0.1);
+  background: var(--background) !important;
+  color: var(--foreground) !important;
 }
 
 .topChrome {
@@ -14,7 +14,7 @@
   padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
   padding-right: max(18px, env(safe-area-inset-right, 0px)) !important;
   padding-left: max(18px, env(safe-area-inset-left, 0px)) !important;
-  background: #000 !important;
+  background: color-mix(in srgb, var(--background) 94%, transparent) !important;
 }
 
 .leftSlot {
@@ -25,12 +25,12 @@
 .actionsGroup,
 .floatingPill,
 .floatingGroup {
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  background: rgba(34, 34, 36, 0.94) !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.34) !important;
-  color: #f5f5f7 !important;
-  -webkit-backdrop-filter: saturate(160%) blur(24px);
-  backdrop-filter: saturate(160%) blur(24px);
+  border: 1px solid rgba(15, 23, 42, 0.09) !important;
+  background: rgba(246, 247, 250, 0.96) !important;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.09) !important;
+  color: #182034 !important;
+  -webkit-backdrop-filter: saturate(160%) blur(20px);
+  backdrop-filter: saturate(160%) blur(20px);
 }
 
 .backButton {
@@ -59,46 +59,40 @@
   width: 52px !important;
   height: 48px !important;
   border: 0 !important;
-  border-left-color: rgba(255, 255, 255, 0.1) !important;
+  border-left-color: rgba(15, 23, 42, 0.07) !important;
   background: transparent !important;
-  color: #f5f5f7 !important;
+  color: #263047 !important;
 }
 
 .headerBlockTheme {
-  background: #000 !important;
-  color: #fff !important;
+  background: var(--background) !important;
+  color: var(--foreground) !important;
 }
 
-.periodTitleTheme {
-  color: #fff !important;
-}
-
-.subTitleTheme {
-  color: #8e8e93 !important;
-}
-
-.eventListTheme {
-  background: #000 !important;
-  color: #fff !important;
-}
-
-.agendaHeaderTheme {
-  border-color: #2c2c2e !important;
-  background: #000 !important;
-}
-
+.periodTitleTheme,
 .agendaDateTheme {
-  color: #f5f5f7 !important;
+  color: var(--foreground) !important;
 }
 
+.subTitleTheme,
 .mutedTheme {
-  color: #8e8e93 !important;
+  color: #7a8496 !important;
+}
+
+.eventListTheme,
+.agendaHeaderTheme {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+.agendaHeaderTheme,
+.emptyTheme {
+  border-color: rgba(15, 23, 42, 0.11) !important;
 }
 
 .emptyTheme {
-  border-color: #2c2c2e !important;
-  background: #000 !important;
-  color: #8e8e93 !important;
+  background: var(--background) !important;
+  color: #7a8496 !important;
 }
 
 .floatingBar {
@@ -120,12 +114,12 @@
 .floatingIcon {
   width: 58px !important;
   height: 50px !important;
-  border-left-color: rgba(255, 255, 255, 0.1) !important;
-  color: #f5f5f7 !important;
+  border-left-color: rgba(15, 23, 42, 0.07) !important;
+  color: #273147 !important;
 }
 
 .popoverBackdrop {
-  background: rgba(0, 0, 0, 0.08) !important;
+  background: rgba(15, 23, 42, 0.08) !important;
 }
 
 .viewPopover {
@@ -134,18 +128,18 @@
   right: max(22px, env(safe-area-inset-right, 0px)) !important;
   bottom: auto !important;
   left: auto !important;
-  width: min(250px, calc(100vw - 44px)) !important;
+  width: min(252px, calc(100vw - 44px)) !important;
   max-height: min(70dvh, 520px);
   overflow-y: auto !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
   border-radius: 28px !important;
-  background: rgba(28, 28, 30, 0.98) !important;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
   padding: 12px !important;
-  color: #fff !important;
+  color: #182034 !important;
   overscroll-behavior: contain;
-  -webkit-backdrop-filter: saturate(160%) blur(30px);
-  backdrop-filter: saturate(160%) blur(30px);
+  -webkit-backdrop-filter: saturate(160%) blur(28px);
+  backdrop-filter: saturate(160%) blur(28px);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -163,23 +157,23 @@
   border-radius: 14px !important;
   background: transparent !important;
   padding: 0 10px !important;
-  color: #f5f5f7 !important;
+  color: #1a2337 !important;
   font-size: 17px !important;
   font-weight: 500 !important;
 }
 
 .viewOption:active {
-  background: #2c2c2e !important;
+  background: rgba(91, 61, 245, 0.08) !important;
 }
 
 .viewOptionActive {
-  background: transparent !important;
-  color: #fff !important;
+  background: var(--calendar-accent-soft) !important;
+  color: var(--calendar-accent) !important;
 }
 
 .viewCheck {
   width: 20px;
-  color: #fff;
+  color: var(--calendar-accent);
 }
 
 .viewCheckHidden {
@@ -189,23 +183,22 @@
 .viewSeparator {
   height: 1px;
   margin: 7px 10px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.1);
 }
 
 .searchOverlayTheme {
-  background: #000 !important;
-  color: #fff !important;
-  color-scheme: dark;
+  background: var(--background) !important;
+  color: var(--foreground) !important;
 }
 
 .searchHeaderTheme {
-  border-color: #2c2c2e !important;
-  background: rgba(0, 0, 0, 0.96) !important;
+  border-color: rgba(15, 23, 42, 0.11) !important;
+  background: color-mix(in srgb, var(--background) 96%, transparent) !important;
 }
 
 .searchFieldTheme {
-  background: #1c1c1e !important;
-  color: #fff !important;
+  background: #f1f3f6 !important;
+  color: #111829 !important;
 }
 
 .searchFieldTheme::placeholder {
@@ -213,7 +206,7 @@
 }
 
 .searchCancelTheme {
-  color: #ff453a !important;
+  color: var(--calendar-accent) !important;
 }
 
 .backButton:focus-visible,
@@ -221,8 +214,65 @@
 .viewOption:focus-visible,
 .floatingPill:focus-visible,
 .floatingIcon:focus-visible {
-  outline: 3px solid rgba(255, 69, 58, 0.42);
+  outline: 3px solid rgba(91, 61, 245, 0.35);
   outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .backButton,
+  .actionsGroup,
+  .floatingPill,
+  .floatingGroup {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    background: rgba(34, 34, 36, 0.94) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.34) !important;
+    color: #f5f5f7 !important;
+  }
+
+  .chromeIconButton,
+  .floatingIcon {
+    border-left-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f5f5f7 !important;
+  }
+
+  .agendaHeaderTheme,
+  .emptyTheme,
+  .searchHeaderTheme {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .viewPopover {
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    background: rgba(28, 28, 30, 0.98) !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58) !important;
+    color: #fff !important;
+  }
+
+  .viewOption {
+    color: #f5f5f7 !important;
+  }
+
+  .viewOption:active {
+    background: rgba(255, 255, 255, 0.09) !important;
+  }
+
+  .viewOptionActive {
+    background: rgba(139, 92, 246, 0.18) !important;
+    color: #c4b5fd !important;
+  }
+
+  .viewCheck {
+    color: #c4b5fd;
+  }
+
+  .viewSeparator {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .searchFieldTheme {
+    background: #1c1c1e !important;
+    color: #fff !important;
+  }
 }
 
 @media (max-width: 390px) {
