@@ -14,7 +14,7 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
 import indicator from './CalendarioMonthIndicators.module.css'
@@ -204,7 +204,7 @@ export default function CalendarioMonthView({
                               ) : (
                                 <span
                                   className={indicator.eventFusion}
-                                  style={{ '--event-count': Math.min(dayEvents.length, MAX_COMPACT_EVENTS) } as React.CSSProperties}
+                                  style={{ '--event-count': Math.min(dayEvents.length, MAX_COMPACT_EVENTS) } as CSSProperties}
                                 >
                                   {compactUnits.map((unit) => (
                                     <span
