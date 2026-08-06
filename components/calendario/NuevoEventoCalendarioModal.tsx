@@ -1,13 +1,13 @@
 'use client'
 
+import { addHours, format } from 'date-fns'
+import { BellRing, CalendarDays, Loader2 } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { BellRing, CalendarDays, Check, Loader2, X } from 'lucide-react'
-import { addHours, format } from 'date-fns'
-import { createClient } from '@/lib/supabase/client'
 import { crearEventoCalendario } from '@/app/actions/eventos'
+import { createClient } from '@/lib/supabase/client'
 import type { CalendarioOrigen } from './calendario-ios-types'
-import styles from './CalendarioIOS.module.css'
+import formStyles from './NuevoEventoCalendarioModal.module.css'
 
 type Miembro = {
   id: string
@@ -61,12 +61,20 @@ export default function NuevoEventoCalendarioModal({
 
   useEffect(() => {
     if (!isOpen) return
+
     const bodyOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !guardando) onClose()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
       document.body.style.overflow = bodyOverflow
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen])
+  }, [guardando, isOpen, onClose])
 
   useEffect(() => {
     if (!isOpen) return
@@ -130,10 +138,11 @@ export default function NuevoEventoCalendarioModal({
     return () => {
       cancelled = true
     }
-  }, [isOpen, itemType, selectedCalendar?.id, selectedCalendar?.ministerio_id, userId])
+  }, [isOpen, itemType, selectedCalendar, userId])
 
   useEffect(() => {
     if (!isOpen) return
+
     const base = new Date(fechaInicial)
     const ahora = new Date()
     base.setHours(Math.max(ahora.getHours() + 1, 8), 0, 0, 0)
@@ -141,6 +150,8 @@ export default function NuevoEventoCalendarioModal({
     setFin(format(addHours(base, 1), "yyyy-MM-dd'T'HH:mm"))
     setItemType('event')
     setTodoElDia(false)
+    setAlertaDia(true)
+    setAlertaHora(true)
     setError('')
   }, [isOpen, fechaInicial])
 
@@ -191,186 +202,257 @@ export default function NuevoEventoCalendarioModal({
   }
 
   return createPortal(
-    <div className={styles.newEventOverlay} role="dialog" aria-modal="true" aria-labelledby="nuevo-evento-titulo">
-      <form onSubmit={guardar}>
-        <header className={styles.newEventTopbar}>
-          <button type="button" onClick={onClose} className={styles.roundAction} aria-label="Cancelar">
-            <X size={23} />
+    <div
+      className={formStyles.overlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nuevo-evento-titulo"
+    >
+      <form className={formStyles.form} onSubmit={guardar}>
+        <header className={formStyles.topbar}>
+          <button
+            type="button"
+            onClick={onClose}
+            className={formStyles.cancelButton}
+            disabled={guardando}
+          >
+            Cancelar
           </button>
-          <h2 id="nuevo-evento-titulo" className={styles.newEventTitle}>Nuevo</h2>
+          <h2 id="nuevo-evento-titulo" className={formStyles.title}>
+            {itemType === 'event' ? 'Nuevo evento' : 'Nuevo recordatorio'}
+          </h2>
           <button
             type="submit"
             disabled={guardando || !selectedCalendar}
-            className={`${styles.roundAction} ${styles.roundActionPrimary}`}
-            aria-label="Guardar"
+            className={formStyles.saveButton}
           >
-            {guardando ? <Loader2 size={21} className="animate-spin" /> : <Check size={23} />}
+            {guardando && <Loader2 size={17} className="animate-spin" aria-hidden="true" />}
+            {guardando ? 'Guardando' : 'Añadir'}
           </button>
         </header>
 
-        <div className={styles.formBody}>
-          <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1" role="tablist" aria-label="Tipo de elemento">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={itemType === 'event'}
-              onClick={() => { setItemType('event'); setError('') }}
-              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${itemType === 'event' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-            >
-              <CalendarDays size={17} /> Evento
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={itemType === 'reminder'}
-              onClick={() => { setItemType('reminder'); setError('') }}
-              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${itemType === 'reminder' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-            >
-              <BellRing size={17} /> Recordatorio
-            </button>
-          </div>
-
-          <section className={styles.formGroup}>
-            <div className={styles.formColumn}>
-              <input name="titulo" required maxLength={140} autoFocus className={styles.formInput} placeholder="Título" />
-            </div>
-            {itemType === 'event' && (
-              <div className={styles.formColumn}>
-                <input name="ubicacion" maxLength={240} className={styles.formInput} placeholder="Ubicación o videollamada" />
-              </div>
-            )}
-          </section>
-
-          <section className={styles.formGroup}>
-            {itemType === 'event' && (
-              <div className={styles.formRow}>
-                <span className={styles.formLabel}>Todo el día</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={todoElDia}
-                  onClick={() => setTodoElDia((actual) => !actual)}
-                  className={`${styles.switch} ${todoElDia ? styles.switchOn : ''}`}
-                >
-                  <span className={styles.switchThumb} />
-                </button>
-              </div>
-            )}
-
-            <label className={styles.formRow}>
-              <span className={styles.formLabel}>{itemType === 'reminder' ? 'Recordar' : 'Comienza'}</span>
-              <input
-                type={itemType === 'event' && todoElDia ? 'date' : 'datetime-local'}
-                value={itemType === 'event' && todoElDia ? inicio.slice(0, 10) : inicio}
-                onChange={(event) => {
-                  const valor = itemType === 'event' && todoElDia ? `${event.target.value}T00:00` : event.target.value
-                  setInicio(valor)
-                  const nuevaFecha = new Date(valor)
-                  if (itemType === 'event' && !Number.isNaN(nuevaFecha.getTime())) {
-                    setFin(format(addHours(nuevaFecha, todoElDia ? 24 : 1), "yyyy-MM-dd'T'HH:mm"))
-                  }
+        <div className={formStyles.body}>
+          <div className={formStyles.content}>
+            <div className={formStyles.segmented} role="tablist" aria-label="Tipo de elemento">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={itemType === 'event'}
+                onClick={() => {
+                  setItemType('event')
+                  setError('')
                 }}
-                className={styles.formInput}
-                required
-              />
-            </label>
+                className={`${formStyles.segment} ${itemType === 'event' ? formStyles.segmentActive : ''}`}
+              >
+                <CalendarDays size={17} aria-hidden="true" />
+                Evento
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={itemType === 'reminder'}
+                onClick={() => {
+                  setItemType('reminder')
+                  setError('')
+                }}
+                className={`${formStyles.segment} ${itemType === 'reminder' ? formStyles.segmentActive : ''}`}
+              >
+                <BellRing size={17} aria-hidden="true" />
+                Recordatorio
+              </button>
+            </div>
 
-            {itemType === 'event' && (
-              <label className={styles.formRow}>
-                <span className={styles.formLabel}>Termina</span>
+            <p className={formStyles.sectionLabel}>Información</p>
+            <section className={formStyles.group}>
+              <div className={formStyles.column}>
                 <input
-                  type={todoElDia ? 'date' : 'datetime-local'}
-                  value={todoElDia ? fin.slice(0, 10) : fin}
-                  onChange={(event) => setFin(todoElDia ? `${event.target.value}T23:59` : event.target.value)}
-                  className={styles.formInput}
+                  name="titulo"
+                  required
+                  maxLength={140}
+                  autoFocus
+                  className={`${formStyles.input} ${formStyles.primaryInput}`}
+                  placeholder={itemType === 'event' ? 'Título' : 'Nombre del recordatorio'}
+                  aria-label="Título"
+                />
+              </div>
+              {itemType === 'event' && (
+                <div className={formStyles.column}>
+                  <input
+                    name="ubicacion"
+                    maxLength={240}
+                    className={`${formStyles.input} ${formStyles.secondaryInput}`}
+                    placeholder="Ubicación o videollamada"
+                    aria-label="Ubicación o videollamada"
+                  />
+                </div>
+              )}
+            </section>
+
+            <p className={formStyles.sectionLabel}>Fecha y hora</p>
+            <section className={formStyles.group}>
+              {itemType === 'event' && (
+                <div className={formStyles.row}>
+                  <span className={formStyles.label}>Todo el día</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={todoElDia}
+                    aria-label="Evento de todo el día"
+                    onClick={() => setTodoElDia((actual) => !actual)}
+                    className={`${formStyles.switch} ${todoElDia ? formStyles.switchOn : ''}`}
+                  >
+                    <span className={formStyles.switchThumb} />
+                  </button>
+                </div>
+              )}
+
+              <label className={formStyles.row}>
+                <span className={formStyles.label}>{itemType === 'reminder' ? 'Recordar' : 'Comienza'}</span>
+                <input
+                  type={itemType === 'event' && todoElDia ? 'date' : 'datetime-local'}
+                  value={itemType === 'event' && todoElDia ? inicio.slice(0, 10) : inicio}
+                  onChange={(event) => {
+                    const valor = itemType === 'event' && todoElDia
+                      ? `${event.target.value}T00:00`
+                      : event.target.value
+                    setInicio(valor)
+                    const nuevaFecha = new Date(valor)
+                    if (itemType === 'event' && !Number.isNaN(nuevaFecha.getTime())) {
+                      setFin(format(addHours(nuevaFecha, todoElDia ? 24 : 1), "yyyy-MM-dd'T'HH:mm"))
+                    }
+                  }}
+                  className={formStyles.input}
                   required
                 />
               </label>
-            )}
 
-            {itemType === 'event' && (
-              <label className={styles.formRow}>
-                <span className={styles.formLabel}>Tiempo de viaje</span>
-                <select name="tiempo_viaje_minutos" defaultValue="0" className={styles.formSelect}>
-                  <option value="0">Ninguno</option>
-                  <option value="15">15 minutos</option>
-                  <option value="30">30 minutos</option>
-                  <option value="45">45 minutos</option>
-                  <option value="60">60 minutos</option>
-                </select>
-              </label>
-            )}
-          </section>
+              {itemType === 'event' && (
+                <label className={formStyles.row}>
+                  <span className={formStyles.label}>Termina</span>
+                  <input
+                    type={todoElDia ? 'date' : 'datetime-local'}
+                    value={todoElDia ? fin.slice(0, 10) : fin}
+                    onChange={(event) => setFin(todoElDia ? `${event.target.value}T23:59` : event.target.value)}
+                    className={formStyles.input}
+                    required
+                  />
+                </label>
+              )}
 
-          <section className={styles.formGroup}>
-            <label className={styles.formColumn}>
-              <span className={styles.formLabel}>Calendario</span>
-              <select
-                name="calendar_id"
-                value={calendarId}
-                onChange={(event) => setCalendarId(event.target.value)}
-                className={styles.formSelect}
-                required
-              >
-                {editableCalendars.map((calendar) => (
-                  <option key={calendar.id} value={calendar.id}>{calendar.nombre}</option>
-                ))}
-              </select>
-            </label>
+              {itemType === 'event' && (
+                <label className={formStyles.row}>
+                  <span className={formStyles.label}>Tiempo de viaje</span>
+                  <select name="tiempo_viaje_minutos" defaultValue="0" className={formStyles.select}>
+                    <option value="0">Ninguno</option>
+                    <option value="15">15 minutos</option>
+                    <option value="30">30 minutos</option>
+                    <option value="45">45 minutos</option>
+                    <option value="60">60 minutos</option>
+                  </select>
+                </label>
+              )}
+            </section>
 
-            {itemType === 'event' && (
-              <div className={styles.formColumn}>
-                <span className={styles.formLabel}>Participantes</span>
-                {cargandoMiembros ? (
-                  <span className="flex items-center gap-2 text-sm text-slate-500">
-                    <Loader2 size={16} className="animate-spin" /> Cargando miembros…
-                  </span>
-                ) : miembros.length > 0 ? (
-                  <div className={styles.membersList}>
-                    {miembros.map((miembro) => (
-                      <label key={miembro.id} className={styles.memberOption}>
-                        <input type="checkbox" name="participantes" value={miembro.id} />
-                        <span>{miembro.nombre}</span>
-                      </label>
+            <p className={formStyles.sectionLabel}>Calendario</p>
+            <section className={formStyles.group}>
+              <label className={formStyles.row}>
+                <span className={formStyles.label}>Guardar en</span>
+                <span className={formStyles.calendarValue}>
+                  <span
+                    className={formStyles.calendarDot}
+                    style={{ backgroundColor: selectedCalendar?.color || '#5b3df5' }}
+                    aria-hidden="true"
+                  />
+                  <select
+                    name="calendar_id"
+                    value={calendarId}
+                    onChange={(event) => setCalendarId(event.target.value)}
+                    className={formStyles.select}
+                    required
+                    aria-label="Calendario"
+                  >
+                    {editableCalendars.map((calendar) => (
+                      <option key={calendar.id} value={calendar.id}>{calendar.nombre}</option>
                     ))}
-                  </div>
-                ) : (
-                  <span className="text-sm text-slate-500">El evento quedará asignado a usted.</span>
-                )}
-              </div>
-            )}
-          </section>
+                  </select>
+                </span>
+              </label>
+            </section>
 
-          {itemType === 'event' && (
-            <section className={styles.formGroup}>
-              <div className={styles.formRow}>
-                <span className={styles.formLabel}>Avisar un día antes</span>
-                <button type="button" role="switch" aria-checked={alertaDia} onClick={() => setAlertaDia((actual) => !actual)} className={`${styles.switch} ${alertaDia ? styles.switchOn : ''}`}>
-                  <span className={styles.switchThumb} />
-                </button>
-              </div>
-              <div className={styles.formRow}>
-                <span className={styles.formLabel}>Avisar una hora antes</span>
-                <button type="button" role="switch" aria-checked={alertaHora} onClick={() => setAlertaHora((actual) => !actual)} className={`${styles.switch} ${alertaHora ? styles.switchOn : ''}`}>
-                  <span className={styles.switchThumb} />
-                </button>
+            {itemType === 'event' && (
+              <>
+                <p className={formStyles.sectionLabel}>Participantes</p>
+                <section className={formStyles.group}>
+                  <div className={formStyles.column}>
+                    {cargandoMiembros ? (
+                      <span className={formStyles.membersIntro}>
+                        <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                        Cargando miembros…
+                      </span>
+                    ) : miembros.length > 0 ? (
+                      <div className={formStyles.membersList}>
+                        {miembros.map((miembro) => (
+                          <label key={miembro.id} className={formStyles.memberOption}>
+                            <input type="checkbox" name="participantes" value={miembro.id} />
+                            <span>{miembro.nombre}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className={formStyles.membersIntro}>El evento quedará asignado a usted.</span>
+                    )}
+                  </div>
+                </section>
+
+                <p className={formStyles.sectionLabel}>Avisos</p>
+                <section className={formStyles.group}>
+                  <div className={formStyles.row}>
+                    <span className={formStyles.label}>Un día antes</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={alertaDia}
+                      aria-label="Avisar un día antes"
+                      onClick={() => setAlertaDia((actual) => !actual)}
+                      className={`${formStyles.switch} ${alertaDia ? formStyles.switchOn : ''}`}
+                    >
+                      <span className={formStyles.switchThumb} />
+                    </button>
+                  </div>
+                  <div className={formStyles.row}>
+                    <span className={formStyles.label}>Una hora antes</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={alertaHora}
+                      aria-label="Avisar una hora antes"
+                      onClick={() => setAlertaHora((actual) => !actual)}
+                      className={`${formStyles.switch} ${alertaHora ? formStyles.switchOn : ''}`}
+                    >
+                      <span className={formStyles.switchThumb} />
+                    </button>
+                  </div>
+                </section>
+              </>
+            )}
+
+            <p className={formStyles.sectionLabel}>Notas</p>
+            <section className={formStyles.group}>
+              <div className={formStyles.column}>
+                <textarea
+                  name="descripcion"
+                  maxLength={4000}
+                  className={formStyles.textarea}
+                  placeholder={itemType === 'reminder'
+                    ? 'Nota del recordatorio'
+                    : 'Descripción o indicaciones del evento'}
+                  aria-label="Notas"
+                />
               </div>
             </section>
-          )}
 
-          <section className={styles.formGroup}>
-            <label className={styles.formColumn}>
-              <span className={styles.formLabel}>Notas</span>
-              <textarea
-                name="descripcion"
-                maxLength={4000}
-                className={styles.formTextarea}
-                placeholder={itemType === 'reminder' ? 'Nota del recordatorio' : 'Descripción o indicaciones del evento'}
-              />
-            </label>
-          </section>
-
-          {error && <p className={styles.formError}>{error}</p>}
+            {error && <p className={formStyles.error} role="alert">{error}</p>}
+          </div>
         </div>
       </form>
     </div>,
