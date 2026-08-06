@@ -16,13 +16,20 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 
 const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 const YEARS_BEFORE = 20
 const YEARS_AFTER = 20
+const STICKY_HEADER_OFFSET = 68
+
+const easeInOutCubic = (progress: number) => (
+  progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2
+)
 
 export default function CalendarioYearView({
   fecha,
@@ -41,9 +48,7 @@ export default function CalendarioYearView({
 }) {
   const activeYearRef = useRef<HTMLElement | null>(null)
   const hasPositionedRef = useRef(false)
-  const transitionTimerRef = useRef<number | null>(null)
-  const revealTimerRef = useRef<number | null>(null)
-  const [isRepositioning, setIsRepositioning] = useState(false)
+  const scrollFrameRef = useRef<number | null>(null)
   const activeYear = fecha.getFullYear()
 
   const years = useMemo(
@@ -53,6 +58,50 @@ export default function CalendarioYearView({
     ),
     [activeYear],
   )
+
+  const cancelAnimatedScroll = useCallback(() => {
+    if (scrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(scrollFrameRef.current)
+      scrollFrameRef.current = null
+    }
+  }, [])
+
+  const animateToActiveYear = useCallback(() => {
+    const target = activeYearRef.current
+    if (!target) return
+
+    cancelAnimatedScroll()
+
+    const startY = window.scrollY
+    const targetY = Math.max(
+      0,
+      startY + target.getBoundingClientRect().top - STICKY_HEADER_OFFSET,
+    )
+    const distance = targetY - startY
+
+    if (Math.abs(distance) < 4 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.scrollTo({ top: targetY, behavior: 'auto' })
+      return
+    }
+
+    // Apple no publica la duración exacta de Calendario. Esta escala mantiene
+    // una transición perceptible y suave sin convertir recorridos largos en saltos.
+    const duration = Math.min(1050, Math.max(650, 560 + Math.sqrt(Math.abs(distance)) * 7))
+    const startedAt = performance.now()
+
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / duration)
+      window.scrollTo(0, startY + distance * easeInOutCubic(progress))
+
+      if (progress < 1) {
+        scrollFrameRef.current = window.requestAnimationFrame(step)
+      } else {
+        scrollFrameRef.current = null
+      }
+    }
+
+    scrollFrameRef.current = window.requestAnimationFrame(step)
+  }, [cancelAnimatedScroll])
 
   useEffect(() => {
     if (hasPositionedRef.current || !activeYearRef.current) return
@@ -69,37 +118,37 @@ export default function CalendarioYearView({
     const handleToday = (event: Event) => {
       event.preventDefault()
       event.stopPropagation()
-      if (isRepositioning) return
 
       const currentYear = new Date().getFullYear()
-      setIsRepositioning(true)
+      if (currentYear !== activeYear) {
+        onChangeYear(currentYear)
+        requestAnimationFrame(() => requestAnimationFrame(animateToActiveYear))
+        return
+      }
 
-      transitionTimerRef.current = window.setTimeout(() => {
-        if (currentYear !== activeYear) onChangeYear(currentYear)
-
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            activeYearRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' })
-            revealTimerRef.current = window.setTimeout(() => setIsRepositioning(false), 90)
-          })
-        })
-      }, 120)
+      animateToActiveYear()
     }
 
     todayButton.addEventListener('click', handleToday, true)
-    return () => todayButton.removeEventListener('click', handleToday, true)
-  }, [activeYear, isRepositioning, onChangeYear])
+    window.addEventListener('wheel', cancelAnimatedScroll, { passive: true })
+    window.addEventListener('touchstart', cancelAnimatedScroll, { passive: true })
+    window.addEventListener('pointerdown', cancelAnimatedScroll, { passive: true })
 
-  useEffect(() => () => {
-    if (transitionTimerRef.current !== null) window.clearTimeout(transitionTimerRef.current)
-    if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current)
-  }, [])
+    return () => {
+      todayButton.removeEventListener('click', handleToday, true)
+      window.removeEventListener('wheel', cancelAnimatedScroll)
+      window.removeEventListener('touchstart', cancelAnimatedScroll)
+      window.removeEventListener('pointerdown', cancelAnimatedScroll)
+    }
+  }, [activeYear, animateToActiveYear, cancelAnimatedScroll, onChangeYear])
+
+  useEffect(() => () => cancelAnimatedScroll(), [cancelAnimatedScroll])
 
   return (
     <div className={styles.yearView} aria-busy={isRefreshing || undefined}>
       <div className={styles.stickyChrome}>{topChrome}</div>
 
-      <div className={`${styles.yearsScroller} ${isRepositioning ? styles.repositioning : ''}`}>
+      <div className={styles.yearsScroller}>
         {years.map((year) => {
           const yearDate = new Date(year, 0, 1)
           const months = eachMonthOfInterval({
