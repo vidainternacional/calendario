@@ -7,8 +7,17 @@
   color: #111827;
 }
 
+.stickyChrome {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+}
+
 .yearView :global([class*='topChrome']) {
-  background: rgba(255, 255, 255, 0.94) !important;
+  background: transparent !important;
   color: #111827 !important;
 }
 
@@ -20,7 +29,7 @@
 .yearView ~ :global([class*='floatingBar']) :global([class*='floatingPill']),
 .yearView ~ :global([class*='floatingBar']) :global([class*='floatingGroup']) {
   border-color: rgba(15, 23, 42, 0.08) !important;
-  background: rgba(250, 250, 252, 0.96) !important;
+  background: rgba(250, 250, 252, 0.97) !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
   color: #1b2437 !important;
 }
@@ -29,17 +38,38 @@
   color: #273147 !important;
 }
 
+.yearsScroller {
+  width: 100%;
+  background: #ffffff;
+  scroll-behavior: smooth;
+}
+
+.yearSection {
+  scroll-margin-top: 68px;
+  padding-bottom: 34px;
+  background: #ffffff;
+}
+
+.yearSection + .yearSection {
+  padding-top: 20px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
 .yearHeader {
-  padding: 4px max(24px, env(safe-area-inset-right, 0px)) 20px max(24px, env(safe-area-inset-left, 0px));
+  padding: 8px max(24px, env(safe-area-inset-right, 0px)) 22px max(24px, env(safe-area-inset-left, 0px));
 }
 
 .yearTitle {
   margin: 0;
-  color: #5b3df5;
-  font-size: clamp(48px, 13vw, 64px);
+  color: #1f2937;
+  font-size: clamp(44px, 12vw, 60px);
   font-weight: 800;
   line-height: 0.94;
   letter-spacing: -0.055em;
+}
+
+.activeYearTitle {
+  color: #5b3df5;
 }
 
 .yearGrid {
@@ -47,7 +77,11 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
   gap: 30px 18px;
-  padding: 0 max(18px, env(safe-area-inset-right, 0px)) calc(126px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+  padding: 0 max(18px, env(safe-area-inset-right, 0px)) 20px max(18px, env(safe-area-inset-left, 0px));
+}
+
+.yearSection:last-child .yearGrid {
+  padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
 }
 
 .miniMonth {
@@ -173,7 +207,7 @@
   }
 
   .yearTitle {
-    font-size: clamp(46px, 13vw, 56px);
+    font-size: clamp(44px, 12.5vw, 54px);
   }
 
   .yearGrid {
@@ -221,6 +255,12 @@
     padding-inline: 28px;
   }
 
+  .yearHeader {
+    max-width: 760px;
+    margin-inline: auto;
+    padding-inline: 28px;
+  }
+
   .miniMonthName {
     font-size: 20px;
   }
@@ -232,6 +272,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .yearsScroller {
+    scroll-behavior: auto;
+  }
+
   .miniMonth {
     transition: none;
   }
