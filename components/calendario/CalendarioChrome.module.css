@@ -1,9 +1,9 @@
 .topChrome {
-  display: grid;
+  display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
-  padding-right: max(10px, env(safe-area-inset-right, 0px));
-  padding-left: max(10px, env(safe-area-inset-left, 0px));
+  gap: 8px !important;
+  padding-right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  padding-left: max(10px, env(safe-area-inset-left, 0px)) !important;
 }
 
 .leftSlot {
@@ -11,9 +11,9 @@
 }
 
 .backButton {
-  max-width: 100%;
-  min-width: 0;
-  padding-inline: 11px;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  padding-inline: 11px !important;
 }
 
 .backText {
@@ -30,11 +30,11 @@
 }
 
 .chromeIconButton {
-  width: 40px;
+  width: 40px !important;
 }
 
 .floatingBar {
-  gap: 10px;
+  gap: 10px !important;
 }
 
 .floatingGroup {
@@ -42,10 +42,10 @@
 }
 
 .viewTrigger {
-  width: auto;
+  width: auto !important;
   min-width: 92px;
   gap: 7px;
-  padding: 0 13px;
+  padding: 0 13px !important;
 }
 
 .viewTriggerLabel {
@@ -58,10 +58,10 @@
 }
 
 .viewPopover {
-  width: min(248px, calc(100vw - 24px));
+  width: min(248px, calc(100vw - 24px)) !important;
   max-height: min(70dvh, 560px);
-  overflow-y: auto;
-  padding: 8px;
+  overflow-y: auto !important;
+  padding: 8px !important;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
@@ -135,14 +135,14 @@
 
 @media (max-width: 480px) {
   .viewPopover {
-    top: auto;
-    right: max(12px, env(safe-area-inset-right, 0px));
-    bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 12px);
-    left: max(12px, env(safe-area-inset-left, 0px));
-    width: auto;
+    top: auto !important;
+    right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 12px) !important;
+    left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    width: auto !important;
     max-height: min(62dvh, 520px);
-    border-radius: 24px;
-    padding: 10px;
+    border-radius: 24px !important;
+    padding: 10px !important;
   }
 
   .viewOptions {
@@ -151,34 +151,34 @@
   }
 
   .viewOption {
-    min-height: 52px;
-    border: 1px solid rgba(15, 23, 42, 0.07);
-    border-radius: 16px;
+    min-height: 52px !important;
+    border: 1px solid rgba(15, 23, 42, 0.07) !important;
+    border-radius: 16px !important;
   }
 }
 
 @media (max-width: 360px) {
   .topChrome {
-    gap: 5px;
-    padding-right: max(8px, env(safe-area-inset-right, 0px));
-    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    gap: 5px !important;
+    padding-right: max(8px, env(safe-area-inset-right, 0px)) !important;
+    padding-left: max(8px, env(safe-area-inset-left, 0px)) !important;
   }
 
   .backButton {
-    min-height: 40px;
-    padding-inline: 8px;
-    font-size: 13px;
+    min-height: 40px !important;
+    padding-inline: 8px !important;
+    font-size: 13px !important;
   }
 
   .chromeIconButton {
-    width: 38px;
-    height: 40px;
+    width: 38px !important;
+    height: 40px !important;
   }
 
   .viewTrigger {
-    width: 48px;
+    width: 48px !important;
     min-width: 48px;
-    padding: 0;
+    padding: 0 !important;
   }
 
   .viewTriggerLabel {
