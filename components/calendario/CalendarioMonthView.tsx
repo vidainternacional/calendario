@@ -24,7 +24,6 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
 const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 18
-const MONTH_TOP_OFFSET = 0
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 function weeksForMonth(month: Date) {
@@ -86,6 +85,8 @@ export default function CalendarioMonthView({
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const scrollRootRef = useRef<HTMLDivElement | null>(null)
+  const stickyChromeRef = useRef<HTMLDivElement | null>(null)
+  const weekdaysRef = useRef<HTMLDivElement | null>(null)
   const activeMonthRef = useRef<HTMLElement | null>(null)
   const positionedMonthRef = useRef<string | null>(null)
   const baseMonth = startOfMonth(month)
@@ -108,19 +109,30 @@ export default function CalendarioMonthView({
     positionedMonthRef.current = positionKey
 
     const align = (behavior: ScrollBehavior) => {
-      const rootTop = root.getBoundingClientRect().top
-      const targetTop = target.getBoundingClientRect().top
-      const nextTop = Math.max(0, root.scrollTop + targetTop - rootTop - MONTH_TOP_OFFSET)
+      const rootRect = root.getBoundingClientRect()
+      const targetRect = target.getBoundingClientRect()
+      const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
+      const availableHeight = Math.max(0, root.clientHeight - stickyHeight)
+      const targetTopInScroll = root.scrollTop + targetRect.top - rootRect.top
+      const centeringSpace = Math.max(0, (availableHeight - targetRect.height) / 2)
+      const nextTop = Math.max(0, targetTopInScroll - stickyHeight - centeringSpace)
+
       root.scrollTo({ top: nextTop, behavior })
     }
 
-    align(scrollRequest > 0 ? 'smooth' : 'auto')
-    const frame = window.requestAnimationFrame(() => align('auto'))
-    const timer = window.setTimeout(() => align('auto'), 120)
+    let timer: number | undefined
+    const frame = window.requestAnimationFrame(() => {
+      const behavior: ScrollBehavior = scrollRequest > 0 ? 'smooth' : 'auto'
+      align(behavior)
+
+      if (behavior === 'auto') {
+        timer = window.setTimeout(() => align('auto'), 140)
+      }
+    })
 
     return () => {
       window.cancelAnimationFrame(frame)
-      window.clearTimeout(timer)
+      if (timer !== undefined) window.clearTimeout(timer)
     }
   }, [baseMonthKey, scrollRequest])
 
@@ -131,9 +143,9 @@ export default function CalendarioMonthView({
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
     >
-      <div className={polish.monthStickyChrome}>{topChrome}</div>
+      <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
 
-      <div className={`${basic.weekdays} ${polish.monthWeekdays}`} aria-label="Días de la semana">
+      <div ref={weekdaysRef} className={`${basic.weekdays} ${polish.monthWeekdays}`} aria-label="Días de la semana">
         <span className={basic.weekNumberHeader} aria-hidden="true" />
         {WEEKDAY_LABELS.map((label, index) => (
           <span key={`${label}-${index}`} aria-label={WEEKDAY_NAMES[index]}>
