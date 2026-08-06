@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
+import polish from './CalendarioMonthPolish.module.css'
 
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
@@ -61,7 +62,6 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
-  const monthViewRef = useRef<HTMLDivElement | null>(null)
   const activeMonthRef = useRef<HTMLElement | null>(null)
   const positionedMonthRef = useRef<string | null>(null)
   const baseMonth = startOfMonth(month)
@@ -107,8 +107,8 @@ export default function CalendarioMonthView({
   }, [baseMonthKey])
 
   return (
-    <div ref={monthViewRef} className={basic.monthView} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
-      <div className={basic.monthStickyChrome}>{topChrome}</div>
+    <div className={`${basic.monthView} ${polish.monthPolish}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+      <div className={polish.monthStickyChrome}>{topChrome}</div>
 
       <div className={basic.weekdays} aria-hidden="true">
         <span className={basic.weekNumberHeader} />
@@ -124,7 +124,7 @@ export default function CalendarioMonthView({
             <section
               key={visibleMonth.toISOString()}
               ref={isBaseMonth ? activeMonthRef : undefined}
-              className={`${basic.monthSection} ${isBaseMonth ? basic.activeMonthSection : ''}`}
+              className={`${basic.monthSection} ${isBaseMonth ? polish.activeMonthSection : ''}`}
               aria-label={format(visibleMonth, 'MMMM yyyy', { locale: es })}
             >
               <header className={basic.monthHeader}>
