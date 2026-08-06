@@ -24,7 +24,7 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
 const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 18
-const MONTH_TOP_OFFSET = 124
+const MONTH_TOP_OFFSET = 0
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 function weeksForMonth(month: Date) {
@@ -85,6 +85,7 @@ export default function CalendarioMonthView({
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
 }) {
+  const scrollRootRef = useRef<HTMLDivElement | null>(null)
   const activeMonthRef = useRef<HTMLElement | null>(null)
   const positionedMonthRef = useRef<string | null>(null)
   const baseMonth = startOfMonth(month)
@@ -101,16 +102,35 @@ export default function CalendarioMonthView({
 
   useLayoutEffect(() => {
     const positionKey = `${baseMonthKey}:${scrollRequest}`
-    if (positionedMonthRef.current === positionKey || !activeMonthRef.current) return
+    const root = scrollRootRef.current
+    const target = activeMonthRef.current
+    if (positionedMonthRef.current === positionKey || !root || !target) return
     positionedMonthRef.current = positionKey
 
-    const target = activeMonthRef.current
-    const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - MONTH_TOP_OFFSET)
-    window.scrollTo({ top, behavior: scrollRequest > 0 ? 'smooth' : 'auto' })
+    const align = (behavior: ScrollBehavior) => {
+      const rootTop = root.getBoundingClientRect().top
+      const targetTop = target.getBoundingClientRect().top
+      const nextTop = Math.max(0, root.scrollTop + targetTop - rootTop - MONTH_TOP_OFFSET)
+      root.scrollTo({ top: nextTop, behavior })
+    }
+
+    align(scrollRequest > 0 ? 'smooth' : 'auto')
+    const frame = window.requestAnimationFrame(() => align('auto'))
+    const timer = window.setTimeout(() => align('auto'), 120)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+    }
   }, [baseMonthKey, scrollRequest])
 
   return (
-    <div className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+    <div
+      ref={scrollRootRef}
+      className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`}
+      aria-hidden={overlay || undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <div className={polish.monthStickyChrome}>{topChrome}</div>
 
       <div className={`${basic.weekdays} ${polish.monthWeekdays}`} aria-label="Días de la semana">
