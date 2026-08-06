@@ -1,0 +1,120 @@
+.eventCompact {
+  display: flex;
+  min-height: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+}
+
+.eventSingleDot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.eventFusion {
+  display: flex;
+  height: 5px;
+  min-width: 18px;
+  max-width: 34px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.eventFusionSegment {
+  display: block;
+  min-width: 3px;
+  height: 100%;
+}
+
+.monthDensity :global([class*='weekdays']) {
+  padding-top: 0 !important;
+  padding-bottom: 7px !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+
+.monthDensity :global([class*='monthHeader']) {
+  padding-bottom: 11px !important;
+}
+
+.monthDensity :global([class*='monthWeekRow']) {
+  min-height: 68px !important;
+}
+
+.monthDensity :global([class*='monthDay']),
+.monthDensity :global([class*='monthDayEmpty']) {
+  min-height: 68px !important;
+}
+
+.monthDensity :global([class*='monthDay']) {
+  padding: 5px 2px 3px !important;
+}
+
+.monthDensity :global([class*='weekNumber']) {
+  padding-top: 8px !important;
+  font-size: 8px !important;
+  font-weight: 650 !important;
+}
+
+.monthDensity :global([class*='dayNumber']) {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 32px !important;
+}
+
+.monthDensity :global([class*='dayToday']),
+.monthDensity :global([class*='daySelected']) {
+  font-weight: 750 !important;
+}
+
+.monthDensity :global([class*='eventBars']),
+.monthDensity :global([class*='eventDetails']) {
+  margin-top: 3px !important;
+  gap: 2px !important;
+}
+
+.monthDensity :global([class*='monthWeekRowDetails']),
+.monthDensity :global([class*='monthDayDetails']) {
+  min-height: 96px !important;
+}
+
+@media (max-width: 390px) {
+  .monthDensity :global([class*='monthWeekRow']),
+  .monthDensity :global([class*='monthDay']),
+  .monthDensity :global([class*='monthDayEmpty']) {
+    min-height: 64px !important;
+  }
+
+  .monthDensity :global([class*='dayNumber']) {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 15px !important;
+    line-height: 30px !important;
+  }
+
+  .monthDensity :global([class*='monthWeekRowDetails']),
+  .monthDensity :global([class*='monthDayDetails']) {
+    min-height: 92px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .monthDensity :global([class*='monthWeekRow']),
+  .monthDensity :global([class*='monthDay']),
+  .monthDensity :global([class*='monthDayEmpty']) {
+    min-height: 60px !important;
+  }
+
+  .monthDensity :global([class*='dayNumber']) {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+    line-height: 28px !important;
+  }
+}

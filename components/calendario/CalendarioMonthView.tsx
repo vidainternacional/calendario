@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
+import indicator from './CalendarioMonthIndicators.module.css'
 import polish from './CalendarioMonthPolish.module.css'
 
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
@@ -24,6 +25,7 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 18
 const MONTH_TOP_OFFSET = 116
+const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
@@ -31,6 +33,25 @@ function weeksForMonth(month: Date) {
   const days = eachDayOfInterval({ start, end })
 
   return Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
+}
+
+function compactEventSegments(events: EventoCalendario[]) {
+  const grouped = new Map<string, { color: string; count: number }>()
+
+  events.forEach((event) => {
+    const color = eventColor(event)
+    const key = event.calendar_id || color
+    const existing = grouped.get(key)
+
+    if (existing) {
+      existing.count += 1
+      return
+    }
+
+    grouped.set(key, { color, count: 1 })
+  })
+
+  return [...grouped.values()]
 }
 
 export default function CalendarioMonthView({
@@ -107,12 +128,16 @@ export default function CalendarioMonthView({
   }, [baseMonthKey])
 
   return (
-    <div className={`${basic.monthView} ${polish.monthPolish}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+    <div className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
       <div className={polish.monthStickyChrome}>{topChrome}</div>
 
-      <div className={basic.weekdays} aria-hidden="true">
-        <span className={basic.weekNumberHeader} />
-        {WEEKDAY_LABELS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+      <div className={basic.weekdays} aria-label="Días de la semana">
+        <span className={basic.weekNumberHeader} aria-hidden="true" />
+        {WEEKDAY_LABELS.map((label, index) => (
+          <span key={`${label}-${index}`} aria-label={WEEKDAY_NAMES[index]}>
+            {label}
+          </span>
+        ))}
       </div>
 
       <div className={basic.monthScroll}>
@@ -146,7 +171,7 @@ export default function CalendarioMonthView({
                       const selected = belongs && isSameDay(day, selectedDay)
                       const today = belongs && isToday(day)
                       const dayEvents = belongs ? eventosDelDia(events, day) : []
-                      const uniqueColors = [...new Map(dayEvents.map((event) => [event.calendar_id, eventColor(event)])).values()]
+                      const compactSegments = compactEventSegments(dayEvents)
 
                       if (!belongs) {
                         return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
@@ -169,17 +194,30 @@ export default function CalendarioMonthView({
                           onClick={handleDayPress}
                           aria-pressed={selected}
                           aria-current={today ? 'date' : undefined}
-                          aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${selected && openDayOnSelect ? ', volver a tocar para abrir vista del día' : ''}`}
+                          aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${dayEvents.length ? `, ${dayEvents.length} evento${dayEvents.length === 1 ? '' : 's'}` : ''}${selected && openDayOnSelect ? ', volver a tocar para abrir vista del día' : ''}`}
                         >
                           <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                             {format(day, 'd')}
                           </span>
 
-                          {displayMode === 'compact' && (
-                            <span className={basic.eventDots} aria-hidden="true">
-                              {uniqueColors.slice(0, 3).map((color, index) => (
-                                <span key={`${color}-${index}`} className={basic.eventDot} style={{ backgroundColor: color }} />
-                              ))}
+                          {displayMode === 'compact' && dayEvents.length > 0 && (
+                            <span className={indicator.eventCompact} aria-hidden="true">
+                              {dayEvents.length === 1 ? (
+                                <span className={indicator.eventSingleDot} style={{ backgroundColor: compactSegments[0]?.color }} />
+                              ) : (
+                                <span
+                                  className={indicator.eventFusion}
+                                  style={{ width: `${Math.min(34, 12 + Math.min(dayEvents.length, 5) * 4)}px` }}
+                                >
+                                  {compactSegments.slice(0, 5).map((segment, index) => (
+                                    <span
+                                      key={`${segment.color}-${index}`}
+                                      className={indicator.eventFusionSegment}
+                                      style={{ backgroundColor: segment.color, flexGrow: segment.count }}
+                                    />
+                                  ))}
+                                </span>
+                              )}
                             </span>
                           )}
 
