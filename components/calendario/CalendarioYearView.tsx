@@ -16,13 +16,14 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 
 const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 const YEARS_BEFORE = 20
 const YEARS_AFTER = 20
+const YEAR_TOP_OFFSET = 68
 
 export default function CalendarioYearView({
   fecha,
@@ -40,7 +41,7 @@ export default function CalendarioYearView({
   onChangeYear: (year: number) => void
 }) {
   const activeYearRef = useRef<HTMLElement | null>(null)
-  const hasPositionedRef = useRef(false)
+  const positionedYearRef = useRef<number | null>(null)
   const pendingTodayScrollRef = useRef(false)
   const activeYear = fecha.getFullYear()
 
@@ -52,15 +53,38 @@ export default function CalendarioYearView({
     [activeYear],
   )
 
-  const scrollToActiveYear = (behavior: ScrollBehavior) => {
-    activeYearRef.current?.scrollIntoView({ block: 'start', behavior })
+  const scrollToActiveYear = (behavior: ScrollBehavior = 'auto') => {
+    const target = activeYearRef.current
+    if (!target) return
+
+    const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - YEAR_TOP_OFFSET)
+    window.scrollTo({ top, behavior })
   }
 
-  useEffect(() => {
-    if (hasPositionedRef.current || !activeYearRef.current) return
-    hasPositionedRef.current = true
-    scrollToActiveYear('auto')
-  }, [])
+  useLayoutEffect(() => {
+    if (positionedYearRef.current === activeYear || !activeYearRef.current) return
+    positionedYearRef.current = activeYear
+
+    const html = document.documentElement
+    const previousBehavior = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+
+    const align = () => scrollToActiveYear('auto')
+    align()
+    const firstFrame = window.requestAnimationFrame(() => {
+      align()
+      window.requestAnimationFrame(align)
+    })
+    const settleTimer = window.setTimeout(align, 120)
+
+    void document.fonts?.ready.then(align)
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      window.clearTimeout(settleTimer)
+      html.style.scrollBehavior = previousBehavior
+    }
+  }, [activeYear])
 
   useEffect(() => {
     if (!pendingTodayScrollRef.current || !activeYearRef.current) return
@@ -151,7 +175,7 @@ export default function CalendarioYearView({
                               key={day.toISOString()}
                               className={`${styles.miniDay} ${selected ? styles.miniSelected : ''} ${today ? styles.miniToday : ''}`}
                             >
-                              {belongs ? format(day, 'd') : ''}
+                              <span className={styles.miniDayLabel}>{belongs ? format(day, 'd') : ''}</span>
                               {visibleMarks.length > 0 && (
                                 <span className={styles.eventMarks} aria-hidden="true">
                                   {visibleMarks.map((_, index) => (
