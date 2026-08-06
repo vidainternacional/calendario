@@ -5,6 +5,7 @@
   min-height: 100%;
   background: #ffffff;
   color: #111827;
+  overscroll-behavior-y: contain;
 }
 
 .stickyChrome {
@@ -40,6 +41,8 @@
 
 .yearsScroller {
   width: 100%;
+  min-height: 100dvh;
+  padding-bottom: calc(42dvh + env(safe-area-inset-bottom, 0px));
   background: #ffffff;
   scroll-behavior: smooth;
 }
