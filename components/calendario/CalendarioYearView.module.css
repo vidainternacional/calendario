@@ -3,19 +3,19 @@
   --foreground: #111827;
   --calendar-accent: #5b3df5;
   position: relative;
-  min-height: 100dvh;
-  isolation: isolate;
+  min-height: 100%;
   background: #ffffff;
   color: #111827;
   overscroll-behavior-y: contain;
 }
 
-.yearView::before {
+.yearView::after {
   position: fixed;
   inset: 0;
   z-index: -1;
   background: #ffffff;
   content: '';
+  pointer-events: none;
 }
 
 .stickyChrome {
@@ -37,14 +37,10 @@
   color: #263047 !important;
 }
 
-.yearView ~ :global([class*='floatingBar']) {
-  background: #ffffff !important;
-}
-
 .yearView ~ :global([class*='floatingBar']) :global([class*='floatingPill']),
 .yearView ~ :global([class*='floatingBar']) :global([class*='floatingGroup']) {
   border-color: rgba(15, 23, 42, 0.08) !important;
-  background: rgba(250, 250, 252, 0.97) !important;
+  background: #ffffff !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
   color: #1b2437 !important;
 }
@@ -56,9 +52,15 @@
 .yearsScroller {
   width: 100%;
   min-height: 100dvh;
-  padding-bottom: calc(58dvh + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(42dvh + env(safe-area-inset-bottom, 0px));
   background: #ffffff;
-  scroll-behavior: smooth;
+  opacity: 1;
+  transition: opacity 120ms ease;
+}
+
+.repositioning {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .yearSection {
@@ -69,7 +71,6 @@
 
 .yearSection + .yearSection {
   padding-top: 20px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .yearHeader {
@@ -98,7 +99,7 @@
 }
 
 .yearSection:last-child .yearGrid {
-  padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
 }
 
 .miniMonth {
@@ -158,27 +159,22 @@
 }
 
 .miniGrid {
-  grid-template-rows: repeat(6, minmax(17px, auto));
+  grid-template-rows: repeat(6, minmax(15px, auto));
   gap: 3px 1px;
 }
 
 .miniDay {
   position: relative;
-  display: flex;
-  width: 17px;
-  height: 17px;
-  min-width: 17px;
-  min-height: 17px;
-  align-items: center;
-  justify-content: center;
-  justify-self: center;
-  border-radius: 50%;
+  display: grid;
+  min-width: 0;
+  min-height: 15px;
+  place-items: center;
+  border-radius: 999px;
   color: #273047;
   font-size: clamp(8px, 2.25vw, 10px);
   font-weight: 550;
-  line-height: 17px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
-  text-align: center;
 }
 
 .miniSelected {
@@ -188,16 +184,23 @@
 }
 
 .miniToday {
+  width: 15px;
+  height: 15px;
+  min-height: 15px;
+  justify-self: center;
+  border-radius: 50%;
   background: #5b3df5;
   box-shadow: none;
   color: #ffffff;
   font-weight: 800;
+  line-height: 15px;
+  text-align: center;
 }
 
 .eventMarks {
   position: absolute;
   right: 0;
-  bottom: -3px;
+  bottom: -2px;
   left: 0;
   display: flex;
   height: 3px;
@@ -263,17 +266,16 @@
     font-size: 6px;
   }
 
-  .miniGrid {
-    grid-template-rows: repeat(6, minmax(15px, auto));
+  .miniDay {
+    min-height: 14px;
+    font-size: 7px;
   }
 
-  .miniDay {
-    width: 15px;
-    height: 15px;
-    min-width: 15px;
-    min-height: 15px;
-    font-size: 7px;
-    line-height: 15px;
+  .miniToday {
+    width: 14px;
+    height: 14px;
+    min-height: 14px;
+    line-height: 14px;
   }
 }
 
@@ -295,23 +297,22 @@
     font-size: 20px;
   }
 
-  .miniGrid {
-    grid-template-rows: repeat(6, minmax(20px, auto));
-  }
-
   .miniDay {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
     min-height: 20px;
     font-size: 11px;
+  }
+
+  .miniToday {
+    width: 20px;
+    height: 20px;
+    min-height: 20px;
     line-height: 20px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .yearsScroller {
-    scroll-behavior: auto;
+    transition: none;
   }
 
   .miniMonth {
