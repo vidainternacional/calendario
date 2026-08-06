@@ -35,22 +35,7 @@ function weeksForMonth(month: Date) {
 }
 
 function compactEventSegments(events: EventoCalendario[]) {
-  const grouped = new Map<string, { color: string; count: number }>()
-
-  events.forEach((event) => {
-    const color = eventColor(event)
-    const key = event.calendar_id || color
-    const existing = grouped.get(key)
-
-    if (existing) {
-      existing.count += 1
-      return
-    }
-
-    grouped.set(key, { color, count: 1 })
-  })
-
-  return [...grouped.values()]
+  return events.slice(0, 6).map((event) => eventColor(event))
 }
 
 export default function CalendarioMonthView({
@@ -213,17 +198,32 @@ export default function CalendarioMonthView({
                           {displayMode === 'compact' && dayEvents.length > 0 && (
                             <span className={indicator.eventCompact} aria-hidden="true">
                               {dayEvents.length === 1 ? (
-                                <span className={indicator.eventSingleDot} style={{ backgroundColor: compactSegments[0]?.color }} />
+                                <span className={indicator.eventSingleDot} style={{ backgroundColor: compactSegments[0] }} />
                               ) : (
                                 <span
                                   className={indicator.eventFusion}
-                                  style={{ width: `${Math.min(34, 12 + Math.min(dayEvents.length, 5) * 4)}px` }}
+                                  style={{
+                                    width: `${5 + (compactSegments.length - 1) * 4}px`,
+                                    minWidth: 0,
+                                    maxWidth: 25,
+                                    overflow: 'visible',
+                                    background: 'transparent',
+                                  }}
                                 >
-                                  {compactSegments.slice(0, 5).map((segment, index) => (
+                                  {compactSegments.map((color, index) => (
                                     <span
-                                      key={`${segment.color}-${index}`}
+                                      key={`${color}-${index}`}
                                       className={indicator.eventFusionSegment}
-                                      style={{ backgroundColor: segment.color, flexGrow: segment.count }}
+                                      style={{
+                                        width: 5,
+                                        minWidth: 5,
+                                        height: 5,
+                                        flexGrow: 0,
+                                        flexShrink: 0,
+                                        marginLeft: index === 0 ? 0 : -1,
+                                        borderRadius: '50%',
+                                        backgroundColor: color,
+                                      }}
                                     />
                                   ))}
                                 </span>
