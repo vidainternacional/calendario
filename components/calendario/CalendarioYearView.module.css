@@ -1,0 +1,238 @@
+.yearView {
+  --background: #ffffff;
+  --foreground: #111827;
+  --calendar-accent: #5b3df5;
+  min-height: 100%;
+  background: #ffffff;
+  color: #111827;
+}
+
+.yearView :global([class*='topChrome']) {
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #111827 !important;
+}
+
+.yearView :global([class*='actionsGroup']),
+.yearView :global([class*='chromeIconButton']) {
+  color: #263047 !important;
+}
+
+.yearView ~ :global([class*='floatingBar']) :global([class*='floatingPill']),
+.yearView ~ :global([class*='floatingBar']) :global([class*='floatingGroup']) {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  background: rgba(250, 250, 252, 0.96) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+  color: #1b2437 !important;
+}
+
+.yearView ~ :global([class*='floatingBar']) :global([class*='floatingIcon']) {
+  color: #273147 !important;
+}
+
+.yearHeader {
+  padding: 4px max(24px, env(safe-area-inset-right, 0px)) 20px max(24px, env(safe-area-inset-left, 0px));
+}
+
+.yearTitle {
+  margin: 0;
+  color: #5b3df5;
+  font-size: clamp(48px, 13vw, 64px);
+  font-weight: 800;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+}
+
+.yearGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 30px 18px;
+  padding: 0 max(18px, env(safe-area-inset-right, 0px)) calc(126px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+}
+
+.miniMonth {
+  min-width: 0;
+  padding: 2px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  transition: background-color 120ms ease, transform 120ms ease, opacity 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.miniMonth:active {
+  background: rgba(91, 61, 245, 0.07);
+  transform: scale(0.975);
+}
+
+.miniMonth:focus-visible {
+  outline: 3px solid rgba(91, 61, 245, 0.3);
+  outline-offset: 4px;
+}
+
+.miniMonthName {
+  display: block;
+  min-height: 24px;
+  margin: 0 2px 7px;
+  overflow: hidden;
+  color: #111827;
+  font-size: clamp(15px, 4.2vw, 19px);
+  font-weight: 760;
+  line-height: 24px;
+  letter-spacing: -0.025em;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.currentMonth .miniMonthName {
+  color: #5b3df5;
+}
+
+.miniWeekdays,
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.miniWeekdays {
+  margin-bottom: 5px;
+  color: #8a93a4;
+  font-size: clamp(6px, 1.8vw, 8px);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.miniGrid {
+  grid-template-rows: repeat(6, minmax(15px, auto));
+  gap: 3px 1px;
+}
+
+.miniDay {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 15px;
+  place-items: center;
+  border-radius: 999px;
+  color: #273047;
+  font-size: clamp(8px, 2.25vw, 10px);
+  font-weight: 550;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.miniSelected {
+  box-shadow: inset 0 0 0 1.5px #5b3df5;
+  color: #5b3df5;
+  font-weight: 760;
+}
+
+.miniToday {
+  background: #5b3df5;
+  box-shadow: none;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.eventMarks {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  display: flex;
+  height: 3px;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.eventMark {
+  width: 2.5px;
+  height: 2.5px;
+  border-radius: 999px;
+  background: #5b3df5;
+}
+
+.miniToday .eventMark {
+  background: #ffffff;
+}
+
+.moreMark {
+  width: 5px;
+  border-radius: 999px;
+}
+
+@media (max-width: 390px) {
+  .yearHeader {
+    padding-inline: 20px;
+    padding-bottom: 18px;
+  }
+
+  .yearTitle {
+    font-size: clamp(46px, 13vw, 56px);
+  }
+
+  .yearGrid {
+    gap: 25px 12px;
+    padding-inline: 13px;
+  }
+
+  .miniMonthName {
+    min-height: 22px;
+    margin-bottom: 5px;
+    font-size: clamp(14px, 4.1vw, 17px);
+    line-height: 22px;
+  }
+
+  .miniGrid {
+    gap-block: 2px;
+  }
+}
+
+@media (max-width: 350px) {
+  .yearGrid {
+    gap: 22px 8px;
+    padding-inline: 9px;
+  }
+
+  .miniMonthName {
+    font-size: 13px;
+  }
+
+  .miniWeekdays {
+    font-size: 6px;
+  }
+
+  .miniDay {
+    min-height: 14px;
+    font-size: 7px;
+  }
+}
+
+@media (min-width: 700px) {
+  .yearGrid {
+    max-width: 760px;
+    margin-inline: auto;
+    gap: 38px 28px;
+    padding-inline: 28px;
+  }
+
+  .miniMonthName {
+    font-size: 20px;
+  }
+
+  .miniDay {
+    min-height: 20px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .miniMonth {
+    transition: none;
+  }
+}
