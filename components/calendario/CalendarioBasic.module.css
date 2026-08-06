@@ -1,20 +1,19 @@
 .yearView,
 .monthView {
   min-height: 100%;
-  background: #000;
-  color: #fff;
-  color-scheme: dark;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .yearHeader,
 .monthHeader {
-  padding: 4px 32px 16px;
+  padding: 4px 24px 16px;
 }
 
 .yearTitle {
   margin: 0;
-  color: #ff453a;
-  font-size: clamp(42px, 12vw, 58px);
+  color: #5b3df5;
+  font-size: clamp(40px, 11vw, 54px);
   font-weight: 750;
   line-height: 1;
   letter-spacing: -0.045em;
@@ -22,8 +21,8 @@
 
 .monthTitle {
   margin: 0;
-  color: #fff;
-  font-size: clamp(40px, 11vw, 56px);
+  color: var(--foreground);
+  font-size: clamp(38px, 10vw, 52px);
   font-weight: 750;
   line-height: 1.03;
   letter-spacing: -0.045em;
@@ -38,8 +37,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: 24px 18px;
-  padding: 0 30px calc(112px + env(safe-area-inset-bottom, 0px));
+  gap: 22px 14px;
+  padding: 0 18px calc(112px + env(safe-area-inset-bottom, 0px));
 }
 
 .miniMonth {
@@ -58,13 +57,13 @@
 
 .miniMonthName {
   display: block;
-  min-height: 22px;
-  margin-bottom: 5px;
+  min-height: 20px;
+  margin-bottom: 4px;
   overflow: hidden;
-  color: #fff;
-  font-size: clamp(14px, 4vw, 18px);
+  color: var(--foreground);
+  font-size: clamp(13px, 4vw, 17px);
   font-weight: 700;
-  line-height: 22px;
+  line-height: 20px;
   text-overflow: ellipsis;
   text-transform: capitalize;
   white-space: nowrap;
@@ -78,7 +77,7 @@
 
 .miniWeekdays {
   margin-bottom: 3px;
-  color: #6f6f76;
+  color: #7a8496;
   font-size: 7px;
   font-weight: 600;
   line-height: 1;
@@ -97,13 +96,13 @@
   min-width: 0;
   aspect-ratio: 1;
   border-radius: 999px;
-  color: #f2f2f7;
+  color: var(--foreground);
   font-size: clamp(8px, 2.2vw, 10px);
   line-height: 1;
 }
 
 .miniToday {
-  background: #ff453a;
+  background: #5b3df5;
   color: #fff;
   font-weight: 700;
 }
@@ -124,27 +123,27 @@
 }
 
 .weekdays {
-  padding: 0 28px 9px;
-  border-bottom: 1px solid #2c2c2e;
-  color: #a1a1a7;
+  padding: 0 18px 9px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.11);
+  color: #7a8496;
   font-size: 11px;
   font-weight: 600;
   text-align: center;
 }
 
 .monthGrid {
-  grid-template-rows: repeat(6, minmax(78px, 1fr));
+  grid-template-rows: repeat(6, minmax(74px, 1fr));
   padding: 0 4px calc(120px + env(safe-area-inset-bottom, 0px));
 }
 
 .monthGridDetails {
-  grid-template-rows: repeat(6, minmax(96px, 1fr));
+  grid-template-rows: repeat(6, minmax(92px, 1fr));
 }
 
 .monthDay,
 .monthDayEmpty {
-  min-height: 78px;
-  border-bottom: 1px solid #2c2c2e;
+  min-height: 74px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.09);
 }
 
 .monthDay {
@@ -154,15 +153,15 @@
   border-top: 0;
   border-right: 0;
   border-left: 0;
-  background: #000;
-  color: #fff;
+  background: var(--background);
+  color: var(--foreground);
   font: inherit;
   text-align: center;
   -webkit-tap-highlight-color: transparent;
 }
 
 .monthDayDetails {
-  min-height: 96px;
+  min-height: 92px;
   padding-inline: 2px;
 }
 
@@ -172,26 +171,26 @@
 
 .monthDayEmpty {
   display: block;
-  background: #000;
+  background: var(--background);
 }
 
 .dayNumber {
   display: inline-grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .daySelected {
-  background: #3a3a3c;
-  color: #fff;
+  background: rgba(91, 61, 245, 0.14);
+  color: #5b3df5;
 }
 
 .dayToday {
-  background: #ff453a;
+  background: #5b3df5;
   color: #fff;
   font-weight: 700;
 }
@@ -210,12 +209,13 @@
   border-radius: 999px;
 }
 
-.eventBars {
+.eventBars,
+.eventDetails {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 3px;
-  margin-top: 9px;
+  margin-top: 8px;
 }
 
 .eventBar {
@@ -226,11 +226,6 @@
 }
 
 .eventDetails {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 7px;
   text-align: left;
 }
 
@@ -239,8 +234,8 @@
   min-width: 0;
   overflow: hidden;
   border-left: 3px solid;
-  border-radius: 4px;
-  background: #242426;
+  border-radius: 5px;
+  background: rgba(91, 61, 245, 0.08);
   padding: 3px 4px;
   font-size: 9px;
   font-weight: 700;
@@ -250,55 +245,72 @@
 }
 
 .eventMore {
-  color: #8e8e93;
+  color: #7a8496;
   font-size: 9px;
   font-weight: 700;
   line-height: 1;
 }
 
+@media (prefers-color-scheme: dark) {
+  .weekdays,
+  .monthDay,
+  .monthDayEmpty {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .daySelected {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+  }
+
+  .eventChip {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
 @media (max-width: 390px) {
   .yearHeader,
   .monthHeader {
-    padding-inline: 20px;
-  }
-
-  .yearGrid {
-    gap: 20px 12px;
     padding-inline: 18px;
   }
 
-  .weekdays {
+  .yearGrid {
+    gap: 19px 10px;
     padding-inline: 12px;
   }
 
+  .weekdays {
+    padding-inline: 10px;
+  }
+
   .monthGrid {
-    grid-template-rows: repeat(6, minmax(70px, 1fr));
+    grid-template-rows: repeat(6, minmax(68px, 1fr));
   }
 
   .monthGridDetails {
-    grid-template-rows: repeat(6, minmax(88px, 1fr));
+    grid-template-rows: repeat(6, minmax(86px, 1fr));
   }
 
   .monthDay,
   .monthDayEmpty {
-    min-height: 70px;
+    min-height: 68px;
   }
 
   .monthDayDetails {
-    min-height: 88px;
+    min-height: 86px;
   }
 
   .dayNumber {
-    width: 34px;
-    height: 34px;
+    width: 33px;
+    height: 33px;
     font-size: 17px;
   }
 }
 
 @media (max-width: 350px) {
   .yearGrid {
-    gap: 17px 8px;
-    padding-inline: 10px;
+    gap: 17px 7px;
+    padding-inline: 8px;
   }
 
   .miniMonthName {
@@ -315,22 +327,5 @@
 
   .miniDay {
     font-size: 7px;
-  }
-
-  .monthGrid {
-    grid-template-rows: repeat(6, minmax(64px, 1fr));
-  }
-
-  .monthGridDetails {
-    grid-template-rows: repeat(6, minmax(82px, 1fr));
-  }
-
-  .monthDay,
-  .monthDayEmpty {
-    min-height: 64px;
-  }
-
-  .monthDayDetails {
-    min-height: 82px;
   }
 }
