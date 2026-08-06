@@ -5,7 +5,8 @@
   min-height: 0;
   flex: 1;
   overflow: hidden;
-  background: #fff;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .horizontalScroller {
@@ -28,6 +29,7 @@
   min-width: 100%;
   height: 100%;
   flex-direction: column;
+  background: var(--background);
 }
 
 .daysHeader {
@@ -36,7 +38,7 @@
   display: grid;
   flex: 0 0 auto;
   border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-  background: rgba(255, 255, 255, 0.96);
+  background: color-mix(in srgb, var(--background) 96%, transparent);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
@@ -55,7 +57,7 @@
   border: 0;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
   background: transparent;
-  color: #69758a;
+  color: #7a8496;
 }
 
 .dayHeader:focus-visible,
@@ -66,7 +68,7 @@
 }
 
 .dayHeader[aria-pressed='true'] {
-  background: rgba(91, 61, 245, 0.06);
+  background: rgba(91, 61, 245, 0.08);
 }
 
 .dayHeader span {
@@ -83,7 +85,7 @@
   justify-content: center;
   margin-top: 3px;
   border-radius: 50%;
-  color: #111829;
+  color: var(--foreground);
   font-size: 18px;
 }
 
@@ -99,7 +101,7 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-  background: #fff;
+  background: var(--background);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -110,7 +112,7 @@
   align-items: flex-start;
   justify-content: flex-end;
   padding: 8px 6px;
-  background: #fff;
+  background: var(--background);
   color: #8a93a4;
   font-size: 10px;
 }
@@ -134,9 +136,9 @@
   border: 0;
   border-left: 3px solid;
   border-radius: 5px;
-  background: #f7f7fb;
+  background: rgba(91, 61, 245, 0.08);
   padding: 4px;
-  color: #273047;
+  color: var(--foreground);
   font-size: 10px;
   font-weight: 750;
   text-align: left;
@@ -151,12 +153,14 @@
   overscroll-behavior-y: contain;
   padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   scroll-padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  background: var(--background);
   -webkit-overflow-scrolling: touch;
 }
 
 .timeline {
   position: relative;
   display: grid;
+  background: var(--background);
 }
 
 .hours {
@@ -180,6 +184,7 @@
   position: relative;
   min-width: 0;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--background);
 }
 
 .hourLine {
@@ -198,6 +203,7 @@
   border-left: 3px solid;
   border-radius: 6px;
   padding: 5px;
+  color: var(--foreground);
   text-align: left;
   transition: filter 0.15s ease, transform 0.15s ease;
 }
@@ -224,6 +230,27 @@
   margin-top: 2px;
   color: #647086;
   font-size: 9px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .daysHeader,
+  .timeSpacer,
+  .dayHeader,
+  .allDayBand,
+  .allDayColumn,
+  .hours,
+  .dayColumn,
+  .hourLine {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .allDayEvent {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .timedEvent span {
+    color: #d1d1d6;
+  }
 }
 
 @media (max-width: 380px) {
