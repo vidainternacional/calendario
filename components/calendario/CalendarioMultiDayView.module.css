@@ -5,7 +5,9 @@
   min-height: 0;
   flex: 1;
   overflow: hidden;
-  background: #fff;
+  background: #000;
+  color: #fff;
+  color-scheme: dark;
 }
 
 .horizontalScroller {
@@ -28,6 +30,7 @@
   min-width: 100%;
   height: 100%;
   flex-direction: column;
+  background: #000;
 }
 
 .daysHeader {
@@ -35,14 +38,14 @@
   z-index: 5;
   display: grid;
   flex: 0 0 auto;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #2c2c2e;
+  background: rgba(0, 0, 0, 0.96);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
 .timeSpacer {
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-right: 1px solid #2c2c2e;
 }
 
 .dayHeader {
@@ -53,42 +56,42 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-right: 1px solid #2c2c2e;
   background: transparent;
-  color: #69758a;
+  color: #a1a1a7;
 }
 
 .dayHeader:focus-visible,
 .allDayEvent:focus-visible,
 .timedEvent:focus-visible {
-  outline: 3px solid rgba(91, 61, 245, 0.35);
+  outline: 3px solid rgba(255, 69, 58, 0.4);
   outline-offset: -3px;
 }
 
 .dayHeader[aria-pressed='true'] {
-  background: rgba(91, 61, 245, 0.06);
+  background: rgba(255, 69, 58, 0.1);
 }
 
 .dayHeader span {
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
 .dayHeader strong {
   display: flex;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
   margin-top: 3px;
   border-radius: 50%;
-  color: #111829;
+  color: #f5f5f7;
   font-size: 18px;
 }
 
 .dayHeader .today {
-  background: #5b3df5;
+  background: #ff453a;
   color: #fff;
 }
 
@@ -98,8 +101,8 @@
   flex: 0 0 auto;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-  background: #fff;
+  border-bottom: 1px solid #2c2c2e;
+  background: #000;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -110,8 +113,8 @@
   align-items: flex-start;
   justify-content: flex-end;
   padding: 8px 6px;
-  background: #fff;
-  color: #8a93a4;
+  background: #000;
+  color: #8e8e93;
   font-size: 10px;
 }
 
@@ -123,7 +126,7 @@
 .allDayColumn {
   min-width: 0;
   min-height: 38px;
-  border-left: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 1px solid #2c2c2e;
   padding: 4px;
 }
 
@@ -133,10 +136,10 @@
   overflow: hidden;
   border: 0;
   border-left: 3px solid;
-  border-radius: 5px;
-  background: #f7f7fb;
-  padding: 4px;
-  color: #273047;
+  border-radius: 6px;
+  background: #1c1c1e;
+  padding: 5px;
+  color: #f5f5f7;
   font-size: 10px;
   font-weight: 750;
   text-align: left;
@@ -151,23 +154,25 @@
   overscroll-behavior-y: contain;
   padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   scroll-padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  background: #000;
   -webkit-overflow-scrolling: touch;
 }
 
 .timeline {
   position: relative;
   display: grid;
+  background: #000;
 }
 
 .hours {
   position: relative;
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-right: 1px solid #2c2c2e;
 }
 
 .hour {
   position: absolute;
   right: 7px;
-  color: #8a93a4;
+  color: #8e8e93;
   font-size: 10px;
 }
 
@@ -179,14 +184,15 @@
 .dayColumn {
   position: relative;
   min-width: 0;
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-right: 1px solid #2c2c2e;
+  background: #000;
 }
 
 .hourLine {
   position: absolute;
   right: 0;
   left: 0;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 1px solid #2c2c2e;
 }
 
 .timedEvent {
@@ -198,12 +204,13 @@
   border-left: 3px solid;
   border-radius: 6px;
   padding: 5px;
+  color: #fff;
   text-align: left;
   transition: filter 0.15s ease, transform 0.15s ease;
 }
 
 .timedEvent:active {
-  filter: brightness(0.96);
+  filter: brightness(1.12);
   transform: scale(0.985);
 }
 
@@ -222,7 +229,7 @@
 
 .timedEvent span {
   margin-top: 2px;
-  color: #647086;
+  color: #d1d1d6;
   font-size: 9px;
 }
 
@@ -232,8 +239,8 @@
   }
 
   .dayHeader strong {
-    width: 31px;
-    height: 31px;
+    width: 32px;
+    height: 32px;
     font-size: 16px;
   }
 
