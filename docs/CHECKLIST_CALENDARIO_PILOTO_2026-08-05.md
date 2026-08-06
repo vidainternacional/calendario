@@ -81,12 +81,18 @@ Alcance: validación funcional y mobile first del calendario durante el Bloque P
 
 ## 8. Rendimiento, caché y despliegue
 
-- [ ] CI y TypeScript aprobados para el bloque.
-- [ ] PR fusionado a `main`.
+- [x] CI y TypeScript aprobados para el bloque — run `31051391611`.
+- [x] PR #203 fusionado a `main` — commit funcional `64b7179805cfb8ec2fea9b751838c94a4deb8248`.
 - [ ] Despliegue de Vercel en estado `READY`.
 - [ ] Abrir como PWA instalada y confirmar que no muestra una versión anterior.
 - [ ] Cerrar y reabrir la app para comprobar restauración estable.
 - [ ] Revisar consola y runtime sin errores durante Año → Mes → Día → Semana → Lista.
+
+### Reintento de despliegue
+
+- Reintento productivo solicitado el 2026-08-05 a las 19:10, hora de El Salvador, mediante este cambio documental en `main`.
+- La versión válida contiene como ancestro el commit funcional `64b7179805cfb8ec2fea9b751838c94a4deb8248`.
+- No redeplegar el commit intermedio `da79214dc2e7bf33434aaa64c4f4788f37c996c3`, porque fue generado antes de agregar `CalendarioEventDetail`.
 
 ## Criterio de cierre
 
