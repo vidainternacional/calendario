@@ -1,0 +1,47 @@
+.yearPolish {
+  min-height: 100dvh;
+  padding-bottom: calc(210px + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+}
+
+.yearPolish :global([class*='topChrome']),
+.yearPolish :global([class*='actionsGroup']),
+.yearPolish :global([class*='chromeIconButton']),
+.yearPolish :global([class*='backButton']) {
+  color: #253047 !important;
+}
+
+.yearPolish :global([class*='actionsGroup']),
+.yearPolish :global([class*='chromeIconButton']),
+.yearPolish :global([class*='backButton']) {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.11) !important;
+}
+
+.yearPolish :global([class*='yearsScroller']) {
+  padding-bottom: calc(58dvh + 190px + env(safe-area-inset-bottom, 0px));
+}
+
+.yearPolish :global([class*='yearSection']:last-child) {
+  padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px));
+}
+
+.yearPolish ~ :global([class*='floatingBar']) {
+  background: linear-gradient(to bottom, rgba(255,255,255,0), #fff 44%) !important;
+}
+
+.yearPolish ~ :global([class*='floatingBar']) :global([class*='floatingPill']),
+.yearPolish ~ :global([class*='floatingBar']) :global([class*='floatingGroup']) {
+  background: rgba(255, 255, 255, 0.98) !important;
+}
+
+@media (max-width: 390px) {
+  .yearPolish {
+    padding-bottom: calc(230px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .yearPolish :global([class*='yearsScroller']) {
+    padding-bottom: calc(62dvh + 210px + env(safe-area-inset-bottom, 0px));
+  }
+}
