@@ -1,3 +1,9 @@
+.eventRowDark {
+  border-color: #2c2c2e !important;
+  background: #000 !important;
+  color: #f5f5f7 !important;
+}
+
 .eventMainFix {
   display: flex;
   min-width: 0;
@@ -16,21 +22,34 @@
   max-width: 100%;
 }
 
+.eventTitleDark {
+  color: #f5f5f7 !important;
+}
+
+.eventMetaDark,
+.eventLocationDark,
+.eventTimeDark {
+  color: #a1a1a7 !important;
+}
+
 .eventTimeFix {
   align-self: center;
   padding-left: 4px;
 }
 
+:global(button[aria-label='Guardar']),
 :global(button[aria-label='Guardar evento']) {
-  background: #e6e7ec !important;
-  color: #111829 !important;
+  background: #3a3a3c !important;
+  color: #fff !important;
 }
 
+:global(button[aria-label='Guardar']:disabled),
 :global(button[aria-label='Guardar evento']:disabled) {
-  color: #6b7280 !important;
+  color: #8e8e93 !important;
 }
 
-:global([role='dialog'][aria-label='Buscar eventos'] > header > button:last-child) {
-  color: #111829 !important;
+:global([role='dialog'][aria-label='Buscar eventos'] > header > button:last-child),
+:global([role='dialog'][aria-label='Buscar eventos y recordatorios'] > header > button:last-child) {
+  color: #ff453a !important;
   opacity: 1 !important;
 }
