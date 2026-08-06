@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
+import indicator from './CalendarioMonthIndicators.module.css'
 import polish from './CalendarioMonthPolish.module.css'
 
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
@@ -24,6 +25,7 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 18
 const MONTH_TOP_OFFSET = 116
+const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
@@ -126,13 +128,13 @@ export default function CalendarioMonthView({
   }, [baseMonthKey])
 
   return (
-    <div className={`${basic.monthView} ${polish.monthPolish}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+    <div className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
       <div className={polish.monthStickyChrome}>{topChrome}</div>
 
       <div className={basic.weekdays} aria-label="Días de la semana">
         <span className={basic.weekNumberHeader} aria-hidden="true" />
         {WEEKDAY_LABELS.map((label, index) => (
-          <span key={`${label}-${index}`} aria-label={['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][index]}>
+          <span key={`${label}-${index}`} aria-label={WEEKDAY_NAMES[index]}>
             {label}
           </span>
         ))}
@@ -199,18 +201,18 @@ export default function CalendarioMonthView({
                           </span>
 
                           {displayMode === 'compact' && dayEvents.length > 0 && (
-                            <span className={basic.eventCompact} aria-hidden="true">
+                            <span className={indicator.eventCompact} aria-hidden="true">
                               {dayEvents.length === 1 ? (
-                                <span className={basic.eventSingleDot} style={{ backgroundColor: compactSegments[0]?.color }} />
+                                <span className={indicator.eventSingleDot} style={{ backgroundColor: compactSegments[0]?.color }} />
                               ) : (
                                 <span
-                                  className={basic.eventFusion}
+                                  className={indicator.eventFusion}
                                   style={{ width: `${Math.min(34, 12 + Math.min(dayEvents.length, 5) * 4)}px` }}
                                 >
                                   {compactSegments.slice(0, 5).map((segment, index) => (
                                     <span
                                       key={`${segment.color}-${index}`}
-                                      className={basic.eventFusionSegment}
+                                      className={indicator.eventFusionSegment}
                                       style={{ backgroundColor: segment.color, flexGrow: segment.count }}
                                     />
                                   ))}
