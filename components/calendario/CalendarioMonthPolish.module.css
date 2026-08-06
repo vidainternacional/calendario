@@ -133,13 +133,33 @@
 .monthPolish :global([class*='eventRow']),
 .monthPolish :global([class*='emptyState']) {
   background: #fff !important;
+  background-color: #fff !important;
+  background-image: none !important;
   color: #111827 !important;
   color-scheme: light !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 .monthPolish :global([class*='eventList']) *,
 .monthPolish :global([class*='agendaHeader']) * {
   color-scheme: light !important;
+}
+
+.monthPolish :global([class*='emptyState']) {
+  min-height: 116px !important;
+  color: #7a8496 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+.monthPolish :global([class*='emptyState'])::before,
+.monthPolish :global([class*='emptyState'])::after,
+.monthPolish :global([class*='eventList'])::before,
+.monthPolish :global([class*='eventList'])::after {
+  display: none !important;
+  background: transparent !important;
+  content: none !important;
 }
 
 .monthPolish :global([class*='agendaHeader']) {
@@ -176,6 +196,28 @@
 
 .monthPolish :global([class*='eventMeta']) {
   opacity: 1 !important;
+}
+
+.monthPolish :global([class*='daySelected']) {
+  border: 2px solid rgba(91, 61, 245, 0.75) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(91, 61, 245, 0.75) !important;
+  font-weight: 750 !important;
+}
+
+.monthPolish :global([class*='daySelected'])::before,
+.monthPolish :global([class*='daySelected'])::after {
+  display: none !important;
+  box-shadow: none !important;
+  content: none !important;
+}
+
+.monthPolish :global([class*='dayToday']) {
+  border: 0 !important;
+  background: #5b3df5 !important;
+  box-shadow: none !important;
+  color: #fff !important;
 }
 
 .monthPolish ~ :global([class*='floatingBar']) {
