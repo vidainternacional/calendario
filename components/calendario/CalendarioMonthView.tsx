@@ -17,10 +17,13 @@ import type { ReactNode } from 'react'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
 
+export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
+
 export default function CalendarioMonthView({
   month,
   selectedDay,
   events,
+  displayMode,
   topChrome,
   isRefreshing,
   overlay = false,
@@ -30,6 +33,7 @@ export default function CalendarioMonthView({
   month: Date
   selectedDay: Date
   events: EventoCalendario[]
+  displayMode: MonthDisplayMode
   topChrome: ReactNode
   isRefreshing: boolean
   dayPanelOpen: boolean
@@ -48,22 +52,19 @@ export default function CalendarioMonthView({
       {topChrome}
       <header className={basic.monthHeader}>
         <h1 className={basic.monthTitle}>{format(month, 'MMMM', { locale: es })}</h1>
-        <p className={basic.selectedDate} aria-live="polite">
-          Toca una fecha para abrir su día
-        </p>
       </header>
 
       <div className={basic.weekdays} aria-hidden="true">
         {WEEKDAY_LABELS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
       </div>
 
-      <div className={basic.monthGrid}>
+      <div className={`${basic.monthGrid} ${displayMode === 'details' ? basic.monthGridDetails : ''}`}>
         {days.map((day) => {
           const belongs = isSameMonth(day, month)
           const selected = belongs && isSameDay(day, selectedDay)
           const today = belongs && isToday(day)
           const dayEvents = belongs ? eventosDelDia(events, day) : []
-          const colors = [...new Map(dayEvents.map((event) => [event.calendar_id, eventColor(event)])).values()].slice(0, 3)
+          const uniqueColors = [...new Map(dayEvents.map((event) => [event.calendar_id, eventColor(event)])).values()]
 
           if (!belongs) {
             return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
@@ -73,7 +74,7 @@ export default function CalendarioMonthView({
             <button
               key={day.toISOString()}
               type="button"
-              className={basic.monthDay}
+              className={`${basic.monthDay} ${displayMode === 'details' ? basic.monthDayDetails : ''}`}
               onClick={() => {
                 onSelectDay(day)
                 onOpenDay(day)
@@ -84,11 +85,45 @@ export default function CalendarioMonthView({
               <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                 {format(day, 'd')}
               </span>
-              <span className={basic.eventDots} aria-hidden="true">
-                {colors.map((color, index) => (
-                  <span key={`${color}-${index}`} className={basic.eventDot} style={{ backgroundColor: color }} />
-                ))}
-              </span>
+
+              {displayMode === 'compact' && (
+                <span className={basic.eventDots} aria-hidden="true">
+                  {uniqueColors.slice(0, 3).map((color, index) => (
+                    <span key={`${color}-${index}`} className={basic.eventDot} style={{ backgroundColor: color }} />
+                  ))}
+                </span>
+              )}
+
+              {displayMode === 'stacked' && (
+                <span className={basic.eventBars} aria-hidden="true">
+                  {dayEvents.slice(0, 3).map((event, index) => (
+                    <span
+                      key={`${event.id || event.fecha_inicio}-${index}`}
+                      className={basic.eventBar}
+                      style={{ backgroundColor: eventColor(event) }}
+                    />
+                  ))}
+                  {dayEvents.length > 3 && <span className={basic.eventMore}>+{dayEvents.length - 3}</span>}
+                </span>
+              )}
+
+              {displayMode === 'details' && (
+                <span className={basic.eventDetails} aria-hidden="true">
+                  {dayEvents.slice(0, 2).map((event, index) => {
+                    const color = eventColor(event)
+                    return (
+                      <span
+                        key={`${event.id || event.fecha_inicio}-${index}`}
+                        className={basic.eventChip}
+                        style={{ borderColor: color, color }}
+                      >
+                        {event.titulo}
+                      </span>
+                    )
+                  })}
+                  {dayEvents.length > 2 && <span className={basic.eventMore}>+{dayEvents.length - 2}</span>}
+                </span>
+              )}
             </button>
           )
         })}
