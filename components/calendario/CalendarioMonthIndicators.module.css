@@ -1,9 +1,9 @@
 .eventCompact {
   display: flex;
-  min-height: 8px;
+  min-height: 7px;
   align-items: center;
   justify-content: center;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .eventSingleDot {
@@ -16,14 +16,16 @@
 
 .eventFusion {
   display: inline-flex;
-  width: fit-content;
-  max-width: 35px;
+  width: auto;
+  max-width: 30px;
   height: 5px;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
   overflow: hidden;
   border-radius: 999px;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .eventFusionSegment {
@@ -31,7 +33,20 @@
   width: 5px;
   height: 5px;
   flex: 0 0 5px;
-  border-radius: 999px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.eventFusionSegment:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.eventFusionSegment:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+.eventFusionSegment:only-child {
+  border-radius: 50%;
 }
 
 .monthDensity :global([class*='weekdays']) {
@@ -84,10 +99,10 @@
 .monthDensity :global([class*='eventBars']),
 .monthDensity :global([class*='eventDetails']) {
   box-sizing: border-box !important;
-  width: calc(100% - 4px) !important;
-  max-width: calc(100% - 4px) !important;
+  width: calc(100% - 8px) !important;
+  max-width: calc(100% - 8px) !important;
   min-width: 0 !important;
-  margin: 3px 2px 0 !important;
+  margin: 3px 4px 0 !important;
   overflow: hidden !important;
   gap: 2px !important;
 }
@@ -101,10 +116,11 @@
 .monthDensity :global([class*='eventBar']) {
   display: block !important;
   width: 100% !important;
-  height: 4px !important;
-  min-height: 4px !important;
-  flex: 0 0 4px !important;
+  height: 3px !important;
+  min-height: 3px !important;
+  flex: 0 0 3px !important;
   border-radius: 999px !important;
+  box-shadow: none !important;
 }
 
 .monthDensity :global([class*='eventDetails']) {
@@ -167,7 +183,7 @@
   }
 
   .eventFusion {
-    max-width: 29px;
+    max-width: 24px;
     height: 4px;
   }
 
