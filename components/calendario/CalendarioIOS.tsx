@@ -114,17 +114,32 @@ export default function CalendarioIOS({
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
   const [monthTransitionAnchor, setMonthTransitionAnchor] = useState<MonthTransitionAnchor | null>(null)
   const [monthTransitionPhase, setMonthTransitionPhase] = useState<MonthTransitionPhase>(null)
+  const [yearHandoff, setYearHandoff] = useState(false)
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
   const isTimelineContext = view === 'dia' || view === 'dos-dias' || view === 'agenda'
-  const showYearUnderlay = (view === 'mes' || view === 'lista') && monthTransitionPhase !== null
+  const showYearPreview = ((view === 'mes' || view === 'lista') && monthTransitionPhase !== null) || yearHandoff
 
   useEffect(() => setMounted(true), [])
 
   useEffect(() => {
     onRangeYearChange(activeDate.getFullYear())
   }, [activeDate, onRangeYearChange])
+
+  useEffect(() => {
+    if (!yearHandoff) return
+
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => setYearHandoff(false))
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) window.cancelAnimationFrame(secondFrame)
+    }
+  }, [yearHandoff])
 
   useEffect(() => {
     if (!externalDetail) return
@@ -198,6 +213,7 @@ export default function CalendarioIOS({
   const openMonth = (month: Date, element?: HTMLElement) => {
     const anchor = captureMonthTransitionAnchor(element)
     element?.blur()
+    setYearHandoff(false)
     setMonthTransitionAnchor(anchor)
     setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
 
@@ -208,6 +224,7 @@ export default function CalendarioIOS({
   }
 
   const openDay = (day: Date) => {
+    setYearHandoff(false)
     setMonthTransitionPhase(null)
     setSelectedDay(day)
     setActiveDate(day)
@@ -220,6 +237,7 @@ export default function CalendarioIOS({
   }
 
   const changeMonthView = (nextMode: MonthMenuMode) => {
+    setYearHandoff(false)
     setMonthTransitionPhase(null)
     setMonthDisplay(nextMode)
     setActiveDate(selectedDay)
@@ -228,6 +246,7 @@ export default function CalendarioIOS({
   }
 
   const changeTimelineView = (nextView: TimelineView) => {
+    setYearHandoff(false)
     setMonthTransitionPhase(null)
     setView(nextView)
     setViewMenuOpen(false)
@@ -235,8 +254,9 @@ export default function CalendarioIOS({
 
   const completeMonthTransition = () => {
     if (monthTransitionPhase === 'exit') {
-      setMonthTransitionPhase(null)
       setView('anio')
+      setMonthTransitionPhase(null)
+      setYearHandoff(true)
       return
     }
 
@@ -251,11 +271,13 @@ export default function CalendarioIOS({
       }
 
       setMonthTransitionPhase(null)
+      setYearHandoff(false)
       setView('anio')
       return
     }
 
     setMonthTransitionPhase(null)
+    setYearHandoff(false)
     setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
@@ -330,7 +352,7 @@ export default function CalendarioIOS({
     onTransitionComplete: completeMonthTransition,
   }
 
-  const renderYearView = (chromeNode: React.ReactNode) => (
+  const renderYearView = (chromeNode: React.ReactNode, transitionPreview = false) => (
     <CalendarioYearView
       fecha={activeDate}
       eventos={sortedEvents}
@@ -338,6 +360,7 @@ export default function CalendarioIOS({
       topChrome={chromeNode}
       onOpenMonth={openMonth}
       onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
+      transitionPreview={transitionPreview}
     />
   )
 
@@ -349,19 +372,19 @@ export default function CalendarioIOS({
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
       {view === 'anio' && renderYearView(topChrome)}
 
-      {showYearUnderlay && (
+      {showYearPreview && (
         <div
           aria-hidden="true"
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 1,
+            zIndex: yearHandoff ? 4 : 1,
             overflow: 'hidden',
             background: '#fff',
             pointerEvents: 'none',
           }}
         >
-          {renderYearView(yearTopChrome)}
+          {renderYearView(yearTopChrome, true)}
         </div>
       )}
 
