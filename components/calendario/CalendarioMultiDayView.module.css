@@ -148,13 +148,13 @@
 
 .allDayEvent {
   width: 100%;
-  min-height: 24px;
+  min-height: 25px;
   overflow: hidden;
   border: 0;
   border-left: 2px solid;
-  border-radius: 7px;
+  border-radius: 10px;
   background: rgba(91, 61, 245, 0.055);
-  padding: 3px 6px;
+  padding: 4px 7px;
   color: #111827;
   font-size: 10px;
   font-weight: 650;
@@ -217,7 +217,7 @@
   overflow: hidden;
   border: 0;
   border-left: 3px solid;
-  border-radius: 7px;
+  border-radius: 9px;
   padding: 7px 8px 5px;
   color: #111827;
   text-align: left;
@@ -243,7 +243,7 @@
   .dayHeader strong { width: 33px; height: 33px; font-size: 17px; }
   .dayTitle { padding-block: 12px 11px; font-size: 18px; }
   .allDayBand { max-height: 98px; }
-  .allDayEvent { min-height: 23px; font-size: 9px; }
+  .allDayEvent { min-height: 24px; font-size: 9px; }
   .timedEvent { padding: 6px 7px 4px; }
   .timedEvent strong { font-size: 11px; }
   .timedEvent span { margin-top: 2px; font-size: 9px; }
@@ -258,7 +258,7 @@
   .allDayBand { max-height: 84px; }
   .allDayLabel { padding-inline: 3px; font-size: 9px; }
   .allDayColumn { padding: 2px; }
-  .timedEvent { border-left-width: 2px; border-radius: 6px; padding: 5px 6px; }
+  .timedEvent { border-left-width: 2px; border-radius: 8px; padding: 5px 6px; }
 }
 
 @media (max-height: 650px) {
