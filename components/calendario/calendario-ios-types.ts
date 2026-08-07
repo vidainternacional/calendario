@@ -41,12 +41,29 @@ export function monthKey(date: Date) {
   return format(date, 'yyyy-MM')
 }
 
+export function dayKey(date: Date) {
+  return format(date, 'yyyy-MM-dd')
+}
+
 export function eventColor(evento: EventoCalendario) {
   return evento.calendars?.color || '#5B3DF5'
 }
 
 export function eventKey(evento: EventoCalendario) {
   return `${evento.kind}:${evento.id}`
+}
+
+export function indexarEventosPorDia(eventos: EventoCalendario[]) {
+  const index = new Map<string, EventoCalendario[]>()
+
+  for (const evento of eventos) {
+    const key = dayKey(new Date(evento.fecha_inicio))
+    const existentes = index.get(key)
+    if (existentes) existentes.push(evento)
+    else index.set(key, [evento])
+  }
+
+  return index
 }
 
 export function eventosDelDia(eventos: EventoCalendario[], dia: Date) {
