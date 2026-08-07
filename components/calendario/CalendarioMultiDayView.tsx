@@ -93,6 +93,7 @@ export default function CalendarioMultiDayView({
   onOpenEvent: (event: EventoCalendario) => void
 }) {
   const viewportRef = useRef<HTMLDivElement>(null)
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null)
   const [now, setNow] = useState(() => new Date())
   const days = useMemo(
     () => Array.from({ length: daysVisible }, (_, index) => addDays(selectedDay, index)),
@@ -135,6 +136,24 @@ export default function CalendarioMultiDayView({
     return () => window.cancelAnimationFrame(frame)
   }, [selectedDay, daysVisible, events])
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (daysVisible !== 1 || event.touches.length !== 1) return
+    swipeStartRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+  }
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
+    const start = swipeStartRef.current
+    swipeStartRef.current = null
+    if (daysVisible !== 1 || !start || event.changedTouches.length !== 1) return
+
+    const end = event.changedTouches[0]
+    const deltaX = end.clientX - start.x
+    const deltaY = end.clientY - start.y
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return
+
+    onSelectDay(addDays(selectedDay, deltaX < 0 ? 1 : -1))
+  }
+
   const allDay = events.filter(
     (event) => Boolean(event.todo_el_dia) && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)),
   )
@@ -147,7 +166,12 @@ export default function CalendarioMultiDayView({
     : null
 
   return (
-    <section className={styles.surface} aria-label={daysVisible === 1 ? 'Vista de un día' : `Vista de ${daysVisible} días`}>
+    <section
+      className={styles.surface}
+      aria-label={daysVisible === 1 ? 'Vista de un día' : `Vista de ${daysVisible} días`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className={styles.horizontalScroller}>
         <div className={styles.canvas} style={{ minWidth: minimumWidth ? `${minimumWidth}px` : '100%' }}>
           <header className={styles.daysHeader} style={{ gridTemplateColumns: headerGridTemplate }}>
