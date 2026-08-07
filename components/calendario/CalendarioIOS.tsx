@@ -14,7 +14,7 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
@@ -121,6 +121,9 @@ export default function CalendarioIOS({
   const [monthTransitionAnchor, setMonthTransitionAnchor] = useState<MonthTransitionAnchor | null>(null)
   const [monthTransitionPhase, setMonthTransitionPhase] = useState<MonthTransitionPhase>(null)
   const [dayTransitionPhase, setDayTransitionPhase] = useState<DayTransitionPhase>(null)
+  const [yearExitLayer, setYearExitLayer] = useState(false)
+  const yearExitLayerRef = useRef<HTMLDivElement | null>(null)
+  const yearExitStartedRef = useRef(false)
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
@@ -154,6 +157,60 @@ export default function CalendarioIOS({
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [viewMenuOpen])
+
+  useLayoutEffect(() => {
+    if (!yearExitLayer || view === 'anio' || reduceMotion || monthTransitionPhase === 'exit' || yearExitStartedRef.current) return
+
+    const root = yearExitLayerRef.current
+    const targetKey = format(visibleMonthDate, 'yyyy-MM')
+    const target = root?.querySelector<HTMLElement>(`[data-calendar-mini-month="${targetKey}"]`)
+    if (!target || typeof window === 'undefined' || window.innerWidth <= 0 || window.innerHeight <= 0) return
+
+    const rect = target.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    const viewportCenterX = window.innerWidth / 2
+    const viewportCenterY = window.innerHeight / 2
+    const exitAnchor: MonthTransitionAnchor = {
+      offsetX: clamp((centerX - viewportCenterX) * 0.22, -46, 46),
+      offsetY: clamp((centerY - viewportCenterY) * 0.18, -54, 54),
+      originX: clamp((centerX / window.innerWidth) * 100, 12, 88),
+      originY: clamp((centerY / window.innerHeight) * 100, 12, 88),
+    }
+
+    yearExitStartedRef.current = true
+    setMonthTransitionAnchor(exitAnchor)
+
+    const frame = window.requestAnimationFrame(() => {
+      setMonthTransitionPhase('exit')
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [monthTransitionPhase, reduceMotion, view, visibleMonthDate, yearExitLayer])
+
+  useEffect(() => {
+    if (view !== 'anio' || !yearExitLayer) return
+
+    let secondFrame = 0
+    let settleTimer = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        settleTimer = window.setTimeout(() => {
+          setYearExitLayer(false)
+          setMonthTransitionAnchor(null)
+          yearExitStartedRef.current = false
+        }, 150)
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) window.cancelAnimationFrame(secondFrame)
+      if (settleTimer) window.clearTimeout(settleTimer)
+    }
+  }, [view, yearExitLayer])
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime()),
@@ -217,6 +274,8 @@ export default function CalendarioIOS({
     const next = selectedDayForMonth(month)
     element?.blur()
 
+    setYearExitLayer(false)
+    yearExitStartedRef.current = false
     setMonthTransitionAnchor(anchor)
     setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
     setVisibleMonthDate(next)
@@ -269,7 +328,6 @@ export default function CalendarioIOS({
   const completeMonthTransition = () => {
     if (monthTransitionPhase === 'exit') {
       setMonthTransitionPhase(null)
-      setMonthTransitionAnchor(null)
       setActiveDate(visibleMonthDate)
       setView('anio')
       return
@@ -295,8 +353,10 @@ export default function CalendarioIOS({
 
   const goBack = () => {
     if (view === 'mes' || view === 'lista') {
-      if (monthTransitionAnchor && !reduceMotion) {
-        setMonthTransitionPhase('exit')
+      if (!reduceMotion) {
+        if (yearExitLayer) return
+        yearExitStartedRef.current = false
+        setYearExitLayer(true)
         return
       }
 
@@ -375,6 +435,16 @@ export default function CalendarioIOS({
     </div>
   )
 
+  const yearTransitionChrome = (
+    <div className={`${styles.topChrome} ${chrome.topChrome}`}>
+      <div className={chrome.leftSlot} />
+      <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`}>
+        <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1}><Search size={25} /></button>
+        {puedeCrear && <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1}><Plus size={28} /></button>}
+      </div>
+    </div>
+  )
+
   const monthTransitionProps = {
     transitionAnchor: monthTransitionAnchor,
     transitionPhase: monthTransitionPhase,
@@ -382,14 +452,17 @@ export default function CalendarioIOS({
     onTransitionComplete: completeMonthTransition,
   }
 
-  const renderYearView = (chromeNode: React.ReactNode) => (
+  const renderYearView = (chromeNode: React.ReactNode, date = activeDate, transitionPreview = false) => (
     <CalendarioYearView
-      fecha={activeDate}
+      fecha={date}
       eventos={sortedEvents}
       isRefreshing={isRefreshing}
       topChrome={chromeNode}
+      transitionPreview={transitionPreview}
       onOpenMonth={openMonth}
-      onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
+      onChangeYear={(year) => {
+        if (!transitionPreview) setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))
+      }}
     />
   )
 
@@ -421,6 +494,24 @@ export default function CalendarioIOS({
 
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
+      {yearExitLayer && (
+        <div
+          ref={yearExitLayerRef}
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: '0 0 calc(4rem + env(safe-area-inset-bottom, 0px)) 0',
+            zIndex: view === 'anio' ? 65 : 35,
+            overflow: 'hidden',
+            background: '#fff',
+            pointerEvents: 'none',
+            colorScheme: 'light',
+          }}
+        >
+          {renderYearView(yearTransitionChrome, visibleMonthDate, true)}
+        </div>
+      )}
+
       {view === 'anio' && renderYearView(topChrome)}
 
       {(view === 'mes' || showMonthBehindDay) && (
