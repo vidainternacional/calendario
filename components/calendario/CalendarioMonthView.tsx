@@ -26,6 +26,11 @@ const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 18
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
+function triggerSoftHaptic() {
+  if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return
+  navigator.vibrate(8)
+}
+
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
   const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
@@ -173,6 +178,7 @@ export default function CalendarioMonthView({
                       }
 
                       const handleDayPress = () => {
+                        triggerSoftHaptic()
                         if (openDayOnSelect) {
                           onOpenDay(day)
                           return
@@ -200,17 +206,7 @@ export default function CalendarioMonthView({
                               {dayEvents.length === 1 ? (
                                 <span className={indicator.eventSingleDot} style={{ backgroundColor: compactSegments[0] }} />
                               ) : (
-                                <span
-                                  className={indicator.eventFusion}
-                                  style={{
-                                    width: `${compactSegments.length * 5}px`,
-                                    minWidth: 0,
-                                    maxWidth: 30,
-                                    overflow: 'hidden',
-                                    background: 'transparent',
-                                    gap: 0,
-                                  }}
-                                >
+                                <span className={indicator.eventFusion} style={{ width: `${compactSegments.length * 5}px`, minWidth: 0, maxWidth: 30, overflow: 'hidden', background: 'transparent', gap: 0 }}>
                                   {compactSegments.map((color, index) => (
                                     <span
                                       key={`${color}-${index}`}
@@ -222,12 +218,7 @@ export default function CalendarioMonthView({
                                         flexGrow: 0,
                                         flexShrink: 0,
                                         marginLeft: 0,
-                                        borderRadius:
-                                          index === 0
-                                            ? '999px 0 0 999px'
-                                            : index === compactSegments.length - 1
-                                              ? '0 999px 999px 0'
-                                              : 0,
+                                        borderRadius: index === 0 ? '999px 0 0 999px' : index === compactSegments.length - 1 ? '0 999px 999px 0' : 0,
                                         backgroundColor: color,
                                       }}
                                     />
@@ -240,11 +231,7 @@ export default function CalendarioMonthView({
                           {displayMode === 'stacked' && (
                             <span className={basic.eventBars} aria-hidden="true">
                               {dayEvents.slice(0, 3).map((event, index) => (
-                                <span
-                                  key={`${event.id || event.fecha_inicio}-${index}`}
-                                  className={basic.eventBar}
-                                  style={{ backgroundColor: eventColor(event) }}
-                                />
+                                <span key={`${event.id || event.fecha_inicio}-${index}`} className={basic.eventBar} style={{ backgroundColor: eventColor(event) }} />
                               ))}
                               {dayEvents.length > 3 && <span className={basic.eventMore}>+{dayEvents.length - 3}</span>}
                             </span>
@@ -255,11 +242,7 @@ export default function CalendarioMonthView({
                               {dayEvents.slice(0, 2).map((event, index) => {
                                 const color = eventColor(event)
                                 return (
-                                  <span
-                                    key={`${event.id || event.fecha_inicio}-${index}`}
-                                    className={basic.eventChip}
-                                    style={{ borderColor: color, color }}
-                                  >
+                                  <span key={`${event.id || event.fecha_inicio}-${index}`} className={basic.eventChip} style={{ borderColor: color, color }}>
                                     {event.titulo}
                                   </span>
                                 )
