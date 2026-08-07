@@ -14,7 +14,10 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { motion } from 'framer-motion'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { SPRING_STANDARD, VIEW_FADE } from '@/lib/motion-config'
+import type { MonthTransitionAnchor } from './CalendarioIOS'
 import { dayKey, eventColor, indexarEventosPorDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
 import indicator from './CalendarioMonthIndicators.module.css'
@@ -55,6 +58,9 @@ export default function CalendarioMonthView({
   showFollowingMonth = true,
   openDayOnSelect = true,
   footer,
+  transitionAnchor = null,
+  transitionPhase = null,
+  onTransitionComplete,
   onSelectDay,
   onOpenDay,
 }: {
@@ -70,6 +76,9 @@ export default function CalendarioMonthView({
   showFollowingMonth?: boolean
   openDayOnSelect?: boolean
   footer?: ReactNode
+  transitionAnchor?: MonthTransitionAnchor | null
+  transitionPhase?: 'enter' | 'exit' | null
+  onTransitionComplete?: () => void
   onSelectDay: (day: Date) => void
   onOpenDay: (day: Date) => void
   onOpenEvent: (event: EventoCalendario) => void
@@ -123,6 +132,29 @@ export default function CalendarioMonthView({
     }
   }, [baseMonthKey, displayMode, scrollRequest, showFollowingMonth])
 
+  const enterMotion = transitionAnchor && transitionPhase === 'enter'
+    ? {
+        x: transitionAnchor.offsetX,
+        y: transitionAnchor.offsetY,
+        scale: 0.97,
+        opacity: 0.86,
+      }
+    : false
+
+  const activeMotion = transitionAnchor && transitionPhase === 'exit'
+    ? {
+        x: transitionAnchor.offsetX,
+        y: transitionAnchor.offsetY,
+        scale: 0.97,
+        opacity: 0.86,
+      }
+    : {
+        x: 0,
+        y: 0,
+        scale: 1,
+        opacity: 1,
+      }
+
   return (
     <div
       ref={scrollRootRef}
@@ -147,11 +179,26 @@ export default function CalendarioMonthView({
           const isBaseMonth = isSameMonth(visibleMonth, baseMonth)
 
           return (
-            <section
+            <motion.section
               key={visibleMonth.toISOString()}
               ref={isBaseMonth ? activeMonthRef : undefined}
               className={`${basic.monthSection} ${isBaseMonth ? polish.activeMonthSection : ''}`}
               aria-label={format(visibleMonth, 'MMMM yyyy', { locale: es })}
+              initial={isBaseMonth ? enterMotion : false}
+              animate={isBaseMonth ? activeMotion : undefined}
+              transition={isBaseMonth ? {
+                x: SPRING_STANDARD,
+                y: SPRING_STANDARD,
+                scale: SPRING_STANDARD,
+                opacity: VIEW_FADE,
+              } : undefined}
+              style={isBaseMonth && transitionAnchor ? {
+                transformOrigin: `${transitionAnchor.originX}% ${transitionAnchor.originY}%`,
+                willChange: transitionPhase ? 'transform, opacity' : 'auto',
+              } : undefined}
+              onAnimationComplete={() => {
+                if (isBaseMonth && transitionPhase) onTransitionComplete?.()
+              }}
             >
               <header className={basic.monthHeader}>
                 <h1 className={basic.monthTitle}>{format(visibleMonth, 'MMMM', { locale: es })}</h1>
@@ -257,7 +304,7 @@ export default function CalendarioMonthView({
                   </div>
                 ))}
               </div>
-            </section>
+            </motion.section>
           )
         })}
 
