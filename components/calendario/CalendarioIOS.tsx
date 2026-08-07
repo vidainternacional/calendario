@@ -46,7 +46,7 @@ import styles from './CalendarioIOS.module.css'
 type CalendarView = 'anio' | 'mes' | 'dia' | 'dos-dias' | 'agenda' | 'lista'
 type TimelineView = 'dia' | 'dos-dias' | 'agenda'
 type MonthMenuMode = MonthDisplayMode | 'list'
-type MonthTransitionPhase = 'enter' | 'exit' | null
+type MonthTransitionPhase = 'enter' | null
 
 export type MonthTransitionAnchor = {
   offsetX: number
@@ -114,32 +114,16 @@ export default function CalendarioIOS({
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
   const [monthTransitionAnchor, setMonthTransitionAnchor] = useState<MonthTransitionAnchor | null>(null)
   const [monthTransitionPhase, setMonthTransitionPhase] = useState<MonthTransitionPhase>(null)
-  const [yearHandoff, setYearHandoff] = useState(false)
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
   const isTimelineContext = view === 'dia' || view === 'dos-dias' || view === 'agenda'
-  const showYearPreview = ((view === 'mes' || view === 'lista') && monthTransitionPhase !== null) || yearHandoff
 
   useEffect(() => setMounted(true), [])
 
   useEffect(() => {
     onRangeYearChange(activeDate.getFullYear())
   }, [activeDate, onRangeYearChange])
-
-  useEffect(() => {
-    if (!yearHandoff) return
-
-    let secondFrame = 0
-    const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => setYearHandoff(false))
-    })
-
-    return () => {
-      window.cancelAnimationFrame(firstFrame)
-      if (secondFrame) window.cancelAnimationFrame(secondFrame)
-    }
-  }, [yearHandoff])
 
   useEffect(() => {
     if (!externalDetail) return
@@ -213,7 +197,6 @@ export default function CalendarioIOS({
   const openMonth = (month: Date, element?: HTMLElement) => {
     const anchor = captureMonthTransitionAnchor(element)
     element?.blur()
-    setYearHandoff(false)
     setMonthTransitionAnchor(anchor)
     setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
 
@@ -224,7 +207,6 @@ export default function CalendarioIOS({
   }
 
   const openDay = (day: Date) => {
-    setYearHandoff(false)
     setMonthTransitionPhase(null)
     setSelectedDay(day)
     setActiveDate(day)
@@ -237,7 +219,6 @@ export default function CalendarioIOS({
   }
 
   const changeMonthView = (nextMode: MonthMenuMode) => {
-    setYearHandoff(false)
     setMonthTransitionPhase(null)
     setMonthDisplay(nextMode)
     setActiveDate(selectedDay)
@@ -246,38 +227,24 @@ export default function CalendarioIOS({
   }
 
   const changeTimelineView = (nextView: TimelineView) => {
-    setYearHandoff(false)
     setMonthTransitionPhase(null)
     setView(nextView)
     setViewMenuOpen(false)
   }
 
   const completeMonthTransition = () => {
-    if (monthTransitionPhase === 'exit') {
-      setView('anio')
-      setMonthTransitionPhase(null)
-      setYearHandoff(true)
-      return
-    }
-
     setMonthTransitionPhase(null)
   }
 
   const goBack = () => {
     if (view === 'mes' || view === 'lista') {
-      if (monthTransitionAnchor && !reduceMotion && monthTransitionPhase !== 'exit') {
-        setMonthTransitionPhase('exit')
-        return
-      }
-
       setMonthTransitionPhase(null)
-      setYearHandoff(false)
+      setMonthTransitionAnchor(null)
       setView('anio')
       return
     }
 
     setMonthTransitionPhase(null)
-    setYearHandoff(false)
     setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
@@ -336,23 +303,13 @@ export default function CalendarioIOS({
     </div>
   )
 
-  const yearTopChrome = (
-    <div className={`${styles.topChrome} ${chrome.topChrome}`}>
-      <div className={chrome.leftSlot} />
-      <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`} role="group" aria-label="Acciones del calendario">
-        <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1} aria-hidden="true"><Search size={25} /></button>
-        {puedeCrear && <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1} aria-hidden="true"><Plus size={28} /></button>}
-      </div>
-    </div>
-  )
-
   const monthTransitionProps = {
     transitionAnchor: monthTransitionAnchor,
     transitionPhase: monthTransitionPhase,
     onTransitionComplete: completeMonthTransition,
   }
 
-  const renderYearView = (chromeNode: React.ReactNode, transitionPreview = false) => (
+  const renderYearView = (chromeNode: React.ReactNode) => (
     <CalendarioYearView
       fecha={activeDate}
       eventos={sortedEvents}
@@ -360,7 +317,6 @@ export default function CalendarioIOS({
       topChrome={chromeNode}
       onOpenMonth={openMonth}
       onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
-      transitionPreview={transitionPreview}
     />
   )
 
@@ -371,22 +327,6 @@ export default function CalendarioIOS({
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
       {view === 'anio' && renderYearView(topChrome)}
-
-      {showYearPreview && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: yearHandoff ? 4 : 1,
-            overflow: 'hidden',
-            background: '#fff',
-            pointerEvents: 'none',
-          }}
-        >
-          {renderYearView(yearTopChrome, true)}
-        </div>
-      )}
 
       {view === 'mes' && (
         <div style={monthTransitionPhase ? { position: 'relative', zIndex: 2, background: '#fff' } : undefined}>
