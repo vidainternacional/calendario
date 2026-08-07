@@ -6,7 +6,7 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -46,6 +46,7 @@ type CalendarView = 'anio' | 'mes' | 'dia' | 'dos-dias' | 'agenda' | 'lista'
 type TimelineView = 'dia' | 'dos-dias' | 'agenda'
 type MonthMenuMode = MonthDisplayMode | 'list'
 type MonthTransitionPhase = 'enter' | null
+type DayTransitionPhase = 'enter' | 'exit' | null
 
 type ViewTransitionHandle = { finished: Promise<void> }
 type ViewTransitionDocument = Document & {
@@ -81,6 +82,49 @@ const TIMELINE_VIEW_OPTIONS: Array<MenuOption<TimelineView>> = [
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
+}
+
+function installMonthZoomOutStyles() {
+  if (typeof document === 'undefined') return () => undefined
+
+  const style = document.createElement('style')
+  style.dataset.calendarTransition = 'month-out'
+  style.textContent = `
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none !important;
+      mix-blend-mode: normal !important;
+    }
+
+    ::view-transition-group(calendar-month-shared) {
+      z-index: 240 !important;
+      animation-duration: 360ms !important;
+      animation-timing-function: cubic-bezier(.22, 1, .36, 1) !important;
+    }
+
+    ::view-transition-old(calendar-month-shared) {
+      mix-blend-mode: normal !important;
+      animation: vida-calendar-month-old 360ms cubic-bezier(.22, 1, .36, 1) both !important;
+    }
+
+    ::view-transition-new(calendar-month-shared) {
+      mix-blend-mode: normal !important;
+      animation: vida-calendar-month-new 360ms cubic-bezier(.22, 1, .36, 1) both !important;
+    }
+
+    @keyframes vida-calendar-month-old {
+      0%, 66% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes vida-calendar-month-new {
+      0%, 42% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+  `
+  document.head.appendChild(style)
+
+  return () => style.remove()
 }
 
 export default function CalendarioIOS({
@@ -119,6 +163,7 @@ export default function CalendarioIOS({
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
   const [monthTransitionAnchor, setMonthTransitionAnchor] = useState<MonthTransitionAnchor | null>(null)
   const [monthTransitionPhase, setMonthTransitionPhase] = useState<MonthTransitionPhase>(null)
+  const [dayTransitionPhase, setDayTransitionPhase] = useState<DayTransitionPhase>(null)
   const [yearSharedTransitionTarget, setYearSharedTransitionTarget] = useState(false)
 
   const puedeCrear = editableCalendars.length > 0
@@ -205,8 +250,8 @@ export default function CalendarioIOS({
     const viewportCenterY = window.innerHeight / 2
 
     return {
-      offsetX: clamp((centerX - viewportCenterX) * 0.16, -34, 34),
-      offsetY: clamp((centerY - viewportCenterY) * 0.14, -42, 42),
+      offsetX: clamp((centerX - viewportCenterX) * 0.22, -46, 46),
+      offsetY: clamp((centerY - viewportCenterY) * 0.18, -54, 54),
       originX: clamp((centerX / window.innerWidth) * 100, 12, 88),
       originY: clamp((centerY / window.innerHeight) * 100, 12, 88),
     }
@@ -217,25 +262,8 @@ export default function CalendarioIOS({
     const next = selectedDayForMonth(month)
     element?.blur()
 
-    const doc = typeof document === 'undefined' ? null : document as ViewTransitionDocument
-    if (!reduceMotion && doc?.startViewTransition) {
-      if (element) element.style.viewTransitionName = 'calendar-month-shared'
-      const transition = runViewTransition(() => {
-        setMonthTransitionAnchor(null)
-        setMonthTransitionPhase(null)
-        setVisibleMonthDate(next)
-        setActiveDate(next)
-        setSelectedDay(next)
-        setView(monthDisplay === 'list' ? 'lista' : 'mes')
-      })
-      transition?.finished.finally(() => {
-        if (element) element.style.viewTransitionName = ''
-      })
-      return
-    }
-
     setMonthTransitionAnchor(anchor)
-    setMonthTransitionPhase(anchor ? 'enter' : null)
+    setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
     setVisibleMonthDate(next)
     setActiveDate(next)
     setSelectedDay(next)
@@ -244,11 +272,10 @@ export default function CalendarioIOS({
 
   const openDay = (day: Date) => {
     setMonthTransitionPhase(null)
-    runViewTransition(() => {
-      setSelectedDay(day)
-      setActiveDate(day)
-      setView('dia')
-    })
+    setDayTransitionPhase(reduceMotion ? null : 'enter')
+    setSelectedDay(day)
+    setActiveDate(day)
+    setView('dia')
   }
 
   const selectDay = (day: Date) => {
@@ -262,6 +289,7 @@ export default function CalendarioIOS({
 
   const changeMonthView = (nextMode: MonthMenuMode) => {
     setMonthTransitionPhase(null)
+    setDayTransitionPhase(null)
     runViewTransition(() => {
       setMonthDisplay(nextMode)
       setActiveDate(selectedDay)
@@ -273,6 +301,7 @@ export default function CalendarioIOS({
 
   const changeTimelineView = (nextView: TimelineView) => {
     setMonthTransitionPhase(null)
+    setDayTransitionPhase(null)
     runViewTransition(() => {
       setView(nextView)
       setViewMenuOpen(false)
@@ -283,26 +312,54 @@ export default function CalendarioIOS({
     setMonthTransitionPhase(null)
   }
 
+  const completeDayTransition = () => {
+    if (dayTransitionPhase === 'enter') {
+      setDayTransitionPhase(null)
+      return
+    }
+
+    if (dayTransitionPhase === 'exit') {
+      setDayTransitionPhase(null)
+      setActiveDate(selectedDay)
+      setVisibleMonthDate(selectedDay)
+      setView(monthDisplay === 'list' ? 'lista' : 'mes')
+    }
+  }
+
   const goBack = () => {
     if (view === 'mes' || view === 'lista') {
       setMonthTransitionPhase(null)
       setMonthTransitionAnchor(null)
       const targetMonth = visibleMonthDate
+      const cleanupStyles = installMonthZoomOutStyles()
       const transition = runViewTransition(() => {
         setYearSharedTransitionTarget(true)
         setActiveDate(targetMonth)
         setView('anio')
       })
-      transition?.finished.finally(() => setYearSharedTransitionTarget(false))
+
+      if (transition) {
+        transition.finished.finally(() => {
+          cleanupStyles()
+          setYearSharedTransitionTarget(false)
+        })
+      } else {
+        cleanupStyles()
+        setYearSharedTransitionTarget(false)
+      }
+      return
+    }
+
+    if (view === 'dia' && !reduceMotion && dayTransitionPhase !== 'exit') {
+      setDayTransitionPhase('exit')
       return
     }
 
     setMonthTransitionPhase(null)
-    runViewTransition(() => {
-      setActiveDate(selectedDay)
-      setVisibleMonthDate(selectedDay)
-      setView(monthDisplay === 'list' ? 'lista' : 'mes')
-    })
+    setDayTransitionPhase(null)
+    setActiveDate(selectedDay)
+    setVisibleMonthDate(selectedDay)
+    setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
   const goToday = () => {
@@ -383,6 +440,28 @@ export default function CalendarioIOS({
     ? <CalendarioMultiDayView selectedDay={selectedDay} events={sortedEvents} daysVisible={timelineDays} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
     : <CalendarioAgendaView selectedDay={selectedDay} events={sortedEvents} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
 
+  const unfoldingDay = view === 'dia' && dayTransitionPhase !== null
+  const daySurfaceInitial = view === 'dia' && dayTransitionPhase === 'enter'
+    ? {
+        clipPath: 'inset(0 0 92% 0)',
+        y: -6,
+        filter: 'blur(0px)',
+      }
+    : false
+  const daySurfaceAnimate = view === 'dia' && dayTransitionPhase === 'exit'
+    ? {
+        clipPath: 'inset(0 0 92% 0)',
+        y: -6,
+        filter: 'blur(0.65px)',
+      }
+    : {
+        clipPath: 'inset(0 0 0% 0)',
+        y: 0,
+        filter: view === 'dia' && dayTransitionPhase === 'enter'
+          ? ['blur(0px)', 'blur(0.55px)', 'blur(0px)']
+          : 'blur(0px)',
+      }
+
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
       {view === 'anio' && renderYearView(topChrome)}
@@ -420,7 +499,29 @@ export default function CalendarioIOS({
           }}
         >
           {topChrome}
-          {timelineContent}
+          <motion.div
+            initial={daySurfaceInitial}
+            animate={daySurfaceAnimate}
+            transition={unfoldingDay ? {
+              clipPath: { duration: 0.38, ease: [0.16, 1, 0.3, 1] },
+              y: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+              filter: view === 'dia' && dayTransitionPhase === 'enter'
+                ? { duration: 0.38, times: [0, 0.84, 1], ease: 'easeOut' }
+                : { duration: 0.16, ease: 'easeOut' },
+            } : { duration: 0 }}
+            onAnimationComplete={() => {
+              if (view === 'dia' && dayTransitionPhase) completeDayTransition()
+            }}
+            style={{
+              width: '100%',
+              overflow: 'hidden',
+              background: '#fff',
+              transformOrigin: 'top center',
+              willChange: unfoldingDay ? 'clip-path, transform, filter' : 'auto',
+            }}
+          >
+            {timelineContent}
+          </motion.div>
         </div>
       )}
 
