@@ -14,10 +14,8 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { motion } from 'framer-motion'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
-import { SPRING_STANDARD, VIEW_FADE } from '@/lib/motion-config'
-import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
+import { dayKey, eventColor, indexarEventosPorDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
 import indicator from './CalendarioMonthIndicators.module.css'
 import polish from './CalendarioMonthPolish.module.css'
@@ -83,6 +81,7 @@ export default function CalendarioMonthView({
   const positionedMonthRef = useRef<string | null>(null)
   const baseMonth = startOfMonth(month)
   const baseMonthKey = format(baseMonth, 'yyyy-MM')
+  const eventosPorDia = useMemo(() => indexarEventosPorDia(events), [events])
 
   const visibleMonths = useMemo(() => {
     if (!showFollowingMonth) return [baseMonth]
@@ -125,15 +124,11 @@ export default function CalendarioMonthView({
   }, [baseMonthKey, displayMode, scrollRequest, showFollowingMonth])
 
   return (
-    <motion.div
+    <div
       ref={scrollRootRef}
       className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`}
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
-      initial={{ opacity: 0.7 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0.68 }}
-      transition={VIEW_FADE}
     >
       <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
 
@@ -152,12 +147,9 @@ export default function CalendarioMonthView({
           const isBaseMonth = isSameMonth(visibleMonth, baseMonth)
 
           return (
-            <motion.section
+            <section
               key={visibleMonth.toISOString()}
               ref={isBaseMonth ? activeMonthRef : undefined}
-              layoutId={isBaseMonth ? `calendar-month-${format(visibleMonth, 'yyyy-MM')}` : undefined}
-              layout={isBaseMonth ? true : undefined}
-              transition={SPRING_STANDARD}
               className={`${basic.monthSection} ${isBaseMonth ? polish.activeMonthSection : ''}`}
               aria-label={format(visibleMonth, 'MMMM yyyy', { locale: es })}
             >
@@ -179,7 +171,7 @@ export default function CalendarioMonthView({
                       const belongs = isSameMonth(day, visibleMonth)
                       const selected = belongs && isSameDay(day, selectedDay)
                       const today = belongs && isToday(day)
-                      const dayEvents = belongs ? eventosDelDia(events, day) : []
+                      const dayEvents = belongs ? (eventosPorDia.get(dayKey(day)) || []) : []
                       const compactSegments = compactEventSegments(dayEvents)
 
                       if (!belongs) {
@@ -265,12 +257,12 @@ export default function CalendarioMonthView({
                   </div>
                 ))}
               </div>
-            </motion.section>
+            </section>
           )
         })}
 
         {footer}
       </div>
-    </motion.div>
+    </div>
   )
 }
