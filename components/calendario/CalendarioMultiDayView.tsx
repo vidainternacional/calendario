@@ -35,9 +35,19 @@ function itemEnd(event: EventoCalendario) {
   return end
 }
 
-function layoutOverlaps(items: EventoCalendario[]): PositionedItem[] {
+function layoutOverlaps(items: EventoCalendario[], day: Date): PositionedItem[] {
+  const dayStart = startOfDay(day)
+  const nextDay = addDays(dayStart, 1)
   const sorted = items
-    .map((event) => ({ event, start: new Date(event.fecha_inicio), end: itemEnd(event) }))
+    .map((event) => {
+      const start = new Date(event.fecha_inicio)
+      const rawEnd = itemEnd(event)
+      return {
+        event,
+        start,
+        end: rawEnd > nextDay ? nextDay : rawEnd,
+      }
+    })
     .sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime())
 
   const groups: Array<typeof sorted> = []
@@ -100,10 +110,29 @@ export default function CalendarioMultiDayView({
   }, [])
 
   useEffect(() => {
-    if (!viewportRef.current) return
-    const hour = isSameDay(selectedDay, new Date()) ? Math.max(new Date().getHours() - 2, 0) : 7
-    viewportRef.current.scrollTop = hour * HOUR_HEIGHT
-  }, [selectedDay, daysVisible])
+    const viewport = viewportRef.current
+    if (!viewport) return
+
+    const timedEvents = events
+      .filter((event) => !event.todo_el_dia && isSameDay(new Date(event.fecha_inicio), selectedDay))
+      .map((event) => new Date(event.fecha_inicio))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime())
+
+    let targetMinutes = 7 * 60
+    if (isSameDay(selectedDay, now)) {
+      targetMinutes = Math.max(differenceInMinutes(now, startOfDay(now)) - 90, 0)
+    } else if (timedEvents.length > 0) {
+      targetMinutes = Math.max(differenceInMinutes(timedEvents[0], startOfDay(selectedDay)) - 60, 0)
+    }
+
+    const targetTop = Math.max(0, (targetMinutes / 60) * HOUR_HEIGHT)
+    const frame = window.requestAnimationFrame(() => {
+      viewport.scrollTo({ top: targetTop, behavior: 'auto' })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [selectedDay, daysVisible, events, now])
 
   const allDay = events.filter(
     (event) => Boolean(event.todo_el_dia) && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)),
@@ -189,6 +218,7 @@ export default function CalendarioMultiDayView({
                 {days.map((day) => {
                   const positioned = layoutOverlaps(
                     events.filter((event) => !event.todo_el_dia && isSameDay(new Date(event.fecha_inicio), day)),
+                    day,
                   )
 
                   return (
@@ -199,10 +229,15 @@ export default function CalendarioMultiDayView({
 
                       {positioned.map(({ event, start, end, column, columns }) => {
                         const startMinutes = differenceInMinutes(start, startOfDay(start))
-                        const duration = Math.max(differenceInMinutes(end, start), MIN_EVENT_MINUTES)
+                        const rawDuration = Math.max(differenceInMinutes(end, start), 1)
+                        const availableMinutes = Math.max(24 * 60 - startMinutes, 1)
+                        const duration = Math.min(Math.max(rawDuration, MIN_EVENT_MINUTES), availableMinutes)
                         const color = eventColor(event)
                         const width = 100 / columns
                         const left = column * width
+                        const naturalHeight = (duration / 60) * HOUR_HEIGHT - 4
+                        const maximumHeight = (availableMinutes / 60) * HOUR_HEIGHT - 2
+                        const eventHeight = Math.max(12, Math.min(Math.max(naturalHeight, 34), maximumHeight))
 
                         return (
                           <button
@@ -211,7 +246,7 @@ export default function CalendarioMultiDayView({
                             className={styles.timedEvent}
                             style={{
                               top: `${(startMinutes / 60) * HOUR_HEIGHT + 2}px`,
-                              height: `${Math.max((duration / 60) * HOUR_HEIGHT - 4, 34)}px`,
+                              height: `${eventHeight}px`,
                               left: `calc(${left}% + 3px)`,
                               width: `calc(${width}% - 6px)`,
                               borderColor: color,
