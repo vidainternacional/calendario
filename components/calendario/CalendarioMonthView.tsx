@@ -109,16 +109,17 @@ export default function CalendarioMonthView({
     positionedMonthRef.current = positionKey
 
     const align = (behavior: ScrollBehavior) => {
-      const rootRect = root.getBoundingClientRect()
-      const targetRect = target.getBoundingClientRect()
       const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
       const availableHeight = Math.max(0, root.clientHeight - stickyHeight)
-      const targetTopInScroll = root.scrollTop + targetRect.top - rootRect.top
-      const centeringSpace = Math.max(0, (availableHeight - targetRect.height) / 2)
+      const targetHeight = target.offsetHeight
+      const targetTopInScroll = target.offsetTop
+      const centeringSpace = Math.max(0, (availableHeight - targetHeight) / 2)
       const nextTop = Math.max(0, targetTopInScroll - stickyHeight - centeringSpace)
 
       root.scrollTo({ top: nextTop, behavior })
     }
+
+    align('auto')
 
     let timer: number | undefined
     const frame = window.requestAnimationFrame(() => {
