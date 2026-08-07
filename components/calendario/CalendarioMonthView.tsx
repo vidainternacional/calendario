@@ -174,7 +174,7 @@ export default function CalendarioMonthView({
   return (
     <div
       ref={scrollRootRef}
-      className={`${basic.monthView} ${transitionPhase === 'exit' ? basic.monthViewExit : ''} ${polish.monthPolish} ${indicator.monthDensity}`}
+      className={`${basic.monthView} ${transitionPhase === 'exit' ? `${basic.monthViewExit} ${polish.monthExit}` : ''} ${polish.monthPolish} ${indicator.monthDensity}`}
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
     >
@@ -194,6 +194,14 @@ export default function CalendarioMonthView({
           const visibleMonthKey = format(visibleMonth, 'yyyy-MM')
           const initialMotion = isTransitionMonth && transitionPhase === 'enter' ? compactZoomState : false
           const activeMotion = isTransitionMonth && transitionPhase === 'exit' ? compactZoomState : expandedZoomState
+          const sectionStyle = isTransitionMonth
+            ? {
+                transformOrigin: transitionAnchor ? `${transitionAnchor.originX}% ${transitionAnchor.originY}%` : '50% 42%',
+                willChange: transitionPhase ? 'transform, opacity' : 'auto',
+              }
+            : transitionPhase === 'exit'
+              ? { opacity: 0, pointerEvents: 'none' as const }
+              : undefined
 
           return (
             <motion.section
@@ -205,10 +213,7 @@ export default function CalendarioMonthView({
               initial={initialMotion}
               animate={isTransitionMonth ? activeMotion : undefined}
               transition={isTransitionMonth ? { x: CALENDAR_ZOOM_SPRING, y: CALENDAR_ZOOM_SPRING, scale: CALENDAR_ZOOM_SPRING, opacity: VIEW_FADE } : undefined}
-              style={isTransitionMonth ? {
-                transformOrigin: transitionAnchor ? `${transitionAnchor.originX}% ${transitionAnchor.originY}%` : '50% 42%',
-                willChange: transitionPhase ? 'transform, opacity' : 'auto',
-              } : undefined}
+              style={sectionStyle}
               onAnimationComplete={() => {
                 if (isTransitionMonth && transitionPhase) onTransitionComplete?.()
               }}
