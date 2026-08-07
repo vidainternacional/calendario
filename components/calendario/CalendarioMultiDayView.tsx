@@ -17,6 +17,11 @@ const MIN_EVENT_MINUTES = 30
 const MIN_DAY_WIDTH = 112
 const TIME_COLUMN_WIDTH = 54
 
+function triggerSoftHaptic() {
+  if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return
+  navigator.vibrate(9)
+}
+
 type PositionedItem = {
   event: EventoCalendario
   start: Date
@@ -42,11 +47,7 @@ function layoutOverlaps(items: EventoCalendario[], day: Date): PositionedItem[] 
     .map((event) => {
       const start = new Date(event.fecha_inicio)
       const rawEnd = itemEnd(event)
-      return {
-        event,
-        start,
-        end: rawEnd > nextDay ? nextDay : rawEnd,
-      }
+      return { event, start, end: rawEnd > nextDay ? nextDay : rawEnd }
     })
     .sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime())
 
@@ -172,6 +173,7 @@ export default function CalendarioMultiDayView({
     const deltaY = end.clientY - start.y
     if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return
 
+    triggerSoftHaptic()
     onSelectDay(addDays(selectedDay, deltaX < 0 ? 1 : -1))
   }
 
@@ -182,9 +184,7 @@ export default function CalendarioMultiDayView({
   const headerGridTemplate = `${TIME_COLUMN_WIDTH}px repeat(${headerDays.length}, minmax(0, 1fr))`
   const currentMinutes = differenceInMinutes(now, startOfDay(now))
   const showCurrentTime = days.some((day) => isSameDay(day, now))
-  const dayTitle = daysVisible === 1
-    ? format(selectedDay, 'EEEE – d MMM yyyy', { locale: es })
-    : null
+  const dayTitle = daysVisible === 1 ? format(selectedDay, 'EEEE – d MMM yyyy', { locale: es }) : null
 
   return (
     <section
@@ -206,7 +206,7 @@ export default function CalendarioMultiDayView({
                   type="button"
                   key={day.toISOString()}
                   className={styles.dayHeader}
-                  onClick={() => onSelectDay(day)}
+                  onClick={() => { triggerSoftHaptic(); onSelectDay(day) }}
                   aria-label={format(day, "EEEE d 'de' MMMM", { locale: es })}
                   aria-pressed={isSelected}
                   aria-current={isCurrentDay ? 'date' : undefined}
@@ -232,7 +232,7 @@ export default function CalendarioMultiDayView({
                         key={eventKey(event)}
                         className={styles.allDayEvent}
                         style={{ borderColor: eventColor(event), color: eventColor(event) }}
-                        onClick={() => onOpenEvent(event)}
+                        onClick={() => { triggerSoftHaptic(); onOpenEvent(event) }}
                       >
                         {event.kind === 'reminder' && <BellRing size={12} className="mr-1 inline" />}
                         {event.titulo}
@@ -255,11 +255,7 @@ export default function CalendarioMultiDayView({
               </div>
 
               {showCurrentTime && (
-                <div
-                  className={styles.currentTimeLine}
-                  style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px`, left: `${TIME_COLUMN_WIDTH}px` }}
-                  aria-hidden="true"
-                >
+                <div className={styles.currentTimeLine} style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px`, left: `${TIME_COLUMN_WIDTH}px` }} aria-hidden="true">
                   <span className={styles.currentTimeLabel}>{format(now, 'h:mm')}</span>
                   <span className={styles.currentTimeDot} />
                 </div>
@@ -303,7 +299,7 @@ export default function CalendarioMultiDayView({
                               borderColor: color,
                               backgroundColor: `${color}16`,
                             }}
-                            onClick={() => onOpenEvent(event)}
+                            onClick={() => { triggerSoftHaptic(); onOpenEvent(event) }}
                             aria-label={`${event.titulo}, ${format(start, 'h:mm a')}`}
                           >
                             <strong style={{ color }}>
