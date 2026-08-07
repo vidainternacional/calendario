@@ -32,6 +32,7 @@ export default function CalendarioYearView({
   topChrome,
   onOpenMonth,
   onChangeYear,
+  transitionPreview = false,
 }: {
   fecha: Date
   eventos: EventoCalendario[]
@@ -39,6 +40,7 @@ export default function CalendarioYearView({
   topChrome: ReactNode
   onOpenMonth: (month: Date, element: HTMLElement) => void
   onChangeYear: (year: number) => void
+  transitionPreview?: boolean
 }) {
   const activeYearRef = useRef<HTMLElement | null>(null)
   const positionedYearRef = useRef<number | null>(null)
@@ -48,11 +50,13 @@ export default function CalendarioYearView({
   const currentMonth = useMemo(() => new Date(), [])
 
   const years = useMemo(
-    () => Array.from(
-      { length: YEARS_BEFORE + YEARS_AFTER + 1 },
-      (_, index) => activeYear - YEARS_BEFORE + index,
-    ),
-    [activeYear],
+    () => transitionPreview
+      ? [activeYear]
+      : Array.from(
+          { length: YEARS_BEFORE + YEARS_AFTER + 1 },
+          (_, index) => activeYear - YEARS_BEFORE + index,
+        ),
+    [activeYear, transitionPreview],
   )
 
   const scrollToActiveYear = (behavior: ScrollBehavior = 'auto') => {
@@ -64,6 +68,7 @@ export default function CalendarioYearView({
   }
 
   useLayoutEffect(() => {
+    if (transitionPreview) return
     if (positionedYearRef.current === activeYear || !activeYearRef.current) return
     positionedYearRef.current = activeYear
 
@@ -86,15 +91,18 @@ export default function CalendarioYearView({
       window.clearTimeout(settleTimer)
       html.style.scrollBehavior = previousBehavior
     }
-  }, [activeYear])
+  }, [activeYear, transitionPreview])
 
   useEffect(() => {
+    if (transitionPreview) return
     if (!pendingTodayScrollRef.current || !activeYearRef.current) return
     pendingTodayScrollRef.current = false
     requestAnimationFrame(() => scrollToActiveYear('smooth'))
-  }, [activeYear])
+  }, [activeYear, transitionPreview])
 
   useEffect(() => {
+    if (transitionPreview) return
+
     const todayButton = Array.from(document.querySelectorAll('button'))
       .find((button) => button.textContent?.trim() === 'Hoy')
 
@@ -118,7 +126,7 @@ export default function CalendarioYearView({
 
     todayButton.addEventListener('click', handleToday, true)
     return () => todayButton.removeEventListener('click', handleToday, true)
-  }, [activeYear, onChangeYear])
+  }, [activeYear, onChangeYear, transitionPreview])
 
   return (
     <div className={`${styles.yearView} ${polish.yearPolish}`} aria-busy={isRefreshing || undefined}>
@@ -157,8 +165,10 @@ export default function CalendarioYearView({
                       type="button"
                       key={monthKey(month)}
                       className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
-                      onClick={(event) => onOpenMonth(month, event.currentTarget)}
-                      aria-label={`Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
+                      onClick={transitionPreview ? undefined : (event) => onOpenMonth(month, event.currentTarget)}
+                      tabIndex={transitionPreview ? -1 : undefined}
+                      aria-hidden={transitionPreview || undefined}
+                      aria-label={transitionPreview ? undefined : `Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
                     >
                       <span className={styles.miniMonthName}>{format(month, 'MMMM', { locale: es })}</span>
                       <span className={styles.miniWeekdays} aria-hidden="true">
