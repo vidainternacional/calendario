@@ -314,18 +314,28 @@ export default function CalendarioIOS({
     </div>
   )
 
+  const yearTopChrome = (
+    <div className={`${styles.topChrome} ${chrome.topChrome}`}>
+      <div className={chrome.leftSlot} />
+      <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`} role="group" aria-label="Acciones del calendario">
+        <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1} aria-hidden="true"><Search size={25} /></button>
+        {puedeCrear && <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1} aria-hidden="true"><Plus size={28} /></button>}
+      </div>
+    </div>
+  )
+
   const monthTransitionProps = {
     transitionAnchor: monthTransitionAnchor,
     transitionPhase: monthTransitionPhase,
     onTransitionComplete: completeMonthTransition,
   }
 
-  const yearView = (
+  const renderYearView = (chromeNode: React.ReactNode) => (
     <CalendarioYearView
       fecha={activeDate}
       eventos={sortedEvents}
       isRefreshing={isRefreshing}
-      topChrome={topChrome}
+      topChrome={chromeNode}
       onOpenMonth={openMonth}
       onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
     />
@@ -337,7 +347,7 @@ export default function CalendarioIOS({
 
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
-      {view === 'anio' && yearView}
+      {view === 'anio' && renderYearView(topChrome)}
 
       {showYearUnderlay && (
         <div
@@ -351,7 +361,7 @@ export default function CalendarioIOS({
             pointerEvents: 'none',
           }}
         >
-          {yearView}
+          {renderYearView(yearTopChrome)}
         </div>
       )}
 
