@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  addDays,
   format,
   getDaysInMonth,
   isSameMonth,
@@ -11,23 +10,27 @@ import {
   CalendarDays,
   Check,
   ChevronLeft,
-  Clock3,
-  Columns3,
-  Grid3X3,
-  List,
   Plus,
-  Rows3,
   Search,
-  SlidersHorizontal,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
+import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
 import CalendarioMonthView, { type MonthDisplayMode } from './CalendarioMonthView'
 import CalendarioMultiDayView from './CalendarioMultiDayView'
 import CalendarioYearView from './CalendarioYearView'
 import NuevoEventoCalendarioModal from './NuevoEventoCalendarioModal'
+import {
+  AgendaViewIcon,
+  CompactViewIcon,
+  DayViewIcon,
+  DetailsViewIcon,
+  MonthListViewIcon,
+  StackedViewIcon,
+  TwoDayViewIcon,
+} from './CalendarioViewIcons'
 import {
   eventKey,
   eventosDelDia,
@@ -38,28 +41,28 @@ import {
 import chrome from './CalendarioChrome.module.css'
 import styles from './CalendarioIOS.module.css'
 
-type CalendarView = 'anio' | 'mes' | 'dia' | 'tres-dias' | 'semana' | 'lista'
+type CalendarView = 'anio' | 'mes' | 'dia' | 'dos-dias' | 'agenda' | 'lista'
+type TimelineView = 'dia' | 'dos-dias' | 'agenda'
 type MonthMenuMode = MonthDisplayMode | 'list'
 
 type MenuOption<T extends string> = {
   id: T
   label: string
-  icon: typeof Grid3X3
+  icon: ComponentType<{ size?: number; className?: string }>
   separated?: boolean
 }
 
 const MONTH_VIEW_OPTIONS: Array<MenuOption<MonthMenuMode>> = [
-  { id: 'compact', label: 'Compacto', icon: SlidersHorizontal },
-  { id: 'stacked', label: 'Apilado', icon: Rows3 },
-  { id: 'details', label: 'Detalles', icon: Grid3X3 },
-  { id: 'list', label: 'Lista', icon: List, separated: true },
+  { id: 'compact', label: 'Compacto', icon: CompactViewIcon },
+  { id: 'stacked', label: 'Apilado', icon: StackedViewIcon },
+  { id: 'details', label: 'Detalles', icon: DetailsViewIcon },
+  { id: 'list', label: 'Lista', icon: MonthListViewIcon, separated: true },
 ]
 
-const TIMELINE_VIEW_OPTIONS: Array<MenuOption<Exclude<CalendarView, 'anio' | 'lista'>>> = [
-  { id: 'dia', label: 'Día', icon: Clock3 },
-  { id: 'tres-dias', label: '3 días', icon: Columns3 },
-  { id: 'semana', label: 'Semana', icon: Rows3 },
-  { id: 'mes', label: 'Mes', icon: CalendarDays, separated: true },
+const TIMELINE_VIEW_OPTIONS: Array<MenuOption<TimelineView>> = [
+  { id: 'dia', label: 'Día', icon: DayViewIcon },
+  { id: 'dos-dias', label: '2 días', icon: TwoDayViewIcon },
+  { id: 'agenda', label: 'Lista', icon: AgendaViewIcon },
 ]
 
 export default function CalendarioIOS({
@@ -179,7 +182,7 @@ export default function CalendarioIOS({
     setViewMenuOpen(false)
   }
 
-  const changeTimelineView = (nextView: Exclude<CalendarView, 'anio' | 'lista'>) => {
+  const changeTimelineView = (nextView: TimelineView) => {
     setActiveDate(selectedDay)
     setView(nextView)
     setViewMenuOpen(false)
@@ -204,19 +207,13 @@ export default function CalendarioIOS({
     ? format(activeDate, 'yyyy')
     : format(activeDate, 'MMMM', { locale: es })
 
-  const timelineDays: TimelineDayCount | null = view === 'dia' ? 1 : view === 'tres-dias' ? 3 : view === 'semana' ? 7 : null
-
-  const timelineTitle = view === 'dia'
-    ? format(selectedDay, 'EEEE – d MMM yyyy', { locale: es })
-    : view === 'tres-dias'
-      ? `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 2), 'd MMM', { locale: es })}`
-      : `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 6), 'd MMM', { locale: es })}`
+  const timelineDays: TimelineDayCount | null = view === 'dia' ? 1 : view === 'dos-dias' ? 2 : null
 
   const currentMenuOption = isMonthContext
     ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)
     : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)
   const currentMenuLabel = currentMenuOption?.label || (isMonthContext ? 'Compacto' : 'Día')
-  const CurrentMenuIcon = currentMenuOption?.icon || SlidersHorizontal
+  const CurrentMenuIcon = currentMenuOption?.icon || DayViewIcon
 
   const listFooter = (
     <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
@@ -245,7 +242,7 @@ export default function CalendarioIOS({
       <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`} role="group" aria-label="Acciones del calendario">
         {view !== 'anio' && (
           <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setViewMenuOpen((open) => !open)} aria-label={`Cambiar vista. Vista actual: ${currentMenuLabel}`} aria-expanded={viewMenuOpen} aria-controls="calendar-view-selector">
-            <CurrentMenuIcon size={24} />
+            <CurrentMenuIcon size={25} />
           </button>
         )}
         <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setSearchOpen(true)} aria-label="Buscar eventos"><Search size={25} /></button>
@@ -265,10 +262,14 @@ export default function CalendarioIOS({
       {timelineDays && (
         <>
           {topChrome}
-          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme} ${view === 'dia' ? chrome.dayHeaderBlock : ''}`}>
-            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme} ${view === 'dia' ? chrome.dayPeriodTitle : ''}`}>{timelineTitle}</h1>
-          </div>
           <CalendarioMultiDayView selectedDay={selectedDay} events={sortedEvents} daysVisible={timelineDays} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
+        </>
+      )}
+
+      {view === 'agenda' && (
+        <>
+          {topChrome}
+          <CalendarioAgendaView selectedDay={selectedDay} events={sortedEvents} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
         </>
       )}
 
@@ -294,9 +295,18 @@ export default function CalendarioIOS({
                 return (
                   <div key={option.id}>
                     {option.separated && <div className={chrome.viewSeparator} aria-hidden="true" />}
-                    <button type="button" className={`${styles.viewOption} ${chrome.viewOption} ${active ? `${styles.viewOptionActive} ${chrome.viewOptionActive}` : ''}`} onClick={() => { if (isMonthContext) changeMonthView(option.id as MonthMenuMode); else changeTimelineView(option.id as Exclude<CalendarView, 'anio' | 'lista'>) }} role="menuitemradio" aria-checked={active}>
+                    <button
+                      type="button"
+                      className={`${styles.viewOption} ${chrome.viewOption} ${active ? `${styles.viewOptionActive} ${chrome.viewOptionActive}` : ''}`}
+                      onClick={() => {
+                        if (isMonthContext) changeMonthView(option.id as MonthMenuMode)
+                        else changeTimelineView(option.id as TimelineView)
+                      }}
+                      role="menuitemradio"
+                      aria-checked={active}
+                    >
                       {active ? <Check size={20} className={chrome.viewCheck} /> : <span className={chrome.viewCheckHidden} />}
-                      <Icon size={24} />
+                      <Icon size={26} />
                       <span>{option.label}</span>
                     </button>
                   </div>
