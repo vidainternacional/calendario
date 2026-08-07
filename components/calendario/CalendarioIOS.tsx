@@ -6,7 +6,7 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
+import { SPRING_STANDARD } from '@/lib/motion-config'
 import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
@@ -53,6 +54,18 @@ type MenuOption<T extends string> = {
   separated?: boolean
 }
 
+type MonthGhostSnapshot = {
+  rect: { left: number; top: number; width: number; height: number }
+  viewport: { width: number; height: number }
+  html: string
+  className: string
+}
+
+type MonthGhost = MonthGhostSnapshot & {
+  id: number
+  direction: 'in' | 'out'
+}
+
 const MONTH_VIEW_OPTIONS: Array<MenuOption<MonthMenuMode>> = [
   { id: 'compact', label: 'Compacto', icon: CompactViewIcon },
   { id: 'stacked', label: 'Apilado', icon: StackedViewIcon },
@@ -65,6 +78,56 @@ const TIMELINE_VIEW_OPTIONS: Array<MenuOption<TimelineView>> = [
   { id: 'dos-dias', label: '2 días', icon: TwoDayViewIcon },
   { id: 'agenda', label: 'Lista', icon: AgendaViewIcon },
 ]
+
+function MonthZoomGhost({ ghost, onComplete }: { ghost: MonthGhost; onComplete: () => void }) {
+  const centerX = ghost.rect.left + ghost.rect.width / 2
+  const centerY = ghost.rect.top + ghost.rect.height / 2
+  const targetX = ghost.viewport.width / 2 - centerX
+  const targetY = ghost.viewport.height / 2 - centerY
+  const targetScale = Math.max(
+    ghost.viewport.width / Math.max(1, ghost.rect.width),
+    ghost.viewport.height / Math.max(1, ghost.rect.height),
+  ) * 1.04
+  const entering = ghost.direction === 'in'
+
+  return (
+    <motion.div
+      key={ghost.id}
+      className={ghost.className}
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        zIndex: 240,
+        left: ghost.rect.left,
+        top: ghost.rect.top,
+        width: ghost.rect.width,
+        height: ghost.rect.height,
+        margin: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        background: '#ffffff',
+        boxShadow: '0 18px 56px rgba(15, 23, 42, 0.16)',
+        transformOrigin: 'center center',
+        willChange: 'transform, opacity',
+      }}
+      initial={entering
+        ? { x: 0, y: 0, scale: 1, opacity: 1, borderRadius: 14 }
+        : { x: targetX, y: targetY, scale: targetScale, opacity: 0.34, borderRadius: 2 }}
+      animate={entering
+        ? { x: targetX, y: targetY, scale: targetScale, opacity: 0, borderRadius: 2 }
+        : { x: 0, y: 0, scale: 1, opacity: 1, borderRadius: 14 }}
+      transition={{
+        x: SPRING_STANDARD,
+        y: SPRING_STANDARD,
+        scale: SPRING_STANDARD,
+        borderRadius: SPRING_STANDARD,
+        opacity: { duration: entering ? 0.34 : 0.26, ease: 'easeOut' },
+      }}
+      onAnimationComplete={onComplete}
+      dangerouslySetInnerHTML={{ __html: ghost.html }}
+    />
+  )
+}
 
 export default function CalendarioIOS({
   events,
@@ -87,6 +150,7 @@ export default function CalendarioIOS({
   externalDetail?: EventoCalendario | null
   onExternalDetailConsumed?: () => void
 }) {
+  const reduceMotion = useReducedMotion()
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<CalendarView>('anio')
   const [monthDisplay, setMonthDisplay] = useState<MonthMenuMode>('compact')
@@ -98,6 +162,8 @@ export default function CalendarioIOS({
   const [query, setQuery] = useState('')
   const [newEventOpen, setNewEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
+  const [monthGhostSnapshot, setMonthGhostSnapshot] = useState<MonthGhostSnapshot | null>(null)
+  const [monthGhost, setMonthGhost] = useState<MonthGhost | null>(null)
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
@@ -158,7 +224,26 @@ export default function CalendarioIOS({
     return new Date(month.getFullYear(), month.getMonth(), Math.min(selectedDay.getDate(), getDaysInMonth(month)))
   }
 
-  const openMonth = (month: Date, _element?: HTMLElement) => {
+  const snapshotMonth = (element?: HTMLElement): MonthGhostSnapshot | null => {
+    if (!element || typeof window === 'undefined') return null
+    const rect = element.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return null
+
+    return {
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      html: element.innerHTML,
+      className: element.className,
+    }
+  }
+
+  const openMonth = (month: Date, element?: HTMLElement) => {
+    const snapshot = snapshotMonth(element)
+    if (snapshot) {
+      setMonthGhostSnapshot(snapshot)
+      if (!reduceMotion) setMonthGhost({ ...snapshot, id: Date.now(), direction: 'in' })
+    }
+
     const next = selectedDayForMonth(month)
     setActiveDate(next)
     setSelectedDay(next)
@@ -191,6 +276,9 @@ export default function CalendarioIOS({
 
   const goBack = () => {
     if (view === 'mes' || view === 'lista') {
+      if (monthGhostSnapshot && !reduceMotion) {
+        setMonthGhost({ ...monthGhostSnapshot, id: Date.now(), direction: 'out' })
+      }
       setView('anio')
       return
     }
@@ -309,6 +397,11 @@ export default function CalendarioIOS({
           <button type="button" className={`${styles.floatingIcon} ${chrome.floatingIcon}`} onClick={onOpenCalendars} aria-label="Abrir calendarios"><CalendarDays size={24} /></button>
         </div>
       </div>
+
+      {mounted && monthGhost && createPortal(
+        <MonthZoomGhost ghost={monthGhost} onComplete={() => setMonthGhost(null)} />,
+        document.body,
+      )}
 
       {mounted && viewMenuOpen && view !== 'anio' && createPortal(
         <>
