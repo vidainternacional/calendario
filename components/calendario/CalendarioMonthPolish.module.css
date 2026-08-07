@@ -211,14 +211,15 @@
   line-height: 1 !important;
   vertical-align: top !important;
   transform: translateZ(0);
+  transition: color 150ms ease, font-weight 150ms ease, transform 150ms cubic-bezier(.2,.8,.2,1) !important;
 }
 
 .monthPolish :global([class*='daySelected']) {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: inherit !important;
-  font-weight: inherit !important;
+  color: #5b3df5 !important;
+  font-weight: 800 !important;
 }
 
 .monthPolish :global([class*='daySelected'])::before,
@@ -272,5 +273,6 @@
 @media (prefers-reduced-motion: reduce) {
   .monthPolish { scroll-behavior: auto; }
   .monthPolish :global([class*='monthDay']),
-  .monthPolish :global([class*='backButton']) { transition: none !important; }
+  .monthPolish :global([class*='backButton']),
+  .monthPolish :global([class*='dayNumber']) { transition: none !important; }
 }
