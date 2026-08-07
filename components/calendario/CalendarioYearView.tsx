@@ -161,12 +161,14 @@ export default function CalendarioYearView({
                   const days = eachDayOfInterval({ start, end })
                   const isCurrentMonth = isSameMonth(month, currentMonth)
                   const isSharedTarget = sharedTransitionTarget && isSameMonth(month, fecha)
+                  const dataMonthKey = format(month, 'yyyy-MM')
                   while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
                   return (
                     <button
                       type="button"
                       key={monthKey(month)}
+                      data-calendar-mini-month={dataMonthKey}
                       className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
                       style={isSharedTarget ? { viewTransitionName: 'calendar-month-shared' } : undefined}
                       onClick={transitionPreview ? undefined : (event) => onOpenMonth(month, event.currentTarget)}
