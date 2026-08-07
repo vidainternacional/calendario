@@ -1,0 +1,71 @@
+.agenda {
+  height: calc(100dvh - 128px - env(safe-area-inset-bottom, 0px));
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  scrollbar-width: none;
+  background: #fff;
+  padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  color: #111827;
+  -webkit-overflow-scrolling: touch;
+}
+
+.agenda::-webkit-scrollbar { display: none; }
+
+.section {
+  background: #fff;
+}
+
+.dateHeader {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.09);
+  background: rgba(255, 255, 255, 0.88);
+  padding: 11px max(20px, env(safe-area-inset-right, 0px)) 9px max(20px, env(safe-area-inset-left, 0px));
+  color: #171b26;
+  font-size: 18px;
+  font-weight: 740;
+  letter-spacing: -0.018em;
+  text-align: left;
+  text-transform: capitalize;
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dateHeaderToday {
+  color: #5b3df5;
+}
+
+.dateHeader:active {
+  background: rgba(91, 61, 245, 0.055);
+}
+
+.empty {
+  display: grid;
+  min-height: 48dvh;
+  place-items: center;
+  padding: 34px;
+  color: #7a8496;
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@media (max-width: 390px) {
+  .agenda {
+    height: calc(100dvh - 124px - env(safe-area-inset-bottom, 0px));
+  }
+
+  .dateHeader {
+    min-height: 50px;
+    padding-inline: max(17px, env(safe-area-inset-left, 0px));
+    font-size: 17px;
+  }
+}
