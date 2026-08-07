@@ -212,9 +212,11 @@ export default function CalendarioIOS({
       ? `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 2), 'd MMM', { locale: es })}`
       : `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 6), 'd MMM', { locale: es })}`
 
-  const currentMenuLabel = isMonthContext
-    ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)?.label || 'Compacto'
-    : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)?.label || 'Día'
+  const currentMenuOption = isMonthContext
+    ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)
+    : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)
+  const currentMenuLabel = currentMenuOption?.label || (isMonthContext ? 'Compacto' : 'Día')
+  const CurrentMenuIcon = currentMenuOption?.icon || SlidersHorizontal
 
   const listFooter = (
     <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
@@ -243,7 +245,7 @@ export default function CalendarioIOS({
       <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`} role="group" aria-label="Acciones del calendario">
         {view !== 'anio' && (
           <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setViewMenuOpen((open) => !open)} aria-label={`Cambiar vista. Vista actual: ${currentMenuLabel}`} aria-expanded={viewMenuOpen} aria-controls="calendar-view-selector">
-            <SlidersHorizontal size={24} />
+            <CurrentMenuIcon size={24} />
           </button>
         )}
         <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setSearchOpen(true)} aria-label="Buscar eventos"><Search size={25} /></button>
