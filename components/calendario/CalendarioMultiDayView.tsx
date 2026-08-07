@@ -142,6 +142,9 @@ export default function CalendarioMultiDayView({
   const headerGridTemplate = `${TIME_COLUMN_WIDTH}px repeat(${headerDays.length}, minmax(0, 1fr))`
   const currentMinutes = differenceInMinutes(now, startOfDay(now))
   const showCurrentTime = days.some((day) => isSameDay(day, now))
+  const dayTitle = daysVisible === 1
+    ? format(selectedDay, 'EEEE – d MMM yyyy', { locale: es })
+    : null
 
   return (
     <section className={styles.surface} aria-label={daysVisible === 1 ? 'Vista de un día' : `Vista de ${daysVisible} días`}>
@@ -163,12 +166,14 @@ export default function CalendarioMultiDayView({
                   aria-pressed={isSelected}
                   aria-current={isCurrentDay ? 'date' : undefined}
                 >
-                  <span>{format(day, 'EEE', { locale: es })}</span>
+                  <span>{format(day, 'EEEEE', { locale: es })}</span>
                   <strong className={isCurrentDay ? styles.today : ''}>{format(day, 'd')}</strong>
                 </button>
               )
             })}
           </header>
+
+          {dayTitle && <div className={styles.dayTitle}>{dayTitle}</div>}
 
           {allDay.length > 0 && (
             <div className={styles.allDayBand} style={{ gridTemplateColumns: `${TIME_COLUMN_WIDTH}px 1fr` }}>
@@ -251,7 +256,7 @@ export default function CalendarioMultiDayView({
                               left: `calc(${left}% + 2px)`,
                               width: `calc(${width}% - 4px)`,
                               borderColor: color,
-                              backgroundColor: `${color}1A`,
+                              backgroundColor: `${color}16`,
                             }}
                             onClick={() => onOpenEvent(event)}
                             aria-label={`${event.titulo}, ${format(start, 'h:mm a')}`}
