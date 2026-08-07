@@ -6,7 +6,7 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
+import { VIEW_FADE } from '@/lib/motion-config'
 import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
@@ -116,6 +117,8 @@ export default function CalendarioIOS({
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
+  const isTimelineContext = view === 'dia' || view === 'dos-dias' || view === 'agenda'
+  const showYearUnderlay = (view === 'mes' || view === 'lista') && monthTransitionPhase !== null
 
   useEffect(() => setMounted(true), [])
 
@@ -194,6 +197,7 @@ export default function CalendarioIOS({
 
   const openMonth = (month: Date, element?: HTMLElement) => {
     const anchor = captureMonthTransitionAnchor(element)
+    element?.blur()
     setMonthTransitionAnchor(anchor)
     setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
 
@@ -225,7 +229,6 @@ export default function CalendarioIOS({
 
   const changeTimelineView = (nextView: TimelineView) => {
     setMonthTransitionPhase(null)
-    setActiveDate(selectedDay)
     setView(nextView)
     setViewMenuOpen(false)
   }
@@ -317,68 +320,98 @@ export default function CalendarioIOS({
     onTransitionComplete: completeMonthTransition,
   }
 
+  const yearView = (
+    <CalendarioYearView
+      fecha={activeDate}
+      eventos={sortedEvents}
+      isRefreshing={isRefreshing}
+      topChrome={topChrome}
+      onOpenMonth={openMonth}
+      onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
+    />
+  )
+
+  const timelineContent = timelineDays
+    ? <CalendarioMultiDayView selectedDay={selectedDay} events={sortedEvents} daysVisible={timelineDays} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
+    : <CalendarioAgendaView selectedDay={selectedDay} events={sortedEvents} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
+
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
-      {view === 'anio' && (
-        <CalendarioYearView
-          fecha={activeDate}
-          eventos={sortedEvents}
-          isRefreshing={isRefreshing}
-          topChrome={topChrome}
-          onOpenMonth={openMonth}
-          onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
-        />
+      {view === 'anio' && yearView}
+
+      {showYearUnderlay && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1,
+            overflow: 'hidden',
+            background: '#fff',
+            pointerEvents: 'none',
+          }}
+        >
+          {yearView}
+        </div>
       )}
 
       {view === 'mes' && (
-        <CalendarioMonthView
-          month={activeDate}
-          selectedDay={selectedDay}
-          events={sortedEvents}
-          displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
-          topChrome={topChrome}
-          isRefreshing={isRefreshing}
-          dayPanelOpen={false}
-          scrollRequest={monthScrollRequest}
-          onSelectDay={selectDay}
-          onOpenDay={openDay}
-          onOpenEvent={setSelectedEvent}
-          {...monthTransitionProps}
-        />
+        <div style={monthTransitionPhase ? { position: 'relative', zIndex: 2, background: '#fff' } : undefined}>
+          <CalendarioMonthView
+            month={activeDate}
+            selectedDay={selectedDay}
+            events={sortedEvents}
+            displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
+            topChrome={topChrome}
+            isRefreshing={isRefreshing}
+            dayPanelOpen={false}
+            scrollRequest={monthScrollRequest}
+            onSelectDay={selectDay}
+            onOpenDay={openDay}
+            onOpenEvent={setSelectedEvent}
+            {...monthTransitionProps}
+          />
+        </div>
       )}
 
-      {timelineDays && (
+      {isTimelineContext && (
         <>
           {topChrome}
-          <CalendarioMultiDayView selectedDay={selectedDay} events={sortedEvents} daysVisible={timelineDays} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
-        </>
-      )}
-
-      {view === 'agenda' && (
-        <>
-          {topChrome}
-          <CalendarioAgendaView selectedDay={selectedDay} events={sortedEvents} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
+          <AnimatePresence initial={false} mode="popLayout">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0.68 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={VIEW_FADE}
+              style={{ width: '100%' }}
+            >
+              {timelineContent}
+            </motion.div>
+          </AnimatePresence>
         </>
       )}
 
       {view === 'lista' && (
-        <CalendarioMonthView
-          month={activeDate}
-          selectedDay={selectedDay}
-          events={sortedEvents}
-          displayMode="compact"
-          topChrome={topChrome}
-          isRefreshing={isRefreshing}
-          dayPanelOpen={false}
-          scrollRequest={monthScrollRequest}
-          showFollowingMonth={false}
-          openDayOnSelect={false}
-          footer={listFooter}
-          onSelectDay={selectDay}
-          onOpenDay={openDay}
-          onOpenEvent={setSelectedEvent}
-          {...monthTransitionProps}
-        />
+        <div style={monthTransitionPhase ? { position: 'relative', zIndex: 2, background: '#fff' } : undefined}>
+          <CalendarioMonthView
+            month={activeDate}
+            selectedDay={selectedDay}
+            events={sortedEvents}
+            displayMode="compact"
+            topChrome={topChrome}
+            isRefreshing={isRefreshing}
+            dayPanelOpen={false}
+            scrollRequest={monthScrollRequest}
+            showFollowingMonth={false}
+            openDayOnSelect={false}
+            footer={listFooter}
+            onSelectDay={selectDay}
+            onOpenDay={openDay}
+            onOpenEvent={setSelectedEvent}
+            {...monthTransitionProps}
+          />
+        </div>
       )}
 
       <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>
