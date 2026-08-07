@@ -172,7 +172,12 @@ export default function CalendarioMonthView({
   const expandedZoomState = { x: 0, y: 0, scale: 1, opacity: 1 }
 
   return (
-    <div ref={scrollRootRef} className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
+    <div
+      ref={scrollRootRef}
+      className={`${basic.monthView} ${transitionPhase === 'exit' ? basic.monthViewExit : ''} ${polish.monthPolish} ${indicator.monthDensity}`}
+      aria-hidden={overlay || undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
       <div ref={weekdaysRef} className={`${basic.weekdays} ${polish.monthWeekdays}`} aria-label="Días de la semana">
         <span className={basic.weekNumberHeader} aria-hidden="true" />
