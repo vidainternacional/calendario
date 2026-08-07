@@ -26,6 +26,7 @@ import polish from './CalendarioMonthPolish.module.css'
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
 const MONTHS_AROUND = 6
+const MONTH_EXIT_HANDOFF_MS = 320
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 function weeksForMonth(month: Date) {
@@ -85,6 +86,7 @@ export default function CalendarioMonthView({
   const weekdaysRef = useRef<HTMLDivElement | null>(null)
   const activeMonthRef = useRef<HTMLElement | null>(null)
   const reportedMonthRef = useRef<string | null>(null)
+  const transitionCompleteRef = useRef(onTransitionComplete)
   const baseMonth = startOfMonth(month)
   const baseMonthKey = format(baseMonth, 'yyyy-MM')
   const eventosPorDia = useMemo(() => indexarEventosPorDia(events), [events])
@@ -95,6 +97,20 @@ export default function CalendarioMonthView({
       : [baseMonth],
     [baseMonthKey, showFollowingMonth],
   )
+
+  useEffect(() => {
+    transitionCompleteRef.current = onTransitionComplete
+  }, [onTransitionComplete])
+
+  useEffect(() => {
+    if (transitionPhase !== 'exit') return
+
+    const timeout = window.setTimeout(() => {
+      transitionCompleteRef.current?.()
+    }, MONTH_EXIT_HANDOFF_MS)
+
+    return () => window.clearTimeout(timeout)
+  }, [transitionPhase])
 
   useLayoutEffect(() => {
     const root = scrollRootRef.current
