@@ -11,6 +11,7 @@ import {
   type TimelineDayCount,
 } from './calendario-ios-types'
 import styles from './CalendarioMultiDayView.module.css'
+import polish from './CalendarioMultiDayPolish.module.css'
 
 const HOUR_HEIGHT = 66
 const MIN_EVENT_MINUTES = 30
@@ -101,7 +102,7 @@ export default function CalendarioMultiDayView({
     [selectedDay, daysVisible],
   )
   const headerDays = useMemo(() => {
-    if (daysVisible !== 1) return days
+    if (daysVisible !== 1 && daysVisible !== 2) return days
     const weekStart = startOfWeek(selectedDay, { weekStartsOn: 0 })
     return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index))
   }, [days, daysVisible, selectedDay])
@@ -159,22 +160,23 @@ export default function CalendarioMultiDayView({
   }, [selectedDay, daysVisible, events])
 
   const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
-    if (daysVisible !== 1 || event.touches.length !== 1) return
+    if ((daysVisible !== 1 && daysVisible !== 2) || event.touches.length !== 1) return
     swipeStartRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
   }
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLElement>) => {
     const start = swipeStartRef.current
     swipeStartRef.current = null
-    if (daysVisible !== 1 || !start || event.changedTouches.length !== 1) return
+    if ((daysVisible !== 1 && daysVisible !== 2) || !start || event.changedTouches.length !== 1) return
 
     const end = event.changedTouches[0]
     const deltaX = end.clientX - start.x
     const deltaY = end.clientY - start.y
     if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return
 
+    const step = daysVisible === 2 ? 2 : 1
     triggerSoftHaptic()
-    onSelectDay(addDays(selectedDay, deltaX < 0 ? 1 : -1))
+    onSelectDay(addDays(selectedDay, deltaX < 0 ? step : -step))
   }
 
   const allDay = events.filter(
@@ -200,15 +202,17 @@ export default function CalendarioMultiDayView({
             {headerDays.map((day) => {
               const isSelected = isSameDay(day, selectedDay)
               const isCurrentDay = isSameDay(day, now)
+              const rangeIndex = daysVisible === 2 ? days.findIndex((rangeDay) => isSameDay(rangeDay, day)) : -1
+              const isInRange = rangeIndex >= 0
 
               return (
                 <button
                   type="button"
                   key={day.toISOString()}
-                  className={styles.dayHeader}
+                  className={`${styles.dayHeader} ${isInRange ? polish.rangeDay : ''} ${rangeIndex === 0 ? polish.rangeStart : ''} ${rangeIndex === 1 ? polish.rangeEnd : ''}`}
                   onClick={() => { triggerSoftHaptic(); onSelectDay(day) }}
                   aria-label={format(day, "EEEE d 'de' MMMM", { locale: es })}
-                  aria-pressed={isSelected}
+                  aria-pressed={daysVisible === 2 ? isInRange : isSelected}
                   aria-current={isCurrentDay ? 'date' : undefined}
                 >
                   <span>{format(day, 'EEEEE', { locale: es })}</span>
@@ -219,6 +223,22 @@ export default function CalendarioMultiDayView({
           </header>
 
           {dayTitle && <div className={styles.dayTitle}>{dayTitle}</div>}
+
+          {daysVisible === 2 && (
+            <div className={polish.rangeTitles} style={{ gridTemplateColumns: `${TIME_COLUMN_WIDTH}px repeat(2, minmax(0, 1fr))` }}>
+              <span className={polish.rangeTitleSpacer} aria-hidden="true" />
+              {days.map((day, index) => (
+                <button
+                  type="button"
+                  key={`title-${day.toISOString()}`}
+                  className={`${polish.rangeTitle} ${index === 0 ? polish.rangeTitleActive : ''}`}
+                  onClick={() => onSelectDay(day)}
+                >
+                  {format(day, 'EEE – d MMM', { locale: es })}
+                </button>
+              ))}
+            </div>
+          )}
 
           {allDay.length > 0 && (
             <div className={styles.allDayBand} style={{ gridTemplateColumns: `${TIME_COLUMN_WIDTH}px 1fr` }}>
