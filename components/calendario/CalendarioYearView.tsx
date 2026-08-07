@@ -33,6 +33,7 @@ export default function CalendarioYearView({
   onOpenMonth,
   onChangeYear,
   transitionPreview = false,
+  sharedTransitionTarget = false,
 }: {
   fecha: Date
   eventos: EventoCalendario[]
@@ -41,6 +42,7 @@ export default function CalendarioYearView({
   onOpenMonth: (month: Date, element: HTMLElement) => void
   onChangeYear: (year: number) => void
   transitionPreview?: boolean
+  sharedTransitionTarget?: boolean
 }) {
   const activeYearRef = useRef<HTMLElement | null>(null)
   const positionedYearRef = useRef<number | null>(null)
@@ -158,6 +160,7 @@ export default function CalendarioYearView({
                   const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
                   const days = eachDayOfInterval({ start, end })
                   const isCurrentMonth = isSameMonth(month, currentMonth)
+                  const isSharedTarget = sharedTransitionTarget && isSameMonth(month, fecha)
                   while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
                   return (
@@ -165,6 +168,7 @@ export default function CalendarioYearView({
                       type="button"
                       key={monthKey(month)}
                       className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
+                      style={isSharedTarget ? { viewTransitionName: 'calendar-month-shared' } : undefined}
                       onClick={transitionPreview ? undefined : (event) => onOpenMonth(month, event.currentTarget)}
                       tabIndex={transitionPreview ? -1 : undefined}
                       aria-hidden={transitionPreview || undefined}
