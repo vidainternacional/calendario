@@ -187,11 +187,11 @@ export default function CalendarioMonthView({
                           type="button"
                           className={`${basic.monthDay} ${displayMode === 'details' ? basic.monthDayDetails : ''}`}
                           onClick={handleDayPress}
-                          aria-pressed={selected}
+                          aria-pressed={openDayOnSelect ? undefined : selected}
                           aria-current={today ? 'date' : undefined}
                           aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${dayEvents.length ? `, ${dayEvents.length} evento${dayEvents.length === 1 ? '' : 's'}` : ''}${openDayOnSelect ? ', abrir vista del día' : ''}`}
                         >
-                          <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
+                          <span className={`${basic.dayNumber} ${!openDayOnSelect && selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                             {format(day, 'd')}
                           </span>
 
