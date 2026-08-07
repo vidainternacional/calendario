@@ -14,7 +14,9 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { motion } from 'framer-motion'
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { SPRING_STANDARD, VIEW_FADE } from '@/lib/motion-config'
 import { eventColor, eventosDelDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
 import indicator from './CalendarioMonthIndicators.module.css'
@@ -123,11 +125,15 @@ export default function CalendarioMonthView({
   }, [baseMonthKey, displayMode, scrollRequest, showFollowingMonth])
 
   return (
-    <div
+    <motion.div
       ref={scrollRootRef}
       className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`}
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
+      initial={{ opacity: 0.7 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0.68 }}
+      transition={VIEW_FADE}
     >
       <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
 
@@ -146,9 +152,12 @@ export default function CalendarioMonthView({
           const isBaseMonth = isSameMonth(visibleMonth, baseMonth)
 
           return (
-            <section
+            <motion.section
               key={visibleMonth.toISOString()}
               ref={isBaseMonth ? activeMonthRef : undefined}
+              layoutId={isBaseMonth ? `calendar-month-${format(visibleMonth, 'yyyy-MM')}` : undefined}
+              layout={isBaseMonth ? true : undefined}
+              transition={SPRING_STANDARD}
               className={`${basic.monthSection} ${isBaseMonth ? polish.activeMonthSection : ''}`}
               aria-label={format(visibleMonth, 'MMMM yyyy', { locale: es })}
             >
@@ -256,12 +265,12 @@ export default function CalendarioMonthView({
                   </div>
                 ))}
               </div>
-            </section>
+            </motion.section>
           )
         })}
 
         {footer}
       </div>
-    </div>
+    </motion.div>
   )
 }
