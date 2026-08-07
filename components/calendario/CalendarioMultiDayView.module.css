@@ -1,7 +1,7 @@
 .surface {
   position: relative;
   display: flex;
-  height: calc(100dvh - 176px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - 128px - env(safe-area-inset-bottom, 0px));
   min-height: 0;
   flex: 1;
   overflow: hidden;
@@ -37,24 +37,24 @@
   z-index: 15;
   display: grid;
   flex: 0 0 auto;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.065);
-  background: rgba(255, 255, 255, 0.965);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.085);
+  background: rgba(255, 255, 255, 0.98);
   -webkit-backdrop-filter: saturate(180%) blur(18px);
   backdrop-filter: saturate(180%) blur(18px);
 }
 
-.timeSpacer { border-right: 1px solid rgba(15, 23, 42, 0.055); }
+.timeSpacer { border-right: 0; }
 
 .dayHeader {
   position: relative;
   display: flex;
   min-width: 0;
-  min-height: 54px;
+  min-height: 58px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-right: 1px solid rgba(15, 23, 42, 0.055);
+  border-right: 0;
   background: transparent;
   color: #8b94a3;
   transition: opacity 120ms ease, color 120ms ease, background-color 120ms ease;
@@ -77,33 +77,47 @@
 
 .dayHeader[aria-pressed='true']::after { content: none; }
 .dayHeader span {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.015em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .dayHeader strong {
   display: flex;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   align-items: center;
   justify-content: center;
   margin-top: 2px;
   border-radius: 50%;
   color: #111827;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
 .dayHeader[aria-pressed='true'] strong:not(.today) {
-  background: rgba(91, 61, 245, 0.06);
+  background: rgba(91, 61, 245, 0.075);
   color: #5b3df5;
   font-weight: 650;
 }
 
 .dayHeader .today { background: #5b3df5; color: #fff; font-weight: 750; }
+
+.dayTitle {
+  flex: 0 0 auto;
+  padding: 13px 12px 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.085);
+  background: #ffffff;
+  color: #171b26;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: capitalize;
+}
 
 .allDayBand {
   display: grid;
@@ -111,7 +125,7 @@
   flex: 0 0 auto;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.065);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.075);
   background: #ffffff;
   -webkit-overflow-scrolling: touch;
 }
@@ -124,13 +138,13 @@
   justify-content: flex-end;
   padding: 7px 5px;
   background: #ffffff;
-  color: #9aa2af;
-  font-size: 9px;
+  color: #8d95a3;
+  font-size: 10px;
   font-weight: 500;
 }
 
 .allDayColumns { display: grid; min-width: 0; }
-.allDayColumn { min-width: 0; min-height: 30px; border-left: 1px solid rgba(15, 23, 42, 0.055); padding: 2px 3px; }
+.allDayColumn { min-width: 0; min-height: 30px; border-left: 1px solid rgba(15, 23, 42, 0.05); padding: 2px 4px; }
 
 .allDayEvent {
   width: 100%;
@@ -138,11 +152,11 @@
   overflow: hidden;
   border: 0;
   border-left: 2px solid;
-  border-radius: 5px;
+  border-radius: 7px;
   background: rgba(91, 61, 245, 0.055);
-  padding: 3px 5px;
+  padding: 3px 6px;
   color: #111827;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 650;
   line-height: 1.15;
   text-align: left;
@@ -157,39 +171,39 @@
   flex: 1;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   scroll-padding-top: 10px;
-  scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   background: #ffffff;
   -webkit-overflow-scrolling: touch;
 }
 
 .timeline { position: relative; display: grid; background: #ffffff; }
-.hours { position: relative; border-right: 1px solid rgba(15, 23, 42, 0.055); }
+.hours { position: relative; border-right: 0; }
 .hour {
   position: absolute;
-  right: 6px;
-  color: #9aa2af;
-  font-size: 9px;
-  font-weight: 500;
+  right: 8px;
+  color: #8d95a3;
+  font-size: 11px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 .columns { display: grid; min-width: 0; }
-.dayColumn { position: relative; min-width: 0; border-right: 1px solid rgba(15, 23, 42, 0.055); background: #ffffff; }
-.hourLine { position: absolute; right: 0; left: 0; border-top: 1px solid rgba(15, 23, 42, 0.055); }
+.dayColumn { position: relative; min-width: 0; border-right: 0; background: #ffffff; }
+.hourLine { position: absolute; right: 0; left: 0; border-top: 1px solid rgba(15, 23, 42, 0.075); }
 
 .currentTimeLine { position: absolute; right: 0; z-index: 8; height: 1px; background: #ff3b4d; pointer-events: none; }
-.currentTimeDot { position: absolute; top: 50%; left: -3px; width: 7px; height: 7px; border-radius: 50%; background: #ff3b4d; transform: translateY(-50%); }
+.currentTimeDot { position: absolute; top: 50%; left: -4px; width: 8px; height: 8px; border-radius: 50%; background: #ff3b4d; transform: translateY(-50%); }
 .currentTimeLabel {
   position: absolute;
   top: 50%;
-  right: calc(100% + 5px);
-  min-width: 42px;
+  right: calc(100% + 6px);
+  min-width: 43px;
   border-radius: 8px;
   background: #ff3b4d;
   padding: 2px 5px;
   color: #fff;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1;
   text-align: center;
@@ -202,9 +216,9 @@
   min-width: 0;
   overflow: hidden;
   border: 0;
-  border-left: 2px solid;
-  border-radius: 5px;
-  padding: 5px 6px 4px;
+  border-left: 3px solid;
+  border-radius: 7px;
+  padding: 7px 8px 5px;
   color: #111827;
   text-align: left;
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.018);
@@ -220,47 +234,51 @@
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.025);
 }
 .timedEvent strong, .timedEvent span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.timedEvent strong { font-size: 10px; font-weight: 700; line-height: 1.18; }
-.timedEvent span { margin-top: 3px; color: #747e8e; font-size: 9px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.timedEvent strong { font-size: 12px; font-weight: 700; line-height: 1.18; }
+.timedEvent span { margin-top: 3px; color: #747e8e; font-size: 10px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 430px) {
-  .surface { height: calc(100dvh - 164px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
-  .dayHeader { min-height: 50px; }
-  .dayHeader strong { width: 29px; height: 29px; font-size: 15px; }
+  .surface { height: calc(100dvh - 128px - env(safe-area-inset-bottom, 0px)); }
+  .dayHeader { min-height: 56px; }
+  .dayHeader strong { width: 33px; height: 33px; font-size: 17px; }
+  .dayTitle { padding-block: 12px 11px; font-size: 18px; }
   .allDayBand { max-height: 98px; }
   .allDayEvent { min-height: 23px; font-size: 9px; }
-  .timedEvent { padding: 4px 5px; }
-  .timedEvent strong { font-size: 9px; }
-  .timedEvent span { margin-top: 2px; font-size: 8px; }
+  .timedEvent { padding: 6px 7px 4px; }
+  .timedEvent strong { font-size: 11px; }
+  .timedEvent span { margin-top: 2px; font-size: 9px; }
 }
 
 @media (max-width: 360px) {
-  .surface { height: calc(100dvh - 156px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
-  .dayHeader { min-height: 48px; }
-  .dayHeader span { font-size: 8px; }
-  .dayHeader strong { width: 27px; height: 27px; font-size: 14px; }
+  .surface { height: calc(100dvh - 124px - env(safe-area-inset-bottom, 0px)); }
+  .dayHeader { min-height: 52px; }
+  .dayHeader span { font-size: 10px; }
+  .dayHeader strong { width: 30px; height: 30px; font-size: 16px; }
+  .dayTitle { font-size: 17px; }
   .allDayBand { max-height: 84px; }
-  .allDayLabel { padding-inline: 3px; font-size: 8px; }
+  .allDayLabel { padding-inline: 3px; font-size: 9px; }
   .allDayColumn { padding: 2px; }
-  .timedEvent { border-left-width: 2px; border-radius: 5px; padding: 3px 4px; }
+  .timedEvent { border-left-width: 2px; border-radius: 6px; padding: 5px 6px; }
 }
 
 @media (max-height: 650px) {
-  .surface { height: calc(100dvh - 146px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
-  .daysHeader .dayHeader { min-height: 46px; }
+  .surface { height: calc(100dvh - 116px - env(safe-area-inset-bottom, 0px)); }
+  .daysHeader .dayHeader { min-height: 48px; }
+  .dayTitle { padding-block: 9px; font-size: 16px; }
   .allDayBand { max-height: 80px; }
-  .viewport { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .viewport { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
-  .surface { height: calc(100dvh - 118px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .surface { height: calc(100dvh - 102px - env(safe-area-inset-bottom, 0px)); }
   .daysHeader .dayHeader { min-height: 40px; flex-direction: row; gap: 4px; }
   .dayHeader strong { width: 26px; height: 26px; margin-top: 0; font-size: 14px; }
+  .dayTitle { padding-block: 7px; font-size: 15px; }
   .allDayBand { max-height: 62px; }
 }
 
 @media (min-width: 700px) {
-  .surface { height: calc(100dvh - 188px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .surface { height: calc(100dvh - 140px - env(safe-area-inset-bottom, 0px)); }
   .dayHeader { min-height: 62px; }
   .timedEvent strong { font-size: 12px; }
   .timedEvent span { font-size: 10px; }
