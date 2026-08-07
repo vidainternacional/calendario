@@ -1,17 +1,40 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Calendar, Megaphone, User, BookOpen } from 'lucide-react'
+import { Home, Megaphone, User, BookOpen } from 'lucide-react'
 
 const PREF_KEY = 'vida-biblia-preferencias'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
 
+function CalendarGridIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.85"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="3.25" y="4.5" width="17.5" height="16" rx="3" />
+      <path d="M7.5 2.75v3.5M16.5 2.75v3.5M3.5 8.6h17" />
+      <rect x="6.2" y="11.15" width="2.35" height="2.35" rx=".45" fill="currentColor" stroke="none" />
+      <rect x="10.82" y="11.15" width="2.35" height="2.35" rx=".45" fill="currentColor" stroke="none" />
+      <rect x="15.45" y="11.15" width="2.35" height="2.35" rx=".45" fill="currentColor" stroke="none" />
+      <rect x="6.2" y="15.55" width="2.35" height="2.35" rx=".45" fill="currentColor" stroke="none" />
+      <rect x="10.82" y="15.55" width="2.35" height="2.35" rx=".45" fill="currentColor" stroke="none" />
+      <rect x="15.45" y="15.55" width="2.35" height="2.35" rx=".45" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 const navItems = [
   { name: 'Inicio', href: '/inicio', icon: Home },
-  { name: 'Calendario', href: '/calendario', icon: Calendar },
+  { name: 'Calendario', href: '/calendario', icon: CalendarGridIcon },
   { name: 'Avisos', href: '/avisos', icon: Megaphone },
   { name: 'Estudios', href: '/estudios', icon: BookOpen },
   { name: 'Perfil', href: '/perfil', icon: User },
@@ -92,6 +115,7 @@ export default function BottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
+          const isCalendar = item.href === '/calendario'
           return (
             <Link
               key={item.name}
@@ -104,7 +128,7 @@ export default function BottomNav() {
               className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}
             >
               <span className={`flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
-                <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? 'fill-current opacity-90' : ''}`} />
+                <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? (isCalendar ? 'opacity-100' : 'fill-current opacity-90') : ''}`} />
               </span>
               <span className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
             </Link>
