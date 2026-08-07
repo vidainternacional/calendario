@@ -6,7 +6,7 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { AnimatePresence, LayoutGroup } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -66,6 +66,11 @@ const TIMELINE_VIEW_OPTIONS: Array<MenuOption<TimelineView>> = [
   { id: 'agenda', label: 'Lista', icon: AgendaViewIcon },
 ]
 
+const VIEW_TRANSITION = {
+  duration: 0.22,
+  ease: [0.22, 1, 0.36, 1] as const,
+}
+
 export default function CalendarioIOS({
   events,
   isRefreshing = false,
@@ -87,6 +92,7 @@ export default function CalendarioIOS({
   externalDetail?: EventoCalendario | null
   onExternalDetailConsumed?: () => void
 }) {
+  const reduceMotion = useReducedMotion()
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<CalendarView>('anio')
   const [monthDisplay, setMonthDisplay] = useState<MonthMenuMode>('compact')
@@ -98,6 +104,7 @@ export default function CalendarioIOS({
   const [query, setQuery] = useState('')
   const [newEventOpen, setNewEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
+  const [transitionOrigin, setTransitionOrigin] = useState('50% 42%')
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
@@ -158,7 +165,16 @@ export default function CalendarioIOS({
     return new Date(month.getFullYear(), month.getMonth(), Math.min(selectedDay.getDate(), getDaysInMonth(month)))
   }
 
-  const openMonth = (month: Date) => {
+  const rememberTransitionOrigin = (element?: HTMLElement) => {
+    if (!element || typeof window === 'undefined' || window.innerWidth <= 0 || window.innerHeight <= 0) return
+    const rect = element.getBoundingClientRect()
+    const x = Math.min(100, Math.max(0, ((rect.left + rect.width / 2) / window.innerWidth) * 100))
+    const y = Math.min(100, Math.max(0, ((rect.top + rect.height / 2) / window.innerHeight) * 100))
+    setTransitionOrigin(`${x.toFixed(1)}% ${y.toFixed(1)}%`)
+  }
+
+  const openMonth = (month: Date, element?: HTMLElement) => {
+    rememberTransitionOrigin(element)
     const next = selectedDayForMonth(month)
     setActiveDate(next)
     setSelectedDay(next)
@@ -216,6 +232,8 @@ export default function CalendarioIOS({
   const currentMenuLabel = currentMenuOption?.label || (isMonthContext ? 'Compacto' : 'Día')
   const CurrentMenuIcon = currentMenuOption?.icon || DayViewIcon
 
+  const motionTransition = reduceMotion ? { duration: 0 } : VIEW_TRANSITION
+
   const listFooter = (
     <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
       <section>
@@ -254,55 +272,83 @@ export default function CalendarioIOS({
 
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
-      <LayoutGroup id="calendar-month-zoom">
-        <AnimatePresence initial={false} mode="popLayout">
-          {view === 'anio' && (
-            <CalendarioYearView
-              key="calendar-year"
-              fecha={activeDate}
-              eventos={sortedEvents}
-              isRefreshing={isRefreshing}
-              topChrome={topChrome}
-              onOpenMonth={openMonth}
-              onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
-            />
-          )}
+      {view === 'anio' && (
+        <motion.div
+          className={styles.motionSurface}
+          style={{ transformOrigin: transitionOrigin, willChange: reduceMotion ? 'auto' : 'transform, opacity' }}
+          initial={reduceMotion ? false : { opacity: 0.72, scale: 1.018 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={motionTransition}
+        >
+          <CalendarioYearView
+            fecha={activeDate}
+            eventos={sortedEvents}
+            isRefreshing={isRefreshing}
+            topChrome={topChrome}
+            onOpenMonth={openMonth}
+            onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
+          />
+        </motion.div>
+      )}
 
-          {view === 'mes' && (
-            <CalendarioMonthView
-              key={`calendar-month-${format(activeDate, 'yyyy-MM')}`}
-              month={activeDate}
-              selectedDay={selectedDay}
-              events={sortedEvents}
-              displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
-              topChrome={topChrome}
-              isRefreshing={isRefreshing}
-              dayPanelOpen={false}
-              scrollRequest={monthScrollRequest}
-              onSelectDay={selectDay}
-              onOpenDay={openDay}
-              onOpenEvent={setSelectedEvent}
-            />
-          )}
-        </AnimatePresence>
-      </LayoutGroup>
+      {view === 'mes' && (
+        <motion.div
+          className={styles.motionSurface}
+          style={{ transformOrigin: transitionOrigin, willChange: reduceMotion ? 'auto' : 'transform, opacity' }}
+          initial={reduceMotion ? false : { opacity: 0.56, scale: 0.955 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={motionTransition}
+        >
+          <CalendarioMonthView
+            month={activeDate}
+            selectedDay={selectedDay}
+            events={sortedEvents}
+            displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
+            topChrome={topChrome}
+            isRefreshing={isRefreshing}
+            dayPanelOpen={false}
+            scrollRequest={monthScrollRequest}
+            onSelectDay={selectDay}
+            onOpenDay={openDay}
+            onOpenEvent={setSelectedEvent}
+          />
+        </motion.div>
+      )}
 
       {timelineDays && (
-        <>
+        <motion.div
+          className={styles.motionSurface}
+          initial={reduceMotion ? false : { opacity: 0.68, y: 6, scale: 0.99 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={motionTransition}
+        >
           {topChrome}
           <CalendarioMultiDayView selectedDay={selectedDay} events={sortedEvents} daysVisible={timelineDays} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
-        </>
+        </motion.div>
       )}
 
       {view === 'agenda' && (
-        <>
+        <motion.div
+          className={styles.motionSurface}
+          initial={reduceMotion ? false : { opacity: 0.68, y: 6, scale: 0.99 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={motionTransition}
+        >
           {topChrome}
           <CalendarioAgendaView selectedDay={selectedDay} events={sortedEvents} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
-        </>
+        </motion.div>
       )}
 
       {view === 'lista' && (
-        <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={sortedEvents} displayMode="compact" topChrome={topChrome} isRefreshing={isRefreshing} dayPanelOpen={false} scrollRequest={monthScrollRequest} showFollowingMonth={false} openDayOnSelect={false} footer={listFooter} onSelectDay={selectDay} onOpenDay={openDay} onOpenEvent={setSelectedEvent} />
+        <motion.div
+          className={styles.motionSurface}
+          style={{ transformOrigin: transitionOrigin, willChange: reduceMotion ? 'auto' : 'transform, opacity' }}
+          initial={reduceMotion ? false : { opacity: 0.62, scale: 0.975 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={motionTransition}
+        >
+          <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={sortedEvents} displayMode="compact" topChrome={topChrome} isRefreshing={isRefreshing} dayPanelOpen={false} scrollRequest={monthScrollRequest} showFollowingMonth={false} openDayOnSelect={false} footer={listFooter} onSelectDay={selectDay} onOpenDay={openDay} onOpenEvent={setSelectedEvent} />
+        </motion.div>
       )}
 
       <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>
