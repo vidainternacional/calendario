@@ -1,11 +1,15 @@
 .rootTheme {
   --calendar-accent: #5b3df5;
   --calendar-accent-soft: rgba(91, 61, 245, 0.1);
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+  background: #ffffff !important;
+  color: #0b1020 !important;
+  color-scheme: light;
 }
 
 .topChrome {
+  position: sticky !important;
+  top: 0;
+  z-index: 90 !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -14,7 +18,9 @@
   padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
   padding-right: max(18px, env(safe-area-inset-right, 0px)) !important;
   padding-left: max(18px, env(safe-area-inset-left, 0px)) !important;
-  background: color-mix(in srgb, var(--background) 94%, transparent) !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
 .leftSlot {
@@ -65,14 +71,12 @@
 }
 
 .headerBlockTheme {
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+  background: #ffffff !important;
+  color: #0b1020 !important;
 }
 
 .dayHeaderBlock {
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.11);
+  display: none !important;
 }
 
 .dayPeriodTitle {
@@ -86,7 +90,7 @@
 
 .periodTitleTheme,
 .agendaDateTheme {
-  color: var(--foreground) !important;
+  color: #0b1020 !important;
 }
 
 .subTitleTheme,
@@ -96,8 +100,8 @@
 
 .eventListTheme,
 .agendaHeaderTheme {
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+  background: #ffffff !important;
+  color: #0b1020 !important;
 }
 
 .agendaHeaderTheme,
@@ -106,7 +110,7 @@
 }
 
 .emptyTheme {
-  background: var(--background) !important;
+  background: #ffffff !important;
   color: #7a8496 !important;
 }
 
@@ -202,13 +206,13 @@
 }
 
 .searchOverlayTheme {
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+  background: #ffffff !important;
+  color: #0b1020 !important;
 }
 
 .searchHeaderTheme {
   border-color: rgba(15, 23, 42, 0.11) !important;
-  background: color-mix(in srgb, var(--background) 96%, transparent) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
 }
 
 .searchFieldTheme {
@@ -234,60 +238,69 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  .rootTheme,
+  .headerBlockTheme,
+  .eventListTheme,
+  .agendaHeaderTheme,
+  .emptyTheme,
+  .searchOverlayTheme {
+    background: #ffffff !important;
+    color: #0b1020 !important;
+  }
+
+  .topChrome,
+  .searchHeaderTheme {
+    background: rgba(255, 255, 255, 0.97) !important;
+    border-color: rgba(15, 23, 42, 0.11) !important;
+  }
+
   .backButton,
   .actionsGroup,
   .floatingPill,
   .floatingGroup {
-    border-color: rgba(255, 255, 255, 0.12) !important;
-    background: rgba(34, 34, 36, 0.94) !important;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.34) !important;
-    color: #f5f5f7 !important;
+    border-color: rgba(15, 23, 42, 0.09) !important;
+    background: rgba(246, 247, 250, 0.96) !important;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.09) !important;
+    color: #182034 !important;
   }
 
   .chromeIconButton,
   .floatingIcon {
-    border-left-color: rgba(255, 255, 255, 0.1) !important;
-    color: #f5f5f7 !important;
-  }
-
-  .dayHeaderBlock,
-  .agendaHeaderTheme,
-  .emptyTheme,
-  .searchHeaderTheme {
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-left-color: rgba(15, 23, 42, 0.07) !important;
+    color: #273147 !important;
   }
 
   .viewPopover {
-    border-color: rgba(255, 255, 255, 0.14) !important;
-    background: rgba(28, 28, 30, 0.98) !important;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58) !important;
-    color: #fff !important;
+    border-color: rgba(15, 23, 42, 0.1) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
+    color: #182034 !important;
   }
 
   .viewOption {
-    color: #f5f5f7 !important;
+    color: #1a2337 !important;
   }
 
   .viewOption:active {
-    background: rgba(255, 255, 255, 0.09) !important;
+    background: rgba(91, 61, 245, 0.08) !important;
   }
 
   .viewOptionActive {
-    background: rgba(139, 92, 246, 0.18) !important;
-    color: #c4b5fd !important;
+    background: rgba(91, 61, 245, 0.1) !important;
+    color: #5b3df5 !important;
   }
 
   .viewCheck {
-    color: #c4b5fd;
+    color: #5b3df5;
   }
 
   .viewSeparator {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(15, 23, 42, 0.1);
   }
 
   .searchFieldTheme {
-    background: #1c1c1e !important;
-    color: #fff !important;
+    background: #f1f3f6 !important;
+    color: #111829 !important;
   }
 }
 
