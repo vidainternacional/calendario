@@ -17,7 +17,7 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
-import { eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
+import { eventColor, eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 import polish from './CalendarioYearPolish.module.css'
 
@@ -169,7 +169,7 @@ export default function CalendarioYearView({
                           const dayEvents = belongs ? eventosDelDia(eventos, day) : []
                           const today = belongs && isToday(day)
                           const selected = belongs && isSameDay(day, fecha) && !today
-                          const visibleMarks = dayEvents.slice(0, 3)
+                          const visibleMarks = dayEvents.slice(0, 6)
 
                           return (
                             <span
@@ -178,11 +178,12 @@ export default function CalendarioYearView({
                             >
                               <span className={styles.miniDayLabel}>{belongs ? format(day, 'd') : ''}</span>
                               {visibleMarks.length > 0 && (
-                                <span className={styles.eventMarks} aria-hidden="true">
-                                  {visibleMarks.map((_, index) => (
+                                <span className={`${styles.eventMarks} ${visibleMarks.length > 1 ? styles.eventMarksFusion : ''}`} aria-hidden="true">
+                                  {visibleMarks.map((event, index) => (
                                     <span
-                                      key={index}
-                                      className={`${styles.eventMark} ${dayEvents.length > 3 && index === 2 ? styles.moreMark : ''}`}
+                                      key={`${event.id || event.fecha_inicio}-${index}`}
+                                      className={`${styles.eventMark} ${visibleMarks.length === 1 ? styles.eventMarkSingle : styles.eventMarkSegment}`}
+                                      style={{ backgroundColor: today ? '#ffffff' : eventColor(event) }}
                                     />
                                   ))}
                                 </span>
