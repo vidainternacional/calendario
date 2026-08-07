@@ -28,6 +28,15 @@
   pointer-events: none;
 }
 
+.monthExit {
+  background: transparent;
+  pointer-events: none;
+}
+
+.monthExit::after {
+  opacity: 0;
+}
+
 .monthPolish::-webkit-scrollbar { display: none; }
 
 .monthStickyChrome {
@@ -40,6 +49,11 @@
   background: rgba(255,255,255,.76);
   -webkit-backdrop-filter: saturate(190%) blur(28px);
   backdrop-filter: saturate(190%) blur(28px);
+}
+
+.monthExit .monthStickyChrome {
+  opacity: 0;
+  transition: opacity 150ms ease;
 }
 
 .monthPolish :global([class*='topChrome']) {
@@ -69,6 +83,11 @@
   color: #6f7787 !important;
   -webkit-backdrop-filter: saturate(180%) blur(22px) !important;
   backdrop-filter: saturate(180%) blur(22px) !important;
+}
+
+.monthExit :global([class*='weekdays']) {
+  opacity: 0 !important;
+  transition: opacity 130ms ease !important;
 }
 
 .monthPolish :global([class*='actionsGroup']),
@@ -144,6 +163,10 @@
   padding-bottom: calc(172px + env(safe-area-inset-bottom, 0px));
   scroll-behavior: auto !important;
   contain: layout paint style;
+}
+
+.monthExit :global([class*='monthScroll']) {
+  background: transparent !important;
 }
 
 .monthPolish :global([class*='monthSection']) {
