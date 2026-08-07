@@ -8,7 +8,6 @@ import {
   endOfWeek,
   endOfYear,
   format,
-  isSameDay,
   isSameMonth,
   isToday,
   startOfMonth,
@@ -168,13 +167,12 @@ export default function CalendarioYearView({
                           const belongs = isSameMonth(day, month)
                           const dayEvents = belongs ? eventosDelDia(eventos, day) : []
                           const today = belongs && isToday(day)
-                          const selected = belongs && isSameDay(day, fecha) && !today
                           const visibleMarks = dayEvents.slice(0, 6)
 
                           return (
                             <span
                               key={day.toISOString()}
-                              className={`${styles.miniDay} ${selected ? styles.miniSelected : ''} ${today ? styles.miniToday : ''}`}
+                              className={`${styles.miniDay} ${today ? styles.miniToday : ''}`}
                             >
                               <span className={styles.miniDayLabel}>{belongs ? format(day, 'd') : ''}</span>
                               {visibleMarks.length > 0 && (
