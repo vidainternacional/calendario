@@ -160,8 +160,8 @@ export default function CalendarioMonthView({
     ? {
         x: transitionAnchor.offsetX,
         y: transitionAnchor.offsetY,
-        scale: 0.955,
-        opacity: 0.34,
+        scale: 0.94,
+        opacity: 0.18,
       }
     : false
 
@@ -176,7 +176,6 @@ export default function CalendarioMonthView({
     <div
       ref={scrollRootRef}
       className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`}
-      style={{ viewTransitionName: 'calendar-surface' }}
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
     >
@@ -209,7 +208,7 @@ export default function CalendarioMonthView({
               transition={isBaseMonth ? {
                 x: SPRING_STANDARD,
                 y: SPRING_STANDARD,
-                scale: { type: 'spring', stiffness: 360, damping: 34, mass: 0.82 },
+                scale: SPRING_STANDARD,
                 opacity: VIEW_FADE,
               } : undefined}
               style={isBaseMonth ? {
