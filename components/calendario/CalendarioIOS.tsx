@@ -6,6 +6,7 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { AnimatePresence, LayoutGroup } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -253,11 +254,38 @@ export default function CalendarioIOS({
 
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
-      {view === 'anio' && <CalendarioYearView fecha={activeDate} eventos={sortedEvents} isRefreshing={isRefreshing} topChrome={topChrome} onOpenMonth={openMonth} onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))} />}
+      <LayoutGroup id="calendar-month-zoom">
+        <AnimatePresence initial={false} mode="popLayout">
+          {view === 'anio' && (
+            <CalendarioYearView
+              key="calendar-year"
+              fecha={activeDate}
+              eventos={sortedEvents}
+              isRefreshing={isRefreshing}
+              topChrome={topChrome}
+              onOpenMonth={openMonth}
+              onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
+            />
+          )}
 
-      {view === 'mes' && (
-        <CalendarioMonthView month={activeDate} selectedDay={selectedDay} events={sortedEvents} displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay} topChrome={topChrome} isRefreshing={isRefreshing} dayPanelOpen={false} scrollRequest={monthScrollRequest} onSelectDay={selectDay} onOpenDay={openDay} onOpenEvent={setSelectedEvent} />
-      )}
+          {view === 'mes' && (
+            <CalendarioMonthView
+              key={`calendar-month-${format(activeDate, 'yyyy-MM')}`}
+              month={activeDate}
+              selectedDay={selectedDay}
+              events={sortedEvents}
+              displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
+              topChrome={topChrome}
+              isRefreshing={isRefreshing}
+              dayPanelOpen={false}
+              scrollRequest={monthScrollRequest}
+              onSelectDay={selectDay}
+              onOpenDay={openDay}
+              onOpenEvent={setSelectedEvent}
+            />
+          )}
+        </AnimatePresence>
+      </LayoutGroup>
 
       {timelineDays && (
         <>
