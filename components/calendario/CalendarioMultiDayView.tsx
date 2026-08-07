@@ -111,6 +111,19 @@ export default function CalendarioMultiDayView({
   }, [])
 
   useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousHtmlOverflow
+    }
+  }, [])
+
+  useEffect(() => {
     const viewport = viewportRef.current
     if (!viewport) return
 
@@ -122,10 +135,18 @@ export default function CalendarioMultiDayView({
       .sort((a, b) => a.getTime() - b.getTime())
 
     let targetMinutes = 7 * 60
-    if (isSameDay(selectedDay, referenceNow)) {
+    if (timedEvents.length > 0) {
+      let targetEvent = timedEvents[0]
+      if (isSameDay(selectedDay, referenceNow)) {
+        targetEvent = timedEvents.reduce((closest, candidate) => {
+          const closestDistance = Math.abs(closest.getTime() - referenceNow.getTime())
+          const candidateDistance = Math.abs(candidate.getTime() - referenceNow.getTime())
+          return candidateDistance < closestDistance ? candidate : closest
+        }, timedEvents[0])
+      }
+      targetMinutes = Math.max(differenceInMinutes(targetEvent, startOfDay(selectedDay)) - 45, 0)
+    } else if (isSameDay(selectedDay, referenceNow)) {
       targetMinutes = Math.max(differenceInMinutes(referenceNow, startOfDay(referenceNow)) - 90, 0)
-    } else if (timedEvents.length > 0) {
-      targetMinutes = Math.max(differenceInMinutes(timedEvents[0], startOfDay(selectedDay)) - 60, 0)
     }
 
     const targetTop = Math.max(0, (targetMinutes / 60) * HOUR_HEIGHT)
@@ -277,8 +298,8 @@ export default function CalendarioMultiDayView({
                             style={{
                               top: `${(startMinutes / 60) * HOUR_HEIGHT + 2}px`,
                               height: `${eventHeight}px`,
-                              left: `calc(${left}% + 2px)`,
-                              width: `calc(${width}% - 4px)`,
+                              left: `calc(${left}% + 3px)`,
+                              width: `calc(${width}% - 6px)`,
                               borderColor: color,
                               backgroundColor: `${color}16`,
                             }}
