@@ -15,7 +15,9 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { motion } from 'framer-motion'
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { SPRING_STANDARD, VIEW_FADE } from '@/lib/motion-config'
 import { eventColor, eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 import polish from './CalendarioYearPolish.module.css'
@@ -119,7 +121,14 @@ export default function CalendarioYearView({
   }, [activeYear, onChangeYear])
 
   return (
-    <div className={`${styles.yearView} ${polish.yearPolish}`} aria-busy={isRefreshing || undefined}>
+    <motion.div
+      className={`${styles.yearView} ${polish.yearPolish}`}
+      aria-busy={isRefreshing || undefined}
+      initial={{ opacity: 0.92 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0.58 }}
+      transition={VIEW_FADE}
+    >
       <div className={styles.stickyChrome}>{topChrome}</div>
 
       <div className={styles.yearsScroller}>
@@ -151,9 +160,12 @@ export default function CalendarioYearView({
                   while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
                   return (
-                    <button
+                    <motion.button
                       type="button"
                       key={monthKey(month)}
+                      layoutId={`calendar-month-${monthKey(month)}`}
+                      layout="position"
+                      transition={SPRING_STANDARD}
                       className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
                       onClick={(event) => onOpenMonth(month, event.currentTarget)}
                       aria-label={`Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
@@ -190,7 +202,7 @@ export default function CalendarioYearView({
                           )
                         })}
                       </span>
-                    </button>
+                    </motion.button>
                   )
                 })}
               </div>
@@ -198,6 +210,6 @@ export default function CalendarioYearView({
           )
         })}
       </div>
-    </div>
+    </motion.div>
   )
 }
