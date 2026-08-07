@@ -137,8 +137,8 @@ export default function CalendarioMonthView({
     ? {
         x: transitionAnchor.offsetX,
         y: transitionAnchor.offsetY,
-        scale: 0.97,
-        opacity: 0.86,
+        scale: 0.94,
+        opacity: 0.18,
       }
     : false
 
@@ -146,8 +146,8 @@ export default function CalendarioMonthView({
     ? {
         x: transitionAnchor.offsetX,
         y: transitionAnchor.offsetY,
-        scale: 0.97,
-        opacity: 0.86,
+        scale: 0.94,
+        opacity: 0.12,
       }
     : {
         x: 0,
