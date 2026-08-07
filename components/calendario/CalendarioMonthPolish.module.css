@@ -4,12 +4,15 @@
   z-index: 40;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
+  scrollbar-width: none;
   background: #fff;
   color: #111827;
   color-scheme: light;
   -webkit-overflow-scrolling: touch;
 }
+
+.monthPolish::-webkit-scrollbar { display: none; }
 
 .monthStickyChrome {
   position: sticky;
@@ -18,7 +21,9 @@
   box-sizing: border-box;
   height: calc(64px + env(safe-area-inset-top, 0px));
   min-height: calc(64px + env(safe-area-inset-top, 0px));
-  background: #fff;
+  background: rgba(255,255,255,.76);
+  -webkit-backdrop-filter: saturate(190%) blur(28px);
+  backdrop-filter: saturate(190%) blur(28px);
 }
 
 .monthPolish :global([class*='topChrome']) {
@@ -26,8 +31,10 @@
   height: calc(64px + env(safe-area-inset-top, 0px)) !important;
   min-height: calc(64px + env(safe-area-inset-top, 0px)) !important;
   padding-top: env(safe-area-inset-top, 0px) !important;
-  background: #fff !important;
+  background: rgba(255,255,255,.72) !important;
   color: #111827 !important;
+  -webkit-backdrop-filter: saturate(190%) blur(28px) !important;
+  backdrop-filter: saturate(190%) blur(28px) !important;
 }
 
 .monthWeekdays,
@@ -41,48 +48,59 @@
   opacity: 1 !important;
   padding-top: 4px !important;
   padding-bottom: 7px !important;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
-  background: #fff !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: rgba(255,255,255,.82) !important;
   color: #6f7787 !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
+  -webkit-backdrop-filter: saturate(180%) blur(22px) !important;
+  backdrop-filter: saturate(180%) blur(22px) !important;
 }
 
 .monthPolish :global([class*='actionsGroup']),
 .monthPolish :global([class*='chromeIconButton']) {
-  border-color: rgba(15, 23, 42, 0.08) !important;
-  background: rgba(246, 247, 250, 0.98) !important;
+  border-color: rgba(255,255,255,.72) !important;
+  background: rgba(246, 247, 250, 0.68) !important;
   color: #253047 !important;
-  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.09) !important;
+  box-shadow: 0 8px 24px rgba(15,23,42,.1), inset 0 1px 0 rgba(255,255,255,.9) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+  backdrop-filter: saturate(180%) blur(24px) !important;
 }
 
 .monthPolish :global([class*='backButton']) {
   display: inline-flex !important;
   width: auto !important;
-  min-width: 72px !important;
-  max-width: 132px !important;
+  min-width: 76px !important;
+  max-width: 142px !important;
   min-height: 44px !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  gap: 0 !important;
+  gap: 2px !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 4px 0 0 !important;
-  color: #5b3df5 !important;
-  font-size: 17px !important;
-  font-weight: 500 !important;
+  border: 1px solid rgba(255,255,255,.74) !important;
+  border-radius: 23px !important;
+  background: rgba(246,247,250,.7) !important;
+  box-shadow: 0 8px 24px rgba(15,23,42,.1), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  padding: 0 13px 0 9px !important;
+  color: #253047 !important;
+  font-size: 16px !important;
+  font-weight: 650 !important;
+  -webkit-backdrop-filter: saturate(180%) blur(24px) !important;
+  backdrop-filter: saturate(180%) blur(24px) !important;
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), opacity 160ms ease, background-color 160ms ease !important;
+}
+
+.monthPolish :global([class*='backButton']):active {
+  transform: scale(.96) !important;
+  opacity: .72 !important;
+  background: rgba(236,238,244,.8) !important;
 }
 
 .monthPolish :global([class*='backButton']) svg {
-  width: 27px !important;
-  height: 27px !important;
-  margin-left: -5px;
-  color: #5b3df5 !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin-left: -2px;
+  color: #253047 !important;
   stroke: currentColor !important;
 }
 
@@ -99,9 +117,7 @@
   stroke: currentColor !important;
 }
 
-.activeMonthSection {
-  scroll-margin-top: 0;
-}
+.activeMonthSection { scroll-margin-top: 0; }
 
 .monthPolish :global([class*='monthScroll']) {
   padding-top: 0 !important;
@@ -140,9 +156,7 @@
 }
 
 .monthPolish :global([class*='eventList']) *,
-.monthPolish :global([class*='agendaHeader']) * {
-  color-scheme: light !important;
-}
+.monthPolish :global([class*='agendaHeader']) * { color-scheme: light !important; }
 
 .monthPolish :global([class*='emptyState']) {
   min-height: 116px !important;
@@ -174,9 +188,7 @@
   line-height: 1.15 !important;
 }
 
-.monthPolish :global([class*='agendaCount']) {
-  color: #7a8496 !important;
-}
+.monthPolish :global([class*='agendaCount']) { color: #7a8496 !important; }
 
 .monthPolish :global([class*='eventRow']) {
   min-height: 72px;
@@ -188,13 +200,9 @@
 
 .monthPolish :global([class*='eventTitle']),
 .monthPolish :global([class*='eventTime']),
-.monthPolish :global([class*='eventLocation']) {
-  color: #111827 !important;
-}
+.monthPolish :global([class*='eventLocation']) { color: #111827 !important; }
 
-.monthPolish :global([class*='eventMeta']) {
-  opacity: 1 !important;
-}
+.monthPolish :global([class*='eventMeta']) { opacity: 1 !important; }
 
 .monthPolish :global([class*='dayNumber']) {
   box-sizing: border-box !important;
@@ -206,11 +214,11 @@
 }
 
 .monthPolish :global([class*='daySelected']) {
-  border: 2px solid rgba(91, 61, 245, 0.75) !important;
+  border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: rgba(91, 61, 245, 0.75) !important;
-  font-weight: 750 !important;
+  color: inherit !important;
+  font-weight: inherit !important;
 }
 
 .monthPolish :global([class*='daySelected'])::before,
@@ -228,39 +236,32 @@
 }
 
 .monthPolish :global([class*='monthDay']) {
-  will-change: auto !important;
+  will-change: transform, opacity !important;
+  transition: transform 170ms cubic-bezier(.2,.8,.2,1), background-color 150ms ease, opacity 150ms ease !important;
 }
 
 .monthPolish :global([class*='monthDay']):active {
-  transform: none !important;
+  transform: scale(.965) !important;
+  background: rgba(91,61,245,.055) !important;
+  opacity: .78 !important;
 }
 
-.monthPolish ~ :global([class*='floatingBar']) {
-  background: transparent !important;
-}
+.monthPolish ~ :global([class*='floatingBar']) { background: transparent !important; }
 
 .monthPolish ~ :global([class*='floatingBar']) :global([class*='floatingPill']),
 .monthPolish ~ :global([class*='floatingBar']) :global([class*='floatingGroup']) {
-  border-color: rgba(15, 23, 42, 0.08) !important;
-  background: rgba(255, 255, 255, 0.98) !important;
+  border-color: rgba(255,255,255,.72) !important;
+  background: rgba(247,248,251,.68) !important;
   color: #1b2437 !important;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+  backdrop-filter: saturate(180%) blur(28px) !important;
 }
 
 @media (max-width: 390px) {
-  .monthPolish :global([class*='monthHeader']) {
-    padding-top: 20px;
-  }
-
-  .monthPolish :global([class*='monthScroll']) {
-    padding-bottom: calc(166px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .monthPolish :global([class*='backButton']) {
-    min-width: 66px !important;
-    font-size: 16px !important;
-  }
-
+  .monthPolish :global([class*='monthHeader']) { padding-top: 20px; }
+  .monthPolish :global([class*='monthScroll']) { padding-bottom: calc(166px + env(safe-area-inset-bottom, 0px)); }
+  .monthPolish :global([class*='backButton']) { min-width: 72px !important; font-size: 15px !important; }
   .monthPolish :global([class*='agendaHeader']),
   .monthPolish :global([class*='eventRow']) {
     padding-right: max(18px, env(safe-area-inset-right, 0px)) !important;
@@ -269,7 +270,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .monthPolish {
-    scroll-behavior: auto;
-  }
+  .monthPolish { scroll-behavior: auto; }
+  .monthPolish :global([class*='monthDay']),
+  .monthPolish :global([class*='backButton']) { transition: none !important; }
 }
