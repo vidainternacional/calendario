@@ -3,13 +3,29 @@
   inset: 0 0 calc(4rem + env(safe-area-inset-bottom, 0px)) 0;
   z-index: 40;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: auto;
   scrollbar-width: none;
   background: #fff;
   color: #111827;
   color-scheme: light;
+  isolation: isolate;
+  contain: layout paint style;
+  clip-path: inset(0);
   -webkit-overflow-scrolling: touch;
+}
+
+.monthPolish::after {
+  position: fixed;
+  right: 0;
+  bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  z-index: 70;
+  height: 96px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.86) 48%, rgba(255,255,255,.98) 100%);
+  content: '';
+  pointer-events: none;
 }
 
 .monthPolish::-webkit-scrollbar { display: none; }
@@ -120,12 +136,19 @@
 .activeMonthSection { scroll-margin-top: 0; }
 
 .monthPolish :global([class*='monthScroll']) {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  overflow-x: hidden;
   padding-top: 0 !important;
-  padding-bottom: calc(156px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(172px + env(safe-area-inset-bottom, 0px));
   scroll-behavior: auto !important;
+  contain: layout paint style;
 }
 
 .monthPolish :global([class*='monthSection']) {
+  width: 100%;
+  overflow: hidden;
   content-visibility: visible !important;
   contain: layout paint style;
 }
@@ -247,21 +270,25 @@
   opacity: .78 !important;
 }
 
-.monthPolish ~ :global([class*='floatingBar']) { background: transparent !important; }
+.monthPolish ~ :global([class*='floatingBar']) {
+  background: transparent !important;
+  isolation: isolate;
+}
 
 .monthPolish ~ :global([class*='floatingBar']) :global([class*='floatingPill']),
 .monthPolish ~ :global([class*='floatingBar']) :global([class*='floatingGroup']) {
-  border-color: rgba(255,255,255,.72) !important;
-  background: rgba(247,248,251,.68) !important;
+  border-color: rgba(255,255,255,.82) !important;
+  background: rgba(247,248,251,.92) !important;
   color: #1b2437 !important;
-  box-shadow: 0 10px 30px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  box-shadow: 0 10px 30px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.96) !important;
   -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
   backdrop-filter: saturate(180%) blur(28px) !important;
 }
 
 @media (max-width: 390px) {
+  .monthPolish::after { height: 104px; }
   .monthPolish :global([class*='monthHeader']) { padding-top: 20px; }
-  .monthPolish :global([class*='monthScroll']) { padding-bottom: calc(166px + env(safe-area-inset-bottom, 0px)); }
+  .monthPolish :global([class*='monthScroll']) { padding-bottom: calc(182px + env(safe-area-inset-bottom, 0px)); }
   .monthPolish :global([class*='backButton']) { min-width: 72px !important; font-size: 15px !important; }
   .monthPolish :global([class*='agendaHeader']),
   .monthPolish :global([class*='eventRow']) {
