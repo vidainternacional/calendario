@@ -26,7 +26,7 @@ import polish from './CalendarioMonthPolish.module.css'
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
 const MONTHS_AROUND = 6
-const MONTH_EXIT_HANDOFF_MS = 320
+const MONTH_EXIT_HANDOFF_MS = 300
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 function weeksForMonth(month: Date) {
