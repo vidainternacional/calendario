@@ -20,11 +20,11 @@
 }
 
 .selectionFix :global([class*='daySelected']) {
-  border-color: rgba(91, 61, 245, 0.75) !important;
+  border-color: rgba(91, 61, 245, 0.3) !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: rgba(91, 61, 245, 0.75) !important;
-  font-weight: 750 !important;
+  color: rgba(91, 61, 245, 0.58) !important;
+  font-weight: 700 !important;
 }
 
 .selectionFix :global([class*='dayToday']) {
