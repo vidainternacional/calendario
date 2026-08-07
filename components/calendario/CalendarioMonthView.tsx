@@ -203,11 +203,12 @@ export default function CalendarioMonthView({
                                 <span
                                   className={indicator.eventFusion}
                                   style={{
-                                    width: `${5 + (compactSegments.length - 1) * 4}px`,
+                                    width: `${compactSegments.length * 5}px`,
                                     minWidth: 0,
-                                    maxWidth: 25,
-                                    overflow: 'visible',
+                                    maxWidth: 30,
+                                    overflow: 'hidden',
                                     background: 'transparent',
+                                    gap: 0,
                                   }}
                                 >
                                   {compactSegments.map((color, index) => (
@@ -220,8 +221,13 @@ export default function CalendarioMonthView({
                                         height: 5,
                                         flexGrow: 0,
                                         flexShrink: 0,
-                                        marginLeft: index === 0 ? 0 : -1,
-                                        borderRadius: '50%',
+                                        marginLeft: 0,
+                                        borderRadius:
+                                          index === 0
+                                            ? '999px 0 0 999px'
+                                            : index === compactSegments.length - 1
+                                              ? '0 999px 999px 0'
+                                              : 0,
                                         backgroundColor: color,
                                       }}
                                     />
