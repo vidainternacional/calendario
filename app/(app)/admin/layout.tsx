@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import AdminPilotAnalyticsShortcut from '@/components/pilot/AdminPilotAnalyticsShortcut'
 
 export const metadata: Metadata = {
   title: 'Administración',
@@ -29,10 +28,5 @@ export default async function AdminLayout({
     redirect('/inicio')
   }
 
-  return (
-    <div className="min-h-screen bg-[#f4f5f9]">
-      <AdminPilotAnalyticsShortcut />
-      {children}
-    </div>
-  )
+  return <div className="min-h-screen bg-[#f4f5f9]">{children}</div>
 }
