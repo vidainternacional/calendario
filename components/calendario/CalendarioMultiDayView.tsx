@@ -12,10 +12,10 @@ import {
 } from './calendario-ios-types'
 import styles from './CalendarioMultiDayView.module.css'
 
-const HOUR_HEIGHT = 64
+const HOUR_HEIGHT = 66
 const MIN_EVENT_MINUTES = 30
 const MIN_DAY_WIDTH = 112
-const TIME_COLUMN_WIDTH = 58
+const TIME_COLUMN_WIDTH = 54
 
 type PositionedItem = {
   event: EventoCalendario
@@ -113,7 +113,7 @@ export default function CalendarioMultiDayView({
     const viewport = viewportRef.current
     if (!viewport) return
 
-    const current = new Date()
+    const referenceNow = new Date()
     const timedEvents = events
       .filter((event) => !event.todo_el_dia && isSameDay(new Date(event.fecha_inicio), selectedDay))
       .map((event) => new Date(event.fecha_inicio))
@@ -121,8 +121,8 @@ export default function CalendarioMultiDayView({
       .sort((a, b) => a.getTime() - b.getTime())
 
     let targetMinutes = 7 * 60
-    if (isSameDay(selectedDay, current)) {
-      targetMinutes = Math.max(differenceInMinutes(current, startOfDay(current)) - 90, 0)
+    if (isSameDay(selectedDay, referenceNow)) {
+      targetMinutes = Math.max(differenceInMinutes(referenceNow, startOfDay(referenceNow)) - 90, 0)
     } else if (timedEvents.length > 0) {
       targetMinutes = Math.max(differenceInMinutes(timedEvents[0], startOfDay(selectedDay)) - 60, 0)
     }
@@ -207,7 +207,7 @@ export default function CalendarioMultiDayView({
               {showCurrentTime && (
                 <div
                   className={styles.currentTimeLine}
-                  style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px` }}
+                  style={{ top: `${(currentMinutes / 60) * HOUR_HEIGHT}px`, left: `${TIME_COLUMN_WIDTH}px` }}
                   aria-hidden="true"
                 >
                   <span className={styles.currentTimeLabel}>{format(now, 'h:mm')}</span>
@@ -248,10 +248,10 @@ export default function CalendarioMultiDayView({
                             style={{
                               top: `${(startMinutes / 60) * HOUR_HEIGHT + 2}px`,
                               height: `${eventHeight}px`,
-                              left: `calc(${left}% + 3px)`,
-                              width: `calc(${width}% - 6px)`,
+                              left: `calc(${left}% + 2px)`,
+                              width: `calc(${width}% - 4px)`,
                               borderColor: color,
-                              backgroundColor: `${color}1F`,
+                              backgroundColor: `${color}1A`,
                             }}
                             onClick={() => onOpenEvent(event)}
                             aria-label={`${event.titulo}, ${format(start, 'h:mm a')}`}
