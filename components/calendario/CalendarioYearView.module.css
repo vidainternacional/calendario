@@ -201,23 +201,41 @@
   height: 3px;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 0;
+  overflow: visible;
+}
+
+.eventMarksFusion {
+  max-width: 15px;
+  margin-inline: auto;
 }
 
 .eventMark {
+  display: block;
+  flex: 0 0 auto;
   width: 2.5px;
   height: 2.5px;
-  border-radius: 999px;
   background: #5b3df5;
+}
+
+.eventMarkSingle {
+  border-radius: 999px;
+}
+
+.eventMarkSegment {
+  border-radius: 0;
+}
+
+.eventMarksFusion .eventMarkSegment:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+.eventMarksFusion .eventMarkSegment:last-child {
+  border-radius: 0 999px 999px 0;
 }
 
 .miniToday .eventMark {
   background: #ffffff;
-}
-
-.moreMark {
-  width: 5px;
-  border-radius: 999px;
 }
 
 @media (max-width: 390px) {
