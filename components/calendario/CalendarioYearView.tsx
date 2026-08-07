@@ -15,10 +15,8 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { motion } from 'framer-motion'
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
-import { SPRING_STANDARD, VIEW_FADE } from '@/lib/motion-config'
-import { eventColor, eventosDelDia, monthKey, type EventoCalendario } from './calendario-ios-types'
+import { dayKey, eventColor, indexarEventosPorDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 import polish from './CalendarioYearPolish.module.css'
 
@@ -46,6 +44,8 @@ export default function CalendarioYearView({
   const positionedYearRef = useRef<number | null>(null)
   const pendingTodayScrollRef = useRef(false)
   const activeYear = fecha.getFullYear()
+  const eventosPorDia = useMemo(() => indexarEventosPorDia(eventos), [eventos])
+  const currentMonth = useMemo(() => new Date(), [])
 
   const years = useMemo(
     () => Array.from(
@@ -121,14 +121,7 @@ export default function CalendarioYearView({
   }, [activeYear, onChangeYear])
 
   return (
-    <motion.div
-      className={`${styles.yearView} ${polish.yearPolish}`}
-      aria-busy={isRefreshing || undefined}
-      initial={{ opacity: 0.92 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0.58 }}
-      transition={VIEW_FADE}
-    >
+    <div className={`${styles.yearView} ${polish.yearPolish}`} aria-busy={isRefreshing || undefined}>
       <div className={styles.stickyChrome}>{topChrome}</div>
 
       <div className={styles.yearsScroller}>
@@ -156,16 +149,13 @@ export default function CalendarioYearView({
                   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
                   const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
                   const days = eachDayOfInterval({ start, end })
-                  const isCurrentMonth = isSameMonth(month, new Date())
+                  const isCurrentMonth = isSameMonth(month, currentMonth)
                   while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
                   return (
-                    <motion.button
+                    <button
                       type="button"
                       key={monthKey(month)}
-                      layoutId={`calendar-month-${monthKey(month)}`}
-                      layout="position"
-                      transition={SPRING_STANDARD}
                       className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
                       onClick={(event) => onOpenMonth(month, event.currentTarget)}
                       aria-label={`Abrir ${format(month, 'MMMM yyyy', { locale: es })}`}
@@ -177,7 +167,7 @@ export default function CalendarioYearView({
                       <span className={styles.miniGrid}>
                         {days.map((day) => {
                           const belongs = isSameMonth(day, month)
-                          const dayEvents = belongs ? eventosDelDia(eventos, day) : []
+                          const dayEvents = belongs ? (eventosPorDia.get(dayKey(day)) || []) : []
                           const today = belongs && isToday(day)
                           const visibleMarks = dayEvents.slice(0, 6)
 
@@ -202,7 +192,7 @@ export default function CalendarioYearView({
                           )
                         })}
                       </span>
-                    </motion.button>
+                    </button>
                   )
                 })}
               </div>
@@ -210,6 +200,6 @@ export default function CalendarioYearView({
           )
         })}
       </div>
-    </motion.div>
+    </div>
   )
 }
