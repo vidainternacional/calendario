@@ -113,6 +113,7 @@ export default function CalendarioMultiDayView({
     const viewport = viewportRef.current
     if (!viewport) return
 
+    const current = new Date()
     const timedEvents = events
       .filter((event) => !event.todo_el_dia && isSameDay(new Date(event.fecha_inicio), selectedDay))
       .map((event) => new Date(event.fecha_inicio))
@@ -120,8 +121,8 @@ export default function CalendarioMultiDayView({
       .sort((a, b) => a.getTime() - b.getTime())
 
     let targetMinutes = 7 * 60
-    if (isSameDay(selectedDay, now)) {
-      targetMinutes = Math.max(differenceInMinutes(now, startOfDay(now)) - 90, 0)
+    if (isSameDay(selectedDay, current)) {
+      targetMinutes = Math.max(differenceInMinutes(current, startOfDay(current)) - 90, 0)
     } else if (timedEvents.length > 0) {
       targetMinutes = Math.max(differenceInMinutes(timedEvents[0], startOfDay(selectedDay)) - 60, 0)
     }
@@ -132,7 +133,7 @@ export default function CalendarioMultiDayView({
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [selectedDay, daysVisible, events, now])
+  }, [selectedDay, daysVisible, events])
 
   const allDay = events.filter(
     (event) => Boolean(event.todo_el_dia) && days.some((day) => isSameDay(new Date(event.fecha_inicio), day)),
