@@ -173,7 +173,7 @@ export default function CalendarioMonthView({
                       }
 
                       const handleDayPress = () => {
-                        if (selected && openDayOnSelect) {
+                        if (openDayOnSelect) {
                           onOpenDay(day)
                           return
                         }
@@ -189,7 +189,7 @@ export default function CalendarioMonthView({
                           onClick={handleDayPress}
                           aria-pressed={selected}
                           aria-current={today ? 'date' : undefined}
-                          aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${dayEvents.length ? `, ${dayEvents.length} evento${dayEvents.length === 1 ? '' : 's'}` : ''}${selected && openDayOnSelect ? ', volver a tocar para abrir vista del día' : ''}`}
+                          aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${dayEvents.length ? `, ${dayEvents.length} evento${dayEvents.length === 1 ? '' : 's'}` : ''}${openDayOnSelect ? ', abrir vista del día' : ''}`}
                         >
                           <span className={`${basic.dayNumber} ${selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
                             {format(day, 'd')}
