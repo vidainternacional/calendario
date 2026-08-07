@@ -5,8 +5,9 @@
   min-height: 0;
   flex: 1;
   overflow: hidden;
-  background: var(--background);
-  color: var(--foreground);
+  background: #ffffff;
+  color: #111827;
+  color-scheme: light;
 }
 
 .horizontalScroller {
@@ -27,7 +28,7 @@
   min-width: 100%;
   height: 100%;
   flex-direction: column;
-  background: var(--background);
+  background: #ffffff;
 }
 
 .daysHeader {
@@ -36,13 +37,13 @@
   z-index: 15;
   display: grid;
   flex: 0 0 auto;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-  background: color-mix(in srgb, var(--background) 96%, transparent);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.09);
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
 }
 
-.timeSpacer { border-right: 1px solid rgba(15, 23, 42, 0.08); }
+.timeSpacer { border-right: 1px solid rgba(15, 23, 42, 0.07); }
 
 .dayHeader {
   position: relative;
@@ -53,31 +54,29 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-right: 1px solid rgba(15, 23, 42, 0.07);
   background: transparent;
   color: #7a8496;
+  transition: opacity 120ms ease, color 120ms ease, background-color 120ms ease;
   -webkit-tap-highlight-color: transparent;
 }
+
+.dayHeader:active { opacity: 0.58; }
 
 .dayHeader:focus-visible,
 .allDayEvent:focus-visible,
 .timedEvent:focus-visible {
-  outline: 3px solid rgba(91, 61, 245, 0.35);
+  outline: 3px solid rgba(91, 61, 245, 0.28);
   outline-offset: -3px;
 }
 
-.dayHeader[aria-pressed='true'] { background: rgba(91, 61, 245, 0.08); }
-.dayHeader[aria-pressed='true']::after {
-  position: absolute;
-  right: 24%;
-  bottom: 3px;
-  left: 24%;
-  height: 2px;
-  border-radius: 999px;
-  background: #5b3df5;
-  content: '';
+.dayHeader[aria-pressed='true'] {
+  background: transparent;
+  color: #5b3df5;
 }
-.dayHeader span { font-size: 10px; font-weight: 800; text-transform: uppercase; }
+
+.dayHeader[aria-pressed='true']::after { content: none; }
+.dayHeader span { font-size: 10px; font-weight: 750; text-transform: uppercase; }
 
 .dayHeader strong {
   display: flex;
@@ -87,11 +86,19 @@
   justify-content: center;
   margin-top: 3px;
   border-radius: 50%;
-  color: var(--foreground);
+  color: #111827;
   font-size: 17px;
+  font-weight: 600;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 
-.dayHeader .today { background: #5b3df5; color: #fff; }
+.dayHeader[aria-pressed='true'] strong:not(.today) {
+  background: rgba(91, 61, 245, 0.075);
+  color: #5b3df5;
+  font-weight: 700;
+}
+
+.dayHeader .today { background: #5b3df5; color: #fff; font-weight: 750; }
 
 .allDayBand {
   display: grid;
@@ -99,8 +106,8 @@
   flex: 0 0 auto;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-  background: var(--background);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.09);
+  background: #ffffff;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -111,13 +118,13 @@
   align-items: flex-start;
   justify-content: flex-end;
   padding: 8px 6px;
-  background: var(--background);
+  background: #ffffff;
   color: #8a93a4;
   font-size: 10px;
 }
 
 .allDayColumns { display: grid; min-width: 0; }
-.allDayColumn { min-width: 0; min-height: 34px; border-left: 1px solid rgba(15, 23, 42, 0.08); padding: 3px; }
+.allDayColumn { min-width: 0; min-height: 34px; border-left: 1px solid rgba(15, 23, 42, 0.07); padding: 3px; }
 
 .allDayEvent {
   width: 100%;
@@ -126,11 +133,11 @@
   border: 0;
   border-left: 3px solid;
   border-radius: 6px;
-  background: rgba(91, 61, 245, 0.08);
+  background: rgba(91, 61, 245, 0.065);
   padding: 4px 5px;
-  color: var(--foreground);
+  color: #111827;
   font-size: 10px;
-  font-weight: 750;
+  font-weight: 700;
   line-height: 1.15;
   text-align: left;
   text-overflow: ellipsis;
@@ -147,20 +154,20 @@
   padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   scroll-padding-top: 12px;
   scroll-padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
-  background: var(--background);
+  background: #ffffff;
   -webkit-overflow-scrolling: touch;
 }
 
-.timeline { position: relative; display: grid; background: var(--background); }
-.hours { position: relative; border-right: 1px solid rgba(15, 23, 42, 0.08); }
+.timeline { position: relative; display: grid; background: #ffffff; }
+.hours { position: relative; border-right: 1px solid rgba(15, 23, 42, 0.07); }
 .hour { position: absolute; right: 7px; color: #8a93a4; font-size: 10px; font-variant-numeric: tabular-nums; }
 .columns { display: grid; min-width: 0; }
-.dayColumn { position: relative; min-width: 0; border-right: 1px solid rgba(15, 23, 42, 0.08); background: var(--background); }
-.hourLine { position: absolute; right: 0; left: 0; border-top: 1px solid rgba(15, 23, 42, 0.08); }
+.dayColumn { position: relative; min-width: 0; border-right: 1px solid rgba(15, 23, 42, 0.07); background: #ffffff; }
+.hourLine { position: absolute; right: 0; left: 0; border-top: 1px solid rgba(15, 23, 42, 0.07); }
 
-.currentTimeLine { position: absolute; right: 0; left: 58px; z-index: 8; height: 2px; background: #ff3b4d; pointer-events: none; }
-.currentTimeDot { position: absolute; top: 50%; left: -5px; width: 10px; height: 10px; border-radius: 50%; background: #ff3b4d; transform: translateY(-50%); }
-.currentTimeLabel { position: absolute; top: 50%; right: calc(100% + 7px); min-width: 48px; border-radius: 10px; background: #ff3b4d; padding: 3px 6px; color: #fff; font-size: 10px; font-weight: 800; line-height: 1; text-align: center; transform: translateY(-50%); }
+.currentTimeLine { position: absolute; right: 0; left: 58px; z-index: 8; height: 1px; background: #ff3b4d; pointer-events: none; }
+.currentTimeDot { position: absolute; top: 50%; left: -4px; width: 8px; height: 8px; border-radius: 50%; background: #ff3b4d; transform: translateY(-50%); }
+.currentTimeLabel { position: absolute; top: 50%; right: calc(100% + 6px); min-width: 46px; border-radius: 9px; background: #ff3b4d; padding: 3px 5px; color: #fff; font-size: 10px; font-weight: 750; line-height: 1; text-align: center; transform: translateY(-50%); }
 
 .timedEvent {
   position: absolute;
@@ -169,31 +176,25 @@
   overflow: hidden;
   border: 0;
   border-left: 3px solid;
-  border-radius: 7px;
+  border-radius: 6px;
   padding: 5px 6px;
-  color: var(--foreground);
+  color: #111827;
   text-align: left;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.035), 0 1px 2px rgba(15, 23, 42, 0.06);
-  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.025);
+  transition: filter 0.12s ease, opacity 0.12s ease;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
 .timedEvent:active {
-  filter: brightness(0.96);
-  transform: scale(0.985);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+  filter: brightness(0.97);
+  opacity: 0.72;
+  transform: none;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.035);
 }
 .timedEvent strong, .timedEvent span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .timedEvent strong { font-size: 10px; line-height: 1.2; }
 .timedEvent span { margin-top: 2px; color: #647086; font-size: 9px; font-variant-numeric: tabular-nums; }
-
-@media (prefers-color-scheme: dark) {
-  .daysHeader, .timeSpacer, .dayHeader, .allDayBand, .allDayColumn, .hours, .dayColumn, .hourLine { border-color: rgba(255, 255, 255, 0.12); }
-  .allDayEvent { background: rgba(255, 255, 255, 0.1); }
-  .timedEvent { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.22); }
-  .timedEvent span { color: #d1d1d6; }
-}
 
 @media (max-width: 430px) {
   .surface { height: calc(100dvh - 164px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
@@ -228,7 +229,6 @@
   .surface { height: calc(100dvh - 118px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
   .daysHeader .dayHeader { min-height: 42px; flex-direction: row; gap: 4px; }
   .dayHeader strong { width: 27px; height: 27px; margin-top: 0; font-size: 14px; }
-  .dayHeader[aria-pressed='true']::after { right: 30%; left: 30%; bottom: 1px; }
   .allDayBand { max-height: 66px; }
 }
 
@@ -239,4 +239,8 @@
   .timedEvent span { font-size: 10px; }
 }
 
-@media (prefers-reduced-motion: reduce) { .timedEvent { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .dayHeader,
+  .dayHeader strong,
+  .timedEvent { transition: none; }
+}
