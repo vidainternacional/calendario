@@ -6,7 +6,7 @@ import {
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -14,9 +14,8 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
-import { useEffect, useMemo, useState, type ComponentType } from 'react'
-import { createPortal } from 'react-dom'
-import { VIEW_FADE } from '@/lib/motion-config'
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
+import { createPortal, flushSync } from 'react-dom'
 import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
@@ -47,6 +46,11 @@ type CalendarView = 'anio' | 'mes' | 'dia' | 'dos-dias' | 'agenda' | 'lista'
 type TimelineView = 'dia' | 'dos-dias' | 'agenda'
 type MonthMenuMode = MonthDisplayMode | 'list'
 type MonthTransitionPhase = 'enter' | null
+
+type ViewTransitionHandle = { finished: Promise<void> }
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => ViewTransitionHandle
+}
 
 export type MonthTransitionAnchor = {
   offsetX: number
@@ -106,6 +110,7 @@ export default function CalendarioIOS({
   const [monthDisplay, setMonthDisplay] = useState<MonthMenuMode>('compact')
   const [activeDate, setActiveDate] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState(new Date())
+  const [visibleMonthDate, setVisibleMonthDate] = useState(new Date())
   const [monthScrollRequest, setMonthScrollRequest] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
   const [viewMenuOpen, setViewMenuOpen] = useState(false)
@@ -114,6 +119,7 @@ export default function CalendarioIOS({
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
   const [monthTransitionAnchor, setMonthTransitionAnchor] = useState<MonthTransitionAnchor | null>(null)
   const [monthTransitionPhase, setMonthTransitionPhase] = useState<MonthTransitionPhase>(null)
+  const [yearSharedTransitionTarget, setYearSharedTransitionTarget] = useState(false)
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
@@ -175,6 +181,18 @@ export default function CalendarioIOS({
     return new Date(month.getFullYear(), month.getMonth(), Math.min(selectedDay.getDate(), getDaysInMonth(month)))
   }
 
+  const runViewTransition = useCallback((update: () => void) => {
+    const doc = typeof document === 'undefined' ? null : document as ViewTransitionDocument
+    if (reduceMotion || !doc?.startViewTransition) {
+      update()
+      return null
+    }
+
+    return doc.startViewTransition(() => {
+      flushSync(update)
+    })
+  }, [reduceMotion])
+
   const captureMonthTransitionAnchor = (element?: HTMLElement): MonthTransitionAnchor | null => {
     if (!element || typeof window === 'undefined' || window.innerWidth <= 0 || window.innerHeight <= 0) return null
 
@@ -187,8 +205,8 @@ export default function CalendarioIOS({
     const viewportCenterY = window.innerHeight / 2
 
     return {
-      offsetX: clamp((centerX - viewportCenterX) * 0.22, -46, 46),
-      offsetY: clamp((centerY - viewportCenterY) * 0.18, -54, 54),
+      offsetX: clamp((centerX - viewportCenterX) * 0.16, -34, 34),
+      offsetY: clamp((centerY - viewportCenterY) * 0.14, -42, 42),
       originX: clamp((centerX / window.innerWidth) * 100, 12, 88),
       originY: clamp((centerY / window.innerHeight) * 100, 12, 88),
     }
@@ -196,11 +214,29 @@ export default function CalendarioIOS({
 
   const openMonth = (month: Date, element?: HTMLElement) => {
     const anchor = captureMonthTransitionAnchor(element)
-    element?.blur()
-    setMonthTransitionAnchor(anchor)
-    setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
-
     const next = selectedDayForMonth(month)
+    element?.blur()
+
+    const doc = typeof document === 'undefined' ? null : document as ViewTransitionDocument
+    if (!reduceMotion && doc?.startViewTransition) {
+      if (element) element.style.viewTransitionName = 'calendar-month-shared'
+      const transition = runViewTransition(() => {
+        setMonthTransitionAnchor(null)
+        setMonthTransitionPhase(null)
+        setVisibleMonthDate(next)
+        setActiveDate(next)
+        setSelectedDay(next)
+        setView(monthDisplay === 'list' ? 'lista' : 'mes')
+      })
+      transition?.finished.finally(() => {
+        if (element) element.style.viewTransitionName = ''
+      })
+      return
+    }
+
+    setMonthTransitionAnchor(anchor)
+    setMonthTransitionPhase(anchor ? 'enter' : null)
+    setVisibleMonthDate(next)
     setActiveDate(next)
     setSelectedDay(next)
     setView(monthDisplay === 'list' ? 'lista' : 'mes')
@@ -208,9 +244,11 @@ export default function CalendarioIOS({
 
   const openDay = (day: Date) => {
     setMonthTransitionPhase(null)
-    setSelectedDay(day)
-    setActiveDate(day)
-    setView('dia')
+    runViewTransition(() => {
+      setSelectedDay(day)
+      setActiveDate(day)
+      setView('dia')
+    })
   }
 
   const selectDay = (day: Date) => {
@@ -218,18 +256,27 @@ export default function CalendarioIOS({
     setActiveDate(day)
   }
 
+  const handleVisibleMonthChange = useCallback((month: Date) => {
+    setVisibleMonthDate((current) => isSameMonth(current, month) ? current : month)
+  }, [])
+
   const changeMonthView = (nextMode: MonthMenuMode) => {
     setMonthTransitionPhase(null)
-    setMonthDisplay(nextMode)
-    setActiveDate(selectedDay)
-    setView(nextMode === 'list' ? 'lista' : 'mes')
-    setViewMenuOpen(false)
+    runViewTransition(() => {
+      setMonthDisplay(nextMode)
+      setActiveDate(selectedDay)
+      setVisibleMonthDate(selectedDay)
+      setView(nextMode === 'list' ? 'lista' : 'mes')
+      setViewMenuOpen(false)
+    })
   }
 
   const changeTimelineView = (nextView: TimelineView) => {
     setMonthTransitionPhase(null)
-    setView(nextView)
-    setViewMenuOpen(false)
+    runViewTransition(() => {
+      setView(nextView)
+      setViewMenuOpen(false)
+    })
   }
 
   const completeMonthTransition = () => {
@@ -240,23 +287,34 @@ export default function CalendarioIOS({
     if (view === 'mes' || view === 'lista') {
       setMonthTransitionPhase(null)
       setMonthTransitionAnchor(null)
-      setView('anio')
+      const targetMonth = visibleMonthDate
+      const transition = runViewTransition(() => {
+        setYearSharedTransitionTarget(true)
+        setActiveDate(targetMonth)
+        setView('anio')
+      })
+      transition?.finished.finally(() => setYearSharedTransitionTarget(false))
       return
     }
 
     setMonthTransitionPhase(null)
-    setView(monthDisplay === 'list' ? 'lista' : 'mes')
+    runViewTransition(() => {
+      setActiveDate(selectedDay)
+      setVisibleMonthDate(selectedDay)
+      setView(monthDisplay === 'list' ? 'lista' : 'mes')
+    })
   }
 
   const goToday = () => {
     const today = new Date()
     setActiveDate(today)
     setSelectedDay(today)
+    setVisibleMonthDate(today)
     if (view === 'mes' || view === 'lista') setMonthScrollRequest((request) => request + 1)
   }
 
   const backLabel = view === 'mes' || view === 'lista'
-    ? format(activeDate, 'yyyy')
+    ? format(visibleMonthDate, 'yyyy')
     : format(activeDate, 'MMMM', { locale: es })
 
   const timelineDays: TimelineDayCount | null = view === 'dia' ? 1 : view === 'dos-dias' ? 2 : null
@@ -317,6 +375,7 @@ export default function CalendarioIOS({
       topChrome={chromeNode}
       onOpenMonth={openMonth}
       onChangeYear={(year) => setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))}
+      sharedTransitionTarget={yearSharedTransitionTarget}
     />
   )
 
@@ -329,62 +388,61 @@ export default function CalendarioIOS({
       {view === 'anio' && renderYearView(topChrome)}
 
       {view === 'mes' && (
-        <div style={monthTransitionPhase ? { position: 'relative', zIndex: 2, background: '#fff' } : undefined}>
-          <CalendarioMonthView
-            month={activeDate}
-            selectedDay={selectedDay}
-            events={sortedEvents}
-            displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
-            topChrome={topChrome}
-            isRefreshing={isRefreshing}
-            dayPanelOpen={false}
-            scrollRequest={monthScrollRequest}
-            onSelectDay={selectDay}
-            onOpenDay={openDay}
-            onOpenEvent={setSelectedEvent}
-            {...monthTransitionProps}
-          />
-        </div>
+        <CalendarioMonthView
+          month={activeDate}
+          selectedDay={selectedDay}
+          events={sortedEvents}
+          displayMode={monthDisplay === 'list' ? 'compact' : monthDisplay}
+          topChrome={topChrome}
+          isRefreshing={isRefreshing}
+          dayPanelOpen={false}
+          scrollRequest={monthScrollRequest}
+          onVisibleMonthChange={handleVisibleMonthChange}
+          onSelectDay={selectDay}
+          onOpenDay={openDay}
+          onOpenEvent={setSelectedEvent}
+          {...monthTransitionProps}
+        />
       )}
 
       {isTimelineContext && (
-        <>
+        <div
+          style={{
+            position: 'fixed',
+            inset: '0 0 calc(4rem + env(safe-area-inset-bottom, 0px)) 0',
+            zIndex: 40,
+            width: '100%',
+            minHeight: 0,
+            overflow: 'hidden',
+            background: '#fff',
+            colorScheme: 'light',
+            viewTransitionName: 'calendar-surface',
+          }}
+        >
           {topChrome}
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.div
-              key={view}
-              initial={{ opacity: 0.68 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={VIEW_FADE}
-              style={{ width: '100%' }}
-            >
-              {timelineContent}
-            </motion.div>
-          </AnimatePresence>
-        </>
+          {timelineContent}
+        </div>
       )}
 
       {view === 'lista' && (
-        <div style={monthTransitionPhase ? { position: 'relative', zIndex: 2, background: '#fff' } : undefined}>
-          <CalendarioMonthView
-            month={activeDate}
-            selectedDay={selectedDay}
-            events={sortedEvents}
-            displayMode="compact"
-            topChrome={topChrome}
-            isRefreshing={isRefreshing}
-            dayPanelOpen={false}
-            scrollRequest={monthScrollRequest}
-            showFollowingMonth={false}
-            openDayOnSelect={false}
-            footer={listFooter}
-            onSelectDay={selectDay}
-            onOpenDay={openDay}
-            onOpenEvent={setSelectedEvent}
-            {...monthTransitionProps}
-          />
-        </div>
+        <CalendarioMonthView
+          month={activeDate}
+          selectedDay={selectedDay}
+          events={sortedEvents}
+          displayMode="compact"
+          topChrome={topChrome}
+          isRefreshing={isRefreshing}
+          dayPanelOpen={false}
+          scrollRequest={monthScrollRequest}
+          showFollowingMonth={false}
+          openDayOnSelect={false}
+          footer={listFooter}
+          onVisibleMonthChange={handleVisibleMonthChange}
+          onSelectDay={selectDay}
+          onOpenDay={openDay}
+          onOpenEvent={setSelectedEvent}
+          {...monthTransitionProps}
+        />
       )}
 
       <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>
