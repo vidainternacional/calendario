@@ -16,7 +16,7 @@ import {
 import { es } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
-import { SPRING_STANDARD, VIEW_FADE } from '@/lib/motion-config'
+import { CALENDAR_ZOOM_SPRING, VIEW_FADE } from '@/lib/motion-config'
 import type { MonthTransitionAnchor } from './CalendarioIOS'
 import { dayKey, eventColor, indexarEventosPorDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
 import basic from './CalendarioBasic.module.css'
@@ -28,16 +28,10 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 const MONTHS_AROUND = 6
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
-function triggerSoftHaptic() {
-  if (typeof navigator === 'undefined' || !('vibrate' in navigator)) return
-  navigator.vibrate(8)
-}
-
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
   const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
   const days = eachDayOfInterval({ start, end })
-
   return Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7))
 }
 
@@ -59,6 +53,7 @@ export default function CalendarioMonthView({
   footer,
   transitionAnchor = null,
   transitionPhase = null,
+  transitionMonth = null,
   onTransitionComplete,
   onVisibleMonthChange,
   onSelectDay,
@@ -77,7 +72,8 @@ export default function CalendarioMonthView({
   openDayOnSelect?: boolean
   footer?: ReactNode
   transitionAnchor?: MonthTransitionAnchor | null
-  transitionPhase?: 'enter' | null
+  transitionPhase?: 'enter' | 'exit' | null
+  transitionMonth?: Date | null
   onTransitionComplete?: () => void
   onVisibleMonthChange?: (month: Date) => void
   onSelectDay: (day: Date) => void
@@ -104,7 +100,6 @@ export default function CalendarioMonthView({
     const root = scrollRootRef.current
     const target = activeMonthRef.current
     if (!root || !target) return
-
     const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
     const nextTop = Math.max(0, target.offsetTop - stickyHeight)
     root.scrollTo({ top: nextTop, behavior: scrollRequest > 0 ? 'smooth' : 'auto' })
@@ -121,7 +116,6 @@ export default function CalendarioMonthView({
         + (stickyChromeRef.current?.offsetHeight || 0)
         + (weekdaysRef.current?.offsetHeight || 0)
         + 24
-
       const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-calendar-month]'))
       let best: HTMLElement | null = null
       let bestDistance = Number.POSITIVE_INFINITY
@@ -156,45 +150,29 @@ export default function CalendarioMonthView({
     }
   }, [baseMonthKey, onVisibleMonthChange, showFollowingMonth])
 
-  const enterMotion = transitionAnchor && transitionPhase === 'enter'
-    ? {
-        x: transitionAnchor.offsetX,
-        y: transitionAnchor.offsetY,
-        scale: 0.94,
-        opacity: 0.18,
-      }
-    : false
-
-  const activeMotion = {
-    x: 0,
-    y: 0,
-    scale: 1,
-    opacity: 1,
-  }
+  const compactZoomState = transitionAnchor
+    ? { x: transitionAnchor.offsetX, y: transitionAnchor.offsetY, scale: 0.94, opacity: 0.18 }
+    : { x: 0, y: 0, scale: 0.94, opacity: 0.18 }
+  const expandedZoomState = { x: 0, y: 0, scale: 1, opacity: 1 }
 
   return (
-    <div
-      ref={scrollRootRef}
-      className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`}
-      aria-hidden={overlay || undefined}
-      aria-busy={isRefreshing || undefined}
-    >
+    <div ref={scrollRootRef} className={`${basic.monthView} ${polish.monthPolish} ${indicator.monthDensity}`} aria-hidden={overlay || undefined} aria-busy={isRefreshing || undefined}>
       <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
-
       <div ref={weekdaysRef} className={`${basic.weekdays} ${polish.monthWeekdays}`} aria-label="Días de la semana">
         <span className={basic.weekNumberHeader} aria-hidden="true" />
-        {WEEKDAY_LABELS.map((label, index) => (
-          <span key={`${label}-${index}`} aria-label={WEEKDAY_NAMES[index]}>
-            {label}
-          </span>
-        ))}
+        {WEEKDAY_LABELS.map((label, index) => <span key={`${label}-${index}`} aria-label={WEEKDAY_NAMES[index]}>{label}</span>)}
       </div>
 
       <div className={basic.monthScroll}>
         {visibleMonths.map((visibleMonth) => {
           const weeks = weeksForMonth(visibleMonth)
           const isBaseMonth = isSameMonth(visibleMonth, baseMonth)
+          const isTransitionMonth = transitionPhase
+            ? isSameMonth(visibleMonth, transitionMonth || baseMonth)
+            : isBaseMonth
           const visibleMonthKey = format(visibleMonth, 'yyyy-MM')
+          const initialMotion = isTransitionMonth && transitionPhase === 'enter' ? compactZoomState : false
+          const activeMotion = isTransitionMonth && transitionPhase === 'exit' ? compactZoomState : expandedZoomState
 
           return (
             <motion.section
@@ -203,37 +181,22 @@ export default function CalendarioMonthView({
               data-calendar-month={visibleMonthKey}
               className={`${basic.monthSection} ${isBaseMonth ? polish.activeMonthSection : ''}`}
               aria-label={format(visibleMonth, 'MMMM yyyy', { locale: es })}
-              initial={isBaseMonth ? enterMotion : false}
-              animate={isBaseMonth ? activeMotion : undefined}
-              transition={isBaseMonth ? {
-                x: SPRING_STANDARD,
-                y: SPRING_STANDARD,
-                scale: SPRING_STANDARD,
-                opacity: VIEW_FADE,
-              } : undefined}
-              style={isBaseMonth ? {
-                viewTransitionName: 'calendar-month-shared',
+              initial={initialMotion}
+              animate={isTransitionMonth ? activeMotion : undefined}
+              transition={isTransitionMonth ? { x: CALENDAR_ZOOM_SPRING, y: CALENDAR_ZOOM_SPRING, scale: CALENDAR_ZOOM_SPRING, opacity: VIEW_FADE } : undefined}
+              style={isTransitionMonth ? {
                 transformOrigin: transitionAnchor ? `${transitionAnchor.originX}% ${transitionAnchor.originY}%` : '50% 42%',
                 willChange: transitionPhase ? 'transform, opacity' : 'auto',
               } : undefined}
               onAnimationComplete={() => {
-                if (isBaseMonth && transitionPhase) onTransitionComplete?.()
+                if (isTransitionMonth && transitionPhase) onTransitionComplete?.()
               }}
             >
-              <header className={basic.monthHeader}>
-                <h1 className={basic.monthTitle}>{format(visibleMonth, 'MMMM', { locale: es })}</h1>
-              </header>
-
+              <header className={basic.monthHeader}><h1 className={basic.monthTitle}>{format(visibleMonth, 'MMMM', { locale: es })}</h1></header>
               <div className={`${basic.monthGrid} ${displayMode === 'details' ? basic.monthGridDetails : ''}`}>
                 {weeks.map((week) => (
-                  <div
-                    key={week[0].toISOString()}
-                    className={`${basic.monthWeekRow} ${displayMode === 'details' ? basic.monthWeekRowDetails : ''}`}
-                  >
-                    <span className={basic.weekNumber} aria-hidden="true">
-                      {getWeek(week[0], { weekStartsOn: 0, firstWeekContainsDate: 1 })}
-                    </span>
-
+                  <div key={week[0].toISOString()} className={`${basic.monthWeekRow} ${displayMode === 'details' ? basic.monthWeekRowDetails : ''}`}>
+                    <span className={basic.weekNumber} aria-hidden="true">{getWeek(week[0], { weekStartsOn: 0, firstWeekContainsDate: 1 })}</span>
                     {week.map((day) => {
                       const belongs = isSameMonth(day, visibleMonth)
                       const selected = belongs && isSameDay(day, selectedDay)
@@ -241,17 +204,13 @@ export default function CalendarioMonthView({
                       const dayEvents = belongs ? (eventosPorDia.get(dayKey(day)) || []) : []
                       const compactSegments = compactEventSegments(dayEvents)
 
-                      if (!belongs) {
-                        return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
-                      }
+                      if (!belongs) return <span key={day.toISOString()} className={basic.monthDayEmpty} aria-hidden="true" />
 
                       const handleDayPress = () => {
-                        triggerSoftHaptic()
                         if (openDayOnSelect) {
                           onOpenDay(day)
                           return
                         }
-
                         onSelectDay(day)
                       }
 
@@ -265,9 +224,7 @@ export default function CalendarioMonthView({
                           aria-current={today ? 'date' : undefined}
                           aria-label={`${format(day, "EEEE d 'de' MMMM", { locale: es })}${dayEvents.length ? `, ${dayEvents.length} evento${dayEvents.length === 1 ? '' : 's'}` : ''}${openDayOnSelect ? ', abrir vista del día' : ''}`}
                         >
-                          <span className={`${basic.dayNumber} ${!openDayOnSelect && selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>
-                            {format(day, 'd')}
-                          </span>
+                          <span className={`${basic.dayNumber} ${!openDayOnSelect && selected && !today ? basic.daySelected : ''} ${today ? basic.dayToday : ''}`}>{format(day, 'd')}</span>
 
                           {displayMode === 'compact' && dayEvents.length > 0 && (
                             <span className={indicator.eventCompact} aria-hidden="true">
@@ -276,20 +233,7 @@ export default function CalendarioMonthView({
                               ) : (
                                 <span className={indicator.eventFusion} style={{ width: `${compactSegments.length * 5}px`, minWidth: 0, maxWidth: 30, overflow: 'hidden', background: 'transparent', gap: 0 }}>
                                   {compactSegments.map((color, index) => (
-                                    <span
-                                      key={`${color}-${index}`}
-                                      className={indicator.eventFusionSegment}
-                                      style={{
-                                        width: 5,
-                                        minWidth: 5,
-                                        height: 5,
-                                        flexGrow: 0,
-                                        flexShrink: 0,
-                                        marginLeft: 0,
-                                        borderRadius: index === 0 ? '999px 0 0 999px' : index === compactSegments.length - 1 ? '0 999px 999px 0' : 0,
-                                        backgroundColor: color,
-                                      }}
-                                    />
+                                    <span key={`${color}-${index}`} className={indicator.eventFusionSegment} style={{ width: 5, minWidth: 5, height: 5, flexGrow: 0, flexShrink: 0, marginLeft: 0, borderRadius: index === 0 ? '999px 0 0 999px' : index === compactSegments.length - 1 ? '0 999px 999px 0' : 0, backgroundColor: color }} />
                                   ))}
                                 </span>
                               )}
@@ -298,9 +242,7 @@ export default function CalendarioMonthView({
 
                           {displayMode === 'stacked' && (
                             <span className={basic.eventBars} aria-hidden="true">
-                              {dayEvents.slice(0, 3).map((event, index) => (
-                                <span key={`${event.id || event.fecha_inicio}-${index}`} className={basic.eventBar} style={{ backgroundColor: eventColor(event) }} />
-                              ))}
+                              {dayEvents.slice(0, 3).map((event, index) => <span key={`${event.id || event.fecha_inicio}-${index}`} className={basic.eventBar} style={{ backgroundColor: eventColor(event) }} />)}
                               {dayEvents.length > 3 && <span className={basic.eventMore}>+{dayEvents.length - 3}</span>}
                             </span>
                           )}
@@ -309,11 +251,7 @@ export default function CalendarioMonthView({
                             <span className={basic.eventDetails} aria-hidden="true">
                               {dayEvents.slice(0, 2).map((event, index) => {
                                 const color = eventColor(event)
-                                return (
-                                  <span key={`${event.id || event.fecha_inicio}-${index}`} className={basic.eventChip} style={{ borderColor: color, color }}>
-                                    {event.titulo}
-                                  </span>
-                                )
+                                return <span key={`${event.id || event.fecha_inicio}-${index}`} className={basic.eventChip} style={{ borderColor: color, color }}>{event.titulo}</span>
                               })}
                               {dayEvents.length > 2 && <span className={basic.eventMore}>+{dayEvents.length - 2}</span>}
                             </span>
@@ -327,7 +265,6 @@ export default function CalendarioMonthView({
             </motion.section>
           )
         })}
-
         {footer}
       </div>
     </div>
