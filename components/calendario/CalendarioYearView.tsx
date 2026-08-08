@@ -24,7 +24,6 @@ const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 const INITIAL_YEARS_AROUND = 6
 const YEARS_PAGE = 4
 const YEAR_EDGE_THRESHOLD = 520
-const YEAR_BOTTOM_INSET = 78
 const YEAR_CENTER_SETTLE_MS = 220
 
 export default function CalendarioYearView({
@@ -73,32 +72,16 @@ export default function CalendarioYearView({
     [activeYear, transitionPreview, yearRange.end, yearRange.start],
   )
 
-  const centerMonthElement = (target: HTMLElement, behavior: ScrollBehavior = 'auto') => {
+  const scrollToActiveYearStart = (behavior: ScrollBehavior = 'auto') => {
     const root = scrollRootRef.current
-    if (!root) return
+    const target = activeYearRef.current
+    if (!root || !target) return
 
-    const rootRect = root.getBoundingClientRect()
-    const targetRect = target.getBoundingClientRect()
     const stickyHeight = stickyChromeRef.current?.offsetHeight || 68
-    const availableHeight = Math.max(1, root.clientHeight - stickyHeight - YEAR_BOTTOM_INSET)
-    const targetTopInScroll = root.scrollTop + targetRect.top - rootRect.top
-    const centeredOffset = stickyHeight + Math.max(0, (availableHeight - targetRect.height) / 2)
-    const nextTop = Math.max(0, targetTopInScroll - centeredOffset)
-
-    root.scrollTo({ top: nextTop, behavior })
-  }
-
-  const scrollToActiveMonth = (behavior: ScrollBehavior = 'auto') => {
-    const target = activeMonthRef.current
-    if (target) {
-      centerMonthElement(target, behavior)
-      return
-    }
-
-    const root = scrollRootRef.current
-    const fallback = activeYearRef.current
-    if (!root || !fallback) return
-    root.scrollTo({ top: Math.max(0, fallback.offsetTop - (stickyChromeRef.current?.offsetHeight || 68)), behavior })
+    root.scrollTo({
+      top: Math.max(0, target.offsetTop - stickyHeight),
+      behavior,
+    })
   }
 
   useLayoutEffect(() => {
@@ -136,7 +119,7 @@ export default function CalendarioYearView({
     let secondFrame = 0
     let cancelled = false
     const align = () => {
-      if (!cancelled) scrollToActiveMonth('auto')
+      if (!cancelled) scrollToActiveYearStart('auto')
     }
 
     align()
