@@ -88,7 +88,7 @@ function initials(name?: string | null) {
 }
 
 function titleFromSummary(summary: string) {
-  return summary.match(/[“\"]([^”\"]+)[”\"]/u)?.[1]?.trim() || ''
+  return summary.match(/[“"]([^”"]+)[”"]/u)?.[1]?.trim() || ''
 }
 
 export default function CalendarioSourcesPanel({
