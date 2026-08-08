@@ -101,10 +101,8 @@ export function useCalendarEvents({
         const [linksResult, remindersResult] = await Promise.all([
           db
             .from('evento_calendarios')
-            .select('event_id, calendar_id, eventos!inner(fecha_inicio)')
-            .in('calendar_id', visibleCalendarIds)
-            .gte('eventos.fecha_inicio', rangeStart.toISOString())
-            .lt('eventos.fecha_inicio', rangeEnd.toISOString()),
+            .select('evento_id, calendar_id')
+            .in('calendar_id', visibleCalendarIds),
           db
             .from('calendar_reminders')
             .select(`
@@ -134,17 +132,17 @@ export function useCalendarEvents({
 
         const eventCalendarMap = new Map<string, string[]>()
         for (const link of linksResult.data || []) {
-          const eventId = String(link.event_id)
+          const eventId = String(link.evento_id)
           const calendarId = String(link.calendar_id)
           const current = eventCalendarMap.get(eventId) || []
           if (!current.includes(calendarId)) current.push(calendarId)
           eventCalendarMap.set(eventId, current)
         }
 
-        const eventIds = Array.from(eventCalendarMap.keys())
+        const linkedEventIds = Array.from(eventCalendarMap.keys())
         let eventRows: any[] = []
 
-        if (eventIds.length > 0) {
+        if (linkedEventIds.length > 0) {
           const { data: eventsData, error: eventsError } = await db
             .from('eventos')
             .select(`
@@ -160,7 +158,7 @@ export function useCalendarEvents({
               ministerio_id,
               ministerios (nombre)
             `)
-            .in('id', eventIds)
+            .in('id', linkedEventIds)
             .gte('fecha_inicio', rangeStart.toISOString())
             .lt('fecha_inicio', rangeEnd.toISOString())
             .order('fecha_inicio', { ascending: true })
@@ -169,6 +167,7 @@ export function useCalendarEvents({
           eventRows = eventsData || []
         }
 
+        const eventIds = eventRows.map((item) => String(item.id))
         const assignmentMap = new Map<string, { id: string; estado: string }>()
         if (eventIds.length > 0) {
           const { data: assignmentsData, error: assignmentsError } = await db
