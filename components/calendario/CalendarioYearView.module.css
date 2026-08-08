@@ -27,6 +27,24 @@
   backdrop-filter: saturate(180%) blur(22px);
 }
 
+.transitionPreview {
+  contain: layout paint style;
+}
+
+.transitionPreview .stickyChrome {
+  background: #ffffff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.transitionPreview .miniMonth {
+  transition: none;
+}
+
+.transitionPreview .yearSection {
+  content-visibility: visible;
+}
+
 .yearView :global([class*='topChrome']) {
   background: transparent !important;
   color: #111827 !important;
