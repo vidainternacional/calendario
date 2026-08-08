@@ -15,7 +15,7 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { motion } from 'framer-motion'
-import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CALENDAR_ZOOM_SPRING, VIEW_FADE } from '@/lib/motion-config'
 import type { MonthTransitionAnchor } from './CalendarioIOS'
 import { dayKey, eventColor, indexarEventosPorDia, WEEKDAY_LABELS, type EventoCalendario } from './calendario-ios-types'
@@ -27,7 +27,13 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
 const MONTHS_AROUND = 6
 const MONTH_EXIT_HANDOFF_MS = 300
+const MONTH_NEIGHBOR_FALLBACK_MS = 90
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+
+type IdleWindow = Window & {
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
+  cancelIdleCallback?: (handle: number) => void
+}
 
 function weeksForMonth(month: Date) {
   const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 })
@@ -89,14 +95,9 @@ export default function CalendarioMonthView({
   const transitionCompleteRef = useRef(onTransitionComplete)
   const baseMonth = startOfMonth(month)
   const baseMonthKey = format(baseMonth, 'yyyy-MM')
+  const isEntering = transitionPhase === 'enter'
+  const [neighborsReady, setNeighborsReady] = useState(() => showFollowingMonth && !isEntering)
   const eventosPorDia = useMemo(() => indexarEventosPorDia(events), [events])
-
-  const visibleMonths = useMemo(
-    () => showFollowingMonth
-      ? Array.from({ length: MONTHS_AROUND * 2 + 1 }, (_, index) => addMonths(baseMonth, index - MONTHS_AROUND))
-      : [baseMonth],
-    [baseMonthKey, showFollowingMonth],
-  )
 
   useEffect(() => {
     transitionCompleteRef.current = onTransitionComplete
@@ -112,6 +113,52 @@ export default function CalendarioMonthView({
     return () => window.clearTimeout(timeout)
   }, [transitionPhase])
 
+  useEffect(() => {
+    if (!showFollowingMonth) {
+      if (neighborsReady) setNeighborsReady(false)
+      return
+    }
+
+    if (isEntering) {
+      if (neighborsReady) setNeighborsReady(false)
+      return
+    }
+
+    if (transitionPhase === 'exit' || neighborsReady) return
+
+    const idleWindow = window as IdleWindow
+    let idleHandle: number | null = null
+    let timerHandle: number | null = null
+    const revealNeighbors = () => setNeighborsReady(true)
+
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      idleHandle = idleWindow.requestIdleCallback(revealNeighbors, { timeout: 180 })
+    } else {
+      timerHandle = window.setTimeout(revealNeighbors, MONTH_NEIGHBOR_FALLBACK_MS)
+    }
+
+    return () => {
+      if (idleHandle !== null) idleWindow.cancelIdleCallback?.(idleHandle)
+      if (timerHandle !== null) window.clearTimeout(timerHandle)
+    }
+  }, [baseMonthKey, isEntering, neighborsReady, showFollowingMonth, transitionPhase])
+
+  const renderNeighborMonths = showFollowingMonth && neighborsReady && !isEntering
+  const visibleMonths = useMemo(
+    () => renderNeighborMonths
+      ? Array.from({ length: MONTHS_AROUND * 2 + 1 }, (_, index) => addMonths(baseMonth, index - MONTHS_AROUND))
+      : [baseMonth],
+    [baseMonthKey, renderNeighborMonths],
+  )
+  const monthModels = useMemo(
+    () => visibleMonths.map((visibleMonth) => ({
+      visibleMonth,
+      visibleMonthKey: format(visibleMonth, 'yyyy-MM'),
+      weeks: weeksForMonth(visibleMonth),
+    })),
+    [visibleMonths],
+  )
+
   useLayoutEffect(() => {
     const root = scrollRootRef.current
     const target = activeMonthRef.current
@@ -119,11 +166,11 @@ export default function CalendarioMonthView({
     const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
     const nextTop = Math.max(0, target.offsetTop - stickyHeight)
     root.scrollTo({ top: nextTop, behavior: scrollRequest > 0 ? 'smooth' : 'auto' })
-  }, [baseMonthKey, displayMode, scrollRequest, showFollowingMonth])
+  }, [baseMonthKey, displayMode, neighborsReady, scrollRequest, showFollowingMonth])
 
   useEffect(() => {
     const root = scrollRootRef.current
-    if (!root || !showFollowingMonth || !onVisibleMonthChange) return
+    if (!root || !showFollowingMonth || !neighborsReady || transitionPhase || !onVisibleMonthChange) return
 
     let frame = 0
     const report = () => {
@@ -164,7 +211,7 @@ export default function CalendarioMonthView({
       root.removeEventListener('scroll', onScroll)
       if (frame) window.cancelAnimationFrame(frame)
     }
-  }, [baseMonthKey, onVisibleMonthChange, showFollowingMonth])
+  }, [baseMonthKey, neighborsReady, onVisibleMonthChange, showFollowingMonth, transitionPhase])
 
   const compactZoomState = transitionAnchor
     ? { x: transitionAnchor.offsetX, y: transitionAnchor.offsetY, scale: 0.94, opacity: 0.18 }
@@ -185,19 +232,19 @@ export default function CalendarioMonthView({
       </div>
 
       <div className={basic.monthScroll}>
-        {visibleMonths.map((visibleMonth) => {
-          const weeks = weeksForMonth(visibleMonth)
+        {monthModels.map(({ visibleMonth, visibleMonthKey, weeks }) => {
           const isBaseMonth = isSameMonth(visibleMonth, baseMonth)
           const isTransitionMonth = transitionPhase
             ? isSameMonth(visibleMonth, transitionMonth || baseMonth)
             : isBaseMonth
-          const visibleMonthKey = format(visibleMonth, 'yyyy-MM')
           const initialMotion = isTransitionMonth && transitionPhase === 'enter' ? compactZoomState : false
           const activeMotion = isTransitionMonth && transitionPhase === 'exit' ? compactZoomState : expandedZoomState
           const sectionStyle = isTransitionMonth
             ? {
                 transformOrigin: transitionAnchor ? `${transitionAnchor.originX}% ${transitionAnchor.originY}%` : '50% 42%',
                 willChange: transitionPhase ? 'transform, opacity' : 'auto',
+                backfaceVisibility: 'hidden' as const,
+                WebkitBackfaceVisibility: 'hidden' as const,
               }
             : transitionPhase === 'exit'
               ? { opacity: 0, pointerEvents: 'none' as const }
