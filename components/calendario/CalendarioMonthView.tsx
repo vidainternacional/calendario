@@ -28,6 +28,7 @@ export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 const MONTHS_AROUND = 6
 const MONTH_EXIT_HANDOFF_MS = 300
 const MONTH_NEIGHBOR_FALLBACK_MS = 90
+const MONTH_FLOATING_INSET = 108
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 type IdleWindow = Window & {
@@ -163,10 +164,20 @@ export default function CalendarioMonthView({
     const root = scrollRootRef.current
     const target = activeMonthRef.current
     if (!root || !target) return
+
+    const rootRect = root.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
     const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
-    const nextTop = Math.max(0, target.offsetTop - stickyHeight)
+    const availableHeight = Math.max(1, root.clientHeight - stickyHeight - MONTH_FLOATING_INSET)
+    const targetTopInScroll = root.scrollTop + targetRect.top - rootRect.top
+    const shouldCenter = !footer && targetRect.height <= availableHeight
+    const visualOffset = shouldCenter
+      ? stickyHeight + Math.max(0, (availableHeight - targetRect.height) / 2)
+      : stickyHeight + 4
+    const nextTop = Math.max(0, targetTopInScroll - visualOffset)
+
     root.scrollTo({ top: nextTop, behavior: scrollRequest > 0 ? 'smooth' : 'auto' })
-  }, [baseMonthKey, displayMode, neighborsReady, scrollRequest, showFollowingMonth])
+  }, [baseMonthKey, displayMode, footer, neighborsReady, scrollRequest, showFollowingMonth])
 
   useEffect(() => {
     const root = scrollRootRef.current
