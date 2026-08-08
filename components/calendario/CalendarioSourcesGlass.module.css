@@ -55,6 +55,57 @@
   color-scheme: light !important;
 }
 
+/* El selector de audiencias replica la respuesta inmediata de Favoritos de Biblia:
+   cada toque alterna el estado local al instante y el control circular confirma
+   visualmente cada calendario sin convertir el multiselect en una lista de checkboxes. */
+:global([aria-label='Seleccionar calendarios'] [class*='pickerOption']) {
+  min-height: 62px !important;
+  border-radius: 14px !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerOption'][aria-pressed='true']) {
+  background: rgba(91, 61, 245, 0.055) !important;
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerOption']:active) {
+  transform: scale(.985);
+  background: rgba(91, 61, 245, 0.075) !important;
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerCheck']) {
+  position: relative;
+  width: 25px !important;
+  height: 25px !important;
+  border: 1.5px solid rgba(120, 120, 128, 0.32) !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.58) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86);
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerCheck'] svg) {
+  display: none !important;
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerCheckSelected']) {
+  border-color: #5b3df5 !important;
+  background: rgba(91, 61, 245, 0.09) !important;
+  box-shadow: 0 0 0 3px rgba(91, 61, 245, 0.055), inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerCheckSelected'])::after {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #5b3df5;
+  content: '';
+}
+
+:global([aria-label='Seleccionar calendarios'] [class*='pickerDot']) {
+  box-shadow: 0 0 0 2px rgba(255,255,255,.88), 0 1px 3px rgba(15,23,42,.12);
+}
+
 @keyframes calendarGlassSheetIn {
   from { opacity: 0; transform: translateY(28px) scale(.985); filter: blur(4px); }
   65% { opacity: 1; transform: translateY(-2px) scale(1.002); filter: blur(0); }
@@ -64,5 +115,9 @@
 @media (prefers-reduced-motion: reduce) {
   :global([aria-labelledby='calendar-sources-title'] > section) {
     animation: none !important;
+  }
+
+  :global([aria-label='Seleccionar calendarios'] [class*='pickerOption']) {
+    transition: none !important;
   }
 }
