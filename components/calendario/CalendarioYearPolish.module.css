@@ -1,7 +1,20 @@
 .yearPolish {
-  min-height: 100dvh;
-  padding-bottom: calc(156px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  inset: 0 0 calc(4rem + env(safe-area-inset-bottom, 0px)) 0;
+  z-index: 40;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  padding-bottom: 0;
   background: #fff;
+  color-scheme: light;
+  -webkit-overflow-scrolling: touch;
+}
+
+.yearPolish::-webkit-scrollbar {
+  display: none;
 }
 
 .yearPolish :global([class*='topChrome']),
@@ -20,6 +33,7 @@
 }
 
 .yearPolish :global([class*='yearsScroller']) {
+  min-height: 100%;
   padding-bottom: calc(34dvh + 142px + env(safe-area-inset-bottom, 0px));
 }
 
@@ -53,10 +67,6 @@
 }
 
 @media (max-width: 390px) {
-  .yearPolish {
-    padding-bottom: calc(168px + env(safe-area-inset-bottom, 0px));
-  }
-
   .yearPolish :global([class*='yearsScroller']) {
     padding-bottom: calc(38dvh + 154px + env(safe-area-inset-bottom, 0px));
   }
