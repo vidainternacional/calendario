@@ -14,6 +14,9 @@
   contain: layout paint style;
   clip-path: inset(0);
   -webkit-overflow-scrolling: touch;
+  transform-origin: 50% 42%;
+  animation: calendarMonthEnter 260ms cubic-bezier(.22,1,.36,1) both;
+  will-change: transform, opacity;
 }
 
 .monthPolish::after {
@@ -324,6 +327,17 @@
   backdrop-filter: saturate(180%) blur(28px) !important;
 }
 
+@keyframes calendarMonthEnter {
+  from {
+    opacity: .7;
+    transform: scale(.948) translate3d(0, 5px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
 @media (max-width: 390px) {
   .monthPolish::after { height: 104px; }
   .monthPolish :global([class*='monthHeader']) { padding-top: 20px; }
@@ -337,7 +351,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .monthPolish { scroll-behavior: auto; }
+  .monthPolish {
+    scroll-behavior: auto;
+    animation-duration: 1ms;
+    will-change: auto;
+  }
   .monthPolish :global([class*='monthDay']),
   .monthPolish :global([class*='backButton']),
   .monthPolish :global([class*='dayNumber']) { transition: none !important; }
