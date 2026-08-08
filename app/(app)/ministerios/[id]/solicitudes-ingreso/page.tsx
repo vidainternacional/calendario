@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { User } from 'lucide-react'
 import SolicitudIngresoBotones from './SolicitudIngresoBotones'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SolicitudesIngresoPage(
   props: {
     params: Promise<{ id: string }>
@@ -62,8 +64,8 @@ export default async function SolicitudesIngresoPage(
   const min = ministerio as any
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-28">
-      <header className="mb-5">
+    <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-[calc(env(safe-area-inset-top)+8rem)] sm:pt-32">
+      <header className="mb-6 px-1">
         <h1 className="text-xl font-bold text-[#171923] sm:text-2xl">Solicitudes de ingreso</h1>
         <p className="mt-1 text-sm leading-relaxed text-slate-500">
           Personas que desean unirse a {min.nombre}
@@ -71,13 +73,13 @@ export default async function SolicitudesIngresoPage(
       </header>
 
       {!solicitudes || solicitudes.length === 0 ? (
-        <div className="rounded-2xl border border-slate-100 bg-white px-4 py-12 text-center">
+        <div className="rounded-[24px] border border-slate-100 bg-white px-4 py-12 text-center shadow-sm">
           <p className="text-sm text-slate-500">No hay solicitudes pendientes.</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:gap-4">
           {solicitudes.map((sol: any) => (
-            <article key={sol.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+            <article key={sol.id} className="overflow-hidden rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex min-w-0 items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100">
                   <User className="h-5 w-5 text-slate-400" />

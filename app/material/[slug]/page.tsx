@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BookOpen, CalendarDays, Church, LockKeyhole, ShieldAlert } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = { title: 'Material Pastoral' }
 
@@ -78,7 +79,11 @@ export default async function MaterialPublicoPage({ params }: { params: Promise<
   const versiculos = Array.isArray(coleccion?.versiculos) ? coleccion.versiculos : []
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl bg-[#f7f7fb] px-4 pb-16 pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-10 lg:px-8">
+    <main className="mx-auto min-h-screen max-w-4xl bg-[#f7f7fb] px-4 pb-16 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
+      <div className="mb-5">
+        <BackButton />
+      </div>
+
       <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         <header className="bg-gradient-to-br from-indigo-800 via-violet-800 to-slate-950 px-6 py-9 text-white sm:px-10 sm:py-12">
           <div className="flex items-center gap-2 text-indigo-200"><Church className="h-4 w-4" /><span className="text-xs font-bold uppercase tracking-[0.18em]">Vida Internacional</span></div>

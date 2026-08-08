@@ -16,8 +16,10 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = { title: 'Centro Pastoral' }
+export const dynamic = 'force-dynamic'
 
 const estadoPaquete: Record<string, { texto: string; clase: string }> = {
   borrador: { texto: 'Borrador', clase: 'bg-slate-100 text-slate-600' },
@@ -60,7 +62,11 @@ export default async function PastoralPage() {
   ]
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
+    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
+      <div className="mb-5">
+        <BackButton />
+      </div>
+
       <header className="pastoral-page-header">
         <div className="pastoral-eyebrow">
           <ShieldCheck aria-hidden="true" />

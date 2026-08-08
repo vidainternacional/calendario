@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: 'Calendario',
 }
 
+export const dynamic = 'force-dynamic'
+
 function normalizarCalendario(value: any): CalendarioOrigen | null {
   if (!value?.id) return null
   return {
@@ -23,11 +25,41 @@ function normalizarCalendario(value: any): CalendarioOrigen | null {
   }
 }
 
-export default async function CalendarioPage() {
+function firstQueryValue(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export default async function CalendarioPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    evento?: string | string[]
+    fecha?: string | string[]
+  }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const query = searchParams ? await searchParams : {}
+  const eventParam = firstQueryValue(query.evento)?.trim() || null
+  const initialEventId = eventParam && /^[0-9a-f-]{36}$/i.test(eventParam) ? eventParam : null
+  let initialEventDate = firstQueryValue(query.fecha)?.trim() || null
+
+  if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) {
+    initialEventDate = null
+  }
+
+  if (initialEventId && !initialEventDate) {
+    const { data: targetEvent } = await (supabase as any)
+      .from('eventos')
+      .select('fecha_inicio')
+      .eq('id', initialEventId)
+      .maybeSingle()
+
+    if (targetEvent?.fecha_inicio) initialEventDate = String(targetEvent.fecha_inicio)
+  }
 
   const [profileReq, leaderReq] = await Promise.all([
     supabase
@@ -107,6 +139,8 @@ export default async function CalendarioPage() {
       userId={user.id}
       canCreateEvents={canCreateEvents}
       creationCalendars={creationCalendars}
+      initialEventId={initialEventId}
+      initialEventDate={initialEventDate}
     />
   )
 }

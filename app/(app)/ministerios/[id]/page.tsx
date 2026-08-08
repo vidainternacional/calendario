@@ -38,14 +38,14 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
     { data: pubs },
     { count: miembros },
     { data: eventosMin },
-    { count: ingresosPendientes },
+    { data: ingresosPendientesRows },
   ] = await Promise.all([
     db.from('ministerios').select('id, nombre, emoji, color_primario, color_secundario, descripcion, portada_url, avatar_url, fuente_titulo, fuente_cuerpo').eq('id', id).single(),
     db.from('ministerio_miembros').select('es_lider').eq('ministerio_id', id).eq('profile_id', user.id).maybeSingle(),
     db.from('publicaciones').select('id, titulo, cuerpo, created_at, autor:profiles!publicaciones_autor_id_fkey(nombre_completo)').eq('ministerio_id', id).order('created_at', { ascending: false }).limit(5),
     db.from('ministerio_miembros').select('id', { count: 'exact', head: true }).eq('ministerio_id', id),
     db.from('eventos').select('id, titulo, ubicacion, fecha_inicio').eq('ministerio_id', id).gte('fecha_inicio', new Date().toISOString()).order('fecha_inicio').limit(5),
-    db.from('ministerio_solicitudes_ingreso').select('id', { count: 'exact', head: true }).eq('ministerio_id', id).eq('estado', 'pendiente'),
+    db.from('ministerio_solicitudes_ingreso').select('id').eq('ministerio_id', id).eq('estado', 'pendiente'),
   ])
   if (!min) notFound()
 
@@ -56,6 +56,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   const fuenteCuerpo = CUERPO_FONT[min.fuente_cuerpo] || CUERPO_FONT.clasica
   const color = min.color_primario || '#5b3df5'
   const colorSecundario = min.color_secundario || '#7c3aed'
+  const ingresosPendientes = ingresosPendientesRows?.length || 0
 
   const accesos = [
     {
@@ -64,6 +65,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
       detail: 'Noticias y recordatorios',
       icon: Megaphone,
       visible: true,
+      badge: 0,
     },
     {
       href: `/ministerios/${id}/miembros`,
@@ -71,6 +73,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
       detail: `${miembros ?? 0} ${miembros === 1 ? 'servidor' : 'servidores'}`,
       icon: Users,
       visible: true,
+      badge: 0,
     },
     {
       href: `/ministerios/${id}/solicitudes`,
@@ -78,6 +81,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
       detail: 'Peticiones del equipo',
       icon: ClipboardList,
       visible: esMiembro,
+      badge: 0,
     },
     {
       href: `/ministerios/${id}/solicitudes-ingreso`,
@@ -87,6 +91,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
         : 'Sin pendientes',
       icon: UserPlus,
       visible: esLider,
+      badge: ingresosPendientes,
     },
   ].filter((item) => item.visible)
 
@@ -152,14 +157,19 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
                   className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}
                 >
                   <span
-                    className="grid h-9 w-9 place-items-center rounded-full"
+                    className="relative grid h-9 w-9 place-items-center rounded-full"
                     style={{ backgroundColor: `${color}13`, color }}
                   >
                     <Icon className="h-[18px] w-[18px]" />
+                    {item.badge > 0 && (
+                      <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span>
-                    <span className="mt-0.5 block truncate text-[11px] text-slate-400">{item.detail}</span>
+                    <span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span>
                   </span>
                 </Link>
               )

@@ -42,7 +42,7 @@ type InicioClientProps = {
   email?: string | null
 }
 
-const CACHE_SCOPE = 'inicio:v3'
+const CACHE_SCOPE = 'inicio:v4'
 const CACHE_TTL = 10 * 60 * 1000
 
 const estadoConfig = {
@@ -122,8 +122,10 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
 
         const membresias = membresiasRes.data || []
         const ministerioIds = membresias.map((m: any) => m.ministerio_id)
+        const role = (profileRes.data as any)?.rol as string | undefined
+        const puedeVerTodoAvisos = role === 'pastor' || role === 'administrador'
 
-        const publicacionesRes = await supabase
+        let publicacionesQuery = supabase
           .from('publicaciones')
           .select(`
             id,
@@ -133,10 +135,17 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             created_at,
             profiles!autor_id (nombre_completo)
           `)
-          .or(`ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`)
           .eq('estado', 'aprobado')
           .order('created_at', { ascending: false })
-          .limit(50)
+          .limit(100)
+
+        if (!puedeVerTodoAvisos) {
+          publicacionesQuery = publicacionesQuery.or(
+            `ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
+          )
+        }
+
+        const publicacionesRes = await publicacionesQuery
 
         const freshData: InicioData = {
           profile: profileRes.data,
@@ -326,42 +335,48 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           <section aria-label="Tu próxima actividad">
             {nextEvent && nextEventStart ? (
               <Link
-                href="/calendario"
-                className="group relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-[#5b3df5] via-[#6747f3] to-[#7c3aed] p-5 text-white shadow-[0_18px_44px_rgba(91,61,245,0.24)] transition active:scale-[0.992] sm:p-6"
+                href={`/calendario?evento=${encodeURIComponent(String(nextEvent.id))}&fecha=${encodeURIComponent(String(nextEvent.fecha_inicio))}`}
+                className="group relative block overflow-hidden rounded-[24px] border border-white/90 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.07)] transition active:scale-[0.993] sm:p-5"
               >
-                <div className="absolute -right-12 -top-14 h-36 w-36 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-                <div className="relative flex items-start justify-between gap-4">
-                  <span className="inline-flex min-h-7 items-center rounded-full border border-white/20 bg-white/12 px-3 text-[10px] font-extrabold tracking-[0.14em] text-white/90 backdrop-blur-sm">
-                    {nextEventIsToday ? 'HOY' : 'PRÓXIMA ACTIVIDAD'}
-                  </span>
-                  <CalendarDays className="h-5 w-5 text-white/80" aria-hidden="true" />
-                </div>
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#5b3df5] via-[#8b5cf6] to-[#5b3df5]" aria-hidden="true" />
+                <ShineSweep className="opacity-25" />
 
-                <div className="relative mt-4">
-                  <h2 className="line-clamp-2 text-[21px] font-bold leading-tight tracking-[-0.025em]">{nextEvent.titulo}</h2>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/82">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                <div className="relative flex min-w-0 items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#5b3df5] to-[#7c3aed] text-white shadow-[0_6px_16px_rgba(91,61,245,0.22)]">
+                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-[12px] font-extrabold text-[#171923]">Vida Internacional</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-500">
+                        {nextEventIsToday ? 'Hoy' : 'Próxima actividad'}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-slate-400">
                       {nextEventIsToday
                         ? format(nextEventStart, 'h:mm a', { locale: es })
                         : capitalize(format(nextEventStart, "EEE d MMM · h:mm a", { locale: es }))}
                     </span>
-                    {nextEvent.ubicacion && (
-                      <span className="inline-flex min-w-0 items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <span className="max-w-[220px] truncate">{nextEvent.ubicacion}</span>
-                      </span>
-                    )}
-                  </div>
+                  </span>
                 </div>
 
-                <div className="relative mt-5 flex items-center justify-between gap-3 border-t border-white/15 pt-4">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-bold text-white ring-1 ring-white/15">
+                <div className="relative mt-4">
+                  <h2 className="line-clamp-2 text-[19px] font-bold leading-snug tracking-[-0.02em] text-[#171923]">{nextEvent.titulo}</h2>
+                  {nextEvent.ubicacion && (
+                    <p className="mt-2 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden="true" />
+                      <span className="truncate">{nextEvent.ubicacion}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="relative mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-100">
                     <span className={`h-1.5 w-1.5 rounded-full ${nextEventState.dot}`} />
                     {nextEventState.label}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-white">
-                    Ver actividad
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-violet-600">
+                    Ver evento
                     <ChevronRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
                   </span>
                 </div>
@@ -420,7 +435,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             <div className="mb-3 flex items-end justify-between gap-3 px-1">
               <div className="min-w-0">
                 <h2 id="publicaciones-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Avisos para ti</h2>
-                <p className="mt-0.5 text-[11px] text-slate-500">Novedades de la iglesia y de tus ministerios.</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">Desliza dentro del bloque para revisar más.</p>
               </div>
               {publicaciones.length > 0 && (
                 <button
@@ -441,8 +456,8 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                 No hay avisos nuevos por ahora.
               </div>
             ) : (
-              <div className="overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)]">
-                {publicaciones.slice(0, 3).map((pub: any) => (
+              <div className="max-h-[228px] overflow-y-auto overscroll-contain rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)] [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]">
+                {publicaciones.map((pub: any) => (
                   <PublicacionCard
                     key={pub.id}
                     publicationId={String(pub.id)}
@@ -462,37 +477,35 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           <section aria-labelledby="herramientas-inicio">
             <div className="mb-3 px-1">
               <h2 id="herramientas-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Herramientas</h2>
-              <p className="mt-0.5 text-[11px] text-slate-500">Acciones que no están en la navegación principal.</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Atajos distintos según tu responsabilidad.</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/preguntas" className="group min-h-[102px] rounded-[22px] border border-white/90 bg-white p-4 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-600 text-white shadow-[0_5px_14px_rgba(79,70,229,0.18)]">
-                  <Mail className="h-[18px] w-[18px]" aria-hidden="true" />
-                </span>
-                <span className="mt-3 block text-sm font-bold text-[#171923]">Buzón</span>
-                <span className="mt-1 block text-[11px] leading-4 text-slate-500">Oración, dudas y sugerencias.</span>
-              </Link>
 
-              <Link href="/ayuda-solidaria" className="group min-h-[102px] rounded-[22px] border border-white/90 bg-white p-4 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-600 text-rose-50 shadow-[0_5px_14px_rgba(225,29,72,0.2)]">
-                  <HeartHandshake className="h-[18px] w-[18px]" aria-hidden="true" />
+            <div className={`grid gap-3 ${puedeGestionarSolicitudes ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              <Link href="/preguntas" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-indigo-600 text-white shadow-[0_6px_16px_rgba(79,70,229,0.2)]">
+                  <Mail className="h-6 w-6" aria-hidden="true" />
                 </span>
-                <span className="mt-3 block text-sm font-bold text-[#171923]">Ayuda Solidaria</span>
-                <span className="mt-1 block text-[11px] leading-4 text-slate-500">Solicita o brinda apoyo.</span>
+                <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Buzón</span>
+                <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Preguntas y oración</span>
               </Link>
 
               {puedeGestionarSolicitudes && (
-                <Link href="/solicitudes" className="group col-span-2 flex min-h-[74px] items-center gap-3 rounded-[22px] border border-white/90 bg-white px-4 py-3 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.99]">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-                    <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
+                <Link href="/solicitudes" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                  <span className="grid h-14 w-14 place-items-center rounded-full bg-amber-500 text-white shadow-[0_6px_16px_rgba(245,158,11,0.2)]">
+                    <FileText className="h-6 w-6" aria-hidden="true" />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-bold text-[#171923]">Solicitudes</span>
-                    <span className="mt-0.5 block text-[11px] text-slate-500">Revisa y gestiona solicitudes de tu ministerio.</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
+                  <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Solicitudes</span>
+                  <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Recursos del equipo</span>
                 </Link>
               )}
+
+              <Link href="/ayuda-solidaria" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-rose-600 text-rose-50 shadow-[0_6px_16px_rgba(225,29,72,0.22)]">
+                  <HeartHandshake className="h-6 w-6" aria-hidden="true" />
+                </span>
+                <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Ayuda</span>
+                <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Apoyo solidario</span>
+              </Link>
             </div>
           </section>
 

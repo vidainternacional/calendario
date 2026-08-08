@@ -7,6 +7,8 @@ import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDash
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
 import styles from './MinisterioLayout.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export default async function MinisterioLayout({
   children,
   params,
@@ -97,13 +99,16 @@ export default async function MinisterioLayout({
 
   let solicitudesPendientes = 0
   if (puedeGestionarIngresos) {
-    const { count } = await (supabase as any)
+    const { data: pendientes, error } = await (supabase as any)
       .from('ministerio_solicitudes_ingreso')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('ministerio_id', id)
       .eq('estado', 'pendiente')
 
-    solicitudesPendientes = count || 0
+    if (error) {
+      console.error('[MinisterioLayout] No se pudieron cargar solicitudes pendientes', error)
+    }
+    solicitudesPendientes = pendientes?.length || 0
   }
 
   return (
@@ -137,8 +142,11 @@ export default async function MinisterioLayout({
             <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="truncate">
               {solicitudesPendientes === 1
-                ? '1 solicitud de ingreso'
-                : `${solicitudesPendientes} solicitudes de ingreso`}
+                ? '1 solicitud de ingreso pendiente'
+                : `${solicitudesPendientes} solicitudes de ingreso pendientes`}
+            </span>
+            <span className="grid h-6 min-w-6 shrink-0 place-items-center rounded-full bg-indigo-600 px-1.5 text-[10px] font-black text-white">
+              {solicitudesPendientes > 99 ? '99+' : solicitudesPendientes}
             </span>
           </Link>
         )}
