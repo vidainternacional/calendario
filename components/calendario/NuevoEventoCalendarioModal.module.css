@@ -199,10 +199,14 @@
   outline: 0 !important;
   outline-color: transparent !important;
   box-shadow: none !important;
-  -webkit-appearance: none;
-  appearance: none;
   -webkit-tap-highlight-color: transparent;
   color-scheme: light !important;
+}
+.input:not([type='date']):not([type='datetime-local']),
+.select,
+.textarea {
+  -webkit-appearance: none;
+  appearance: none;
 }
 .input:focus,
 .select:focus,
@@ -236,8 +240,6 @@
   color: var(--sheet-text);
   padding: 6px 8px;
   font-size: 15px;
-  -webkit-appearance: auto;
-  appearance: auto;
 }
 .select { min-height: 38px; color: #6f7787; background: transparent; font-size: 16px; }
 
