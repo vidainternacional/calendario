@@ -103,6 +103,7 @@ export default function CalendarioIOS({
   const [selectedDay, setSelectedDay] = useState(new Date())
   const [visibleMonthDate, setVisibleMonthDate] = useState(new Date())
   const [monthScrollRequest, setMonthScrollRequest] = useState(0)
+  const [yearScrollRequest, setYearScrollRequest] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
   const [viewMenuOpen, setViewMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -234,7 +235,9 @@ export default function CalendarioIOS({
     setSelectedDay(today)
     setVisibleMonthDate(today)
 
-    if (view === 'mes' || view === 'lista') {
+    if (view === 'anio') {
+      setYearScrollRequest((request) => request + 1)
+    } else if (view === 'mes' || view === 'lista') {
       setMonthScrollRequest((request) => request + 1)
     }
   }
@@ -335,12 +338,9 @@ export default function CalendarioIOS({
           eventos={sortedEvents}
           isRefreshing={isRefreshing}
           topChrome={topChrome}
+          scrollRequest={yearScrollRequest}
           onOpenMonth={(month) => openMonth(month)}
-          onChangeYear={(year) => {
-            const next = new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28))
-            setActiveDate(next)
-            setVisibleMonthDate(next)
-          }}
+          onChangeYear={onRangeYearChange}
         />
       )}
 
