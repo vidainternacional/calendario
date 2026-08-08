@@ -6,6 +6,7 @@ import {
   BellRing,
   CalendarDays,
   CarFront,
+  ChevronLeft,
   Clock3,
   MapPin,
   NotebookText,
@@ -51,6 +52,8 @@ export default function CalendarioEventDetail({
     : end
       ? `${format(start, 'h:mm a')} – ${format(end, 'h:mm a')}`
       : format(start, 'h:mm a')
+  const monthText = format(start, 'MMMM', { locale: es })
+  const monthLabel = monthText.charAt(0).toUpperCase() + monthText.slice(1)
 
   return (
     <div
@@ -64,14 +67,15 @@ export default function CalendarioEventDetail({
         aria-modal="true"
         aria-labelledby="calendar-event-detail-title"
       >
-        <span className={styles.grabber} aria-hidden="true" />
-
         <header className={styles.topbar}>
-          <span aria-hidden="true" />
+          <button type="button" className={styles.backButton} onClick={onClose} aria-label={`Volver a ${monthLabel}`}>
+            <ChevronLeft size={24} strokeWidth={2.4} aria-hidden="true" />
+            <span>{monthLabel}</span>
+          </button>
           <p className={styles.topbarTitle}>
             {event.kind === 'reminder' ? 'Recordatorio' : 'Evento'}
           </p>
-          <button type="button" className={styles.doneButton} onClick={onClose}>Listo</button>
+          <span className={styles.topbarSpacer} aria-hidden="true" />
         </header>
 
         <div className={styles.body}>
