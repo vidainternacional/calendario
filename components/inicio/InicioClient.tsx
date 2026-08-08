@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
   CalendarDays,
@@ -8,9 +9,10 @@ import {
   Clock3,
   FileText,
   HeartHandshake,
+  Mail,
   MapPin,
-  MessageCircleMore,
   UsersRound,
+  X,
 } from 'lucide-react'
 import { format, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -24,6 +26,7 @@ import {
   useUnreadPublicationsCount,
 } from '@/components/avisos/usePublicationReads'
 import InstallBanner from '@/components/pwa/InstallBanner'
+import ShineSweep from '@/components/ui/ShineSweep'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 
 type InicioData = {
@@ -39,7 +42,7 @@ type InicioClientProps = {
   email?: string | null
 }
 
-const CACHE_SCOPE = 'inicio:v2'
+const CACHE_SCOPE = 'inicio:v3'
 const CACHE_TTL = 10 * 60 * 1000
 
 const estadoConfig = {
@@ -71,6 +74,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
   )
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [clock, setClock] = useState<Date | null>(null)
+  const [avisosPreviewOpen, setAvisosPreviewOpen] = useState(false)
 
   useEffect(() => {
     const updateClock = () => setClock(new Date())
@@ -132,7 +136,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           .or(`ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`)
           .eq('estado', 'aprobado')
           .order('created_at', { ascending: false })
-          .limit(5)
+          .limit(50)
 
         const freshData: InicioData = {
           profile: profileRes.data,
@@ -156,6 +160,37 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
       cancelled = true
     }
   }, [userId])
+
+  useEffect(() => {
+    if (!avisosPreviewOpen) return
+    const scrollY = window.scrollY
+    const body = document.body
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    }
+
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAvisosPreviewOpen(false)
+    }
+    document.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape)
+      body.style.position = previous.position
+      body.style.top = previous.top
+      body.style.width = previous.width
+      body.style.overflow = previous.overflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [avisosPreviewOpen])
 
   const currentPublicationIds = (data?.publicaciones || []).map((pub: any) => String(pub.id))
   const unreadIds = useUnreadPublicationIds(currentPublicationIds)
@@ -190,205 +225,287 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
     ? capitalize(format(clock, "EEEE, d 'de' MMMM", { locale: es }))
     : 'Tu espacio personal en VIDA'
 
-  return (
-    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(.85rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
-      <header className="mb-5 flex items-center justify-between gap-4 sm:mb-6">
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold tracking-[0.02em] text-slate-500">{todayLabel}</p>
-          <h1 className="mt-1 truncate text-[26px] font-bold leading-tight tracking-[-0.035em] text-[#171923]">
-            {greetingFor(clock)}, {firstName}
-          </h1>
-          {isRefreshing && (
-            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />
-              Actualizando
-            </span>
-          )}
-        </div>
-
-        <Link
-          href="/perfil"
-          aria-label="Abrir perfil"
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-[0_8px_20px_rgba(79,70,229,0.22)] ring-4 ring-white/80 transition active:scale-95"
+  const avisosPreview = avisosPreviewOpen && typeof document !== 'undefined'
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-[9997] flex items-end justify-center bg-slate-950/35 px-0 backdrop-blur-[2px] sm:items-center sm:px-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setAvisosPreviewOpen(false)
+          }}
         >
-          {inicial}
-        </Link>
-      </header>
-
-      <div className="space-y-5 sm:space-y-6">
-        <section aria-label="Tu próxima actividad">
-          {nextEvent && nextEventStart ? (
-            <Link
-              href="/calendario"
-              className="group relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-[#5b3df5] via-[#6747f3] to-[#7c3aed] p-5 text-white shadow-[0_18px_44px_rgba(91,61,245,0.24)] transition active:scale-[0.992] sm:p-6"
-            >
-              <div className="absolute -right-12 -top-14 h-36 w-36 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
-              <div className="relative flex items-start justify-between gap-4">
-                <span className="inline-flex min-h-7 items-center rounded-full border border-white/20 bg-white/12 px-3 text-[10px] font-extrabold tracking-[0.14em] text-white/90 backdrop-blur-sm">
-                  {nextEventIsToday ? 'HOY' : 'PRÓXIMA ACTIVIDAD'}
-                </span>
-                <CalendarDays className="h-5 w-5 text-white/80" aria-hidden="true" />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="avisos-preview-title"
+            className="flex max-h-[86dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-[30px] border border-white/80 bg-[#f7f8fb] shadow-[0_-18px_60px_rgba(15,23,42,0.22)] sm:rounded-[30px]"
+          >
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/95 px-4 pb-3 pt-4 backdrop-blur-xl sm:px-5">
+              <div className="min-w-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-indigo-500">Vista rápida</p>
+                <h2 id="avisos-preview-title" className="mt-0.5 text-xl font-bold tracking-[-0.025em] text-[#171923]">Avisos para ti</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al día'} · los dos checks indican leído
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setAvisosPreviewOpen(false)}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 transition active:scale-95"
+                aria-label="Cerrar vista rápida de avisos"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </header>
 
-              <div className="relative mt-4">
-                <h2 className="line-clamp-2 text-[21px] font-bold leading-tight tracking-[-0.025em]">{nextEvent.titulo}</h2>
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/82">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-                    {nextEventIsToday
-                      ? format(nextEventStart, 'h:mm a', { locale: es })
-                      : capitalize(format(nextEventStart, "EEE d MMM · h:mm a", { locale: es }))}
-                  </span>
-                  {nextEvent.ubicacion && (
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      <span className="max-w-[220px] truncate">{nextEvent.ubicacion}</span>
-                    </span>
-                  )}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 [-webkit-overflow-scrolling:touch] sm:px-4">
+              {publicaciones.length === 0 ? (
+                <div className="rounded-[22px] border border-white bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-sm">
+                  No hay avisos disponibles por ahora.
                 </div>
-              </div>
-
-              <div className="relative mt-5 flex items-center justify-between gap-3 border-t border-white/15 pt-4">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-bold text-white ring-1 ring-white/15">
-                  <span className={`h-1.5 w-1.5 rounded-full ${nextEventState.dot}`} />
-                  {nextEventState.label}
-                </span>
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-white">
-                  Ver actividad
-                  <ChevronRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
-                </span>
-              </div>
-            </Link>
-          ) : (
-            <div className="flex min-h-[118px] items-center gap-4 rounded-[28px] border border-white/90 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-                <CalendarDays className="h-6 w-6" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="text-[10px] font-extrabold tracking-[0.14em] text-violet-600">HOY</span>
-                <span className="mt-1 block text-lg font-bold tracking-[-0.02em] text-[#171923]">Tu agenda está libre por ahora</span>
-                <span className="mt-1 block text-xs leading-5 text-slate-500">No tienes actividades asignadas próximas.</span>
-              </span>
+              ) : (
+                <div className="overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.06)]">
+                  {publicaciones.map((pub: any) => (
+                    <PublicacionCard
+                      key={pub.id}
+                      publicationId={String(pub.id)}
+                      unread={unreadIds.has(String(pub.id))}
+                      titulo={pub.titulo}
+                      cuerpo={pub.cuerpo}
+                      tipo={pub.tipo}
+                      fecha={format(new Date(pub.created_at), "d 'de' MMM", { locale: es })}
+                      autor={pub.profiles?.nombre_completo || 'Autor desconocido'}
+                      variant="row"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </section>
 
-        <MaterialesInicio
-          materiales={materiales}
-          mode="preparation"
-          puedeAbrirCentroPastoral={puedeAbrirCentroPastoral}
-        />
-
-        {membresias.length > 0 ? (
-          <MinisterioSwitcher
-            membresias={membresias.map((m: any) => ({
-              ministerio_id: m.ministerio_id,
-              es_lider: !!m.es_lider,
-              nombre: m.ministerios?.nombre ?? 'Ministerio',
-              emoji: m.ministerios?.emoji ?? '⛪',
-              color: m.ministerios?.color_primario ?? '#5B3DF5',
-            }))}
-          />
-        ) : (
-          <section aria-label="Ministerios">
-            <Link
-              href="/ministerios"
-              className="group flex min-h-[76px] items-center gap-3 rounded-[24px] border border-white/90 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] transition active:scale-[0.992]"
-            >
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700">
-                <UsersRound className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[10px] font-extrabold uppercase tracking-[0.11em] text-emerald-600">SERVIR</span>
-                <span className="mt-0.5 block text-sm font-bold text-[#171923]">Explorar ministerios</span>
-                <span className="mt-0.5 block text-[11px] text-slate-500">Encuentra un equipo donde puedas servir.</span>
-              </span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
-            </Link>
+            <footer className="shrink-0 border-t border-slate-200/80 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-5">
+              <Link
+                href="/avisos"
+                onClick={() => setAvisosPreviewOpen(false)}
+                className="flex min-h-12 items-center justify-center rounded-2xl bg-indigo-600 px-4 text-sm font-bold text-white shadow-[0_8px_24px_rgba(79,70,229,0.22)] transition active:scale-[0.99]"
+              >
+                Abrir todos los avisos
+              </Link>
+            </footer>
           </section>
-        )}
+        </div>,
+        document.body,
+      )
+    : null
 
-        <section aria-labelledby="publicaciones-inicio">
-          <div className="mb-3 flex items-end justify-between gap-3 px-1">
-            <div className="min-w-0">
-              <h2 id="publicaciones-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Avisos para ti</h2>
-              <p className="mt-0.5 text-[11px] text-slate-500">Novedades de la iglesia y de tus ministerios.</p>
-            </div>
-            {unreadCount > 0 && (
-              <span className="shrink-0 rounded-full bg-rose-500 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-sm">
-                {unreadCount > 99 ? '99+' : unreadCount} nuevo{unreadCount === 1 ? '' : 's'}
+  return (
+    <>
+      <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(.85rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
+        <header className="mb-5 flex items-center justify-between gap-4 sm:mb-6">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold tracking-[0.02em] text-slate-500">{todayLabel}</p>
+            <h1 className="mt-1 truncate text-[26px] font-bold leading-tight tracking-[-0.035em] text-[#171923]">
+              {greetingFor(clock)}, {firstName}
+            </h1>
+            {isRefreshing && (
+              <span className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />
+                Actualizando
               </span>
             )}
           </div>
 
-          {publicaciones.length === 0 ? (
-            <div className="rounded-[24px] border border-white/90 bg-white px-4 py-5 text-sm text-slate-500 shadow-[0_8px_26px_rgba(15,23,42,0.045)]">
-              No hay avisos nuevos por ahora.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)]">
-              {publicaciones.slice(0, 3).map((pub: any) => (
-                <PublicacionCard
-                  key={pub.id}
-                  publicationId={String(pub.id)}
-                  unread={unreadIds.has(String(pub.id))}
-                  titulo={pub.titulo}
-                  cuerpo={pub.cuerpo}
-                  tipo={pub.tipo}
-                  fecha={format(new Date(pub.created_at), "d 'de' MMM", { locale: es })}
-                  autor={pub.profiles?.nombre_completo || 'Autor desconocido'}
-                  variant="row"
-                />
-              ))}
-            </div>
-          )}
-        </section>
+          <Link
+            href="/perfil"
+            aria-label="Abrir perfil"
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-[0_8px_20px_rgba(79,70,229,0.22)] ring-4 ring-white/80 transition active:scale-95"
+          >
+            {inicial}
+          </Link>
+        </header>
 
-        <section aria-labelledby="herramientas-inicio">
-          <div className="mb-3 px-1">
-            <h2 id="herramientas-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Herramientas</h2>
-            <p className="mt-0.5 text-[11px] text-slate-500">Acciones que no están en la navegación principal.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/preguntas" className="group min-h-[102px] rounded-[22px] border border-white/90 bg-white p-4 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-50 text-indigo-700">
-                <MessageCircleMore className="h-[18px] w-[18px]" aria-hidden="true" />
-              </span>
-              <span className="mt-3 block text-sm font-bold text-[#171923]">Buzón</span>
-              <span className="mt-1 block text-[11px] leading-4 text-slate-500">Oración, dudas y sugerencias.</span>
-            </Link>
+        <div className="space-y-5 sm:space-y-6">
+          <section aria-label="Tu próxima actividad">
+            {nextEvent && nextEventStart ? (
+              <Link
+                href="/calendario"
+                className="group relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-[#5b3df5] via-[#6747f3] to-[#7c3aed] p-5 text-white shadow-[0_18px_44px_rgba(91,61,245,0.24)] transition active:scale-[0.992] sm:p-6"
+              >
+                <div className="absolute -right-12 -top-14 h-36 w-36 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+                <div className="relative flex items-start justify-between gap-4">
+                  <span className="inline-flex min-h-7 items-center rounded-full border border-white/20 bg-white/12 px-3 text-[10px] font-extrabold tracking-[0.14em] text-white/90 backdrop-blur-sm">
+                    {nextEventIsToday ? 'HOY' : 'PRÓXIMA ACTIVIDAD'}
+                  </span>
+                  <CalendarDays className="h-5 w-5 text-white/80" aria-hidden="true" />
+                </div>
 
-            <Link href="/ayuda-solidaria" className="group min-h-[102px] rounded-[22px] border border-white/90 bg-white p-4 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-50 text-rose-600">
-                <HeartHandshake className="h-[18px] w-[18px]" aria-hidden="true" />
-              </span>
-              <span className="mt-3 block text-sm font-bold text-[#171923]">Ayuda Solidaria</span>
-              <span className="mt-1 block text-[11px] leading-4 text-slate-500">Solicita o brinda apoyo.</span>
-            </Link>
+                <div className="relative mt-4">
+                  <h2 className="line-clamp-2 text-[21px] font-bold leading-tight tracking-[-0.025em]">{nextEvent.titulo}</h2>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/82">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                      {nextEventIsToday
+                        ? format(nextEventStart, 'h:mm a', { locale: es })
+                        : capitalize(format(nextEventStart, "EEE d MMM · h:mm a", { locale: es }))}
+                    </span>
+                    {nextEvent.ubicacion && (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span className="max-w-[220px] truncate">{nextEvent.ubicacion}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-            {puedeGestionarSolicitudes && (
-              <Link href="/solicitudes" className="group col-span-2 flex min-h-[74px] items-center gap-3 rounded-[22px] border border-white/90 bg-white px-4 py-3 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.99]">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
-                  <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
+                <div className="relative mt-5 flex items-center justify-between gap-3 border-t border-white/15 pt-4">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-bold text-white ring-1 ring-white/15">
+                    <span className={`h-1.5 w-1.5 rounded-full ${nextEventState.dot}`} />
+                    {nextEventState.label}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-white">
+                    Ver actividad
+                    <ChevronRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex min-h-[118px] items-center gap-4 rounded-[28px] border border-white/90 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+                  <CalendarDays className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold text-[#171923]">Solicitudes</span>
-                  <span className="mt-0.5 block text-[11px] text-slate-500">Revisa y gestiona solicitudes de tu ministerio.</span>
+                  <span className="text-[10px] font-extrabold tracking-[0.14em] text-violet-600">HOY</span>
+                  <span className="mt-1 block text-lg font-bold tracking-[-0.02em] text-[#171923]">Tu agenda está libre por ahora</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">No tienes actividades asignadas próximas.</span>
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
-              </Link>
+              </div>
             )}
-          </div>
-        </section>
+          </section>
 
-        <MaterialesInicio
-          materiales={materiales}
-          mode="growth"
-          puedeAbrirCentroPastoral={puedeAbrirCentroPastoral}
-        />
+          <MaterialesInicio
+            materiales={materiales}
+            mode="preparation"
+            puedeAbrirCentroPastoral={puedeAbrirCentroPastoral}
+          />
 
-        <InstallBanner />
-      </div>
-    </main>
+          {membresias.length > 0 ? (
+            <MinisterioSwitcher
+              membresias={membresias.map((m: any) => ({
+                ministerio_id: m.ministerio_id,
+                es_lider: !!m.es_lider,
+                nombre: m.ministerios?.nombre ?? 'Ministerio',
+                emoji: m.ministerios?.emoji ?? '⛪',
+                color: m.ministerios?.color_primario ?? '#5B3DF5',
+              }))}
+            />
+          ) : (
+            <section aria-label="Explorar ministerios">
+              <Link
+                href="/ministerios"
+                className="group relative flex min-h-[84px] items-center gap-3 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#5b3df5] via-[#6d43f5] to-[#7c3aed] px-4 py-3.5 text-white shadow-[0_14px_34px_rgba(91,61,245,0.22)] ring-1 ring-white/20 transition active:scale-[0.992]"
+              >
+                <ShineSweep />
+                <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-sm">
+                  <UsersRound className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="relative min-w-0 flex-1">
+                  <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/75">SERVIR</span>
+                  <span className="mt-1 block text-[16px] font-bold tracking-[-0.02em] text-white">Explorar ministerios</span>
+                  <span className="mt-0.5 block text-[11px] text-white/72">Encuentra un equipo donde puedas servir.</span>
+                </span>
+                <ChevronRight className="relative h-5 w-5 shrink-0 text-white/80 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+              </Link>
+            </section>
+          )}
+
+          <section aria-labelledby="publicaciones-inicio">
+            <div className="mb-3 flex items-end justify-between gap-3 px-1">
+              <div className="min-w-0">
+                <h2 id="publicaciones-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Avisos para ti</h2>
+                <p className="mt-0.5 text-[11px] text-slate-500">Novedades de la iglesia y de tus ministerios.</p>
+              </div>
+              {publicaciones.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAvisosPreviewOpen(true)}
+                  aria-haspopup="dialog"
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold shadow-sm transition active:scale-95 ${
+                    unreadCount > 0 ? 'bg-rose-500 text-white' : 'bg-white text-indigo-600 ring-1 ring-slate-200'
+                  }`}
+                >
+                  {unreadCount > 0 ? `${unreadCount > 99 ? '99+' : unreadCount} nuevo${unreadCount === 1 ? '' : 's'}` : 'Vista rápida'}
+                </button>
+              )}
+            </div>
+
+            {publicaciones.length === 0 ? (
+              <div className="rounded-[24px] border border-white/90 bg-white px-4 py-5 text-sm text-slate-500 shadow-[0_8px_26px_rgba(15,23,42,0.045)]">
+                No hay avisos nuevos por ahora.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)]">
+                {publicaciones.slice(0, 3).map((pub: any) => (
+                  <PublicacionCard
+                    key={pub.id}
+                    publicationId={String(pub.id)}
+                    unread={unreadIds.has(String(pub.id))}
+                    titulo={pub.titulo}
+                    cuerpo={pub.cuerpo}
+                    tipo={pub.tipo}
+                    fecha={format(new Date(pub.created_at), "d 'de' MMM", { locale: es })}
+                    autor={pub.profiles?.nombre_completo || 'Autor desconocido'}
+                    variant="row"
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section aria-labelledby="herramientas-inicio">
+            <div className="mb-3 px-1">
+              <h2 id="herramientas-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Herramientas</h2>
+              <p className="mt-0.5 text-[11px] text-slate-500">Acciones que no están en la navegación principal.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/preguntas" className="group min-h-[102px] rounded-[22px] border border-white/90 bg-white p-4 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-600 text-white shadow-[0_5px_14px_rgba(79,70,229,0.18)]">
+                  <Mail className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                <span className="mt-3 block text-sm font-bold text-[#171923]">Buzón</span>
+                <span className="mt-1 block text-[11px] leading-4 text-slate-500">Oración, dudas y sugerencias.</span>
+              </Link>
+
+              <Link href="/ayuda-solidaria" className="group min-h-[102px] rounded-[22px] border border-white/90 bg-white p-4 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-600 text-rose-50 shadow-[0_5px_14px_rgba(225,29,72,0.2)]">
+                  <HeartHandshake className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                <span className="mt-3 block text-sm font-bold text-[#171923]">Ayuda Solidaria</span>
+                <span className="mt-1 block text-[11px] leading-4 text-slate-500">Solicita o brinda apoyo.</span>
+              </Link>
+
+              {puedeGestionarSolicitudes && (
+                <Link href="/solicitudes" className="group col-span-2 flex min-h-[74px] items-center gap-3 rounded-[22px] border border-white/90 bg-white px-4 py-3 shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.99]">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700">
+                    <FileText className="h-[18px] w-[18px]" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-[#171923]">Solicitudes</span>
+                    <span className="mt-0.5 block text-[11px] text-slate-500">Revisa y gestiona solicitudes de tu ministerio.</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
+                </Link>
+              )}
+            </div>
+          </section>
+
+          <MaterialesInicio
+            materiales={materiales}
+            mode="growth"
+            puedeAbrirCentroPastoral={puedeAbrirCentroPastoral}
+          />
+
+          <InstallBanner />
+        </div>
+      </main>
+      {avisosPreview}
+    </>
   )
 }

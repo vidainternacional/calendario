@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronRight, ExternalLink, Globe, Megaphone, X } from 'lucide-react'
+import { Check, CheckCheck, ChevronRight, ExternalLink, Globe, Megaphone, X } from 'lucide-react'
 import { markPublicationRead } from '@/components/avisos/usePublicationReads'
 
 type PublicacionCardProps = {
@@ -18,6 +18,18 @@ type PublicacionCardProps = {
   etiqueta?: string
   colorClass?: string
   variant?: 'card' | 'row'
+}
+
+function ReadReceipt({ unread }: { unread: boolean }) {
+  return unread ? (
+    <span className="inline-flex items-center text-slate-400" aria-label="Pendiente de leer" title="Pendiente de leer">
+      <Check className="h-4 w-4" aria-hidden="true" />
+    </span>
+  ) : (
+    <span className="inline-flex items-center text-indigo-500" aria-label="Leído" title="Leído">
+      <CheckCheck className="h-4 w-4" aria-hidden="true" />
+    </span>
+  )
 }
 
 export default function PublicacionCard({
@@ -36,6 +48,7 @@ export default function PublicacionCard({
 }: PublicacionCardProps) {
   const [abierta, setAbierta] = useState(false)
   const inicial = autor.charAt(0).toUpperCase()
+  const tracked = Boolean(publicationId)
 
   const abrir = () => {
     setAbierta(true)
@@ -93,10 +106,18 @@ export default function PublicacionCard({
           >
             <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
               <div className="min-w-0 flex-1">
-                <span className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${colorClass}`}>
-                  <Megaphone className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{etiqueta ?? tipo.replace('_', ' ')}</span>
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${colorClass}`}>
+                    <Megaphone className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{etiqueta ?? tipo.replace('_', ' ')}</span>
+                  </span>
+                  {tracked && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-500">
+                      <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                      Leído
+                    </span>
+                  )}
+                </div>
                 <h2 className="mt-2 break-words text-xl font-bold leading-snug text-[#171923] sm:text-2xl">{titulo}</h2>
               </div>
               <button
@@ -146,7 +167,7 @@ export default function PublicacionCard({
           type="button"
           onClick={abrir}
           className={`group flex min-h-[74px] w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 active:bg-slate-50 focus:outline-none focus-visible:bg-indigo-50/60 ${unread ? 'bg-indigo-50/25' : ''}`}
-          aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : ''}`}
+          aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : ', leída'}`}
         >
           <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
             <Megaphone className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -163,7 +184,10 @@ export default function PublicacionCard({
               {cuerpo || autor}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+          <span className="flex shrink-0 items-center gap-1.5">
+            {tracked && <ReadReceipt unread={unread} />}
+            <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+          </span>
         </button>
         {modal}
       </>
@@ -176,7 +200,7 @@ export default function PublicacionCard({
         type="button"
         onClick={abrir}
         className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 ${compacta ? 'p-4 sm:p-5' : 'p-5'} ${unread ? 'border-indigo-200' : 'border-slate-100'}`}
-        aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : ''}`}
+        aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : tracked ? ', leída' : ''}`}
       >
         {unread && <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-rose-500" aria-hidden="true" />}
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 pr-3">
@@ -184,7 +208,10 @@ export default function PublicacionCard({
             <Megaphone className="h-3 w-3 shrink-0" />
             <span className="truncate">{etiqueta ?? tipo.replace('_', ' ')}</span>
           </span>
-          <span className="text-[11px] text-gray-400">{fecha}</span>
+          <span className="flex items-center gap-2">
+            {tracked && <ReadReceipt unread={unread} />}
+            <span className="text-[11px] text-gray-400">{fecha}</span>
+          </span>
         </div>
 
         <h3 className="break-words text-base font-bold leading-snug text-[#171923]">{titulo}</h3>

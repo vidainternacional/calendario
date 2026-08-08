@@ -1,7 +1,8 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import PreguntaForm from './PreguntaForm'
-import { MessageCircleQuestion, MailCheck } from 'lucide-react'
+import { ChevronLeft, Mail, MailCheck } from 'lucide-react'
 
 export default async function PreguntasPage() {
   const supabase = await createClient()
@@ -17,26 +18,42 @@ export default async function PreguntasPage() {
   const preguntasList = (preguntas as any[]) || []
 
   return (
-    <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-28 pt-5 sm:pt-8">
+    <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-28 pt-[calc(.75rem+env(safe-area-inset-top))] sm:pt-8">
       <header className="mb-6 sm:mb-8">
-        <h1 className="break-words text-2xl font-bold text-[#171923]">Buzón de preguntas</h1>
-        <p className="mt-1 max-w-xl text-sm leading-relaxed text-gray-500">
-          Escribe tus dudas, sugerencias o motivos de oración. Los pastores te responderán en privado.
-        </p>
+        <Link
+          href="/inicio"
+          className="mb-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/90 bg-white px-3.5 text-sm font-bold text-slate-700 shadow-[0_5px_18px_rgba(15,23,42,0.06)] transition active:scale-[0.98]"
+          aria-label="Volver a Inicio"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          Inicio
+        </Link>
+
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-600 text-white shadow-[0_7px_20px_rgba(79,70,229,0.2)]">
+            <Mail className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-bold text-[#171923]">Buzón</h1>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-gray-500">
+              Escribe tus dudas, sugerencias o motivos de oración. Los pastores te responderán en privado.
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className="relative mb-7 overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:mb-8 sm:p-6">
         <div className="pointer-events-none absolute right-0 top-0 p-3 opacity-[0.07] sm:p-4">
-          <MessageCircleQuestion className="h-20 w-20 sm:h-24 sm:w-24" />
+          <Mail className="h-20 w-20 sm:h-24 sm:w-24" />
         </div>
         <PreguntaForm />
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-[#171923]">Tus preguntas</h2>
+        <h2 className="text-lg font-bold text-[#171923]">Tus mensajes</h2>
         {preguntasList.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center">
-            <p className="text-sm text-gray-500">No has enviado ninguna pregunta todavía.</p>
+            <p className="text-sm text-gray-500">No has enviado ningún mensaje todavía.</p>
           </div>
         ) : (
           preguntasList.map((p) => (

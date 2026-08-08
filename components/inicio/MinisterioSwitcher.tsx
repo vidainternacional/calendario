@@ -40,7 +40,7 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/78">
-              Mi ministerio
+              {membresias.length > 1 ? 'Mis ministerios' : 'Mi ministerio'}
               {principal.es_lider && (
                 <span className="rounded-full bg-white/16 px-2 py-0.5 text-[8px] font-extrabold text-white ring-1 ring-white/20">Líder</span>
               )}
@@ -53,28 +53,26 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
           <ChevronRight className="h-5 w-5 shrink-0 text-white/75" aria-hidden="true" />
         </Link>
 
-        {membresias.length > 1 && (
-          <button
-            type="button"
-            onClick={() => setAbierto((valor) => !valor)}
-            aria-expanded={abierto}
-            aria-haspopup="menu"
-            aria-label="Cambiar de ministerio"
-            className="relative flex w-[58px] shrink-0 flex-col items-center justify-center gap-1 border-l border-white/15 bg-white/8 text-white transition active:bg-white/15"
-          >
-            <span className="rounded-full bg-white/16 px-2 py-0.5 text-[9px] font-extrabold ring-1 ring-white/20">{membresias.length}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setAbierto((valor) => !valor)}
+          aria-expanded={abierto}
+          aria-haspopup="menu"
+          aria-label="Cambiar o explorar ministerios"
+          className="relative flex w-[58px] shrink-0 flex-col items-center justify-center gap-1 border-l border-white/15 bg-white/8 text-white transition active:bg-white/15"
+        >
+          <span className="rounded-full bg-white/16 px-2 py-0.5 text-[9px] font-extrabold ring-1 ring-white/20">{membresias.length}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
       </div>
 
-      {abierto && membresias.length > 1 && (
+      {abierto && (
         <>
           <button type="button" aria-label="Cerrar selector de ministerios" className="fixed inset-0 z-40 cursor-default bg-transparent" onClick={() => setAbierto(false)} />
           <div role="menu" className="absolute left-0 right-0 z-50 mt-2 max-h-[min(70vh,420px)] overflow-y-auto rounded-[24px] border border-slate-200/80 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.18)] [-webkit-overflow-scrolling:touch]">
             <div className="px-3 pb-2 pt-2">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400">Mis ministerios</p>
-              <p className="mt-1 text-xs text-slate-500">Elige el dashboard que deseas abrir.</p>
+              <p className="mt-1 text-xs text-slate-500">Elige el dashboard que deseas abrir o explora otros equipos.</p>
             </div>
             <div className="space-y-1">
               {membresias.map((ministerio, index) => (
@@ -107,7 +105,7 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
                 className="flex min-h-12 items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-indigo-600 transition-colors active:bg-indigo-50"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-50"><LayoutGrid className="h-4 w-4" aria-hidden="true" /></span>
-                <span className="min-w-0 flex-1">Ver todos los ministerios</span>
+                <span className="min-w-0 flex-1">Explorar ministerios</span>
               </Link>
             </div>
           </div>
