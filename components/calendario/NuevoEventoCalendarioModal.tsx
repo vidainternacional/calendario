@@ -5,38 +5,35 @@ import { Check, Loader2, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { crearEventoCalendario } from '@/app/actions/eventos'
-import { createClient } from '@/lib/supabase/client'
 import type { CalendarioOrigen } from './calendario-ios-types'
 import formStyles from './NuevoEventoCalendarioModal.module.css'
 
-type Miembro = {
-  id: string
-  nombre: string
-}
-
 type ItemType = 'event' | 'reminder'
+
+function etiquetaCalendario(calendar: CalendarioOrigen) {
+  if (calendar.es_publico && !calendar.ministerio_id) {
+    return 'Toda la congregación — Vida Internacional'
+  }
+  return calendar.nombre
+}
 
 export default function NuevoEventoCalendarioModal({
   isOpen,
   onClose,
   onCreated,
   editableCalendars,
-  userId,
   fechaInicial,
 }: {
   isOpen: boolean
   onClose: () => void
   onCreated: () => void
   editableCalendars: CalendarioOrigen[]
-  userId: string
   fechaInicial: Date
 }) {
   const [mounted, setMounted] = useState(false)
   const [itemType, setItemType] = useState<ItemType>('event')
   const [todoElDia, setTodoElDia] = useState(false)
   const [calendarId, setCalendarId] = useState(editableCalendars[0]?.id || '')
-  const [miembros, setMiembros] = useState<Miembro[]>([])
-  const [cargandoMiembros, setCargandoMiembros] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [alertaDia, setAlertaDia] = useState(true)
@@ -84,63 +81,6 @@ export default function NuevoEventoCalendarioModal({
   }, [calendarId, editableCalendars, isOpen])
 
   useEffect(() => {
-    if (!isOpen || itemType === 'reminder' || !selectedCalendar) {
-      setMiembros([])
-      return
-    }
-
-    let cancelled = false
-
-    async function cargarMiembros() {
-      setCargandoMiembros(true)
-      const supabase = createClient()
-
-      try {
-        if (selectedCalendar.ministerio_id) {
-          const { data } = await supabase
-            .from('ministerio_miembros')
-            .select('profile_id, profiles(id, nombre_completo)')
-            .eq('ministerio_id', selectedCalendar.ministerio_id)
-
-          if (!cancelled) {
-            setMiembros(
-              (data || [])
-                .map((item: any) => ({
-                  id: item.profile_id,
-                  nombre: item.profiles?.nombre_completo || 'Miembro',
-                }))
-                .filter((item: Miembro) => item.id !== userId),
-            )
-          }
-          return
-        }
-
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, nombre_completo')
-          .eq('activo', true)
-          .eq('estado_cuenta', 'activo')
-          .order('nombre_completo')
-
-        if (!cancelled) {
-          setMiembros(
-            (data || [])
-              .map((item: any) => ({ id: item.id, nombre: item.nombre_completo || 'Miembro' }))
-              .filter((item: Miembro) => item.id !== userId),
-          )
-        }
-      } finally {
-        if (!cancelled) setCargandoMiembros(false)
-      }
-    }
-
-    void cargarMiembros()
-    return () => {
-      cancelled = true
-    }
-  }, [isOpen, itemType, selectedCalendar, userId])
-
-  useEffect(() => {
     if (!isOpen) return
 
     const base = new Date(fechaInicial)
@@ -162,7 +102,7 @@ export default function NuevoEventoCalendarioModal({
     setError('')
 
     if (!selectedCalendar) {
-      setError('No hay un calendario editable disponible.')
+      setError('No hay un calendario disponible para guardar este elemento.')
       return
     }
 
@@ -366,7 +306,7 @@ export default function NuevoEventoCalendarioModal({
               )}
             </section>
 
-            <p className={formStyles.sectionLabel}>Más opciones</p>
+            <p className={formStyles.sectionLabel}>Audiencia</p>
             <section className={formStyles.group}>
               <label className={formStyles.row}>
                 <span className={formStyles.label}>Calendario</span>
@@ -380,42 +320,17 @@ export default function NuevoEventoCalendarioModal({
                     name="calendar_id"
                     value={calendarId}
                     onChange={(event) => setCalendarId(event.target.value)}
-                    className={formStyles.select}
+                    className={`${formStyles.select} ${formStyles.calendarSelect}`}
                     required
-                    aria-label="Calendario"
+                    aria-label="Calendario o audiencia"
                   >
                     {editableCalendars.map((calendar) => (
-                      <option key={calendar.id} value={calendar.id}>{calendar.nombre}</option>
+                      <option key={calendar.id} value={calendar.id}>{etiquetaCalendario(calendar)}</option>
                     ))}
                   </select>
                 </span>
               </label>
             </section>
-
-            {itemType === 'event' && (
-              <section className={`${formStyles.group} ${formStyles.spacedGroup}`}>
-                <div className={formStyles.column}>
-                  <span className={formStyles.inlineHeading}>Participantes</span>
-                  {cargandoMiembros ? (
-                    <span className={formStyles.membersIntro}>
-                      <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                      Cargando miembros…
-                    </span>
-                  ) : miembros.length > 0 ? (
-                    <div className={formStyles.membersList}>
-                      {miembros.map((miembro) => (
-                        <label key={miembro.id} className={formStyles.memberOption}>
-                          <input type="checkbox" name="participantes" value={miembro.id} />
-                          <span>{miembro.nombre}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className={formStyles.membersIntro}>El evento quedará asignado a usted.</span>
-                  )}
-                </div>
-              </section>
-            )}
 
             {itemType === 'event' && (
               <section className={`${formStyles.group} ${formStyles.spacedGroup}`}>
