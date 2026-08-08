@@ -1,7 +1,7 @@
 'use client'
 
 import { addHours, format } from 'date-fns'
-import { BellRing, CalendarDays, Loader2 } from 'lucide-react'
+import { Check, Loader2, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { crearEventoCalendario } from '@/app/actions/eventos'
@@ -201,6 +201,8 @@ export default function NuevoEventoCalendarioModal({
     onClose()
   }
 
+  const titlePlaceholder = itemType === 'event' ? 'Título' : 'Nombre del recordatorio'
+
   return createPortal(
     <div
       className={formStyles.overlay}
@@ -215,19 +217,22 @@ export default function NuevoEventoCalendarioModal({
             onClick={onClose}
             className={formStyles.cancelButton}
             disabled={guardando}
+            aria-label="Cancelar"
           >
-            Cancelar
+            <X size={29} strokeWidth={2.15} aria-hidden="true" />
           </button>
-          <h2 id="nuevo-evento-titulo" className={formStyles.title}>
-            {itemType === 'event' ? 'Nuevo evento' : 'Nuevo recordatorio'}
-          </h2>
+
+          <h2 id="nuevo-evento-titulo" className={formStyles.title}>Nuevo</h2>
+
           <button
             type="submit"
             disabled={guardando || !selectedCalendar}
             className={formStyles.saveButton}
+            aria-label={guardando ? 'Guardando' : 'Añadir'}
           >
-            {guardando && <Loader2 size={17} className="animate-spin" aria-hidden="true" />}
-            {guardando ? 'Guardando' : 'Añadir'}
+            {guardando
+              ? <Loader2 size={23} className="animate-spin" aria-hidden="true" />
+              : <Check size={30} strokeWidth={2.2} aria-hidden="true" />}
           </button>
         </header>
 
@@ -244,7 +249,6 @@ export default function NuevoEventoCalendarioModal({
                 }}
                 className={`${formStyles.segment} ${itemType === 'event' ? formStyles.segmentActive : ''}`}
               >
-                <CalendarDays size={17} aria-hidden="true" />
                 Evento
               </button>
               <button
@@ -257,13 +261,11 @@ export default function NuevoEventoCalendarioModal({
                 }}
                 className={`${formStyles.segment} ${itemType === 'reminder' ? formStyles.segmentActive : ''}`}
               >
-                <BellRing size={17} aria-hidden="true" />
                 Recordatorio
               </button>
             </div>
 
-            <p className={formStyles.sectionLabel}>Información</p>
-            <section className={formStyles.group}>
+            <section className={`${formStyles.group} ${formStyles.primaryGroup}`}>
               <div className={formStyles.column}>
                 <input
                   name="titulo"
@@ -271,11 +273,12 @@ export default function NuevoEventoCalendarioModal({
                   maxLength={140}
                   autoFocus
                   className={`${formStyles.input} ${formStyles.primaryInput}`}
-                  placeholder={itemType === 'event' ? 'Título' : 'Nombre del recordatorio'}
+                  placeholder={titlePlaceholder}
                   aria-label="Título"
                 />
               </div>
-              {itemType === 'event' && (
+
+              {itemType === 'event' ? (
                 <div className={formStyles.column}>
                   <input
                     name="ubicacion"
@@ -283,6 +286,16 @@ export default function NuevoEventoCalendarioModal({
                     className={`${formStyles.input} ${formStyles.secondaryInput}`}
                     placeholder="Ubicación o videollamada"
                     aria-label="Ubicación o videollamada"
+                  />
+                </div>
+              ) : (
+                <div className={formStyles.column}>
+                  <textarea
+                    name="descripcion"
+                    maxLength={4000}
+                    className={`${formStyles.textarea} ${formStyles.reminderNotes}`}
+                    placeholder="Notas"
+                    aria-label="Notas"
                   />
                 </div>
               )}
@@ -321,7 +334,7 @@ export default function NuevoEventoCalendarioModal({
                       setFin(format(addHours(nuevaFecha, todoElDia ? 24 : 1), "yyyy-MM-dd'T'HH:mm"))
                     }
                   }}
-                  className={formStyles.input}
+                  className={`${formStyles.input} ${formStyles.dateInput}`}
                   required
                 />
               </label>
@@ -333,7 +346,7 @@ export default function NuevoEventoCalendarioModal({
                     type={todoElDia ? 'date' : 'datetime-local'}
                     value={todoElDia ? fin.slice(0, 10) : fin}
                     onChange={(event) => setFin(todoElDia ? `${event.target.value}T23:59` : event.target.value)}
-                    className={formStyles.input}
+                    className={`${formStyles.input} ${formStyles.dateInput}`}
                     required
                   />
                 </label>
@@ -353,10 +366,10 @@ export default function NuevoEventoCalendarioModal({
               )}
             </section>
 
-            <p className={formStyles.sectionLabel}>Calendario</p>
+            <p className={formStyles.sectionLabel}>Más opciones</p>
             <section className={formStyles.group}>
               <label className={formStyles.row}>
-                <span className={formStyles.label}>Guardar en</span>
+                <span className={formStyles.label}>Calendario</span>
                 <span className={formStyles.calendarValue}>
                   <span
                     className={formStyles.calendarDot}
@@ -380,76 +393,74 @@ export default function NuevoEventoCalendarioModal({
             </section>
 
             {itemType === 'event' && (
-              <>
-                <p className={formStyles.sectionLabel}>Participantes</p>
-                <section className={formStyles.group}>
-                  <div className={formStyles.column}>
-                    {cargandoMiembros ? (
-                      <span className={formStyles.membersIntro}>
-                        <Loader2 size={16} className="animate-spin" aria-hidden="true" />
-                        Cargando miembros…
-                      </span>
-                    ) : miembros.length > 0 ? (
-                      <div className={formStyles.membersList}>
-                        {miembros.map((miembro) => (
-                          <label key={miembro.id} className={formStyles.memberOption}>
-                            <input type="checkbox" name="participantes" value={miembro.id} />
-                            <span>{miembro.nombre}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className={formStyles.membersIntro}>El evento quedará asignado a usted.</span>
-                    )}
-                  </div>
-                </section>
-
-                <p className={formStyles.sectionLabel}>Avisos</p>
-                <section className={formStyles.group}>
-                  <div className={formStyles.row}>
-                    <span className={formStyles.label}>Un día antes</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={alertaDia}
-                      aria-label="Avisar un día antes"
-                      onClick={() => setAlertaDia((actual) => !actual)}
-                      className={`${formStyles.switch} ${alertaDia ? formStyles.switchOn : ''}`}
-                    >
-                      <span className={formStyles.switchThumb} />
-                    </button>
-                  </div>
-                  <div className={formStyles.row}>
-                    <span className={formStyles.label}>Una hora antes</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={alertaHora}
-                      aria-label="Avisar una hora antes"
-                      onClick={() => setAlertaHora((actual) => !actual)}
-                      className={`${formStyles.switch} ${alertaHora ? formStyles.switchOn : ''}`}
-                    >
-                      <span className={formStyles.switchThumb} />
-                    </button>
-                  </div>
-                </section>
-              </>
+              <section className={`${formStyles.group} ${formStyles.spacedGroup}`}>
+                <div className={formStyles.column}>
+                  <span className={formStyles.inlineHeading}>Participantes</span>
+                  {cargandoMiembros ? (
+                    <span className={formStyles.membersIntro}>
+                      <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                      Cargando miembros…
+                    </span>
+                  ) : miembros.length > 0 ? (
+                    <div className={formStyles.membersList}>
+                      {miembros.map((miembro) => (
+                        <label key={miembro.id} className={formStyles.memberOption}>
+                          <input type="checkbox" name="participantes" value={miembro.id} />
+                          <span>{miembro.nombre}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className={formStyles.membersIntro}>El evento quedará asignado a usted.</span>
+                  )}
+                </div>
+              </section>
             )}
 
-            <p className={formStyles.sectionLabel}>Notas</p>
-            <section className={formStyles.group}>
-              <div className={formStyles.column}>
-                <textarea
-                  name="descripcion"
-                  maxLength={4000}
-                  className={formStyles.textarea}
-                  placeholder={itemType === 'reminder'
-                    ? 'Nota del recordatorio'
-                    : 'Descripción o indicaciones del evento'}
-                  aria-label="Notas"
-                />
-              </div>
-            </section>
+            {itemType === 'event' && (
+              <section className={`${formStyles.group} ${formStyles.spacedGroup}`}>
+                <div className={formStyles.row}>
+                  <span className={formStyles.label}>Avisar un día antes</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={alertaDia}
+                    aria-label="Avisar un día antes"
+                    onClick={() => setAlertaDia((actual) => !actual)}
+                    className={`${formStyles.switch} ${alertaDia ? formStyles.switchOn : ''}`}
+                  >
+                    <span className={formStyles.switchThumb} />
+                  </button>
+                </div>
+                <div className={formStyles.row}>
+                  <span className={formStyles.label}>Avisar una hora antes</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={alertaHora}
+                    aria-label="Avisar una hora antes"
+                    onClick={() => setAlertaHora((actual) => !actual)}
+                    className={`${formStyles.switch} ${alertaHora ? formStyles.switchOn : ''}`}
+                  >
+                    <span className={formStyles.switchThumb} />
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {itemType === 'event' && (
+              <section className={`${formStyles.group} ${formStyles.spacedGroup}`}>
+                <div className={formStyles.column}>
+                  <textarea
+                    name="descripcion"
+                    maxLength={4000}
+                    className={formStyles.textarea}
+                    placeholder="Notas"
+                    aria-label="Notas"
+                  />
+                </div>
+              </section>
+            )}
 
             {error && <p className={formStyles.error} role="alert">{error}</p>}
           </div>
