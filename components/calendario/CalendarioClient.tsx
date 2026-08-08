@@ -6,14 +6,15 @@ import CalendarioSourcesPanel from '@/components/calendario/CalendarioSourcesPan
 import selectionFix from './CalendarioSelectionFix.module.css'
 import sourcesGlass from './CalendarioSourcesGlass.module.css'
 import { useCalendarEvents } from './useCalendarEvents'
-import type { EventoCalendario } from './calendario-ios-types'
+import type { CalendarioOrigen, EventoCalendario } from './calendario-ios-types'
 
 type CalendarioClientProps = {
   userId: string
   canCreateEvents: boolean
+  creationCalendars: CalendarioOrigen[]
 }
 
-export default function CalendarioClient({ userId, canCreateEvents }: CalendarioClientProps) {
+export default function CalendarioClient({ userId, canCreateEvents, creationCalendars }: CalendarioClientProps) {
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [rangeYear, setRangeYear] = useState(() => new Date().getFullYear())
   const [externalDetail, setExternalDetail] = useState<EventoCalendario | null>(null)
@@ -23,7 +24,6 @@ export default function CalendarioClient({ userId, canCreateEvents }: Calendario
 
   const {
     events,
-    editableCalendars,
     isRefreshing,
     error,
     reload,
@@ -44,8 +44,8 @@ export default function CalendarioClient({ userId, canCreateEvents }: Calendario
       <CalendarioIOS
         events={events}
         isRefreshing={isRefreshing}
-        editableCalendars={editableCalendars}
-        canCreateEvents={canCreateEvents}
+        editableCalendars={creationCalendars}
+        canCreateEvents={canCreateEvents && creationCalendars.length > 0}
         userId={userId}
         onRefresh={reload}
         onOpenCalendars={() => setSourcesOpen(true)}

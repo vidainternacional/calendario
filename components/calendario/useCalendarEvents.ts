@@ -82,9 +82,13 @@ export function useCalendarEvents({
           calendars: asCalendar(item.calendars),
         })) as CalendarSubscription[]
 
-        const visibleCalendarIds = normalizedSubscriptions
-          .filter((item) => item.visible && item.calendars)
-          .map((item) => item.calendar_id)
+        const visibleSubscriptions = normalizedSubscriptions.filter((item) => item.visible && item.calendars)
+        const visibleCalendarIds = visibleSubscriptions.map((item) => item.calendar_id)
+        const calendarLookup = new Map(
+          normalizedSubscriptions
+            .filter((item) => item.calendars)
+            .map((item) => [item.calendar_id, item.calendars!] as const),
+        )
 
         if (cancelled) return
         setSubscriptions(normalizedSubscriptions)
@@ -94,35 +98,11 @@ export function useCalendarEvents({
           return
         }
 
-        const [eventsResult, remindersResult] = await Promise.all([
+        const [linksResult, remindersResult] = await Promise.all([
           db
-            .from('eventos')
-            .select(`
-              id,
-              titulo,
-              descripcion,
-              ubicacion,
-              fecha_inicio,
-              fecha_fin,
-              todo_el_dia,
-              tiempo_viaje_minutos,
-              calendar_id,
-              ministerio_id,
-              calendars!inner (
-                id,
-                nombre,
-                color,
-                owner_id,
-                tipo_cuenta,
-                es_publico,
-                ministerio_id
-              ),
-              ministerios (nombre)
-            `)
-            .in('calendar_id', visibleCalendarIds)
-            .gte('fecha_inicio', rangeStart.toISOString())
-            .lt('fecha_inicio', rangeEnd.toISOString())
-            .order('fecha_inicio', { ascending: true }),
+            .from('evento_calendarios')
+            .select('evento_id, calendar_id')
+            .in('calendar_id', visibleCalendarIds),
           db
             .from('calendar_reminders')
             .select(`
@@ -147,13 +127,48 @@ export function useCalendarEvents({
             .order('remind_at', { ascending: true }),
         ])
 
-        if (eventsResult.error) throw eventsResult.error
+        if (linksResult.error) throw linksResult.error
         if (remindersResult.error) throw remindersResult.error
 
-        const eventRows = (eventsResult.data || []) as any[]
-        const eventIds = eventRows.map((item) => item.id)
-        const assignmentMap = new Map<string, { id: string; estado: string }>()
+        const eventCalendarMap = new Map<string, string[]>()
+        for (const link of linksResult.data || []) {
+          const eventId = String(link.evento_id)
+          const calendarId = String(link.calendar_id)
+          const current = eventCalendarMap.get(eventId) || []
+          if (!current.includes(calendarId)) current.push(calendarId)
+          eventCalendarMap.set(eventId, current)
+        }
 
+        const linkedEventIds = Array.from(eventCalendarMap.keys())
+        let eventRows: any[] = []
+
+        if (linkedEventIds.length > 0) {
+          const { data: eventsData, error: eventsError } = await db
+            .from('eventos')
+            .select(`
+              id,
+              titulo,
+              descripcion,
+              ubicacion,
+              fecha_inicio,
+              fecha_fin,
+              todo_el_dia,
+              tiempo_viaje_minutos,
+              calendar_id,
+              ministerio_id,
+              ministerios (nombre)
+            `)
+            .in('id', linkedEventIds)
+            .gte('fecha_inicio', rangeStart.toISOString())
+            .lt('fecha_inicio', rangeEnd.toISOString())
+            .order('fecha_inicio', { ascending: true })
+
+          if (eventsError) throw eventsError
+          eventRows = eventsData || []
+        }
+
+        const eventIds = eventRows.map((item) => String(item.id))
+        const assignmentMap = new Map<string, { id: string; estado: string }>()
         if (eventIds.length > 0) {
           const { data: assignmentsData, error: assignmentsError } = await db
             .from('evento_asignaciones')
@@ -171,10 +186,17 @@ export function useCalendarEvents({
         }
 
         const eventItems: EventoCalendario[] = eventRows.map((row) => {
-          const assignment = assignmentMap.get(String(row.id))
+          const eventId = String(row.id)
+          const assignment = assignmentMap.get(eventId)
+          const linkedCalendarIds = eventCalendarMap.get(eventId) || [String(row.calendar_id)]
+          const visibleLinkedCalendarId = linkedCalendarIds.find((id) => visibleCalendarIds.includes(id))
+          const displayCalendarId = visibleCalendarIds.includes(String(row.calendar_id))
+            ? String(row.calendar_id)
+            : (visibleLinkedCalendarId || String(row.calendar_id))
+
           return {
             kind: 'event',
-            id: String(row.id),
+            id: eventId,
             titulo: String(row.titulo),
             descripcion: row.descripcion || null,
             ubicacion: row.ubicacion || null,
@@ -182,8 +204,9 @@ export function useCalendarEvents({
             fecha_fin: row.fecha_fin ? String(row.fecha_fin) : null,
             todo_el_dia: Boolean(row.todo_el_dia),
             tiempo_viaje_minutos: Number(row.tiempo_viaje_minutos || 0),
-            calendar_id: String(row.calendar_id),
-            calendars: asCalendar(row.calendars),
+            calendar_id: displayCalendarId,
+            calendar_ids: linkedCalendarIds,
+            calendars: calendarLookup.get(displayCalendarId) || null,
             ministerio_id: row.ministerio_id || null,
             ministerios: row.ministerios || null,
             asignacion_id: assignment?.id || null,
@@ -204,6 +227,7 @@ export function useCalendarEvents({
             todo_el_dia: false,
             tiempo_viaje_minutos: 0,
             calendar_id: String(row.calendar_id),
+            calendar_ids: [String(row.calendar_id)],
             calendars: asCalendar(row.calendars),
             ministerio_id: row.calendars?.ministerio_id || null,
             ministerios: null,
