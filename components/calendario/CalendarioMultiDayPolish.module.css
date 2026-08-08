@@ -51,8 +51,8 @@
   font-weight: 760;
 }
 
-/* Cada evento conserva su propia cápsula visual. La duración sigue usándose
-   para calcular solapamientos/columnas, pero no estira la cápsula por horas. */
+/* La altura vuelve a venir de la duración real calculada por la línea de tiempo.
+   Un evento corto queda casi como píldora; uno largo se vuelve rectángulo de esquinas redondas. */
 :global([class*='eventChip']) {
   border: 0 !important;
   border-radius: 999px !important;
@@ -62,12 +62,9 @@
 }
 
 :global([class*='timedEvent']) {
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
   border: 0 !important;
   border-left: 0 !important;
-  border-radius: 999px !important;
+  border-radius: 18px !important;
   padding: 7px 12px 6px !important;
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .035), 0 1px 2px rgba(15, 23, 42, .025) !important;
 }
@@ -131,11 +128,6 @@
 @media (max-width: 390px) {
   .rangeTitles { min-height: 44px; }
   .rangeTitle { font-size: 14px; }
-  :global([class*='timedEvent']) {
-    height: 42px !important;
-    min-height: 42px !important;
-    max-height: 42px !important;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
