@@ -71,8 +71,8 @@ export default function CalendarioEventDetail({
     : end
       ? `${format(start, 'h:mm a')} – ${format(end, 'h:mm a')}`
       : format(start, 'h:mm a')
-  const monthText = format(start, 'MMMM', { locale: es })
-  const monthLabel = monthText.charAt(0).toUpperCase() + monthText.slice(1)
+  const dayLabel = format(start, 'd MMM', { locale: es })
+  const dayAriaLabel = format(start, "EEEE d 'de' MMMM", { locale: es })
 
   return (
     <div className={`${styles.backdrop} ${closing ? styles.closing : ''}`} role="presentation">
@@ -83,9 +83,9 @@ export default function CalendarioEventDetail({
         aria-labelledby="calendar-event-detail-title"
       >
         <header className={styles.topbar}>
-          <button type="button" className={styles.backButton} onClick={requestClose} aria-label={`Volver a ${monthLabel}`}>
+          <button type="button" className={styles.backButton} onClick={requestClose} aria-label={`Volver al día ${dayAriaLabel}`}>
             <ChevronLeft size={25} strokeWidth={2.25} aria-hidden="true" />
-            <span>{monthLabel}</span>
+            <span>{dayLabel}</span>
           </button>
           <p className={styles.topbarTitle}>{event.kind === 'reminder' ? 'Recordatorio' : 'Evento'}</p>
           <span className={styles.topbarSpacer} aria-hidden="true" />
