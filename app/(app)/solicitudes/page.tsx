@@ -7,6 +7,7 @@ import { FileText, Clock, CheckCircle2, XCircle } from 'lucide-react'
 import NuevaSolicitudModal from '@/components/solicitudes/NuevaSolicitudModal'
 import { BotonesAprobacion } from '@/components/solicitudes/BotonesAprobacion'
 import BackButton from '@/components/navigation/BackButton'
+import UserAvatar from '@/components/comunidad/UserAvatar'
 
 export const metadata: Metadata = {
   title: 'Solicitudes',
@@ -84,7 +85,7 @@ export default async function SolicitudesPage() {
       created_at,
       resuelto_at,
       solicitado_por,
-      profiles!solicitado_por (nombre_completo),
+      profiles!solicitado_por (nombre_completo, avatar_url),
       ministerios (nombre)
     `)
     .order('created_at', { ascending: false })
@@ -118,6 +119,7 @@ export default async function SolicitudesPage() {
     const cfg = estadoConfig[sol.estado as keyof typeof estadoConfig] ?? estadoConfig.pendiente
     const StateIcon = cfg.icon
     const solicitante = (sol.profiles as any)?.nombre_completo ?? 'Usuario'
+    const solicitanteAvatar = (sol.profiles as any)?.avatar_url ?? null
     const ministerioNombre = (sol.ministerios as any)?.nombre ?? 'Ministerio'
     const fecha = new Date(sol.created_at)
 
@@ -144,12 +146,15 @@ export default async function SolicitudesPage() {
               </p>
             )}
 
-            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
+            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] text-gray-400">
               <span className="font-medium text-gray-500">{tipoLabel[sol.tipo] ?? sol.tipo}</span>
               <span>·</span>
               <span className="font-semibold text-indigo-500">{ministerioNombre}</span>
               <span>·</span>
-              <span>Por <strong className="font-medium text-[#171923]">{solicitante}</strong></span>
+              <span className="inline-flex items-center gap-1.5">
+                <UserAvatar nombre={solicitante} avatarUrl={solicitanteAvatar} size="xs" />
+                <strong className="font-medium text-[#171923]">{solicitante}</strong>
+              </span>
               <span>·</span>
               <time
                 dateTime={fecha.toISOString()}

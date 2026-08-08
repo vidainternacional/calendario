@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Camera, Check, Loader2, QrCode, ScanLine, Trash2, UserRoundPlus, Users, X } from 'lucide-react'
 import { eliminarContacto, enviarSolicitudPorCodigo, enviarSolicitudPorQr, responderSolicitudContacto } from '@/app/actions/contactos'
+import UserAvatar from '@/components/comunidad/UserAvatar'
 
-type Persona = { id: string; nombre_completo: string; email: string | null }
+type Persona = { id: string; nombre_completo: string; avatar_url: string | null; email: string | null }
 type Relacion = {
   id: string
   estado: string
@@ -15,9 +16,10 @@ type Relacion = {
   destinatario: Persona | null
 }
 
-export default function ContactosClient({ miId, miNombre, qrToken, relaciones }: {
+export default function ContactosClient({ miId, miNombre, miAvatarUrl, qrToken, relaciones }: {
   miId: string
   miNombre: string
+  miAvatarUrl?: string | null
   qrToken: string
   relaciones: Relacion[]
 }) {
@@ -127,9 +129,12 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
   const Tarjeta = ({ persona, extra }: { persona: Persona | null; extra?: React.ReactNode }) => (
     <article className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm sm:p-4">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-600">
-          {(persona?.nombre_completo ?? '?').charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar
+          nombre={persona?.nombre_completo}
+          avatarUrl={persona?.avatar_url}
+          size="md"
+          className="shadow-sm"
+        />
         <div className="min-w-0 flex-1">
           <p className="break-words text-sm font-semibold leading-snug text-[#171923]">{persona?.nombre_completo ?? 'Usuario'}</p>
           {persona?.email && <p className="mt-0.5 break-all text-xs text-slate-500">{persona.email}</p>}
@@ -240,6 +245,9 @@ export default function ContactosClient({ miId, miNombre, qrToken, relaciones }:
       {tab === 'qr' && (
         <section className="rounded-[24px] border border-slate-100 bg-white p-5 text-center shadow-sm sm:p-8">
           <p className="mb-5 text-sm leading-relaxed text-slate-500">Muestra este código para que otra persona pueda agregarte.</p>
+          <div className="mb-4 flex justify-center">
+            <UserAvatar nombre={miNombre} avatarUrl={miAvatarUrl} size="xl" className="shadow-md" />
+          </div>
           <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-2xl border border-slate-100 bg-white p-2">
             <canvas ref={qrCanvasRef} width={280} height={280} className="h-auto w-full" />
           </div>

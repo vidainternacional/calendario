@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { User } from 'lucide-react'
+import UserAvatar from '@/components/comunidad/UserAvatar'
 import SolicitudIngresoBotones from './SolicitudIngresoBotones'
 
 export const dynamic = 'force-dynamic'
@@ -66,7 +66,7 @@ export default async function SolicitudesIngresoPage(
   if (profileIds.length > 0) {
     const { data: perfiles, error: perfilesError } = await (supabase as any)
       .from('profiles')
-      .select('id, nombre_completo, telefono')
+      .select('id, nombre_completo, avatar_url, telefono')
       .in('id', profileIds)
 
     if (perfilesError) {
@@ -106,9 +106,12 @@ export default async function SolicitudesIngresoPage(
           {solicitudesConPerfil.map((sol: any) => (
             <article key={sol.id} className="overflow-hidden rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex min-w-0 items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100">
-                  <User className="h-5 w-5 text-slate-400" />
-                </div>
+                <UserAvatar
+                  nombre={sol.profile?.nombre_completo}
+                  avatarUrl={sol.profile?.avatar_url}
+                  size="md"
+                  className="shadow-sm"
+                />
 
                 <div className="min-w-0 flex-1">
                   <h3 className="break-words text-sm font-bold text-[#171923] sm:text-base">

@@ -17,7 +17,7 @@ export default async function ContactosPage() {
 
   const { data: perfil } = await db
     .from('profiles')
-    .select('id, nombre_completo, qr_token')
+    .select('id, nombre_completo, avatar_url, qr_token')
     .eq('id', user.id)
     .single()
 
@@ -25,8 +25,8 @@ export default async function ContactosPage() {
     .from('contactos')
     .select(`
       id, estado, solicitante_id, destinatario_id, created_at,
-      solicitante:profiles!contactos_solicitante_id_fkey ( id, nombre_completo, email ),
-      destinatario:profiles!contactos_destinatario_id_fkey ( id, nombre_completo, email )
+      solicitante:profiles!contactos_solicitante_id_fkey ( id, nombre_completo, avatar_url, email ),
+      destinatario:profiles!contactos_destinatario_id_fkey ( id, nombre_completo, avatar_url, email )
     `)
     .or(`solicitante_id.eq.${user.id},destinatario_id.eq.${user.id}`)
     .order('created_at', { ascending: false })
@@ -39,6 +39,7 @@ export default async function ContactosPage() {
       <ContactosClient
         miId={user.id}
         miNombre={perfil?.nombre_completo ?? ''}
+        miAvatarUrl={perfil?.avatar_url ?? null}
         qrToken={perfil?.qr_token ?? ''}
         relaciones={relaciones ?? []}
       />

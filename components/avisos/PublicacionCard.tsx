@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, CheckCheck, ChevronRight, ExternalLink, Globe, Megaphone, X } from 'lucide-react'
 import { markPublicationRead } from '@/components/avisos/usePublicationReads'
+import UserAvatar from '@/components/comunidad/UserAvatar'
 
 type PublicacionCardProps = {
   publicationId?: string
@@ -13,6 +14,7 @@ type PublicacionCardProps = {
   tipo: string
   fecha: string
   autor: string
+  autorAvatarUrl?: string | null
   ministerio?: string | null
   compacta?: boolean
   etiqueta?: string
@@ -40,6 +42,7 @@ export default function PublicacionCard({
   tipo,
   fecha,
   autor,
+  autorAvatarUrl,
   ministerio,
   compacta = false,
   etiqueta,
@@ -47,7 +50,6 @@ export default function PublicacionCard({
   variant = 'card',
 }: PublicacionCardProps) {
   const [abierta, setAbierta] = useState(false)
-  const inicial = autor.charAt(0).toUpperCase()
   const tracked = Boolean(publicationId)
 
   const abrir = () => {
@@ -140,7 +142,7 @@ export default function PublicacionCard({
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 shadow-sm">
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">{inicial}</span>
+                <UserAvatar nombre={autor} avatarUrl={autorAvatarUrl} size="xs" />
                 <span className="font-medium text-slate-600">{autor}</span>
                 <span aria-hidden="true" className="text-slate-300">•</span>
                 <span>{fecha}</span>
@@ -169,9 +171,9 @@ export default function PublicacionCard({
           className={`group flex min-h-[74px] w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 active:bg-slate-50 focus:outline-none focus-visible:bg-indigo-50/60 ${unread ? 'bg-indigo-50/25' : ''}`}
           aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : ', leída'}`}
         >
-          <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
-            <Megaphone className="h-[18px] w-[18px]" aria-hidden="true" />
-            {unread && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-rose-500" aria-hidden="true" />}
+          <span className="relative shrink-0">
+            <UserAvatar nombre={autor} avatarUrl={autorAvatarUrl} size="md" preview={false} />
+            {unread && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-rose-500" aria-hidden="true" />}
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex min-w-0 items-center gap-2">
@@ -222,7 +224,7 @@ export default function PublicacionCard({
         )}
 
         <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-slate-100 pt-3 text-xs text-gray-500">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">{inicial}</div>
+          <UserAvatar nombre={autor} avatarUrl={autorAvatarUrl} size="xs" preview={false} />
           <span className="min-w-0 flex-1 truncate">{autor}</span>
           <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-indigo-600">
             Ver completo <ExternalLink className="h-3.5 w-3.5" />

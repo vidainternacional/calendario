@@ -22,7 +22,7 @@ type AvisosClientProps = {
   userId: string
 }
 
-const CACHE_SCOPE = 'avisos:v1'
+const CACHE_SCOPE = 'avisos:v2'
 const CACHE_TTL = 10 * 60 * 1000
 
 const tipoLabel: Record<string, string> = {
@@ -99,7 +99,7 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
             tipo,
             ministerio_id,
             created_at,
-            profiles!autor_id (nombre_completo),
+            profiles!autor_id (nombre_completo, avatar_url),
             ministerios (nombre)
           `)
           .eq('estado', 'aprobado')
@@ -226,6 +226,7 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 landscape:grid-cols-2">
           {items.map((pub) => {
             const autor = pub.profiles?.nombre_completo ?? 'Autor desconocido'
+            const avatarUrl = pub.profiles?.avatar_url ?? null
             const minNombre = pub.ministerios?.nombre
             const publicationId = String(pub.id)
 
@@ -241,6 +242,7 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
                 colorClass={tipoColor[pub.tipo] ?? tipoColor.aviso}
                 fecha={formatDistanceToNow(new Date(pub.created_at), { addSuffix: true, locale: es })}
                 autor={autor}
+                autorAvatarUrl={avatarUrl}
                 ministerio={minNombre}
               />
             )

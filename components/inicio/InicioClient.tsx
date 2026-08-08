@@ -28,6 +28,7 @@ import {
 import InstallBanner from '@/components/pwa/InstallBanner'
 import ShineSweep from '@/components/ui/ShineSweep'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import UserAvatar from '@/components/comunidad/UserAvatar'
 
 type InicioData = {
   profile: any | null
@@ -42,7 +43,7 @@ type InicioClientProps = {
   email?: string | null
 }
 
-const CACHE_SCOPE = 'inicio:v4'
+const CACHE_SCOPE = 'inicio:v5'
 const CACHE_TTL = 10 * 60 * 1000
 
 const estadoConfig = {
@@ -94,7 +95,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         const [profileRes, misEventosRes, membresiasRes, materialesRes] = await Promise.all([
           supabase
             .from('profiles')
-            .select('nombre_completo, rol, acceso_centro_pastoral')
+            .select('nombre_completo, avatar_url, rol, acceso_centro_pastoral')
             .eq('id', userId)
             .single(),
           supabase
@@ -133,7 +134,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             cuerpo,
             tipo,
             created_at,
-            profiles!autor_id (nombre_completo)
+            profiles!autor_id (nombre_completo, avatar_url)
           `)
           .eq('estado', 'aprobado')
           .order('created_at', { ascending: false })
@@ -218,7 +219,6 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
   const firstNameRaw = nombre.trim().split(/\s+/)[0] || 'Servidor'
   const firstName = firstNameRaw.charAt(0).toUpperCase() + firstNameRaw.slice(1)
   const rol = profile?.rol as string | undefined
-  const inicial = nombre.charAt(0).toUpperCase()
   const puedeGestionarSolicitudes =
     rol === 'pastor' ||
     rol === 'administrador' ||
@@ -283,6 +283,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                       tipo={pub.tipo}
                       fecha={format(new Date(pub.created_at), "d 'de' MMM", { locale: es })}
                       autor={pub.profiles?.nombre_completo || 'Autor desconocido'}
+                      autorAvatarUrl={pub.profiles?.avatar_url ?? null}
                       variant="row"
                     />
                   ))}
@@ -322,13 +323,12 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             )}
           </div>
 
-          <Link
-            href="/perfil"
-            aria-label="Abrir perfil"
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-[0_8px_20px_rgba(79,70,229,0.22)] ring-4 ring-white/80 transition active:scale-95"
-          >
-            {inicial}
-          </Link>
+          <UserAvatar
+            nombre={nombre}
+            avatarUrl={profile?.avatar_url}
+            size="lg"
+            className="shadow-[0_8px_20px_rgba(79,70,229,0.22)] ring-4 ring-white/80"
+          />
         </header>
 
         <div className="space-y-5 sm:space-y-6">
@@ -467,6 +467,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                     tipo={pub.tipo}
                     fecha={format(new Date(pub.created_at), "d 'de' MMM", { locale: es })}
                     autor={pub.profiles?.nombre_completo || 'Autor desconocido'}
+                    autorAvatarUrl={pub.profiles?.avatar_url ?? null}
                     variant="row"
                   />
                 ))}

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Shield, User } from 'lucide-react'
+import { Shield } from 'lucide-react'
+import UserAvatar from '@/components/comunidad/UserAvatar'
 
 export default async function MiembrosPage(
   props: {
@@ -85,25 +86,18 @@ export default async function MiembrosPage(
               month: 'short',
               year: 'numeric',
             })
-            const inicial = memberProfile?.nombre_completo?.trim()?.charAt(0)?.toUpperCase() || 'U'
 
             return (
               <article
                 key={m.id}
                 className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:items-center sm:gap-4 sm:px-5"
               >
-                {memberProfile?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={memberProfile.avatar_url}
-                    alt={`Foto de ${memberProfile?.nombre_completo || 'miembro'}`}
-                    className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm ring-2 ring-white"
-                  />
-                ) : (
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-indigo-50 text-sm font-bold text-indigo-600 ring-1 ring-indigo-100">
-                    {inicial || <User className="h-5 w-5 text-slate-400" />}
-                  </div>
-                )}
+                <UserAvatar
+                  nombre={memberProfile?.nombre_completo}
+                  avatarUrl={memberProfile?.avatar_url}
+                  size="md"
+                  className="shadow-sm"
+                />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-2">
