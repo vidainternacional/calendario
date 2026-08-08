@@ -1,12 +1,12 @@
 'use client'
 
 import {
+  addDays,
   format,
   getDaysInMonth,
   isSameMonth,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { motion, useReducedMotion } from 'framer-motion'
 import {
   CalendarDays,
   Check,
@@ -14,8 +14,8 @@ import {
   Plus,
   Search,
 } from 'lucide-react'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from 'react'
-import { createPortal, flushSync } from 'react-dom'
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
+import { createPortal } from 'react-dom'
 import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
@@ -45,20 +45,6 @@ import styles from './CalendarioIOS.module.css'
 type CalendarView = 'anio' | 'mes' | 'dia' | 'dos-dias' | 'agenda' | 'lista'
 type TimelineView = 'dia' | 'dos-dias' | 'agenda'
 type MonthMenuMode = MonthDisplayMode | 'list'
-type MonthTransitionPhase = 'enter' | 'exit' | null
-type DayTransitionPhase = 'enter' | 'exit' | null
-
-type ViewTransitionHandle = { finished: Promise<void> }
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => ViewTransitionHandle
-}
-
-export type MonthTransitionAnchor = {
-  offsetX: number
-  offsetY: number
-  originX: number
-  originY: number
-}
 
 type MenuOption<T extends string> = {
   id: T
@@ -79,10 +65,6 @@ const TIMELINE_VIEW_OPTIONS: Array<MenuOption<TimelineView>> = [
   { id: 'dos-dias', label: '2 días', icon: TwoDayViewIcon },
   { id: 'agenda', label: 'Lista', icon: AgendaViewIcon },
 ]
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value))
-}
 
 export default function CalendarioIOS({
   events,
@@ -105,7 +87,6 @@ export default function CalendarioIOS({
   externalDetail?: EventoCalendario | null
   onExternalDetailConsumed?: () => void
 }) {
-  const reduceMotion = useReducedMotion()
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<CalendarView>('anio')
   const [monthDisplay, setMonthDisplay] = useState<MonthMenuMode>('compact')
@@ -118,19 +99,9 @@ export default function CalendarioIOS({
   const [query, setQuery] = useState('')
   const [newEventOpen, setNewEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
-  const [monthTransitionAnchor, setMonthTransitionAnchor] = useState<MonthTransitionAnchor | null>(null)
-  const [monthTransitionPhase, setMonthTransitionPhase] = useState<MonthTransitionPhase>(null)
-  const [dayTransitionPhase, setDayTransitionPhase] = useState<DayTransitionPhase>(null)
-  const [yearExitLayer, setYearExitLayer] = useState(false)
-  const [yearExitRequested, setYearExitRequested] = useState(false)
-  const [yearPreviewDate, setYearPreviewDate] = useState(new Date())
-  const yearExitLayerRef = useRef<HTMLDivElement | null>(null)
-  const yearExitStartedRef = useRef(false)
 
   const puedeCrear = editableCalendars.length > 0
   const isMonthContext = view === 'mes' || view === 'lista'
-  const isTimelineContext = view === 'dia' || view === 'dos-dias' || view === 'agenda'
-  const showMonthBehindDay = view === 'dia' && dayTransitionPhase !== null
 
   useEffect(() => setMounted(true), [])
 
@@ -146,6 +117,7 @@ export default function CalendarioIOS({
 
   useEffect(() => {
     if (!viewMenuOpen) return
+
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
@@ -160,72 +132,6 @@ export default function CalendarioIOS({
     }
   }, [viewMenuOpen])
 
-  useEffect(() => {
-    if (reduceMotion || yearExitLayer || monthTransitionPhase || (view !== 'mes' && view !== 'lista')) return
-
-    const timer = window.setTimeout(() => {
-      setYearPreviewDate(visibleMonthDate)
-      setYearExitLayer(true)
-    }, 120)
-
-    return () => window.clearTimeout(timer)
-  }, [monthTransitionPhase, reduceMotion, view, visibleMonthDate, yearExitLayer])
-
-  useLayoutEffect(() => {
-    if (!yearExitRequested || !yearExitLayer || view === 'anio' || reduceMotion || monthTransitionPhase === 'exit' || yearExitStartedRef.current) return
-
-    const root = yearExitLayerRef.current
-    const targetKey = format(visibleMonthDate, 'yyyy-MM')
-    const target = root?.querySelector<HTMLElement>(`[data-calendar-mini-month="${targetKey}"]`)
-    if (!target || typeof window === 'undefined' || window.innerWidth <= 0 || window.innerHeight <= 0) return
-
-    const rect = target.getBoundingClientRect()
-    if (rect.width <= 0 || rect.height <= 0) return
-
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-    const viewportCenterX = window.innerWidth / 2
-    const viewportCenterY = window.innerHeight / 2
-    const exitAnchor: MonthTransitionAnchor = {
-      offsetX: clamp((centerX - viewportCenterX) * 0.22, -46, 46),
-      offsetY: clamp((centerY - viewportCenterY) * 0.18, -54, 54),
-      originX: clamp((centerX / window.innerWidth) * 100, 12, 88),
-      originY: clamp((centerY / window.innerHeight) * 100, 12, 88),
-    }
-
-    yearExitStartedRef.current = true
-    setMonthTransitionAnchor(exitAnchor)
-
-    const frame = window.requestAnimationFrame(() => {
-      setMonthTransitionPhase('exit')
-    })
-
-    return () => window.cancelAnimationFrame(frame)
-  }, [monthTransitionPhase, reduceMotion, view, visibleMonthDate, yearExitLayer, yearExitRequested])
-
-  useEffect(() => {
-    if (view !== 'anio' || !yearExitLayer) return
-
-    let secondFrame = 0
-    let settleTimer = 0
-    const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        settleTimer = window.setTimeout(() => {
-          setYearExitLayer(false)
-          setYearExitRequested(false)
-          setMonthTransitionAnchor(null)
-          yearExitStartedRef.current = false
-        }, 180)
-      })
-    })
-
-    return () => {
-      window.cancelAnimationFrame(firstFrame)
-      if (secondFrame) window.cancelAnimationFrame(secondFrame)
-      if (settleTimer) window.clearTimeout(settleTimer)
-    }
-  }, [view, yearExitLayer])
-
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime()),
     [events],
@@ -234,6 +140,7 @@ export default function CalendarioIOS({
   const searchResults = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('es')
     if (!needle) return sortedEvents
+
     return sortedEvents.filter((event) =>
       [event.titulo, event.ubicacion, event.descripcion, event.calendars?.nombre, event.ministerios?.nombre]
         .filter(Boolean)
@@ -248,187 +155,65 @@ export default function CalendarioIOS({
 
   const selectedDayForMonth = (month: Date) => {
     if (isSameMonth(selectedDay, month)) return selectedDay
+
     const today = new Date()
     if (isSameMonth(today, month)) return today
-    return new Date(month.getFullYear(), month.getMonth(), Math.min(selectedDay.getDate(), getDaysInMonth(month)))
+
+    return new Date(
+      month.getFullYear(),
+      month.getMonth(),
+      Math.min(selectedDay.getDate(), getDaysInMonth(month)),
+    )
   }
 
-  const runViewTransition = useCallback((update: () => void) => {
-    const doc = typeof document === 'undefined' ? null : document as ViewTransitionDocument
-    if (reduceMotion || !doc?.startViewTransition) {
-      update()
-      return null
-    }
-
-    return doc.startViewTransition(() => {
-      flushSync(update)
-    })
-  }, [reduceMotion])
-
-  const captureMonthTransitionAnchor = (element?: HTMLElement): MonthTransitionAnchor | null => {
-    if (!element || typeof window === 'undefined' || window.innerWidth <= 0 || window.innerHeight <= 0) return null
-    const rect = element.getBoundingClientRect()
-    if (rect.width <= 0 || rect.height <= 0) return null
-
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-    const viewportCenterX = window.innerWidth / 2
-    const viewportCenterY = window.innerHeight / 2
-
-    return {
-      offsetX: clamp((centerX - viewportCenterX) * 0.22, -46, 46),
-      offsetY: clamp((centerY - viewportCenterY) * 0.18, -54, 54),
-      originX: clamp((centerX / window.innerWidth) * 100, 12, 88),
-      originY: clamp((centerY / window.innerHeight) * 100, 12, 88),
-    }
-  }
-
-  const openMonth = (month: Date, element?: HTMLElement) => {
-    const anchor = captureMonthTransitionAnchor(element)
+  const openMonth = (month: Date) => {
     const next = selectedDayForMonth(month)
-    element?.blur()
-
-    setYearExitLayer(false)
-    setYearExitRequested(false)
-    setYearPreviewDate(next)
-    yearExitStartedRef.current = false
-    setMonthTransitionAnchor(anchor)
-    setMonthTransitionPhase(anchor && !reduceMotion ? 'enter' : null)
-    setVisibleMonthDate(next)
     setActiveDate(next)
     setSelectedDay(next)
+    setVisibleMonthDate(next)
     setView(monthDisplay === 'list' ? 'lista' : 'mes')
   }
 
   const openDay = (day: Date) => {
-    setYearExitLayer(false)
-    setYearExitRequested(false)
-    yearExitStartedRef.current = false
-    setMonthTransitionPhase(null)
-    setDayTransitionPhase(reduceMotion ? null : 'enter')
     setSelectedDay(day)
-    if (reduceMotion) {
-      setActiveDate(day)
-      setVisibleMonthDate(day)
-    }
+    setActiveDate(day)
+    setVisibleMonthDate(day)
     setView('dia')
   }
 
   const selectDay = (day: Date) => {
     setSelectedDay(day)
     setActiveDate(day)
+    setVisibleMonthDate(day)
   }
 
   const handleVisibleMonthChange = useCallback((month: Date) => {
     setVisibleMonthDate((current) => isSameMonth(current, month) ? current : month)
-    setYearPreviewDate((current) => current.getFullYear() === month.getFullYear() ? current : month)
   }, [])
 
   const changeMonthView = (nextMode: MonthMenuMode) => {
-    setMonthTransitionPhase(null)
-    setDayTransitionPhase(null)
-    runViewTransition(() => {
-      setMonthDisplay(nextMode)
-      setActiveDate(selectedDay)
-      setVisibleMonthDate(selectedDay)
-      setView(nextMode === 'list' ? 'lista' : 'mes')
-      setViewMenuOpen(false)
-    })
+    setMonthDisplay(nextMode)
+    setActiveDate(selectedDay)
+    setVisibleMonthDate(selectedDay)
+    setView(nextMode === 'list' ? 'lista' : 'mes')
+    setViewMenuOpen(false)
   }
 
   const changeTimelineView = (nextView: TimelineView) => {
-    setYearExitLayer(false)
-    setYearExitRequested(false)
-    yearExitStartedRef.current = false
-    setMonthTransitionPhase(null)
-    setDayTransitionPhase(null)
-    runViewTransition(() => {
-      setView(nextView)
-      setViewMenuOpen(false)
-    })
-  }
-
-  const completeMonthTransition = () => {
-    if (monthTransitionPhase === 'exit') {
-      setMonthTransitionPhase(null)
-      setYearExitRequested(false)
-      setActiveDate(visibleMonthDate)
-      setView('anio')
-      return
-    }
-    setMonthTransitionPhase(null)
-  }
-
-  const completeDayTransition = () => {
-    if (dayTransitionPhase === 'enter') {
-      setActiveDate(selectedDay)
-      setVisibleMonthDate(selectedDay)
-      setDayTransitionPhase(null)
-      return
-    }
-
-    if (dayTransitionPhase === 'exit') {
-      setDayTransitionPhase(null)
-      setActiveDate(selectedDay)
-      setVisibleMonthDate(selectedDay)
-      setView(monthDisplay === 'list' ? 'lista' : 'mes')
-    }
+    setActiveDate(selectedDay)
+    setVisibleMonthDate(selectedDay)
+    setView(nextView)
+    setViewMenuOpen(false)
   }
 
   const goBack = () => {
     if (view === 'mes' || view === 'lista') {
-      if (!reduceMotion) {
-        if (monthTransitionPhase === 'exit' || yearExitRequested) return
-
-        setYearExitRequested(true)
-
-        const root = yearExitLayerRef.current
-        const targetKey = format(visibleMonthDate, 'yyyy-MM')
-        const target = root?.querySelector<HTMLElement>(`[data-calendar-mini-month="${targetKey}"]`)
-
-        if (yearExitLayer && target && typeof window !== 'undefined' && window.innerWidth > 0 && window.innerHeight > 0) {
-          const rect = target.getBoundingClientRect()
-          if (rect.width > 0 && rect.height > 0) {
-            const centerX = rect.left + rect.width / 2
-            const centerY = rect.top + rect.height / 2
-            const viewportCenterX = window.innerWidth / 2
-            const viewportCenterY = window.innerHeight / 2
-            const exitAnchor: MonthTransitionAnchor = {
-              offsetX: clamp((centerX - viewportCenterX) * 0.22, -46, 46),
-              offsetY: clamp((centerY - viewportCenterY) * 0.18, -54, 54),
-              originX: clamp((centerX / window.innerWidth) * 100, 12, 88),
-              originY: clamp((centerY / window.innerHeight) * 100, 12, 88),
-            }
-
-            yearExitStartedRef.current = true
-            setMonthTransitionAnchor(exitAnchor)
-            setMonthTransitionPhase('exit')
-            return
-          }
-        }
-
-        setYearPreviewDate(visibleMonthDate)
-        setYearExitLayer(true)
-        return
-      }
-
-      setMonthTransitionPhase(null)
-      setMonthTransitionAnchor(null)
       setActiveDate(visibleMonthDate)
+      setSelectedDay(selectedDayForMonth(visibleMonthDate))
       setView('anio')
       return
     }
 
-    if (view === 'dia' && !reduceMotion && dayTransitionPhase !== 'exit') {
-      setDayTransitionPhase('exit')
-      return
-    }
-
-    setYearExitLayer(false)
-    setYearExitRequested(false)
-    yearExitStartedRef.current = false
-    setMonthTransitionPhase(null)
-    setDayTransitionPhase(null)
     setActiveDate(selectedDay)
     setVisibleMonthDate(selectedDay)
     setView(monthDisplay === 'list' ? 'lista' : 'mes')
@@ -439,8 +224,10 @@ export default function CalendarioIOS({
     setActiveDate(today)
     setSelectedDay(today)
     setVisibleMonthDate(today)
-    setYearPreviewDate(today)
-    if (view === 'mes' || view === 'lista') setMonthScrollRequest((request) => request + 1)
+
+    if (view === 'mes' || view === 'lista') {
+      setMonthScrollRequest((request) => request + 1)
+    }
   }
 
   const backLabel = view === 'mes' || view === 'lista'
@@ -449,22 +236,31 @@ export default function CalendarioIOS({
 
   const timelineDays: TimelineDayCount | null = view === 'dia' ? 1 : view === 'dos-dias' ? 2 : null
 
-  const currentMenuOption = isMonthContext
-    ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)
-    : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)
-  const currentMenuLabel = currentMenuOption?.label || (isMonthContext ? 'Compacto' : 'Día')
-  const CurrentMenuIcon = currentMenuOption?.icon || DayViewIcon
+  const timelineTitle = view === 'dia'
+    ? format(selectedDay, 'EEEE – d MMM yyyy', { locale: es })
+    : `${format(selectedDay, 'd MMM', { locale: es })} – ${format(addDays(selectedDay, 1), 'd MMM', { locale: es })}`
+
+  const currentMenuLabel = isMonthContext
+    ? MONTH_VIEW_OPTIONS.find((option) => option.id === monthDisplay)?.label || 'Compacto'
+    : TIMELINE_VIEW_OPTIONS.find((option) => option.id === view)?.label || 'Día'
 
   const listFooter = (
     <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
       <section>
         <div className={`${styles.agendaHeader} ${chrome.agendaHeaderTheme}`}>
-          <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>{format(selectedDay, 'EEEE d', { locale: es })}</h2>
+          <h2 className={`${styles.agendaDate} ${chrome.agendaDateTheme}`}>
+            {format(selectedDay, 'EEEE d', { locale: es })}
+          </h2>
           <span className={`${styles.agendaCount} ${chrome.mutedTheme}`}>{selectedDayEvents.length}</span>
         </div>
+
         {selectedDayEvents.length > 0 ? selectedDayEvents.map((event) => (
           <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
-        )) : <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No hay eventos ni recordatorios para esta fecha.</div>}
+        )) : (
+          <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>
+            No hay eventos ni recordatorios para esta fecha.
+          </div>
+        )}
       </section>
     </div>
   )
@@ -473,105 +269,73 @@ export default function CalendarioIOS({
     <div className={`${styles.topChrome} ${chrome.topChrome}`}>
       <div className={chrome.leftSlot}>
         {view !== 'anio' && (
-          <button type="button" className={`${styles.chromePill} ${chrome.backButton}`} onClick={goBack} aria-label={view === 'mes' || view === 'lista' ? 'Volver al año' : 'Volver al mes'}>
+          <button
+            type="button"
+            className={`${styles.chromePill} ${chrome.backButton}`}
+            onClick={goBack}
+            aria-label={view === 'mes' || view === 'lista' ? 'Volver al año' : 'Volver al mes'}
+          >
             <ChevronLeft size={24} strokeWidth={2.4} />
             <span className={chrome.backText}>{backLabel}</span>
           </button>
         )}
       </div>
+
       <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`} role="group" aria-label="Acciones del calendario">
         {view !== 'anio' && (
-          <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setViewMenuOpen((open) => !open)} aria-label={`Cambiar vista. Vista actual: ${currentMenuLabel}`} aria-expanded={viewMenuOpen} aria-controls="calendar-view-selector">
-            <CurrentMenuIcon size={25} />
+          <button
+            type="button"
+            className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
+            onClick={() => setViewMenuOpen((open) => !open)}
+            aria-label={`Cambiar vista. Vista actual: ${currentMenuLabel}`}
+            aria-expanded={viewMenuOpen}
+            aria-controls="calendar-view-selector"
+          >
+            <MonthListViewIcon size={24} />
           </button>
         )}
-        <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setSearchOpen(true)} aria-label="Buscar eventos"><Search size={25} /></button>
-        {puedeCrear && <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} onClick={() => setNewEventOpen(true)} aria-label="Crear evento o recordatorio"><Plus size={28} /></button>}
+
+        <button
+          type="button"
+          className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
+          onClick={() => setSearchOpen(true)}
+          aria-label="Buscar eventos"
+        >
+          <Search size={25} />
+        </button>
+
+        {puedeCrear && (
+          <button
+            type="button"
+            className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`}
+            onClick={() => setNewEventOpen(true)}
+            aria-label="Crear evento o recordatorio"
+          >
+            <Plus size={28} />
+          </button>
+        )}
       </div>
     </div>
   )
-
-  const yearTransitionChrome = (
-    <div className={`${styles.topChrome} ${chrome.topChrome}`}>
-      <div className={chrome.leftSlot} />
-      <div className={`${styles.chromeGroup} ${chrome.actionsGroup}`}>
-        <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1}><Search size={25} /></button>
-        {puedeCrear && <button type="button" className={`${styles.chromeIconButton} ${chrome.chromeIconButton}`} tabIndex={-1}><Plus size={28} /></button>}
-      </div>
-    </div>
-  )
-
-  const monthTransitionProps = {
-    transitionAnchor: monthTransitionAnchor,
-    transitionPhase: monthTransitionPhase,
-    transitionMonth: monthTransitionPhase === 'exit' ? visibleMonthDate : activeDate,
-    onTransitionComplete: completeMonthTransition,
-  }
-
-  const renderYearView = (chromeNode: React.ReactNode, date = activeDate, transitionPreview = false) => (
-    <CalendarioYearView
-      fecha={date}
-      eventos={sortedEvents}
-      isRefreshing={isRefreshing}
-      topChrome={chromeNode}
-      transitionPreview={transitionPreview}
-      onOpenMonth={openMonth}
-      onChangeYear={(year) => {
-        if (!transitionPreview) setActiveDate(new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28)))
-      }}
-    />
-  )
-
-  const timelineContent = timelineDays
-    ? <CalendarioMultiDayView selectedDay={selectedDay} events={sortedEvents} daysVisible={timelineDays} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
-    : <CalendarioAgendaView selectedDay={selectedDay} events={sortedEvents} onSelectDay={selectDay} onOpenEvent={setSelectedEvent} />
-
-  const unfoldingDay = view === 'dia' && dayTransitionPhase !== null
-  const daySurfaceInitial = view === 'dia' && dayTransitionPhase === 'enter'
-    ? {
-        clipPath: 'inset(0 0 100% 0)',
-        y: -10,
-        filter: 'blur(0px)',
-      }
-    : false
-  const daySurfaceAnimate = view === 'dia' && dayTransitionPhase === 'exit'
-    ? {
-        clipPath: 'inset(0 0 100% 0)',
-        y: -10,
-        filter: 'blur(0.35px)',
-      }
-    : {
-        clipPath: 'inset(0 0 0% 0)',
-        y: 0,
-        filter: view === 'dia' && dayTransitionPhase === 'enter'
-          ? ['blur(0px)', 'blur(0px)', 'blur(0.35px)', 'blur(0px)']
-          : 'blur(0px)',
-      }
 
   return (
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
-      {yearExitLayer && (
-        <div
-          ref={yearExitLayerRef}
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            inset: '0 0 calc(4rem + env(safe-area-inset-bottom, 0px)) 0',
-            zIndex: view === 'anio' ? 65 : 35,
-            overflow: 'hidden',
-            background: '#fff',
-            pointerEvents: 'none',
-            colorScheme: 'light',
-            contain: 'layout paint style',
+      {view === 'anio' && (
+        <CalendarioYearView
+          fecha={activeDate}
+          eventos={sortedEvents}
+          isRefreshing={isRefreshing}
+          topChrome={topChrome}
+          onOpenMonth={(month) => openMonth(month)}
+          onChangeYear={(year) => {
+            const next = new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28))
+            setActiveDate(next)
+            setVisibleMonthDate(next)
           }}
-        >
-          {renderYearView(yearTransitionChrome, yearPreviewDate, true)}
-        </div>
+        />
       )}
 
-      {view === 'anio' && renderYearView(topChrome)}
-
-      {(view === 'mes' || showMonthBehindDay) && (
+      {view === 'mes' && (
         <CalendarioMonthView
           month={activeDate}
           selectedDay={selectedDay}
@@ -581,54 +345,47 @@ export default function CalendarioIOS({
           isRefreshing={isRefreshing}
           dayPanelOpen={false}
           scrollRequest={monthScrollRequest}
-          overlay={showMonthBehindDay}
+          transitionAnchor={null}
+          transitionPhase={null}
+          transitionMonth={null}
           onVisibleMonthChange={handleVisibleMonthChange}
           onSelectDay={selectDay}
           onOpenDay={openDay}
           onOpenEvent={setSelectedEvent}
-          {...monthTransitionProps}
         />
       )}
 
-      {isTimelineContext && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: '0 0 calc(4rem + env(safe-area-inset-bottom, 0px)) 0',
-            zIndex: 45,
-            width: '100%',
-            minHeight: 0,
-            overflow: 'hidden',
-            background: unfoldingDay ? 'transparent' : '#fff',
-            colorScheme: 'light',
-            viewTransitionName: 'calendar-surface',
-          }}
-        >
+      {timelineDays && (
+        <>
           {topChrome}
-          <motion.div
-            initial={daySurfaceInitial}
-            animate={daySurfaceAnimate}
-            transition={unfoldingDay ? {
-              clipPath: { duration: 0.42, ease: [0.16, 1, 0.3, 1] },
-              y: { duration: 0.36, ease: [0.16, 1, 0.3, 1] },
-              filter: view === 'dia' && dayTransitionPhase === 'enter'
-                ? { duration: 0.42, times: [0, 0.78, 0.92, 1], ease: 'easeOut' }
-                : { duration: 0.18, ease: 'easeOut' },
-            } : { duration: 0 }}
-            onAnimationComplete={() => {
-              if (view === 'dia' && dayTransitionPhase) completeDayTransition()
-            }}
-            style={{
-              width: '100%',
-              overflow: 'hidden',
-              background: '#fff',
-              transformOrigin: 'top center',
-              willChange: unfoldingDay ? 'clip-path, transform' : 'auto',
-            }}
-          >
-            {timelineContent}
-          </motion.div>
-        </div>
+          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme} ${view === 'dia' ? chrome.dayHeaderBlock : ''}`}>
+            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme} ${view === 'dia' ? chrome.dayPeriodTitle : ''}`}>
+              {timelineTitle}
+            </h1>
+          </div>
+          <CalendarioMultiDayView
+            selectedDay={selectedDay}
+            events={sortedEvents}
+            daysVisible={timelineDays}
+            onSelectDay={selectDay}
+            onOpenEvent={setSelectedEvent}
+          />
+        </>
+      )}
+
+      {view === 'agenda' && (
+        <>
+          {topChrome}
+          <div className={`${styles.headerBlock} ${chrome.headerBlockTheme}`}>
+            <h1 className={`${styles.periodTitle} ${chrome.periodTitleTheme}`}>Lista</h1>
+          </div>
+          <CalendarioAgendaView
+            selectedDay={selectedDay}
+            events={sortedEvents}
+            onSelectDay={selectDay}
+            onOpenEvent={setSelectedEvent}
+          />
+        </>
       )}
 
       {view === 'lista' && (
@@ -644,29 +401,51 @@ export default function CalendarioIOS({
           showFollowingMonth={false}
           openDayOnSelect={false}
           footer={listFooter}
+          transitionAnchor={null}
+          transitionPhase={null}
+          transitionMonth={null}
           onVisibleMonthChange={handleVisibleMonthChange}
           onSelectDay={selectDay}
           onOpenDay={openDay}
           onOpenEvent={setSelectedEvent}
-          {...monthTransitionProps}
         />
       )}
 
       <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>
-        <button type="button" className={`${styles.floatingPill} ${chrome.floatingPill}`} onClick={goToday}>Hoy</button>
+        <button type="button" className={`${styles.floatingPill} ${chrome.floatingPill}`} onClick={goToday}>
+          Hoy
+        </button>
         <div className={`${styles.floatingGroup} ${chrome.floatingGroup}`}>
-          <button type="button" className={`${styles.floatingIcon} ${chrome.floatingIcon}`} onClick={onOpenCalendars} aria-label="Abrir calendarios"><CalendarDays size={24} /></button>
+          <button
+            type="button"
+            className={`${styles.floatingIcon} ${chrome.floatingIcon}`}
+            onClick={onOpenCalendars}
+            aria-label="Abrir calendarios"
+          >
+            <CalendarDays size={24} />
+          </button>
         </div>
       </div>
 
       {mounted && viewMenuOpen && view !== 'anio' && createPortal(
         <>
-          <button type="button" className={`${styles.popoverBackdrop} ${chrome.popoverBackdrop}`} onClick={() => setViewMenuOpen(false)} aria-label="Cerrar selector de vista" />
-          <div id="calendar-view-selector" className={`${styles.viewPopover} ${chrome.viewPopover}`} role="menu" aria-label="Vistas del calendario">
+          <button
+            type="button"
+            className={`${styles.popoverBackdrop} ${chrome.popoverBackdrop}`}
+            onClick={() => setViewMenuOpen(false)}
+            aria-label="Cerrar selector de vista"
+          />
+          <div
+            id="calendar-view-selector"
+            className={`${styles.viewPopover} ${chrome.viewPopover}`}
+            role="menu"
+            aria-label="Vistas del calendario"
+          >
             <div className={chrome.viewOptions}>
               {(isMonthContext ? MONTH_VIEW_OPTIONS : TIMELINE_VIEW_OPTIONS).map((option) => {
                 const Icon = option.icon
                 const active = isMonthContext ? option.id === monthDisplay : option.id === view
+
                 return (
                   <div key={option.id}>
                     {option.separated && <div className={chrome.viewSeparator} aria-hidden="true" />}
@@ -681,7 +460,7 @@ export default function CalendarioIOS({
                       aria-checked={active}
                     >
                       {active ? <Check size={20} className={chrome.viewCheck} /> : <span className={chrome.viewCheckHidden} />}
-                      <Icon size={26} />
+                      <Icon size={24} />
                       <span>{option.label}</span>
                     </button>
                   </div>
@@ -689,25 +468,56 @@ export default function CalendarioIOS({
               })}
             </div>
           </div>
-        </>, document.body,
+        </>,
+        document.body,
       )}
 
       {mounted && searchOpen && createPortal(
         <div className={`${styles.searchOverlay} ${chrome.searchOverlayTheme}`} role="dialog" aria-modal="true" aria-label="Buscar eventos y recordatorios">
           <header className={`${styles.searchHeader} ${chrome.searchHeaderTheme}`}>
-            <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} className={`${styles.searchField} ${chrome.searchFieldTheme}`} placeholder="Buscar" />
-            <button type="button" className={`${styles.searchCancel} ${chrome.searchCancelTheme}`} onClick={() => setSearchOpen(false)}>Cancelar</button>
+            <input
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className={`${styles.searchField} ${chrome.searchFieldTheme}`}
+              placeholder="Buscar"
+            />
+            <button
+              type="button"
+              className={`${styles.searchCancel} ${chrome.searchCancelTheme}`}
+              onClick={() => setSearchOpen(false)}
+            >
+              Cancelar
+            </button>
           </header>
+
           <div className={`${styles.eventList} ${chrome.eventListTheme}`}>
             {searchResults.length > 0 ? searchResults.map((event) => (
-              <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={(item) => { setSearchOpen(false); setSelectedEvent(item) }} />
-            )) : <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No se encontraron resultados.</div>}
+              <CalendarioEventRow
+                key={eventKey(event)}
+                evento={event}
+                onOpen={(item) => {
+                  setSearchOpen(false)
+                  setSelectedEvent(item)
+                }}
+              />
+            )) : (
+              <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>No se encontraron resultados.</div>
+            )}
           </div>
-        </div>, document.body,
+        </div>,
+        document.body,
       )}
 
       <CalendarioEventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-      <NuevoEventoCalendarioModal isOpen={newEventOpen} onClose={() => setNewEventOpen(false)} onCreated={onRefresh} editableCalendars={editableCalendars} userId={userId} fechaInicial={selectedDay} />
+      <NuevoEventoCalendarioModal
+        isOpen={newEventOpen}
+        onClose={() => setNewEventOpen(false)}
+        onCreated={onRefresh}
+        editableCalendars={editableCalendars}
+        userId={userId}
+        fechaInicial={selectedDay}
+      />
     </div>
   )
 }
