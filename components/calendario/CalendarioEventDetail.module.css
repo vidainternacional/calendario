@@ -59,25 +59,40 @@
 .backButton {
   display: inline-flex;
   width: fit-content;
+  min-width: 76px;
+  max-width: 142px;
   min-height: 44px;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
+  gap: 2px;
   justify-self: start;
-  border: 0;
-  background: transparent;
-  padding: 0 4px 0 0;
-  color: #5b3df5;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 23px;
+  background: rgba(246, 247, 250, 0.78);
+  padding: 0 13px 0 9px;
+  color: #253047;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.94);
   font-size: 16px;
-  font-weight: 560;
+  font-weight: 650;
   letter-spacing: -0.01em;
   white-space: nowrap;
-  transition: opacity 120ms ease, transform 120ms ease;
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+  transition: opacity 140ms ease, transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 140ms ease;
+}
+
+.backButton svg {
+  width: 24px;
+  height: 24px;
+  margin-left: -2px;
+  color: currentColor;
+  stroke: currentColor;
 }
 
 .backButton:active {
-  opacity: 0.58;
-  transform: translateX(-1px);
+  opacity: 0.72;
+  transform: scale(0.96);
+  background: rgba(236, 238, 244, 0.84);
 }
 
 .topbarTitle {
@@ -213,7 +228,7 @@
 .backButton:focus-visible {
   outline: 2px solid rgba(91, 61, 245, 0.28);
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: 23px;
 }
 
 @keyframes detailBackdropIn {
@@ -269,6 +284,7 @@
   }
 
   .backButton {
+    min-width: 72px;
     font-size: 15px;
   }
 
