@@ -6,8 +6,8 @@ export const SPRING_STANDARD: Transition = {
   damping: 30,
 }
 
-// Zoom de navegación del Calendario. La misma física se usa al entrar y al salir
-// para que Año ↔ Mes se sienta como una sola transición reversible y consistente.
+// Zoom de navegación del Calendario. La misma física se usa al entrar y al salir.
+// La superficie de Año se prepara fuera del frame crítico para preservar continuidad.
 export const CALENDAR_ZOOM_SPRING: Transition = {
   type: 'spring',
   stiffness: 320,
