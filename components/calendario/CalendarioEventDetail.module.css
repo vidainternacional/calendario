@@ -1,9 +1,9 @@
 .backdrop {
-  --detail-bg: #f7f8fb;
-  --detail-surface: rgba(255, 255, 255, 0.86);
+  --detail-bg: #f6f7fb;
+  --detail-surface: rgba(255, 255, 255, 0.78);
   --detail-text: #111827;
-  --detail-muted: #737b8b;
-  --detail-separator: rgba(15, 23, 42, 0.085);
+  --detail-muted: #7d8594;
+  --detail-separator: rgba(15, 23, 42, 0.075);
   position: fixed;
   inset: 0;
   z-index: 170;
@@ -11,12 +11,9 @@
   align-items: stretch;
   justify-content: center;
   overflow: hidden;
-  background: rgba(238, 241, 247, 0.46);
+  background: var(--detail-bg);
   color: var(--detail-text);
   color-scheme: light;
-  padding-top: max(6px, env(safe-area-inset-top, 0px));
-  -webkit-backdrop-filter: saturate(175%) blur(22px);
-  backdrop-filter: saturate(175%) blur(22px);
 }
 
 .sheet {
@@ -26,48 +23,41 @@
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  border-bottom: 0;
-  border-radius: 30px 30px 0 0;
-  background: rgba(247, 248, 251, 0.94);
+  background: linear-gradient(180deg, #fbfbfd 0%, #f5f6fa 100%);
   color: var(--detail-text);
-  box-shadow: 0 -16px 56px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.96);
-  -webkit-backdrop-filter: saturate(185%) blur(34px);
-  backdrop-filter: saturate(185%) blur(34px);
 }
 
 .topbar {
   position: relative;
   z-index: 2;
   display: grid;
-  min-height: 76px;
-  grid-template-columns: minmax(110px, 1fr) auto minmax(110px, 1fr);
+  min-height: 62px;
+  grid-template-columns: minmax(96px, 1fr) auto minmax(96px, 1fr);
   flex: 0 0 auto;
   align-items: center;
-  gap: 8px;
-  padding: 8px max(16px, env(safe-area-inset-right, 0px)) 4px max(16px, env(safe-area-inset-left, 0px));
-  background: rgba(255, 255, 255, 0.64);
-  box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.045), inset 0 1px 0 rgba(255, 255, 255, 0.92);
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
-  backdrop-filter: saturate(180%) blur(24px);
+  gap: 6px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.045);
+  background: rgba(251, 251, 253, 0.86);
+  padding: max(5px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) 5px max(14px, env(safe-area-inset-left, 0px));
+  -webkit-backdrop-filter: saturate(170%) blur(22px);
+  backdrop-filter: saturate(170%) blur(22px);
 }
 
 .backButton {
   display: inline-flex;
   width: fit-content;
-  min-height: 46px;
+  min-height: 44px;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
+  gap: 0;
   justify-self: start;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 23px;
-  background: rgba(255, 255, 255, 0.82);
-  padding: 0 14px 0 9px;
-  color: #303746;
-  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.96);
-  font-size: 15px;
-  font-weight: 690;
+  border: 0;
+  background: transparent;
+  padding: 0 4px 0 0;
+  color: #5b3df5;
+  font-size: 16px;
+  font-weight: 560;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
@@ -75,7 +65,7 @@
   margin: 0;
   color: var(--detail-text);
   font-size: 17px;
-  font-weight: 760;
+  font-weight: 650;
   letter-spacing: -0.015em;
   text-align: center;
   white-space: nowrap;
@@ -91,7 +81,6 @@
   flex: 1;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(244, 246, 250, 0.88));
   padding: 14px max(16px, env(safe-area-inset-right, 0px)) calc(30px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   scroll-padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
   scrollbar-width: none;
@@ -103,135 +92,115 @@
 }
 
 .summary {
+  margin: 0 0 24px;
+  padding: 10px 4px 2px;
+}
+
+.titleLine {
   display: grid;
-  grid-template-columns: 8px minmax(0, 1fr);
-  gap: 14px;
-  margin: 2px 2px 18px;
-  padding: 16px 4px 8px;
+  grid-template-columns: 13px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
 }
 
-.colorBar {
+.calendarDot {
   display: block;
-  width: 6px;
-  min-height: 88px;
-  border-radius: 999px;
-}
-
-.summaryCopy {
-  min-width: 0;
-}
-
-.kind {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 820;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  width: 11px;
+  height: 11px;
+  margin-top: 8px;
+  border-radius: 50%;
 }
 
 .title {
   margin: 0;
   overflow-wrap: anywhere;
   color: var(--detail-text);
-  font-size: clamp(28px, 8vw, 38px);
-  font-weight: 790;
-  letter-spacing: -0.04em;
-  line-height: 1.06;
+  font-size: clamp(26px, 7.5vw, 34px);
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
 }
 
 .calendarName {
-  margin: 9px 0 0;
+  margin: 7px 0 0 23px;
   color: var(--detail-muted);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .group {
   overflow: hidden;
-  margin-bottom: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 22px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 18px;
   background: var(--detail-surface);
-  box-shadow: 0 9px 28px rgba(15, 23, 42, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.96);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+  -webkit-backdrop-filter: saturate(150%) blur(16px);
+  backdrop-filter: saturate(150%) blur(16px);
 }
 
 .row {
   display: grid;
   min-width: 0;
-  grid-template-columns: 40px minmax(0, 1fr);
-  align-items: center;
-  gap: 13px;
+  grid-template-columns: minmax(88px, 0.72fr) minmax(0, 1.28fr);
+  align-items: start;
+  gap: 16px;
   border-top: 1px solid var(--detail-separator);
-  padding: 15px 16px;
+  padding: 14px 16px;
 }
 
 .row:first-child {
   border-top: 0;
 }
 
-.icon {
-  display: inline-flex;
-  width: 38px;
-  height: 38px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: rgba(91, 61, 245, 0.09);
-  color: #5b3df5;
-}
-
-.rowCopy {
-  min-width: 0;
-}
-
 .label {
   display: block;
-  margin-bottom: 4px;
-  color: #7a8291;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: var(--detail-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .value {
   display: block;
   overflow-wrap: anywhere;
   color: var(--detail-text);
-  font-size: 15px;
-  font-weight: 610;
-  line-height: 1.48;
+  font-size: 14px;
+  font-weight: 520;
+  line-height: 1.45;
+  text-align: right;
   white-space: pre-wrap;
 }
 
+.descriptionGroup .row {
+  display: block;
+}
+
+.descriptionGroup .label {
+  margin-bottom: 6px;
+}
+
 .descriptionGroup .value {
-  font-weight: 490;
-  line-height: 1.6;
+  font-weight: 450;
+  line-height: 1.58;
+  text-align: left;
 }
 
 .backButton:focus-visible {
-  outline: 3px solid rgba(91, 61, 245, 0.28);
+  outline: 2px solid rgba(91, 61, 245, 0.28);
   outline-offset: 2px;
+  border-radius: 8px;
 }
 
 @media (max-width: 390px) {
-  .sheet {
-    border-radius: 28px 28px 0 0;
-  }
-
   .topbar {
-    min-height: 72px;
-    grid-template-columns: minmax(100px, 1fr) auto minmax(100px, 1fr);
-    padding-inline: 12px;
+    min-height: 60px;
+    grid-template-columns: minmax(92px, 1fr) auto minmax(92px, 1fr);
+    padding-inline: 10px;
   }
 
   .backButton {
-    min-height: 44px;
-    border-radius: 22px;
-    padding-right: 12px;
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .body {
@@ -239,38 +208,47 @@
   }
 
   .summary {
-    margin-inline: 1px;
-    padding-top: 12px;
+    margin-bottom: 20px;
+  }
+
+  .group {
+    border-radius: 17px;
   }
 
   .row {
-    padding-inline: 14px;
+    grid-template-columns: minmax(82px, 0.7fr) minmax(0, 1.3fr);
+    gap: 12px;
+    padding: 13px 14px;
   }
 }
 
 @media (max-width: 350px) {
   .topbar {
-    grid-template-columns: minmax(88px, 1fr) auto minmax(88px, 1fr);
+    grid-template-columns: minmax(78px, 1fr) auto minmax(78px, 1fr);
   }
 
   .backButton span {
-    max-width: 72px;
+    max-width: 64px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .row {
+    grid-template-columns: 76px minmax(0, 1fr);
   }
 }
 
 @media (min-width: 700px) {
   .backdrop {
     align-items: center;
-    padding: max(24px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
     background: rgba(31, 41, 55, 0.12);
+    padding: 24px;
   }
 
   .sheet {
-    height: min(820px, calc(100dvh - 48px));
+    height: min(760px, calc(100dvh - 48px));
     border: 1px solid rgba(255, 255, 255, 0.88);
-    border-radius: 30px;
-    box-shadow: 0 34px 100px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    border-radius: 26px;
+    box-shadow: 0 30px 90px rgba(15, 23, 42, 0.16);
   }
 }
