@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Camera, Check, Loader2, Trash2, X, ZoomIn } from 'lucide-react'
+import { Camera, Check, Loader2, Pencil, Trash2, X, ZoomIn } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import UserAvatar from '@/components/comunidad/UserAvatar'
@@ -16,7 +16,6 @@ type AvatarUploaderProps = {
 }
 
 type EditorState = {
-  file: File
   objectUrl: string
   image: HTMLImageElement
   baseWidth: number
@@ -24,12 +23,14 @@ type EditorState = {
   zoom: number
   offsetX: number
   offsetY: number
+  sourceBlob?: Blob
 }
 
 const AVATAR_SIZE = 512
+const SOURCE_MAX_SIDE = 1600
 const EDITOR_SIZE = 280
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024
-const MAX_AVATAR_BYTES = 512 * 1024
+const MAX_STORED_BYTES = 512 * 1024
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -46,9 +47,9 @@ function clampOffsets(editor: EditorState, x: number, y: number, zoom = editor.z
   }
 }
 
-function abrirImagen(file: File) {
+function abrirBlob(blob: Blob) {
   return new Promise<{ image: HTMLImageElement; objectUrl: string }>((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file)
+    const objectUrl = URL.createObjectURL(blob)
     const image = new Image()
     image.onload = () => resolve({ image, objectUrl })
     image.onerror = () => {
@@ -61,6 +62,54 @@ function abrirImagen(file: File) {
 
 function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
   return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', quality))
+}
+
+async function optimizarFuente(file: File) {
+  if (!file.type.startsWith('image/')) throw new Error('Selecciona una fotografía válida.')
+  if (file.size > MAX_SOURCE_BYTES) throw new Error('La fotografía original es demasiado grande.')
+
+  const { image, objectUrl } = await abrirBlob(file)
+
+  try {
+    const scale = Math.min(1, SOURCE_MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight))
+    const width = Math.max(1, Math.round(image.naturalWidth * scale))
+    const height = Math.max(1, Math.round(image.naturalHeight * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('No se pudo preparar la fotografía.')
+
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = 'high'
+    context.drawImage(image, 0, 0, width, height)
+
+    for (const quality of [0.82, 0.74, 0.66, 0.58, 0.5, 0.42]) {
+      const blob = await canvasToBlob(canvas, quality)
+      if (blob && blob.size <= MAX_STORED_BYTES) return blob
+    }
+
+    throw new Error('La fotografía no pudo optimizarse lo suficiente.')
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+async function crearEditorDesdeBlob(blob: Blob, sourceBlob?: Blob): Promise<EditorState> {
+  const { image, objectUrl } = await abrirBlob(blob)
+  const scale = Math.max(EDITOR_SIZE / image.naturalWidth, EDITOR_SIZE / image.naturalHeight)
+
+  return {
+    objectUrl,
+    image,
+    baseWidth: image.naturalWidth * scale,
+    baseHeight: image.naturalHeight * scale,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+    sourceBlob,
+  }
 }
 
 async function generarAvatar(editor: EditorState) {
@@ -89,7 +138,7 @@ async function generarAvatar(editor: EditorState) {
 
   for (const quality of [0.82, 0.72, 0.62]) {
     const blob = await canvasToBlob(canvas, quality)
-    if (blob && blob.size <= MAX_AVATAR_BYTES) return blob
+    if (blob && blob.size <= MAX_STORED_BYTES) return blob
   }
 
   throw new Error('La fotografía no pudo optimizarse lo suficiente.')
@@ -109,6 +158,15 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [pending, setPending] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
+  const cancelarEditor = () => {
+    setEditor((prev) => {
+      if (prev) URL.revokeObjectURL(prev.objectUrl)
+      return null
+    })
+    dragRef.current = null
+    if (inputRef.current) inputRef.current.value = ''
+  }
 
   useEffect(() => {
     if (!editor) return
@@ -141,41 +199,53 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Boolean(editor), pending])
 
-  const cancelarEditor = () => {
-    setEditor((prev) => {
-      if (prev) URL.revokeObjectURL(prev.objectUrl)
-      return null
-    })
-    dragRef.current = null
-    if (inputRef.current) inputRef.current.value = ''
-  }
-
   const seleccionar = async (file?: File) => {
     if (!file) return
+    setPending(true)
     setMessage(null)
 
     try {
-      if (!file.type.startsWith('image/')) throw new Error('Selecciona una fotografía válida.')
-      if (file.size > MAX_SOURCE_BYTES) throw new Error('La fotografía original es demasiado grande.')
-
-      const { image, objectUrl } = await abrirImagen(file)
-      const scale = Math.max(EDITOR_SIZE / image.naturalWidth, EDITOR_SIZE / image.naturalHeight)
+      const sourceBlob = await optimizarFuente(file)
+      const nextEditor = await crearEditorDesdeBlob(sourceBlob, sourceBlob)
       setEditor((prev) => {
         if (prev) URL.revokeObjectURL(prev.objectUrl)
-        return {
-          file,
-          objectUrl,
-          image,
-          baseWidth: image.naturalWidth * scale,
-          baseHeight: image.naturalHeight * scale,
-          zoom: 1,
-          offsetX: 0,
-          offsetY: 0,
-        }
+        return nextEditor
       })
     } catch (error) {
       if (inputRef.current) inputRef.current.value = ''
       setMessage(error instanceof Error ? error.message : 'No se pudo abrir la fotografía.')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const editarActual = async () => {
+    if (!currentUrl || pending) return
+    setPending(true)
+    setMessage(null)
+
+    try {
+      const supabase = createClient()
+      const { data: source, error } = await supabase.storage
+        .from('avatars')
+        .download(`${userId}/source.webp`)
+
+      if (error || !source) {
+        setMessage('Para reencuadrar esta foto antigua, selecciona la original una vez.')
+        window.setTimeout(() => inputRef.current?.click(), 50)
+        return
+      }
+
+      const nextEditor = await crearEditorDesdeBlob(source)
+      setEditor((prev) => {
+        if (prev) URL.revokeObjectURL(prev.objectUrl)
+        return nextEditor
+      })
+    } catch (error) {
+      console.error('[AvatarUploader:editarActual]', error)
+      setMessage('No se pudo abrir la fotografía para editarla.')
+    } finally {
+      setPending(false)
     }
   }
 
@@ -187,10 +257,22 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
     try {
       const avatar = await generarAvatar(editor)
       const supabase = createClient()
-      const path = `${userId}/avatar.webp`
+      const avatarPath = `${userId}/avatar.webp`
+
+      if (editor.sourceBlob) {
+        const { error: sourceError } = await supabase.storage
+          .from('avatars')
+          .upload(`${userId}/source.webp`, editor.sourceBlob, {
+            upsert: true,
+            contentType: 'image/webp',
+            cacheControl: '3600',
+          })
+        if (sourceError) throw sourceError
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(path, avatar, {
+        .upload(avatarPath, avatar, {
           upsert: true,
           contentType: 'image/webp',
           cacheControl: '3600',
@@ -198,7 +280,7 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
 
       if (uploadError) throw uploadError
 
-      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      const { data } = supabase.storage.from('avatars').getPublicUrl(avatarPath)
       const publicUrl = `${data.publicUrl}?v=${Date.now()}`
       const { error: profileError } = await (supabase as any)
         .from('profiles')
@@ -226,12 +308,15 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
     setMessage(null)
     try {
       const supabase = createClient()
-      const path = `${userId}/avatar.webp`
-      await supabase.storage.from('avatars').remove([path])
+      await supabase.storage
+        .from('avatars')
+        .remove([`${userId}/avatar.webp`, `${userId}/source.webp`])
+
       const { error } = await (supabase as any)
         .from('profiles')
         .update({ avatar_url: null })
         .eq('id', userId)
+
       if (error) throw error
       setCurrentUrl('')
       setMessage('Foto eliminada')
@@ -275,7 +360,9 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
             </header>
 
             <div className="px-4 py-5 sm:px-5">
-              <p className="mb-4 text-center text-xs leading-5 text-slate-500">Arrastra la imagen para centrarla y usa el control de zoom hasta que quede como quieres.</p>
+              <p className="mb-4 text-center text-xs leading-5 text-slate-500">
+                Arrastra la imagen para elegir qué parte se verá y usa el zoom para ajustar el encuadre.
+              </p>
 
               <div
                 className="relative mx-auto h-[280px] w-[280px] touch-none select-none overflow-hidden rounded-full bg-slate-950 shadow-inner ring-4 ring-slate-100"
@@ -358,7 +445,7 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
                   className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-bold text-white shadow-[0_8px_22px_rgba(79,70,229,0.22)] disabled:opacity-50"
                 >
                   {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  {pending ? 'Guardando…' : 'Usar esta foto'}
+                  {pending ? 'Guardando…' : 'Guardar encuadre'}
                 </button>
               </div>
             </div>
@@ -395,19 +482,41 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
       </div>
 
       {currentUrl && (
-        <button
-          type="button"
-          onClick={() => void quitar()}
-          disabled={pending}
-          className="mt-2 inline-flex min-h-8 items-center gap-1 text-[10px] font-semibold text-slate-400 transition hover:text-rose-500 disabled:opacity-50"
-        >
-          <Trash2 className="h-3 w-3" aria-hidden="true" />
-          Quitar
-        </button>
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void editarActual()}
+            disabled={pending}
+            className="inline-flex min-h-8 items-center gap-1 text-[10px] font-semibold text-indigo-500 transition hover:text-indigo-600 disabled:opacity-50"
+          >
+            <Pencil className="h-3 w-3" aria-hidden="true" />
+            Editar
+          </button>
+          <span className="text-slate-200" aria-hidden="true">·</span>
+          <button
+            type="button"
+            onClick={() => void quitar()}
+            disabled={pending}
+            className="inline-flex min-h-8 items-center gap-1 text-[10px] font-semibold text-slate-400 transition hover:text-rose-500 disabled:opacity-50"
+          >
+            <Trash2 className="h-3 w-3" aria-hidden="true" />
+            Quitar
+          </button>
+        </div>
       )}
 
       {message && (
-        <p className={`mt-1 max-w-28 text-[10px] leading-4 ${message.startsWith('No ') || message.includes('demasiado') || message.includes('Selecciona') ? 'text-rose-500' : 'text-emerald-600'}`} role="status">
+        <p
+          className={`mt-1 max-w-40 text-[10px] leading-4 ${
+            message.startsWith('No ') ||
+            message.includes('demasiado') ||
+            message.includes('Selecciona') ||
+            message.includes('antigua')
+              ? 'text-rose-500'
+              : 'text-emerald-600'
+          }`}
+          role="status"
+        >
           {message}
         </p>
       )}
