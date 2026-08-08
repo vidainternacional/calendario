@@ -12,7 +12,7 @@
   color-scheme: light;
   -webkit-overflow-scrolling: touch;
   transform-origin: 50% 40%;
-  animation: calendarYearEnter 300ms cubic-bezier(.22,1,.36,1) both;
+  animation: calendarYearEnter 320ms cubic-bezier(.22,1,.36,1) both;
   will-change: transform, opacity;
 }
 
@@ -32,19 +32,19 @@
 
 .yearPolish :global([class*='yearSection']) {
   content-visibility: auto;
-  contain-intrinsic-size: auto 780px;
+  contain-intrinsic-size: auto 760px;
 }
 
 .yearPolish :global([class*='yearHeader']) {
-  padding-bottom: 14px;
+  padding-bottom: 12px;
 }
 
 .yearPolish :global([class*='yearGrid']) {
-  gap: 20px 16px;
+  gap: 18px 14px;
 }
 
 .yearPolish :global([class*='miniMonthName']) {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .yearPolish :global([class*='miniGrid']) {
@@ -76,12 +76,8 @@
 
 @keyframes calendarYearEnter {
   from {
-    opacity: .58;
-    transform: scale(.952) translate3d(0, -8px, 0);
-  }
-  72% {
-    opacity: 1;
-    transform: scale(1.004) translate3d(0, 0, 0);
+    opacity: .66;
+    transform: scale(.965) translate3d(0, -6px, 0);
   }
   to {
     opacity: 1;
@@ -89,27 +85,59 @@
   }
 }
 
-@media (max-width: 390px) {
+/* iPhone Pro / Pro Max: esta es la geometría de referencia aprobada.
+   Antes el corte en 390px dejaba fuera precisamente los iPhone de 393/430px. */
+@media (max-width: 440px) {
   .yearPolish :global([class*='yearsScroller']) {
-    padding-bottom: calc(38dvh + 154px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(36dvh + 148px + env(safe-area-inset-bottom, 0px));
   }
 
-  .yearPolish :global([class*='yearGrid']) {
-    gap: 17px 11px;
+  .yearPolish :global([class*='yearSection']) {
+    padding-bottom: 22px !important;
+    contain-intrinsic-size: auto 650px;
   }
-}
 
-@media (max-height: 760px) {
   .yearPolish :global([class*='yearHeader']) {
-    padding-bottom: 10px;
+    padding-top: 6px !important;
+    padding-bottom: 10px !important;
   }
 
   .yearPolish :global([class*='yearGrid']) {
-    gap-block: 14px;
+    gap: 12px 11px !important;
+    padding-bottom: 12px !important;
   }
 
   .yearPolish :global([class*='miniMonthName']) {
-    margin-bottom: 3px;
+    min-height: 20px !important;
+    margin-bottom: 3px !important;
+    line-height: 20px !important;
+  }
+
+  .yearPolish :global([class*='miniWeekdays']) {
+    margin-bottom: 3px !important;
+  }
+
+  .yearPolish :global([class*='miniGrid']) {
+    grid-template-rows: repeat(6, 13px) !important;
+    gap-block: 1px !important;
+  }
+
+  .yearPolish :global([class*='miniDay']) {
+    min-height: 13px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .yearPolish :global([class*='yearGrid']) {
+    gap: 10px 8px !important;
+  }
+
+  .yearPolish :global([class*='miniGrid']) {
+    grid-template-rows: repeat(6, 12px) !important;
+  }
+
+  .yearPolish :global([class*='miniDay']) {
+    min-height: 12px !important;
   }
 }
 

@@ -51,7 +51,83 @@
   font-weight: 760;
 }
 
+/* Eventos: cápsula real, no tarjeta rectangular redondeada. */
+:global([class*='eventChip']) {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 4px 8px !important;
+  background: color-mix(in srgb, currentColor 12%, #ffffff) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent) !important;
+}
+
+:global([class*='timedEvent']) {
+  border: 0 !important;
+  border-left: 0 !important;
+  border-radius: 999px !important;
+  padding-inline: 11px !important;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .035), 0 1px 2px rgba(15, 23, 42, .025) !important;
+}
+
+:global([class*='allDayEvent']) {
+  border-radius: 999px !important;
+  padding-inline: 10px !important;
+}
+
+/* Transiciones de FASE A: simples y deterministas, sin overlays ni controlador complejo. */
+:global([class*='yearPolish']) {
+  animation: vidaCalendarYearIn 320ms cubic-bezier(.22,1,.36,1) both !important;
+}
+
+:global([class*='monthPolish']) {
+  animation: vidaCalendarMonthIn 330ms cubic-bezier(.22,1,.36,1) both !important;
+}
+
+:global(section[aria-label^='Vista de'][class*='surface']) {
+  animation: vidaCalendarDayIn 320ms cubic-bezier(.22,1,.36,1) both !important;
+}
+
+@keyframes vidaCalendarYearIn {
+  from {
+    opacity: .72;
+    transform: scale(.972) translate3d(0, -4px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vidaCalendarMonthIn {
+  from {
+    opacity: .58;
+    transform: scale(.955) translate3d(0, 7px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes vidaCalendarDayIn {
+  from {
+    opacity: .62;
+    transform: translate3d(22px, 0, 0) scale(.995);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 @media (max-width: 390px) {
   .rangeTitles { min-height: 44px; }
   .rangeTitle { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global([class*='yearPolish']),
+  :global([class*='monthPolish']),
+  :global(section[aria-label^='Vista de'][class*='surface']) {
+    animation-duration: 1ms !important;
+  }
 }
