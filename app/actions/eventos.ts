@@ -120,7 +120,7 @@ export async function crearEventoCalendario(
 
   const itemType = texto(formData, 'item_type') === 'reminder' ? 'reminder' : 'event'
   const titulo = texto(formData, 'titulo')
-  const calendarId = texto(formData, 'calendar_id')
+  const calendarIdFallback = texto(formData, 'calendar_id')
   const descripcion = texto(formData, 'descripcion')
   const fechaInicioRaw = texto(formData, 'fecha_inicio')
 
@@ -128,12 +128,40 @@ export async function crearEventoCalendario(
     return { success: false, error: 'Escribe un título válido.' }
   }
 
-  if (!uuidValido(calendarId)) {
-    return { success: false, error: 'Selecciona un calendario válido.' }
+  const calendarIds = Array.from(new Set(
+    (itemType === 'event' ? formData.getAll('calendar_ids') : [calendarIdFallback])
+      .map((value) => String(value))
+      .filter(uuidValido),
+  ))
+
+  if (calendarIds.length === 0 && uuidValido(calendarIdFallback)) {
+    calendarIds.push(calendarIdFallback)
   }
 
-  const access = await validarAccesoEscritura(db, user.id, calendarId)
-  if ('error' in access) return { success: false, error: access.error }
+  if (calendarIds.length === 0) {
+    return { success: false, error: 'Selecciona al menos un calendario.' }
+  }
+
+  if (calendarIds.length > 50) {
+    return { success: false, error: 'Seleccionaste demasiados calendarios.' }
+  }
+
+  const accessList: Array<{ calendar: CalendarioEscritura }> = []
+  for (const calendarId of calendarIds) {
+    const access = await validarAccesoEscritura(db, user.id, calendarId)
+    if ('error' in access) return { success: false, error: access.error }
+    accessList.push({ calendar: access.calendar })
+  }
+
+  const primaryCalendarId = calendarIds.includes(calendarIdFallback)
+    ? calendarIdFallback
+    : calendarIds[0]
+  const primaryIndex = calendarIds.indexOf(primaryCalendarId)
+  const primaryCalendar = accessList[Math.max(0, primaryIndex)]?.calendar
+
+  if (!primaryCalendar) {
+    return { success: false, error: 'No fue posible determinar el calendario principal.' }
+  }
 
   const fechaInicio = new Date(fechaInicioRaw)
   if (Number.isNaN(fechaInicio.getTime())) {
@@ -144,7 +172,7 @@ export async function crearEventoCalendario(
     const { data: reminderRaw, error: reminderError } = await db
       .from('calendar_reminders')
       .insert({
-        calendar_id: calendarId,
+        calendar_id: primaryCalendarId,
         title: titulo,
         notes: descripcion || null,
         remind_at: fechaInicio.toISOString(),
@@ -176,7 +204,12 @@ export async function crearEventoCalendario(
     return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
   }
 
-  const ministerioId = access.calendar.ministerio_id || null
+  const ministerioIds = Array.from(new Set(
+    accessList.map((access) => access.calendar.ministerio_id).filter(Boolean),
+  )) as string[]
+  const ministerioId = calendarIds.length === 1 && ministerioIds.length === 1
+    ? ministerioIds[0]
+    : null
 
   const { data: eventoRaw, error: eventoError } = await db
     .from('eventos')
@@ -185,7 +218,7 @@ export async function crearEventoCalendario(
       ubicacion: ubicacion || null,
       descripcion: descripcion || null,
       ministerio_id: ministerioId,
-      calendar_id: calendarId,
+      calendar_id: primaryCalendarId,
       fecha_inicio: fechaInicio.toISOString(),
       fecha_fin: fechaFin.toISOString(),
       todo_el_dia: todoElDia,
@@ -199,6 +232,19 @@ export async function crearEventoCalendario(
   if (eventoError || !evento) {
     console.error('[crearEventoCalendario] evento', eventoError)
     return { success: false, error: 'No fue posible guardar el evento.' }
+  }
+
+  const { error: calendariosError } = await db.from('evento_calendarios').insert(
+    calendarIds.map((calendarId) => ({
+      evento_id: evento.id,
+      calendar_id: calendarId,
+    })),
+  )
+
+  if (calendariosError) {
+    console.error('[crearEventoCalendario] calendarios', calendariosError)
+    await db.from('eventos').delete().eq('id', evento.id)
+    return { success: false, error: 'El evento no pudo asignarse a los calendarios seleccionados.' }
   }
 
   const { error: asignacionError } = await db.from('evento_asignaciones').insert({
