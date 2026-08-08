@@ -46,6 +46,13 @@ type CalendarView = 'anio' | 'mes' | 'dia' | 'dos-dias' | 'agenda' | 'lista'
 type TimelineView = 'dia' | 'dos-dias' | 'agenda'
 type MonthMenuMode = MonthDisplayMode | 'list'
 
+export type MonthTransitionAnchor = {
+  offsetX: number
+  offsetY: number
+  originX: number
+  originY: number
+}
+
 type MenuOption<T extends string> = {
   id: T
   label: string
