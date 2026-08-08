@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ArrowLeftRight, Check, X, Clock } from 'lucide-react'
 import { aceptarIntercambio, rechazarIntercambio } from '@/app/actions/intercambios'
+import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = {
   title: 'Intercambios',
@@ -50,14 +51,14 @@ export default async function IntercambiosPage() {
   const recibidos = (todosPendientes || []).filter((i: any) => {
     // Si soy el destinatario directo
     if (i.destinatario_id === user.id) return true
-    
+
     // Si está abierto a cualquiera y soy del mismo ministerio del evento
     // Y yo no soy el solicitante
     const evt = i.evento_asignaciones?.eventos
     if (!i.destinatario_id && i.solicitante_id !== user.id && evt?.ministerio_id && misMinisterios.includes(evt.ministerio_id)) {
       return true
     }
-    
+
     return false
   })
 
@@ -82,7 +83,11 @@ export default async function IntercambiosPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <main className="min-h-screen bg-[#f4f5f9] px-4 py-8 max-w-lg mx-auto pb-24">
+    <main className="mx-auto min-h-screen max-w-lg bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:pt-8">
+      <div className="mb-5">
+        <BackButton />
+      </div>
+
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[#171923]">Intercambios</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -118,7 +123,7 @@ export default async function IntercambiosPage() {
                           Pendiente
                         </span>
                       </div>
-                      
+
                       <p className="text-sm text-gray-500 mb-3">
                         Solicita que cubras: <strong className="text-[#171923]">{evt?.titulo}</strong> el {evt ? format(new Date(evt.fecha_inicio), "d 'de' MMMM", { locale: es }) : ''}
                       </p>
@@ -167,7 +172,7 @@ export default async function IntercambiosPage() {
               {enviados.map((int: any) => {
                 const evt = int.evento_asignaciones?.eventos
                 const dest = int.profiles?.nombre_completo || 'Alguien del ministerio'
-                
+
                 let colorClass = 'bg-slate-100 text-gray-600'
                 let bgBorder = 'bg-gray-300'
                 if (int.estado === 'pendiente') { colorClass = 'bg-amber-100 text-amber-700'; bgBorder = 'bg-amber-500' }

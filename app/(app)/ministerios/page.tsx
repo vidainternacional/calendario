@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { HandHeart, UsersRound } from 'lucide-react'
 import SolicitarIngresoBoton from '@/components/ministerios/SolicitarIngresoBoton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = {
   title: 'Ministerios',
@@ -43,6 +44,10 @@ export default async function MinisteriosPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:px-6">
+      <div className="mb-5">
+        <BackButton />
+      </div>
+
       <header className="mb-6 min-w-0 sm:mb-8">
         <h1 className="break-words text-2xl font-bold text-[#171923] sm:text-3xl">Ministerios</h1>
         <p className="mt-1 max-w-2xl break-words text-sm text-gray-500 sm:text-base">

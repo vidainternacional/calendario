@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ContactosClient from '@/components/contactos/ContactosClient'
+import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = { title: 'Mis Contactos' }
 export const dynamic = 'force-dynamic'
@@ -31,11 +32,16 @@ export default async function ContactosPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <ContactosClient
-      miId={user.id}
-      miNombre={perfil?.nombre_completo ?? ''}
-      qrToken={perfil?.qr_token ?? ''}
-      relaciones={relaciones ?? []}
-    />
+    <div className="min-h-screen bg-[#f4f5f9]">
+      <div className="mx-auto max-w-2xl px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
+        <BackButton />
+      </div>
+      <ContactosClient
+        miId={user.id}
+        miNombre={perfil?.nombre_completo ?? ''}
+        qrToken={perfil?.qr_token ?? ''}
+        relaciones={relaciones ?? []}
+      />
+    </div>
   )
 }

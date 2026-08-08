@@ -3,6 +3,7 @@ import AdminClient from './AdminClient'
 import Link from 'next/link'
 import { BookOpenCheck, Building2, CheckCircle2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import BackButton from '@/components/navigation/BackButton'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -133,6 +134,10 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 max-w-2xl mx-auto">
+      <div className="mb-5">
+        <BackButton />
+      </div>
+
       <header className="mb-6 sm:mb-8">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-500 mb-1.5">Panel general</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-[#171923] leading-tight">Administración</h1>
