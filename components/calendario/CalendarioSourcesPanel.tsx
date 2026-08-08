@@ -47,11 +47,30 @@ type CalendarAccessDetails = {
   members: AccessPerson[]
 }
 
-const GROUP_LABELS: Record<string, string> = {
-  interno: 'Vida Internacional',
+type CalendarGroupKey = 'vida' | 'pastoral' | 'ministerios' | 'gmail' | 'icloud' | 'otros'
+
+const GROUP_LABELS: Record<CalendarGroupKey, string> = {
+  vida: 'Vida Internacional',
+  pastoral: 'Pastoral',
+  ministerios: 'Ministerios',
   gmail: 'Gmail',
   icloud: 'iCloud',
-  other: 'Otros',
+  otros: 'Otros',
+}
+
+const GROUP_ORDER: CalendarGroupKey[] = ['vida', 'pastoral', 'ministerios', 'gmail', 'icloud', 'otros']
+
+function groupForSource(source: CalendarSource): CalendarGroupKey {
+  const calendar = source.calendars
+  if (!calendar) return 'otros'
+
+  if (calendar.tipo_cuenta === 'gmail') return 'gmail'
+  if (calendar.tipo_cuenta === 'icloud') return 'icloud'
+  if (calendar.tipo_cuenta === 'other') return 'otros'
+
+  if (calendar.ministerio_id) return 'ministerios'
+  if (calendar.es_publico) return 'vida'
+  return 'pastoral'
 }
 
 function initials(name?: string | null) {
@@ -64,7 +83,7 @@ function initials(name?: string | null) {
 }
 
 function titleFromSummary(summary: string) {
-  return summary.match(/[“"]([^”"]+)[”"]/u)?.[1]?.trim() || ''
+  return summary.match(/[“\"]([^”\"]+)[”\"]/u)?.[1]?.trim() || ''
 }
 
 export default function CalendarioSourcesPanel({
@@ -172,12 +191,18 @@ export default function CalendarioSourcesPanel({
   }, [closeDetails, closePanel, isOpen, selectedSource])
 
   const groups = useMemo(() => {
-    const map = new Map<string, CalendarSource[]>()
+    const map = new Map<CalendarGroupKey, CalendarSource[]>()
+
     for (const source of sources) {
-      const key = source.calendars?.tipo_cuenta || 'other'
+      const key = groupForSource(source)
       map.set(key, [...(map.get(key) || []), source])
     }
-    return [...map.entries()]
+
+    return GROUP_ORDER
+      .map((key) => [key, [...(map.get(key) || [])].sort((a, b) => (
+        (a.calendars?.nombre || '').localeCompare(b.calendars?.nombre || '', 'es', { sensitivity: 'base' })
+      ))] as const)
+      .filter(([, groupItems]) => groupItems.length > 0)
   }, [sources])
 
   const unreadCount = changes.filter((change) => !change.change_reads || change.change_reads.length === 0).length
@@ -294,8 +319,8 @@ export default function CalendarioSourcesPanel({
 
         <p className={styles.intro}>
           {sources.length > 0
-            ? `${visibleCount} de ${sources.length} calendarios visibles`
-            : 'Elige los calendarios que aparecerán en todas las vistas.'}
+            ? `${visibleCount} de ${sources.length} visibles · combina los calendarios que quieres ver`
+            : 'Elige los calendarios que aparecerán juntos en todas tus vistas.'}
         </p>
 
         <div className={styles.tabs} role="tablist" aria-label="Contenido del panel">
@@ -338,7 +363,7 @@ export default function CalendarioSourcesPanel({
           ) : tab === 'calendars' ? (
             groups.length > 0 ? groups.map(([group, groupItems]) => (
               <section key={group} className={styles.group}>
-                <h3>{GROUP_LABELS[group] || group}</h3>
+                <h3>{GROUP_LABELS[group]}</h3>
                 {groupItems.map((source) => {
                   const sourceName = source.calendars?.nombre || 'Calendario'
                   const sourceColor = source.calendars?.color || '#5B3DF5'
@@ -352,7 +377,7 @@ export default function CalendarioSourcesPanel({
                         onClick={() => toggleVisibility(source)}
                         disabled={saving}
                         aria-pressed={source.visible}
-                        aria-label={`${source.visible ? 'Ocultar' : 'Mostrar'} ${sourceName}`}
+                        aria-label={`${source.visible ? 'Ocultar' : 'Mostrar'} ${sourceName} en mis vistas`}
                       >
                         <span
                           className={`${styles.colorDot} ${!source.visible ? styles.colorDotHidden : ''}`}
@@ -366,8 +391,8 @@ export default function CalendarioSourcesPanel({
                         <span className={styles.sourceText}>
                           <strong>{sourceName}</strong>
                           <small>
-                            {source.can_edit ? 'Puede crear y editar' : 'Solo lectura'}
-                            {!source.visible ? ' · Oculto' : ''}
+                            {source.visible ? 'Visible en tu calendario' : 'Oculto en tu calendario'}
+                            {source.can_edit ? ' · Puedes editar' : ''}
                           </small>
                         </span>
                       </button>
