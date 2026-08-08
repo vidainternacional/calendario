@@ -15,14 +15,15 @@ import {
   startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { dayKey, eventColor, indexarEventosPorDia, monthKey, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioYearView.module.css'
 import polish from './CalendarioYearPolish.module.css'
 
 const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
-const YEARS_BEFORE = 20
-const YEARS_AFTER = 20
+const INITIAL_YEARS_AROUND = 1
+const YEARS_PAGE = 3
+const YEAR_EDGE_THRESHOLD = 460
 const YEAR_TOP_OFFSET = 68
 
 export default function CalendarioYearView({
@@ -44,21 +45,29 @@ export default function CalendarioYearView({
   transitionPreview?: boolean
   sharedTransitionTarget?: boolean
 }) {
+  const activeYear = fecha.getFullYear()
   const activeYearRef = useRef<HTMLElement | null>(null)
   const positionedYearRef = useRef<number | null>(null)
   const pendingTodayScrollRef = useRef(false)
-  const activeYear = fecha.getFullYear()
-  const eventosPorDia = useMemo(() => indexarEventosPorDia(eventos), [eventos])
+  const prependHeightRef = useRef<number | null>(null)
+  const [yearRange, setYearRange] = useState(() => ({
+    start: activeYear - INITIAL_YEARS_AROUND,
+    end: activeYear + INITIAL_YEARS_AROUND,
+  }))
+  const eventosPorDia = useMemo(
+    () => transitionPreview ? new Map<string, EventoCalendario[]>() : indexarEventosPorDia(eventos),
+    [eventos, transitionPreview],
+  )
   const currentMonth = useMemo(() => new Date(), [])
 
   const years = useMemo(
     () => transitionPreview
       ? [activeYear]
       : Array.from(
-          { length: YEARS_BEFORE + YEARS_AFTER + 1 },
-          (_, index) => activeYear - YEARS_BEFORE + index,
+          { length: yearRange.end - yearRange.start + 1 },
+          (_, index) => yearRange.start + index,
         ),
-    [activeYear, transitionPreview],
+    [activeYear, transitionPreview, yearRange.end, yearRange.start],
   )
 
   const scrollToActiveYear = (behavior: ScrollBehavior = 'auto') => {
@@ -71,6 +80,26 @@ export default function CalendarioYearView({
 
   useLayoutEffect(() => {
     if (transitionPreview) return
+    if (activeYear >= yearRange.start && activeYear <= yearRange.end) return
+
+    positionedYearRef.current = null
+    setYearRange({
+      start: activeYear - INITIAL_YEARS_AROUND,
+      end: activeYear + INITIAL_YEARS_AROUND,
+    })
+  }, [activeYear, transitionPreview, yearRange.end, yearRange.start])
+
+  useLayoutEffect(() => {
+    if (transitionPreview || prependHeightRef.current === null) return
+
+    const previousHeight = prependHeightRef.current
+    prependHeightRef.current = null
+    const delta = document.documentElement.scrollHeight - previousHeight
+    if (delta > 0) window.scrollBy({ top: delta, left: 0, behavior: 'auto' })
+  }, [transitionPreview, yearRange.start])
+
+  useLayoutEffect(() => {
+    if (transitionPreview) return
     if (positionedYearRef.current === activeYear || !activeYearRef.current) return
     positionedYearRef.current = activeYear
 
@@ -78,29 +107,69 @@ export default function CalendarioYearView({
     const previousBehavior = html.style.scrollBehavior
     html.style.scrollBehavior = 'auto'
 
-    const align = () => scrollToActiveYear('auto')
-    align()
-    const firstFrame = window.requestAnimationFrame(() => {
-      align()
-      window.requestAnimationFrame(align)
-    })
-    const settleTimer = window.setTimeout(align, 120)
-
-    void document.fonts?.ready.then(align)
+    scrollToActiveYear('auto')
+    const frame = window.requestAnimationFrame(() => scrollToActiveYear('auto'))
 
     return () => {
-      window.cancelAnimationFrame(firstFrame)
-      window.clearTimeout(settleTimer)
+      window.cancelAnimationFrame(frame)
       html.style.scrollBehavior = previousBehavior
     }
-  }, [activeYear, transitionPreview])
+  }, [activeYear, transitionPreview, yearRange.end, yearRange.start])
+
+  useEffect(() => {
+    if (transitionPreview) return
+
+    let frame = 0
+    let extending = false
+
+    const extendIfNeeded = () => {
+      frame = 0
+      if (extending) return
+
+      const root = document.documentElement
+      const scrollTop = window.scrollY
+      const viewportBottom = scrollTop + window.innerHeight
+      const scrollHeight = root.scrollHeight
+
+      if (scrollTop <= YEAR_EDGE_THRESHOLD) {
+        extending = true
+        prependHeightRef.current = scrollHeight
+        setYearRange((range) => ({
+          start: range.start - YEARS_PAGE,
+          end: range.end,
+        }))
+        window.requestAnimationFrame(() => { extending = false })
+        return
+      }
+
+      if (viewportBottom >= scrollHeight - YEAR_EDGE_THRESHOLD) {
+        extending = true
+        setYearRange((range) => ({
+          start: range.start,
+          end: range.end + YEARS_PAGE,
+        }))
+        window.requestAnimationFrame(() => { extending = false })
+      }
+    }
+
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(extendIfNeeded)
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [transitionPreview])
 
   useEffect(() => {
     if (transitionPreview) return
     if (!pendingTodayScrollRef.current || !activeYearRef.current) return
     pendingTodayScrollRef.current = false
     requestAnimationFrame(() => scrollToActiveYear('smooth'))
-  }, [activeYear, transitionPreview])
+  }, [activeYear, transitionPreview, yearRange.end, yearRange.start])
 
   useEffect(() => {
     if (transitionPreview) return
