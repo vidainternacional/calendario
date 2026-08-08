@@ -158,6 +158,7 @@
   min-width: 0;
   border-bottom: 1px solid var(--sheet-separator);
   padding: 14px 18px;
+  transition: background-color 150ms ease;
 }
 .row:last-child,
 .column:last-child { border-bottom: 0; }
@@ -174,6 +175,10 @@
   flex-direction: column;
   gap: 9px;
 }
+.column:focus-within,
+.row:focus-within {
+  background: rgba(91, 61, 245, 0.035);
+}
 
 .primaryInput { min-height: 48px; font-size: 22px; font-weight: 560; letter-spacing: -0.025em; }
 .secondaryInput { min-height: 43px; font-size: 17px; }
@@ -186,13 +191,39 @@
 .textarea {
   width: 100%;
   min-width: 0;
-  border: 0;
+  border: 0 !important;
   border-radius: 0;
-  background: transparent;
+  background: transparent !important;
   color: var(--sheet-text);
   font: inherit;
-  outline: none;
+  outline: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
   color-scheme: light !important;
+}
+.input:not([type='date']):not([type='datetime-local']),
+.select,
+.textarea {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.input:focus,
+.select:focus,
+.textarea:focus,
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+.input::-moz-focus-inner,
+.select::-moz-focus-inner,
+.textarea::-moz-focus-inner {
+  border: 0;
 }
 .input::placeholder,
 .textarea::placeholder { color: #8f98a8; opacity: 1; }
@@ -205,7 +236,7 @@
   min-height: 38px;
   justify-self: end;
   border-radius: 12px;
-  background: rgba(118, 118, 128, 0.1);
+  background: rgba(118, 118, 128, 0.1) !important;
   color: var(--sheet-text);
   padding: 6px 8px;
   font-size: 15px;
@@ -373,9 +404,6 @@
 .saveButton:focus-visible,
 .segment:focus-visible,
 .switch:focus-visible,
-.input:focus-visible,
-.select:focus-visible,
-.textarea:focus-visible,
 .calendarPickerButton:focus-visible,
 .pickerOption:focus-visible,
 .pickerTextButton:focus-visible {
@@ -441,5 +469,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .switchThumb { transition: none; }
+  .switchThumb,
+  .row,
+  .column { transition: none; }
 }
