@@ -27,6 +27,7 @@ export type EventoCalendario = {
   todo_el_dia?: boolean
   tiempo_viaje_minutos?: number
   calendar_id: string
+  calendar_ids?: string[]
   calendars?: CalendarioOrigen | null
   ministerio_id?: string | null
   ministerios?: { nombre: string } | null
