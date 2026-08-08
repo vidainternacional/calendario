@@ -355,8 +355,14 @@ export default function CalendarioIOS({
     if (view === 'mes' || view === 'lista') {
       if (!reduceMotion) {
         if (yearExitLayer) return
-        yearExitStartedRef.current = false
+
+        const canReuseEntryAnchor = Boolean(
+          monthTransitionAnchor && isSameMonth(visibleMonthDate, activeDate),
+        )
+
+        yearExitStartedRef.current = canReuseEntryAnchor
         setYearExitLayer(true)
+        if (canReuseEntryAnchor) setMonthTransitionPhase('exit')
         return
       }
 
