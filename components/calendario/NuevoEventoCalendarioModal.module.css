@@ -191,12 +191,17 @@
 .textarea {
   width: 100%;
   min-width: 0;
-  border: 0;
+  border: 0 !important;
   border-radius: 0;
-  background: transparent;
+  background: transparent !important;
   color: var(--sheet-text);
   font: inherit;
-  outline: none;
+  outline: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
   color-scheme: light !important;
 }
 .input:focus,
@@ -205,8 +210,16 @@
 .input:focus-visible,
 .select:focus-visible,
 .textarea:focus-visible {
-  outline: none;
-  box-shadow: none;
+  border: 0 !important;
+  outline: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+.input::-moz-focus-inner,
+.select::-moz-focus-inner,
+.textarea::-moz-focus-inner {
+  border: 0;
 }
 .input::placeholder,
 .textarea::placeholder { color: #8f98a8; opacity: 1; }
@@ -219,10 +232,12 @@
   min-height: 38px;
   justify-self: end;
   border-radius: 12px;
-  background: rgba(118, 118, 128, 0.1);
+  background: rgba(118, 118, 128, 0.1) !important;
   color: var(--sheet-text);
   padding: 6px 8px;
   font-size: 15px;
+  -webkit-appearance: auto;
+  appearance: auto;
 }
 .select { min-height: 38px; color: #6f7787; background: transparent; font-size: 16px; }
 
