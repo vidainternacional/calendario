@@ -1,0 +1,37 @@
+name: Validar piloto STEPBible
+
+on:
+  pull_request:
+    paths:
+      - "scripts/stepbible/**"
+      - ".github/workflows/validate-stepbible-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    name: Extraer Salmos 23:1 y Juan 3:16
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar extracción validada
+        run: python scripts/stepbible/extract_pilot.py
+
+      - name: Publicar artefacto de revisión
+        uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-pilot-validation
+          path: artifacts/stepbible-pilot/
+          if-no-files-found: error
+          retention-days: 7
