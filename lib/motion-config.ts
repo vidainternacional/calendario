@@ -7,7 +7,7 @@ export const SPRING_STANDARD: Transition = {
 }
 
 // Zoom de navegación del Calendario. La misma física se usa al entrar y al salir.
-// La superficie de Año se prepara fuera del frame crítico para preservar continuidad.
+// Año se precarga fuera del frame crítico para que el regreso no monte la vista al tocar atrás.
 export const CALENDAR_ZOOM_SPRING: Transition = {
   type: 'spring',
   stiffness: 320,
