@@ -25,7 +25,8 @@ const INITIAL_YEARS_AROUND = 1
 const YEARS_PAGE = 3
 const YEAR_EDGE_THRESHOLD = 460
 const YEAR_TOP_OFFSET = 68
-const YEAR_BOTTOM_INSET = 84
+const YEAR_BOTTOM_INSET = 96
+const YEAR_CENTER_SETTLE_MS = 140
 
 export default function CalendarioYearView({
   fecha,
@@ -47,6 +48,7 @@ export default function CalendarioYearView({
   sharedTransitionTarget?: boolean
 }) {
   const activeYear = fecha.getFullYear()
+  const stickyChromeRef = useRef<HTMLDivElement | null>(null)
   const activeYearRef = useRef<HTMLElement | null>(null)
   const activeMonthRef = useRef<HTMLButtonElement | null>(null)
   const positionedDateRef = useRef<string | null>(null)
@@ -73,11 +75,23 @@ export default function CalendarioYearView({
     [activeYear, transitionPreview, yearRange.end, yearRange.start],
   )
 
+  const visibleCalendarCenterY = () => {
+    if (typeof window === 'undefined') return 0
+    const viewportHeight = window.visualViewport?.height || window.innerHeight
+    const chromeBottom = stickyChromeRef.current?.getBoundingClientRect().bottom || YEAR_TOP_OFFSET
+    const floatingBar = document.querySelector<HTMLElement>('[class*="floatingBar"]')
+    const floatingTop = floatingBar?.getBoundingClientRect().top
+    const bottomBoundary = floatingTop && floatingTop > chromeBottom
+      ? Math.min(viewportHeight, floatingTop)
+      : Math.max(chromeBottom + 1, viewportHeight - YEAR_BOTTOM_INSET)
+
+    return chromeBottom + Math.max(1, bottomBoundary - chromeBottom) / 2
+  }
+
   const centerMonthElement = (target: HTMLElement, behavior: ScrollBehavior = 'auto') => {
     if (typeof window === 'undefined') return
     const rect = target.getBoundingClientRect()
-    const availableHeight = Math.max(1, window.innerHeight - YEAR_TOP_OFFSET - YEAR_BOTTOM_INSET)
-    const desiredCenterY = YEAR_TOP_OFFSET + availableHeight / 2
+    const desiredCenterY = visibleCalendarCenterY()
     const top = Math.max(0, window.scrollY + rect.top + rect.height / 2 - desiredCenterY)
     window.scrollTo({ top, behavior })
   }
@@ -129,12 +143,26 @@ export default function CalendarioYearView({
     const html = document.documentElement
     const previousBehavior = html.style.scrollBehavior
     html.style.scrollBehavior = 'auto'
+    let secondFrame = 0
+    let cancelled = false
 
-    scrollToActiveMonth('auto')
-    const frame = window.requestAnimationFrame(() => scrollToActiveMonth('auto'))
+    const align = () => {
+      if (!cancelled) scrollToActiveMonth('auto')
+    }
+
+    align()
+    const firstFrame = window.requestAnimationFrame(() => {
+      align()
+      secondFrame = window.requestAnimationFrame(align)
+    })
+    const settleTimer = window.setTimeout(align, YEAR_CENTER_SETTLE_MS)
+    void document.fonts?.ready.then(align)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      cancelled = true
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) window.cancelAnimationFrame(secondFrame)
+      window.clearTimeout(settleTimer)
       html.style.scrollBehavior = previousBehavior
     }
   }, [activeMonthKey, activeYear, transitionPreview, yearRange.end, yearRange.start])
@@ -225,8 +253,8 @@ export default function CalendarioYearView({
   }, [activeYear, onChangeYear, transitionPreview])
 
   return (
-    <div className={`${styles.yearView} ${polish.yearPolish}`} aria-busy={isRefreshing || undefined}>
-      <div className={styles.stickyChrome}>{topChrome}</div>
+    <div className={`${styles.yearView} ${transitionPreview ? styles.transitionPreview : ''} ${polish.yearPolish}`} aria-busy={isRefreshing || undefined}>
+      <div ref={stickyChromeRef} className={styles.stickyChrome}>{topChrome}</div>
 
       <div className={styles.yearsScroller}>
         {years.map((year) => {
@@ -279,8 +307,20 @@ export default function CalendarioYearView({
                       <span className={styles.miniGrid}>
                         {days.map((day) => {
                           const belongs = isSameMonth(day, month)
-                          const dayEvents = belongs ? (eventosPorDia.get(dayKey(day)) || []) : []
                           const today = belongs && isToday(day)
+
+                          if (transitionPreview) {
+                            return (
+                              <span
+                                key={day.toISOString()}
+                                className={`${styles.miniDay} ${today ? styles.miniToday : ''}`}
+                              >
+                                {belongs ? day.getDate() : ''}
+                              </span>
+                            )
+                          }
+
+                          const dayEvents = belongs ? (eventosPorDia.get(dayKey(day)) || []) : []
                           const visibleMarks = dayEvents.slice(0, 6)
 
                           return (
