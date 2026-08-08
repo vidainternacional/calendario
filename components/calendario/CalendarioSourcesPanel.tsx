@@ -64,6 +64,11 @@ function groupForSource(source: CalendarSource): CalendarGroupKey {
   const calendar = source.calendars
   if (!calendar) return 'otros'
 
+  const normalizedName = calendar.nombre.trim().toLocaleLowerCase('es')
+  if (!calendar.ministerio_id && !calendar.es_publico && (
+    calendar.tipo_cuenta === 'interno' || normalizedName.includes('pastor')
+  )) return 'pastoral'
+
   if (calendar.tipo_cuenta === 'gmail') return 'gmail'
   if (calendar.tipo_cuenta === 'icloud') return 'icloud'
   if (calendar.tipo_cuenta === 'other') return 'otros'
