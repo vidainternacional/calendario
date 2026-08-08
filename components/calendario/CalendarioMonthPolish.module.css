@@ -7,6 +7,8 @@
   overflow-y: auto;
   overscroll-behavior-y: auto;
   scrollbar-width: none;
+  scroll-snap-type: none !important;
+  scroll-padding: 0 !important;
   background: #fff;
   color: #111827;
   color-scheme: light;

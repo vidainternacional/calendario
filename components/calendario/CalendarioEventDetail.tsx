@@ -18,15 +18,26 @@ export default function CalendarioEventDetail({
 }) {
   const [closing, setClosing] = useState(false)
   const closeTimerRef = useRef<number | null>(null)
+  const closingRef = useRef(false)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   const requestClose = useCallback(() => {
-    if (closing) return
+    if (closingRef.current) return
+    closingRef.current = true
     setClosing(true)
-    closeTimerRef.current = window.setTimeout(onClose, EXIT_MS)
-  }, [closing, onClose])
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null
+      onCloseRef.current()
+    }, EXIT_MS)
+  }, [])
 
   useEffect(() => {
     if (!event) return
+    closingRef.current = false
     setClosing(false)
 
     const previousOverflow = document.body.style.overflow
@@ -44,6 +55,7 @@ export default function CalendarioEventDetail({
         window.clearTimeout(closeTimerRef.current)
         closeTimerRef.current = null
       }
+      closingRef.current = false
     }
   }, [event, requestClose])
 
