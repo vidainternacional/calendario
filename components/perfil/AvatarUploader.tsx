@@ -230,20 +230,29 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
         .from('avatars')
         .download(`${userId}/source.webp`)
 
-      if (error || !source) {
-        setMessage('Para reencuadrar esta foto antigua, selecciona la original una vez.')
-        window.setTimeout(() => inputRef.current?.click(), 50)
-        return
+      let editableBlob: Blob
+      let persistAsSource = false
+
+      if (!error && source) {
+        editableBlob = source
+      } else {
+        const response = await fetch(currentUrl, { cache: 'no-store' })
+        if (!response.ok) throw new Error('No se pudo cargar la foto guardada.')
+        editableBlob = await response.blob()
+        persistAsSource = true
       }
 
-      const nextEditor = await crearEditorDesdeBlob(source)
+      const nextEditor = await crearEditorDesdeBlob(
+        editableBlob,
+        persistAsSource ? editableBlob : undefined,
+      )
       setEditor((prev) => {
         if (prev) URL.revokeObjectURL(prev.objectUrl)
         return nextEditor
       })
     } catch (error) {
       console.error('[AvatarUploader:editarActual]', error)
-      setMessage('No se pudo abrir la fotografía para editarla.')
+      setMessage(error instanceof Error ? error.message : 'No se pudo abrir la fotografía para editarla.')
     } finally {
       setPending(false)
     }
@@ -510,8 +519,7 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
           className={`mt-1 max-w-40 text-[10px] leading-4 ${
             message.startsWith('No ') ||
             message.includes('demasiado') ||
-            message.includes('Selecciona') ||
-            message.includes('antigua')
+            message.includes('Selecciona')
               ? 'text-rose-500'
               : 'text-emerald-600'
           }`}
