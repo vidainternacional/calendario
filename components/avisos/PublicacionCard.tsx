@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ExternalLink, Globe, Megaphone, X } from 'lucide-react'
+import { ChevronRight, ExternalLink, Globe, Megaphone, X } from 'lucide-react'
 
 type PublicacionCardProps = {
   titulo: string
@@ -14,6 +14,7 @@ type PublicacionCardProps = {
   compacta?: boolean
   etiqueta?: string
   colorClass?: string
+  variant?: 'card' | 'row'
 }
 
 export default function PublicacionCard({
@@ -26,6 +27,7 @@ export default function PublicacionCard({
   compacta = false,
   etiqueta,
   colorClass = 'bg-indigo-50 text-indigo-600 border-indigo-100',
+  variant = 'card',
 }: PublicacionCardProps) {
   const [abierta, setAbierta] = useState(false)
   const inicial = autor.charAt(0).toUpperCase()
@@ -126,6 +128,36 @@ export default function PublicacionCard({
         document.body,
       )
     : null
+
+  if (variant === 'row') {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setAbierta(true)}
+          className="group flex min-h-[76px] w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 active:bg-slate-50 focus:outline-none focus-visible:bg-indigo-50/60"
+          aria-label={`Abrir publicación: ${titulo}`}
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+            <Megaphone className="h-[18px] w-[18px]" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate text-sm font-bold text-[#171923]">{titulo}</span>
+              <span className="shrink-0 text-[10px] text-slate-400">{fecha}</span>
+            </span>
+            <span className="mt-1 block truncate text-[11px] text-slate-500">
+              <span className="font-bold uppercase tracking-[0.06em] text-indigo-500">{etiqueta ?? tipo.replace('_', ' ')}</span>
+              <span className="mx-1.5 text-slate-300" aria-hidden="true">·</span>
+              {cuerpo || autor}
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+        </button>
+        {modal}
+      </>
+    )
+  }
 
   return (
     <>

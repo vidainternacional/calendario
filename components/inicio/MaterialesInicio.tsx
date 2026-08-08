@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { AlertTriangle, BookHeart, ChevronRight, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { readUserCache } from '@/lib/cache/userCache'
-import ShineSweep from '@/components/ui/ShineSweep'
 
 type MaterialVisible = {
   id: string
@@ -80,8 +79,8 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoReci
 
   if (materiales === null) {
     return (
-      <section aria-label="Área pastoral" aria-busy="true">
-        <div className="h-24 animate-pulse rounded-2xl border border-indigo-100 bg-white" />
+      <section aria-label="Materiales para la iglesia" aria-busy="true">
+        <div className="h-20 animate-pulse rounded-[24px] border border-white/90 bg-white" />
         <span className="sr-only">Cargando materiales pastorales…</span>
       </section>
     )
@@ -89,14 +88,14 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoReci
 
   if (!puedeAbrirCentroPastoral && errorCarga) {
     return (
-      <section aria-label="Error al cargar materiales pastorales" className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <section aria-label="Error al cargar materiales pastorales" className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
         <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-amber-700">
             <AlertTriangle className="h-5 w-5" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-bold text-amber-950">No pudimos cargar los materiales</h2>
-            <p className="mt-1 text-xs leading-5 text-amber-900/75">Puede intentar nuevamente. El resto de Inicio continúa disponible.</p>
+            <p className="mt-1 text-xs leading-5 text-amber-900/75">El resto de Inicio continúa disponible.</p>
             <button
               type="button"
               onClick={() => {
@@ -117,46 +116,40 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoReci
   if (!puedeAbrirCentroPastoral && materiales.length === 0) return null
 
   return (
-    <div className="space-y-6" data-build="pastoral-centro-v6">
+    <div className="space-y-4" data-build="inicio-materiales-compactos-v1">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
             href="/pastoral"
-            className="group relative flex min-h-24 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-600 to-violet-700 p-4 text-white shadow-[0_12px_30px_rgba(91,33,182,0.24)] transition hover:shadow-[0_16px_38px_rgba(91,33,182,0.32)] active:scale-[0.99] sm:p-5"
+            className="group flex min-h-[76px] items-center gap-3 rounded-[24px] border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50/80 px-4 py-3.5 shadow-[0_7px_22px_rgba(91,61,245,0.06)] transition active:scale-[0.99]"
           >
-            <ShineSweep />
-            <div className="relative flex min-w-0 items-center gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
-                <ShieldCheck className="h-6 w-6" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-100">Área de trabajo pastoral</p>
-                <h2 className="mt-1 text-lg font-bold">Centro Pastoral</h2>
-                <p className="mt-1 text-xs leading-5 text-indigo-100">Prepare mensajes, recursos, presentaciones y materiales desde un solo espacio.</p>
-              </div>
-            </div>
-            <ChevronRight className="relative h-5 w-5 shrink-0 text-white/80 transition-transform group-hover:translate-x-1" />
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-violet-700 shadow-sm ring-1 ring-violet-100">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-violet-600">Área pastoral</span>
+              <span className="mt-0.5 block text-sm font-bold text-[#171923]">Centro Pastoral</span>
+              <span className="mt-0.5 block text-[11px] text-slate-500">Mensajes, recursos y materiales en un solo espacio.</span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-violet-400 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
           </Link>
         </section>
       )}
 
-      {errorCarga && (
-        <section aria-label="Error al cargar materiales pastorales" className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      {errorCarga && puedeAbrirCentroPastoral && (
+        <section aria-label="Error al cargar materiales pastorales" className="rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
-              <p className="text-xs leading-5 text-amber-900">El Centro Pastoral está disponible, pero los materiales publicados no pudieron cargarse.</p>
-            </div>
+            <p className="text-xs leading-5 text-amber-900">El Centro Pastoral está disponible, pero los materiales no pudieron cargarse.</p>
             <button
               type="button"
               onClick={() => {
                 setMateriales(null)
                 setIntento((valor) => valor + 1)
               }}
-              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-3 text-xs font-bold text-amber-900 active:scale-[0.99]"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-amber-800 ring-1 ring-amber-200 active:scale-95"
+              aria-label="Reintentar carga de materiales"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Reintentar
             </button>
           </div>
         </section>
@@ -164,40 +157,38 @@ export default function MaterialesInicio({ puedeAbrirCentroPastoral: permisoReci
 
       {!errorCarga && materiales.length > 0 && (
         <section aria-labelledby="materiales-inicio">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-              <BookHeart className="h-4.5 w-4.5" />
+          <div className="mb-3 flex items-center gap-3 px-1">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-violet-50 text-violet-700">
+              <BookHeart className="h-[18px] w-[18px]" aria-hidden="true" />
             </span>
-            <div>
-              <h2 id="materiales-inicio" className="text-lg font-bold text-[#171923]">Materiales para la iglesia</h2>
-              <p className="text-xs text-slate-500">Enseñanzas y guías compartidas por el equipo pastoral.</p>
+            <div className="min-w-0">
+              <h2 id="materiales-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Para tu crecimiento</h2>
+              <p className="mt-0.5 text-[11px] text-slate-500">Enseñanzas y guías compartidas por el equipo pastoral.</p>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)]">
             {materiales.map((material) => {
               const nuevo = esNuevo(material)
-              const animado = material.destacado || nuevo
               return (
                 <Link
                   key={material.id}
                   href={`/material/${material.public_slug}`}
-                  className="group relative flex min-h-40 flex-col overflow-hidden rounded-2xl border border-violet-300/55 bg-gradient-to-br from-indigo-600 via-violet-700 to-purple-900 p-5 text-white shadow-[0_12px_32px_rgba(109,40,217,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(109,40,217,0.36)] active:scale-[0.99]"
+                  className="group flex min-h-[78px] items-center gap-3 border-b border-slate-100 px-4 py-3.5 last:border-b-0 active:bg-violet-50/45"
                 >
-                  {animado && <ShineSweep />}
-                  <div className="relative flex items-start justify-between gap-3">
-                    <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
-                      {audienciaLabel[material.audiencia]}
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${material.destacado ? 'bg-violet-100 text-violet-800' : 'bg-violet-50 text-violet-700'}`}>
+                    {material.destacado ? <Sparkles className="h-5 w-5" aria-hidden="true" /> : <BookHeart className="h-5 w-5" aria-hidden="true" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm font-bold text-[#171923]">{material.titulo}</span>
+                      {material.destacado && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-amber-800">Importante</span>}
+                      {!material.destacado && nuevo && <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-violet-700 ring-1 ring-violet-100">Nuevo</span>}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      {material.destacado && <span className="inline-flex items-center gap-1 rounded-full bg-amber-300 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-950"><Sparkles className="h-3 w-3" /> Importante</span>}
-                      {!material.destacado && nuevo && <span className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-violet-700">Nuevo</span>}
-                      <ChevronRight className="h-4 w-4 text-white/75 transition-transform group-hover:translate-x-0.5" />
-                    </span>
-                  </div>
-                  <h3 className="relative mt-4 line-clamp-2 text-lg font-bold leading-snug">{material.titulo}</h3>
-                  <p className="relative mt-2 line-clamp-2 text-xs leading-5 text-violet-100">{material.descripcion_publica || 'Nuevo material pastoral disponible para la congregación.'}</p>
-                  <span className="relative mt-auto pt-4 text-xs font-bold text-white">Abrir material →</span>
+                    <span className="mt-1 block truncate text-[11px] text-slate-500">{material.descripcion_publica || audienciaLabel[material.audiencia]}</span>
+                    <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.08em] text-violet-500">{audienciaLabel[material.audiencia]}</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
                 </Link>
               )
             })}
