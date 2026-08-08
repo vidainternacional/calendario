@@ -87,7 +87,7 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
 
       const { data } = supabase.storage.from('avatars').getPublicUrl(path)
       const publicUrl = `${data.publicUrl}?v=${Date.now()}`
-      const { error: profileError } = await supabase
+      const { error: profileError } = await (supabase as any)
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', userId)
@@ -113,7 +113,7 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
       const supabase = createClient()
       const path = `${userId}/avatar.webp`
       await supabase.storage.from('avatars').remove([path])
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profiles')
         .update({ avatar_url: null })
         .eq('id', userId)
