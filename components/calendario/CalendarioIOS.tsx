@@ -77,6 +77,7 @@ export default function CalendarioIOS({
   events,
   isRefreshing = false,
   editableCalendars = [],
+  canCreateEvents,
   userId,
   onRefresh,
   onOpenCalendars,
@@ -87,6 +88,7 @@ export default function CalendarioIOS({
   events: EventoCalendario[]
   isRefreshing?: boolean
   editableCalendars?: CalendarioOrigen[]
+  canCreateEvents: boolean
   userId: string
   onRefresh: () => void
   onOpenCalendars: () => void
@@ -107,7 +109,7 @@ export default function CalendarioIOS({
   const [newEventOpen, setNewEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<EventoCalendario | null>(null)
 
-  const puedeCrear = editableCalendars.length > 0
+  const puedeCrear = canCreateEvents
   const isMonthContext = view === 'mes' || view === 'lista'
 
   useEffect(() => setMounted(true), [])
