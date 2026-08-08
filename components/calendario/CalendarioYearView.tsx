@@ -24,13 +24,17 @@ const MINI_WEEKDAYS = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 const INITIAL_YEARS_AROUND = 6
 const YEARS_PAGE = 4
 const YEAR_EDGE_THRESHOLD = 520
-const YEAR_CENTER_SETTLE_MS = 220
+const YEAR_CENTER_SETTLE_MS = 240
+const YEAR_TOP_GAP = 6
+const YEAR_BOTTOM_GAP = 14
+const YEAR_UPWARD_BIAS = 24
 
 export default function CalendarioYearView({
   fecha,
   eventos,
   isRefreshing,
   topChrome,
+  scrollRequest = 0,
   onOpenMonth,
   onChangeYear,
   transitionPreview = false,
@@ -40,6 +44,7 @@ export default function CalendarioYearView({
   eventos: EventoCalendario[]
   isRefreshing: boolean
   topChrome: ReactNode
+  scrollRequest?: number
   onOpenMonth: (month: Date, element: HTMLElement) => void
   onChangeYear: (year: number) => void
   transitionPreview?: boolean
@@ -51,6 +56,8 @@ export default function CalendarioYearView({
   const activeYearRef = useRef<HTMLElement | null>(null)
   const activeMonthRef = useRef<HTMLButtonElement | null>(null)
   const positionedDateRef = useRef<string | null>(null)
+  const handledScrollRequestRef = useRef(scrollRequest)
+  const reportedYearRef = useRef<number | null>(null)
   const prependHeightRef = useRef<number | null>(null)
   const edgeExpansionReadyRef = useRef(false)
   const [yearRange, setYearRange] = useState(() => ({
@@ -72,14 +79,36 @@ export default function CalendarioYearView({
     [activeYear, transitionPreview, yearRange.end, yearRange.start],
   )
 
-  const scrollToActiveYearStart = (behavior: ScrollBehavior = 'auto') => {
+  const focusYear = (year: number, behavior: ScrollBehavior = 'auto') => {
     const root = scrollRootRef.current
-    const target = activeYearRef.current
-    if (!root || !target) return
+    if (!root) return
 
+    const target = root.querySelector<HTMLElement>(`[data-calendar-year="${year}"]`)
+      || (year === activeYear ? activeYearRef.current : null)
+    if (!target) return
+
+    const rootRect = root.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
     const stickyHeight = stickyChromeRef.current?.offsetHeight || 68
+    const floatingBar = document.querySelector<HTMLElement>('[data-calendar-floating-bar="true"], [class*="floatingBar"]')
+    const floatingTop = floatingBar?.getBoundingClientRect().top
+
+    const visibleTop = rootRect.top + stickyHeight + YEAR_TOP_GAP
+    const visibleBottom = Math.max(
+      visibleTop + 1,
+      Math.min(rootRect.bottom, floatingTop && floatingTop > visibleTop ? floatingTop - YEAR_BOTTOM_GAP : rootRect.bottom - 104),
+    )
+    const availableHeight = Math.max(1, visibleBottom - visibleTop)
+    const targetTopInScroll = root.scrollTop + targetRect.top - rootRect.top
+
+    const centeredTop = visibleTop + Math.max(0, (availableHeight - targetRect.height) / 2 - YEAR_UPWARD_BIAS)
+    const maxTopThatKeepsFullYearVisible = visibleBottom - targetRect.height
+    const desiredViewportTop = targetRect.height <= availableHeight
+      ? Math.max(visibleTop, Math.min(centeredTop, maxTopThatKeepsFullYearVisible))
+      : visibleTop
+
     root.scrollTo({
-      top: Math.max(0, target.offsetTop - stickyHeight),
+      top: Math.max(0, targetTopInScroll - (desiredViewportTop - rootRect.top)),
       behavior,
     })
   }
@@ -108,18 +137,16 @@ export default function CalendarioYearView({
   }, [transitionPreview, yearRange.start])
 
   useLayoutEffect(() => {
-    if (transitionPreview) return
-    const root = scrollRootRef.current
-    if (!root || positionedDateRef.current === activeMonthKey || !activeYearRef.current) return
+    if (transitionPreview || positionedDateRef.current === activeMonthKey) return
+    if (!scrollRootRef.current || !activeYearRef.current) return
 
     positionedDateRef.current = activeMonthKey
     edgeExpansionReadyRef.current = false
-    root.scrollTop = 0
 
     let secondFrame = 0
     let cancelled = false
     const align = () => {
-      if (!cancelled) scrollToActiveYearStart('auto')
+      if (!cancelled) focusYear(activeYear, 'auto')
     }
 
     align()
@@ -143,6 +170,28 @@ export default function CalendarioYearView({
     }
   }, [activeMonthKey, activeYear, transitionPreview, yearRange.end, yearRange.start])
 
+  useLayoutEffect(() => {
+    if (transitionPreview || handledScrollRequestRef.current === scrollRequest) return
+    handledScrollRequestRef.current = scrollRequest
+    edgeExpansionReadyRef.current = false
+
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      focusYear(activeYear, 'auto')
+      secondFrame = window.requestAnimationFrame(() => focusYear(activeYear, 'auto'))
+    })
+    const settleTimer = window.setTimeout(() => {
+      focusYear(activeYear, 'auto')
+      edgeExpansionReadyRef.current = true
+    }, 140)
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) window.cancelAnimationFrame(secondFrame)
+      window.clearTimeout(settleTimer)
+    }
+  }, [activeYear, scrollRequest, transitionPreview, yearRange.end, yearRange.start])
+
   useEffect(() => {
     if (transitionPreview) return
     const root = scrollRootRef.current
@@ -151,8 +200,39 @@ export default function CalendarioYearView({
     let frame = 0
     let extending = false
 
+    const reportVisibleYear = () => {
+      const rootRect = root.getBoundingClientRect()
+      const stickyHeight = stickyChromeRef.current?.offsetHeight || 68
+      const floatingBar = document.querySelector<HTMLElement>('[data-calendar-floating-bar="true"], [class*="floatingBar"]')
+      const floatingTop = floatingBar?.getBoundingClientRect().top
+      const visibleTop = rootRect.top + stickyHeight
+      const visibleBottom = Math.min(rootRect.bottom, floatingTop && floatingTop > visibleTop ? floatingTop : rootRect.bottom)
+      const anchorY = visibleTop + Math.max(1, visibleBottom - visibleTop) / 2
+      const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-calendar-year]'))
+      let bestYear: number | null = null
+      let bestDistance = Number.POSITIVE_INFINITY
+
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect()
+        const distance = rect.top <= anchorY && rect.bottom >= anchorY
+          ? 0
+          : Math.min(Math.abs(rect.top - anchorY), Math.abs(rect.bottom - anchorY))
+        if (distance < bestDistance) {
+          bestDistance = distance
+          const year = Number(section.dataset.calendarYear)
+          bestYear = Number.isFinite(year) ? year : null
+        }
+      }
+
+      if (bestYear !== null && reportedYearRef.current !== bestYear) {
+        reportedYearRef.current = bestYear
+        onChangeYear(bestYear)
+      }
+    }
+
     const extendIfNeeded = () => {
       frame = 0
+      reportVisibleYear()
       if (extending || !edgeExpansionReadyRef.current) return
 
       const scrollTop = root.scrollTop
@@ -179,12 +259,13 @@ export default function CalendarioYearView({
       frame = window.requestAnimationFrame(extendIfNeeded)
     }
 
+    reportVisibleYear()
     root.addEventListener('scroll', onScroll, { passive: true })
     return () => {
       root.removeEventListener('scroll', onScroll)
       if (frame) window.cancelAnimationFrame(frame)
     }
-  }, [transitionPreview])
+  }, [onChangeYear, transitionPreview])
 
   return (
     <div
@@ -203,6 +284,7 @@ export default function CalendarioYearView({
             <section
               key={year}
               ref={isActiveYear ? activeYearRef : undefined}
+              data-calendar-year={year}
               className={styles.yearSection}
               aria-label={`Año ${year}`}
               style={isActiveYear ? { contentVisibility: 'visible' } : undefined}

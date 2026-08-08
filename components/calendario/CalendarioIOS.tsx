@@ -103,6 +103,7 @@ export default function CalendarioIOS({
   const [selectedDay, setSelectedDay] = useState(new Date())
   const [visibleMonthDate, setVisibleMonthDate] = useState(new Date())
   const [monthScrollRequest, setMonthScrollRequest] = useState(0)
+  const [yearScrollRequest, setYearScrollRequest] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
   const [viewMenuOpen, setViewMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -112,6 +113,17 @@ export default function CalendarioIOS({
   const puedeCrear = canCreateEvents
   const isMonthContext = view === 'mes' || view === 'lista'
 
+  const openEventDetail = useCallback((item: EventoCalendario) => {
+    const eventDay = new Date(item.fecha_inicio)
+    if (!Number.isNaN(eventDay.getTime())) {
+      setSelectedDay(eventDay)
+      setActiveDate(eventDay)
+      setVisibleMonthDate(eventDay)
+      setView('dia')
+    }
+    setSelectedEvent(item)
+  }, [])
+
   useEffect(() => setMounted(true), [])
 
   useEffect(() => {
@@ -120,9 +132,9 @@ export default function CalendarioIOS({
 
   useEffect(() => {
     if (!externalDetail) return
-    setSelectedEvent(externalDetail)
+    openEventDetail(externalDetail)
     onExternalDetailConsumed?.()
-  }, [externalDetail, onExternalDetailConsumed])
+  }, [externalDetail, onExternalDetailConsumed, openEventDetail])
 
   useEffect(() => {
     if (!viewMenuOpen) return
@@ -234,7 +246,9 @@ export default function CalendarioIOS({
     setSelectedDay(today)
     setVisibleMonthDate(today)
 
-    if (view === 'mes' || view === 'lista') {
+    if (view === 'anio') {
+      setYearScrollRequest((request) => request + 1)
+    } else if (view === 'mes' || view === 'lista') {
       setMonthScrollRequest((request) => request + 1)
     }
   }
@@ -264,7 +278,7 @@ export default function CalendarioIOS({
         </div>
 
         {selectedDayEvents.length > 0 ? selectedDayEvents.map((event) => (
-          <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={setSelectedEvent} />
+          <CalendarioEventRow key={eventKey(event)} evento={event} onOpen={openEventDetail} />
         )) : (
           <div className={`${styles.emptyState} ${chrome.emptyTheme}`}>
             No hay eventos ni recordatorios para esta fecha.
@@ -331,16 +345,14 @@ export default function CalendarioIOS({
     <div className={`${styles.calendarScreen} ${chrome.rootTheme}`}>
       {view === 'anio' && (
         <CalendarioYearView
+          key={`year-${activeDate.getFullYear()}-${yearScrollRequest}`}
           fecha={activeDate}
           eventos={sortedEvents}
           isRefreshing={isRefreshing}
           topChrome={topChrome}
+          scrollRequest={yearScrollRequest}
           onOpenMonth={(month) => openMonth(month)}
-          onChangeYear={(year) => {
-            const next = new Date(year, activeDate.getMonth(), Math.min(activeDate.getDate(), 28))
-            setActiveDate(next)
-            setVisibleMonthDate(next)
-          }}
+          onChangeYear={onRangeYearChange}
         />
       )}
 
@@ -360,7 +372,7 @@ export default function CalendarioIOS({
           onVisibleMonthChange={handleVisibleMonthChange}
           onSelectDay={selectDay}
           onOpenDay={openDay}
-          onOpenEvent={setSelectedEvent}
+          onOpenEvent={openEventDetail}
         />
       )}
 
@@ -377,7 +389,7 @@ export default function CalendarioIOS({
             events={sortedEvents}
             daysVisible={timelineDays}
             onSelectDay={selectDay}
-            onOpenEvent={setSelectedEvent}
+            onOpenEvent={openEventDetail}
           />
         </>
       )}
@@ -392,7 +404,7 @@ export default function CalendarioIOS({
             selectedDay={selectedDay}
             events={sortedEvents}
             onSelectDay={selectDay}
-            onOpenEvent={setSelectedEvent}
+            onOpenEvent={openEventDetail}
           />
         </>
       )}
@@ -416,11 +428,11 @@ export default function CalendarioIOS({
           onVisibleMonthChange={handleVisibleMonthChange}
           onSelectDay={selectDay}
           onOpenDay={openDay}
-          onOpenEvent={setSelectedEvent}
+          onOpenEvent={openEventDetail}
         />
       )}
 
-      <div className={`${styles.floatingBar} ${chrome.floatingBar}`}>
+      <div data-calendar-floating-bar="true" className={`${styles.floatingBar} ${chrome.floatingBar}`}>
         <button type="button" className={`${styles.floatingPill} ${chrome.floatingPill}`} onClick={goToday}>
           Hoy
         </button>
@@ -507,7 +519,7 @@ export default function CalendarioIOS({
                 evento={event}
                 onOpen={(item) => {
                   setSearchOpen(false)
-                  setSelectedEvent(item)
+                  openEventDetail(item)
                 }}
               />
             )) : (

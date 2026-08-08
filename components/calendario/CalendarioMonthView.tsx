@@ -12,6 +12,7 @@ import {
   isToday,
   startOfMonth,
   startOfWeek,
+  startOfYear,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { motion } from 'framer-motion'
@@ -25,9 +26,12 @@ import polish from './CalendarioMonthPolish.module.css'
 
 export type MonthDisplayMode = 'compact' | 'stacked' | 'details'
 
-const MONTHS_AROUND = 6
 const MONTH_EXIT_HANDOFF_MS = 300
 const MONTH_NEIGHBOR_FALLBACK_MS = 90
+const MONTH_TOP_GAP = 4
+const MONTH_BOTTOM_GAP = 10
+const MONTH_UPWARD_BIAS = 8
+const MONTHS_PER_RANGE = 36
 const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 type IdleWindow = Window & {
@@ -92,6 +96,7 @@ export default function CalendarioMonthView({
   const weekdaysRef = useRef<HTMLDivElement | null>(null)
   const activeMonthRef = useRef<HTMLElement | null>(null)
   const reportedMonthRef = useRef<string | null>(null)
+  const handledScrollRequestRef = useRef(scrollRequest)
   const transitionCompleteRef = useRef(onTransitionComplete)
   const baseMonth = startOfMonth(month)
   const baseMonthKey = format(baseMonth, 'yyyy-MM')
@@ -105,11 +110,7 @@ export default function CalendarioMonthView({
 
   useEffect(() => {
     if (transitionPhase !== 'exit') return
-
-    const timeout = window.setTimeout(() => {
-      transitionCompleteRef.current?.()
-    }, MONTH_EXIT_HANDOFF_MS)
-
+    const timeout = window.setTimeout(() => transitionCompleteRef.current?.(), MONTH_EXIT_HANDOFF_MS)
     return () => window.clearTimeout(timeout)
   }, [transitionPhase])
 
@@ -118,12 +119,10 @@ export default function CalendarioMonthView({
       if (neighborsReady) setNeighborsReady(false)
       return
     }
-
     if (isEntering) {
       if (neighborsReady) setNeighborsReady(false)
       return
     }
-
     if (transitionPhase === 'exit' || neighborsReady) return
 
     const idleWindow = window as IdleWindow
@@ -144,12 +143,12 @@ export default function CalendarioMonthView({
   }, [baseMonthKey, isEntering, neighborsReady, showFollowingMonth, transitionPhase])
 
   const renderNeighborMonths = showFollowingMonth && neighborsReady && !isEntering
-  const visibleMonths = useMemo(
-    () => renderNeighborMonths
-      ? Array.from({ length: MONTHS_AROUND * 2 + 1 }, (_, index) => addMonths(baseMonth, index - MONTHS_AROUND))
-      : [baseMonth],
-    [baseMonthKey, renderNeighborMonths],
-  )
+  const visibleMonths = useMemo(() => {
+    if (!renderNeighborMonths) return [baseMonth]
+    const firstMonth = addMonths(startOfYear(baseMonth), -12)
+    return Array.from({ length: MONTHS_PER_RANGE }, (_, index) => addMonths(firstMonth, index))
+  }, [baseMonthKey, renderNeighborMonths])
+
   const monthModels = useMemo(
     () => visibleMonths.map((visibleMonth) => ({
       visibleMonth,
@@ -159,14 +158,56 @@ export default function CalendarioMonthView({
     [visibleMonths],
   )
 
-  useLayoutEffect(() => {
+  const frameMonth = (target: HTMLElement, behavior: ScrollBehavior = 'auto') => {
     const root = scrollRootRef.current
-    const target = activeMonthRef.current
-    if (!root || !target) return
+    if (!root) return
+
+    const rootRect = root.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
     const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
-    const nextTop = Math.max(0, target.offsetTop - stickyHeight)
-    root.scrollTo({ top: nextTop, behavior: scrollRequest > 0 ? 'smooth' : 'auto' })
-  }, [baseMonthKey, displayMode, neighborsReady, scrollRequest, showFollowingMonth])
+    const floatingBar = document.querySelector<HTMLElement>('[data-calendar-floating-bar="true"]')
+    const floatingTop = floatingBar?.getBoundingClientRect().top
+
+    const visibleTop = rootRect.top + stickyHeight + MONTH_TOP_GAP
+    const visibleBottom = Math.max(
+      visibleTop + 1,
+      Math.min(rootRect.bottom, floatingTop && floatingTop > visibleTop ? floatingTop - MONTH_BOTTOM_GAP : rootRect.bottom - 104),
+    )
+    const availableHeight = Math.max(1, visibleBottom - visibleTop)
+    const targetTopInScroll = root.scrollTop + targetRect.top - rootRect.top
+    const centeredTop = visibleTop + Math.max(0, (availableHeight - targetRect.height) / 2 - MONTH_UPWARD_BIAS)
+    const maxTopThatKeepsFullMonthVisible = visibleBottom - targetRect.height
+    const desiredViewportTop = targetRect.height <= availableHeight
+      ? Math.max(visibleTop, Math.min(centeredTop, maxTopThatKeepsFullMonthVisible))
+      : visibleTop
+
+    root.scrollTo({
+      top: Math.max(0, targetTopInScroll - (desiredViewportTop - rootRect.top)),
+      behavior,
+    })
+  }
+
+  useLayoutEffect(() => {
+    const target = activeMonthRef.current
+    if (!target) return
+    const requestChanged = handledScrollRequestRef.current !== scrollRequest
+    handledScrollRequestRef.current = scrollRequest
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const behavior: ScrollBehavior = requestChanged && !reduceMotion ? 'smooth' : 'auto'
+
+    let secondFrame = 0
+    const firstFrame = window.requestAnimationFrame(() => {
+      frameMonth(target, behavior)
+      secondFrame = window.requestAnimationFrame(() => frameMonth(target, behavior))
+    })
+    const settleTimer = window.setTimeout(() => frameMonth(target, 'auto'), requestChanged ? 420 : 180)
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame)
+      if (secondFrame) window.cancelAnimationFrame(secondFrame)
+      window.clearTimeout(settleTimer)
+    }
+  }, [baseMonthKey, displayMode, footer, neighborsReady, scrollRequest, showFollowingMonth])
 
   useEffect(() => {
     const root = scrollRootRef.current
@@ -175,17 +216,21 @@ export default function CalendarioMonthView({
     let frame = 0
     const report = () => {
       frame = 0
-      const anchorY = root.getBoundingClientRect().top
-        + (stickyChromeRef.current?.offsetHeight || 0)
-        + (weekdaysRef.current?.offsetHeight || 0)
-        + 24
+      const rootRect = root.getBoundingClientRect()
+      const stickyHeight = (stickyChromeRef.current?.offsetHeight || 0) + (weekdaysRef.current?.offsetHeight || 0)
+      const floatingBar = document.querySelector<HTMLElement>('[data-calendar-floating-bar="true"]')
+      const floatingTop = floatingBar?.getBoundingClientRect().top
+      const visibleTop = rootRect.top + stickyHeight
+      const visibleBottom = Math.min(rootRect.bottom, floatingTop && floatingTop > visibleTop ? floatingTop : rootRect.bottom)
+      const anchorY = visibleTop + Math.max(1, visibleBottom - visibleTop) / 2
       const sections = Array.from(root.querySelectorAll<HTMLElement>('[data-calendar-month]'))
       let best: HTMLElement | null = null
       let bestDistance = Number.POSITIVE_INFINITY
 
       for (const section of sections) {
         const rect = section.getBoundingClientRect()
-        const distance = Math.abs(rect.top - anchorY)
+        const center = rect.top + rect.height / 2
+        const distance = Math.abs(center - anchorY)
         if (distance < bestDistance) {
           bestDistance = distance
           best = section
@@ -224,6 +269,11 @@ export default function CalendarioMonthView({
       className={`${basic.monthView} ${transitionPhase === 'exit' ? `${basic.monthViewExit} ${polish.monthExit}` : ''} ${polish.monthPolish} ${indicator.monthDensity}`}
       aria-hidden={overlay || undefined}
       aria-busy={isRefreshing || undefined}
+      style={showFollowingMonth ? {
+        scrollSnapType: 'y proximity',
+        scrollPaddingTop: 'calc(100px + env(safe-area-inset-top, 0px))',
+        scrollPaddingBottom: '116px',
+      } : undefined}
     >
       <div ref={stickyChromeRef} className={polish.monthStickyChrome}>{topChrome}</div>
       <div ref={weekdaysRef} className={`${basic.weekdays} ${polish.monthWeekdays}`} aria-label="Días de la semana">
@@ -245,10 +295,15 @@ export default function CalendarioMonthView({
                 willChange: transitionPhase ? 'transform, opacity' : 'auto',
                 backfaceVisibility: 'hidden' as const,
                 WebkitBackfaceVisibility: 'hidden' as const,
+                scrollSnapAlign: showFollowingMonth ? 'start' as const : undefined,
+                scrollSnapStop: showFollowingMonth ? 'normal' as const : undefined,
               }
             : transitionPhase === 'exit'
               ? { opacity: 0, pointerEvents: 'none' as const }
-              : undefined
+              : {
+                  scrollSnapAlign: showFollowingMonth ? 'start' as const : undefined,
+                  scrollSnapStop: showFollowingMonth ? 'normal' as const : undefined,
+                }
 
           return (
             <motion.section
