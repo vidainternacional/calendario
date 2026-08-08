@@ -25,6 +25,7 @@ const INITIAL_YEARS_AROUND = 1
 const YEARS_PAGE = 3
 const YEAR_EDGE_THRESHOLD = 460
 const YEAR_TOP_OFFSET = 68
+const YEAR_BOTTOM_INSET = 84
 
 export default function CalendarioYearView({
   fecha,
@@ -47,7 +48,8 @@ export default function CalendarioYearView({
 }) {
   const activeYear = fecha.getFullYear()
   const activeYearRef = useRef<HTMLElement | null>(null)
-  const positionedYearRef = useRef<number | null>(null)
+  const activeMonthRef = useRef<HTMLButtonElement | null>(null)
+  const positionedDateRef = useRef<string | null>(null)
   const pendingTodayScrollRef = useRef(false)
   const prependHeightRef = useRef<number | null>(null)
   const [yearRange, setYearRange] = useState(() => ({
@@ -59,6 +61,7 @@ export default function CalendarioYearView({
     [eventos, transitionPreview],
   )
   const currentMonth = useMemo(() => new Date(), [])
+  const activeMonthKey = format(fecha, 'yyyy-MM')
 
   const years = useMemo(
     () => transitionPreview
@@ -70,19 +73,39 @@ export default function CalendarioYearView({
     [activeYear, transitionPreview, yearRange.end, yearRange.start],
   )
 
-  const scrollToActiveYear = (behavior: ScrollBehavior = 'auto') => {
-    const target = activeYearRef.current
-    if (!target) return
-
-    const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - YEAR_TOP_OFFSET)
+  const centerMonthElement = (target: HTMLElement, behavior: ScrollBehavior = 'auto') => {
+    if (typeof window === 'undefined') return
+    const rect = target.getBoundingClientRect()
+    const availableHeight = Math.max(1, window.innerHeight - YEAR_TOP_OFFSET - YEAR_BOTTOM_INSET)
+    const desiredCenterY = YEAR_TOP_OFFSET + availableHeight / 2
+    const top = Math.max(0, window.scrollY + rect.top + rect.height / 2 - desiredCenterY)
     window.scrollTo({ top, behavior })
+  }
+
+  const scrollToActiveMonth = (behavior: ScrollBehavior = 'auto') => {
+    const target = activeMonthRef.current
+    if (target) {
+      centerMonthElement(target, behavior)
+      return
+    }
+
+    const fallback = activeYearRef.current
+    if (!fallback) return
+    const top = Math.max(0, window.scrollY + fallback.getBoundingClientRect().top - YEAR_TOP_OFFSET)
+    window.scrollTo({ top, behavior })
+  }
+
+  const scrollToMonth = (date: Date, behavior: ScrollBehavior = 'auto') => {
+    const key = format(date, 'yyyy-MM')
+    const target = document.querySelector<HTMLElement>(`[data-calendar-mini-month="${key}"]`)
+    if (target) centerMonthElement(target, behavior)
   }
 
   useLayoutEffect(() => {
     if (transitionPreview) return
     if (activeYear >= yearRange.start && activeYear <= yearRange.end) return
 
-    positionedYearRef.current = null
+    positionedDateRef.current = null
     setYearRange({
       start: activeYear - INITIAL_YEARS_AROUND,
       end: activeYear + INITIAL_YEARS_AROUND,
@@ -100,21 +123,21 @@ export default function CalendarioYearView({
 
   useLayoutEffect(() => {
     if (transitionPreview) return
-    if (positionedYearRef.current === activeYear || !activeYearRef.current) return
-    positionedYearRef.current = activeYear
+    if (positionedDateRef.current === activeMonthKey || !activeYearRef.current) return
+    positionedDateRef.current = activeMonthKey
 
     const html = document.documentElement
     const previousBehavior = html.style.scrollBehavior
     html.style.scrollBehavior = 'auto'
 
-    scrollToActiveYear('auto')
-    const frame = window.requestAnimationFrame(() => scrollToActiveYear('auto'))
+    scrollToActiveMonth('auto')
+    const frame = window.requestAnimationFrame(() => scrollToActiveMonth('auto'))
 
     return () => {
       window.cancelAnimationFrame(frame)
       html.style.scrollBehavior = previousBehavior
     }
-  }, [activeYear, transitionPreview, yearRange.end, yearRange.start])
+  }, [activeMonthKey, activeYear, transitionPreview, yearRange.end, yearRange.start])
 
   useEffect(() => {
     if (transitionPreview) return
@@ -168,7 +191,7 @@ export default function CalendarioYearView({
     if (transitionPreview) return
     if (!pendingTodayScrollRef.current || !activeYearRef.current) return
     pendingTodayScrollRef.current = false
-    requestAnimationFrame(() => scrollToActiveYear('smooth'))
+    requestAnimationFrame(() => scrollToMonth(new Date(), 'smooth'))
   }, [activeYear, transitionPreview, yearRange.end, yearRange.start])
 
   useEffect(() => {
@@ -183,14 +206,16 @@ export default function CalendarioYearView({
       event.preventDefault()
       event.stopPropagation()
 
-      const currentYear = new Date().getFullYear()
+      const today = new Date()
+      const currentYear = today.getFullYear()
       if (currentYear !== activeYear) {
         pendingTodayScrollRef.current = true
         onChangeYear(currentYear)
         return
       }
 
-      scrollToActiveYear(
+      scrollToMonth(
+        today,
         window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       )
     }
@@ -229,7 +254,8 @@ export default function CalendarioYearView({
                   const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 })
                   const days = eachDayOfInterval({ start, end })
                   const isCurrentMonth = isSameMonth(month, currentMonth)
-                  const isSharedTarget = sharedTransitionTarget && isSameMonth(month, fecha)
+                  const isActiveMonth = isSameMonth(month, fecha)
+                  const isSharedTarget = sharedTransitionTarget && isActiveMonth
                   const dataMonthKey = format(month, 'yyyy-MM')
                   while (days.length < 42) days.push(addDays(days[days.length - 1], 1))
 
@@ -237,6 +263,7 @@ export default function CalendarioYearView({
                     <button
                       type="button"
                       key={monthKey(month)}
+                      ref={isActiveMonth ? activeMonthRef : undefined}
                       data-calendar-mini-month={dataMonthKey}
                       className={`${styles.miniMonth} ${isCurrentMonth ? styles.currentMonth : ''}`}
                       style={isSharedTarget ? { viewTransitionName: 'calendar-month-shared' } : undefined}
