@@ -27,7 +27,7 @@ const YEAR_EDGE_THRESHOLD = 520
 const YEAR_CENTER_SETTLE_MS = 240
 const YEAR_TOP_GAP = 6
 const YEAR_BOTTOM_GAP = 14
-const YEAR_UPWARD_BIAS = 24
+const YEAR_UPWARD_BIAS = 72
 
 export default function CalendarioYearView({
   fecha,

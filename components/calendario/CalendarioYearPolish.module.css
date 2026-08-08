@@ -12,7 +12,7 @@
   color-scheme: light;
   -webkit-overflow-scrolling: touch;
   transform-origin: 50% 40%;
-  animation: calendarYearEnter 250ms cubic-bezier(.22,1,.36,1) both;
+  animation: calendarYearEnter 300ms cubic-bezier(.22,1,.36,1) both;
   will-change: transform, opacity;
 }
 
@@ -33,6 +33,22 @@
 .yearPolish :global([class*='yearSection']) {
   content-visibility: auto;
   contain-intrinsic-size: auto 780px;
+}
+
+.yearPolish :global([class*='yearHeader']) {
+  padding-bottom: 14px;
+}
+
+.yearPolish :global([class*='yearGrid']) {
+  gap: 20px 16px;
+}
+
+.yearPolish :global([class*='miniMonthName']) {
+  margin-bottom: 4px;
+}
+
+.yearPolish :global([class*='miniGrid']) {
+  gap-block: 2px;
 }
 
 .yearPolish :global([class*='yearTitle']) { color: #111827 !important; }
@@ -60,12 +76,12 @@
 
 @keyframes calendarYearEnter {
   from {
-    opacity: .72;
-    transform: scale(.972) translate3d(0, -5px, 0);
+    opacity: .58;
+    transform: scale(.952) translate3d(0, -8px, 0);
   }
   72% {
     opacity: 1;
-    transform: scale(1.003) translate3d(0, 0, 0);
+    transform: scale(1.004) translate3d(0, 0, 0);
   }
   to {
     opacity: 1;
@@ -80,6 +96,20 @@
 
   .yearPolish :global([class*='yearGrid']) {
     gap: 17px 11px;
+  }
+}
+
+@media (max-height: 760px) {
+  .yearPolish :global([class*='yearHeader']) {
+    padding-bottom: 10px;
+  }
+
+  .yearPolish :global([class*='yearGrid']) {
+    gap-block: 14px;
+  }
+
+  .yearPolish :global([class*='miniMonthName']) {
+    margin-bottom: 3px;
   }
 }
 
