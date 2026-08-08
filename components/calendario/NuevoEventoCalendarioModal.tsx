@@ -28,6 +28,7 @@ export default function NuevoEventoCalendarioModal({
   onClose: () => void
   onCreated: () => void
   editableCalendars: CalendarioOrigen[]
+  userId?: string
   fechaInicial: Date
 }) {
   const [mounted, setMounted] = useState(false)
