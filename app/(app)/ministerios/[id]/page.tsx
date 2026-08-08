@@ -145,36 +145,60 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
           <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
             Herramientas
           </h2>
-          <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
-            {accesos.map((item, index) => {
-              const Icon = item.icon
-              const isLeft = index % 2 === 0
-              const hasRowBelow = index < accesos.length - 2
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}
-                >
-                  <span
-                    className="relative grid h-9 w-9 place-items-center rounded-full"
-                    style={{ backgroundColor: `${color}13`, color }}
+
+          {esLider ? (
+            <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
+              {accesos.map((item, index) => {
+                const Icon = item.icon
+                const isLeft = index % 2 === 0
+                const hasRowBelow = index < accesos.length - 2
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}
                   >
-                    <Icon className="h-[18px] w-[18px]" />
-                    {item.badge > 0 && (
-                      <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">
-                        {item.badge > 99 ? '99+' : item.badge}
-                      </span>
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span>
-                    <span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span>
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
+                    <span
+                      className="relative grid h-9 w-9 place-items-center rounded-full"
+                      style={{ backgroundColor: `${color}13`, color }}
+                    >
+                      <Icon className="h-[18px] w-[18px]" />
+                      {item.badge > 0 && (
+                        <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span>
+                      <span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span>
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2 rounded-[25px] bg-white px-3 py-4 ring-1 ring-black/[0.045]">
+              {accesos.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group flex min-w-0 flex-col items-center justify-start rounded-2xl px-1 py-1.5 text-center transition active:scale-[0.97] active:bg-slate-50"
+                  >
+                    <span
+                      className="grid h-12 w-12 place-items-center rounded-full shadow-[0_5px_14px_rgba(15,23,42,0.05)]"
+                      style={{ backgroundColor: `${color}13`, color }}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="mt-2 block max-w-full truncate text-[12px] font-bold text-[#171923]">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         {esLider && (

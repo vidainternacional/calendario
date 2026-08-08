@@ -27,11 +27,13 @@ export default async function MiembrosPage(
     .select('es_lider')
     .eq('profile_id', user.id)
     .eq('ministerio_id', params.id)
-    .single()
+    .maybeSingle()
 
-  if (!isAdminOrPastor && !(membresiaActual as any)?.es_lider) {
+  if (!isAdminOrPastor && !membresiaActual) {
     redirect('/ministerios')
   }
+
+  const puedeVerContacto = isAdminOrPastor || Boolean((membresiaActual as any)?.es_lider)
 
   const { data: ministerio } = await supabase
     .from('ministerios')
@@ -61,7 +63,7 @@ export default async function MiembrosPage(
   const miembrosList = (miembros as any[]) || []
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:pt-6">
+    <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-[calc(env(safe-area-inset-top)+5.75rem)] sm:pt-28">
       <header className="mb-5 sm:mb-6">
         <h1 className="text-2xl font-bold text-[#171923]">Miembros</h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -76,7 +78,7 @@ export default async function MiembrosPage(
       ) : (
         <div className="grid gap-3">
           {miembrosList.map((m: any) => {
-            const profile = m.profiles as any
+            const memberProfile = m.profiles as any
             const desde = new Date(m.created_at).toLocaleDateString('es-ES', {
               day: '2-digit',
               month: 'short',
@@ -95,7 +97,7 @@ export default async function MiembrosPage(
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-2">
                     <span className="max-w-full break-words text-sm font-bold text-[#171923]">
-                      {profile?.nombre_completo || 'Desconocido'}
+                      {memberProfile?.nombre_completo || 'Desconocido'}
                     </span>
                     {m.es_lider && (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-600">
@@ -104,7 +106,7 @@ export default async function MiembrosPage(
                     )}
                   </div>
                   <div className="mt-1 flex flex-col gap-0.5 text-xs text-slate-400 sm:flex-row sm:flex-wrap sm:gap-x-2">
-                    <span className="break-all">{profile?.telefono || 'Sin teléfono'}</span>
+                    {puedeVerContacto && <span className="break-all">{memberProfile?.telefono || 'Sin teléfono'}</span>}
                     <span>Desde {desde}</span>
                   </div>
                 </div>

@@ -63,7 +63,7 @@ export default async function SolicitudesPage({
   }
 
   return (
-    <div className="space-y-5 px-4 pb-28 sm:px-0">
+    <div className="mx-auto w-full max-w-2xl space-y-5 px-4 pb-28 pt-[calc(env(safe-area-inset-top)+5.75rem)] sm:px-0 sm:pt-28">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-[#171923]">Solicitudes</h2>
         <Link

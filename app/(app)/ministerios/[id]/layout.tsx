@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
-import { UserPlus } from 'lucide-react'
 import BackButton from '@/components/navigation/BackButton'
 import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDashboardSwitcher'
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
@@ -61,7 +59,6 @@ export default async function MinisterioLayout({
     profile?.rol === 'administrador' ||
     profile?.es_pastor_general
   const esLider = Boolean((membresiaReq.data as any)?.es_lider)
-  const puedeGestionarIngresos = esLider || isAdminOrPastor
   const puedePersonalizar = esLider || isAdminOrPastor
 
   if (!membresiaReq.data && !isAdminOrPastor) {
@@ -97,20 +94,6 @@ export default async function MinisterioLayout({
     }))
   }
 
-  let solicitudesPendientes = 0
-  if (puedeGestionarIngresos) {
-    const { data: pendientes, error } = await (supabase as any)
-      .from('ministerio_solicitudes_ingreso')
-      .select('id')
-      .eq('ministerio_id', id)
-      .eq('estado', 'pendiente')
-
-    if (error) {
-      console.error('[MinisterioLayout] No se pudieron cargar solicitudes pendientes', error)
-    }
-    solicitudesPendientes = pendientes?.length || 0
-  }
-
   return (
     <div className={`${styles.shell} relative min-h-screen overflow-x-hidden bg-[#f4f5f9]`}>
       <div
@@ -133,23 +116,6 @@ export default async function MinisterioLayout({
           />
           {puedePersonalizar && <PersonalizarMinisterioButton ministerio={ministerio} />}
         </div>
-
-        {solicitudesPendientes > 0 && (
-          <Link
-            href={`/ministerios/${id}/solicitudes-ingreso`}
-            className="pointer-events-auto mt-2 inline-flex min-h-11 max-w-full items-center justify-center gap-2 rounded-xl border border-white/50 bg-white/95 px-3 py-2 text-sm font-semibold text-indigo-600 shadow-lg backdrop-blur-md transition-colors hover:bg-white active:scale-[0.98]"
-          >
-            <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">
-              {solicitudesPendientes === 1
-                ? '1 solicitud de ingreso pendiente'
-                : `${solicitudesPendientes} solicitudes de ingreso pendientes`}
-            </span>
-            <span className="grid h-6 min-w-6 shrink-0 place-items-center rounded-full bg-indigo-600 px-1.5 text-[10px] font-black text-white">
-              {solicitudesPendientes > 99 ? '99+' : solicitudesPendientes}
-            </span>
-          </Link>
-        )}
       </div>
 
       <div>{children}</div>

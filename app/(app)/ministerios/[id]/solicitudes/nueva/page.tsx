@@ -19,7 +19,7 @@ export default async function NuevaSolicitudPage({
   if (!user) redirect('/login')
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-28 sm:px-0">
+    <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-[calc(env(safe-area-inset-top)+5.75rem)] sm:px-0 sm:pt-28">
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-5 text-xl font-bold text-[#171923] sm:mb-6">Crear nueva solicitud</h2>
         <NuevaSolicitudForm ministerioId={id} />
