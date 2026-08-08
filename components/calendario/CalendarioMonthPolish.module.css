@@ -14,8 +14,8 @@
   contain: layout paint style;
   clip-path: inset(0);
   -webkit-overflow-scrolling: touch;
-  transform-origin: 50% 42%;
-  animation: calendarMonthEnter 260ms cubic-bezier(.22,1,.36,1) both;
+  transform-origin: 50% 40%;
+  animation: calendarMonthEnter 280ms cubic-bezier(.22,1,.36,1) both;
   will-change: transform, opacity;
 }
 
@@ -36,10 +36,7 @@
   pointer-events: none;
 }
 
-.monthExit::after {
-  display: none;
-}
-
+.monthExit::after { display: none; }
 .monthPolish::-webkit-scrollbar { display: none; }
 
 .monthStickyChrome {
@@ -168,7 +165,7 @@
 }
 
 .activeMonthSection {
-  scroll-margin-top: 0;
+  scroll-margin-top: calc(100px + env(safe-area-inset-top, 0px));
   content-visibility: visible !important;
 }
 
@@ -183,9 +180,7 @@
   contain: layout paint style;
 }
 
-.monthExit :global([class*='monthScroll']) {
-  background: transparent !important;
-}
+.monthExit :global([class*='monthScroll']) { background: transparent !important; }
 
 .monthPolish :global([class*='monthSection']) {
   width: 100%;
@@ -193,11 +188,12 @@
   content-visibility: auto !important;
   contain-intrinsic-size: auto 560px;
   contain: layout paint style;
+  scroll-margin-top: calc(100px + env(safe-area-inset-top, 0px));
 }
 
 .monthPolish :global([class*='monthHeader']) {
-  padding-top: 24px;
-  padding-bottom: 16px;
+  padding-top: 20px;
+  padding-bottom: 14px;
 }
 
 .monthPolish :global([class*='monthTitle']) {
@@ -252,7 +248,6 @@
   font-size: 22px !important;
   line-height: 1.15 !important;
 }
-
 .monthPolish :global([class*='agendaCount']) { color: #7a8496 !important; }
 
 .monthPolish :global([class*='eventRow']) {
@@ -266,7 +261,6 @@
 .monthPolish :global([class*='eventTitle']),
 .monthPolish :global([class*='eventTime']),
 .monthPolish :global([class*='eventLocation']) { color: #111827 !important; }
-
 .monthPolish :global([class*='eventMeta']) { opacity: 1 !important; }
 
 .monthPolish :global([class*='dayNumber']) {
@@ -329,8 +323,12 @@
 
 @keyframes calendarMonthEnter {
   from {
-    opacity: .7;
-    transform: scale(.948) translate3d(0, 5px, 0);
+    opacity: .62;
+    transform: scale(.936) translate3d(0, 8px, 0);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.006) translate3d(0, -1px, 0);
   }
   to {
     opacity: 1;
@@ -340,7 +338,7 @@
 
 @media (max-width: 390px) {
   .monthPolish::after { height: 104px; }
-  .monthPolish :global([class*='monthHeader']) { padding-top: 20px; }
+  .monthPolish :global([class*='monthHeader']) { padding-top: 18px; }
   .monthPolish :global([class*='monthScroll']) { padding-bottom: calc(182px + env(safe-area-inset-bottom, 0px)); }
   .monthPolish :global([class*='backButton']) { min-width: 72px !important; font-size: 15px !important; }
   .monthPolish :global([class*='agendaHeader']),
