@@ -1,7 +1,7 @@
 'use client'
 
 import { addHours, format } from 'date-fns'
-import { Check, Loader2, X } from 'lucide-react'
+import { Check, ChevronRight, Loader2, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { crearEventoCalendario } from '@/app/actions/eventos'
@@ -34,16 +34,28 @@ export default function NuevoEventoCalendarioModal({
   const [mounted, setMounted] = useState(false)
   const [itemType, setItemType] = useState<ItemType>('event')
   const [todoElDia, setTodoElDia] = useState(false)
-  const [calendarId, setCalendarId] = useState(editableCalendars[0]?.id || '')
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
+    editableCalendars[0]?.id ? [editableCalendars[0].id] : [],
+  )
+  const [calendarPickerOpen, setCalendarPickerOpen] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [alertaDia, setAlertaDia] = useState(true)
   const [alertaHora, setAlertaHora] = useState(true)
 
-  const selectedCalendar = useMemo(
-    () => editableCalendars.find((calendar) => calendar.id === calendarId) || editableCalendars[0] || null,
-    [calendarId, editableCalendars],
+  const selectedCalendars = useMemo(
+    () => editableCalendars.filter((calendar) => selectedCalendarIds.includes(calendar.id)),
+    [editableCalendars, selectedCalendarIds],
   )
+
+  const primaryCalendar = selectedCalendars[0] || null
+
+  const calendarSummary = useMemo(() => {
+    if (selectedCalendars.length === 0) return 'Seleccionar'
+    if (selectedCalendars.length === 1) return etiquetaCalendario(selectedCalendars[0])
+    if (selectedCalendars.length === editableCalendars.length) return 'Todos los calendarios'
+    return `${selectedCalendars.length} calendarios`
+  }, [editableCalendars.length, selectedCalendars])
 
   const inicioPredeterminado = useMemo(() => {
     const base = new Date(fechaInicial)
@@ -64,7 +76,9 @@ export default function NuevoEventoCalendarioModal({
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !guardando) onClose()
+      if (event.key !== 'Escape' || guardando) return
+      if (calendarPickerOpen) setCalendarPickerOpen(false)
+      else onClose()
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -72,14 +86,18 @@ export default function NuevoEventoCalendarioModal({
       document.body.style.overflow = bodyOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [guardando, isOpen, onClose])
+  }, [calendarPickerOpen, guardando, isOpen, onClose])
 
   useEffect(() => {
     if (!isOpen) return
-    if (!editableCalendars.some((calendar) => calendar.id === calendarId)) {
-      setCalendarId(editableCalendars[0]?.id || '')
-    }
-  }, [calendarId, editableCalendars, isOpen])
+
+    const allowedIds = new Set(editableCalendars.map((calendar) => calendar.id))
+    setSelectedCalendarIds((current) => {
+      const valid = current.filter((id) => allowedIds.has(id))
+      if (valid.length > 0) return itemType === 'reminder' ? [valid[0]] : valid
+      return editableCalendars[0]?.id ? [editableCalendars[0].id] : []
+    })
+  }, [editableCalendars, isOpen, itemType])
 
   useEffect(() => {
     if (!isOpen) return
@@ -91,19 +109,42 @@ export default function NuevoEventoCalendarioModal({
     setFin(format(addHours(base, 1), "yyyy-MM-dd'T'HH:mm"))
     setItemType('event')
     setTodoElDia(false)
+    setSelectedCalendarIds(editableCalendars[0]?.id ? [editableCalendars[0].id] : [])
+    setCalendarPickerOpen(false)
     setAlertaDia(true)
     setAlertaHora(true)
     setError('')
-  }, [isOpen, fechaInicial])
+  }, [editableCalendars, fechaInicial, isOpen])
 
   if (!mounted || !isOpen) return null
+
+  function toggleCalendar(calendarId: string) {
+    if (itemType === 'reminder') {
+      setSelectedCalendarIds([calendarId])
+      setCalendarPickerOpen(false)
+      return
+    }
+
+    setSelectedCalendarIds((current) => (
+      current.includes(calendarId)
+        ? current.filter((id) => id !== calendarId)
+        : [...current, calendarId]
+    ))
+  }
+
+  function selectAllCalendars() {
+    if (itemType === 'reminder') return
+    const allIds = editableCalendars.map((calendar) => calendar.id)
+    const allSelected = allIds.length > 0 && allIds.every((id) => selectedCalendarIds.includes(id))
+    setSelectedCalendarIds(allSelected ? [] : allIds)
+  }
 
   async function guardar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
 
-    if (!selectedCalendar) {
-      setError('No hay un calendario disponible para guardar este elemento.')
+    if (!primaryCalendar || selectedCalendars.length === 0) {
+      setError('Selecciona al menos un calendario.')
       return
     }
 
@@ -123,7 +164,9 @@ export default function NuevoEventoCalendarioModal({
     setGuardando(true)
     const formData = new FormData(event.currentTarget)
     formData.set('item_type', itemType)
-    formData.set('calendar_id', selectedCalendar.id)
+    formData.set('calendar_id', primaryCalendar.id)
+    formData.delete('calendar_ids')
+    selectedCalendars.forEach((calendar) => formData.append('calendar_ids', calendar.id))
     formData.set('fecha_inicio', inicioDate.toISOString())
     formData.set('fecha_fin', itemType === 'event' ? finDate.toISOString() : inicioDate.toISOString())
     formData.set('todo_el_dia', itemType === 'event' && todoElDia ? 'true' : 'false')
@@ -143,6 +186,8 @@ export default function NuevoEventoCalendarioModal({
   }
 
   const titlePlaceholder = itemType === 'event' ? 'Título' : 'Nombre del recordatorio'
+  const allCalendarsSelected = editableCalendars.length > 0
+    && editableCalendars.every((calendar) => selectedCalendarIds.includes(calendar.id))
 
   return createPortal(
     <div
@@ -167,7 +212,7 @@ export default function NuevoEventoCalendarioModal({
 
           <button
             type="submit"
-            disabled={guardando || !selectedCalendar}
+            disabled={guardando || selectedCalendars.length === 0}
             className={formStyles.saveButton}
             aria-label={guardando ? 'Guardando' : 'Añadir'}
           >
@@ -198,6 +243,7 @@ export default function NuevoEventoCalendarioModal({
                 aria-selected={itemType === 'reminder'}
                 onClick={() => {
                   setItemType('reminder')
+                  setSelectedCalendarIds((current) => current[0] ? [current[0]] : [])
                   setError('')
                 }}
                 className={`${formStyles.segment} ${itemType === 'reminder' ? formStyles.segmentActive : ''}`}
@@ -309,28 +355,30 @@ export default function NuevoEventoCalendarioModal({
 
             <p className={formStyles.sectionLabel}>Audiencia</p>
             <section className={formStyles.group}>
-              <label className={formStyles.row}>
-                <span className={formStyles.label}>Calendario</span>
-                <span className={formStyles.calendarValue}>
-                  <span
-                    className={formStyles.calendarDot}
-                    style={{ backgroundColor: selectedCalendar?.color || '#5b3df5' }}
-                    aria-hidden="true"
-                  />
-                  <select
-                    name="calendar_id"
-                    value={calendarId}
-                    onChange={(event) => setCalendarId(event.target.value)}
-                    className={`${formStyles.select} ${formStyles.calendarSelect}`}
-                    required
-                    aria-label="Calendario o audiencia"
-                  >
-                    {editableCalendars.map((calendar) => (
-                      <option key={calendar.id} value={calendar.id}>{etiquetaCalendario(calendar)}</option>
-                    ))}
-                  </select>
+              <button
+                type="button"
+                className={`${formStyles.row} ${formStyles.calendarPickerButton}`}
+                onClick={() => setCalendarPickerOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={calendarPickerOpen}
+              >
+                <span className={formStyles.label}>
+                  {itemType === 'event' ? 'Calendarios' : 'Calendario'}
                 </span>
-              </label>
+                <span className={formStyles.calendarPickerValue}>
+                  <span className={formStyles.calendarDots} aria-hidden="true">
+                    {selectedCalendars.slice(0, 4).map((calendar) => (
+                      <span
+                        key={calendar.id}
+                        className={formStyles.calendarDot}
+                        style={{ backgroundColor: calendar.color || '#5b3df5' }}
+                      />
+                    ))}
+                  </span>
+                  <span className={formStyles.calendarSummary}>{calendarSummary}</span>
+                  <ChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
+                </span>
+              </button>
             </section>
 
             {itemType === 'event' && (
@@ -381,6 +429,71 @@ export default function NuevoEventoCalendarioModal({
             {error && <p className={formStyles.error} role="alert">{error}</p>}
           </div>
         </div>
+
+        {calendarPickerOpen && (
+          <div className={formStyles.pickerLayer} role="dialog" aria-modal="true" aria-label="Seleccionar calendarios">
+            <button
+              type="button"
+              className={formStyles.pickerBackdrop}
+              onClick={() => setCalendarPickerOpen(false)}
+              aria-label="Cerrar selección de calendarios"
+            />
+            <section className={formStyles.pickerSheet}>
+              <header className={formStyles.pickerHeader}>
+                <button
+                  type="button"
+                  className={formStyles.pickerTextButton}
+                  onClick={() => setCalendarPickerOpen(false)}
+                >
+                  Listo
+                </button>
+                <h3>{itemType === 'event' ? 'Calendarios' : 'Calendario'}</h3>
+                {itemType === 'event' ? (
+                  <button
+                    type="button"
+                    className={formStyles.pickerTextButton}
+                    onClick={selectAllCalendars}
+                  >
+                    {allCalendarsSelected ? 'Ninguno' : 'Todos'}
+                  </button>
+                ) : <span />}
+              </header>
+
+              <div className={formStyles.pickerList}>
+                {editableCalendars.map((calendar) => {
+                  const selected = selectedCalendarIds.includes(calendar.id)
+                  return (
+                    <button
+                      key={calendar.id}
+                      type="button"
+                      className={formStyles.pickerOption}
+                      onClick={() => toggleCalendar(calendar.id)}
+                      aria-pressed={selected}
+                    >
+                      <span
+                        className={formStyles.pickerDot}
+                        style={{ backgroundColor: calendar.color || '#5b3df5' }}
+                        aria-hidden="true"
+                      />
+                      <span className={formStyles.pickerOptionText}>
+                        <strong>{etiquetaCalendario(calendar)}</strong>
+                        {calendar.ministerio_id && <small>Ministerio</small>}
+                        {!calendar.ministerio_id && calendar.nombre.toLowerCase() === 'pastores' && <small>Solo pastores y administración</small>}
+                      </span>
+                      <span className={`${formStyles.pickerCheck} ${selected ? formStyles.pickerCheckSelected : ''}`}>
+                        {selected && <Check size={17} strokeWidth={2.6} aria-hidden="true" />}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {itemType === 'event' && selectedCalendars.length === 0 && (
+                <p className={formStyles.pickerHint}>Selecciona al menos un calendario para guardar el evento.</p>
+              )}
+            </section>
+          </div>
+        )}
       </form>
     </div>,
     document.body,
