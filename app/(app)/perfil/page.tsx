@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { User, Mail, Shield, Bell, Settings2, Users, BookHeart } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
+import AvatarUploader from '@/components/perfil/AvatarUploader'
 import PushTestButton from '@/components/pwa/PushTestButton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
@@ -22,7 +23,7 @@ export default async function PerfilPage() {
 
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('nombre_completo, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral')
+    .select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral')
     .eq('id', user.id)
     .single()
 
@@ -50,6 +51,7 @@ export default async function PerfilPage() {
   const rolGlobal = roles[rolActual] || roles.servidor
   const tieneCentroPastoral = tieneAccesoPastoral(profile as any)
   const tienePanelAdministrativo = ['pastor', 'administrador'].includes(rolActual)
+  const nombre = (profile as any)?.nombre_completo || 'Usuario'
 
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-8 max-w-xl mx-auto">
@@ -57,7 +59,7 @@ export default async function PerfilPage() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-[#171923]">Mi Perfil</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Tu información y preferencias
+            Tu identidad dentro de la comunidad VIDA
           </p>
         </div>
         <div className="shrink-0">
@@ -67,22 +69,27 @@ export default async function PerfilPage() {
 
       <div className="space-y-5 sm:space-y-6">
         <section className="bg-white border border-slate-100 rounded-[22px] p-5 sm:p-6 shadow-sm overflow-hidden">
-          <div className="flex items-start gap-4 mb-6 min-w-0">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-600 flex items-center justify-center text-xl sm:text-2xl font-bold text-white shadow-lg shrink-0">
-              {(profile as any)?.nombre_completo?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-4 mb-5 min-w-0">
+            <AvatarUploader
+              userId={user.id}
+              nombre={nombre}
+              avatarUrl={(profile as any)?.avatar_url ?? null}
+            />
+            <div className="min-w-0 flex-1 pt-1">
               <h2 className="text-lg sm:text-xl font-bold text-[#171923] leading-tight break-words">
-                {(profile as any)?.nombre_completo || 'Usuario'}
+                {nombre}
               </h2>
               <span className={`inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border mt-2 ${rolGlobal.bg} ${rolGlobal.text} ${rolGlobal.border}`}>
                 <Shield className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">Rol global: {rolGlobal.label}</span>
               </span>
+              <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                Tu foto ayuda a que líderes y compañeros puedan reconocerte dentro de VIDA.
+              </p>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 border-t border-slate-100 pt-4">
             <div className="flex items-start gap-3 text-[#171923] min-w-0">
               <Mail className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
               <span className="text-sm break-all min-w-0">{user.email}</span>
@@ -94,7 +101,7 @@ export default async function PerfilPage() {
           </div>
 
           <EditarPerfilForm
-            nombre={(profile as any)?.nombre_completo ?? ''}
+            nombre={nombre}
             telefono={(profile as any)?.telefono ?? null}
             fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null}
           />

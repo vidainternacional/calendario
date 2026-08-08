@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-07
+Última actualización: 2026-08-08
 
-Fase / prioridad activa: **PULIDO DE EXPERIENCIA — Entrada limpia y fluidez del Calendario**
+Fase / prioridad activa: **PULIDO DE EXPERIENCIA — Identidad comunitaria y perfil**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -36,38 +36,59 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
-# PRIORIDAD ACTIVA — PULIDO DE EXPERIENCIA
+# PRIORIDAD ACTIVA — IDENTIDAD COMUNITARIA Y PERFIL
 
-El usuario decidió el 2026-08-07 retirar temporalmente el modo piloto de la experiencia normal porque su onboarding y acompañamiento interfieren con las pruebas iniciales de la aplicación.
+El usuario aprobó el 2026-08-08 avanzar desde el pulido de Inicio, Ministerios y navegación hacia una experiencia más comunitaria. VIDA debe seguir siendo personalizada para cada usuario, pero también permitir reconocer a las personas reales que forman parte de la iglesia y de cada equipo de servicio.
 
 ## Objetivo inmediato
 
-Dejar VIDA libre de interferencias del piloto y conseguir que las transiciones del Calendario sean fluidas en dispositivos móviles, especialmente iPhone, antes de continuar con nuevas superficies de producto.
+Convertir el perfil en la identidad comunitaria reutilizable del usuario, comenzando por una foto opcional y optimizada que pueda verse de forma consistente en las superficies donde una persona aparece ante otros miembros.
 
 ## Alcance autorizado
 
-1. Desactivar de forma no destructiva el modo piloto en la experiencia visible y en el arranque normal.
-2. Desactivar el onboarding/gate, telemetría y controles visibles exclusivos del piloto mientras esta prioridad siga activa.
-3. Conservar tablas, migraciones, RLS, datos, código histórico y evidencia del piloto para poder retomarlo más adelante.
-4. Optimizar las animaciones del Calendario, eliminando trabajo de layout innecesario y priorizando transformaciones aceleradas por GPU.
-5. Reducir el coste de render de vistas largas del Calendario sin cambiar su contrato funcional.
-6. Respetar `prefers-reduced-motion` y conservar accesibilidad.
-7. Verificar build y despliegue productivo antes de declarar cada bloque terminado.
+1. Mantener `profiles.avatar_url` como referencia única de la foto activa del usuario.
+2. Usar un bucket `avatars` independiente de los archivos ministeriales y pastorales.
+3. Limitar el avatar almacenado a una sola imagen activa por persona, reemplazando la anterior y evitando acumulación.
+4. Optimizar la imagen en el dispositivo antes de subirla; objetivo inicial: recorte cuadrado, 512×512, WebP y máximo 512 KB almacenados.
+5. Permitir que cada usuario escriba, reemplace o elimine únicamente su propio avatar mediante RLS.
+6. Mostrar la identidad visual primero en Perfil y Miembros del ministerio; después de validación, reutilizarla en Inicio, Contactos y otras superficies comunitarias.
+7. Conservar la privacidad ya aprobada: un servidor normal puede reconocer a sus compañeros, pero los datos de contacto siguen sujetos a permisos de liderazgo/pastoral existentes.
+8. No modificar roles, liderazgo, membresías ni permisos administrativos para implementar la identidad visual.
+9. Mantener diseño móvil premium, safe areas, navegación inferior y patrones de regreso ya aprobados.
+10. Verificar build y producción antes de declarar cada bloque terminado.
 
 ## Criterio de cierre de esta prioridad
 
-- la aplicación abre sin onboarding, gate ni interferencias del modo piloto;
-- la navegación habitual sigue funcionando por rol y permisos existentes;
-- el Calendario mantiene Año, Mes, Día, 2 días, Lista/Agenda y sus controles;
-- Año → Mes y retornos se perciben fluidos, sin saltos ni bloqueos notorios en iPhone;
-- build y producción quedan en estado aprobado;
-- validación visual del usuario completada.
+- cada usuario puede poner, reemplazar y quitar su foto sin almacenar originales innecesarios;
+- el avatar se muestra correctamente en su perfil y en la lista de miembros del ministerio;
+- cuando no existe foto se conserva un fallback visual limpio con inicial;
+- no se exponen datos de contacto adicionales a servidores normales;
+- Storage queda limitado y protegido por RLS;
+- build y producción quedan aprobados;
+- el usuario valida visualmente el resultado en iPhone.
+
+## Siguiente paso después de esta prioridad
+
+Una vez validada la identidad comunitaria, extender el avatar de manera controlada a Inicio/Contactos y entrar al bloque transversal de **Notificaciones y badges reales**, reutilizando nombre y foto cuando la notificación represente una acción de una persona.
+
+# PRIORIDAD CERRADA — PULIDO DE EXPERIENCIA / CALENDARIO E INICIO
+
+El pulido de entrada, Calendario, Inicio, Ministerios y navegación móvil quedó estabilizado durante las validaciones del 2026-08-07 y 2026-08-08. El Calendario conserva su base móvil aprobada y no debe degradarse. Los ajustes posteriores se limitaron a Inicio/Dashboard, solicitudes de ministerio, permisos de miembros, safe areas y navegación de regreso.
+
+Evidencia reciente:
+
+- `3f9b42e` — `feat(inicio): priorizar solicitudes, avisos y acceso directo a eventos`;
+- `62f1e8e` — `fix(ministerios): mostrar solicitudes de ingreso al líder`;
+- `78d3952` — `fix(ministerios): ajustar herramientas y navegación por rol`;
+- `9036ed4` — `fix(navegacion): añadir regreso en pantallas secundarias`.
+
+La navegación habitual continúa funcionando por rol y permisos existentes. No reabrir este bloque salvo bug comprobable.
 
 # SIGUIENTE BLOQUE PROPUESTO — RECORRIDO GUIADO POR SECCIONES
 
-Estado: **DOCUMENTADO, NO INICIAR HASTA CERRAR EL PULIDO ACTIVO**.
+Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR IDENTIDAD COMUNITARIA Y NOTIFICACIONES PRIORITARIAS**.
 
-Cuando el usuario apruebe la fluidez y entrada limpia, se construirá un recorrido de primera entrada que explique la aplicación por secciones.
+Cuando corresponda, se construirá un recorrido de primera entrada que explique la aplicación por secciones.
 
 Principios ya definidos:
 
@@ -77,8 +98,6 @@ Principios ya definidos:
 - podrá repetirse manualmente desde un punto de ayuda o perfil;
 - la misma fuente estructurada de contenidos servirá para generar posteriormente el manual escrito de VIDA;
 - el recorrido no dependerá del antiguo modo piloto ni de una cohorte de prueba.
-
-No implementar este recorrido antes de que la prioridad activa de pulido esté cerrada y aprobada.
 
 # PILOTO OPERATIVO — EN PAUSA
 
@@ -127,19 +146,19 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 **Biblia → Notas** ya es la base funcional del cuaderno. La FASE F no debe crear otro cuaderno; se redefine como evolución del espacio existente con sincronización entre dispositivos, respaldo en Supabase, número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación.
 
-# Evidencia reciente del Calendario
+# Evidencia histórica reciente del Calendario
 
 - contrato visual de fechas y eventos aprobado durante el pulido anterior;
 - icono inferior de Calendario refinado en commit `f7eda6c5c78e66ac09a21da5a15274745b2fa3e1`;
 - primera transición Año → Mes con spring implementada en commit `d3ba0c2e04ec01f7695dd637c8451275c955b52f`;
-- el usuario confirmó que la dirección visual es correcta pero reportó tirones y falta de fluidez, por lo que esa implementación debe optimizarse antes de continuar.
+- las iteraciones posteriores dejaron una base móvil estable, conservada como comportamiento aprobado.
 
 # Siguiente punto autorizado
 
-1. Desactivar la experiencia automática y telemetría visible/exclusiva del piloto sin borrar sus datos.
-2. Identificar y corregir los cuellos de botella de animación en Calendario.
-3. Desplegar y validar el bloque optimizado en producción.
+1. Implementar avatar optimizado y reemplazable desde Perfil.
+2. Mostrar avatar/fallback en Miembros sin ampliar visibilidad de datos privados.
+3. Validar Storage, RLS, build y producción.
 4. Solicitar validación visual del usuario en iPhone.
-5. Solo después de su aprobación, preparar el recorrido guiado por secciones y su fuente común para el futuro manual.
+5. Tras aprobación, extender identidad a Inicio/Contactos y continuar con Notificaciones y badges reales.
 
-No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de pulido no esté cerrado.
+No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de identidad comunitaria siga activo.
