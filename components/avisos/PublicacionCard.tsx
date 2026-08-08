@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronRight, ExternalLink, Globe, Megaphone, X } from 'lucide-react'
+import { markPublicationRead } from '@/components/avisos/usePublicationReads'
 
 type PublicacionCardProps = {
+  publicationId?: string
+  unread?: boolean
   titulo: string
   cuerpo?: string | null
   tipo: string
@@ -18,6 +21,8 @@ type PublicacionCardProps = {
 }
 
 export default function PublicacionCard({
+  publicationId,
+  unread = false,
   titulo,
   cuerpo,
   tipo,
@@ -31,6 +36,11 @@ export default function PublicacionCard({
 }: PublicacionCardProps) {
   const [abierta, setAbierta] = useState(false)
   const inicial = autor.charAt(0).toUpperCase()
+
+  const abrir = () => {
+    setAbierta(true)
+    if (publicationId && unread) void markPublicationRead(publicationId)
+  }
 
   useEffect(() => {
     if (!abierta) return
@@ -134,16 +144,17 @@ export default function PublicacionCard({
       <>
         <button
           type="button"
-          onClick={() => setAbierta(true)}
-          className="group flex min-h-[76px] w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 active:bg-slate-50 focus:outline-none focus-visible:bg-indigo-50/60"
-          aria-label={`Abrir publicación: ${titulo}`}
+          onClick={abrir}
+          className={`group flex min-h-[74px] w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 active:bg-slate-50 focus:outline-none focus-visible:bg-indigo-50/60 ${unread ? 'bg-indigo-50/25' : ''}`}
+          aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : ''}`}
         >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+          <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
             <Megaphone className="h-[18px] w-[18px]" aria-hidden="true" />
+            {unread && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-rose-500" aria-hidden="true" />}
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-sm font-bold text-[#171923]">{titulo}</span>
+              <span className={`truncate text-sm text-[#171923] ${unread ? 'font-extrabold' : 'font-bold'}`}>{titulo}</span>
               <span className="shrink-0 text-[10px] text-slate-400">{fecha}</span>
             </span>
             <span className="mt-1 block truncate text-[11px] text-slate-500">
@@ -163,11 +174,12 @@ export default function PublicacionCard({
     <>
       <button
         type="button"
-        onClick={() => setAbierta(true)}
-        className={`group w-full overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 ${compacta ? 'p-4 sm:p-5' : 'p-5'}`}
-        aria-label={`Abrir publicación: ${titulo}`}
+        onClick={abrir}
+        className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 ${compacta ? 'p-4 sm:p-5' : 'p-5'} ${unread ? 'border-indigo-200' : 'border-slate-100'}`}
+        aria-label={`Abrir publicación: ${titulo}${unread ? ', no leída' : ''}`}
       >
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        {unread && <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-rose-500" aria-hidden="true" />}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 pr-3">
           <span className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${colorClass}`}>
             <Megaphone className="h-3 w-3 shrink-0" />
             <span className="truncate">{etiqueta ?? tipo.replace('_', ' ')}</span>

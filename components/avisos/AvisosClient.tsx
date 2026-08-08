@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { readUserCache, writeUserCache } from '@/lib/cache/userCache'
 import NuevoAvisoModal from '@/components/avisos/NuevoAvisoModal'
 import PublicacionCard from '@/components/avisos/PublicacionCard'
+import { useUnreadPublicationIds } from '@/components/avisos/usePublicationReads'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 
 type AvisosData = {
@@ -132,6 +133,9 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
     }
   }, [userId])
 
+  const currentItems = data?.publicaciones || []
+  const unreadIds = useUnreadPublicationIds(currentItems.map((item: any) => String(item.id)))
+
   if (!data) {
     return (
       <main className="mx-auto min-h-screen max-w-3xl overflow-x-hidden bg-[#f4f5f9] px-4 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6">
@@ -157,6 +161,9 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
             {items.length === 0
               ? 'Sin publicaciones por ahora'
               : `${items.length} publicación${items.length !== 1 ? 'es' : ''}`}
+            {unreadIds.size > 0 && (
+              <span className="ml-2 font-semibold text-rose-500">· {unreadIds.size} sin leer</span>
+            )}
             {isRefreshing && <span className="ml-2 text-xs text-gray-400">Actualizando…</span>}
           </p>
         </div>
@@ -220,10 +227,13 @@ export default function AvisosClient({ userId }: AvisosClientProps) {
           {items.map((pub) => {
             const autor = pub.profiles?.nombre_completo ?? 'Autor desconocido'
             const minNombre = pub.ministerios?.nombre
+            const publicationId = String(pub.id)
 
             return (
               <PublicacionCard
                 key={pub.id}
+                publicationId={publicationId}
+                unread={unreadIds.has(publicationId)}
                 titulo={pub.titulo}
                 cuerpo={pub.cuerpo}
                 tipo={pub.tipo}

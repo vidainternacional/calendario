@@ -5,6 +5,7 @@ import { useEffect, useState, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Megaphone, User, BookOpen } from 'lucide-react'
+import { useUnreadPublicationsCount } from '@/components/avisos/usePublicationReads'
 
 const PREF_KEY = 'vida-biblia-preferencias'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
@@ -56,6 +57,7 @@ export default function BottomNav() {
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
+  const unreadAvisos = useUnreadPublicationsCount()
 
   useEffect(() => {
     setPortalReady(true)
@@ -116,19 +118,26 @@ export default function BottomNav() {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
           const isCalendar = item.href === '/calendario'
+          const showUnreadBadge = item.href === '/avisos' && unreadAvisos > 0
+
           return (
             <Link
               key={item.name}
               href={item.href}
               prefetch
               aria-current={isActive ? 'page' : undefined}
-              aria-label={item.name}
+              aria-label={showUnreadBadge ? `${item.name}, ${unreadAvisos} sin leer` : item.name}
               onPointerEnter={() => router.prefetch(item.href)}
               onTouchStart={() => router.prefetch(item.href)}
               className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}
             >
-              <span className={`flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
+              <span className={`relative flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
                 <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? (isCalendar ? 'opacity-100' : 'fill-current opacity-90') : ''}`} />
+                {showUnreadBadge && (
+                  <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-black leading-none text-white shadow-sm">
+                    {unreadAvisos > 99 ? '99+' : unreadAvisos}
+                  </span>
+                )}
               </span>
               <span className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
             </Link>
