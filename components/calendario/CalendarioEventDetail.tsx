@@ -3,9 +3,11 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { ChevronLeft } from 'lucide-react'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { eventColor, type EventoCalendario } from './calendario-ios-types'
 import styles from './CalendarioEventDetail.module.css'
+
+const EXIT_MS = 190
 
 export default function CalendarioEventDetail({
   event,
@@ -14,22 +16,36 @@ export default function CalendarioEventDetail({
   event: EventoCalendario | null
   onClose: () => void
 }) {
+  const [closing, setClosing] = useState(false)
+  const closeTimerRef = useRef<number | null>(null)
+
+  const requestClose = useCallback(() => {
+    if (closing) return
+    setClosing(true)
+    closeTimerRef.current = window.setTimeout(onClose, EXIT_MS)
+  }, [closing, onClose])
+
   useEffect(() => {
     if (!event) return
+    setClosing(false)
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (keyboardEvent: KeyboardEvent) => {
-      if (keyboardEvent.key === 'Escape') onClose()
+      if (keyboardEvent.key === 'Escape') requestClose()
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current)
+        closeTimerRef.current = null
+      }
     }
-  }, [event, onClose])
+  }, [event, requestClose])
 
   if (!event) return null
 
@@ -47,7 +63,7 @@ export default function CalendarioEventDetail({
   const monthLabel = monthText.charAt(0).toUpperCase() + monthText.slice(1)
 
   return (
-    <div className={styles.backdrop} role="presentation">
+    <div className={`${styles.backdrop} ${closing ? styles.closing : ''}`} role="presentation">
       <section
         className={styles.sheet}
         role="dialog"
@@ -55,7 +71,7 @@ export default function CalendarioEventDetail({
         aria-labelledby="calendar-event-detail-title"
       >
         <header className={styles.topbar}>
-          <button type="button" className={styles.backButton} onClick={onClose} aria-label={`Volver a ${monthLabel}`}>
+          <button type="button" className={styles.backButton} onClick={requestClose} aria-label={`Volver a ${monthLabel}`}>
             <ChevronLeft size={25} strokeWidth={2.25} aria-hidden="true" />
             <span>{monthLabel}</span>
           </button>
