@@ -11,9 +11,10 @@ import type { EventoCalendario } from './calendario-ios-types'
 
 type CalendarioClientProps = {
   userId: string
+  canCreateEvents: boolean
 }
 
-export default function CalendarioClient({ userId }: CalendarioClientProps) {
+export default function CalendarioClient({ userId, canCreateEvents }: CalendarioClientProps) {
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [rangeYear, setRangeYear] = useState(() => new Date().getFullYear())
   const [externalDetail, setExternalDetail] = useState<EventoCalendario | null>(null)
@@ -53,6 +54,7 @@ export default function CalendarioClient({ userId }: CalendarioClientProps) {
         events={events}
         isRefreshing={isRefreshing}
         editableCalendars={editableCalendars}
+        canCreateEvents={canCreateEvents}
         userId={userId}
         onRefresh={reload}
         onOpenCalendars={() => setSourcesOpen(true)}
