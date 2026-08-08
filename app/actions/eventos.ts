@@ -22,17 +22,18 @@ type PerfilPermisosEvento = {
   es_pastor_general?: boolean | null
 }
 
-type FilaProfileId = { profile_id: string }
 type FilaId = { id: string }
 type FilaElemento = { id: string; calendar_id: string }
 
+type CalendarioEscritura = {
+  id: string
+  nombre: string
+  ministerio_id: string | null
+}
+
 type SuscripcionCalendario = {
   can_edit: boolean
-  calendars: {
-    id: string
-    nombre: string
-    ministerio_id: string | null
-  } | null
+  calendars: CalendarioEscritura | null
 }
 
 function texto(formData: FormData, nombre: string) {
@@ -60,6 +61,21 @@ async function validarAccesoEscritura(db: any, userId: string, calendarId: strin
     perfil.rol === 'administrador' ||
     Boolean(perfil.es_pastor_general)
 
+  if (esPastorAdmin) {
+    const { data: calendarRaw, error: calendarError } = await db
+      .from('calendars')
+      .select('id, nombre, ministerio_id')
+      .eq('id', calendarId)
+      .maybeSingle()
+
+    const calendar = calendarRaw as CalendarioEscritura | null
+    if (calendarError || !calendar) {
+      return { error: 'No tienes permiso para escribir en ese calendario.' as const }
+    }
+
+    return { perfil, calendar }
+  }
+
   const { data: subscriptionRaw, error: subscriptionError } = await db
     .from('calendar_subscriptions')
     .select('can_edit, calendars(id, nombre, ministerio_id)')
@@ -68,15 +84,11 @@ async function validarAccesoEscritura(db: any, userId: string, calendarId: strin
     .maybeSingle()
 
   const subscription = subscriptionRaw as SuscripcionCalendario | null
-  if (subscriptionError || !subscription?.calendars) {
-    return { error: 'No tienes permiso para escribir en ese calendario.' as const }
-  }
-
-  if (esPastorAdmin) {
-    return { perfil, subscription: subscription as SuscripcionCalendario }
-  }
-
-  if (!subscription.can_edit || !subscription.calendars.ministerio_id) {
+  if (
+    subscriptionError ||
+    !subscription?.can_edit ||
+    !subscription.calendars?.ministerio_id
+  ) {
     return { error: 'No tienes permiso para escribir en ese calendario.' as const }
   }
 
@@ -92,7 +104,7 @@ async function validarAccesoEscritura(db: any, userId: string, calendarId: strin
     return { error: 'Solo administradores, pastores y líderes pueden modificar eventos.' as const }
   }
 
-  return { perfil, subscription: subscription as SuscripcionCalendario }
+  return { perfil, calendar: subscription.calendars }
 }
 
 export async function crearEventoCalendario(
@@ -164,40 +176,7 @@ export async function crearEventoCalendario(
     return { success: false, error: 'La fecha de finalización debe ser posterior al inicio.' }
   }
 
-  const ministerioId = access.subscription.calendars!.ministerio_id || null
-  const participantesSolicitados = Array.from(
-    new Set(
-      formData
-        .getAll('participantes')
-        .map((valor) => String(valor))
-        .filter(uuidValido),
-    ),
-  )
-
-  let participantesPermitidos = participantesSolicitados
-
-  if (ministerioId && participantesSolicitados.length > 0) {
-    const { data: membresiasRaw } = await db
-      .from('ministerio_miembros')
-      .select('profile_id')
-      .eq('ministerio_id', ministerioId)
-      .in('profile_id', participantesSolicitados)
-
-    const membresias = (membresiasRaw || []) as FilaProfileId[]
-    const permitidos = new Set(membresias.map((item) => item.profile_id))
-    participantesPermitidos = participantesSolicitados.filter((id) => permitidos.has(id))
-  } else if (!ministerioId && participantesSolicitados.length > 0) {
-    const { data: perfilesActivosRaw } = await db
-      .from('profiles')
-      .select('id')
-      .eq('activo', true)
-      .eq('estado_cuenta', 'activo')
-      .in('id', participantesSolicitados)
-
-    const perfilesActivos = (perfilesActivosRaw || []) as FilaId[]
-    const permitidos = new Set(perfilesActivos.map((item) => item.id))
-    participantesPermitidos = participantesSolicitados.filter((id) => permitidos.has(id))
-  }
+  const ministerioId = access.calendar.ministerio_id || null
 
   const { data: eventoRaw, error: eventoError } = await db
     .from('eventos')
@@ -222,21 +201,18 @@ export async function crearEventoCalendario(
     return { success: false, error: 'No fue posible guardar el evento.' }
   }
 
-  const asignados = Array.from(new Set([user.id, ...participantesPermitidos]))
-  const { error: asignacionesError } = await db.from('evento_asignaciones').insert(
-    asignados.map((profileId) => ({
-      evento_id: evento.id,
-      profile_id: profileId,
-      estado: profileId === user.id ? 'confirmado' : 'asignado',
-      notif_1d: notif1d,
-      notif_1h: notif1h,
-    })),
-  )
+  const { error: asignacionError } = await db.from('evento_asignaciones').insert({
+    evento_id: evento.id,
+    profile_id: user.id,
+    estado: 'confirmado',
+    notif_1d: notif1d,
+    notif_1h: notif1h,
+  })
 
-  if (asignacionesError) {
-    console.error('[crearEventoCalendario] asignaciones', asignacionesError)
+  if (asignacionError) {
+    console.error('[crearEventoCalendario] asignacion creador', asignacionError)
     await db.from('eventos').delete().eq('id', evento.id)
-    return { success: false, error: 'El evento no pudo asignarse a los participantes.' }
+    return { success: false, error: 'El evento no pudo configurar sus avisos.' }
   }
 
   revalidatePath('/calendario')
