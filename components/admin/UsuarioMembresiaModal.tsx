@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2, Shield, Trash2, Users } from 'lucide-react'
 import { eliminarUsuarioDefinitivamente, toggleMembresia } from '@/app/actions/admin'
+import { obtenerContextoAdministrador } from '@/app/actions/admin-permissions'
 import { actualizarLiderazgoMinisterial } from '@/app/actions/liderazgo'
-import { createClient } from '@/lib/supabase/client'
 
 export default function UsuarioMembresiaModal({
   usuario,
@@ -38,13 +38,11 @@ export default function UsuarioMembresiaModal({
     }
 
     let cancelled = false
-    const supabase = createClient()
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-      setCurrentUserId(user.id)
-      const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
-      if (!cancelled) setPuedeEliminar((profile as any)?.rol === 'administrador')
+      const contexto = await obtenerContextoAdministrador()
+      if (cancelled) return
+      setPuedeEliminar(contexto.esAdministrador)
+      setCurrentUserId(contexto.userId)
     })()
 
     const previousOverflow = document.body.style.overflow
