@@ -46,21 +46,24 @@ Convertir el perfil en la identidad comunitaria reutilizable del usuario, comenz
 
 ## Alcance autorizado
 
-1. Mantener `profiles.avatar_url` como referencia única de la foto activa del usuario.
+1. Mantener `profiles.avatar_url` como referencia única de la foto activa del usuario y del encuadre visual aplicado.
 2. Usar un bucket `avatars` independiente de los archivos ministeriales y pastorales.
-3. Limitar el avatar almacenado a una sola imagen activa por persona, reemplazando la anterior y evitando acumulación.
-4. Optimizar la imagen en el dispositivo antes de subirla; objetivo inicial: recorte cuadrado, 512×512, WebP y máximo 512 KB almacenados.
-5. Permitir que cada usuario escriba, reemplace o elimine únicamente su propio avatar mediante RLS.
-6. Mostrar la identidad visual primero en Perfil y Miembros del ministerio; después de validación, reutilizarla en Inicio, Contactos y otras superficies comunitarias.
-7. Conservar la privacidad ya aprobada: un servidor normal puede reconocer a sus compañeros, pero los datos de contacto siguen sujetos a permisos de liderazgo/pastoral existentes.
-8. No modificar roles, liderazgo, membresías ni permisos administrativos para implementar la identidad visual.
-9. Mantener diseño móvil premium, safe areas, navegación inferior y patrones de regreso ya aprobados.
-10. Verificar build y producción antes de declarar cada bloque terminado.
+3. Limitar el avatar almacenado a **una sola fotografía completa optimizada por persona**, reemplazando la anterior y evitando galerías o acumulación.
+4. Optimizar la imagen en el dispositivo antes de subirla; conservar una versión completa proporcional en WebP de máximo 512 KB. El círculo de avatar no genera ni almacena otra copia recortada: posición X/Y y zoom determinan qué parte se muestra.
+5. Permitir reencuadrar posteriormente la misma fotografía guardada sin volver a subirla; cambiar de fotografía reemplaza el único archivo activo.
+6. Permitir que cada usuario escriba, reemplace o elimine únicamente su propio avatar mediante RLS.
+7. Mostrar la identidad visual en Perfil, Inicio, Miembros, Contactos y demás superficies comunitarias donde aparezca una persona.
+8. Conservar la privacidad ya aprobada: un servidor normal puede reconocer a sus compañeros, pero los datos de contacto siguen sujetos a permisos de liderazgo/pastoral existentes.
+9. No modificar roles, liderazgo, membresías ni permisos administrativos para implementar la identidad visual.
+10. Mantener diseño móvil premium, safe areas, navegación inferior y patrones de regreso ya aprobados.
+11. Verificar build y producción antes de declarar cada bloque terminado.
 
 ## Criterio de cierre de esta prioridad
 
-- cada usuario puede poner, reemplazar y quitar su foto sin almacenar originales innecesarios;
-- el avatar se muestra correctamente en su perfil y en la lista de miembros del ministerio;
+- cada usuario puede poner, reemplazar, quitar y reencuadrar su foto sin acumular archivos;
+- Storage conserva como máximo una fotografía completa optimizada activa por usuario;
+- el encuadre puede cambiar sin volver a subir la foto y se respeta en todas las superficies comunitarias;
+- al abrir el preview se muestra la fotografía completa, no únicamente el recorte circular;
 - cuando no existe foto se conserva un fallback visual limpio con inicial;
 - no se exponen datos de contacto adicionales a servidores normales;
 - Storage queda limitado y protegido por RLS;
@@ -69,7 +72,7 @@ Convertir el perfil en la identidad comunitaria reutilizable del usuario, comenz
 
 ## Siguiente paso después de esta prioridad
 
-Una vez validada la identidad comunitaria, extender el avatar de manera controlada a Inicio/Contactos y entrar al bloque transversal de **Notificaciones y badges reales**, reutilizando nombre y foto cuando la notificación represente una acción de una persona.
+Una vez validada la identidad comunitaria, entrar al bloque transversal de **Notificaciones y badges reales**, reutilizando nombre y foto cuando la notificación represente una acción de una persona.
 
 # PRIORIDAD CERRADA — PULIDO DE EXPERIENCIA / CALENDARIO E INICIO
 
@@ -155,10 +158,11 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 # Siguiente punto autorizado
 
-1. Implementar avatar optimizado y reemplazable desde Perfil.
-2. Mostrar avatar/fallback en Miembros sin ampliar visibilidad de datos privados.
-3. Validar Storage, RLS, build y producción.
-4. Solicitar validación visual del usuario en iPhone.
-5. Tras aprobación, extender identidad a Inicio/Contactos y continuar con Notificaciones y badges reales.
+1. Consolidar una sola fotografía completa optimizada por usuario en `avatars/source.webp`.
+2. Guardar y reutilizar encuadre X/Y/zoom sin crear un segundo archivo recortado.
+3. Validar reencuadre posterior, preview completo y propagación en superficies comunitarias.
+4. Validar Storage, RLS, build y producción.
+5. Solicitar validación visual del usuario en iPhone.
+6. Tras aprobación, continuar con Notificaciones y badges reales.
 
 No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de identidad comunitaria siga activo.
