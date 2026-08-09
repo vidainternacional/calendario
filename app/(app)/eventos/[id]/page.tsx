@@ -48,7 +48,7 @@ export default async function EventoDirectoPage({
 
   let calendar: CalendarioOrigen | null = null
   if (row.calendar_id) {
-    const { data: calendarRow } = await supabase
+    const { data: calendarRow } = await (supabase as any)
       .from('calendars')
       .select('id, nombre, color, owner_id, tipo_cuenta, es_publico, ministerio_id')
       .eq('id', row.calendar_id)
