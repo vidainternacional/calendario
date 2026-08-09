@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-08
+Última actualización: 2026-08-09
 
-Fase / prioridad activa: **PULIDO DE EXPERIENCIA — Notificaciones y badges reales**
+Fase / prioridad activa: **PULIDO DE EXPERIENCIA — Administración: control y eliminación permanente**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -36,15 +36,57 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
-# PRIORIDAD ACTIVA — NOTIFICACIONES Y BADGES REALES
+# PRIORIDAD ACTIVA — ADMINISTRACIÓN: CONTROL Y ELIMINACIÓN PERMANENTE
 
-El usuario aprobó el 2026-08-08 continuar desde la identidad comunitaria hacia una lógica transversal de elementos pendientes y no leídos. VIDA ya cuenta con lectura real de avisos, suscripciones push, preferencias por ministerio, App Badge y contadores de solicitudes de ingreso; el objetivo es consolidarlos sin inventar cifras ni construir fuentes paralelas innecesarias.
+El usuario pausó temporalmente las pruebas finales de notificaciones el 2026-08-09 y priorizó convertir Administración en un centro de control real. El primer objetivo es permitir que un Administrador pueda eliminar definitivamente usuarios y ministerios cuando lo decida, sin confundir esta acción con suspender/desactivar.
 
 ## Objetivo inmediato
 
-Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla en badges, Inicio, navegación y notificaciones push cuando corresponda, manteniendo cada contador derivado del estado real en Supabase.
+Dar al rol `administrador` control explícito y seguro sobre eliminación permanente, conservando protecciones críticas y evitando operaciones parciales o ambiguas.
 
 ## Alcance autorizado
+
+1. Solo `administrador` puede ejecutar eliminación permanente.
+2. Usuario: eliminar la cuenta real de Supabase Auth, no únicamente `profiles`.
+3. Proteger la cuenta administradora principal y bloquear la autoeliminación accidental desde la sesión activa.
+4. Limpiar avatar del usuario de forma best-effort después de borrar correctamente la cuenta.
+5. Ministerio: permitir `DELETE` real además de activar/desactivar.
+6. Si una FK o dato histórico impide eliminar un ministerio, cancelar la operación completa y explicar el bloqueo; no dejar borrados parciales.
+7. Toda acción destructiva requiere confirmación fuerte escrita (`ELIMINAR`).
+8. La acción destructiva debe estar dentro de la ficha/modal correspondiente, separada visualmente de las acciones habituales.
+9. Después de estabilizar la eliminación permanente, rediseñar el dashboard administrativo con accesos directos desde métricas superiores, Analytics visible y eliminación de herramientas duplicadas.
+10. Mantener mobile first, safe areas, jerarquía premium y no degradar permisos o módulos aprobados.
+11. Verificar TypeScript/build y producción antes de probar borrados reales.
+
+## Estado implementado del bloque
+
+- `createAdminClient()` ya existía con `SUPABASE_SERVICE_ROLE_KEY` y se reutiliza exclusivamente en servidor.
+- acción `eliminarUsuarioDefinitivamente()` exige Administrador, bloquea autoeliminación y protege el superadministrador; usa Supabase Auth Admin para borrar la cuenta real.
+- acción `eliminarMinisterioDefinitivamente()` exige Administrador y ejecuta un borrado real atómico; si la base lo bloquea por integridad referencial no elimina parcialmente.
+- la ficha de usuario muestra la zona destructiva solo al Administrador y exige escribir `ELIMINAR`.
+- la ficha de edición de ministerio muestra la zona destructiva solo al Administrador y exige escribir `ELIMINAR`.
+
+## Criterio de cierre
+
+- Administrador puede borrar permanentemente un usuario de prueba no protegido y desaparece de Auth/perfiles/listados;
+- Administrador puede borrar permanentemente un ministerio de prueba cuando sus relaciones permiten eliminación segura;
+- cuenta principal y autoeliminación quedan protegidas;
+- Pastor/Líder/Servidor no pueden ejecutar ni visualizar la acción destructiva;
+- errores de integridad no producen eliminación parcial;
+- build y producción quedan READY;
+- el usuario valida el flujo antes de pasar al rediseño completo del panel.
+
+# PRIORIDAD EN PAUSA — NOTIFICACIONES Y BADGES REALES
+
+Pausada temporalmente el 2026-08-09 por decisión explícita del usuario antes de ejecutar las pruebas finales en iPhone. No reiniciar esas pruebas ni avanzar aprobación/rechazo hasta que el usuario reactive este bloque.
+
+El usuario aprobó el 2026-08-08 continuar desde la identidad comunitaria hacia una lógica transversal de elementos pendientes y no leídos. VIDA ya cuenta con lectura real de avisos, suscripciones push, preferencias por ministerio, App Badge y contadores de solicitudes de ingreso; el objetivo es consolidarlos sin inventar cifras ni construir fuentes paralelas innecesarias.
+
+## Objetivo conservado
+
+Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla en badges, Inicio, navegación y notificaciones push cuando corresponda, manteniendo cada contador derivado del estado real en Supabase.
+
+## Alcance conservado
 
 1. Reutilizar `publicacion_lecturas` y las RPC existentes para avisos no leídos; no reemplazar su lógica por contadores locales.
 2. Reutilizar `ministerio_solicitudes_ingreso` para pendientes visibles únicamente a líderes/pastores/administradores con permisos reales.
@@ -59,14 +101,6 @@ Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla 
 11. Mantener navegación, safe areas, diseño móvil premium y componentes ya aprobados.
 12. Verificar TypeScript/build y producción agrupando cambios; evitar deployments de prueba innecesarios.
 
-## Primer bloque autorizado
-
-1. Inventariar fuentes reales de pendientes ya existentes.
-2. Crear una capa común para contadores reales de Avisos y solicitudes de ingreso de ministerios liderados.
-3. Evitar doble conteo entre badges de módulo y App Badge.
-4. Conservar cada badge contextual donde ya funciona y preparar la capa para sumar categorías posteriores.
-5. Verificar por rol: servidor normal, líder y pastor/administrador.
-
 ## Estado implementado de notificaciones
 
 - `6a1ce22` consolidó Avisos no leídos y solicitudes de ingreso gestionables en una fuente transversal de badges reales.
@@ -77,17 +111,12 @@ Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla 
 - el service worker ya soportaba navegación por `payload.url` y no fue modificado.
 - commit funcional del bloque: `41353b4` — `feat(notificaciones): conectar push a destinos directos`.
 
-## Criterio de cierre de esta prioridad
+## Pendiente al reactivar
 
-- ningún badge visible depende de números inventados o estados locales no persistentes;
-- Avisos mantiene conteo real y lectura persistente;
-- pendientes de liderazgo aparecen solo para quien puede gestionarlos;
-- el App Badge no duplica el mismo pendiente entre superficies;
-- notificaciones push relevantes abren directamente su destino;
-- nombre/foto comunitaria se reutilizan cuando corresponda;
-- permisos y privacidad se conservan;
-- build y producción quedan aprobados;
-- el usuario valida visualmente el resultado en iPhone.
+1. Validar en iPhone un Aviso push → ficha exacta.
+2. Validar solicitud de ingreso → pantalla de revisión del ministerio.
+3. Conectar aprobación/rechazo al usuario solicitante sin crear contadores artificiales.
+4. Auditar las demás acciones que ya generan push y aplicar destino directo solo cuando exista una superficie inequívoca.
 
 # PRIORIDAD CERRADA — IDENTIDAD COMUNITARIA Y PERFIL
 
@@ -130,7 +159,7 @@ La navegación habitual continúa funcionando por rol y permisos existentes. No 
 
 # SIGUIENTE BLOQUE PROPUESTO — RECORRIDO GUIADO POR SECCIONES
 
-Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR NOTIFICACIONES PRIORITARIAS**.
+Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR LAS PRIORIDADES DE ADMINISTRACIÓN Y NOTIFICACIONES**.
 
 Cuando corresponda, se construirá un recorrido de primera entrada que explique la aplicación por secciones.
 
@@ -199,9 +228,9 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 # Siguiente punto autorizado
 
-1. Verificar build y producción del bloque de destinos directos.
-2. Validar en iPhone un Aviso push → ficha exacta y una solicitud de ingreso → pantalla de revisión del ministerio.
-3. Conectar, después de esa validación, las respuestas de aprobación/rechazo de ingreso al usuario solicitante sin crear contadores artificiales.
-4. Auditar las demás acciones que ya generan push y aplicar destino directo solo cuando exista una superficie inequívoca.
+1. Verificar build y producción de eliminación permanente.
+2. Probar con un usuario de prueba no protegido y un ministerio de prueba.
+3. Confirmar que Pastor/Líder/Servidor no ven ni pueden ejecutar eliminación permanente.
+4. Una vez estable, iniciar el rediseño compacto del panel de Administración con métricas navegables, Analytics y eliminación de duplicidades.
 
-No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de notificaciones y badges siga activo.
+No reanudar Notificaciones, piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras esta prioridad administrativa siga activa.
