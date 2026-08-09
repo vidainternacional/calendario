@@ -1,22 +1,35 @@
 import { createClient } from '@/lib/supabase/server'
 import AdminClient from './AdminClient'
 import Link from 'next/link'
-import { BookOpenCheck, Building2, CheckCircle2, MessageCircleQuestion, Megaphone, UserPlus, Users } from 'lucide-react'
-import { EmptyState } from '@/components/ui/EmptyState'
+import {
+  BarChart3,
+  BookOpenCheck,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  HeartHandshake,
+  MessageCircleQuestion,
+  Megaphone,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import BackButton from '@/components/navigation/BackButton'
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
+  const params = await searchParams
+  const initialTab = params.tab === 'usuarios' ? 'usuarios' : 'ministerios'
   const supabase = await createClient()
 
-  // 1. Ministerios
   const { data: ministerios, error: e1 } = await supabase
     .from('ministerios')
     .select('*')
     .order('orden', { ascending: true })
-
   if (e1) console.error('[Admin] Error ministerios:', e1)
 
-  // 2. Usuarios
   const { data: usuarios, error: e2 } = await supabase
     .from('profiles')
     .select(`
@@ -38,51 +51,32 @@ export default async function AdminPage() {
       )
     `)
     .order('nombre_completo', { ascending: true })
-
   if (e2) console.error('[Admin] Error usuarios:', e2)
 
-  // 3. Ícono activo de la app
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: iconSetting } = await (supabase as any)
     .from('app_settings')
     .select('valor')
     .eq('clave', 'active_icon_variant')
     .maybeSingle()
+  const activeIconVariant: string = typeof iconSetting?.valor === 'string'
+    ? iconSetting.valor.replace(/"/g, '')
+    : 'dorado'
 
-  const activeIconVariant: string =
-    typeof iconSetting?.valor === 'string'
-      ? iconSetting.valor.replace(/"/g, '')
-      : 'dorado'
-
-  // 4. Estudio Profundo System Prompt
   const { data: promptSetting } = await (supabase as any)
     .from('app_settings')
     .select('valor')
     .eq('clave', 'estudio_system_prompt')
     .maybeSingle()
+  const estudioPrompt: string = typeof promptSetting?.valor === 'string'
+    ? promptSetting.valor.replace(/^"|"$/g, '').replace(/\\n/g, '\n')
+    : ''
 
-  const estudioPrompt: string =
-    typeof promptSetting?.valor === 'string'
-      ? promptSetting.valor.replace(/^"|"$/g, '').replace(/\\n/g, '\n')
-      : ''
+  const [{ count: pendingPreguntas }, { count: pendingAvisos }, { count: pendingIngresos }] = await Promise.all([
+    (supabase as any).from('preguntas_congregacion').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+    (supabase as any).from('publicaciones').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+    (supabase as any).from('ministerio_solicitudes_ingreso').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+  ])
 
-  // 5. Contadores de elementos pendientes
-  const { count: pendingPreguntas } = await (supabase as any)
-    .from('preguntas_congregacion')
-    .select('*', { count: 'exact', head: true })
-    .eq('estado', 'pendiente')
-
-  const { count: pendingAvisos } = await (supabase as any)
-    .from('publicaciones')
-    .select('*', { count: 'exact', head: true })
-    .eq('estado', 'pendiente')
-
-  const { count: pendingIngresos } = await (supabase as any)
-    .from('ministerio_solicitudes_ingreso')
-    .select('*', { count: 'exact', head: true })
-    .eq('estado', 'pendiente')
-
-  // 6. Current User Role
   const { data: { user } } = await supabase.auth.getUser()
   let currentUserRol = 'servidor'
   if (user) {
@@ -90,178 +84,95 @@ export default async function AdminPage() {
     if ((profile as any)?.rol) currentUserRol = (profile as any).rol
   }
 
-  const estadisticas = [
+  const totalPendientes = (pendingIngresos || 0) + (pendingAvisos || 0) + (pendingPreguntas || 0)
+
+  const resumen = [
     {
-      label: 'Usuarios',
-      value: usuarios?.length || 0,
-      icon: Users,
-      iconClass: 'bg-indigo-50 text-indigo-600',
-      valueClass: 'text-[#171923]',
+      label: 'Usuarios', value: usuarios?.length || 0, detail: 'Gestionar personas', href: '/admin?tab=usuarios#gestion',
+      icon: Users, tone: 'bg-indigo-50 text-indigo-600', valueTone: 'text-[#171923]',
     },
     {
-      label: 'Ministerios',
-      value: ministerios?.length || 0,
-      icon: Building2,
-      iconClass: 'bg-emerald-50 text-emerald-600',
-      valueClass: 'text-[#171923]',
+      label: 'Ministerios', value: ministerios?.length || 0, detail: 'Gestionar equipos', href: '/admin?tab=ministerios#gestion',
+      icon: Building2, tone: 'bg-emerald-50 text-emerald-600', valueTone: 'text-[#171923]',
     },
     {
-      label: 'Ingresos pendientes',
-      value: pendingIngresos || 0,
-      icon: UserPlus,
-      iconClass: 'bg-sky-50 text-sky-600',
-      valueClass: pendingIngresos ? 'text-sky-600' : 'text-[#171923]',
+      label: 'Solicitudes', value: pendingIngresos || 0, detail: 'Ingresos pendientes', href: '/admin/solicitudes-ministerios',
+      icon: UserPlus, tone: 'bg-sky-50 text-sky-600', valueTone: pendingIngresos ? 'text-sky-600' : 'text-[#171923]',
     },
     {
-      label: 'Avisos pendientes',
-      value: pendingAvisos || 0,
-      icon: Megaphone,
-      iconClass: 'bg-amber-50 text-amber-600',
-      valueClass: pendingAvisos ? 'text-amber-600' : 'text-[#171923]',
+      label: 'Avisos', value: pendingAvisos || 0, detail: 'Pendientes de revisión', href: '/avisos',
+      icon: Megaphone, tone: 'bg-amber-50 text-amber-600', valueTone: pendingAvisos ? 'text-amber-600' : 'text-[#171923]',
     },
     {
-      label: 'Dudas / Buzón',
-      value: pendingPreguntas || 0,
-      icon: MessageCircleQuestion,
-      iconClass: 'bg-rose-50 text-rose-600',
-      valueClass: pendingPreguntas ? 'text-rose-600' : 'text-[#171923]',
+      label: 'Buzón', value: pendingPreguntas || 0, detail: 'Mensajes pendientes', href: '/admin/preguntas',
+      icon: MessageCircleQuestion, tone: 'bg-rose-50 text-rose-600', valueTone: pendingPreguntas ? 'text-rose-600' : 'text-[#171923]',
+    },
+    {
+      label: 'Análisis', value: '›', detail: 'Actividad y adopción', href: '/admin/analisis',
+      icon: BarChart3, tone: 'bg-violet-50 text-violet-600', valueTone: 'text-violet-600',
     },
   ]
 
-  const totalPendientes = (pendingIngresos || 0) + (pendingAvisos || 0) + (pendingPreguntas || 0)
-  const sinMinisterios = !ministerios || ministerios.length === 0
-  const sinUsuarios = !usuarios || usuarios.length === 0
-
   return (
-    <main className="min-h-screen bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 max-w-2xl mx-auto">
-      <div className="mb-5">
-        <BackButton />
-      </div>
+    <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
+      <div className="mb-5"><BackButton /></div>
 
-      <header className="mb-6 sm:mb-8">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-500 mb-1.5">Panel general</p>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#171923] leading-tight">Administración</h1>
-        <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
-          Gestiona ministerios, usuarios, accesos y contenido de la aplicación.
-        </p>
+      <header className="mb-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-500">Centro de control</p>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.035em] text-[#171923]">Administración</h1>
+        <p className="mt-1.5 text-sm leading-6 text-slate-500">Personas, ministerios, pendientes y análisis desde un solo lugar.</p>
       </header>
 
-      <section aria-label="Resumen administrativo" className="mb-6 sm:mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        {estadisticas.map(({ label, value, icon: Icon, iconClass, valueClass }) => (
-          <article
-            key={label}
-            className="min-w-0 bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col gap-3"
-          >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconClass}`}>
-              <Icon className="w-4.5 h-4.5" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wide leading-tight break-words">
-                {label}
-              </p>
-              <p className={`mt-1 text-2xl sm:text-3xl font-bold leading-none ${valueClass}`}>{value}</p>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      {totalPendientes === 0 && !sinUsuarios && (
-        <section className="mb-6 flex items-start gap-3 rounded-[20px] border border-emerald-100 bg-emerald-50 px-4 py-4 shadow-sm" role="status">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm">
-            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-bold text-emerald-900">Todo está al día</h2>
-            <p className="mt-1 text-xs leading-relaxed text-emerald-700">No hay solicitudes, avisos ni mensajes pendientes de revisión.</p>
-          </div>
+      {totalPendientes === 0 && (usuarios?.length || 0) > 0 && (
+        <section className="mb-4 flex items-center gap-3 rounded-[18px] border border-emerald-100 bg-emerald-50 px-4 py-3" role="status">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-emerald-600"><CheckCircle2 className="h-4.5 w-4.5" /></div>
+          <div><p className="text-sm font-bold text-emerald-900">Todo está al día</p><p className="text-[11px] text-emerald-700">No hay solicitudes, avisos ni mensajes pendientes.</p></div>
         </section>
       )}
 
-      {(sinMinisterios || sinUsuarios) && (
-        <div className="mb-6 grid gap-4">
-          {sinMinisterios && (
-            <EmptyState
-              icon={Building2}
-              title="Aún no hay ministerios"
-              description="Crea el primer ministerio desde la sección de gestión que aparece más abajo."
-              compact
-            />
-          )}
-          {sinUsuarios && (
-            <EmptyState
-              icon={Users}
-              title="Aún no hay usuarios registrados"
-              description="Las cuentas nuevas aparecerán aquí cuando las personas se registren en la aplicación."
-              compact
-            />
-          )}
-        </div>
-      )}
+      <section aria-label="Resumen administrativo" className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {resumen.map(({ label, value, detail, href, icon: Icon, tone, valueTone }) => (
+          <Link key={label} href={href} className="group min-w-0 rounded-[20px] border border-slate-100 bg-white p-4 shadow-sm transition-all active:scale-[0.98]">
+            <div className="flex items-start justify-between gap-2">
+              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}><Icon className="h-4.5 w-4.5" /></span>
+              <ChevronRight className="h-4 w-4 text-slate-250 group-hover:text-indigo-400" />
+            </div>
+            <p className={`mt-3 text-2xl font-extrabold leading-none ${valueTone}`}>{value}</p>
+            <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
+            <p className="mt-0.5 line-clamp-1 text-[10px] text-slate-400">{detail}</p>
+          </Link>
+        ))}
+      </section>
 
-      <section className="mb-6 sm:mb-8" aria-labelledby="accesos-rapidos">
-        <h2 id="accesos-rapidos" className="text-sm font-bold text-[#171923] mb-3">Accesos rápidos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <section className="mb-6" aria-labelledby="herramientas-admin">
+        <div className="mb-3 flex items-end justify-between px-1">
+          <h2 id="herramientas-admin" className="text-sm font-bold text-[#171923]">Herramientas administrativas</h2>
+          <span className="text-[10px] text-slate-400">Accesos especializados</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
           {currentUserRol === 'administrador' && (
-            <Link
-              href="/admin/accesos-pastorales"
-              className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-indigo-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-indigo-200 active:scale-[0.99] transition-all group"
-            >
-              <div className="min-w-0">
-                <h3 className="font-bold text-[#171923] leading-tight">Accesos pastorales</h3>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">Autoriza quién puede preparar estudios y materiales.</p>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
-                <BookOpenCheck className="w-5 h-5" aria-hidden="true" />
-              </div>
+            <Link href="/admin/accesos-pastorales" className="flex items-center gap-3 rounded-[18px] border border-slate-100 bg-white p-4 shadow-sm active:scale-[0.99]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><BookOpenCheck className="h-5 w-5" /></span>
+              <div className="min-w-0 flex-1"><p className="text-sm font-bold text-[#171923]">Accesos pastorales</p><p className="mt-0.5 text-[11px] text-slate-500">Permisos para preparar materiales.</p></div>
+              <ChevronRight className="h-4 w-4 text-slate-300" />
             </Link>
           )}
-
-          <Link
-            href="/admin/solicitudes-ministerios"
-            className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-sky-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-sky-200 active:scale-[0.99] transition-all group"
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-bold text-[#171923] leading-tight">Solicitudes de ministerios</h3>
-                {(pendingIngresos || 0) > 0 && (
-                  <span className="inline-flex min-h-6 items-center rounded-full bg-sky-100 px-2 text-[10px] font-bold text-sky-700">
-                    {pendingIngresos} pendiente{pendingIngresos === 1 ? '' : 's'}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                Aprueba o rechaza ingresos de todos los ministerios.
-              </p>
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:bg-sky-100 transition-colors shrink-0">
-              <UserPlus className="w-5 h-5" aria-hidden="true" />
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/preguntas"
-            className="bg-white rounded-[18px] p-4 sm:p-5 shadow-sm border border-slate-100 flex items-center justify-between gap-4 hover:shadow-md hover:border-indigo-100 active:scale-[0.99] transition-all group"
-          >
-            <div className="min-w-0">
-              <h3 className="font-bold text-[#171923] leading-tight">Buzón de Congregación</h3>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">Revisa preguntas, sugerencias y motivos de oración.</p>
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors shrink-0">
-              <MessageCircleQuestion className="w-5 h-5" aria-hidden="true" />
-            </div>
+          <Link href="/admin/ayuda-solidaria" className="flex items-center gap-3 rounded-[18px] border border-slate-100 bg-white p-4 shadow-sm active:scale-[0.99]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><HeartHandshake className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1"><p className="text-sm font-bold text-[#171923]">Ayuda Solidaria</p><p className="mt-0.5 text-[11px] text-slate-500">Solicitudes y aportes comunitarios.</p></div>
+            <ChevronRight className="h-4 w-4 text-slate-300" />
           </Link>
         </div>
       </section>
 
-      <div className="min-w-0 overflow-x-hidden [&>section:nth-child(1)_button]:min-h-24 [&>section:nth-child(1)_button]:px-2.5 [&>section:nth-child(1)_button]:py-3 [&>section:nth-child(2)_button]:w-full sm:[&>section:nth-child(2)_button]:w-auto [&>section:nth-child(2)_textarea]:!h-[min(16rem,42dvh)] [&>section:nth-child(2)_textarea]:min-h-44 [&>section:nth-child(2)_textarea]:max-h-[55dvh]">
-        <AdminClient
-          ministerios={ministerios || []}
-          usuarios={usuarios || []}
-          activeIconVariant={activeIconVariant}
-          initialEstudioPrompt={estudioPrompt}
-          currentUserRol={currentUserRol}
-        />
-      </div>
+      <AdminClient
+        ministerios={ministerios || []}
+        usuarios={usuarios || []}
+        activeIconVariant={activeIconVariant}
+        initialEstudioPrompt={estudioPrompt}
+        currentUserRol={currentUserRol}
+        initialTab={initialTab}
+      />
     </main>
   )
 }
