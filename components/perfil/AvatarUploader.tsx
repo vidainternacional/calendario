@@ -28,7 +28,6 @@ type EditorState = {
 
 const SOURCE_MAX_SIDE = 1600
 const EDITOR_SIZE = 280
-const EDITOR_OVERSCAN = 1.12
 const MAX_SOURCE_BYTES = 30 * 1024 * 1024
 const MAX_STORED_BYTES = 512 * 1024
 const TARGET_STORED_BYTES = 480 * 1024
@@ -122,8 +121,7 @@ async function optimizarFuente(file: File) {
 
 async function crearEditorDesdeBlob(blob: Blob, crop?: { x: number; y: number }, sourceBlob?: Blob): Promise<EditorState> {
   const { image, objectUrl } = await abrirBlob(blob)
-  const coverScale = Math.max(EDITOR_SIZE / image.naturalWidth, EDITOR_SIZE / image.naturalHeight)
-  const scale = coverScale * EDITOR_OVERSCAN
+  const scale = Math.max(EDITOR_SIZE / image.naturalWidth, EDITOR_SIZE / image.naturalHeight)
   const editor: EditorState = {
     objectUrl,
     image,
