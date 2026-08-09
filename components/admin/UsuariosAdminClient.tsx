@@ -9,7 +9,17 @@ function avatarFallback(nombre?: string | null) {
   return (nombre || 'U').trim().charAt(0).toUpperCase()
 }
 
-export default function UsuariosAdminClient({ usuarios, ministerios }: { usuarios: any[]; ministerios: any[] }) {
+export default function UsuariosAdminClient({
+  usuarios,
+  ministerios,
+  capacidades,
+  responsabilidades,
+}: {
+  usuarios: any[]
+  ministerios: any[]
+  capacidades: any[]
+  responsabilidades: any[]
+}) {
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
   const [editingUser, setEditingUser] = useState<any | null>(null)
@@ -101,7 +111,14 @@ export default function UsuariosAdminClient({ usuarios, ministerios }: { usuario
         </div>
       </div>
 
-      <UsuarioMembresiaModal usuario={editingUser} todosMinisterios={ministerios} isOpen={!!editingUser} onClose={() => setEditingUser(null)} />
+      <UsuarioMembresiaModal
+        usuario={editingUser}
+        todosMinisterios={ministerios}
+        capacidadesMinisteriales={capacidades}
+        responsabilidadesMinisteriales={responsabilidades}
+        isOpen={!!editingUser}
+        onClose={() => setEditingUser(null)}
+      />
     </>
   )
 }
