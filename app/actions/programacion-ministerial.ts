@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 
+// Regla del bloque: el cliente con service role solo se usa después de validar
+// que la sesión actual pertenece a un Administrador activo.
 async function exigirAdministrador() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
