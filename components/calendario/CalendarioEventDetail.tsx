@@ -12,9 +12,13 @@ const EXIT_MS = 190
 export default function CalendarioEventDetail({
   event,
   onClose,
+  backLabel,
+  backAriaLabel,
 }: {
   event: EventoCalendario | null
   onClose: () => void
+  backLabel?: string
+  backAriaLabel?: string
 }) {
   const [closing, setClosing] = useState(false)
   const closeTimerRef = useRef<number | null>(null)
@@ -73,6 +77,8 @@ export default function CalendarioEventDetail({
       : format(start, 'h:mm a')
   const dayLabel = format(start, 'd MMM', { locale: es })
   const dayAriaLabel = format(start, "EEEE d 'de' MMMM", { locale: es })
+  const resolvedBackLabel = backLabel || dayLabel
+  const resolvedBackAriaLabel = backAriaLabel || `Volver al día ${dayAriaLabel}`
 
   return (
     <div className={`${styles.backdrop} ${closing ? styles.closing : ''}`} role="presentation">
@@ -83,9 +89,9 @@ export default function CalendarioEventDetail({
         aria-labelledby="calendar-event-detail-title"
       >
         <header className={styles.topbar}>
-          <button type="button" className={styles.backButton} onClick={requestClose} aria-label={`Volver al día ${dayAriaLabel}`}>
+          <button type="button" className={styles.backButton} onClick={requestClose} aria-label={resolvedBackAriaLabel}>
             <ChevronLeft size={25} strokeWidth={2.25} aria-hidden="true" />
-            <span>{dayLabel}</span>
+            <span>{resolvedBackLabel}</span>
           </button>
           <p className={styles.topbarTitle}>{event.kind === 'reminder' ? 'Recordatorio' : 'Evento'}</p>
           <span className={styles.topbarSpacer} aria-hidden="true" />

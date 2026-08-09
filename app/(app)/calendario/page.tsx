@@ -45,20 +45,18 @@ export default async function CalendarioPage({
   const query = searchParams ? await searchParams : {}
   const eventParam = firstQueryValue(query.evento)?.trim() || null
   const initialEventId = eventParam && /^[0-9a-f-]{36}$/i.test(eventParam) ? eventParam : null
+
+  // Los enlaces profundos a un evento no deben montar primero la interfaz completa
+  // del Calendario. Se resuelven a una ficha directa y el historial conserva el
+  // origen para que Atrás regrese a la pantalla desde la que se abrió.
+  if (initialEventId) {
+    redirect(`/eventos/${initialEventId}`)
+  }
+
   let initialEventDate = firstQueryValue(query.fecha)?.trim() || null
 
   if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) {
     initialEventDate = null
-  }
-
-  if (initialEventId && !initialEventDate) {
-    const { data: targetEvent } = await (supabase as any)
-      .from('eventos')
-      .select('fecha_inicio')
-      .eq('id', initialEventId)
-      .maybeSingle()
-
-    if (targetEvent?.fecha_inicio) initialEventDate = String(targetEvent.fecha_inicio)
   }
 
   const [profileReq, leaderReq] = await Promise.all([
@@ -139,7 +137,7 @@ export default async function CalendarioPage({
       userId={user.id}
       canCreateEvents={canCreateEvents}
       creationCalendars={creationCalendars}
-      initialEventId={initialEventId}
+      initialEventId={null}
       initialEventDate={initialEventDate}
     />
   )
