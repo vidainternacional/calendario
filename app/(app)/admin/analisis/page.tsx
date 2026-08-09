@@ -126,7 +126,7 @@ export default async function AdminAnalyticsPage() {
   }, {})
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+6.5rem)] sm:px-6 sm:pt-14">
+    <main className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] px-6 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+6.5rem)] sm:px-8 sm:pt-14">
       <div className="mb-8"><BackButton /></div>
 
       <header className="mb-8">
