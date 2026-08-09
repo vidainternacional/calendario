@@ -32,6 +32,24 @@ main {
   }
 }
 
+/*
+ * Centro de Análisis móvil.
+ * globals.css aplica reglas generales a todos los <main> y puede ganar sobre
+ * utilidades de Tailwind. Esta vista necesita respiración propia, así que se
+ * fuerza aquí —archivo cargado después de globals.css— sin afectar otras rutas.
+ */
+@media (max-width: 639px) {
+  main[class*="max-w-[430px]"][style*="calc(100% - 64px)"] {
+    width: calc(100% - 48px) !important;
+    max-width: calc(100% - 48px) !important;
+    margin-left: 24px !important;
+    margin-right: 24px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: calc(env(safe-area-inset-top) + 4.75rem) !important;
+  }
+}
+
 /* Refuerzo común para overlays y fichas de toda la aplicación. */
 .modal-overlay-safe,
 [role="dialog"] {
