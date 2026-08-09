@@ -126,7 +126,7 @@ export default async function AdminAnalyticsPage() {
   }, {})
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+6.5rem)] sm:max-w-4xl sm:px-8 sm:pt-14" style={{ paddingLeft: '24px', paddingRight: '24px' }}>
+    <main className="mx-auto min-h-screen max-w-[430px] bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+6.5rem)] sm:max-w-4xl sm:pt-14" style={{ width: 'calc(100% - 64px)', paddingLeft: 0, paddingRight: 0 }}>
       <div className="mb-8"><BackButton /></div>
 
       <header className="mb-8">
