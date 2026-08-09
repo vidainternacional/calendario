@@ -160,10 +160,15 @@ export async function notifyUsersOnceByReference(
   payload: PushPayload,
   reference: NotifyOnceReference,
 ): Promise<{ users: number; devices: number }> {
-  const service = createServiceClient() as any
   const uniqueProfileIds = [...new Set(profileIds.filter(Boolean))]
   if (!uniqueProfileIds.length) return { users: 0, devices: 0 }
 
+  if (!reference.tipo.trim() || !reference.referenciaId.trim()) {
+    console.error('[webpush] Referencia inválida; se canceló el envío deduplicado.')
+    return { users: 0, devices: 0 }
+  }
+
+  const service = createServiceClient() as any
   const results = await Promise.all(
     uniqueProfileIds.map(async (profileId) => {
       const { data: reservation, error: reserveError } = await service
