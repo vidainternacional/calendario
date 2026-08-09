@@ -13,15 +13,15 @@ function chips(items: unknown) { return Array.isArray(items) ? items.filter(Bool
 export default function UsuarioMembresiaModal({
   usuario,
   todosMinisterios,
-  capacidadesMinisteriales,
-  responsabilidadesMinisteriales,
+  capacidadesMinisteriales = [],
+  responsabilidadesMinisteriales = [],
   isOpen,
   onClose,
 }: {
   usuario: any | null
   todosMinisterios: any[]
-  capacidadesMinisteriales: any[]
-  responsabilidadesMinisteriales: any[]
+  capacidadesMinisteriales?: any[]
+  responsabilidadesMinisteriales?: any[]
   isOpen: boolean
   onClose: () => void
 }) {

@@ -11,12 +11,13 @@ async function exigirAdministrador() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('rol')
+    .select('rol,activo,estado_cuenta')
     .eq('id', user.id)
     .single()
 
-  if ((profile as any)?.rol !== 'administrador') {
-    return { user, error: 'Solo un administrador puede gestionar capacidades y responsabilidades especiales.' }
+  const caller = profile as any
+  if (caller?.rol !== 'administrador' || caller?.activo !== true || caller?.estado_cuenta !== 'activo') {
+    return { user, error: 'Solo un administrador activo puede gestionar capacidades y responsabilidades especiales.' }
   }
 
   return { user, error: null }
