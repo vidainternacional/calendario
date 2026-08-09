@@ -2,7 +2,7 @@
 
 Última actualización: 2026-08-08
 
-Fase / prioridad activa: **PULIDO DE EXPERIENCIA — Identidad comunitaria y perfil**
+Fase / prioridad activa: **PULIDO DE EXPERIENCIA — Notificaciones y badges reales**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -36,43 +36,73 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
-# PRIORIDAD ACTIVA — IDENTIDAD COMUNITARIA Y PERFIL
+# PRIORIDAD ACTIVA — NOTIFICACIONES Y BADGES REALES
 
-El usuario aprobó el 2026-08-08 avanzar desde el pulido de Inicio, Ministerios y navegación hacia una experiencia más comunitaria. VIDA debe seguir siendo personalizada para cada usuario, pero también permitir reconocer a las personas reales que forman parte de la iglesia y de cada equipo de servicio.
+El usuario aprobó el 2026-08-08 continuar desde la identidad comunitaria hacia una lógica transversal de elementos pendientes y no leídos. VIDA ya cuenta con lectura real de avisos, suscripciones push, preferencias por ministerio, App Badge y contadores de solicitudes de ingreso; el objetivo es consolidarlos sin inventar cifras ni construir fuentes paralelas innecesarias.
 
 ## Objetivo inmediato
 
-Convertir el perfil en la identidad comunitaria reutilizable del usuario, comenzando por una foto opcional y optimizada que pueda verse de forma consistente en las superficies donde una persona aparece ante otros miembros.
+Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla en badges, Inicio, navegación y notificaciones push cuando corresponda, manteniendo cada contador derivado del estado real en Supabase.
 
 ## Alcance autorizado
 
-1. Mantener `profiles.avatar_url` como referencia única de la foto activa del usuario y del encuadre visual aplicado.
-2. Usar un bucket `avatars` independiente de los archivos ministeriales y pastorales.
-3. Limitar el avatar almacenado a **una sola fotografía completa optimizada por persona**, reemplazando la anterior y evitando galerías o acumulación.
-4. Optimizar la imagen en el dispositivo antes de subirla; conservar una versión completa proporcional en WebP de máximo 512 KB. El círculo de avatar no genera ni almacena otra copia recortada: posición X/Y y zoom determinan qué parte se muestra.
-5. Permitir reencuadrar posteriormente la misma fotografía guardada sin volver a subirla; cambiar de fotografía reemplaza el único archivo activo.
-6. Permitir que cada usuario escriba, reemplace o elimine únicamente su propio avatar mediante RLS.
-7. Mostrar la identidad visual en Perfil, Inicio, Miembros, Contactos y demás superficies comunitarias donde aparezca una persona.
-8. Conservar la privacidad ya aprobada: un servidor normal puede reconocer a sus compañeros, pero los datos de contacto siguen sujetos a permisos de liderazgo/pastoral existentes.
-9. No modificar roles, liderazgo, membresías ni permisos administrativos para implementar la identidad visual.
-10. Mantener diseño móvil premium, safe areas, navegación inferior y patrones de regreso ya aprobados.
-11. Verificar build y producción antes de declarar cada bloque terminado.
+1. Reutilizar `publicacion_lecturas` y las RPC existentes para avisos no leídos; no reemplazar su lógica por contadores locales.
+2. Reutilizar `ministerio_solicitudes_ingreso` para pendientes visibles únicamente a líderes/pastores/administradores con permisos reales.
+3. Auditar y reutilizar `push_subscriptions`, `notificaciones_preferencias` y `notificaciones_enviadas` antes de crear nuevas tablas.
+4. Consolidar en una capa común los contadores que hoy se consultan de forma separada, evitando que Inicio, navegación y módulos muestren números distintos para el mismo estado.
+5. Mantener el badge de Avisos como contador real de publicaciones visibles no leídas.
+6. Mantener los badges de solicitudes de ingreso en el ministerio correspondiente y permitir que el estado transversal los incorpore para usuarios con liderazgo.
+7. Incorporar otros pendientes solo cuando exista una definición inequívoca de “requiere acción” o “no leído” en sus datos; no convertir estados informativos en notificaciones arbitrarias.
+8. El App Badge del dispositivo debe representar elementos pendientes reales definidos por esta prioridad, sin dobles conteos.
+9. Cuando una notificación represente una acción de una persona, reutilizar nombre y `avatar_url` de la identidad comunitaria cuando la plataforma lo permita.
+10. Las notificaciones push deben abrir directamente la superficie relacionada y respetar roles/RLS; no enviar datos sensibles en el cuerpo del push.
+11. Mantener navegación, safe areas, diseño móvil premium y componentes ya aprobados.
+12. Verificar TypeScript/build y producción agrupando cambios; evitar deployments de prueba innecesarios.
+
+## Primer bloque autorizado
+
+1. Inventariar fuentes reales de pendientes ya existentes.
+2. Crear una capa común para contadores reales de Avisos y solicitudes de ingreso de ministerios liderados.
+3. Evitar doble conteo entre badges de módulo y App Badge.
+4. Conservar cada badge contextual donde ya funciona y preparar la capa para sumar categorías posteriores.
+5. Verificar por rol: servidor normal, líder y pastor/administrador.
 
 ## Criterio de cierre de esta prioridad
 
-- cada usuario puede poner, reemplazar, quitar y reencuadrar su foto sin acumular archivos;
-- Storage conserva como máximo una fotografía completa optimizada activa por usuario;
-- el encuadre puede cambiar sin volver a subir la foto y se respeta en todas las superficies comunitarias;
-- al abrir el preview se muestra la fotografía completa, no únicamente el recorte circular;
-- cuando no existe foto se conserva un fallback visual limpio con inicial;
-- no se exponen datos de contacto adicionales a servidores normales;
-- Storage queda limitado y protegido por RLS;
+- ningún badge visible depende de números inventados o estados locales no persistentes;
+- Avisos mantiene conteo real y lectura persistente;
+- pendientes de liderazgo aparecen solo para quien puede gestionarlos;
+- el App Badge no duplica el mismo pendiente entre superficies;
+- notificaciones push relevantes abren directamente su destino;
+- nombre/foto comunitaria se reutilizan cuando corresponda;
+- permisos y privacidad se conservan;
 - build y producción quedan aprobados;
 - el usuario valida visualmente el resultado en iPhone.
 
-## Siguiente paso después de esta prioridad
+# PRIORIDAD CERRADA — IDENTIDAD COMUNITARIA Y PERFIL
 
-Una vez validada la identidad comunitaria, entrar al bloque transversal de **Notificaciones y badges reales**, reutilizando nombre y foto cuando la notificación represente una acción de una persona.
+Cerrada el 2026-08-08 tras validación del usuario y despliegue de la versión final de encuadre en producción.
+
+Estado consolidado:
+
+- `profiles.avatar_url` es la referencia única de la identidad visual activa y del encuadre;
+- bucket `avatars` separado, protegido por RLS y limitado a una fotografía completa optimizada por usuario;
+- `avatars/source.webp` reemplaza la fotografía anterior en lugar de acumular archivos;
+- optimización adaptativa conserva proporción y limita almacenamiento a 512 KB;
+- el usuario puede reemplazar, quitar y reencuadrar la fotografía guardada sin subir otra imagen para cada ajuste;
+- editor sin zoom adicional: únicamente desplazamiento horizontal/vertical sobre la fotografía proporcional;
+- preview grande muestra la fotografía completa;
+- avatar reutilizado en Inicio, Perfil, Miembros, Contactos, Avisos y demás superficies comunitarias implementadas;
+- fallback con inicial cuando no existe fotografía;
+- privacidad de datos de contacto permanece sujeta a permisos existentes.
+
+Evidencia reciente:
+
+- `71d2980` — `feat(perfil): extender identidad comunitaria y editor de foto`;
+- `7c932a2` — `fix(perfil): conservar foto completa y separar encuadre`;
+- `fab9b1c` — `fix(perfil): optimizar fotos de avatar de forma adaptativa`;
+- `b7ac858` — `fix(perfil): simplificar encuadre de avatar sin zoom`;
+- `817ffa3` — `fix(perfil): conservar proporción exacta al reencuadrar avatar` — READY / Production.
 
 # PRIORIDAD CERRADA — PULIDO DE EXPERIENCIA / CALENDARIO E INICIO
 
@@ -83,13 +113,14 @@ Evidencia reciente:
 - `3f9b42e` — `feat(inicio): priorizar solicitudes, avisos y acceso directo a eventos`;
 - `62f1e8e` — `fix(ministerios): mostrar solicitudes de ingreso al líder`;
 - `78d3952` — `fix(ministerios): ajustar herramientas y navegación por rol`;
-- `9036ed4` — `fix(navegacion): añadir regreso en pantallas secundarias`.
+- `9036ed4` — `fix(navegacion): añadir regreso en pantallas secundarias`;
+- `33e2894` — `fix(inicio): corregir tipado de acceso directo a evento` — acceso Inicio → Evento directo estable en producción.
 
 La navegación habitual continúa funcionando por rol y permisos existentes. No reabrir este bloque salvo bug comprobable.
 
 # SIGUIENTE BLOQUE PROPUESTO — RECORRIDO GUIADO POR SECCIONES
 
-Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR IDENTIDAD COMUNITARIA Y NOTIFICACIONES PRIORITARIAS**.
+Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR NOTIFICACIONES PRIORITARIAS**.
 
 Cuando corresponda, se construirá un recorrido de primera entrada que explique la aplicación por secciones.
 
@@ -158,11 +189,10 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 # Siguiente punto autorizado
 
-1. Consolidar una sola fotografía completa optimizada por usuario en `avatars/source.webp`.
-2. Guardar y reutilizar encuadre X/Y/zoom sin crear un segundo archivo recortado.
-3. Validar reencuadre posterior, preview completo y propagación en superficies comunitarias.
-4. Validar Storage, RLS, build y producción.
-5. Solicitar validación visual del usuario en iPhone.
-6. Tras aprobación, continuar con Notificaciones y badges reales.
+1. Consolidar contadores reales de Avisos y solicitudes de ingreso en una capa común.
+2. Mantener badges contextuales y evitar dobles conteos en App Badge.
+3. Validar comportamiento por rol antes de incorporar nuevas categorías.
+4. Auditar la ruta push existente y conectar destinos directos únicamente después de estabilizar los contadores.
+5. Verificar build y producción.
 
-No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de identidad comunitaria siga activo.
+No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de notificaciones y badges siga activo.
