@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Camera, Check, Loader2, Pencil, Trash2, X, ZoomIn } from 'lucide-react'
+import { Camera, Check, Loader2, Pencil, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import UserAvatar, { parseAvatarUrl } from '@/components/comunidad/UserAvatar'
@@ -28,6 +28,7 @@ type EditorState = {
 
 const SOURCE_MAX_SIDE = 1600
 const EDITOR_SIZE = 280
+const EDITOR_OVERSCAN = 1.12
 const MAX_SOURCE_BYTES = 30 * 1024 * 1024
 const MAX_STORED_BYTES = 512 * 1024
 const TARGET_STORED_BYTES = 480 * 1024
@@ -37,11 +38,9 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function clampOffsets(editor: EditorState, x: number, y: number, zoom = editor.zoom) {
-  const width = editor.baseWidth * zoom
-  const height = editor.baseHeight * zoom
-  const maxX = Math.max(0, (width - EDITOR_SIZE) / 2)
-  const maxY = Math.max(0, (height - EDITOR_SIZE) / 2)
+function clampOffsets(editor: EditorState, x: number, y: number) {
+  const maxX = Math.max(0, (editor.baseWidth - EDITOR_SIZE) / 2)
+  const maxY = Math.max(0, (editor.baseHeight - EDITOR_SIZE) / 2)
   return { x: clamp(x, -maxX, maxX), y: clamp(y, -maxY, maxY) }
 }
 
@@ -72,33 +71,20 @@ async function optimizarFuente(file: File) {
 
     const originalMaxSide = Math.max(image.naturalWidth, image.naturalHeight)
     const initialMaxSide = Math.min(SOURCE_MAX_SIDE, originalMaxSide)
-    const dimensionSteps = [
-      initialMaxSide,
-      1440,
-      1280,
-      1120,
-      1024,
-      900,
-      800,
-      720,
-      SOURCE_MIN_SIDE,
-    ].filter((value, index, values) => value <= initialMaxSide && values.indexOf(value) === index)
-
+    const dimensionSteps = [initialMaxSide, 1440, 1280, 1120, 1024, 900, 800, 720, SOURCE_MIN_SIDE]
+      .filter((value, index, values) => value <= initialMaxSide && values.indexOf(value) === index)
     const qualities = [0.84, 0.76, 0.68, 0.6, 0.52, 0.44, 0.36]
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
     if (!context) throw new Error('No se pudo preparar la fotografía.')
-
     context.imageSmoothingEnabled = true
     context.imageSmoothingQuality = 'high'
-
     let smallestBlob: Blob | null = null
 
     for (const maxSide of dimensionSteps) {
       const scale = Math.min(1, maxSide / originalMaxSide)
       const width = Math.max(1, Math.round(image.naturalWidth * scale))
       const height = Math.max(1, Math.round(image.naturalHeight * scale))
-
       canvas.width = width
       canvas.height = height
       context.clearRect(0, 0, width, height)
@@ -114,8 +100,6 @@ async function optimizarFuente(file: File) {
 
     if (smallestBlob && smallestBlob.size <= MAX_STORED_BYTES) return smallestBlob
 
-    // Último recurso: para avatares 512 px aún ofrece una imagen nítida y
-    // garantiza que una fotografía válida no falle solo por tener mucho detalle.
     for (const maxSide of [576, 512]) {
       const scale = Math.min(1, maxSide / originalMaxSide)
       const width = Math.max(1, Math.round(image.naturalWidth * scale))
@@ -124,7 +108,6 @@ async function optimizarFuente(file: File) {
       canvas.height = height
       context.clearRect(0, 0, width, height)
       context.drawImage(image, 0, 0, width, height)
-
       for (const quality of [0.42, 0.34, 0.28]) {
         const blob = await canvasToBlob(canvas, quality)
         if (blob && blob.size <= MAX_STORED_BYTES) return blob
@@ -137,20 +120,21 @@ async function optimizarFuente(file: File) {
   }
 }
 
-async function crearEditorDesdeBlob(blob: Blob, crop?: { x: number; y: number; zoom: number }, sourceBlob?: Blob): Promise<EditorState> {
+async function crearEditorDesdeBlob(blob: Blob, crop?: { x: number; y: number }, sourceBlob?: Blob): Promise<EditorState> {
   const { image, objectUrl } = await abrirBlob(blob)
-  const scale = Math.max(EDITOR_SIZE / image.naturalWidth, EDITOR_SIZE / image.naturalHeight)
+  const coverScale = Math.max(EDITOR_SIZE / image.naturalWidth, EDITOR_SIZE / image.naturalHeight)
+  const scale = coverScale * EDITOR_OVERSCAN
   const editor: EditorState = {
     objectUrl,
     image,
     baseWidth: image.naturalWidth * scale,
     baseHeight: image.naturalHeight * scale,
-    zoom: clamp(crop?.zoom ?? 1, 1, 3),
+    zoom: 1,
     offsetX: (crop?.x ?? 0) * EDITOR_SIZE,
     offsetY: (crop?.y ?? 0) * EDITOR_SIZE,
     sourceBlob,
   }
-  const next = clampOffsets(editor, editor.offsetX, editor.offsetY, editor.zoom)
+  const next = clampOffsets(editor, editor.offsetX, editor.offsetY)
   editor.offsetX = next.x
   editor.offsetY = next.y
   return editor
@@ -161,7 +145,7 @@ function buildAvatarUrl(baseUrl: string, editor: EditorState) {
   url.searchParams.set('v', String(Date.now()))
   url.searchParams.set('cx', (editor.offsetX / EDITOR_SIZE).toFixed(5))
   url.searchParams.set('cy', (editor.offsetY / EDITOR_SIZE).toFixed(5))
-  url.searchParams.set('cz', editor.zoom.toFixed(4))
+  url.searchParams.set('cz', '1')
   return url.toString()
 }
 
@@ -236,11 +220,10 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
         setMessage('Esta foto fue guardada con el sistema anterior y ya no conserva las partes recortadas. Reemplázala una vez para habilitar el reencuadre completo.')
         return
       }
-
       const supabase = createClient()
       const { data: source, error } = await supabase.storage.from('avatars').download(`${userId}/source.webp`)
       if (error || !source) throw new Error('No se encontró la fotografía completa guardada.')
-      const nextEditor = await crearEditorDesdeBlob(source, { x: parsed.x, y: parsed.y, zoom: parsed.zoom })
+      const nextEditor = await crearEditorDesdeBlob(source, { x: parsed.x, y: parsed.y })
       setEditor((prev) => {
         if (prev) URL.revokeObjectURL(prev.objectUrl)
         return nextEditor
@@ -260,7 +243,6 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
     try {
       const supabase = createClient()
       const sourcePath = `${userId}/source.webp`
-
       if (editor.sourceBlob) {
         const { error: sourceError } = await supabase.storage.from('avatars').upload(sourcePath, editor.sourceBlob, {
           upsert: true,
@@ -269,16 +251,11 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
         })
         if (sourceError) throw sourceError
       }
-
       const { data } = supabase.storage.from('avatars').getPublicUrl(sourcePath)
       const publicUrl = buildAvatarUrl(data.publicUrl, editor)
       const { error: profileError } = await (supabase as any).from('profiles').update({ avatar_url: publicUrl }).eq('id', userId)
       if (profileError) throw profileError
-
-      if (editor.sourceBlob) {
-        await supabase.storage.from('avatars').remove([`${userId}/avatar.webp`])
-      }
-
+      if (editor.sourceBlob) await supabase.storage.from('avatars').remove([`${userId}/avatar.webp`])
       setCurrentUrl(publicUrl)
       setMessage(editor.sourceBlob ? 'Foto actualizada' : 'Encuadre actualizado')
       URL.revokeObjectURL(editor.objectUrl)
@@ -324,7 +301,7 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
         </header>
 
         <div className="px-4 py-5 sm:px-5">
-          <p className="mb-4 text-center text-xs leading-5 text-slate-500">La foto completa queda guardada. Arrástrala y ajusta el zoom para decidir únicamente qué parte se verá dentro del círculo.</p>
+          <p className="mb-4 text-center text-xs leading-5 text-slate-500">La foto completa queda guardada. Arrástrala hacia arriba, abajo, izquierda o derecha para elegir el encuadre.</p>
           <div
             className="relative mx-auto h-[280px] w-[280px] touch-none select-none overflow-hidden rounded-full bg-slate-950 shadow-inner ring-4 ring-slate-100"
             onPointerDown={(event) => {
@@ -343,20 +320,8 @@ export default function AvatarUploader({ userId, nombre, avatarUrl }: AvatarUplo
             }}
             onPointerCancel={() => { dragRef.current = null }}
           >
-            <img src={editor.objectUrl} alt="Vista previa para encuadrar" draggable={false} className="pointer-events-none absolute max-w-none select-none" style={{ width: editor.baseWidth * editor.zoom, height: editor.baseHeight * editor.zoom, left: `calc(50% + ${editor.offsetX}px)`, top: `calc(50% + ${editor.offsetY}px)`, transform: 'translate(-50%, -50%)' }} />
+            <img src={editor.objectUrl} alt="Vista previa para encuadrar" draggable={false} className="pointer-events-none absolute max-w-none select-none" style={{ width: editor.baseWidth, height: editor.baseHeight, left: `calc(50% + ${editor.offsetX}px)`, top: `calc(50% + ${editor.offsetY}px)`, transform: 'translate(-50%, -50%)' }} />
             <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/40" />
-          </div>
-
-          <div className="mx-auto mt-5 flex max-w-[300px] items-center gap-3">
-            <ZoomIn className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-            <input type="range" min="1" max="3" step="0.01" value={editor.zoom} onChange={(event) => {
-              const zoom = Number(event.target.value)
-              setEditor((prev) => {
-                if (!prev) return prev
-                const next = clampOffsets(prev, prev.offsetX, prev.offsetY, zoom)
-                return { ...prev, zoom, offsetX: next.x, offsetY: next.y }
-              })
-            }} className="h-2 w-full accent-indigo-600" aria-label="Zoom de la fotografía" />
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
