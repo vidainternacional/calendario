@@ -69,7 +69,7 @@ export default async function SolicitudesMinisteriosAdminPage() {
                   <span className="text-xl" aria-hidden="true">{ministerio?.emoji || '🤝'}</span>
                   <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Ministerio</p><p className="truncate text-sm font-semibold text-slate-700">{ministerio?.nombre || 'Ministerio'}</p></div>
                 </div>
-                <SolicitudIngresoBotones solicitudId={solicitud.id} ministerioId={solicitud.ministerio_id} />
+                <SolicitudIngresoBotones solicitudId={solicitud.id} profileId={solicitud.profile_id} ministerioId={solicitud.ministerio_id} />
               </article>
             )
           })}
