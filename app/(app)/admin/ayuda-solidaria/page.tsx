@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowLeft, HeartHandshake, ShieldCheck } from 'lucide-react'
+import { HeartHandshake, ShieldCheck } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import SolidarityAdminBoard from '@/components/solidaridad/SolidarityAdminBoard'
+import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = {
   title: 'Gestión de Ayuda Solidaria',
@@ -58,9 +58,7 @@ export default async function AdminAyudaSolidariaPage() {
     <main className="min-h-screen bg-[#f5f5f7] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)]">
       <section className="bg-[linear-gradient(145deg,#17132e,#302072_48%,#5b3df5)] px-4 pb-7 pt-4 text-white sm:px-6">
         <div className="mx-auto max-w-3xl">
-          <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white/12 px-4 text-sm font-bold text-white ring-1 ring-white/15 backdrop-blur">
-            <ArrowLeft className="h-4 w-4" /> Administración
-          </Link>
+          <BackButton />
           <div className="mt-6 flex items-start gap-4">
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-rose-600 text-white shadow-[0_8px_20px_rgba(225,29,72,0.25)]"><HeartHandshake className="h-7 w-7" /></span>
             <div className="min-w-0">

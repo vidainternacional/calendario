@@ -61,6 +61,16 @@ main {
 }
 
 /*
+ * Identidad de Ayuda Solidaria.
+ * HeartHandshake se reserva como identificador visual del módulo. Su contenedor
+ * debe mantenerse rojo y el símbolo blanco en todos los accesos y cabeceras.
+ */
+span:has(> svg.lucide-heart-handshake) {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+}
+
+/*
  * Las vistas Semana y Mes usan grids densos de 7 y 8 columnas.
  * En Safari móvil, un hijo con ancho mínimo implícito puede ensanchar el grid
  * unos píxeles y permitir que el viewport completo se desplace lateralmente.
