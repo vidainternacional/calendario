@@ -1,11 +1,9 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import {
   Activity,
   BellRing,
   Building2,
   CalendarDays,
-  ChevronLeft,
   Eye,
   HeartHandshake,
   MessageCircleQuestion,
@@ -16,6 +14,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import BackButton from '@/components/navigation/BackButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,17 +52,15 @@ export default async function AdminAnalyticsPage() {
   const leaders = new Set(memberships.filter((item) => item.es_lider).map((item) => item.profile_id))
   const usage = (usageResult.data || []) as any[]
   const questions = (questionsResult.data || []) as any[]
-  const notices = (noticesResult.data || []) as any[]
   const joinRequests = (requestsResult.data || []) as any[]
 
-  const profileById = new Map(profiles.map((p) => [p.id, p]))
   const usageByProfile = new Map<string, any[]>()
   usage.forEach((item) => usageByProfile.set(item.profile_id, [...(usageByProfile.get(item.profile_id) || []), item]))
 
   const behavioralUsers = activeProfiles.map((profile) => {
-    const events = usageByProfile.get(profile.id) || []
-    const pageViews = events.filter((item) => item.event_name === 'page_view')
-    const actions = events.length - pageViews.length
+    const userEvents = usageByProfile.get(profile.id) || []
+    const pageViews = userEvents.filter((item) => item.event_name === 'page_view')
+    const actions = userEvents.length - pageViews.length
     const routes = new Map<string, number>()
     pageViews.forEach((item) => { if (item.route) routes.set(item.route, (routes.get(item.route) || 0) + 1) })
     const favoriteRoute = [...routes.entries()].sort((a, b) => b[1] - a[1])[0]
@@ -73,7 +70,7 @@ export default async function AdminAnalyticsPage() {
       role: profile.rol,
       pageViews: pageViews.length,
       actions,
-      lastSeen: events[0]?.occurred_at || null,
+      lastSeen: userEvents[0]?.occurred_at || null,
       favoriteRoute: favoriteRoute?.[0] || null,
       favoriteRouteViews: favoriteRoute?.[1] || 0,
       questions: questions.filter((q) => q.profile_id === profile.id).length,
@@ -109,10 +106,10 @@ export default async function AdminAnalyticsPage() {
   ]
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+2.25rem)] sm:px-6 sm:pt-10">
-      <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-black/[0.04]"><ChevronLeft className="h-4 w-4" />Administración</Link>
+    <main className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+4.75rem)] sm:px-6 sm:pt-12">
+      <div className="mb-7"><BackButton /></div>
 
-      <header className="mb-6 mt-7">
+      <header className="mb-7">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-500">Comportamiento y operación</p>
         <h1 className="mt-1 text-3xl font-extrabold tracking-[-0.035em] text-[#171923]">Centro de Análisis</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Actividad real de los usuarios, rutas más utilizadas, preguntas, adopción de notificaciones y operación de la comunidad.</p>
