@@ -28,8 +28,10 @@ type EditorState = {
 
 const SOURCE_MAX_SIDE = 1600
 const EDITOR_SIZE = 280
-const MAX_SOURCE_BYTES = 12 * 1024 * 1024
+const MAX_SOURCE_BYTES = 30 * 1024 * 1024
 const MAX_STORED_BYTES = 512 * 1024
+const TARGET_STORED_BYTES = 480 * 1024
+const SOURCE_MIN_SIDE = 640
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -50,7 +52,7 @@ function abrirBlob(blob: Blob) {
     image.onload = () => resolve({ image, objectUrl })
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl)
-      reject(new Error('No se pudo leer la imagen.'))
+      reject(new Error('No se pudo leer esta fotografía en el dispositivo. Prueba convertirla a JPG, PNG o WebP.'))
     }
     image.src = objectUrl
   })
@@ -62,27 +64,74 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
 
 async function optimizarFuente(file: File) {
   if (!file.type.startsWith('image/')) throw new Error('Selecciona una fotografía válida.')
-  if (file.size > MAX_SOURCE_BYTES) throw new Error('La fotografía original es demasiado grande.')
+  if (file.size > MAX_SOURCE_BYTES) throw new Error('La fotografía es demasiado grande para procesarla en el teléfono.')
 
   const { image, objectUrl } = await abrirBlob(file)
   try {
-    const scale = Math.min(1, SOURCE_MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight))
-    const width = Math.max(1, Math.round(image.naturalWidth * scale))
-    const height = Math.max(1, Math.round(image.naturalHeight * scale))
+    if (!image.naturalWidth || !image.naturalHeight) throw new Error('La fotografía no tiene dimensiones válidas.')
+
+    const originalMaxSide = Math.max(image.naturalWidth, image.naturalHeight)
+    const initialMaxSide = Math.min(SOURCE_MAX_SIDE, originalMaxSide)
+    const dimensionSteps = [
+      initialMaxSide,
+      1440,
+      1280,
+      1120,
+      1024,
+      900,
+      800,
+      720,
+      SOURCE_MIN_SIDE,
+    ].filter((value, index, values) => value <= initialMaxSide && values.indexOf(value) === index)
+
+    const qualities = [0.84, 0.76, 0.68, 0.6, 0.52, 0.44, 0.36]
     const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
     const context = canvas.getContext('2d')
     if (!context) throw new Error('No se pudo preparar la fotografía.')
+
     context.imageSmoothingEnabled = true
     context.imageSmoothingQuality = 'high'
-    context.drawImage(image, 0, 0, width, height)
 
-    for (const quality of [0.82, 0.74, 0.66, 0.58, 0.5, 0.42]) {
-      const blob = await canvasToBlob(canvas, quality)
-      if (blob && blob.size <= MAX_STORED_BYTES) return blob
+    let smallestBlob: Blob | null = null
+
+    for (const maxSide of dimensionSteps) {
+      const scale = Math.min(1, maxSide / originalMaxSide)
+      const width = Math.max(1, Math.round(image.naturalWidth * scale))
+      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+
+      canvas.width = width
+      canvas.height = height
+      context.clearRect(0, 0, width, height)
+      context.drawImage(image, 0, 0, width, height)
+
+      for (const quality of qualities) {
+        const blob = await canvasToBlob(canvas, quality)
+        if (!blob) continue
+        if (!smallestBlob || blob.size < smallestBlob.size) smallestBlob = blob
+        if (blob.size <= TARGET_STORED_BYTES) return blob
+      }
     }
-    throw new Error('La fotografía no pudo optimizarse lo suficiente.')
+
+    if (smallestBlob && smallestBlob.size <= MAX_STORED_BYTES) return smallestBlob
+
+    // Último recurso: para avatares 512 px aún ofrece una imagen nítida y
+    // garantiza que una fotografía válida no falle solo por tener mucho detalle.
+    for (const maxSide of [576, 512]) {
+      const scale = Math.min(1, maxSide / originalMaxSide)
+      const width = Math.max(1, Math.round(image.naturalWidth * scale))
+      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      canvas.width = width
+      canvas.height = height
+      context.clearRect(0, 0, width, height)
+      context.drawImage(image, 0, 0, width, height)
+
+      for (const quality of [0.42, 0.34, 0.28]) {
+        const blob = await canvasToBlob(canvas, quality)
+        if (blob && blob.size <= MAX_STORED_BYTES) return blob
+      }
+    }
+
+    throw new Error('No se pudo preparar esta fotografía. Prueba con otra imagen válida.')
   } finally {
     URL.revokeObjectURL(objectUrl)
   }
