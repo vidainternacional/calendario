@@ -67,6 +67,16 @@ Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla 
 4. Conservar cada badge contextual donde ya funciona y preparar la capa para sumar categorías posteriores.
 5. Verificar por rol: servidor normal, líder y pastor/administrador.
 
+## Estado implementado de notificaciones
+
+- `6a1ce22` consolidó Avisos no leídos y solicitudes de ingreso gestionables en una fuente transversal de badges reales.
+- `notificaciones_enviadas` se reutiliza como control único por `tipo + referencia_id + profile_id`, evitando reenvíos duplicados al mismo usuario.
+- los pushes de Avisos apuntan a una ficha directa `/avisos/[id]`, protegida por RLS y marcada como leída al abrirse.
+- una nueva solicitud de ingreso genera push únicamente a líderes reales del ministerio que mantengan activas sus notificaciones; el push abre directamente `/ministerios/[id]/solicitudes-ingreso`.
+- el cuerpo del push de ingreso no expone identidad ni datos sensibles en la pantalla bloqueada.
+- el service worker ya soportaba navegación por `payload.url` y no fue modificado.
+- commit funcional del bloque: `41353b4` — `feat(notificaciones): conectar push a destinos directos`.
+
 ## Criterio de cierre de esta prioridad
 
 - ningún badge visible depende de números inventados o estados locales no persistentes;
@@ -189,10 +199,9 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 # Siguiente punto autorizado
 
-1. Consolidar contadores reales de Avisos y solicitudes de ingreso en una capa común.
-2. Mantener badges contextuales y evitar dobles conteos en App Badge.
-3. Validar comportamiento por rol antes de incorporar nuevas categorías.
-4. Auditar la ruta push existente y conectar destinos directos únicamente después de estabilizar los contadores.
-5. Verificar build y producción.
+1. Verificar build y producción del bloque de destinos directos.
+2. Validar en iPhone un Aviso push → ficha exacta y una solicitud de ingreso → pantalla de revisión del ministerio.
+3. Conectar, después de esa validación, las respuestas de aprobación/rechazo de ingreso al usuario solicitante sin crear contadores artificiales.
+4. Auditar las demás acciones que ya generan push y aplicar destino directo solo cuando exista una superficie inequívoca.
 
 No reanudar el piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras este bloque de notificaciones y badges siga activo.
