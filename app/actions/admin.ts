@@ -1,11 +1,25 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { Database } from '@/lib/types/database'
 
 type MinisterioRow = Database['public']['Tables']['ministerios']['Row']
 type ProfileRow = Database['public']['Tables']['profiles']['Row']
+
+const SUPERADMIN_EMAIL = 'publiartsv.info@gmail.com'
+
+async function verificarAdministrador() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { supabase, user: null, error: 'No autorizado' }
+
+  const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
+  const rol = (profile as any)?.rol as string | undefined
+  if (rol !== 'administrador') return { supabase, user, error: 'Solo un administrador puede eliminar definitivamente.' }
+
+  return { supabase, user, error: null }
+}
 
 // --- MINISTERIOS ---
 
@@ -28,14 +42,7 @@ export async function guardarMinisterio(formData: FormData) {
   const descripcion = formData.get('descripcion') as string
   const activo = formData.get('activo') === 'true'
 
-  const payload = {
-    nombre,
-    emoji,
-    color_primario,
-    color_secundario,
-    descripcion,
-    activo
-  }
+  const payload = { nombre, emoji, color_primario, color_secundario, descripcion, activo }
 
   if (id) {
     const { error } = await (supabase as any).from('ministerios').update(payload).eq('id', id)
@@ -57,15 +64,45 @@ export async function toggleMinisterioActivo(id: string, activo: boolean) {
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const _rol2 = (profile as any)?.rol
-  if (_rol2 !== 'pastor' && _rol2 !== 'administrador') {
-    throw new Error('Permisos insuficientes')
-  }
+  if (_rol2 !== 'pastor' && _rol2 !== 'administrador') throw new Error('Permisos insuficientes')
 
   const { error } = await (supabase as any).from('ministerios').update({ activo }).eq('id', id)
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
   revalidatePath('/ministerios')
+  return { success: true }
+}
+
+export async function eliminarMinisterioDefinitivamente(id: string) {
+  const { user, error: permisoError } = await verificarAdministrador()
+  if (permisoError || !user) return { success: false, error: permisoError ?? 'No autorizado' }
+
+  const admin = createAdminClient()
+  const { data: ministerio, error: lookupError } = await (admin as any)
+    .from('ministerios')
+    .select('id, nombre')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (lookupError) return { success: false, error: lookupError.message }
+  if (!ministerio) return { success: false, error: 'El ministerio ya no existe.' }
+
+  const { error } = await (admin as any).from('ministerios').delete().eq('id', id)
+  if (error) {
+    return {
+      success: false,
+      error: error.message.includes('foreign key')
+        ? 'Este ministerio conserva información relacionada que impide borrarlo de forma segura. No se eliminó ningún dato.'
+        : error.message,
+    }
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/ministerios')
+  revalidatePath('/inicio')
+  revalidatePath('/avisos')
+  revalidatePath('/calendario')
   return { success: true }
 }
 
@@ -78,40 +115,68 @@ export async function cambiarRolUsuario(profileId: string, nuevoRol: 'servidor' 
 
   const { data: callerProfile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const callerRol = (callerProfile as any)?.rol
-  if (callerRol !== 'pastor' && callerRol !== 'administrador') {
-    return { success: false, error: 'Permisos insuficientes' }
-  }
+  if (callerRol !== 'pastor' && callerRol !== 'administrador') return { success: false, error: 'Permisos insuficientes' }
 
-  // 🔒 Guard: cannot change your own role
-  if (profileId === user.id) {
-    return { success: false, error: 'No puedes cambiar tu propio rol desde el panel de administración.' }
-  }
+  if (profileId === user.id) return { success: false, error: 'No puedes cambiar tu propio rol desde el panel de administración.' }
 
-  // 🔒 Jerarquía de roles:
-  //   - Solo un ADMINISTRADOR puede otorgar el rol 'administrador'
-  //   - Solo un ADMINISTRADOR puede cambiar el rol de otro administrador
-  //   (la BD también lo bloquea vía trigger guard_role_escalation — defensa doble)
-  if (nuevoRol === 'administrador' && callerRol !== 'administrador') {
-    return { success: false, error: 'Solo un administrador puede otorgar el rol de administrador.' }
-  }
+  if (nuevoRol === 'administrador' && callerRol !== 'administrador') return { success: false, error: 'Solo un administrador puede otorgar el rol de administrador.' }
 
   const { data: targetProfile } = await supabase.from('profiles').select('rol').eq('id', profileId).single()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const targetRol = (targetProfile as any)?.rol
-  if (targetRol === 'administrador' && callerRol !== 'administrador') {
-    return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
-  }
+  if (targetRol === 'administrador' && callerRol !== 'administrador') return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
 
   const { error } = await (supabase as any).from('profiles').update({ rol: nuevoRol }).eq('id', profileId)
   if (error) {
-    // DB trigger will reject the superadmin account change
-    if (error.message?.includes('protected')) {
-      return { success: false, error: 'Este usuario está protegido y no puede cambiar de rol.' }
-    }
+    if (error.message?.includes('protected')) return { success: false, error: 'Este usuario está protegido y no puede cambiar de rol.' }
     return { success: false, error: error.message }
   }
 
   revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function eliminarUsuarioDefinitivamente(profileId: string) {
+  const { supabase, user, error: permisoError } = await verificarAdministrador()
+  if (permisoError || !user) return { success: false, error: permisoError ?? 'No autorizado' }
+
+  if (profileId === user.id) {
+    return { success: false, error: 'No puedes eliminar definitivamente tu propia cuenta mientras estás usando el panel.' }
+  }
+
+  const { data: target, error: targetError } = await supabase
+    .from('profiles')
+    .select('id, email, nombre_completo')
+    .eq('id', profileId)
+    .maybeSingle()
+
+  if (targetError) return { success: false, error: targetError.message }
+  if (!target) return { success: false, error: 'El usuario ya no existe.' }
+
+  if (((target as any).email as string | null)?.toLowerCase() === SUPERADMIN_EMAIL) {
+    return { success: false, error: 'La cuenta administradora principal está protegida y no puede eliminarse.' }
+  }
+
+  const admin = createAdminClient()
+  const { error: authError } = await admin.auth.admin.deleteUser(profileId)
+  if (authError) {
+    return {
+      success: false,
+      error: authError.message.includes('foreign key')
+        ? 'La cuenta conserva información relacionada que impide borrarla de forma segura. No se eliminó la cuenta.'
+        : authError.message,
+    }
+  }
+
+  // Limpieza best-effort de los dos nombres usados históricamente por el avatar.
+  await admin.storage.from('avatars').remove([
+    `${profileId}/source.webp`,
+    `${profileId}/avatar.webp`,
+  ])
+
+  revalidatePath('/admin')
+  revalidatePath('/inicio')
+  revalidatePath('/ministerios')
+  revalidatePath('/avisos')
   return { success: true }
 }
 
@@ -122,9 +187,7 @@ export async function toggleMembresia(profileId: string, ministerioId: string, a
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const _rol4 = (profile as any)?.rol
-  if (_rol4 !== 'pastor' && _rol4 !== 'administrador') {
-    throw new Error('Permisos insuficientes')
-  }
+  if (_rol4 !== 'pastor' && _rol4 !== 'administrador') throw new Error('Permisos insuficientes')
 
   if (agregar) {
     const { error } = await (supabase as any).from('ministerio_miembros').insert([{ profile_id: profileId, ministerio_id: ministerioId, es_lider: false }])
@@ -145,19 +208,11 @@ export async function setEsLider(profileId: string, ministerioId: string, esLide
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const _rol5 = (profile as any)?.rol
-  if (_rol5 !== 'pastor' && _rol5 !== 'administrador') {
-    throw new Error('Permisos insuficientes')
-  }
+  if (_rol5 !== 'pastor' && _rol5 !== 'administrador') throw new Error('Permisos insuficientes')
 
-  const { error } = await (supabase as any).from('ministerio_miembros')
-    .update({ es_lider: esLider })
-    .eq('profile_id', profileId)
-    .eq('ministerio_id', ministerioId)
-  
+  const { error } = await (supabase as any).from('ministerio_miembros').update({ es_lider: esLider }).eq('profile_id', profileId).eq('ministerio_id', ministerioId)
   if (error) {
-    if (error.message.includes('No se puede ser líder de más de 2 ministerios')) {
-      return { success: false, error: 'Un usuario no puede ser líder de más de 2 ministerios (Regla de negocio).' }
-    }
+    if (error.message.includes('No se puede ser líder de más de 2 ministerios')) return { success: false, error: 'Un usuario no puede ser líder de más de 2 ministerios (Regla de negocio).' }
     return { success: false, error: error.message }
   }
 
@@ -172,22 +227,10 @@ export async function updateIconVariant(variant: 'dorado' | 'blanco' | 'rojo') {
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const rol = (profile as any)?.rol
-  if (rol !== 'pastor' && rol !== 'administrador') {
-    throw new Error('Permisos insuficientes')
-  }
+  if (rol !== 'pastor' && rol !== 'administrador') throw new Error('Permisos insuficientes')
 
-  const { error } = await (supabase as any)
-    .from('app_settings')
-    .update({ valor: variant, updated_at: new Date().toISOString() })
-    .eq('clave', 'active_icon_variant')
-
-  if (error) {
-    // Si no existía, hacemos insert
-    await (supabase as any).from('app_settings').insert({
-      clave: 'active_icon_variant',
-      valor: variant
-    })
-  }
+  const { error } = await (supabase as any).from('app_settings').update({ valor: variant, updated_at: new Date().toISOString() }).eq('clave', 'active_icon_variant')
+  if (error) await (supabase as any).from('app_settings').insert({ clave: 'active_icon_variant', valor: variant })
 
   revalidatePath('/admin')
   return { success: true }
@@ -200,23 +243,10 @@ export async function updateEstudioPrompt(prompt: string) {
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const rol = (profile as any)?.rol
-  if (rol !== 'pastor' && rol !== 'administrador') {
-    throw new Error('Permisos insuficientes')
-  }
+  if (rol !== 'pastor' && rol !== 'administrador') throw new Error('Permisos insuficientes')
 
-  const { error } = await (supabase as any)
-    .from('app_settings')
-    .upsert({
-      clave: 'estudio_system_prompt',
-      valor: `"${prompt}"`,
-      updated_at: new Date().toISOString()
-    }, {
-      onConflict: 'clave'
-    })
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  const { error } = await (supabase as any).from('app_settings').upsert({ clave: 'estudio_system_prompt', valor: `"${prompt}"`, updated_at: new Date().toISOString() }, { onConflict: 'clave' })
+  if (error) return { success: false, error: error.message }
 
   revalidatePath('/admin')
   revalidatePath('/estudios/profundo')
@@ -230,25 +260,14 @@ export async function togglePastorGeneral(profileId: string, esPastorGeneral: bo
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
   const rol = (profile as any)?.rol
-  if (rol !== 'administrador') {
-    return { success: false, error: 'Solo un administrador puede asignar el rol de Pastor General.' }
-  }
+  if (rol !== 'administrador') return { success: false, error: 'Solo un administrador puede asignar el rol de Pastor General.' }
 
-  const { error } = await (supabase as any)
-    .from('profiles')
-    .update({ es_pastor_general: esPastorGeneral })
-    .eq('id', profileId)
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  const { error } = await (supabase as any).from('profiles').update({ es_pastor_general: esPastorGeneral }).eq('id', profileId)
+  if (error) return { success: false, error: error.message }
 
   revalidatePath('/admin')
   return { success: true }
 }
-
-
-// ─── FASE 1: Gestión de estados de cuenta ────────────────────────────────────
 
 type EstadoCuenta = 'pendiente' | 'activo' | 'suspendido' | 'rechazado'
 
@@ -258,50 +277,23 @@ async function verificarPermisoGestion() {
   if (!user) return { supabase, user: null, callerRol: null, error: 'No autorizado' }
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const callerRol = (profile as any)?.rol as string | undefined
-
-  if (callerRol !== 'pastor' && callerRol !== 'administrador') {
-    return { supabase, user, callerRol, error: 'Permisos insuficientes' }
-  }
+  if (callerRol !== 'pastor' && callerRol !== 'administrador') return { supabase, user, callerRol, error: 'Permisos insuficientes' }
   return { supabase, user, callerRol, error: null }
 }
 
-/**
- * Cambia el estado de cuenta de un usuario.
- * - Aprobar cuenta:   'activo'
- * - Rechazar cuenta:  'rechazado'
- * - Suspender:        'suspendido'
- * - Reactivar:        'activo'
- * Reglas: no puedes cambiarte a ti mismo; solo un administrador
- * puede suspender/rechazar a otro administrador. El superadmin está
- * protegido a nivel de base de datos.
- */
 export async function setEstadoCuenta(profileId: string, estado: EstadoCuenta) {
   const { supabase, user, callerRol, error: permError } = await verificarPermisoGestion()
   if (permError || !user) return { success: false, error: permError ?? 'No autorizado' }
-
-  if (profileId === user.id) {
-    return { success: false, error: 'No puedes cambiar el estado de tu propia cuenta.' }
-  }
+  if (profileId === user.id) return { success: false, error: 'No puedes cambiar el estado de tu propia cuenta.' }
 
   const { data: targetProfile } = await supabase.from('profiles').select('rol').eq('id', profileId).single()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const targetRol = (targetProfile as any)?.rol
-  if (targetRol === 'administrador' && callerRol !== 'administrador') {
-    return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
-  }
+  if (targetRol === 'administrador' && callerRol !== 'administrador') return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from('profiles')
-    .update({ estado_cuenta: estado })
-    .eq('id', profileId)
-
+  const { error } = await (supabase as any).from('profiles').update({ estado_cuenta: estado }).eq('id', profileId)
   if (error) {
-    if (error.message?.includes('protected')) {
-      return { success: false, error: 'Esta cuenta está protegida y no puede ser desactivada.' }
-    }
+    if (error.message?.includes('protected')) return { success: false, error: 'Esta cuenta está protegida y no puede ser desactivada.' }
     return { success: false, error: error.message }
   }
 
@@ -309,12 +301,10 @@ export async function setEstadoCuenta(profileId: string, estado: EstadoCuenta) {
   return { success: true }
 }
 
-/** Aprueba una cuenta pendiente → acceso completo a la app. */
 export async function aprobarUsuario(profileId: string) {
   return setEstadoCuenta(profileId, 'activo')
 }
 
-/** Rechaza una solicitud de cuenta. */
 export async function rechazarUsuario(profileId: string) {
   return setEstadoCuenta(profileId, 'rechazado')
 }
