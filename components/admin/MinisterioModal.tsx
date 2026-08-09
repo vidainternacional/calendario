@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Loader2, Trash2 } from 'lucide-react'
 import { eliminarMinisterioDefinitivamente, guardarMinisterio } from '@/app/actions/admin'
-import { createClient } from '@/lib/supabase/client'
+import { obtenerContextoAdministrador } from '@/app/actions/admin-permissions'
 
 const EMOJIS_COMUNES = [
   '🎵', '🎶', '🎤', '🎧', '🎼', '🎹', '🎸', '🎺',
@@ -41,12 +41,9 @@ export default function MinisterioModal({ ministerio, isOpen, onClose }: { minis
     }
 
     let cancelled = false
-    const supabase = createClient()
     void (async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-      const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
-      if (!cancelled) setPuedeEliminar((profile as any)?.rol === 'administrador')
+      const contexto = await obtenerContextoAdministrador()
+      if (!cancelled) setPuedeEliminar(contexto.esAdministrador)
     })()
 
     const previousOverflow = document.body.style.overflow
