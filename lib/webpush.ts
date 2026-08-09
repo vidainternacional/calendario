@@ -149,3 +149,51 @@ export async function notifyMultipleUsers(
 
   return results.reduce<number>((total, value) => total + value, 0)
 }
+
+type NotifyOnceReference = {
+  tipo: string
+  referenciaId: string
+}
+
+export async function notifyUsersOnceByReference(
+  profileIds: string[],
+  payload: PushPayload,
+  reference: NotifyOnceReference,
+): Promise<{ users: number; devices: number }> {
+  const service = createServiceClient() as any
+  const uniqueProfileIds = [...new Set(profileIds.filter(Boolean))]
+  if (!uniqueProfileIds.length) return { users: 0, devices: 0 }
+
+  const results = await Promise.all(
+    uniqueProfileIds.map(async (profileId) => {
+      const { data: reservation, error: reserveError } = await service
+        .from('notificaciones_enviadas')
+        .insert({
+          tipo: reference.tipo,
+          referencia_id: reference.referenciaId,
+          profile_id: profileId,
+        })
+        .select('id')
+        .single()
+
+      if (reserveError) {
+        if (reserveError.code === '23505') return { users: 0, devices: 0 }
+        console.error('[webpush] No se pudo reservar el envío:', reserveError)
+        return { users: 0, devices: 0 }
+      }
+
+      const devices = await notifyUser(service, profileId, payload)
+      if (devices === 0 && reservation?.id) {
+        await service.from('notificaciones_enviadas').delete().eq('id', reservation.id)
+        return { users: 0, devices: 0 }
+      }
+
+      return { users: 1, devices }
+    }),
+  )
+
+  return results.reduce(
+    (total, item) => ({ users: total.users + item.users, devices: total.devices + item.devices }),
+    { users: 0, devices: 0 },
+  )
+}

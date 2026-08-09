@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
-import { composePushBody, notifyMultipleUsers } from '@/lib/webpush'
+import { composePushBody, notifyUsersOnceByReference } from '@/lib/webpush'
 
 export type AvisoState = {
   error?: string
@@ -95,22 +95,27 @@ async function enviarNotificacionAviso(input: AvisoPushInput): Promise<number> {
   if (finalUserIds.length === 0) return 0
 
   const origen = await resolverOrigenAviso(service, input.ministerioId, input.autorId)
-  const enviados = await notifyMultipleUsers(service, finalUserIds, {
-    title: origen,
-    body: composePushBody(input.titulo, input.cuerpo),
-    url: input.ministerioId ? `/ministerios/${input.ministerioId}/avisos` : '/avisos',
-    tag: `aviso-${input.id}`,
-    renotify: true,
-  })
+  const result = await notifyUsersOnceByReference(
+    finalUserIds,
+    {
+      title: origen,
+      body: composePushBody(input.titulo, input.cuerpo),
+      url: `/avisos/${input.id}`,
+      tag: `aviso-${input.id}`,
+      renotify: true,
+    },
+    { tipo: 'aviso', referenciaId: input.id },
+  )
 
   console.log('[avisos] Reparto push completado', {
     avisoId: input.id,
     ministerioId: input.ministerioId,
     destinatarios: finalUserIds.length,
-    dispositivos: enviados,
+    usuariosNotificados: result.users,
+    dispositivos: result.devices,
   })
 
-  return enviados
+  return result.devices
 }
 
 export async function crearAviso(

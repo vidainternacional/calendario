@@ -1,7 +1,53 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
+import { composePushBody, notifyUsersOnceByReference } from '@/lib/webpush'
+
+async function notificarLideresSolicitudIngreso(ministerioId: string, solicitudId: string, requesterId: string) {
+  const service = createServiceClient() as any
+  const [{ data: lideres, error: lideresError }, { data: ministerio }, { data: preferencias }] = await Promise.all([
+    service
+      .from('ministerio_miembros')
+      .select('profile_id')
+      .eq('ministerio_id', ministerioId)
+      .eq('es_lider', true),
+    service
+      .from('ministerios')
+      .select('nombre')
+      .eq('id', ministerioId)
+      .single(),
+    service
+      .from('notificaciones_preferencias')
+      .select('profile_id')
+      .eq('ministerio_id', ministerioId)
+      .eq('activo', false),
+  ])
+
+  if (lideresError) throw lideresError
+
+  const disabledIds = new Set((preferencias || []).map((item: any) => String(item.profile_id)))
+  const destinatarios = [...new Set(
+    (lideres || [])
+      .map((item: any) => String(item.profile_id || ''))
+      .filter((profileId: string) => profileId && profileId !== requesterId && !disabledIds.has(profileId)),
+  )]
+
+  if (!destinatarios.length) return
+
+  await notifyUsersOnceByReference(
+    destinatarios,
+    {
+      title: (ministerio as any)?.nombre || 'Ministerio',
+      body: composePushBody('Nueva solicitud de ingreso', 'Hay una solicitud pendiente de revisión.'),
+      url: `/ministerios/${ministerioId}/solicitudes-ingreso`,
+      tag: `solicitud-ingreso-${solicitudId}`,
+      renotify: true,
+    },
+    { tipo: 'solicitud_ingreso', referenciaId: solicitudId },
+  )
+}
 
 export async function solicitarIngreso(ministerioId: string) {
   const supabase = await createClient()
@@ -11,30 +57,39 @@ export async function solicitarIngreso(ministerioId: string) {
     return { success: false, error: 'No autorizado' }
   }
 
-  const { error } = await (supabase as any)
+  const { data: solicitud, error } = await (supabase as any)
     .from('ministerio_solicitudes_ingreso')
     .insert({
       profile_id: user.id,
       ministerio_id: ministerioId,
       estado: 'pendiente'
     })
+    .select('id')
+    .single()
 
-  if (error) {
+  if (error || !solicitud) {
     console.error('Error al solicitar ingreso:', error)
-    // Could fail due to unique constraint if already exists
-    if (error.code === '23505') {
+    if (error?.code === '23505') {
       return { success: false, error: 'Ya tienes una solicitud pendiente para este ministerio.' }
     }
     return { success: false, error: 'Error al enviar solicitud.' }
   }
 
+  try {
+    await notificarLideresSolicitudIngreso(ministerioId, String(solicitud.id), user.id)
+  } catch (pushError) {
+    console.error('[ministerios] Solicitud creada, pero falló la notificación a líderes:', pushError)
+  }
+
   revalidatePath('/ministerios')
+  revalidatePath('/inicio')
+  revalidatePath(`/ministerios/${ministerioId}`)
+  revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
   return { success: true }
 }
 
 export async function aprobarSolicitudIngreso(solicitudId: string, profileId: string, ministerioId: string) {
   const supabase = await createClient()
-  // 1. Mark as approved
   const { error: e1 } = await (supabase as any)
     .from('ministerio_solicitudes_ingreso')
     .update({ estado: 'aprobada', resuelto_at: new Date().toISOString() })
@@ -42,7 +97,6 @@ export async function aprobarSolicitudIngreso(solicitudId: string, profileId: st
   
   if (e1) return { success: false, error: e1.message }
 
-  // 2. Insert into ministerio_miembros
   const { error: e2 } = await (supabase as any)
     .from('ministerio_miembros')
     .insert({
@@ -56,6 +110,8 @@ export async function aprobarSolicitudIngreso(solicitudId: string, profileId: st
   }
 
   revalidatePath('/ministerios')
+  revalidatePath('/inicio')
+  revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
   return { success: true }
 }
@@ -69,6 +125,8 @@ export async function rechazarSolicitudIngreso(solicitudId: string, ministerioId
 
   if (error) return { success: false, error: error.message }
 
+  revalidatePath('/inicio')
+  revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
   return { success: true }
 }
