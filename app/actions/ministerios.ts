@@ -27,12 +27,14 @@ async function notificarLideresSolicitudIngreso(ministerioId: string, solicitudI
 
   if (lideresError) throw lideresError
 
-  const disabledIds = new Set((preferencias || []).map((item: any) => String(item.profile_id)))
-  const destinatarios = [...new Set(
-    (lideres || [])
-      .map((item: any) => String(item.profile_id || ''))
-      .filter((profileId: string) => profileId && profileId !== requesterId && !disabledIds.has(profileId)),
-  )]
+  const disabledIds = new Set<string>((preferencias || []).map((item: any) => String(item.profile_id)))
+  const destinatarios: string[] = Array.from(
+    new Set<string>(
+      (lideres || [])
+        .map((item: any) => String(item.profile_id || ''))
+        .filter((profileId: string) => profileId && profileId !== requesterId && !disabledIds.has(profileId)),
+    ),
+  )
 
   if (!destinatarios.length) return
 
