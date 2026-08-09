@@ -72,7 +72,7 @@ export async function signup(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { data: { nombre } },
@@ -85,7 +85,16 @@ export async function signup(
     return { error: error.message }
   }
 
-  redirect('/pendiente')
+  // Si Supabase entrega sesión inmediata, la cuenta ya está activa y entra a VIDA.
+  if (data.session) {
+    redirect('/inicio')
+  }
+
+  // La confirmación de correo puede seguir activa en Supabase, pero ya no existe
+  // una segunda aprobación manual por parte de Administración.
+  return {
+    success: '¡Cuenta creada! Revisa tu correo para confirmar tu dirección. Después podrás entrar directamente a VIDA Internacional.',
+  }
 }
 
 export async function logout(): Promise<void> {

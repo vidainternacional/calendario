@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { signup, type AuthState } from '@/app/actions/auth'
-import { User, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react'
+import { User, Mail, Lock, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SignupForm() {
@@ -15,23 +15,27 @@ export default function SignupForm() {
 
   return (
     <form action={action} className="space-y-4">
-      {/* Error */}
       {state?.error && (
-        <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {state.error}
         </div>
       )}
 
-      {/* Nombre */}
+      {state?.success && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-700">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{state.success}</span>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-1.5">
-        <label
-          htmlFor="nombre"
-          className="block text-sm font-medium text-slate-300"
-        >
+        <label htmlFor="nombre" className="block text-sm font-medium text-slate-300">
           Nombre completo
         </label>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             id="nombre"
             name="nombre"
@@ -39,21 +43,17 @@ export default function SignupForm() {
             placeholder="Juan Pérez"
             required
             autoComplete="name"
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 pl-10 pr-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
 
-      {/* Email */}
       <div className="space-y-1.5">
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-slate-300"
-        >
+        <label htmlFor="email" className="block text-sm font-medium text-slate-300">
           Correo electrónico
         </label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             id="email"
             name="email"
@@ -61,21 +61,17 @@ export default function SignupForm() {
             placeholder="tu@correo.com"
             required
             autoComplete="email"
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 pl-10 pr-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
 
-      {/* Password */}
       <div className="space-y-1.5">
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-slate-300"
-        >
+        <label htmlFor="password" className="block text-sm font-medium text-slate-300">
           Contraseña
         </label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             id="password"
             name="password"
@@ -83,33 +79,26 @@ export default function SignupForm() {
             placeholder="Mínimo 8 caracteres"
             required
             autoComplete="new-password"
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 pl-10 pr-10 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors focus:outline-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300 focus:outline-none"
             tabIndex={-1}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           >
-            {showPassword ? (
-              <EyeOff className="w-4 h-4" />
-            ) : (
-              <Eye className="w-4 h-4" />
-            )}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Confirm Password */}
       <div className="space-y-1.5">
-        <label
-          htmlFor="confirmPassword"
-          className="block text-sm font-medium text-slate-300"
-        >
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300">
           Confirmar contraseña
         </label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             id="confirmPassword"
             name="confirmPassword"
@@ -117,32 +106,28 @@ export default function SignupForm() {
             placeholder="••••••••"
             required
             autoComplete="new-password"
-            className="w-full rounded-xl bg-slate-800 border border-slate-700 pl-10 pr-10 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors focus:outline-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-slate-300 focus:outline-none"
             tabIndex={-1}
+            aria-label={showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
           >
-            {showConfirmPassword ? (
-              <EyeOff className="w-4 h-4" />
-            ) : (
-              <Eye className="w-4 h-4" />
-            )}
+            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={pending}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 text-sm font-semibold text-white transition-colors"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
             Creando cuenta...
           </>
         ) : (
@@ -150,13 +135,9 @@ export default function SignupForm() {
         )}
       </button>
 
-      {/* Login link */}
       <p className="text-center text-sm text-slate-500">
         ¿Ya tienes cuenta?{' '}
-        <Link
-          href="/login"
-          className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
-        >
+        <Link href="/login" className="font-medium text-indigo-400 transition-colors hover:text-indigo-300">
           Iniciar sesión
         </Link>
       </p>
