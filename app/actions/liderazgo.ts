@@ -30,7 +30,10 @@ export async function actualizarLiderazgoMinisterial(
   const { supabase, user, callerRol, error: permisoError } = await obtenerContextoGestion()
   if (permisoError || !user) return { success: false, error: permisoError ?? 'No autorizado' }
 
-  if (profileId === user.id) {
+  // Un pastor no debe poder modificar su propio liderazgo desde este panel.
+  // El administrador sí puede administrarse a sí mismo porque su rol global
+  // le concede acceso transversal independientemente de sus membresías ministeriales.
+  if (profileId === user.id && callerRol !== 'administrador') {
     return { success: false, error: 'No puedes modificar tu propio liderazgo desde este panel.' }
   }
 
