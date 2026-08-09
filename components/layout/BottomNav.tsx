@@ -117,7 +117,6 @@ export default function BottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
-          const isCalendar = item.href === '/calendario'
           const showUnreadBadge = item.href === '/avisos' && unreadAvisos > 0
 
           return (
@@ -132,7 +131,7 @@ export default function BottomNav() {
               className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}
             >
               <span className={`relative flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
-                <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? (isCalendar ? 'opacity-100' : 'fill-current opacity-90') : ''}`} />
+                <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${isActive ? 'opacity-100' : ''}`} />
                 {showUnreadBadge && (
                   <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-black leading-none text-white shadow-sm">
                     {unreadAvisos > 99 ? '99+' : unreadAvisos}
