@@ -2,22 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Loader2, Shield, Trash2, Users } from 'lucide-react'
+import { Activity, BellRing, CalendarDays, Loader2, Mail, Phone, Shield, Trash2, Users, X } from 'lucide-react'
 import { eliminarUsuarioDefinitivamente, toggleMembresia } from '@/app/actions/admin'
 import { obtenerContextoAdministrador } from '@/app/actions/admin-permissions'
 import { actualizarLiderazgoMinisterial } from '@/app/actions/liderazgo'
 
-export default function UsuarioMembresiaModal({
-  usuario,
-  todosMinisterios,
-  isOpen,
-  onClose,
-}: {
-  usuario: any | null
-  todosMinisterios: any[]
-  isOpen: boolean
-  onClose: () => void
-}) {
+export default function UsuarioMembresiaModal({ usuario, todosMinisterios, isOpen, onClose }: { usuario: any | null; todosMinisterios: any[]; isOpen: boolean; onClose: () => void }) {
   const router = useRouter()
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({})
   const [deleting, setDeleting] = useState(false)
@@ -47,11 +37,7 @@ export default function UsuarioMembresiaModal({
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isProcessing) onClose()
-    }
-
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !isProcessing) onClose() }
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
@@ -65,6 +51,7 @@ export default function UsuarioMembresiaModal({
 
   const baseMembresias = usuario.ministerio_miembros || []
   const misMembresias = Array.isArray(baseMembresias) ? baseMembresias : [baseMembresias]
+  const liderazgos = misMembresias.filter((m: any) => m.es_lider).length
   const estadoMinisterio = (minId: string) => {
     if (overrides[minId]) return overrides[minId]
     const membresia = misMembresias.find((m: any) => m.ministerio_id === minId)
@@ -74,21 +61,13 @@ export default function UsuarioMembresiaModal({
   const handleToggleMembresia = async (minId: string, isMember: boolean, currentlyLider: boolean) => {
     setLoadingIds((previous) => ({ ...previous, [minId]: true }))
     setError('')
-
     try {
       if (isMember && currentlyLider) {
         const liderazgo = await actualizarLiderazgoMinisterial(usuario.id, minId, false)
-        if (!liderazgo.success) {
-          setError(liderazgo.error || 'No fue posible quitar el liderazgo antes de retirar la membresía.')
-          return
-        }
+        if (!liderazgo.success) { setError(liderazgo.error || 'No fue posible quitar el liderazgo antes de retirar la membresía.'); return }
       }
-
       await toggleMembresia(usuario.id, minId, !isMember)
-      setOverrides((previous) => ({
-        ...previous,
-        [minId]: isMember ? { member: false, lider: false } : { member: true, lider: false },
-      }))
+      setOverrides((previous) => ({ ...previous, [minId]: isMember ? { member: false, lider: false } : { member: true, lider: false } }))
       router.refresh()
     } catch (err: any) {
       setError(err.message || 'No fue posible actualizar la membresía.')
@@ -100,18 +79,10 @@ export default function UsuarioMembresiaModal({
   const handleToggleLider = async (minId: string, currentlyLider: boolean) => {
     setLoadingIds((previous) => ({ ...previous, [`lider_${minId}`]: true }))
     setError('')
-
     try {
       const result = await actualizarLiderazgoMinisterial(usuario.id, minId, !currentlyLider)
-      if (!result.success) {
-        setError(result.error || 'No fue posible cambiar el liderazgo.')
-        return
-      }
-
-      setOverrides((previous) => ({
-        ...previous,
-        [minId]: { member: true, lider: !currentlyLider },
-      }))
+      if (!result.success) { setError(result.error || 'No fue posible cambiar el liderazgo.'); return }
+      setOverrides((previous) => ({ ...previous, [minId]: { member: true, lider: !currentlyLider } }))
       router.refresh()
     } catch (err: any) {
       setError(err.message || 'No fue posible cambiar el liderazgo.')
@@ -121,19 +92,13 @@ export default function UsuarioMembresiaModal({
   }
 
   const handleEliminarUsuario = async () => {
-    const confirmacion = window.prompt(
-      `Vas a eliminar definitivamente a ${usuario.nombre_completo || 'este usuario'} y su acceso a VIDA. Esta acción no se puede deshacer.\n\nEscribe ELIMINAR para confirmar.`
-    )
+    const confirmacion = window.prompt(`Vas a eliminar definitivamente a ${usuario.nombre_completo || 'este usuario'} y su acceso a VIDA. Esta acción no se puede deshacer.\n\nEscribe ELIMINAR para confirmar.`)
     if (confirmacion !== 'ELIMINAR') return
-
     setDeleting(true)
     setError('')
     try {
       const result = await eliminarUsuarioDefinitivamente(usuario.id)
-      if (!result.success) {
-        setError(result.error || 'No fue posible eliminar al usuario.')
-        return
-      }
+      if (!result.success) { setError(result.error || 'No fue posible eliminar al usuario.'); return }
       onClose()
       router.refresh()
     } catch (err: any) {
@@ -143,41 +108,45 @@ export default function UsuarioMembresiaModal({
     }
   }
 
+  const inicial = (usuario.nombre_completo || 'U').trim().charAt(0).toUpperCase()
+
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="membresias-modal-title"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !isProcessing) onClose()
-      }}
-    >
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="membresias-modal-title" onMouseDown={(event) => { if (event.target === event.currentTarget && !isProcessing) onClose() }}>
       <div className="flex max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-md flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:max-h-[88vh]">
         <header className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
-          <div className="min-w-0 pr-3">
-            <h3 id="membresias-modal-title" className="font-bold text-[#171923]">Membresías y liderazgo</h3>
-            <p className="mt-0.5 truncate text-xs text-slate-500">{usuario.nombre_completo}</p>
-          </div>
-          <button type="button" onClick={onClose} disabled={isProcessing} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-50 text-gray-500 transition-colors hover:bg-slate-100 disabled:opacity-50" aria-label="Cerrar membresías y liderazgo">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="min-w-0 pr-3"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">Administración</p><h3 id="membresias-modal-title" className="mt-0.5 font-bold text-[#171923]">Ficha del usuario</h3></div>
+          <button type="button" onClick={onClose} disabled={isProcessing} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-50 text-gray-500 transition-colors hover:bg-slate-100 disabled:opacity-50" aria-label="Cerrar ficha del usuario"><X className="h-5 w-5" /></button>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
-          <div className="mb-4 rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
-            <p className="text-xs font-semibold text-amber-800">El liderazgo se asigna por ministerio.</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-amber-700/80">“Asignar como líder” agrega a la persona al ministerio si hace falta y sincroniza su rol automáticamente.</p>
-          </div>
+          <section className="rounded-[20px] bg-slate-50 p-4 ring-1 ring-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-xl font-extrabold text-indigo-600 ring-2 ring-white shadow-sm">{usuario.avatar_url ? <img src={usuario.avatar_url} alt="" className="h-full w-full object-cover" /> : inicial}</div>
+              <div className="min-w-0 flex-1">
+                <h4 className="break-words text-base font-extrabold text-[#171923]">{usuario.nombre_completo || 'Usuario sin nombre'}</h4>
+                <div className="mt-2 flex flex-wrap gap-1.5"><span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-bold capitalize text-indigo-700">{usuario.rol}</span><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${usuario.estado_cuenta === 'suspendido' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>{usuario.estado_cuenta || 'activo'}</span>{usuario.push_activo && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700"><BellRing className="h-3 w-3" />Push</span>}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2 border-t border-slate-200/70 pt-4 text-xs text-slate-600">
+              {usuario.email && <div className="flex min-w-0 items-center gap-2"><Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span className="break-all">{usuario.email}</span></div>}
+              {usuario.telefono && <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span>{usuario.telefono}</span></div>}
+              <div className="flex items-center gap-2"><CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span>En VIDA desde {usuario.created_at ? new Date(usuario.created_at).toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' }) : 'fecha no disponible'}</span></div>
+              <div className="flex items-center gap-2"><Activity className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span>Última actividad: {usuario.ultima_actividad ? new Date(usuario.ultima_actividad).toLocaleString('es-SV') : 'sin registro reciente'}</span></div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-white p-3 text-center shadow-sm"><p className="text-xl font-extrabold text-[#171923]">{misMembresias.length}</p><p className="text-[9px] uppercase tracking-wide text-slate-400">Ministerios</p></div>
+              <div className="rounded-xl bg-white p-3 text-center shadow-sm"><p className="text-xl font-extrabold text-[#171923]">{liderazgos}</p><p className="text-[9px] uppercase tracking-wide text-slate-400">Liderazgos</p></div>
+            </div>
+          </section>
+
+          <div className="mb-4 mt-5 rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3"><p className="text-xs font-semibold text-amber-800">Ministerios y liderazgo</p><p className="mt-1 text-[11px] leading-relaxed text-amber-700/80">El liderazgo se asigna por ministerio. “Asignar como líder” agrega a la persona al ministerio si hace falta y sincroniza su rol automáticamente.</p></div>
 
           {error && <div className="sticky top-0 z-10 mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-600 shadow-sm" role="alert">{error}</div>}
 
           {todosMinisterios.length === 0 ? (
-            <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 text-center">
-              <Users className="mb-3 h-8 w-8 text-slate-300" />
-              <p className="text-sm font-semibold text-slate-600">No hay ministerios disponibles</p>
-              <p className="mt-1 text-xs text-slate-400">Crea un ministerio antes de asignar membresías.</p>
-            </div>
+            <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 text-center"><Users className="mb-3 h-8 w-8 text-slate-300" /><p className="text-sm font-semibold text-slate-600">No hay ministerios disponibles</p><p className="mt-1 text-xs text-slate-400">Crea un ministerio antes de asignar membresías.</p></div>
           ) : (
             <div className="space-y-3">
               {todosMinisterios.map((ministerio) => {
@@ -187,25 +156,12 @@ export default function UsuarioMembresiaModal({
                 return (
                   <section key={ministerio.id} className={`rounded-2xl border p-4 transition-colors ${lider ? 'border-amber-200 bg-amber-50/45' : member ? 'border-indigo-100 bg-indigo-50/40' : 'border-slate-100 bg-white'}`}>
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm" aria-hidden="true">{ministerio.emoji || '✨'}</span>
-                        <div className="min-w-0">
-                          <h4 className="break-words text-sm font-bold leading-snug text-[#171923]">{ministerio.nombre}</h4>
-                          <p className="mt-0.5 text-[11px] text-slate-500">{lider ? 'Líder del ministerio' : member ? 'Miembro del ministerio' : 'Sin asignar'}</p>
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => handleToggleMembresia(ministerio.id, member, lider)} disabled={loadingMem || loadingLider} className={`flex min-h-11 min-w-[88px] shrink-0 items-center justify-center rounded-xl px-3 text-xs font-bold transition-colors disabled:opacity-50 ${member ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}>
-                        {loadingMem ? <Loader2 className="h-4 w-4 animate-spin" /> : member ? 'Quitar' : 'Agregar'}
-                      </button>
+                      <div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm" aria-hidden="true">{ministerio.emoji || '✨'}</span><div className="min-w-0"><h4 className="break-words text-sm font-bold leading-snug text-[#171923]">{ministerio.nombre}</h4><p className="mt-0.5 text-[11px] text-slate-500">{lider ? 'Líder del ministerio' : member ? 'Miembro del ministerio' : 'Sin asignar'}</p></div></div>
+                      <button type="button" onClick={() => handleToggleMembresia(ministerio.id, member, lider)} disabled={loadingMem || loadingLider} className={`flex min-h-11 min-w-[88px] shrink-0 items-center justify-center rounded-xl px-3 text-xs font-bold transition-colors disabled:opacity-50 ${member ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}>{loadingMem ? <Loader2 className="h-4 w-4 animate-spin" /> : member ? 'Quitar' : 'Agregar'}</button>
                     </div>
                     <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                        {lider ? <Shield className="h-4 w-4 text-amber-500" /> : <Users className="h-4 w-4 text-gray-400" />}
-                        {lider ? 'Gestiona este ministerio' : member ? 'Servidor del ministerio' : 'Puede asignarse directamente como líder'}
-                      </span>
-                      <button type="button" onClick={() => handleToggleLider(ministerio.id, lider)} disabled={loadingLider || loadingMem} className={`flex min-h-11 w-full items-center justify-center rounded-xl border px-3 text-xs font-bold transition-colors disabled:opacity-50 min-[380px]:w-auto ${lider ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}>
-                        {loadingLider ? <Loader2 className="h-4 w-4 animate-spin" /> : lider ? 'Quitar liderazgo' : 'Asignar como líder'}
-                      </button>
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">{lider ? <Shield className="h-4 w-4 text-amber-500" /> : <Users className="h-4 w-4 text-gray-400" />}{lider ? 'Gestiona este ministerio' : member ? 'Servidor del ministerio' : 'Puede asignarse directamente como líder'}</span>
+                      <button type="button" onClick={() => handleToggleLider(ministerio.id, lider)} disabled={loadingLider || loadingMem} className={`flex min-h-11 w-full items-center justify-center rounded-xl border px-3 text-xs font-bold transition-colors disabled:opacity-50 min-[380px]:w-auto ${lider ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}>{loadingLider ? <Loader2 className="h-4 w-4 animate-spin" /> : lider ? 'Quitar liderazgo' : 'Asignar como líder'}</button>
                     </div>
                   </section>
                 )
@@ -214,25 +170,11 @@ export default function UsuarioMembresiaModal({
           )}
 
           {puedeEliminar && currentUserId !== usuario.id && (
-            <section className="mt-5 rounded-2xl border border-rose-200 bg-rose-50/60 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 shadow-sm"><Trash2 className="h-4 w-4" /></div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-bold text-rose-900">Eliminar usuario definitivamente</h4>
-                  <p className="mt-1 text-xs leading-relaxed text-rose-700">Borra su cuenta de acceso y los datos que la base tenga configurados para eliminar con ella. No se puede deshacer.</p>
-                  <button type="button" onClick={handleEliminarUsuario} disabled={deleting} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-xs font-bold text-white transition-colors hover:bg-rose-500 disabled:opacity-50">
-                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    {deleting ? 'Eliminando…' : 'Eliminar definitivamente'}
-                  </button>
-                </div>
-              </div>
-            </section>
+            <section className="mt-5 rounded-2xl border border-rose-200 bg-rose-50/60 p-4"><div className="flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 shadow-sm"><Trash2 className="h-4 w-4" /></div><div className="min-w-0 flex-1"><h4 className="text-sm font-bold text-rose-900">Eliminar usuario definitivamente</h4><p className="mt-1 text-xs leading-relaxed text-rose-700">Borra su cuenta de acceso y los datos configurados para eliminar con ella. No se puede deshacer.</p><button type="button" onClick={handleEliminarUsuario} disabled={deleting} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-xs font-bold text-white transition-colors hover:bg-rose-500 disabled:opacity-50">{deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{deleting ? 'Eliminando…' : 'Eliminar definitivamente'}</button></div></div></section>
           )}
         </div>
 
-        <footer className="shrink-0 border-t border-slate-100 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:pb-4">
-          <button type="button" onClick={onClose} disabled={isProcessing} className="min-h-12 w-full rounded-xl bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50">Listo</button>
-        </footer>
+        <footer className="shrink-0 border-t border-slate-100 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:pb-4"><button type="button" onClick={onClose} disabled={isProcessing} className="min-h-12 w-full rounded-xl bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50">Listo</button></footer>
       </div>
     </div>
   )
