@@ -26,7 +26,7 @@ export default async function AdminPage() {
     { label: 'Usuarios', value: usuarios || 0, detail: 'Roles, membresías y acceso', href: '/admin/usuarios', icon: Users, tone: 'bg-indigo-50 text-indigo-600' },
     { label: 'Ministerios', value: ministerios || 0, detail: 'Equipos, líderes y configuración', href: '/admin/ministerios', icon: Building2, tone: 'bg-emerald-50 text-emerald-600' },
     { label: 'Solicitudes', value: pendingIngresos || 0, detail: 'Ingresos pendientes', href: '/admin/solicitudes-ministerios', icon: UserPlus, tone: 'bg-sky-50 text-sky-600' },
-    { label: 'Avisos', value: pendingAvisos || 0, detail: 'Publicaciones por revisar', href: '/avisos', icon: Megaphone, tone: 'bg-amber-50 text-amber-600' },
+    { label: 'Avisos', value: pendingAvisos || 0, detail: 'Publicaciones y revisión', href: '/admin/avisos', icon: Megaphone, tone: 'bg-amber-50 text-amber-600' },
     { label: 'Buzón', value: pendingPreguntas || 0, detail: 'Preguntas y mensajes', href: '/admin/preguntas', icon: MessageCircleQuestion, tone: 'bg-rose-50 text-rose-600' },
     { label: 'Análisis', value: '›', detail: 'Comportamiento y operación', href: '/admin/analisis', icon: BarChart3, tone: 'bg-violet-50 text-violet-600' },
   ]
