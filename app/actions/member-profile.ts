@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-const allowedSex = new Set(['masculino', 'femenino', 'prefiere_no_indicar'])
+const allowedSex = new Set(['masculino', 'femenino'])
 const allowedCivil = new Set(['soltero', 'casado', 'divorciado', 'viudo', 'prefiere_no_indicar'])
 
 function text(fd: FormData, key: string, max = 500) {

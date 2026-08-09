@@ -62,7 +62,7 @@ export default async function AdminAyudaSolidariaPage() {
             <ArrowLeft className="h-4 w-4" /> Administración
           </Link>
           <div className="mt-6 flex items-start gap-4">
-            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/12 ring-1 ring-white/20"><HeartHandshake className="h-7 w-7" /></span>
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-rose-600 text-white shadow-[0_8px_20px_rgba(225,29,72,0.25)]"><HeartHandshake className="h-7 w-7" /></span>
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Gestión privada</p>
               <h1 className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.04em]">Ayuda Solidaria</h1>
