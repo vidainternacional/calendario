@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, Loader2, Shield, Users } from 'lucide-react'
-import { toggleMembresia, setEsLider } from '@/app/actions/admin'
+import { toggleMembresia } from '@/app/actions/admin'
+import { actualizarLiderazgoMinisterial } from '@/app/actions/liderazgo'
 
 export default function UsuarioMembresiaModal({
   usuario,
@@ -15,14 +17,17 @@ export default function UsuarioMembresiaModal({
   isOpen: boolean
   onClose: () => void
 }) {
+  const router = useRouter()
   const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({})
   const [error, setError] = useState('')
+  const [overrides, setOverrides] = useState<Record<string, { member: boolean; lider: boolean }>>({})
 
   const isProcessing = Object.values(loadingIds).some(Boolean)
 
   useEffect(() => {
     if (!isOpen) {
       setError('')
+      setOverrides({})
       return
     }
 
@@ -45,15 +50,31 @@ export default function UsuarioMembresiaModal({
 
   const baseMembresias = usuario.ministerio_miembros || []
   const misMembresias = Array.isArray(baseMembresias) ? baseMembresias : [baseMembresias]
-  const hasMinisterio = (minId: string) => misMembresias.some((m: any) => m.ministerio_id === minId)
-  const isLider = (minId: string) => misMembresias.some((m: any) => m.ministerio_id === minId && m.es_lider)
+  const estadoMinisterio = (minId: string) => {
+    if (overrides[minId]) return overrides[minId]
+    const membresia = misMembresias.find((m: any) => m.ministerio_id === minId)
+    return { member: !!membresia, lider: !!membresia?.es_lider }
+  }
 
-  const handleToggleMembresia = async (minId: string, isMember: boolean) => {
+  const handleToggleMembresia = async (minId: string, isMember: boolean, currentlyLider: boolean) => {
     setLoadingIds((previous) => ({ ...previous, [minId]: true }))
     setError('')
 
     try {
+      if (isMember && currentlyLider) {
+        const liderazgo = await actualizarLiderazgoMinisterial(usuario.id, minId, false)
+        if (!liderazgo.success) {
+          setError(liderazgo.error || 'No fue posible quitar el liderazgo antes de retirar la membresía.')
+          return
+        }
+      }
+
       await toggleMembresia(usuario.id, minId, !isMember)
+      setOverrides((previous) => ({
+        ...previous,
+        [minId]: isMember ? { member: false, lider: false } : { member: true, lider: false },
+      }))
+      router.refresh()
     } catch (err: any) {
       setError(err.message || 'No fue posible actualizar la membresía.')
     } finally {
@@ -66,10 +87,17 @@ export default function UsuarioMembresiaModal({
     setError('')
 
     try {
-      const result = await setEsLider(usuario.id, minId, !currentlyLider)
-      if (result && !result.success) {
+      const result = await actualizarLiderazgoMinisterial(usuario.id, minId, !currentlyLider)
+      if (!result.success) {
         setError(result.error || 'No fue posible cambiar el liderazgo.')
+        return
       }
+
+      setOverrides((previous) => ({
+        ...previous,
+        [minId]: { member: true, lider: !currentlyLider },
+      }))
+      router.refresh()
     } catch (err: any) {
       setError(err.message || 'No fue posible cambiar el liderazgo.')
     } finally {
@@ -91,7 +119,7 @@ export default function UsuarioMembresiaModal({
         <header className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
           <div className="min-w-0 pr-3">
             <h3 id="membresias-modal-title" className="font-bold text-[#171923]">
-              Membresías
+              Membresías y liderazgo
             </h3>
             <p className="mt-0.5 truncate text-xs text-slate-500">{usuario.nombre_completo}</p>
           </div>
@@ -101,13 +129,20 @@ export default function UsuarioMembresiaModal({
             onClick={onClose}
             disabled={isProcessing}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-50 text-gray-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
-            aria-label="Cerrar membresías"
+            aria-label="Cerrar membresías y liderazgo"
           >
             <X className="h-5 w-5" />
           </button>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+          <div className="mb-4 rounded-2xl border border-amber-100 bg-amber-50/70 px-4 py-3">
+            <p className="text-xs font-semibold text-amber-800">El liderazgo se asigna por ministerio.</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-amber-700/80">
+              “Asignar como líder” agrega a la persona al ministerio si hace falta y sincroniza su rol automáticamente.
+            </p>
+          </div>
+
           {error && (
             <div className="sticky top-0 z-10 mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-600 shadow-sm" role="alert">
               {error}
@@ -123,8 +158,7 @@ export default function UsuarioMembresiaModal({
           ) : (
             <div className="space-y-3">
               {todosMinisterios.map((ministerio) => {
-                const member = hasMinisterio(ministerio.id)
-                const lider = isLider(ministerio.id)
+                const { member, lider } = estadoMinisterio(ministerio.id)
                 const loadingMem = loadingIds[ministerio.id]
                 const loadingLider = loadingIds[`lider_${ministerio.id}`]
 
@@ -132,7 +166,7 @@ export default function UsuarioMembresiaModal({
                   <section
                     key={ministerio.id}
                     className={`rounded-2xl border p-4 transition-colors ${
-                      member ? 'border-indigo-100 bg-indigo-50/40' : 'border-slate-100 bg-white'
+                      lider ? 'border-amber-200 bg-amber-50/45' : member ? 'border-indigo-100 bg-indigo-50/40' : 'border-slate-100 bg-white'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -143,14 +177,14 @@ export default function UsuarioMembresiaModal({
                         <div className="min-w-0">
                           <h4 className="break-words text-sm font-bold leading-snug text-[#171923]">{ministerio.nombre}</h4>
                           <p className="mt-0.5 text-[11px] text-slate-500">
-                            {member ? (lider ? 'Miembro y líder' : 'Miembro del ministerio') : 'Sin asignar'}
+                            {lider ? 'Líder del ministerio' : member ? 'Miembro del ministerio' : 'Sin asignar'}
                           </p>
                         </div>
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => handleToggleMembresia(ministerio.id, member)}
+                        onClick={() => handleToggleMembresia(ministerio.id, member, lider)}
                         disabled={loadingMem || loadingLider}
                         className={`flex min-h-11 min-w-[88px] shrink-0 items-center justify-center rounded-xl px-3 text-xs font-bold transition-colors disabled:opacity-50 ${
                           member
@@ -162,33 +196,31 @@ export default function UsuarioMembresiaModal({
                       </button>
                     </div>
 
-                    {member && (
-                      <div className="mt-4 flex flex-col gap-3 border-t border-indigo-100/70 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-                          {lider ? <Shield className="h-4 w-4 text-amber-500" /> : <Users className="h-4 w-4 text-gray-400" />}
-                          {lider ? 'Líder del ministerio' : 'Servidor del ministerio'}
-                        </span>
+                    <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                        {lider ? <Shield className="h-4 w-4 text-amber-500" /> : <Users className="h-4 w-4 text-gray-400" />}
+                        {lider ? 'Gestiona este ministerio' : member ? 'Servidor del ministerio' : 'Puede asignarse directamente como líder'}
+                      </span>
 
-                        <button
-                          type="button"
-                          onClick={() => handleToggleLider(ministerio.id, lider)}
-                          disabled={loadingLider || loadingMem}
-                          className={`flex min-h-11 w-full items-center justify-center rounded-xl border px-3 text-xs font-bold transition-colors disabled:opacity-50 min-[380px]:w-auto ${
-                            lider
-                              ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          {loadingLider ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : lider ? (
-                            'Quitar liderazgo'
-                          ) : (
-                            'Hacer líder'
-                          )}
-                        </button>
-                      </div>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleLider(ministerio.id, lider)}
+                        disabled={loadingLider || loadingMem}
+                        className={`flex min-h-11 w-full items-center justify-center rounded-xl border px-3 text-xs font-bold transition-colors disabled:opacity-50 min-[380px]:w-auto ${
+                          lider
+                            ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                            : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'
+                        }`}
+                      >
+                        {loadingLider ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : lider ? (
+                          'Quitar liderazgo'
+                        ) : (
+                          'Asignar como líder'
+                        )}
+                      </button>
+                    </div>
                   </section>
                 )
               })}
