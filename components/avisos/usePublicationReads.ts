@@ -113,18 +113,5 @@ export function useUnreadPublicationsCount() {
     }
   }, [])
 
-  useEffect(() => {
-    const badgeNavigator = navigator as Navigator & {
-      setAppBadge?: (value?: number) => Promise<void>
-      clearAppBadge?: () => Promise<void>
-    }
-
-    if (count > 0 && badgeNavigator.setAppBadge) {
-      void badgeNavigator.setAppBadge(count).catch(() => undefined)
-    } else if (count === 0 && badgeNavigator.clearAppBadge) {
-      void badgeNavigator.clearAppBadge().catch(() => undefined)
-    }
-  }, [count])
-
   return count
 }

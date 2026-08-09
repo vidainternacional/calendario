@@ -5,7 +5,7 @@ import { useEffect, useState, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Megaphone, User, BookOpen } from 'lucide-react'
-import { useUnreadPublicationsCount } from '@/components/avisos/usePublicationReads'
+import { usePendingIndicators } from '@/components/notificaciones/usePendingIndicators'
 
 const PREF_KEY = 'vida-biblia-preferencias'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
@@ -57,7 +57,7 @@ export default function BottomNav() {
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
-  const unreadAvisos = useUnreadPublicationsCount()
+  const { unreadAvisos } = usePendingIndicators()
 
   useEffect(() => {
     setPortalReady(true)
