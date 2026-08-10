@@ -33,6 +33,7 @@ async function validarEvento(admin: any, ministerioId: string, eventoId: string)
 }
 
 function revalidarProgramacion(ministerioId: string) {
+  revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/programacion`)
   revalidatePath(`/ministerios/${ministerioId}/programacion/equipo`)
   revalidatePath('/admin/usuarios')
@@ -110,15 +111,25 @@ export async function quitarServidorAlabanza(ministerioId: string, eventoId: str
   revalidarProgramacion(ministerioId)
 }
 
+function datosCancion(formData: FormData) {
+  return {
+    titulo: String(formData.get('titulo') || '').trim(),
+    tonalidad: String(formData.get('tonalidad') || '').trim() || null,
+    spotify_url: String(formData.get('spotify_url') || '').trim() || null,
+    youtube_url: String(formData.get('youtube_url') || '').trim() || null,
+    notas: String(formData.get('notas') || '').trim() || null,
+  }
+}
+
 export async function agregarCancionAlabanza(ministerioId: string, eventoId: string, formData: FormData): Promise<void> {
   const acceso = await obtenerAcceso(ministerioId)
   if (!acceso?.puedeProgramar) fail('No tienes permiso para editar el repertorio.')
-  const titulo = String(formData.get('titulo') || '').trim()
-  if (!titulo) fail('Escribe el título de la canción.')
+  const cancion = datosCancion(formData)
+  if (!cancion.titulo) fail('Escribe el título de la canción.')
   const admin = createAdminClient() as any
   if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
   const { count } = await admin.from('evento_repertorio').select('id', { count: 'exact', head: true }).eq('evento_id', eventoId)
-  const { error } = await admin.from('evento_repertorio').insert({ evento_id: eventoId, orden: count ?? 0, titulo, tonalidad: String(formData.get('tonalidad') || '').trim() || null, enlace: String(formData.get('enlace') || '').trim() || null, notas: String(formData.get('notas') || '').trim() || null, creado_por: acceso.userId })
+  const { error } = await admin.from('evento_repertorio').insert({ evento_id: eventoId, orden: count ?? 0, ...cancion, creado_por: acceso.userId })
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }
@@ -127,11 +138,11 @@ export async function actualizarCancionAlabanza(ministerioId: string, eventoId: 
   const acceso = await obtenerAcceso(ministerioId)
   if (!acceso?.puedeProgramar) fail('No tienes permiso para editar el repertorio.')
   const cancionId = String(formData.get('cancion_id') || '')
-  const titulo = String(formData.get('titulo') || '').trim()
-  if (!cancionId || !titulo) fail('Canción inválida.')
+  const cancion = datosCancion(formData)
+  if (!cancionId || !cancion.titulo) fail('Canción inválida.')
   const admin = createAdminClient() as any
   if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
-  const { error } = await admin.from('evento_repertorio').update({ titulo, tonalidad: String(formData.get('tonalidad') || '').trim() || null, enlace: String(formData.get('enlace') || '').trim() || null, notas: String(formData.get('notas') || '').trim() || null, updated_at: new Date().toISOString() }).eq('id', cancionId).eq('evento_id', eventoId)
+  const { error } = await admin.from('evento_repertorio').update({ ...cancion, updated_at: new Date().toISOString() }).eq('id', cancionId).eq('evento_id', eventoId)
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }

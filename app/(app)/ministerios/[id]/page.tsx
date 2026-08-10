@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardList,
   Megaphone,
+  Music2,
   Send,
   UserPlus,
   Users,
@@ -52,6 +53,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   const { data: perfil } = await db.from('profiles').select('rol').eq('id', user.id).single()
   const esLider = mem?.es_lider === true || ['pastor', 'administrador'].includes(perfil?.rol)
   const esMiembro = !!mem || esLider
+  const esAlabanza = String(min.nombre || '').trim().toLowerCase() === 'alabanza'
   const fuenteTitulo = TITULO_FONT[min.fuente_titulo] || TITULO_FONT.moderna
   const fuenteCuerpo = CUERPO_FONT[min.fuente_cuerpo] || CUERPO_FONT.clasica
   const color = min.color_primario || '#5b3df5'
@@ -59,247 +61,50 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   const ingresosPendientes = ingresosPendientesRows?.length || 0
 
   const accesos = [
-    {
-      href: `/ministerios/${id}/avisos`,
-      label: 'Avisos',
-      detail: 'Noticias y recordatorios',
-      icon: Megaphone,
-      visible: true,
-      badge: 0,
-    },
-    {
-      href: `/ministerios/${id}/miembros`,
-      label: 'Miembros',
-      detail: `${miembros ?? 0} ${miembros === 1 ? 'servidor' : 'servidores'}`,
-      icon: Users,
-      visible: true,
-      badge: 0,
-    },
-    {
-      href: `/ministerios/${id}/solicitudes`,
-      label: 'Solicitudes',
-      detail: 'Peticiones del equipo',
-      icon: ClipboardList,
-      visible: esMiembro,
-      badge: 0,
-    },
-    {
-      href: `/ministerios/${id}/solicitudes-ingreso`,
-      label: 'Ingresos',
-      detail: ingresosPendientes
-        ? `${ingresosPendientes} ${ingresosPendientes === 1 ? 'pendiente' : 'pendientes'}`
-        : 'Sin pendientes',
-      icon: UserPlus,
-      visible: esLider,
-      badge: ingresosPendientes,
-    },
+    { href: `/ministerios/${id}/avisos`, label: 'Avisos', detail: 'Noticias y recordatorios', icon: Megaphone, visible: true, badge: 0 },
+    { href: `/ministerios/${id}/miembros`, label: 'Miembros', detail: `${miembros ?? 0} ${miembros === 1 ? 'servidor' : 'servidores'}`, icon: Users, visible: true, badge: 0 },
+    { href: `/ministerios/${id}/solicitudes`, label: 'Solicitudes', detail: 'Peticiones del equipo', icon: ClipboardList, visible: esMiembro, badge: 0 },
+    { href: `/ministerios/${id}/solicitudes-ingreso`, label: 'Ingresos', detail: ingresosPendientes ? `${ingresosPendientes} ${ingresosPendientes === 1 ? 'pendiente' : 'pendientes'}` : 'Sin pendientes', icon: UserPlus, visible: esLider, badge: ingresosPendientes },
   ].filter((item) => item.visible)
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] pb-28" style={{ fontFamily: fuenteCuerpo }}>
       <section className="relative isolate min-h-[320px] overflow-hidden rounded-b-[30px] text-white sm:min-h-[360px] sm:rounded-b-[36px]">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: min.portada_url
-              ? `linear-gradient(180deg, rgba(15,23,42,.12), rgba(15,23,42,.74)), url("${min.portada_url}")`
-              : `linear-gradient(145deg, ${color}, ${colorSecundario})`,
-          }}
-        />
-        {!min.portada_url && (
-          <>
-            <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-30 blur-2xl" style={{ backgroundColor: colorSecundario }} />
-            <div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-white/15 blur-2xl" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.24),transparent_28%),radial-gradient(circle_at_84%_74%,rgba(255,255,255,0.12),transparent_24%)]" />
-            <div className="absolute right-5 top-20 select-none text-[7rem] leading-none opacity-[0.12] sm:right-10 sm:text-[9rem]" aria-hidden="true">{min.emoji}</div>
-          </>
-        )}
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: min.portada_url ? `linear-gradient(180deg, rgba(15,23,42,.12), rgba(15,23,42,.74)), url("${min.portada_url}")` : `linear-gradient(145deg, ${color}, ${colorSecundario})` }} />
+        {!min.portada_url && <><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-30 blur-2xl" style={{ backgroundColor: colorSecundario }} /><div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-white/15 blur-2xl" /><div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.24),transparent_28%),radial-gradient(circle_at_84%_74%,rgba(255,255,255,0.12),transparent_24%)]" /><div className="absolute right-5 top-20 select-none text-[7rem] leading-none opacity-[0.12] sm:right-10 sm:text-[9rem]" aria-hidden="true">{min.emoji}</div></>}
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
-
         <div className="relative mx-auto flex min-h-[320px] max-w-2xl flex-col justify-end px-4 pb-8 pt-[calc(7rem+env(safe-area-inset-top))] sm:min-h-[360px] sm:pb-9">
           <div className="flex min-w-0 items-end gap-3.5">
-            <div className="grid h-[76px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-white/90 bg-white/18 text-3xl shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md sm:h-24 sm:w-24 sm:text-4xl" aria-hidden="true">
-              {min.avatar_url ? <img src={min.avatar_url} alt="" className="h-full w-full object-cover" /> : min.emoji}
-            </div>
-            <div className="min-w-0 flex-1 pb-0.5">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.19em] text-white/70">Ministerio</p>
-              <h1 className="break-words text-[27px] font-bold leading-[1.05] tracking-[-0.035em] drop-shadow-sm sm:text-4xl" style={{ fontFamily: fuenteTitulo }}>
-                {min.nombre}
-              </h1>
-              <p className="mt-1.5 break-words text-[13px] leading-relaxed text-white/88">
-                {miembros ?? 0} {miembros === 1 ? 'servidor' : 'servidores'}
-                {esLider ? ' · Eres líder aquí' : esMiembro ? ' · Eres parte del equipo' : ''}
-              </p>
-            </div>
+            <div className="grid h-[76px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-white/90 bg-white/18 text-3xl shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md sm:h-24 sm:w-24 sm:text-4xl" aria-hidden="true">{min.avatar_url ? <img src={min.avatar_url} alt="" className="h-full w-full object-cover" /> : min.emoji}</div>
+            <div className="min-w-0 flex-1 pb-0.5"><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.19em] text-white/70">Ministerio</p><h1 className="break-words text-[27px] font-bold leading-[1.05] tracking-[-0.035em] drop-shadow-sm sm:text-4xl" style={{ fontFamily: fuenteTitulo }}>{min.nombre}</h1><p className="mt-1.5 break-words text-[13px] leading-relaxed text-white/88">{miembros ?? 0} {miembros === 1 ? 'servidor' : 'servidores'}{esLider ? ' · Eres líder aquí' : esMiembro ? ' · Eres parte del equipo' : ''}</p></div>
           </div>
-          {min.descripcion && (
-            <p className="mt-4 max-w-xl break-words text-[13px] leading-5 text-white/88 drop-shadow-sm">
-              {min.descripcion}
-            </p>
-          )}
+          {min.descripcion && <p className="mt-4 max-w-xl break-words text-[13px] leading-5 text-white/88 drop-shadow-sm">{min.descripcion}</p>}
         </div>
       </section>
 
       <div className="relative z-10 mx-auto -mt-3 max-w-2xl space-y-7 px-4">
         <section>
-          <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-            Herramientas
-          </h2>
-
-          {esLider ? (
-            <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
-              {accesos.map((item, index) => {
-                const Icon = item.icon
-                const isLeft = index % 2 === 0
-                const hasRowBelow = index < accesos.length - 2
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}
-                  >
-                    <span
-                      className="relative grid h-9 w-9 place-items-center rounded-full"
-                      style={{ backgroundColor: `${color}13`, color }}
-                    >
-                      <Icon className="h-[18px] w-[18px]" />
-                      {item.badge > 0 && (
-                        <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">
-                          {item.badge > 99 ? '99+' : item.badge}
-                        </span>
-                      )}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span>
-                      <span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span>
-                    </span>
-                  </Link>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2 rounded-[25px] bg-white px-3 py-4 ring-1 ring-black/[0.045]">
-              {accesos.map((item) => {
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="group flex min-w-0 flex-col items-center justify-start rounded-2xl px-1 py-1.5 text-center transition active:scale-[0.97] active:bg-slate-50"
-                  >
-                    <span
-                      className="grid h-12 w-12 place-items-center rounded-full shadow-[0_5px_14px_rgba(15,23,42,0.05)]"
-                      style={{ backgroundColor: `${color}13`, color }}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <span className="mt-2 block max-w-full truncate text-[12px] font-bold text-[#171923]">{item.label}</span>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
+          <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Herramientas</h2>
+          {esLider ? <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">{accesos.map((item, index) => { const Icon = item.icon; const isLeft = index % 2 === 0; const hasRowBelow = index < accesos.length - 2; return <Link key={item.href} href={item.href} className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}><span className="relative grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: `${color}13`, color }}><Icon className="h-[18px] w-[18px]" />{item.badge > 0 && <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">{item.badge > 99 ? '99+' : item.badge}</span>}</span><span className="min-w-0"><span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span><span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span></span></Link> })}</div> : <div className="grid grid-cols-3 gap-2 rounded-[25px] bg-white px-3 py-4 ring-1 ring-black/[0.045]">{accesos.map((item) => { const Icon = item.icon; return <Link key={item.href} href={item.href} className="group flex min-w-0 flex-col items-center justify-start rounded-2xl px-1 py-1.5 text-center transition active:scale-[0.97] active:bg-slate-50"><span className="grid h-12 w-12 place-items-center rounded-full shadow-[0_5px_14px_rgba(15,23,42,0.05)]" style={{ backgroundColor: `${color}13`, color }}><Icon className="h-5 w-5" /></span><span className="mt-2 block max-w-full truncate text-[12px] font-bold text-[#171923]">{item.label}</span></Link> })}</div>}
         </section>
 
-        {esLider && (
-          <section>
-            <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-              Panel del líder
-            </h2>
-            <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
-              <Link
-                href={`/ministerios/${id}/avisos/nuevo`}
-                className="flex min-h-[58px] items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 active:bg-slate-50"
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white" style={{ backgroundColor: color }}>
-                    <Send className="h-[17px] w-[17px]" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold text-[#171923]">Publicar un aviso</span>
-                    <span className="block truncate text-xs text-slate-400">Comunicar al equipo</span>
-                  </span>
-                </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />
-              </Link>
-              <div className="p-4">
-                <NotificarMinisterioForm ministerioId={id} color={color} />
-              </div>
-            </div>
-          </section>
-        )}
+        {esLider && <section>
+          <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Panel del líder</h2>
+          <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
+            {esAlabanza && <Link href={`/ministerios/${id}/programacion`} className="flex min-h-[66px] items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 active:bg-slate-50"><span className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white" style={{ backgroundColor: color }}><Music2 className="h-[18px] w-[18px]" /></span><span className="min-w-0"><span className="block truncate text-sm font-bold text-[#171923]">Programación de Alabanza</span><span className="block truncate text-xs text-slate-400">Equipo, repertorio y paleta por servicio</span></span></span><ChevronRight className="h-5 w-5 shrink-0 text-slate-300" /></Link>}
+            <Link href={`/ministerios/${id}/avisos/nuevo`} className="flex min-h-[58px] items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 active:bg-slate-50"><span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white" style={{ backgroundColor: color }}><Send className="h-[17px] w-[17px]" /></span><span className="min-w-0"><span className="block truncate text-sm font-bold text-[#171923]">Publicar un aviso</span><span className="block truncate text-xs text-slate-400">Comunicar al equipo</span></span></span><ChevronRight className="h-5 w-5 shrink-0 text-slate-300" /></Link>
+            <div className="p-4"><NotificarMinisterioForm ministerioId={id} color={color} /></div>
+          </div>
+        </section>}
 
         <section>
-          <div className="mb-2.5 flex items-center justify-between px-1">
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-              Próximos eventos
-            </h2>
-            <CalendarDays className="h-4 w-4 text-slate-300" />
-          </div>
-          {(!eventosMin || eventosMin.length === 0) ? (
-            <div className="rounded-[25px] bg-white px-5 py-8 text-center text-sm text-slate-400 ring-1 ring-black/[0.045]">
-              Sin eventos próximos.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
-              {(eventosMin ?? []).map((evento: any, index: number) => {
-                const fecha = new Date(evento.fecha_inicio)
-                return (
-                  <div
-                    key={evento.id}
-                    className={`flex min-w-0 items-center gap-3 px-4 py-3.5 ${index < eventosMin.length - 1 ? 'border-b border-slate-100' : ''}`}
-                  >
-                    <div className="w-11 shrink-0 text-center">
-                      <p className="text-[10px] font-extrabold uppercase tracking-wide" style={{ color }}>
-                        {fecha.toLocaleDateString('es', { month: 'short' })}
-                      </p>
-                      <p className="mt-0.5 text-[22px] font-extrabold leading-none text-[#171923]">{fecha.getDate()}</p>
-                    </div>
-                    <div className="min-w-0 flex-1 border-l border-slate-100 pl-3">
-                      <p className="truncate text-sm font-bold text-[#171923]">{evento.titulo}</p>
-                      <p className="mt-1 truncate text-xs text-slate-400">
-                        {fecha.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                        {evento.ubicacion ? ` · ${evento.ubicacion}` : ''}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          <div className="mb-2.5 flex items-center justify-between px-1"><h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Próximos eventos</h2><CalendarDays className="h-4 w-4 text-slate-300" /></div>
+          {(!eventosMin || eventosMin.length === 0) ? <div className="rounded-[25px] bg-white px-5 py-8 text-center text-sm text-slate-400 ring-1 ring-black/[0.045]">Sin eventos próximos.</div> : <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">{(eventosMin ?? []).map((evento: any, index: number) => { const fecha = new Date(evento.fecha_inicio); return <div key={evento.id} className={`flex min-w-0 items-center gap-3 px-4 py-3.5 ${index < eventosMin.length - 1 ? 'border-b border-slate-100' : ''}`}><div className="w-11 shrink-0 text-center"><p className="text-[10px] font-extrabold uppercase tracking-wide" style={{ color }}>{fecha.toLocaleDateString('es', { month: 'short' })}</p><p className="mt-0.5 text-[22px] font-extrabold leading-none text-[#171923]">{fecha.getDate()}</p></div><div className="min-w-0 flex-1 border-l border-slate-100 pl-3"><p className="truncate text-sm font-bold text-[#171923]">{evento.titulo}</p><p className="mt-1 truncate text-xs text-slate-400">{fecha.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit', hour12: true })}{evento.ubicacion ? ` · ${evento.ubicacion}` : ''}</p></div></div> })}</div>}
         </section>
 
         <section>
-          <div className="mb-2.5 flex items-center justify-between px-1">
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-              Publicaciones recientes
-            </h2>
-            <Megaphone className="h-4 w-4 text-slate-300" />
-          </div>
-          {(!pubs || pubs.length === 0) ? (
-            <div className="rounded-[25px] bg-white px-5 py-8 text-center text-sm text-slate-400 ring-1 ring-black/[0.045]">
-              Aún no hay publicaciones.
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
-              {(pubs ?? []).map((pub: any, index: number) => (
-                <article
-                  key={pub.id}
-                  className={`px-4 py-4 ${index < pubs.length - 1 ? 'border-b border-slate-100' : ''}`}
-                >
-                  <p className="break-words text-sm font-bold leading-snug text-[#171923]">{pub.titulo}</p>
-                  {pub.cuerpo && (
-                    <p className="mt-1.5 line-clamp-3 break-words text-[13px] leading-5 text-slate-500">
-                      {pub.cuerpo}
-                    </p>
-                  )}
-                  <p className="mt-2.5 break-words text-[11px] text-slate-400">
-                    {pub.autor?.nombre_completo || 'Usuario'} · {new Date(pub.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
-                  </p>
-                </article>
-              ))}
-            </div>
-          )}
+          <div className="mb-2.5 flex items-center justify-between px-1"><h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Publicaciones recientes</h2><Megaphone className="h-4 w-4 text-slate-300" /></div>
+          {(!pubs || pubs.length === 0) ? <div className="rounded-[25px] bg-white px-5 py-8 text-center text-sm text-slate-400 ring-1 ring-black/[0.045]">Aún no hay publicaciones.</div> : <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">{(pubs ?? []).map((pub: any, index: number) => <article key={pub.id} className={`px-4 py-4 ${index < pubs.length - 1 ? 'border-b border-slate-100' : ''}`}><p className="break-words text-sm font-bold leading-snug text-[#171923]">{pub.titulo}</p>{pub.cuerpo && <p className="mt-1.5 line-clamp-3 break-words text-[13px] leading-5 text-slate-500">{pub.cuerpo}</p>}<p className="mt-2.5 break-words text-[11px] text-slate-400">{pub.autor?.nombre_completo || 'Usuario'} · {new Date(pub.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}</p></article>)}</div>}
         </section>
       </div>
     </main>
