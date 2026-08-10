@@ -39,24 +39,27 @@ export default async function CalendarioPage({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const query = searchParams ? await searchParams : {}
   const eventParam = firstQueryValue(query.evento)?.trim() || null
   const initialEventId = eventParam && /^[0-9a-f-]{36}$/i.test(eventParam) ? eventParam : null
-
-  // Los enlaces profundos a un evento no deben montar primero la interfaz completa
-  // del Calendario. Se resuelven a una ficha directa y el historial conserva el
-  // origen para que Atrás regrese a la pantalla desde la que se abrió.
-  if (initialEventId) {
-    redirect(`/eventos/${initialEventId}`)
-  }
+  if (initialEventId) redirect(`/eventos/${initialEventId}`)
 
   let initialEventDate = firstQueryValue(query.fecha)?.trim() || null
+  if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) initialEventDate = null
 
-  if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) {
-    initialEventDate = null
+  // Inicio enlaza por el instante exacto que ya muestra en la tarjeta. La RPC
+  // resuelve ese instante únicamente entre los calendarios visibles del usuario,
+  // incluso si el elemento acaba de empezar, y abre su ficha directa.
+  if (initialEventDate) {
+    const { data: resolvedRows } = await (supabase as any).rpc('resolve_visible_calendar_item_at', {
+      p_fecha: new Date(initialEventDate).toISOString(),
+    })
+    const resolved = resolvedRows?.[0]
+    if (resolved?.id) {
+      redirect(resolved.item_type === 'reminder' ? `/recordatorios/${resolved.id}` : `/eventos/${resolved.id}`)
+    }
   }
 
   const [profileReq, leaderReq] = await Promise.all([

@@ -1,27 +1,148 @@
 import Link from 'next/link'
-import { redirect, notFound } from 'next/navigation'
-import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Music2, Palette, Users } from 'lucide-react'
+import { notFound, redirect } from 'next/navigation'
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Music2,
+  Palette,
+  Plus,
+  Users,
+} from 'lucide-react'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import { agregarCancionAlabanza, actualizarCancionAlabanza, eliminarCancionAlabanza, guardarPaletaAlabanza } from '@/app/actions/programacion-alabanza'
+import {
+  agregarCancionAlabanza,
+  agregarCancionBibliotecaAlabanza,
+  actualizarCancionAlabanza,
+  eliminarCancionAlabanza,
+  guardarPaletaAlabanza,
+} from '@/app/actions/programacion-alabanza'
+import { crearServicioAlabanza, prepararFechaAlabanza } from '@/app/actions/servicios-alabanza'
 import PaletaAlabanzaEditor from '@/components/ministerios/PaletaAlabanzaEditor'
+import RepertorioBibliotecaPicker, { type CancionBiblioteca } from '@/components/ministerios/RepertorioBibliotecaPicker'
+import {
+  cargarCalendarioMinisterial,
+  type ProgramacionCalendarItem,
+} from '@/lib/programacion/calendario-ministerial'
 
 export const dynamic = 'force-dynamic'
 
 function mesActualSV() {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/El_Salvador', year: 'numeric', month: '2-digit' }).formatToParts(new Date())
-  return `${parts.find((p) => p.type === 'year')?.value || '2026'}-${parts.find((p) => p.type === 'month')?.value || '01'}`
-}
-function rangoMes(mes: string) {
-  const [y, m] = mes.split('-').map(Number)
-  const nextY = m === 12 ? y + 1 : y
-  const nextM = m === 12 ? 1 : m + 1
-  return { start: `${y}-${String(m).padStart(2, '0')}-01T00:00:00-06:00`, end: `${nextY}-${String(nextM).padStart(2, '0')}-01T00:00:00-06:00` }
-}
-function fechaSV(value: string) {
-  return new Intl.DateTimeFormat('es-SV', { timeZone: 'America/El_Salvador', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(value))
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/El_Salvador',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date())
+  return `${parts.find((part) => part.type === 'year')?.value || '2026'}-${parts.find((part) => part.type === 'month')?.value || '01'}`
 }
 
-export default async function ProgramacionMinisterialPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ mes?: string; evento?: string }> }) {
+function rangoMes(mes: string) {
+  const [year, month] = mes.split('-').map(Number)
+  const nextYear = month === 12 ? year + 1 : year
+  const nextMonth = month === 12 ? 1 : month + 1
+  return {
+    start: `${year}-${String(month).padStart(2, '0')}-01T00:00:00-06:00`,
+    end: `${nextYear}-${String(nextMonth).padStart(2, '0')}-01T00:00:00-06:00`,
+  }
+}
+
+function moverMes(mes: string, delta: number) {
+  const [year, month] = mes.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1 + delta, 1))
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function nombreMes(mes: string) {
+  const [year, month] = mes.split('-').map(Number)
+  const text = new Intl.DateTimeFormat('es-SV', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, 1)))
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+function fechaKeySV(value: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/El_Salvador',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value))
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+  return `${year}-${month}-${day}`
+}
+
+function fechaSV(value: string) {
+  return new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
+function horaSV(value: string) {
+  return new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
+function fechaLargaDia(dateKey: string) {
+  const [year, month, day] = dateKey.split('-').map(Number)
+  const text = new Intl.DateTimeFormat('es-SV', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day)))
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+function celdasMes(mes: string) {
+  const [year, month] = mes.split('-').map(Number)
+  const first = new Date(Date.UTC(year, month - 1, 1))
+  const days = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  const leading = first.getUTCDay()
+  return [
+    ...Array.from({ length: leading }, () => null),
+    ...Array.from({ length: days }, (_, index) => index + 1),
+  ]
+}
+
+function dateKeyFromDay(mes: string, day: number) {
+  return `${mes}-${String(day).padStart(2, '0')}`
+}
+
+function tonoHistorial(rows: any[]) {
+  const tonos: string[] = []
+  for (const row of rows) {
+    const tone = String(row.tonalidad || '').trim()
+    if (tone && !tonos.some((item) => item.toLowerCase() === tone.toLowerCase())) tonos.push(tone)
+  }
+  return tonos.slice(0, 6)
+}
+
+function itemKey(item: ProgramacionCalendarItem) {
+  return `${item.kind}:${item.id}`
+}
+
+export default async function ProgramacionMinisterialPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ mes?: string; dia?: string; evento?: string }>
+}) {
   const { id } = await params
   const query = await searchParams
   const supabase = await createClient()
@@ -35,53 +156,503 @@ export default async function ProgramacionMinisterialPage({ params, searchParams
     admin.from('ministerio_miembros').select('es_lider').eq('ministerio_id', id).eq('profile_id', user.id).maybeSingle(),
     admin.from('ministerio_responsabilidad_asignaciones').select('responsabilidad_id').eq('profile_id', user.id),
   ])
+
   if (!ministerio) notFound()
   if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') redirect('/inicio')
 
   let responsablePaleta = false
   if ((respRows || []).length) {
-    const { data: paletaResp } = await admin.from('ministerio_responsabilidades').select('id').in('id', respRows.map((r: any) => r.responsabilidad_id)).eq('codigo', 'paleta_colores').eq('activo', true).limit(1)
+    const { data: paletaResp } = await admin
+      .from('ministerio_responsabilidades')
+      .select('id')
+      .in('id', respRows.map((row: any) => row.responsabilidad_id))
+      .eq('codigo', 'paleta_colores')
+      .eq('activo', true)
+      .limit(1)
     responsablePaleta = (paletaResp || []).length > 0
   }
+
   const puedeProgramar = ['administrador', 'pastor'].includes(profile.rol) || membresia?.es_lider === true
   const puedePaleta = puedeProgramar || responsablePaleta
   if (!puedeProgramar && !puedePaleta) redirect(`/ministerios/${id}`)
 
   const mes = /^\d{4}-\d{2}$/.test(query.mes || '') ? query.mes! : mesActualSV()
   const { start, end } = rangoMes(mes)
-  const { data: eventos = [] } = await admin.from('eventos').select('id,titulo,fecha_inicio,ubicacion').eq('ministerio_id', id).gte('fecha_inicio', start).lt('fecha_inicio', end).order('fecha_inicio')
-  const evento: any = eventos.find((e: any) => e.id === query.evento) || eventos[0] || null
+  const [{ ministerioCalendar, items }, { data: cancionesBiblioteca = [] }] = await Promise.all([
+    cargarCalendarioMinisterial(admin, id, start, end),
+    admin
+      .from('ministerio_canciones')
+      .select('id,titulo,artista,spotify_url,youtube_url,activo,created_at')
+      .eq('ministerio_id', id)
+      .eq('activo', true)
+      .order('titulo')
+      .limit(300),
+  ])
+
+  if (!ministerioCalendar) {
+    return (
+      <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-28 pt-4 sm:px-6">
+        <h1 className="text-2xl font-extrabold text-slate-900">Programación de {ministerio.nombre}</h1>
+        <p className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-amber-100">
+          Este ministerio todavía no tiene un calendario configurado.
+        </p>
+      </main>
+    )
+  }
+
+  const preparedEvents = items.filter((item) => item.kind === 'event' && item.preparado)
+  const preparedEventIds = preparedEvents.map((item) => item.id)
+
+  const assignmentsByEvent = new Map<string, any[]>()
+  if (preparedEventIds.length > 0) {
+    const { data: assignmentRows = [] } = await admin
+      .from('evento_asignaciones')
+      .select('id,evento_id,profile_id,capacidad_id,ministerio_id,estado')
+      .in('evento_id', preparedEventIds)
+
+    const capabilityIds = Array.from(new Set((assignmentRows as any[]).map((row: any) => row.capacidad_id).filter(Boolean)))
+    const profileIds = Array.from(new Set((assignmentRows as any[]).map((row: any) => row.profile_id).filter(Boolean)))
+    const [profilesReq, capabilitiesReq] = await Promise.all([
+      profileIds.length
+        ? admin.from('profiles').select('id,nombre_completo').in('id', profileIds)
+        : Promise.resolve({ data: [] }),
+      capabilityIds.length
+        ? admin.from('ministerio_capacidades').select('id,nombre,ministerio_id').in('id', capabilityIds)
+        : Promise.resolve({ data: [] }),
+    ])
+
+    const profileMap = new Map<string, any>((profilesReq.data || []).map((row: any) => [String(row.id), row]))
+    const capabilityMap = new Map<string, any>((capabilitiesReq.data || []).map((row: any) => [String(row.id), row]))
+
+    for (const assignment of assignmentRows as any[]) {
+      const capability = assignment.capacidad_id ? capabilityMap.get(String(assignment.capacidad_id)) : null
+      const belongs = String(assignment.ministerio_id || '') === id
+        || (!assignment.ministerio_id && capability && String(capability.ministerio_id || '') === id)
+      if (!belongs) continue
+      const eventId = String(assignment.evento_id)
+      assignmentsByEvent.set(eventId, [
+        ...(assignmentsByEvent.get(eventId) || []),
+        {
+          ...assignment,
+          persona: profileMap.get(String(assignment.profile_id)),
+          capacidad: capability,
+        },
+      ])
+    }
+  }
+
+  const evento = preparedEvents.find((item) => item.id === String(query.evento || '')) || null
+  const diaQuery = /^\d{4}-\d{2}-\d{2}$/.test(query.dia || '') && String(query.dia).startsWith(`${mes}-`)
+    ? String(query.dia)
+    : null
+  const diaSeleccionado = evento ? fechaKeySV(evento.fecha_inicio) : diaQuery
+  const itemsDia = diaSeleccionado
+    ? items.filter((item) => fechaKeySV(item.fecha_inicio) === diaSeleccionado)
+    : []
+  const asignadosEvento = evento ? assignmentsByEvent.get(evento.id) || [] : []
 
   let repertorio: any[] = []
   let paleta: any = null
   if (evento) {
-    const [r, p] = await Promise.all([
-      admin.from('evento_repertorio').select('*').eq('evento_id', evento.id).order('orden').order('created_at'),
-      admin.from('evento_paletas').select('*').eq('evento_id', evento.id).maybeSingle(),
+    const [repertorioReq, paletaReq] = await Promise.all([
+      admin
+        .from('evento_repertorio')
+        .select('*, ministerio_canciones(id,titulo,artista,spotify_url,youtube_url)')
+        .eq('evento_id', evento.id)
+        .eq('ministerio_id', id)
+        .order('orden')
+        .order('created_at'),
+      admin
+        .from('evento_paletas')
+        .select('*')
+        .eq('evento_id', evento.id)
+        .or(`ministerio_id.eq.${id},ministerio_id.is.null`)
+        .maybeSingle(),
     ])
-    repertorio = r.data || []
-    paleta = p.data || null
+    repertorio = repertorioReq.data || []
+    paleta = paletaReq.data || null
+  }
+
+  const libraryIds = (cancionesBiblioteca as any[]).map((item: any) => String(item.id))
+  const historyBySong = new Map<string, any[]>()
+  if (libraryIds.length > 0) {
+    const { data: historyRows = [] } = await admin
+      .from('evento_repertorio')
+      .select('cancion_id,tonalidad,created_at')
+      .eq('ministerio_id', id)
+      .in('cancion_id', libraryIds)
+      .order('created_at', { ascending: false })
+      .limit(2000)
+    for (const row of historyRows as any[]) {
+      const songId = String(row.cancion_id)
+      historyBySong.set(songId, [...(historyBySong.get(songId) || []), row])
+    }
+  }
+
+  const biblioteca: CancionBiblioteca[] = (cancionesBiblioteca as any[]).map((song: any) => {
+    const history = historyBySong.get(String(song.id)) || []
+    const tonalidades = tonoHistorial(history)
+    return {
+      id: String(song.id),
+      titulo: String(song.titulo),
+      artista: song.artista || null,
+      spotify_url: song.spotify_url || null,
+      youtube_url: song.youtube_url || null,
+      tonalidades,
+      ultimaTonalidad: tonalidades[0] || null,
+    }
+  })
+
+  const itemsByDay = new Map<string, ProgramacionCalendarItem[]>()
+  for (const item of items) {
+    const key = fechaKeySV(item.fecha_inicio)
+    itemsByDay.set(key, [...(itemsByDay.get(key) || []), item])
   }
 
   const color = ministerio.color_primario || '#5b3df5'
   const colores: string[] = Array.isArray(paleta?.colores) ? paleta.colores : []
   const defaults = ['#111827', '#F8FAFC', '#7C3AED', '#D4A373', '#94A3B8']
+  const mesAnterior = moverMes(mes, -1)
+  const mesSiguiente = moverMes(mes, 1)
+  const grid = celdasMes(mes)
 
-  return <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pt-8">
-    <header className="mb-5 flex items-center gap-3"><Link href={`/ministerios/${id}`} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm ring-1 ring-black/[0.04]"><ChevronLeft className="h-5 w-5" /></Link><div><p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>{puedeProgramar ? 'Panel del líder' : 'Programación ministerial'}</p><h1 className="text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">{ministerio.nombre}</h1></div></header>
+  return (
+    <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-5">
+      <header className="mb-5 pt-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>
+          {puedeProgramar ? 'Panel del líder' : 'Programación ministerial'}
+        </p>
+        <h1 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">Programación de {ministerio.nombre}</h1>
+        <p className="mt-1 text-xs leading-5 text-slate-500">
+          El Calendario de VIDA define las fechas. Aquí preparas la participación de {ministerio.nombre} sin duplicar eventos.
+        </p>
+      </header>
 
-    {puedeProgramar && <section className="mb-5 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]"><Link href={`/ministerios/${id}/programacion/equipo?mes=${mes}${evento ? `&evento=${evento.id}` : ''}`} className="flex min-h-[76px] items-center justify-between gap-3 p-4 active:bg-slate-50"><span className="flex min-w-0 items-center gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><Users className="h-5 w-5"/></span><span className="min-w-0"><span className="block text-sm font-extrabold text-[#171923]">Programar equipo</span><span className="mt-0.5 block text-xs text-slate-500">Funciones del ministerio, integrantes y asignaciones</span></span></span><ChevronRight className="h-5 w-5 shrink-0 text-slate-300"/></Link></section>}
+      <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
+        <details open={Boolean(diaSeleccionado || evento)}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+            <span className="min-w-0">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Calendario</span>
+              <span className="mt-1 block text-lg font-extrabold tracking-[-0.02em] text-slate-800">{nombreMes(mes)}</span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                {items.length} {items.length === 1 ? 'fecha visible' : 'fechas visibles'} · Vida Internacional + {ministerio.nombre}
+              </span>
+            </span>
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-600">
+              <ChevronDown className="h-5 w-5" />
+            </span>
+          </summary>
 
-    <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]"><div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-extrabold text-[#171923]">Servicios del Calendario</h2><p className="mt-1 text-xs leading-5 text-slate-500">Aquí se prepara el contenido de cada servicio real.</p></div><CalendarDays className="h-5 w-5 text-slate-300" /></div><form method="get" className="mt-4"><label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Mes<input type="month" name="mes" defaultValue={mes} className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-100" /></label><button className="mt-2 h-10 w-full rounded-xl bg-slate-100 text-xs font-bold text-slate-600">Ver mes</button></form><div className="mt-4 space-y-2">{eventos.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">Sin servicios este mes.</p> : eventos.map((e: any) => <Link key={e.id} href={`/ministerios/${id}/programacion?mes=${mes}&evento=${e.id}`} className={`block rounded-2xl p-3 ring-1 ${evento?.id === e.id ? 'bg-indigo-50 ring-indigo-200' : 'bg-slate-50 ring-slate-100'}`}><p className="text-sm font-extrabold text-slate-800">{e.titulo}</p><p className="mt-1 text-xs text-slate-500">{fechaSV(e.fecha_inicio)}{e.ubicacion ? ` · ${e.ubicacion}` : ''}</p></Link>)}</div></section>
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="flex items-center justify-between gap-3">
+              <Link
+                href={`/ministerios/${id}/programacion?mes=${mesAnterior}`}
+                className="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-600 ring-1 ring-slate-100"
+                aria-label="Mes anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Link>
+              <p className="text-sm font-extrabold text-slate-800">{nombreMes(mes)}</p>
+              <Link
+                href={`/ministerios/${id}/programacion?mes=${mesSiguiente}`}
+                className="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-600 ring-1 ring-slate-100"
+                aria-label="Mes siguiente"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
 
-    {evento && <>
-      <section className="mt-5 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
-        <div className="flex items-center gap-2"><Music2 className="h-5 w-5 text-violet-500"/><div><h2 className="text-sm font-extrabold text-[#171923]">Repertorio</h2><p className="text-xs text-slate-500">Canciones, tonalidades y enlaces para escuchar antes del servicio.</p></div></div>
-        <div className="mt-4 space-y-3">{repertorio.length === 0 ? <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500">Todavía no hay canciones agregadas.</p> : repertorio.map((c:any,i:number)=><div key={c.id} className="rounded-2xl bg-slate-50 p-3"><p className="text-sm font-extrabold text-slate-800">{i+1}. {c.titulo}</p><p className="mt-1 text-xs text-slate-500">{c.tonalidad ? `Tonalidad: ${c.tonalidad}` : 'Tonalidad no indicada'}</p>{c.notas && <p className="mt-2 rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-600">{c.notas}</p>}{(c.spotify_url || c.youtube_url || c.enlace) && <div className="mt-3 flex flex-wrap gap-2">{c.spotify_url && <a href={c.spotify_url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200">Spotify <ExternalLink className="h-3 w-3"/></a>}{c.youtube_url && <a href={c.youtube_url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200">YouTube <ExternalLink className="h-3 w-3"/></a>}{!c.spotify_url && !c.youtube_url && c.enlace && <a href={c.enlace} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-white px-3 text-xs font-bold text-slate-700 ring-1 ring-slate-200">Enlace anterior <ExternalLink className="h-3 w-3"/></a>}</div>}{puedeProgramar && <details className="mt-3"><summary className="cursor-pointer text-[11px] font-bold text-slate-500">Editar canción</summary><form action={actualizarCancionAlabanza.bind(null,id,evento.id)} className="mt-3 grid gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100"><input type="hidden" name="cancion_id" value={c.id}/><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Canción<input name="titulo" defaultValue={c.titulo} required className="mt-1 h-10 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Tonalidad<input name="tonalidad" defaultValue={c.tonalidad || ''} placeholder="Ej.: G, A, C#m" className="mt-1 h-10 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Link de Spotify<input name="spotify_url" type="url" defaultValue={c.spotify_url || ''} placeholder="https://open.spotify.com/..." className="mt-1 h-10 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Link de YouTube<input name="youtube_url" type="url" defaultValue={c.youtube_url || ''} placeholder="https://youtube.com/..." className="mt-1 h-10 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Notas<textarea name="notas" defaultValue={c.notas || ''} placeholder="Entrada, arreglo, versión, indicaciones..." className="mt-1 min-h-20 w-full rounded-xl bg-slate-50 p-3 text-xs"/></label><button className="h-10 rounded-xl bg-indigo-600 text-xs font-bold text-white">Guardar canción</button></form><form action={eliminarCancionAlabanza.bind(null,id,evento.id)} className="mt-2"><input type="hidden" name="cancion_id" value={c.id}/><button className="h-10 w-full rounded-xl bg-rose-50 text-xs font-bold text-rose-600">Eliminar canción</button></form></details>}</div>)}</div>
-        {puedeProgramar && <details className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/40"><summary className="cursor-pointer list-none px-4 py-3 text-xs font-extrabold text-violet-700">+ Agregar canción al repertorio</summary><form action={agregarCancionAlabanza.bind(null,id,evento.id)} className="grid gap-3 border-t border-violet-100 bg-white p-4"><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Canción<input name="titulo" required placeholder="Nombre de la canción" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Tonalidad<input name="tonalidad" placeholder="Ej.: G, A, C#m" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Link de Spotify<input name="spotify_url" type="url" placeholder="Pegue aquí el enlace de Spotify" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Link de YouTube<input name="youtube_url" type="url" placeholder="Pegue aquí el enlace de YouTube" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs"/></label><label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Notas para el equipo<textarea name="notas" placeholder="Versión, entrada, arreglo o cualquier indicación" className="mt-1 min-h-20 w-full rounded-xl bg-slate-50 p-3 text-xs"/></label><button className="h-11 rounded-xl bg-violet-600 text-xs font-bold text-white">Agregar canción</button></form></details>}
+            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[9px] font-extrabold uppercase tracking-wide text-slate-400">
+              {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+            </div>
+            <div className="mt-1 grid grid-cols-7 gap-1">
+              {grid.map((day, index) => {
+                if (!day) return <span key={`empty-${index}`} className="aspect-square" />
+                const key = dateKeyFromDay(mes, day)
+                const dayItems = itemsByDay.get(key) || []
+                const selected = diaSeleccionado === key
+                return (
+                  <Link
+                    key={key}
+                    href={`/ministerios/${id}/programacion?mes=${mes}&dia=${key}#dia-seleccionado`}
+                    className={`relative grid aspect-square place-items-center rounded-xl text-xs font-bold transition active:scale-95 ${selected ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-700'}`}
+                    aria-label={`Seleccionar ${key}`}
+                  >
+                    {day}
+                    {dayItems.length > 0 && (
+                      <span className="absolute bottom-1 flex max-w-[80%] gap-[2px]" aria-hidden="true">
+                        {dayItems.slice(0, 3).map((item) => (
+                          <span
+                            key={itemKey(item)}
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: selected ? '#ffffff' : item.calendar_color }}
+                          />
+                        ))}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+
+            {diaSeleccionado && (
+              <div id="dia-seleccionado" className="mt-4 scroll-mt-24 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">Día seleccionado</p>
+                <p className="mt-1 text-sm font-extrabold text-slate-800">{fechaLargaDia(diaSeleccionado)}</p>
+
+                <div className="mt-3 space-y-2">
+                  {itemsDia.length ? itemsDia.map((item) => {
+                    const team = item.kind === 'event' ? assignmentsByEvent.get(item.id) || [] : []
+                    const selected = evento?.id === item.id
+                    return (
+                      <div
+                        key={itemKey(item)}
+                        className={`rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: item.calendar_color }}
+                            aria-hidden="true"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <p className="min-w-0 truncate text-sm font-extrabold text-slate-800">{item.titulo}</p>
+                              {item.preparado && (
+                                <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-extrabold text-emerald-700">{ministerio.nombre}</span>
+                              )}
+                              {item.publico && (
+                                <span className="rounded-full bg-indigo-50 px-2 py-1 text-[9px] font-bold text-indigo-600">General</span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {horaSV(item.fecha_inicio)} · {item.calendar_nombre}{item.ubicacion ? ` · ${item.ubicacion}` : ''}
+                            </p>
+                            {item.preparado && (
+                              <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
+                                {team.length ? `${team.length} integrantes asignados` : 'Equipo sin asignar'}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {item.preparado && item.kind === 'event' ? (
+                          <Link
+                            href={`/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
+                            className="mt-3 flex min-h-10 items-center justify-between rounded-xl bg-slate-900 px-3 text-[11px] font-extrabold text-white"
+                          >
+                            Abrir programación <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        ) : puedeProgramar ? (
+                          <form action={prepararFechaAlabanza.bind(null, id)} className="mt-3">
+                            <input type="hidden" name="item_type" value={item.kind} />
+                            <input type="hidden" name="item_id" value={item.id} />
+                            <button className="flex min-h-10 w-full items-center justify-between rounded-xl bg-indigo-50 px-3 text-[11px] font-extrabold text-indigo-700 ring-1 ring-indigo-100">
+                              Preparar en {ministerio.nombre} <Plus className="h-4 w-4" />
+                            </button>
+                          </form>
+                        ) : null}
+                      </div>
+                    )
+                  }) : (
+                    <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">No hay fechas en el Calendario para este día.</p>
+                  )}
+                </div>
+
+                {puedeProgramar && (
+                  <details className="mt-3 overflow-hidden rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-extrabold text-indigo-700">
+                      <Plus className="h-4 w-4" /> Crear una fecha nueva
+                    </summary>
+                    <form action={crearServicioAlabanza.bind(null, id)} className="grid gap-3 border-t border-indigo-100 bg-white p-3">
+                      <input type="hidden" name="fecha" value={diaSeleccionado} />
+                      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        Hora
+                        <input name="hora" type="time" required defaultValue="10:00" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-extrabold" />
+                      </label>
+                      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        Nombre
+                        <input name="titulo" defaultValue="Servicio" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
+                      </label>
+                      <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
+                        <label className="min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                          Ubicación
+                          <input name="ubicacion" placeholder="Templo principal" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs" />
+                        </label>
+                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                          Duración
+                          <select name="duracion_minutos" defaultValue="120" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-2 text-xs font-semibold">
+                            <option value="60">1 h</option>
+                            <option value="90">1.5 h</option>
+                            <option value="120">2 h</option>
+                            <option value="180">3 h</option>
+                          </select>
+                        </label>
+                      </div>
+                      <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y preparar</button>
+                      <p className="text-[10px] leading-4 text-slate-400">
+                        Se crea un solo evento real, visible en Vida Internacional y en {ministerio.nombre}.
+                      </p>
+                    </form>
+                  </details>
+                )}
+              </div>
+            )}
+          </div>
+        </details>
       </section>
 
-      <section className="mt-5 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]"><div className="flex items-center gap-2"><Palette className="h-5 w-5 text-pink-500"/><div><h2 className="text-sm font-extrabold text-[#171923]">Paleta de colores</h2><p className="text-xs text-slate-500">Vestuario y referencia visual vinculados a este servicio.</p></div></div><div className="mt-4 flex overflow-hidden rounded-xl ring-1 ring-black/5">{(colores.length ? colores : defaults).map((c,i)=><span key={`${c}-${i}`} className="h-12 flex-1" style={{backgroundColor:c}}/>)}</div>{paleta?.observaciones && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">{paleta.observaciones}</p>}{paleta?.referencia_url && <a href={paleta.referencia_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-indigo-600">Referencia visual <ExternalLink className="h-3 w-3"/></a>}{puedePaleta && <PaletaAlabanzaEditor action={guardarPaletaAlabanza.bind(null,id,evento.id)} initialColors={colores.length ? colores : defaults} initialObservaciones={paleta?.observaciones} initialReferenciaUrl={paleta?.referencia_url} puedeProgramar={puedeProgramar}/>}</section>
-    </>}
-  </main>
+      {evento && (
+        <section id="servicio-activo" className="mt-5 scroll-mt-24 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
+          <div className="p-4">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Programación de {ministerio.nombre}</p>
+            <h2 className="mt-1 text-xl font-extrabold tracking-[-0.025em] text-[#171923]">{evento.titulo}</h2>
+            <p className="mt-1 text-xs text-slate-500">{fechaSV(evento.fecha_inicio)}{evento.ubicacion ? ` · ${evento.ubicacion}` : ''}</p>
+          </div>
+
+          <details className="border-t border-slate-100">
+            <summary className="flex min-h-[62px] cursor-pointer list-none items-center gap-3 px-4 py-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-600"><Users className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-extrabold text-slate-800">Equipo</span>
+                <span className="block text-[11px] text-slate-400">{asignadosEvento.length} {asignadosEvento.length === 1 ? 'integrante asignado' : 'integrantes asignados'}</span>
+              </span>
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            </summary>
+            <div className="border-t border-slate-100 bg-slate-50/70 p-4">
+              {asignadosEvento.length === 0 ? (
+                <p className="text-xs text-slate-500">Todavía no hay integrantes asignados.</p>
+              ) : (
+                <div className="space-y-2">
+                  {asignadosEvento.map((assignment: any, index: number) => (
+                    <div key={`${assignment.profile_id}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-100">
+                      <p className="min-w-0 truncate text-xs font-bold text-slate-700">{assignment.persona?.nombre_completo || 'Servidor'}</p>
+                      <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-1 text-[9px] font-bold text-indigo-600">{assignment.capacidad?.nombre || 'Sin función'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {puedeProgramar && (
+                <Link
+                  href={`/ministerios/${id}/programacion/equipo?mes=${mes}&evento=${evento.id}`}
+                  className="mt-3 flex min-h-11 items-center justify-between rounded-xl bg-indigo-600 px-4 text-xs font-extrabold text-white"
+                >
+                  Programar equipo <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+          </details>
+
+          <details className="border-t border-slate-100">
+            <summary className="flex min-h-[62px] cursor-pointer list-none items-center gap-3 px-4 py-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-50 text-violet-600"><Music2 className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-extrabold text-slate-800">Repertorio</span>
+                <span className="block text-[11px] text-slate-400">{repertorio.length} {repertorio.length === 1 ? 'canción' : 'canciones'} · biblioteca reutilizable</span>
+              </span>
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            </summary>
+            <div className="border-t border-slate-100 bg-slate-50/70 p-4">
+              <div className="space-y-2">
+                {repertorio.length === 0 ? (
+                  <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">Todavía no hay canciones en este servicio.</p>
+                ) : repertorio.map((row: any, index: number) => {
+                  const librarySong = row.ministerio_canciones
+                  const title = librarySong?.titulo || row.titulo
+                  const spotify = librarySong?.spotify_url || row.spotify_url || null
+                  const youtube = librarySong?.youtube_url || row.youtube_url || null
+                  return (
+                    <div key={row.id} className="rounded-2xl bg-white p-3 ring-1 ring-slate-100">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 text-xs font-extrabold text-violet-600">{index + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <p className="truncate text-sm font-extrabold text-slate-800">{title}</p>
+                            {row.tonalidad && <span className="shrink-0 rounded-full bg-slate-50 px-2 py-1 text-[10px] font-extrabold text-slate-500">{row.tonalidad}</span>}
+                          </div>
+                          {librarySong?.artista && <p className="mt-0.5 truncate text-[10px] text-slate-400">{librarySong.artista}</p>}
+                          {(spotify || youtube || row.enlace) && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {spotify && <a href={spotify} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">Spotify <ExternalLink className="h-3 w-3" /></a>}
+                              {youtube && <a href={youtube} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">YouTube <ExternalLink className="h-3 w-3" /></a>}
+                            </div>
+                          )}
+                          {row.notas && <p className="mt-2 text-[11px] leading-5 text-slate-500">{row.notas}</p>}
+                        </div>
+                      </div>
+
+                      {puedeProgramar && (
+                        <details className="mt-2 border-t border-slate-100 pt-2">
+                          <summary className="cursor-pointer list-none text-[10px] font-bold text-violet-600">Editar detalles</summary>
+                          <form action={actualizarCancionAlabanza.bind(null, id, evento.id)} className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3">
+                            <input type="hidden" name="repertorio_id" value={row.id} />
+                            <div className="grid grid-cols-[minmax(0,1fr)_86px] gap-2">
+                              <input name="titulo" defaultValue={title} required aria-label="Canción" className="h-10 w-full rounded-xl bg-white px-3 text-xs" />
+                              <input name="tonalidad" defaultValue={row.tonalidad || ''} placeholder="Tono" aria-label="Tonalidad" className="h-10 w-full rounded-xl bg-white px-2 text-center text-xs" />
+                            </div>
+                            <input name="spotify_url" type="url" defaultValue={spotify || ''} placeholder="Link de Spotify" className="h-10 w-full rounded-xl bg-white px-3 text-xs" />
+                            <input name="youtube_url" type="url" defaultValue={youtube || ''} placeholder="Link de YouTube" className="h-10 w-full rounded-xl bg-white px-3 text-xs" />
+                            <textarea name="notas" defaultValue={row.notas || ''} placeholder="Notas solo para este servicio" className="min-h-16 w-full rounded-xl bg-white p-3 text-xs" />
+                            <button className="h-10 rounded-xl bg-indigo-600 text-xs font-bold text-white">Guardar detalles</button>
+                          </form>
+                          <form action={eliminarCancionAlabanza.bind(null, id, evento.id)} className="mt-2">
+                            <input type="hidden" name="repertorio_id" value={row.id} />
+                            <button className="h-9 w-full rounded-xl bg-rose-50 text-[10px] font-bold text-rose-600">Quitar de este servicio</button>
+                          </form>
+                        </details>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {puedeProgramar && (
+                <RepertorioBibliotecaPicker
+                  canciones={biblioteca}
+                  agregarAction={agregarCancionBibliotecaAlabanza.bind(null, id, evento.id)}
+                  crearAction={agregarCancionAlabanza.bind(null, id, evento.id)}
+                />
+              )}
+            </div>
+          </details>
+
+          <details className="border-t border-slate-100">
+            <summary className="flex min-h-[62px] cursor-pointer list-none items-center gap-3 px-4 py-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pink-50 text-pink-600"><Palette className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-extrabold text-slate-800">Paleta de colores</span>
+                <span className="mt-1 flex h-4 max-w-32 overflow-hidden rounded-full ring-1 ring-black/5">
+                  {(colores.length ? colores : defaults).map((item, index) => <span key={`${item}-${index}`} className="flex-1" style={{ backgroundColor: item }} />)}
+                </span>
+              </span>
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            </summary>
+            <div className="border-t border-slate-100 bg-slate-50/70 p-4">
+              {paleta?.observaciones && <p className="rounded-xl bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-100">{paleta.observaciones}</p>}
+              {paleta?.referencia_url && <a href={paleta.referencia_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-indigo-600">Referencia visual <ExternalLink className="h-3 w-3" /></a>}
+              {puedePaleta && (
+                <PaletaAlabanzaEditor
+                  action={guardarPaletaAlabanza.bind(null, id, evento.id)}
+                  initialColors={colores.length ? colores : defaults}
+                  initialObservaciones={paleta?.observaciones}
+                  initialReferenciaUrl={paleta?.referencia_url}
+                  puedeProgramar={puedeProgramar}
+                />
+              )}
+            </div>
+          </details>
+        </section>
+      )}
+
+      {!evento && diaSeleccionado && itemsDia.some((item) => item.preparado) && (
+        <p className="mt-4 rounded-2xl bg-white p-4 text-center text-xs text-slate-500 ring-1 ring-black/[0.04]">
+          Toca “Abrir programación” en una fecha preparada para ver equipo, repertorio y paleta.
+        </p>
+      )}
+
+      <div className="mt-5 rounded-2xl bg-indigo-50 p-3 text-[10px] leading-4 text-indigo-700 ring-1 ring-indigo-100">
+        <CalendarDays className="mr-1 inline h-3.5 w-3.5" /> El mini calendario usa las mismas fechas de Vida Internacional y {ministerio.nombre}. Preparar una fecha no crea una copia.
+      </div>
+    </main>
+  )
 }
