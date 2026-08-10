@@ -175,7 +175,7 @@ export async function asignarServidorAlabanza(ministerioId: string, eventoId: st
     asignado_por: acceso.userId,
     estado: 'asignado',
     updated_at: new Date().toISOString(),
-  }, { onConflict: 'evento_id,profile_id' })
+  }, { onConflict: 'evento_id,ministerio_id,profile_id' })
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }
@@ -427,7 +427,7 @@ export async function guardarPaletaAlabanza(ministerioId: string, eventoId: stri
     referencia_url: texto(formData, 'referencia_url') || null,
     actualizado_por: acceso.userId,
     updated_at: new Date().toISOString(),
-  }, { onConflict: 'evento_id' })
+  }, { onConflict: 'evento_id,ministerio_id' })
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }
