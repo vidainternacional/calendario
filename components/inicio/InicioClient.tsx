@@ -32,7 +32,7 @@ import UserAvatar from '@/components/comunidad/UserAvatar'
 
 type InicioData = {
   profile: any | null
-  misEventos: any[]
+  proximoItem: any | null
   membresias: any[]
   publicaciones: any[]
   materiales: MaterialVisible[]
@@ -43,7 +43,7 @@ type InicioClientProps = {
   email?: string | null
 }
 
-const CACHE_SCOPE = 'inicio:v6'
+const CACHE_SCOPE = 'inicio:v7'
 const CACHE_TTL = 10 * 60 * 1000
 
 const estadoConfig = {
@@ -64,9 +64,9 @@ function greetingFor(date: Date | null) {
   return 'Buenas noches'
 }
 
-function eventStatus(evento: any) {
-  const estado = evento?.evento_asignaciones?.[0]?.estado as keyof typeof estadoConfig | undefined
-  return estado ? (estadoConfig[estado] || null) : null
+function eventStatus(estado?: string | null) {
+  const key = estado as keyof typeof estadoConfig | undefined
+  return key ? (estadoConfig[key] || null) : null
 }
 
 export default function InicioClient({ userId, email }: InicioClientProps) {
@@ -92,28 +92,13 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
       const supabase = createClient()
 
       try {
-        const [profileRes, misEventosRes, membresiasRes, materialesRes] = await Promise.all([
+        const [profileRes, proximoItemRes, membresiasRes, materialesRes] = await Promise.all([
           supabase
             .from('profiles')
             .select('nombre_completo, avatar_url, rol, acceso_centro_pastoral')
             .eq('id', userId)
             .single(),
-          supabase
-            .from('eventos')
-            .select(`
-              id,
-              titulo,
-              fecha_inicio,
-              ubicacion,
-              evento_asignaciones (
-                estado,
-                profile_id
-              )
-            `)
-            .eq('evento_asignaciones.profile_id', userId)
-            .gte('fecha_inicio', new Date().toISOString())
-            .order('fecha_inicio', { ascending: true })
-            .limit(4),
+          (supabase as any).rpc('get_next_visible_calendar_item'),
           supabase
             .from('ministerio_miembros')
             .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario )')
@@ -150,7 +135,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
 
         const freshData: InicioData = {
           profile: profileRes.data,
-          misEventos: misEventosRes.data || [],
+          proximoItem: proximoItemRes.data?.[0] || null,
           membresias,
           publicaciones: publicacionesRes.data || [],
           materiales: (materialesRes.data || []) as MaterialVisible[],
@@ -214,7 +199,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
     )
   }
 
-  const { profile, misEventos, membresias, publicaciones, materiales = [] } = data
+  const { profile, proximoItem, membresias, publicaciones, materiales = [] } = data
   const nombre = profile?.nombre_completo || email?.split('@')[0] || 'Servidor'
   const firstNameRaw = nombre.trim().split(/\s+/)[0] || 'Servidor'
   const firstName = firstNameRaw.charAt(0).toUpperCase() + firstNameRaw.slice(1)
@@ -226,10 +211,11 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
   const puedeAbrirCentroPastoral =
     Boolean(profile?.acceso_centro_pastoral) || rol === 'pastor' || rol === 'administrador'
 
-  const nextEvent = misEventos[0] || null
+  const nextEvent = proximoItem
   const nextEventStart = nextEvent ? new Date(nextEvent.fecha_inicio) : null
   const nextEventIsToday = Boolean(clock && nextEventStart && isSameDay(nextEventStart, clock))
-  const nextEventState = nextEvent ? eventStatus(nextEvent) : null
+  const nextEventState = nextEvent ? eventStatus(nextEvent.estado) : null
+  const nextEventKind = nextEvent?.item_type === 'reminder' ? 'Recordatorio' : 'Evento'
   const todayLabel = clock
     ? capitalize(format(clock, "EEEE, d 'de' MMMM", { locale: es }))
     : 'Tu espacio personal en VIDA'
@@ -335,7 +321,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           <section aria-label="Tu próximo evento">
             {nextEvent && nextEventStart ? (
               <Link
-                href={`/calendario?evento=${encodeURIComponent(String(nextEvent.id))}&fecha=${encodeURIComponent(String(nextEvent.fecha_inicio))}`}
+                href={`/calendario?fecha=${encodeURIComponent(String(nextEvent.fecha_inicio))}`}
                 className="group relative block overflow-hidden rounded-[24px] border border-white/90 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.07)] transition active:scale-[0.993] sm:p-5"
               >
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#5b3df5] via-[#8b5cf6] to-[#5b3df5]" aria-hidden="true" />
@@ -356,6 +342,10 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                 </div>
 
                 <div className="relative mt-4">
+                  <div className="mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                    <span>{nextEventKind}</span>
+                    {nextEvent.calendar_nombre && <><span>·</span><span className="truncate">{nextEvent.calendar_nombre}</span></>}
+                  </div>
                   <h2 className="line-clamp-2 text-[19px] font-bold leading-snug tracking-[-0.02em] text-[#171923]">{nextEvent.titulo}</h2>
                   {nextEvent.ubicacion && (
                     <p className="mt-2 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
@@ -378,7 +368,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-violet-600">
-                    Ver evento
+                    Ver en calendario
                     <ChevronRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
                   </span>
                 </div>
