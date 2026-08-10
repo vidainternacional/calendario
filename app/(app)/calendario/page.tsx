@@ -46,9 +46,6 @@ export default async function CalendarioPage({
   const eventParam = firstQueryValue(query.evento)?.trim() || null
   const initialEventId = eventParam && /^[0-9a-f-]{36}$/i.test(eventParam) ? eventParam : null
 
-  // Los enlaces profundos a un evento no deben montar primero la interfaz completa
-  // del Calendario. Se resuelven a una ficha directa y el historial conserva el
-  // origen para que Atrás regrese a la pantalla desde la que se abrió.
   if (initialEventId) {
     redirect(`/eventos/${initialEventId}`)
   }
@@ -57,6 +54,52 @@ export default async function CalendarioPage({
 
   if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) {
     initialEventDate = null
+  }
+
+  // Inicio enlaza al instante exacto del próximo elemento visible. Antes ese enlace
+  // solo posicionaba el calendario en el año. Ahora resolvemos el elemento real y
+  // abrimos su ficha, sea evento o recordatorio.
+  if (initialEventDate) {
+    const target = new Date(initialEventDate)
+    const from = new Date(target.getTime() - 60_000).toISOString()
+    const to = new Date(target.getTime() + 60_000).toISOString()
+
+    const [eventReq, reminderReq] = await Promise.all([
+      (supabase as any)
+        .from('eventos')
+        .select('id,fecha_inicio')
+        .gte('fecha_inicio', from)
+        .lte('fecha_inicio', to)
+        .order('fecha_inicio')
+        .limit(4),
+      (supabase as any)
+        .from('calendar_reminders')
+        .select('id,remind_at')
+        .gte('remind_at', from)
+        .lte('remind_at', to)
+        .order('remind_at')
+        .limit(4),
+    ])
+
+    const candidates = [
+      ...(eventReq.data || []).map((item: any) => ({
+        id: String(item.id),
+        kind: 'event' as const,
+        time: new Date(item.fecha_inicio).getTime(),
+      })),
+      ...(reminderReq.data || []).map((item: any) => ({
+        id: String(item.id),
+        kind: 'reminder' as const,
+        time: new Date(item.remind_at).getTime(),
+      })),
+    ]
+      .filter((item) => Number.isFinite(item.time))
+      .sort((a, b) => Math.abs(a.time - target.getTime()) - Math.abs(b.time - target.getTime()))
+
+    const nearest = candidates[0]
+    if (nearest) {
+      redirect(nearest.kind === 'event' ? `/eventos/${nearest.id}` : `/recordatorios/${nearest.id}`)
+    }
   }
 
   const [profileReq, leaderReq] = await Promise.all([
