@@ -1,14 +1,18 @@
 import { notFound, redirect } from 'next/navigation'
-import { ChevronDown, Trash2, UserPlus, Users } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
-  asignarServidorAlabanza,
-  quitarServidorAlabanza,
   crearFuncionMinisterial,
   actualizarFuncionMinisterial,
   cambiarEstadoFuncionMinisterial,
 } from '@/app/actions/programacion-alabanza'
+import {
+  asignarFuncionEquipoMinisterial,
+  cambiarDisponibilidadFuncionMiembro,
+  quitarFuncionEquipoMinisterial,
+} from '@/app/actions/equipo-ministerial'
 import FuncionesAlabanzaEditor from '@/components/ministerios/FuncionesAlabanzaEditor'
+import EquipoServicioEditor from '@/components/ministerios/EquipoServicioEditor'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,6 +73,7 @@ export default async function EquipoAlabanzaPage({
   ])
 
   if (!evento) redirect(`/ministerios/${id}/programacion?mes=${mes}`)
+
   const ministerioCalendarIds = (ministerioCalendars || []).map((item: any) => String(item.id))
   let pertenece = String(evento.ministerio_id || '') === id
   if (!pertenece && ministerioCalendarIds.length > 0) {
@@ -84,7 +89,7 @@ export default async function EquipoAlabanzaPage({
   if (!pertenece) redirect(`/ministerios/${id}/programacion?mes=${mes}`)
 
   const funcionesActivas = (funciones as any[]).filter((item: any) => item.activo === true)
-  const [asignacionesReq, miembrosReq] = await Promise.all([
+  const [{ data: asignacionesRows = [] }, { data: miembrosRows = [] }] = await Promise.all([
     admin
       .from('evento_asignaciones')
       .select('id,profile_id,estado,capacidad_id,ministerio_id')
@@ -93,40 +98,61 @@ export default async function EquipoAlabanzaPage({
     admin.from('ministerio_miembros').select('profile_id').eq('ministerio_id', id),
   ])
 
-  const profileIds = (miembrosReq.data || []).map((item: any) => item.profile_id)
-  const candidatosPorCapacidad = new Map<string, any[]>()
-  let asignaciones: any[] = []
+  const profileIds = (miembrosRows as any[]).map((item: any) => String(item.profile_id))
+  let miembrosEditor: Array<{ id: string; nombre_completo: string; avatar_url: string | null; capacidades: string[] }> = []
+  let asignacionesEditor: Array<{ id: string; profile_id: string; capacidad_id: string; estado: string }> = []
 
   if (profileIds.length > 0) {
-    const [{ data: perfiles = [] }, { data: capsMiembro = [] }] = await Promise.all([
-      admin.from('profiles').select('id,nombre_completo,avatar_url,activo,estado_cuenta').in('id', profileIds),
-      admin.from('ministerio_miembro_capacidades').select('profile_id,capacidad_id').eq('ministerio_id', id).in('profile_id', profileIds),
+    const [{ data: perfiles = [] }, { data: capacidadesMiembro = [] }] = await Promise.all([
+      admin
+        .from('profiles')
+        .select('id,nombre_completo,avatar_url,activo,estado_cuenta')
+        .in('id', profileIds)
+        .order('nombre_completo'),
+      admin
+        .from('ministerio_miembro_capacidades')
+        .select('profile_id,capacidad_id')
+        .eq('ministerio_id', id)
+        .in('profile_id', profileIds),
     ])
-    const perfilPorId = new Map<string, any>((perfiles as any[]).map((item: any) => [String(item.id), item]))
-    const capacidadPorId = new Map<string, any>((funciones as any[]).map((item: any) => [String(item.id), item]))
 
-    for (const item of capsMiembro as any[]) {
-      const persona = perfilPorId.get(String(item.profile_id))
-      if (!persona || persona.activo !== true || persona.estado_cuenta !== 'activo') continue
-      candidatosPorCapacidad.set(String(item.capacidad_id), [
-        ...(candidatosPorCapacidad.get(String(item.capacidad_id)) || []),
-        persona,
+    const capacidadesPorPersona = new Map<string, string[]>()
+    for (const row of capacidadesMiembro as any[]) {
+      const profileId = String(row.profile_id)
+      capacidadesPorPersona.set(profileId, [
+        ...(capacidadesPorPersona.get(profileId) || []),
+        String(row.capacidad_id),
       ])
     }
 
-    asignaciones = (asignacionesReq.data || [])
-      .map((assignment: any) => ({
-        ...assignment,
-        persona: perfilPorId.get(String(assignment.profile_id)),
-        capacidad: assignment.capacidad_id ? capacidadPorId.get(String(assignment.capacidad_id)) : null,
+    miembrosEditor = (perfiles as any[])
+      .filter((persona: any) => persona.activo === true && persona.estado_cuenta === 'activo')
+      .map((persona: any) => ({
+        id: String(persona.id),
+        nombre_completo: String(persona.nombre_completo || 'Integrante'),
+        avatar_url: persona.avatar_url || null,
+        capacidades: capacidadesPorPersona.get(String(persona.id)) || [],
       }))
-      .filter((assignment: any) => (
-        String(assignment.ministerio_id || '') === id
-        || (!assignment.ministerio_id && assignment.capacidad)
-      ))
+
+    const funcionesPorId = new Map<string, any>((funciones as any[]).map((item: any) => [String(item.id), item]))
+    const miembrosValidos = new Set(miembrosEditor.map((item) => item.id))
+
+    asignacionesEditor = (asignacionesRows as any[])
+      .filter((assignment: any) => {
+        if (!miembrosValidos.has(String(assignment.profile_id))) return false
+        const capacidad = assignment.capacidad_id ? funcionesPorId.get(String(assignment.capacidad_id)) : null
+        return String(assignment.ministerio_id || '') === id
+          || (!assignment.ministerio_id && Boolean(capacidad))
+      })
+      .filter((assignment: any) => Boolean(assignment.capacidad_id))
+      .map((assignment: any) => ({
+        id: String(assignment.id),
+        profile_id: String(assignment.profile_id),
+        capacidad_id: String(assignment.capacidad_id),
+        estado: String(assignment.estado || 'asignado'),
+      }))
   }
 
-  const asignadosIds = new Set(asignaciones.map((item: any) => String(item.profile_id)))
   const color = ministerio.color_primario || '#5b3df5'
 
   return (
@@ -142,7 +168,7 @@ export default async function EquipoAlabanzaPage({
         <summary className="flex min-h-[66px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
           <span className="min-w-0">
             <span className="block text-sm font-extrabold text-slate-800">Funciones de {ministerio.nombre}</span>
-            <span className="mt-0.5 block text-[11px] text-slate-400">{funcionesActivas.length} activas · abre solo cuando necesites administrarlas</span>
+            <span className="mt-0.5 block text-[11px] text-slate-400">{funcionesActivas.length} activas · administra el catálogo solo cuando lo necesites</span>
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
         </summary>
@@ -156,80 +182,18 @@ export default async function EquipoAlabanzaPage({
         </div>
       </details>
 
-      <section className="mt-5 rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-indigo-500" />
-          <div>
-            <h2 className="text-sm font-extrabold text-[#171923]">Equipo de este servicio</h2>
-            <p className="text-xs text-slate-500">{asignaciones.length} {asignaciones.length === 1 ? 'integrante' : 'integrantes'} programados.</p>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-2">
-          {asignaciones.length === 0 ? (
-            <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500">Todavía no hay integrantes asignados.</p>
-          ) : asignaciones.map((assignment: any) => (
-            <div key={assignment.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-indigo-100 font-extrabold text-indigo-600">
-                {assignment.persona?.avatar_url
-                  ? <img src={assignment.persona.avatar_url} alt="" className="h-full w-full object-cover" />
-                  : (assignment.persona?.nombre_completo || 'U').charAt(0)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-slate-800">{assignment.persona?.nombre_completo || 'Servidor'}</p>
-                <p className="truncate text-xs text-slate-500">{assignment.capacidad?.nombre || 'Función anterior'} · {assignment.estado}</p>
-              </div>
-              <form action={quitarServidorAlabanza.bind(null, id, evento.id)}>
-                <input type="hidden" name="asignacion_id" value={assignment.id} />
-                <button className="grid h-10 w-10 place-items-center rounded-full bg-rose-50 text-rose-500" aria-label="Quitar del servicio">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </form>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-5 border-t border-slate-100 pt-4">
-          <p className="flex items-center gap-2 text-xs font-extrabold text-slate-700"><UserPlus className="h-4 w-4 text-indigo-500" />Asignar integrante</p>
-          <p className="mt-1 text-[11px] leading-5 text-slate-500">Abre únicamente la función que necesitas. Solo aparecen personas compatibles y todavía no asignadas.</p>
-
-          <div className="mt-3 overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-100">
-            {funcionesActivas.length === 0 ? (
-              <p className="p-4 text-xs text-slate-400">No hay funciones activas. Ábrelas arriba para crear la primera.</p>
-            ) : funcionesActivas.map((cap: any, index: number) => {
-              const candidatos = (candidatosPorCapacidad.get(String(cap.id)) || [])
-                .filter((persona: any) => !asignadosIds.has(String(persona.id)))
-              return (
-                <details key={cap.id} className={index ? 'border-t border-slate-100' : ''}>
-                  <summary className="flex min-h-[54px] cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5">
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-slate-800">{cap.nombre}</span>
-                      <span className="mt-0.5 block text-[10px] text-slate-400">{candidatos.length} {candidatos.length === 1 ? 'persona compatible' : 'personas compatibles'}</span>
-                    </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-                  </summary>
-                  <div className="border-t border-slate-100 bg-white p-3">
-                    {candidatos.length ? (
-                      <form action={asignarServidorAlabanza.bind(null, id, evento.id)} className="grid gap-2">
-                        <input type="hidden" name="capacidad_id" value={cap.id} />
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                          Integrante
-                          <select name="profile_id" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs font-semibold">
-                            {candidatos.map((persona: any) => <option key={persona.id} value={persona.id}>{persona.nombre_completo}</option>)}
-                          </select>
-                        </label>
-                        <button className="h-11 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white">Asignar a {cap.nombre}</button>
-                      </form>
-                    ) : (
-                      <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400">No hay personas disponibles con esta función asignada en su ficha.</p>
-                    )}
-                  </div>
-                </details>
-              )
-            })}
-          </div>
-        </div>
-      </section>
+      <EquipoServicioEditor
+        funciones={funcionesActivas.map((funcion: any) => ({
+          id: String(funcion.id),
+          nombre: String(funcion.nombre),
+          categoria: String(funcion.categoria || 'Servicio'),
+        }))}
+        miembros={miembrosEditor}
+        asignaciones={asignacionesEditor}
+        disponibilidadAction={cambiarDisponibilidadFuncionMiembro.bind(null, id)}
+        asignarAction={asignarFuncionEquipoMinisterial.bind(null, id, evento.id)}
+        quitarAction={quitarFuncionEquipoMinisterial.bind(null, id, evento.id)}
+      />
     </main>
   )
 }
