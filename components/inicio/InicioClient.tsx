@@ -43,7 +43,7 @@ type InicioClientProps = {
   email?: string | null
 }
 
-const CACHE_SCOPE = 'inicio:v5'
+const CACHE_SCOPE = 'inicio:v6'
 const CACHE_TTL = 10 * 60 * 1000
 
 const estadoConfig = {
@@ -66,7 +66,7 @@ function greetingFor(date: Date | null) {
 
 function eventStatus(evento: any) {
   const estado = evento?.evento_asignaciones?.[0]?.estado as keyof typeof estadoConfig | undefined
-  return estadoConfig[estado || 'asignado'] || estadoConfig.asignado
+  return estado ? (estadoConfig[estado] || null) : null
 }
 
 export default function InicioClient({ userId, email }: InicioClientProps) {
@@ -105,7 +105,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
               titulo,
               fecha_inicio,
               ubicacion,
-              evento_asignaciones!inner (
+              evento_asignaciones (
                 estado,
                 profile_id
               )
@@ -229,7 +229,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
   const nextEvent = misEventos[0] || null
   const nextEventStart = nextEvent ? new Date(nextEvent.fecha_inicio) : null
   const nextEventIsToday = Boolean(clock && nextEventStart && isSameDay(nextEventStart, clock))
-  const nextEventState = nextEvent ? eventStatus(nextEvent) : estadoConfig.asignado
+  const nextEventState = nextEvent ? eventStatus(nextEvent) : null
   const todayLabel = clock
     ? capitalize(format(clock, "EEEE, d 'de' MMMM", { locale: es }))
     : 'Tu espacio personal en VIDA'
@@ -332,7 +332,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         </header>
 
         <div className="space-y-5 sm:space-y-6">
-          <section aria-label="Tu próxima actividad">
+          <section aria-label="Tu próximo evento">
             {nextEvent && nextEventStart ? (
               <Link
                 href={`/calendario?evento=${encodeURIComponent(String(nextEvent.id))}&fecha=${encodeURIComponent(String(nextEvent.fecha_inicio))}`}
@@ -346,16 +346,11 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                     <CalendarDays className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="text-[12px] font-extrabold text-[#171923]">Vida Internacional</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-500">
-                        {nextEventIsToday ? 'Hoy' : 'Próxima actividad'}
-                      </span>
-                    </span>
+                    <span className="block text-[11px] font-extrabold uppercase tracking-[0.1em] text-violet-600">Tu próximo evento</span>
                     <span className="mt-0.5 block text-[11px] text-slate-400">
                       {nextEventIsToday
-                        ? format(nextEventStart, 'h:mm a', { locale: es })
-                        : capitalize(format(nextEventStart, "EEE d MMM · h:mm a", { locale: es }))}
+                        ? `Hoy · ${format(nextEventStart, 'h:mm a', { locale: es })}`
+                        : capitalize(format(nextEventStart, "EEEE d 'de' MMMM · h:mm a", { locale: es }))}
                     </span>
                   </span>
                 </div>
@@ -371,10 +366,17 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                 </div>
 
                 <div className="relative mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-100">
-                    <span className={`h-1.5 w-1.5 rounded-full ${nextEventState.dot}`} />
-                    {nextEventState.label}
-                  </span>
+                  {nextEventState ? (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-slate-600 ring-1 ring-slate-100">
+                      <span className={`h-1.5 w-1.5 rounded-full ${nextEventState.dot}`} />
+                      {nextEventState.label}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[10px] font-bold text-violet-600 ring-1 ring-violet-100">
+                      <Clock3 className="h-3 w-3" aria-hidden="true" />
+                      Próximo
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-violet-600">
                     Ver evento
                     <ChevronRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
@@ -387,9 +389,9 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                   <CalendarDays className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="text-[10px] font-extrabold tracking-[0.14em] text-violet-600">HOY</span>
-                  <span className="mt-1 block text-lg font-bold tracking-[-0.02em] text-[#171923]">Tu agenda está libre por ahora</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">No tienes actividades asignadas próximas.</span>
+                  <span className="text-[10px] font-extrabold tracking-[0.14em] text-violet-600">PRÓXIMOS EVENTOS</span>
+                  <span className="mt-1 block text-lg font-bold tracking-[-0.02em] text-[#171923]">No hay eventos próximos por ahora</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">Cuando se agregue una nueva fecha visible para ti, aparecerá aquí.</span>
                 </span>
               </div>
             )}
