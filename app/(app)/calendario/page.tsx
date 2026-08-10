@@ -39,66 +39,26 @@ export default async function CalendarioPage({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
   if (!user) redirect('/login')
 
   const query = searchParams ? await searchParams : {}
   const eventParam = firstQueryValue(query.evento)?.trim() || null
   const initialEventId = eventParam && /^[0-9a-f-]{36}$/i.test(eventParam) ? eventParam : null
-
-  if (initialEventId) {
-    redirect(`/eventos/${initialEventId}`)
-  }
+  if (initialEventId) redirect(`/eventos/${initialEventId}`)
 
   let initialEventDate = firstQueryValue(query.fecha)?.trim() || null
+  if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) initialEventDate = null
 
-  if (initialEventDate && Number.isNaN(new Date(initialEventDate).getTime())) {
-    initialEventDate = null
-  }
-
-  // Inicio enlaza al instante exacto del próximo elemento visible. Antes ese enlace
-  // solo posicionaba el calendario en el año. Ahora resolvemos el elemento real y
-  // abrimos su ficha, sea evento o recordatorio.
+  // Inicio enlaza por el instante exacto que ya muestra en la tarjeta. La RPC
+  // resuelve ese instante únicamente entre los calendarios visibles del usuario,
+  // incluso si el elemento acaba de empezar, y abre su ficha directa.
   if (initialEventDate) {
-    const target = new Date(initialEventDate)
-    const from = new Date(target.getTime() - 60_000).toISOString()
-    const to = new Date(target.getTime() + 60_000).toISOString()
-
-    const [eventReq, reminderReq] = await Promise.all([
-      (supabase as any)
-        .from('eventos')
-        .select('id,fecha_inicio')
-        .gte('fecha_inicio', from)
-        .lte('fecha_inicio', to)
-        .order('fecha_inicio')
-        .limit(4),
-      (supabase as any)
-        .from('calendar_reminders')
-        .select('id,remind_at')
-        .gte('remind_at', from)
-        .lte('remind_at', to)
-        .order('remind_at')
-        .limit(4),
-    ])
-
-    const candidates = [
-      ...(eventReq.data || []).map((item: any) => ({
-        id: String(item.id),
-        kind: 'event' as const,
-        time: new Date(item.fecha_inicio).getTime(),
-      })),
-      ...(reminderReq.data || []).map((item: any) => ({
-        id: String(item.id),
-        kind: 'reminder' as const,
-        time: new Date(item.remind_at).getTime(),
-      })),
-    ]
-      .filter((item) => Number.isFinite(item.time))
-      .sort((a, b) => Math.abs(a.time - target.getTime()) - Math.abs(b.time - target.getTime()))
-
-    const nearest = candidates[0]
-    if (nearest) {
-      redirect(nearest.kind === 'event' ? `/eventos/${nearest.id}` : `/recordatorios/${nearest.id}`)
+    const { data: resolvedRows } = await (supabase as any).rpc('resolve_visible_calendar_item_at', {
+      p_fecha: new Date(initialEventDate).toISOString(),
+    })
+    const resolved = resolvedRows?.[0]
+    if (resolved?.id) {
+      redirect(resolved.item_type === 'reminder' ? `/recordatorios/${resolved.id}` : `/eventos/${resolved.id}`)
     }
   }
 

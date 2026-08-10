@@ -1,6 +1,5 @@
-import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ChevronDown, ChevronLeft, Trash2, UserPlus, Users } from 'lucide-react'
+import { ChevronDown, Trash2, UserPlus, Users } from 'lucide-react'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
   asignarServidorAlabanza,
@@ -63,30 +62,49 @@ export default async function EquipoAlabanzaPage({
   const eventoId = String(query.evento || '')
   if (!eventoId) redirect(`/ministerios/${id}/programacion?mes=${mes}`)
 
-  const [{ data: evento }, { data: funciones = [] }] = await Promise.all([
-    admin.from('eventos').select('id,titulo,fecha_inicio,ubicacion').eq('id', eventoId).eq('ministerio_id', id).maybeSingle(),
+  const [{ data: evento }, { data: funciones = [] }, { data: ministerioCalendars = [] }] = await Promise.all([
+    admin.from('eventos').select('id,titulo,fecha_inicio,ubicacion,ministerio_id').eq('id', eventoId).maybeSingle(),
     admin.from('ministerio_capacidades').select('id,nombre,categoria,orden,activo').eq('ministerio_id', id).order('orden'),
+    admin.from('calendars').select('id').eq('ministerio_id', id).limit(5),
   ])
+
   if (!evento) redirect(`/ministerios/${id}/programacion?mes=${mes}`)
+  const ministerioCalendarIds = (ministerioCalendars || []).map((item: any) => String(item.id))
+  let pertenece = String(evento.ministerio_id || '') === id
+  if (!pertenece && ministerioCalendarIds.length > 0) {
+    const { data: link } = await admin
+      .from('evento_calendarios')
+      .select('evento_id')
+      .eq('evento_id', eventoId)
+      .in('calendar_id', ministerioCalendarIds)
+      .limit(1)
+      .maybeSingle()
+    pertenece = Boolean(link)
+  }
+  if (!pertenece) redirect(`/ministerios/${id}/programacion?mes=${mes}`)
 
   const funcionesActivas = (funciones as any[]).filter((item: any) => item.activo === true)
-  let asignaciones: any[] = []
-  const candidatosPorCapacidad = new Map<string, any[]>()
-
   const [asignacionesReq, miembrosReq] = await Promise.all([
-    admin.from('evento_asignaciones').select('id,profile_id,estado,capacidad_id').eq('evento_id', evento.id).order('created_at'),
+    admin
+      .from('evento_asignaciones')
+      .select('id,profile_id,estado,capacidad_id,ministerio_id')
+      .eq('evento_id', evento.id)
+      .order('created_at'),
     admin.from('ministerio_miembros').select('profile_id').eq('ministerio_id', id),
   ])
-  asignaciones = asignacionesReq.data || []
 
   const profileIds = (miembrosReq.data || []).map((item: any) => item.profile_id)
-  if (profileIds.length) {
+  const candidatosPorCapacidad = new Map<string, any[]>()
+  let asignaciones: any[] = []
+
+  if (profileIds.length > 0) {
     const [{ data: perfiles = [] }, { data: capsMiembro = [] }] = await Promise.all([
       admin.from('profiles').select('id,nombre_completo,avatar_url,activo,estado_cuenta').in('id', profileIds),
       admin.from('ministerio_miembro_capacidades').select('profile_id,capacidad_id').eq('ministerio_id', id).in('profile_id', profileIds),
     ])
-
     const perfilPorId = new Map<string, any>((perfiles as any[]).map((item: any) => [String(item.id), item]))
+    const capacidadPorId = new Map<string, any>((funciones as any[]).map((item: any) => [String(item.id), item]))
+
     for (const item of capsMiembro as any[]) {
       const persona = perfilPorId.get(String(item.profile_id))
       if (!persona || persona.activo !== true || persona.estado_cuenta !== 'activo') continue
@@ -96,42 +114,37 @@ export default async function EquipoAlabanzaPage({
       ])
     }
 
-    asignaciones = asignaciones.map((assignment: any) => ({
-      ...assignment,
-      persona: perfilPorId.get(String(assignment.profile_id)),
-      capacidad: (funciones as any[]).find((cap: any) => String(cap.id) === String(assignment.capacidad_id)),
-    }))
+    asignaciones = (asignacionesReq.data || [])
+      .map((assignment: any) => ({
+        ...assignment,
+        persona: perfilPorId.get(String(assignment.profile_id)),
+        capacidad: assignment.capacidad_id ? capacidadPorId.get(String(assignment.capacidad_id)) : null,
+      }))
+      .filter((assignment: any) => (
+        String(assignment.ministerio_id || '') === id
+        || (!assignment.ministerio_id && assignment.capacidad)
+      ))
   }
 
+  const asignadosIds = new Set(asignaciones.map((item: any) => String(item.profile_id)))
   const color = ministerio.color_primario || '#5b3df5'
 
   return (
-    <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pt-8">
-      <header className="mb-5">
-        <Link
-          href={`/ministerios/${id}/programacion?mes=${mes}&evento=${evento.id}#servicio-activo`}
-          className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-black/[0.04]"
-        >
-          <ChevronLeft className="h-4 w-4" /> Atrás
-        </Link>
+    <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-5">
+      <header className="mb-5 pt-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>Panel del líder</p>
         <h1 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">Programar equipo</h1>
-        <p className="mt-1 text-xs text-slate-500">{ministerio.nombre}</p>
+        <p className="mt-1 text-xs text-slate-500">{ministerio.nombre} · {fechaSV(evento.fecha_inicio)}</p>
+        <p className="mt-1 text-sm font-bold text-slate-800">{evento.titulo}</p>
       </header>
 
-      <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">Servicio</p>
-        <h2 className="mt-1 text-lg font-extrabold text-slate-800">{evento.titulo}</h2>
-        <p className="mt-1 text-xs text-slate-500">{fechaSV(evento.fecha_inicio)}{evento.ubicacion ? ` · ${evento.ubicacion}` : ''}</p>
-      </section>
-
-      <details className="mt-5 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
-        <summary className="flex min-h-[62px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-          <span>
-            <span className="block text-sm font-extrabold text-slate-800">Funciones de Alabanza</span>
-            <span className="block text-[11px] text-slate-400">Crear, editar, retirar o reactivar funciones</span>
+      <details className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
+        <summary className="flex min-h-[66px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+          <span className="min-w-0">
+            <span className="block text-sm font-extrabold text-slate-800">Funciones de {ministerio.nombre}</span>
+            <span className="mt-0.5 block text-[11px] text-slate-400">{funcionesActivas.length} activas · abre solo cuando necesites administrarlas</span>
           </span>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
         </summary>
         <div className="border-t border-slate-100 bg-slate-50/60 p-3">
           <FuncionesAlabanzaEditor
@@ -147,8 +160,8 @@ export default async function EquipoAlabanzaPage({
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-indigo-500" />
           <div>
-            <h2 className="text-sm font-extrabold text-[#171923]">Integrantes asignados</h2>
-            <p className="text-xs text-slate-500">{asignaciones.length} {asignaciones.length === 1 ? 'persona' : 'personas'} en este servicio</p>
+            <h2 className="text-sm font-extrabold text-[#171923]">Equipo de este servicio</h2>
+            <p className="text-xs text-slate-500">{asignaciones.length} {asignaciones.length === 1 ? 'integrante' : 'integrantes'} programados.</p>
           </div>
         </div>
 
@@ -178,11 +191,14 @@ export default async function EquipoAlabanzaPage({
 
         <div className="mt-5 border-t border-slate-100 pt-4">
           <p className="flex items-center gap-2 text-xs font-extrabold text-slate-700"><UserPlus className="h-4 w-4 text-indigo-500" />Asignar integrante</p>
-          <p className="mt-1 text-[11px] leading-5 text-slate-500">Abre únicamente la función que necesitas. Solo aparecen personas compatibles.</p>
+          <p className="mt-1 text-[11px] leading-5 text-slate-500">Abre únicamente la función que necesitas. Solo aparecen personas compatibles y todavía no asignadas.</p>
 
           <div className="mt-3 overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-100">
-            {funcionesActivas.map((cap: any, index: number) => {
-              const candidatos = candidatosPorCapacidad.get(String(cap.id)) || []
+            {funcionesActivas.length === 0 ? (
+              <p className="p-4 text-xs text-slate-400">No hay funciones activas. Ábrelas arriba para crear la primera.</p>
+            ) : funcionesActivas.map((cap: any, index: number) => {
+              const candidatos = (candidatosPorCapacidad.get(String(cap.id)) || [])
+                .filter((persona: any) => !asignadosIds.has(String(persona.id)))
               return (
                 <details key={cap.id} className={index ? 'border-t border-slate-100' : ''}>
                   <summary className="flex min-h-[54px] cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5">
@@ -199,13 +215,13 @@ export default async function EquipoAlabanzaPage({
                         <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                           Integrante
                           <select name="profile_id" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs font-semibold">
-                            {candidatos.map((person: any) => <option key={person.id} value={person.id}>{person.nombre_completo}</option>)}
+                            {candidatos.map((persona: any) => <option key={persona.id} value={persona.id}>{persona.nombre_completo}</option>)}
                           </select>
                         </label>
                         <button className="h-11 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white">Asignar a {cap.nombre}</button>
                       </form>
                     ) : (
-                      <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400">No hay personas con esta función asignada en su ficha.</p>
+                      <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-400">No hay personas disponibles con esta función asignada en su ficha.</p>
                     )}
                   </div>
                 </details>

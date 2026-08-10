@@ -19,9 +19,13 @@ import {
   eliminarCancionAlabanza,
   guardarPaletaAlabanza,
 } from '@/app/actions/programacion-alabanza'
-import { crearServicioAlabanza } from '@/app/actions/servicios-alabanza'
+import { crearServicioAlabanza, prepararFechaAlabanza } from '@/app/actions/servicios-alabanza'
 import PaletaAlabanzaEditor from '@/components/ministerios/PaletaAlabanzaEditor'
 import RepertorioBibliotecaPicker, { type CancionBiblioteca } from '@/components/ministerios/RepertorioBibliotecaPicker'
+import {
+  cargarCalendarioMinisterial,
+  type ProgramacionCalendarItem,
+} from '@/lib/programacion/calendario-ministerial'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,6 +88,14 @@ function fechaSV(value: string) {
   }).format(new Date(value))
 }
 
+function horaSV(value: string) {
+  return new Intl.DateTimeFormat('es-SV', {
+    timeZone: 'America/El_Salvador',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
 function fechaLargaDia(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number)
   const text = new Intl.DateTimeFormat('es-SV', {
@@ -118,6 +130,10 @@ function tonoHistorial(rows: any[]) {
     if (tone && !tonos.some((item) => item.toLowerCase() === tone.toLowerCase())) tonos.push(tone)
   }
   return tonos.slice(0, 6)
+}
+
+function itemKey(item: ProgramacionCalendarItem) {
+  return `${item.kind}:${item.id}`
 }
 
 export default async function ProgramacionMinisterialPage({
@@ -162,14 +178,8 @@ export default async function ProgramacionMinisterialPage({
 
   const mes = /^\d{4}-\d{2}$/.test(query.mes || '') ? query.mes! : mesActualSV()
   const { start, end } = rangoMes(mes)
-  const [{ data: eventos = [] }, { data: cancionesBiblioteca = [] }] = await Promise.all([
-    admin
-      .from('eventos')
-      .select('id,titulo,fecha_inicio,fecha_fin,ubicacion')
-      .eq('ministerio_id', id)
-      .gte('fecha_inicio', start)
-      .lt('fecha_inicio', end)
-      .order('fecha_inicio'),
+  const [{ ministerioCalendar, items }, { data: cancionesBiblioteca = [] }] = await Promise.all([
+    cargarCalendarioMinisterial(admin, id, start, end),
     admin
       .from('ministerio_canciones')
       .select('id,titulo,artista,spotify_url,youtube_url,activo,created_at')
@@ -179,52 +189,67 @@ export default async function ProgramacionMinisterialPage({
       .limit(300),
   ])
 
-  const eventIds = (eventos as any[]).map((item: any) => String(item.id))
-  const assignmentsByEvent = new Map<string, any[]>()
+  if (!ministerioCalendar) {
+    return (
+      <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-28 pt-4 sm:px-6">
+        <h1 className="text-2xl font-extrabold text-slate-900">Programación de {ministerio.nombre}</h1>
+        <p className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800 ring-1 ring-amber-100">
+          Este ministerio todavía no tiene un calendario configurado.
+        </p>
+      </main>
+    )
+  }
 
-  if (eventIds.length > 0) {
+  const preparedEvents = items.filter((item) => item.kind === 'event' && item.preparado)
+  const preparedEventIds = preparedEvents.map((item) => item.id)
+
+  const assignmentsByEvent = new Map<string, any[]>()
+  if (preparedEventIds.length > 0) {
     const { data: assignmentRows = [] } = await admin
       .from('evento_asignaciones')
-      .select('evento_id,profile_id,capacidad_id,estado')
-      .in('evento_id', eventIds)
+      .select('id,evento_id,profile_id,capacidad_id,ministerio_id,estado')
+      .in('evento_id', preparedEventIds)
 
-    const profileIds = Array.from(new Set((assignmentRows as any[]).map((item: any) => item.profile_id).filter(Boolean)))
-    const capabilityIds = Array.from(new Set((assignmentRows as any[]).map((item: any) => item.capacidad_id).filter(Boolean)))
-
+    const capabilityIds = Array.from(new Set((assignmentRows as any[]).map((row: any) => row.capacidad_id).filter(Boolean)))
+    const profileIds = Array.from(new Set((assignmentRows as any[]).map((row: any) => row.profile_id).filter(Boolean)))
     const [profilesReq, capabilitiesReq] = await Promise.all([
       profileIds.length
         ? admin.from('profiles').select('id,nombre_completo').in('id', profileIds)
         : Promise.resolve({ data: [] }),
       capabilityIds.length
-        ? admin.from('ministerio_capacidades').select('id,nombre').in('id', capabilityIds)
+        ? admin.from('ministerio_capacidades').select('id,nombre,ministerio_id').in('id', capabilityIds)
         : Promise.resolve({ data: [] }),
     ])
 
-    const profileMap = new Map<string, any>((profilesReq.data || []).map((item: any) => [String(item.id), item]))
-    const capabilityMap = new Map<string, any>((capabilitiesReq.data || []).map((item: any) => [String(item.id), item]))
+    const profileMap = new Map<string, any>((profilesReq.data || []).map((row: any) => [String(row.id), row]))
+    const capabilityMap = new Map<string, any>((capabilitiesReq.data || []).map((row: any) => [String(row.id), row]))
 
     for (const assignment of assignmentRows as any[]) {
+      const capability = assignment.capacidad_id ? capabilityMap.get(String(assignment.capacidad_id)) : null
+      const belongs = String(assignment.ministerio_id || '') === id
+        || (!assignment.ministerio_id && capability && String(capability.ministerio_id || '') === id)
+      if (!belongs) continue
       const eventId = String(assignment.evento_id)
       assignmentsByEvent.set(eventId, [
         ...(assignmentsByEvent.get(eventId) || []),
         {
           ...assignment,
           persona: profileMap.get(String(assignment.profile_id)),
-          capacidad: assignment.capacidad_id ? capabilityMap.get(String(assignment.capacidad_id)) : null,
+          capacidad: capability,
         },
       ])
     }
   }
 
-  const evento: any = (eventos as any[]).find((item: any) => String(item.id) === String(query.evento || '')) || null
+  const evento = preparedEvents.find((item) => item.id === String(query.evento || '')) || null
   const diaQuery = /^\d{4}-\d{2}-\d{2}$/.test(query.dia || '') && String(query.dia).startsWith(`${mes}-`)
     ? String(query.dia)
     : null
   const diaSeleccionado = evento ? fechaKeySV(evento.fecha_inicio) : diaQuery
-  const eventosDia = diaSeleccionado
-    ? (eventos as any[]).filter((item: any) => fechaKeySV(item.fecha_inicio) === diaSeleccionado)
+  const itemsDia = diaSeleccionado
+    ? items.filter((item) => fechaKeySV(item.fecha_inicio) === diaSeleccionado)
     : []
-  const asignadosEvento = evento ? assignmentsByEvent.get(String(evento.id)) || [] : []
+  const asignadosEvento = evento ? assignmentsByEvent.get(evento.id) || [] : []
 
   let repertorio: any[] = []
   let paleta: any = null
@@ -234,9 +259,15 @@ export default async function ProgramacionMinisterialPage({
         .from('evento_repertorio')
         .select('*, ministerio_canciones(id,titulo,artista,spotify_url,youtube_url)')
         .eq('evento_id', evento.id)
+        .eq('ministerio_id', id)
         .order('orden')
         .order('created_at'),
-      admin.from('evento_paletas').select('*').eq('evento_id', evento.id).maybeSingle(),
+      admin
+        .from('evento_paletas')
+        .select('*')
+        .eq('evento_id', evento.id)
+        .or(`ministerio_id.eq.${id},ministerio_id.is.null`)
+        .maybeSingle(),
     ])
     repertorio = repertorioReq.data || []
     paleta = paletaReq.data || null
@@ -248,6 +279,7 @@ export default async function ProgramacionMinisterialPage({
     const { data: historyRows = [] } = await admin
       .from('evento_repertorio')
       .select('cancion_id,tonalidad,created_at')
+      .eq('ministerio_id', id)
       .in('cancion_id', libraryIds)
       .order('created_at', { ascending: false })
       .limit(2000)
@@ -271,10 +303,10 @@ export default async function ProgramacionMinisterialPage({
     }
   })
 
-  const eventsByDay = new Map<string, any[]>()
-  for (const item of eventos as any[]) {
+  const itemsByDay = new Map<string, ProgramacionCalendarItem[]>()
+  for (const item of items) {
     const key = fechaKeySV(item.fecha_inicio)
-    eventsByDay.set(key, [...(eventsByDay.get(key) || []), item])
+    itemsByDay.set(key, [...(itemsByDay.get(key) || []), item])
   }
 
   const color = ministerio.color_primario || '#5b3df5'
@@ -285,28 +317,26 @@ export default async function ProgramacionMinisterialPage({
   const grid = celdasMes(mes)
 
   return (
-    <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pt-8">
-      <header className="mb-5">
-        <Link
-          href={`/ministerios/${id}`}
-          className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-black/[0.04]"
-        >
-          <ChevronLeft className="h-4 w-4" /> Atrás
-        </Link>
+    <main className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-5">
+      <header className="mb-5 pt-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>
           {puedeProgramar ? 'Panel del líder' : 'Programación ministerial'}
         </p>
         <h1 className="mt-1 text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">Programación de {ministerio.nombre}</h1>
-        <p className="mt-1 text-xs leading-5 text-slate-500">El Calendario define la fecha. Aquí preparas el equipo, repertorio y paleta de cada servicio.</p>
+        <p className="mt-1 text-xs leading-5 text-slate-500">
+          El Calendario de VIDA define las fechas. Aquí preparas la participación de {ministerio.nombre} sin duplicar eventos.
+        </p>
       </header>
 
       <section className="rounded-[24px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
         <details open={Boolean(diaSeleccionado || evento)}>
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <span className="min-w-0">
-              <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Calendario de servicios</span>
+              <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Calendario</span>
               <span className="mt-1 block text-lg font-extrabold tracking-[-0.02em] text-slate-800">{nombreMes(mes)}</span>
-              <span className="mt-0.5 block text-xs text-slate-500">{eventos.length} {eventos.length === 1 ? 'servicio programado' : 'servicios programados'} · toca para {diaSeleccionado ? 'ocultar' : 'ver el mes'}</span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                {items.length} {items.length === 1 ? 'fecha visible' : 'fechas visibles'} · Vida Internacional + {ministerio.nombre}
+              </span>
             </span>
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-600">
               <ChevronDown className="h-5 w-5" />
@@ -339,7 +369,7 @@ export default async function ProgramacionMinisterialPage({
               {grid.map((day, index) => {
                 if (!day) return <span key={`empty-${index}`} className="aspect-square" />
                 const key = dateKeyFromDay(mes, day)
-                const dayEvents = eventsByDay.get(key) || []
+                const dayItems = itemsByDay.get(key) || []
                 const selected = diaSeleccionado === key
                 return (
                   <Link
@@ -349,9 +379,15 @@ export default async function ProgramacionMinisterialPage({
                     aria-label={`Seleccionar ${key}`}
                   >
                     {day}
-                    {dayEvents.length > 0 && (
-                      <span className={`absolute bottom-1 h-1.5 min-w-1.5 rounded-full ${selected ? 'bg-white' : 'bg-indigo-500'}`}>
-                        {dayEvents.length > 1 && <span className="sr-only">{dayEvents.length} servicios</span>}
+                    {dayItems.length > 0 && (
+                      <span className="absolute bottom-1 flex max-w-[80%] gap-[2px]" aria-hidden="true">
+                        {dayItems.slice(0, 3).map((item) => (
+                          <span
+                            key={itemKey(item)}
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: selected ? '#ffffff' : item.calendar_color }}
+                          />
+                        ))}
                       </span>
                     )}
                   </Link>
@@ -365,34 +401,68 @@ export default async function ProgramacionMinisterialPage({
                 <p className="mt-1 text-sm font-extrabold text-slate-800">{fechaLargaDia(diaSeleccionado)}</p>
 
                 <div className="mt-3 space-y-2">
-                  {eventosDia.length ? eventosDia.map((item: any) => {
-                    const team = assignmentsByEvent.get(String(item.id)) || []
+                  {itemsDia.length ? itemsDia.map((item) => {
+                    const team = item.kind === 'event' ? assignmentsByEvent.get(item.id) || [] : []
                     const selected = evento?.id === item.id
                     return (
-                      <Link
-                        key={item.id}
-                        href={`/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
-                        className={`block rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
+                      <div
+                        key={itemKey(item)}
+                        className={`rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-extrabold text-slate-800">{item.titulo}</span>
-                            <span className="mt-1 block text-xs text-slate-500">{fechaSV(item.fecha_inicio)}{item.ubicacion ? ` · ${item.ubicacion}` : ''}</span>
-                            <span className="mt-1.5 block text-[10px] font-semibold text-slate-400">{team.length ? `${team.length} integrantes asignados` : 'Equipo sin asignar'}</span>
-                          </span>
-                          <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300" />
+                        <div className="flex items-start gap-3">
+                          <span
+                            className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: item.calendar_color }}
+                            aria-hidden="true"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <p className="min-w-0 truncate text-sm font-extrabold text-slate-800">{item.titulo}</p>
+                              {item.preparado && (
+                                <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-extrabold text-emerald-700">{ministerio.nombre}</span>
+                              )}
+                              {item.publico && (
+                                <span className="rounded-full bg-indigo-50 px-2 py-1 text-[9px] font-bold text-indigo-600">General</span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {horaSV(item.fecha_inicio)} · {item.calendar_nombre}{item.ubicacion ? ` · ${item.ubicacion}` : ''}
+                            </p>
+                            {item.preparado && (
+                              <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
+                                {team.length ? `${team.length} integrantes asignados` : 'Equipo sin asignar'}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </Link>
+
+                        {item.preparado && item.kind === 'event' ? (
+                          <Link
+                            href={`/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
+                            className="mt-3 flex min-h-10 items-center justify-between rounded-xl bg-slate-900 px-3 text-[11px] font-extrabold text-white"
+                          >
+                            Abrir programación <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        ) : puedeProgramar ? (
+                          <form action={prepararFechaAlabanza.bind(null, id)} className="mt-3">
+                            <input type="hidden" name="item_type" value={item.kind} />
+                            <input type="hidden" name="item_id" value={item.id} />
+                            <button className="flex min-h-10 w-full items-center justify-between rounded-xl bg-indigo-50 px-3 text-[11px] font-extrabold text-indigo-700 ring-1 ring-indigo-100">
+                              Preparar en {ministerio.nombre} <Plus className="h-4 w-4" />
+                            </button>
+                          </form>
+                        ) : null}
+                      </div>
                     )
                   }) : (
-                    <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">No hay servicios de Alabanza en este día.</p>
+                    <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">No hay fechas en el Calendario para este día.</p>
                   )}
                 </div>
 
                 {puedeProgramar && (
                   <details className="mt-3 overflow-hidden rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
                     <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-extrabold text-indigo-700">
-                      <Plus className="h-4 w-4" /> Agregar servicio
+                      <Plus className="h-4 w-4" /> Crear una fecha nueva
                     </summary>
                     <form action={crearServicioAlabanza.bind(null, id)} className="grid gap-3 border-t border-indigo-100 bg-white p-3">
                       <input type="hidden" name="fecha" value={diaSeleccionado} />
@@ -401,8 +471,8 @@ export default async function ProgramacionMinisterialPage({
                         <input name="hora" type="time" required defaultValue="10:00" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-extrabold" />
                       </label>
                       <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        Nombre del servicio
-                        <input name="titulo" defaultValue="Servicio de Alabanza" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
+                        Nombre
+                        <input name="titulo" defaultValue="Servicio" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
                       </label>
                       <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
                         <label className="min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
@@ -419,8 +489,10 @@ export default async function ProgramacionMinisterialPage({
                           </select>
                         </label>
                       </div>
-                      <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y continuar</button>
-                      <p className="text-[10px] leading-4 text-slate-400">Se crea un solo evento real: aparece en Alabanza y también en el calendario general Vida Internacional.</p>
+                      <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y preparar</button>
+                      <p className="text-[10px] leading-4 text-slate-400">
+                        Se crea un solo evento real, visible en Vida Internacional y en {ministerio.nombre}.
+                      </p>
                     </form>
                   </details>
                 )}
@@ -433,7 +505,7 @@ export default async function ProgramacionMinisterialPage({
       {evento && (
         <section id="servicio-activo" className="mt-5 scroll-mt-24 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
           <div className="p-4">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Servicio seleccionado</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Programación de {ministerio.nombre}</p>
             <h2 className="mt-1 text-xl font-extrabold tracking-[-0.025em] text-[#171923]">{evento.titulo}</h2>
             <p className="mt-1 text-xs text-slate-500">{fechaSV(evento.fecha_inicio)}{evento.ubicacion ? ` · ${evento.ubicacion}` : ''}</p>
           </div>
@@ -503,7 +575,6 @@ export default async function ProgramacionMinisterialPage({
                             <div className="mt-2 flex flex-wrap gap-1.5">
                               {spotify && <a href={spotify} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">Spotify <ExternalLink className="h-3 w-3" /></a>}
                               {youtube && <a href={youtube} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">YouTube <ExternalLink className="h-3 w-3" /></a>}
-                              {!spotify && !youtube && row.enlace && <a href={row.enlace} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">Enlace <ExternalLink className="h-3 w-3" /></a>}
                             </div>
                           )}
                           {row.notas && <p className="mt-2 text-[11px] leading-5 text-slate-500">{row.notas}</p>}
@@ -573,12 +644,14 @@ export default async function ProgramacionMinisterialPage({
         </section>
       )}
 
-      {!evento && diaSeleccionado && eventosDia.length > 0 && (
-        <p className="mt-4 rounded-2xl bg-white p-4 text-center text-xs text-slate-500 ring-1 ring-black/[0.04]">Toca uno de los servicios del día para abrir su programación.</p>
+      {!evento && diaSeleccionado && itemsDia.some((item) => item.preparado) && (
+        <p className="mt-4 rounded-2xl bg-white p-4 text-center text-xs text-slate-500 ring-1 ring-black/[0.04]">
+          Toca “Abrir programación” en una fecha preparada para ver equipo, repertorio y paleta.
+        </p>
       )}
 
       <div className="mt-5 rounded-2xl bg-indigo-50 p-3 text-[10px] leading-4 text-indigo-700 ring-1 ring-indigo-100">
-        <CalendarDays className="mr-1 inline h-3.5 w-3.5" /> Una fecha creada aquí es el mismo evento que verá la congregación en Calendario; Alabanza solamente añade la información de servicio.
+        <CalendarDays className="mr-1 inline h-3.5 w-3.5" /> El mini calendario usa las mismas fechas de Vida Internacional y {ministerio.nombre}. Preparar una fecha no crea una copia.
       </div>
     </main>
   )

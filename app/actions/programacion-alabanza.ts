@@ -40,14 +40,30 @@ async function obtenerAcceso(ministerioId: string): Promise<AccesoProgramacion |
   return { userId: user.id, puedeProgramar, puedePaleta: puedeProgramar || tienePaleta }
 }
 
-async function validarEvento(admin: any, ministerioId: string, eventoId: string) {
+async function calendarioMinisterio(admin: any, ministerioId: string) {
   const { data } = await admin
-    .from('eventos')
+    .from('calendars')
     .select('id')
-    .eq('id', eventoId)
     .eq('ministerio_id', ministerioId)
-    .maybeSingle()
-  return !!data
+    .order('created_at')
+    .limit(1)
+  return data?.[0]?.id ? String(data[0].id) : null
+}
+
+async function validarEvento(admin: any, ministerioId: string, eventoId: string) {
+  const calendarId = await calendarioMinisterio(admin, ministerioId)
+  if (!calendarId) return false
+
+  const [{ data: evento }, { data: link }] = await Promise.all([
+    admin.from('eventos').select('id,ministerio_id').eq('id', eventoId).maybeSingle(),
+    admin
+      .from('evento_calendarios')
+      .select('evento_id')
+      .eq('evento_id', eventoId)
+      .eq('calendar_id', calendarId)
+      .maybeSingle(),
+  ])
+  return Boolean(evento && (link || String(evento.ministerio_id || '') === ministerioId))
 }
 
 function revalidarProgramacion(ministerioId: string) {
@@ -55,6 +71,8 @@ function revalidarProgramacion(ministerioId: string) {
   revalidatePath(`/ministerios/${ministerioId}/programacion`)
   revalidatePath(`/ministerios/${ministerioId}/programacion/equipo`)
   revalidatePath('/admin/usuarios')
+  revalidatePath('/inicio')
+  revalidatePath('/calendario')
 }
 
 export async function crearFuncionMinisterial(ministerioId: string, formData: FormData): Promise<void> {
@@ -140,7 +158,7 @@ export async function asignarServidorAlabanza(ministerioId: string, eventoId: st
   if (!profileId || !capacidadId) fail('Selecciona una persona compatible.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
   const [{ data: membresia }, { data: capacidadAsignada }, { data: capacidad }] = await Promise.all([
     admin.from('ministerio_miembros').select('id').eq('ministerio_id', ministerioId).eq('profile_id', profileId).maybeSingle(),
@@ -152,6 +170,7 @@ export async function asignarServidorAlabanza(ministerioId: string, eventoId: st
   const { error } = await admin.from('evento_asignaciones').upsert({
     evento_id: eventoId,
     profile_id: profileId,
+    ministerio_id: ministerioId,
     capacidad_id: capacidadId,
     asignado_por: acceso.userId,
     estado: 'asignado',
@@ -169,9 +188,14 @@ export async function quitarServidorAlabanza(ministerioId: string, eventoId: str
   if (!asignacionId) fail('Asignación inválida.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
-  const { error } = await admin.from('evento_asignaciones').delete().eq('id', asignacionId).eq('evento_id', eventoId)
+  const { error } = await admin
+    .from('evento_asignaciones')
+    .delete()
+    .eq('id', asignacionId)
+    .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }
@@ -180,25 +204,28 @@ function texto(formData: FormData, key: string) {
   return String(formData.get(key) || '').trim()
 }
 
-async function siguienteOrden(admin: any, eventoId: string) {
+async function siguienteOrden(admin: any, ministerioId: string, eventoId: string) {
   const { count } = await admin
     .from('evento_repertorio')
     .select('id', { count: 'exact', head: true })
     .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
   return count ?? 0
 }
 
 async function insertarEnRepertorio(
   admin: any,
   acceso: AccesoProgramacion,
+  ministerioId: string,
   eventoId: string,
   cancion: any,
   tonalidad: string | null,
   notas: string | null,
 ) {
-  const orden = await siguienteOrden(admin, eventoId)
+  const orden = await siguienteOrden(admin, ministerioId, eventoId)
   const { error } = await admin.from('evento_repertorio').insert({
     evento_id: eventoId,
+    ministerio_id: ministerioId,
     cancion_id: cancion.id,
     orden,
     titulo: cancion.titulo,
@@ -220,7 +247,7 @@ export async function agregarCancionBibliotecaAlabanza(ministerioId: string, eve
   if (!cancionId) fail('Selecciona una canción de la biblioteca.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
   const { data: cancion } = await admin
     .from('ministerio_canciones')
@@ -234,11 +261,12 @@ export async function agregarCancionBibliotecaAlabanza(ministerioId: string, eve
     .from('evento_repertorio')
     .select('id')
     .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
     .eq('cancion_id', cancionId)
     .maybeSingle()
   if (yaExiste) fail('Esa canción ya está en el repertorio de este servicio.')
 
-  await insertarEnRepertorio(admin, acceso, eventoId, cancion, tonalidad, null)
+  await insertarEnRepertorio(admin, acceso, ministerioId, eventoId, cancion, tonalidad, null)
   revalidarProgramacion(ministerioId)
 }
 
@@ -255,7 +283,7 @@ export async function agregarCancionAlabanza(ministerioId: string, eventoId: str
   if (!titulo) fail('Escribe el título de la canción.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
   let { data: cancion } = await admin
     .from('ministerio_canciones')
@@ -295,11 +323,12 @@ export async function agregarCancionAlabanza(ministerioId: string, eventoId: str
     .from('evento_repertorio')
     .select('id')
     .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
     .eq('cancion_id', cancion.id)
     .maybeSingle()
   if (yaExiste) fail('Esa canción ya está en el repertorio de este servicio.')
 
-  await insertarEnRepertorio(admin, acceso, eventoId, cancion, tonalidad, notas)
+  await insertarEnRepertorio(admin, acceso, ministerioId, eventoId, cancion, tonalidad, notas)
   revalidarProgramacion(ministerioId)
 }
 
@@ -316,13 +345,14 @@ export async function actualizarCancionAlabanza(ministerioId: string, eventoId: 
   if (!repertorioId || !titulo) fail('Canción inválida.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
   const { data: fila } = await admin
     .from('evento_repertorio')
     .select('id,cancion_id')
     .eq('id', repertorioId)
     .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
     .maybeSingle()
   if (!fila) fail('La canción ya no está en este repertorio.')
 
@@ -352,6 +382,7 @@ export async function actualizarCancionAlabanza(ministerioId: string, eventoId: 
     })
     .eq('id', repertorioId)
     .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }
@@ -364,9 +395,14 @@ export async function eliminarCancionAlabanza(ministerioId: string, eventoId: st
   if (!repertorioId) fail('Canción inválida.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
-  const { error } = await admin.from('evento_repertorio').delete().eq('id', repertorioId).eq('evento_id', eventoId)
+  const { error } = await admin
+    .from('evento_repertorio')
+    .delete()
+    .eq('id', repertorioId)
+    .eq('evento_id', eventoId)
+    .eq('ministerio_id', ministerioId)
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
 }
@@ -381,10 +417,11 @@ export async function guardarPaletaAlabanza(ministerioId: string, eventoId: stri
   if (colores.length < 2) fail('Selecciona al menos dos colores válidos.')
 
   const admin = createAdminClient() as any
-  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no pertenece a este ministerio.')
+  if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
 
   const { error } = await admin.from('evento_paletas').upsert({
     evento_id: eventoId,
+    ministerio_id: ministerioId,
     colores,
     observaciones: texto(formData, 'observaciones') || null,
     referencia_url: texto(formData, 'referencia_url') || null,
