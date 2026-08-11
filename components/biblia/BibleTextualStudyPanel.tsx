@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Languages, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { cargarEvidenciaTextualBiblica } from '@/app/actions/evidencia-textual'
 import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'
 
@@ -53,24 +53,7 @@ export default function BibleTextualStudyPanel({
     sepia: 'border-[#c9ad78] bg-[#f3e3c2] text-[#493c2d]',
   }[modo]
 
-  if (!tieneVersiculo) {
-    return (
-      <section className={`rounded-3xl border p-5 ${palette}`}>
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-500/15 text-indigo-500">
-            <Languages className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-indigo-500">Análisis textual</p>
-            <h2 className="mt-1 text-base font-bold">Seleccione un versículo</h2>
-            <p className="mt-1 text-xs leading-5 opacity-70">
-              Elija un versículo en el selector superior para ver texto original, transliteración, morfología, Strong y variantes.
-            </p>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  if (!tieneVersiculo) return null
 
   if (cargando) {
     return (
@@ -83,24 +66,7 @@ export default function BibleTextualStudyPanel({
     )
   }
 
-  if (!resultado) {
-    return (
-      <section className={`rounded-3xl border p-5 ${palette}`}>
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-500/15 text-indigo-500">
-            <Languages className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-indigo-500">Análisis textual</p>
-            <h2 className="mt-1 text-base font-bold">Capa lingüística no disponible todavía</h2>
-            <p className="mt-1 text-xs leading-5 opacity-70">
-              El contexto del pasaje sigue disponible. La capa palabra por palabra se mostrará cuando la fuente original de este testamento quede importada y aprobada.
-            </p>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  if (!resultado) return null
 
   return <TextualEvidencePanel evidence={resultado} modo={modo} />
 }
