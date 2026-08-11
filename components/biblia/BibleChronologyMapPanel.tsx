@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Clock3, ExternalLink, Loader2, MapPin, ShieldCheck } from 'lucide-react'
 import { cargarCronologiaBiblica } from '@/app/actions/cronologia-biblica'
+import type { EventoCronologicoBiblico } from '@/lib/estudios/biblical-chronology-maps'
 
 type Modo = 'claro' | 'oscuro' | 'sepia'
 type Resultado = Awaited<ReturnType<typeof cargarCronologiaBiblica>>
@@ -24,7 +25,7 @@ const certaintyLabels: Record<string, string> = {
   disputed: 'Debatido',
 }
 
-function bibleRange(event: Resultado extends { status: 'available'; events: infer E } ? E extends Array<infer T> ? T : never : never) {
+function bibleRange(event: EventoCronologicoBiblico) {
   const start = `${event.startBookCode} ${event.startChapter}${event.startVerse ? `:${event.startVerse}` : ''}`
   const endBook = event.endBookCode ?? event.startBookCode
   const endChapter = event.endChapter ?? event.startChapter
