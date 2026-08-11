@@ -69,18 +69,15 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
     : `${reference.book.nameEs}, panorama general del libro`
 
   return {
-    texto_original: unirSecciones(
-      `Idioma original principal: ${languages.join(' y ') || 'pendiente de clasificación'}.`,
-      'El contexto general de este pasaje está disponible. El texto original exacto se adjunta por separado cuando existe un paquete textual aprobado para la referencia.'
-    ),
-    transliteracion: 'La transliteración exacta aparece en la evidencia textual aprobada cuando está disponible para esta referencia.',
-    traduccion_literal: 'La secuencia literal palabra por palabra aparece en la evidencia textual aprobada. No debe confundirse con una traducción española pulida.',
+    texto_original: '',
+    transliteracion: '',
+    traduccion_literal: '',
     traduccion_interpretativa: unirSecciones(
       `Síntesis contextual de la unidad «${alcance}»:`,
       apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
       `Versión interna del paquete: ${version}.`
     ),
-    comparacion_versiones: 'La comparación de traducciones permanece en Biblia → Comparar. Las diferencias de versificación se resuelven según la traducción seleccionada.',
+    comparacion_versiones: '',
     contexto_historico: unirSecciones(
       'Contexto general del libro:',
       apartado(bookProfile, 'historicalContext'),
@@ -90,9 +87,8 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
       apartado(sectionContext, 'jewishContext') || apartado(bookProfile, 'jewishContext')
     ),
     analisis_linguistico: unirSecciones(
-      `Idioma(s) del libro: ${languages.join(', ') || 'no especificado'}.`,
-      terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null,
-      'Las palabras, lemas, números Strong y códigos morfológicos se muestran únicamente desde ocurrencias textuales aprobadas.'
+      languages.length > 0 ? `Idioma(s) del libro: ${languages.join(', ')}.` : null,
+      terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null
     ),
     que_quiso_comunicar: unirSecciones(
       apartado(sectionContext, 'authorialIntent'),
@@ -104,12 +100,10 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
     ),
     explicacion: unirSecciones(
       apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
-      'Estructura y función literaria:',
       apartado(sectionContext, 'literaryContext') || apartado(bookProfile, 'literaryContext')
     ),
     reflexion: apartado(sectionContext, 'theologicalReflection')
-      || apartado(bookProfile, 'theologicalReflection')
-      || 'La reflexión espiritual se añadirá cuando exista una unidad editorial aprobada para este pasaje.',
+      || apartado(bookProfile, 'theologicalReflection'),
   }
 }
 
