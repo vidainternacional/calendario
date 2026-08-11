@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, CheckCheck, Globe, Megaphone } from 'lucide-react'
 import UserAvatar from '@/components/comunidad/UserAvatar'
 import { markPublicationRead } from '@/components/avisos/usePublicationReads'
@@ -29,11 +30,19 @@ export default function PublicacionDetalle({
   ministerioId,
   ministerioNombre,
 }: Props) {
+  const searchParams = useSearchParams()
+
   useEffect(() => {
     void markPublicationRead(id)
   }, [id])
 
-  const backHref = ministerioId ? `/ministerios/${ministerioId}/avisos` : '/avisos'
+  const abiertoDesdePush = searchParams.get('origen') === 'push'
+  const backHref = abiertoDesdePush
+    ? '/inicio'
+    : ministerioId
+      ? `/ministerios/${ministerioId}/avisos`
+      : '/avisos'
+  const backLabel = abiertoDesdePush ? 'Inicio' : 'Avisos'
 
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+1.25rem)] sm:px-6">
@@ -41,10 +50,10 @@ export default function PublicacionDetalle({
         <Link
           href={backHref}
           className="inline-flex min-h-11 items-center gap-2.5 rounded-full border border-white/70 bg-white/95 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur-md transition active:scale-[0.98]"
-          aria-label="Regresar a avisos"
+          aria-label={`Regresar a ${backLabel.toLowerCase()}`}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          <span>Avisos</span>
+          <span>{backLabel}</span>
         </Link>
 
         <article className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)]">
@@ -59,9 +68,7 @@ export default function PublicacionDetalle({
                 Leído
               </span>
             </div>
-            <h1 className="mt-3 break-words text-[28px] font-extrabold leading-tight tracking-[-0.035em] text-[#171923] sm:text-[34px]">
-              {titulo}
-            </h1>
+            <h1 className="mt-3 break-words text-[28px] font-extrabold leading-tight tracking-[-0.035em] text-[#171923] sm:text-[34px]">{titulo}</h1>
           </header>
 
           <div className="px-5 py-5 sm:px-7 sm:py-7">
