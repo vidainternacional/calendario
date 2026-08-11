@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronRight, LayoutGrid } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import ShineSweep from '@/components/ui/ShineSweep'
+import { obtenerPendientesMinisterioDashboard } from '@/app/actions/pendientes-ministerio-dashboard'
+import { PENDING_INDICATORS_EVENT } from '@/components/notificaciones/usePendingIndicators'
 
 type Mem = {
   ministerio_id: string
@@ -21,11 +22,11 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
   const [pendientes, setPendientes] = useState<PendingByMinistry>({})
   const menuRef = useRef<HTMLElement>(null)
 
-  const leaderIds = useMemo(
-    () => membresias.filter((item) => item.es_lider).map((item) => item.ministerio_id),
+  const ministryIds = useMemo(
+    () => membresias.map((item) => item.ministerio_id),
     [membresias],
   )
-  const leaderKey = leaderIds.join('|')
+  const ministryKey = ministryIds.join('|')
 
   useEffect(() => {
     if (!abierto) return
@@ -38,7 +39,7 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
 
   useEffect(() => {
     let cancelled = false
-    const ids = leaderKey ? leaderKey.split('|') : []
+    const ids = ministryKey ? ministryKey.split('|') : []
 
     if (ids.length === 0) {
       setPendientes({})
@@ -46,48 +47,38 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
     }
 
     async function refreshPending() {
-      const supabase = createClient()
-      const { data, error } = await (supabase as any)
-        .from('ministerio_solicitudes_ingreso')
-        .select('ministerio_id')
-        .in('ministerio_id', ids)
-        .eq('estado', 'pendiente')
-
-      if (error) {
-        console.error('No se pudieron cargar las solicitudes de ingreso pendientes', error)
-        return
+      try {
+        const next = await obtenerPendientesMinisterioDashboard(ids)
+        if (!cancelled) setPendientes(next)
+      } catch (error) {
+        console.error('No se pudieron cargar los pendientes del dashboard ministerial', error)
       }
-
-      const next: PendingByMinistry = Object.fromEntries(ids.map((id) => [id, 0]))
-      for (const row of data || []) {
-        const ministerioId = String(row.ministerio_id || '')
-        if (!ministerioId) continue
-        next[ministerioId] = (next[ministerioId] || 0) + 1
-      }
-
-      if (!cancelled) setPendientes(next)
     }
 
     const handleFocus = () => void refreshPending()
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') void refreshPending()
     }
+    const handlePendingRefresh = () => void refreshPending()
 
     void refreshPending()
-    const interval = window.setInterval(refreshPending, 45_000)
+    const interval = window.setInterval(refreshPending, 30_000)
     window.addEventListener('focus', handleFocus)
+    window.addEventListener(PENDING_INDICATORS_EVENT, handlePendingRefresh)
     document.addEventListener('visibilitychange', handleVisibility)
 
     return () => {
       cancelled = true
       window.clearInterval(interval)
       window.removeEventListener('focus', handleFocus)
+      window.removeEventListener(PENDING_INDICATORS_EVENT, handlePendingRefresh)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [leaderKey])
+  }, [ministryKey])
 
   if (!membresias.length) return null
   const principal = membresias[0]
+  const principalPendientes = pendientes[principal.ministerio_id] || 0
   const totalPendientes = Object.values(pendientes).reduce((total, value) => total + value, 0)
 
   return (
@@ -102,8 +93,16 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
           href={`/ministerios/${principal.ministerio_id}`}
           className="relative flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 transition active:bg-white/5"
         >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15 text-xl ring-1 ring-white/25 backdrop-blur-sm">
+          <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/15 text-xl ring-1 ring-white/25 backdrop-blur-sm">
             {principal.emoji}
+            {principalPendientes > 0 && (
+              <span
+                className="absolute -right-2.5 -top-2.5 grid h-6 min-w-6 place-items-center rounded-full bg-rose-500 px-1.5 text-[9px] font-black leading-none text-white shadow-sm ring-2 ring-white"
+                aria-label={`${principalPendientes} pendiente${principalPendientes === 1 ? '' : 's'} por revisar en ${principal.nombre}`}
+              >
+                {principalPendientes > 99 ? '99+' : principalPendientes}
+              </span>
+            )}
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white/78">
@@ -114,18 +113,13 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
             </span>
             <span className="mt-1 block truncate text-[16px] font-bold tracking-[-0.02em] text-white">{principal.nombre}</span>
             <span className="mt-0.5 block truncate text-[11px] text-white/72">
-              {principal.es_lider ? 'Dashboard, equipo y actividad del ministerio.' : 'Equipo, actividades y recursos del ministerio.'}
+              {principalPendientes > 0
+                ? `${principalPendientes} ${principalPendientes === 1 ? 'acción pendiente' : 'acciones pendientes'} por revisar.`
+                : principal.es_lider
+                  ? 'Dashboard, equipo y actividad del ministerio.'
+                  : 'Equipo, actividades y recursos del ministerio.'}
             </span>
           </span>
-          {totalPendientes > 0 && (
-            <span
-              className="grid h-8 min-w-8 shrink-0 place-items-center rounded-full bg-white px-2 text-[11px] font-black shadow-[0_4px_12px_rgba(15,23,42,0.16)]"
-              style={{ color: principal.color }}
-              aria-label={`${totalPendientes} solicitud${totalPendientes === 1 ? '' : 'es'} de ingreso pendiente${totalPendientes === 1 ? '' : 's'}`}
-            >
-              {totalPendientes > 99 ? '99+' : totalPendientes}
-            </span>
-          )}
           <ChevronRight className="h-5 w-5 shrink-0 text-white/75" aria-hidden="true" />
         </Link>
 
@@ -150,7 +144,7 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
               <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400">Mis ministerios</p>
               <p className="mt-1 text-xs text-slate-500">
                 {totalPendientes > 0
-                  ? 'Las solicitudes pendientes están marcadas en el ministerio correspondiente.'
+                  ? 'El círculo rojo marca decisiones o solicitudes pendientes en cada dashboard.'
                   : 'Elige el dashboard que deseas abrir o explora otros equipos.'}
               </p>
             </div>
@@ -166,23 +160,29 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
                     className="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors active:bg-slate-100"
                   >
                     <span
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-lg text-white shadow-sm"
+                      className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl text-lg text-white shadow-sm"
                       style={{ backgroundColor: ministerio.color }}
                     >
                       {ministerio.emoji}
+                      {pendingCount > 0 && (
+                        <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[8px] font-black leading-none text-white ring-2 ring-white">
+                          {pendingCount > 99 ? '99+' : pendingCount}
+                        </span>
+                      )}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="truncate text-sm font-semibold text-[#171923]">{ministerio.nombre}</span>
-                      <span className="mt-0.5 block text-[10px] font-medium text-slate-400">
-                        {index === 0 ? 'Ministerio principal' : ministerio.es_lider ? 'Liderazgo' : 'Miembro'}
+                      <span className={`mt-0.5 block text-[10px] font-medium ${pendingCount > 0 ? 'text-rose-500' : 'text-slate-400'}`}>
+                        {pendingCount > 0
+                          ? `${pendingCount} ${pendingCount === 1 ? 'pendiente' : 'pendientes'} por revisar`
+                          : index === 0
+                            ? 'Ministerio principal'
+                            : ministerio.es_lider
+                              ? 'Liderazgo'
+                              : 'Miembro'}
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
-                      {pendingCount > 0 && (
-                        <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[9px] font-extrabold text-rose-600 ring-1 ring-rose-100">
-                          {pendingCount} pendiente{pendingCount === 1 ? '' : 's'}
-                        </span>
-                      )}
                       {ministerio.es_lider && (
                         <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-extrabold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100">Líder</span>
                       )}
