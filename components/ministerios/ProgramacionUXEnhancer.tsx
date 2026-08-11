@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import EquipoEstadoSync from '@/components/ministerios/EquipoEstadoSync'
 import EquipoServicioInline from '@/components/ministerios/EquipoServicioInline'
+import ReemplazosServicioInline from '@/components/ministerios/ReemplazosServicioInline'
 
 function hoySV() {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -38,6 +39,7 @@ export default function ProgramacionUXEnhancer() {
   return (
     <>
       <EquipoServicioInline />
+      <ReemplazosServicioInline />
       <EquipoEstadoSync />
       <style jsx global>{`
         .programacion-ministerial input:not([type='color']):not([type='hidden']),

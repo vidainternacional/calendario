@@ -19,7 +19,6 @@ export async function proponerIntercambio(formData: FormData) {
 
   if (!asignacion_origen_id) return { error: 'Datos incompletos' }
 
-  // Use .from<any> to bypass strict generated types that don't include Insert
   const db = supabase as any
   const { error } = await db.from('intercambios').insert({
     asignacion_origen_id,
@@ -34,13 +33,11 @@ export async function proponerIntercambio(formData: FormData) {
     return { error: 'Error al proponer el intercambio' }
   }
 
-  // Notificar al destinatario o al ministerio completo
   const { data: profile } = await db.from('profiles').select('nombre_completo').eq('id', user.id).single()
   const solicitanteNombre = profile?.nombre_completo || 'Alguien'
   const notifBody = mensaje ? `"${mensaje}"` : 'Ha solicitado un intercambio de turno.'
 
   if (destinatario_id) {
-    // Intercambio directo
     await notifyUser(supabase, destinatario_id, {
       title: `🔄 Solicitud de intercambio de ${solicitanteNombre}`,
       body: notifBody,
@@ -48,13 +45,12 @@ export async function proponerIntercambio(formData: FormData) {
       tag: 'intercambio_nuevo',
     })
   } else {
-    // Intercambio abierto: notificar a todos los del mismo ministerio
     const { data: asig } = await db
       .from('evento_asignaciones')
       .select('eventos(ministerio_id)')
       .eq('id', asignacion_origen_id)
       .single()
-    
+
     const ministerioId = asig?.eventos?.ministerio_id
     if (ministerioId) {
       const { data: miembros } = await db
@@ -65,14 +61,13 @@ export async function proponerIntercambio(formData: FormData) {
 
       if (miembros && miembros.length > 0) {
         const targetIds = miembros.map((m: any) => m.profile_id)
-        
-        // Check preferences
+
         const { data: prefData } = await db
           .from('notificaciones_preferencias')
           .select('profile_id')
           .eq('activo', false)
           .eq('ministerio_id', ministerioId)
-        
+
         const disabledIds = new Set(prefData?.map((p: any) => p.profile_id) || [])
         const finalIds = targetIds.filter((id: string) => !disabledIds.has(id))
 
@@ -94,7 +89,9 @@ export async function proponerIntercambio(formData: FormData) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// ACEPTAR INTERCAMBIO
+// ACEPTAR INTERCAMBIO LEGACY
+// Las solicitudes abiertas de reemplazo del flujo ministerial las resuelve
+// exclusivamente el líder desde la programación del servicio.
 // ────────────────────────────────────────────────────────────────────────────
 export async function aceptarIntercambio(formData: FormData) {
   const supabase = await createClient()
@@ -106,8 +103,6 @@ export async function aceptarIntercambio(formData: FormData) {
   if (!intercambio_id) return { error: 'Falta el ID' }
 
   const db = supabase as any
-
-  // Obtener la info del intercambio
   const { data: exchange, error: fetchErr } = await db
     .from('intercambios')
     .select('*')
@@ -117,7 +112,13 @@ export async function aceptarIntercambio(formData: FormData) {
   if (fetchErr || !exchange) return { error: 'Intercambio no encontrado' }
   if (exchange.estado !== 'pendiente') return { error: 'Este intercambio ya no está pendiente' }
 
-  // Transferir asignación al usuario que acepta
+  if (!exchange.destinatario_id) {
+    return { error: 'Esta solicitud de reemplazo debe resolverla el líder del ministerio.' }
+  }
+  if (String(exchange.destinatario_id) !== user.id) {
+    return { error: 'Esta solicitud no está dirigida a tu cuenta.' }
+  }
+
   const { error: asigErr } = await db
     .from('evento_asignaciones')
     .update({ profile_id: user.id, estado: 'asignado' })
@@ -128,7 +129,6 @@ export async function aceptarIntercambio(formData: FormData) {
     return { error: 'Error al transferir la asignación' }
   }
 
-  // Marcar intercambio como aceptado
   const { error: updateErr } = await db
     .from('intercambios')
     .update({
@@ -148,7 +148,7 @@ export async function aceptarIntercambio(formData: FormData) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// RECHAZAR INTERCAMBIO
+// RECHAZAR INTERCAMBIO DIRECTO LEGACY
 // ────────────────────────────────────────────────────────────────────────────
 export async function rechazarIntercambio(formData: FormData) {
   const supabase = await createClient()
@@ -167,7 +167,7 @@ export async function rechazarIntercambio(formData: FormData) {
       resuelto_at: new Date().toISOString(),
     })
     .eq('id', intercambio_id)
-    .eq('destinatario_id', user.id) // solo el destinatario puede rechazar
+    .eq('destinatario_id', user.id)
 
   if (error) {
     console.error('Error rechazando intercambio:', error)
