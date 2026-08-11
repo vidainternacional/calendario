@@ -4,6 +4,7 @@ import BackButton from '@/components/navigation/BackButton'
 import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDashboardSwitcher'
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
 import MinisterioSolicitudesEnhancer from '@/components/ministerios/MinisterioSolicitudesEnhancer'
+import MinisterioBienvenida from '@/components/ministerios/MinisterioBienvenida'
 import styles from './MinisterioLayout.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -120,6 +121,7 @@ export default async function MinisterioLayout({
       </div>
 
       <MinisterioSolicitudesEnhancer ministerioId={id} puedeGestionar={puedePersonalizar} />
+      <MinisterioBienvenida ministerioId={id} ministerioNombre={ministerio.nombre} />
       <div>{children}</div>
     </div>
   )
