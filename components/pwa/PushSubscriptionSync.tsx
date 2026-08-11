@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { guardarSuscripcionPush } from '@/app/actions/push'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -18,13 +19,22 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 
 export default function PushSubscriptionSync() {
   useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+
+    const handleServiceWorkerMessage = (event: MessageEvent<{ type?: string }>) => {
+      if (event.data?.type === 'VIDA_PUSH_RECEIVED') {
+        requestPendingIndicatorsRefresh()
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
+
     if (
       !('Notification' in window) ||
-      !('serviceWorker' in navigator) ||
       !('PushManager' in window) ||
       Notification.permission !== 'granted'
     ) {
-      return
+      return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
     }
 
     let cancelled = false
@@ -57,6 +67,7 @@ export default function PushSubscriptionSync() {
     void sincronizar()
     return () => {
       cancelled = true
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
     }
   }, [])
 
