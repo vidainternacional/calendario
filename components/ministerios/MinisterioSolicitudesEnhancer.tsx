@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronDown, Clock3, History, UserRoundPlus, Users } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, Clock3, History, UserRoundPlus, Users } from 'lucide-react'
 import {
   obtenerCentroSolicitudesMinisterio,
   type CentroSolicitudesMinisterio,
@@ -24,8 +25,23 @@ function fechaCorta(value: string) {
   }).format(new Date(value))
 }
 
+function hrefServicio(ministerioId: string, eventoId: string, value: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/El_Salvador',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value))
+  const year = parts.find((item) => item.type === 'year')?.value || '2026'
+  const month = parts.find((item) => item.type === 'month')?.value || '01'
+  const day = parts.find((item) => item.type === 'day')?.value || '01'
+  const mes = `${year}-${month}`
+  const dia = `${mes}-${day}`
+  return `/ministerios/${ministerioId}/programacion?mes=${mes}&dia=${dia}&evento=${eventoId}#servicio-activo`
+}
+
 function estadoHistorial(value: string) {
-  if (value === 'aceptado') return 'Reemplazado'
+  if (value === 'aceptado') return 'Resuelto'
   if (value === 'cancelado') return 'Cancelado'
   if (value === 'rechazado') return 'Rechazado'
   return value
@@ -254,6 +270,13 @@ export default function MinisterioSolicitudesEnhancer({
                     </div>
                     <p className="mt-1 text-[11px] font-bold text-slate-700">{grupo.eventoTitulo}</p>
                     <p className="mt-0.5 text-[9px] text-slate-400">{fechaCorta(grupo.fechaInicio)} · pidió reemplazo {fechaCorta(grupo.createdAt)}</p>
+                    <Link
+                      href={hrefServicio(ministerioId, grupo.eventoId, grupo.fechaInicio)}
+                      className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-3 text-[10px] font-extrabold text-indigo-600 ring-1 ring-indigo-100 transition active:scale-[0.98]"
+                    >
+                      Abrir servicio
+                      <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -343,7 +366,7 @@ export default function MinisterioSolicitudesEnhancer({
                       <p className="mt-0.5 text-[9px] text-slate-500">{item.solicitanteNombre} · {item.funcion}</p>
                       <p className="mt-0.5 text-[9px] text-slate-400">{item.reemplazoNombre ? `Cubrió: ${item.reemplazoNombre}` : 'Sin reemplazo asignado'}</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[8px] font-extrabold text-slate-500">{estadoHistorial(item.estado)}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-extrabold ${item.estado === 'aceptado' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-100 text-slate-500'}`}>{estadoHistorial(item.estado)}</span>
                   </div>
                   <p className="mt-1.5 flex items-center gap-1 text-[8px] text-slate-300"><Clock3 className="h-3 w-3" />{fechaCorta(item.resueltoAt || item.createdAt)}</p>
                 </div>
@@ -353,7 +376,7 @@ export default function MinisterioSolicitudesEnhancer({
         )}
       </section>
     )
-  }, [datos, errores, isPending, seleccion, target])
+  }, [datos, errores, isPending, ministerioId, seleccion, target])
 
   return contenido && target ? createPortal(contenido, target) : null
 }
