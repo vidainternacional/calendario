@@ -2,7 +2,7 @@
 
 Última actualización: 2026-08-11
 
-Fase / prioridad activa: **NOTIFICACIONES Y BADGES REALES**
+Fase / prioridad activa: **FASE D — BLOQUE 5: CRONOLOGÍAS Y MAPAS**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -32,7 +32,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE A | Experiencia profesional mobile first | COMPLETADA |
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
-| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **EN PAUSA OPERATIVA — BLOQUE 5 CONSERVADO** |
+| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **ACTIVA — BLOQUE 5: CRONOLOGÍAS Y MAPAS** |
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
@@ -108,47 +108,35 @@ Dar al rol `administrador` control explícito y seguro sobre eliminación perman
 - build y producción quedan READY;
 - el usuario validó el flujo y el panel administrativo antes de pasar a la siguiente prioridad.
 
-# PRIORIDAD ACTIVA — NOTIFICACIONES Y BADGES REALES
+# PRIORIDAD CERRADA — NOTIFICACIONES Y BADGES REALES
 
-Reactivada el 2026-08-11 por decisión explícita del usuario después del cierre formal de Programación Ministerial. Retomar desde el estado conservado; no reiniciar el bloque desde cero.
+Cerrada el 2026-08-11 tras validación funcional en iPhone del flujo push, destinos directos, solicitudes de ingreso, bienvenida ministerial y badges derivados de estado real.
 
-El usuario aprobó el 2026-08-08 continuar desde la identidad comunitaria hacia una lógica transversal de elementos pendientes y no leídos. VIDA ya cuenta con lectura real de avisos, suscripciones push, preferencias por ministerio, App Badge y contadores de solicitudes de ingreso; el objetivo es consolidarlos sin inventar cifras ni construir fuentes paralelas innecesarias.
+El usuario aprobó el 2026-08-08 continuar desde la identidad comunitaria hacia una lógica transversal de elementos pendientes y no leídos. VIDA ya contaba con lectura real de avisos, suscripciones push, preferencias por ministerio, App Badge y contadores de solicitudes de ingreso; el bloque consolidó esas fuentes sin inventar cifras ni construir contadores paralelos.
 
-## Objetivo activo
+## Estado consolidado del cierre
 
-Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla en badges, Inicio, navegación y notificaciones push cuando corresponda, manteniendo cada contador derivado del estado real en Supabase.
+- `6a1ce22` consolidó Avisos no leídos y solicitudes de ingreso gestionables en una fuente transversal de badges reales;
+- `notificaciones_enviadas` se reutiliza como control único por `tipo + referencia_id + profile_id`, evitando reenvíos duplicados al mismo usuario;
+- los pushes de Avisos apuntan a una ficha directa `/avisos/[id]`, protegida por RLS y marcada como leída al abrirse;
+- una nueva solicitud de ingreso genera push únicamente a líderes reales del ministerio que mantengan activas sus notificaciones y abre `/ministerios/[id]/solicitudes-ingreso`;
+- aprobar o rechazar una solicitud de ingreso notifica al solicitante sin crear contadores artificiales y abre el ministerio correspondiente;
+- la bienvenida de ingreso se presenta como modal glass centrado sobre el dashboard, con fondo inmóvil y explicación breve de las herramientas ministeriales;
+- el badge de Avisos representa exclusivamente publicaciones visibles no leídas; los servicios pendientes no se mezclan en ese contador;
+- el App Badge general conserva el total transversal de elementos que requieren atención sin dobles conteos;
+- confirmar/no poder servir/solicitar reemplazo/resolver reemplazo/aprobar o rechazar ingreso disparan refresco explícito de indicadores;
+- al recibir un push con VIDA abierta, el service worker avisa al cliente para recalcular indicadores sin esperar únicamente al polling;
+- el botón de regreso de un Aviso abierto desde push retorna de forma explícita a Inicio;
+- los encabezados de subpáginas ministeriales reservan un espacio seguro común bajo los controles flotantes;
+- Avisos permite seleccionar identidad visible del remitente: nombre personal, ministerio, `Líder de [Ministerio]`, etiqueta personalizada o VIDA Internacional cuando el permiso lo permite;
+- la identidad elegida se conserva en push, listado y detalle;
+- migración aditiva versionada para etiquetas de remitente: `supabase/migrations/20260811144500_remitente_personalizado_avisos.sql`;
+- build, TypeScript y producción quedaron READY en `48efda443e719279fac267e64931b1c5f36e8a07`;
+- el usuario confirmó que pushes, apertura y funcionamiento general son correctos y autorizó avanzar.
 
-## Alcance conservado
+## Pendiente transversal diferido a optimización final
 
-1. Reutilizar `publicacion_lecturas` y las RPC existentes para avisos no leídos; no reemplazar su lógica por contadores locales.
-2. Reutilizar `ministerio_solicitudes_ingreso` para pendientes visibles únicamente a líderes/pastores/administradores con permisos reales.
-3. Auditar y reutilizar `push_subscriptions`, `notificaciones_preferencias` y `notificaciones_enviadas` antes de crear nuevas tablas.
-4. Consolidar en una capa común los contadores que hoy se consultan de forma separada, evitando que Inicio, navegación y módulos muestren números distintos para el mismo estado.
-5. Mantener el badge de Avisos como contador real de publicaciones visibles no leídas.
-6. Mantener los badges de solicitudes de ingreso en el ministerio correspondiente y permitir que el estado transversal los incorpore para usuarios con liderazgo.
-7. Incorporar otros pendientes solo cuando exista una definición inequívoca de “requiere acción” o “no leído” en sus datos; no convertir estados informativos en notificaciones arbitrarias.
-8. El App Badge del dispositivo debe representar elementos pendientes reales definidos por esta prioridad, sin dobles conteos.
-9. Cuando una notificación represente una acción de una persona, reutilizar nombre y `avatar_url` de la identidad comunitaria cuando la plataforma lo permita.
-10. Las notificaciones push deben abrir directamente la superficie relacionada y respetar roles/RLS; no enviar datos sensibles en el cuerpo del push.
-11. Mantener navegación, safe areas, diseño móvil premium y componentes ya aprobados.
-12. Verificar TypeScript/build y producción agrupando cambios; evitar deployments de prueba innecesarios.
-
-## Estado implementado de notificaciones
-
-- `6a1ce22` consolidó Avisos no leídos y solicitudes de ingreso gestionables en una fuente transversal de badges reales.
-- `notificaciones_enviadas` se reutiliza como control único por `tipo + referencia_id + profile_id`, evitando reenvíos duplicados al mismo usuario.
-- los pushes de Avisos apuntan a una ficha directa `/avisos/[id]`, protegida por RLS y marcada como leída al abrirse.
-- una nueva solicitud de ingreso genera push únicamente a líderes reales del ministerio que mantengan activas sus notificaciones; el push abre directamente `/ministerios/[id]/solicitudes-ingreso`.
-- el cuerpo del push de ingreso no expone identidad ni datos sensibles en la pantalla bloqueada.
-- el service worker ya soportaba navegación por `payload.url` y no fue modificado.
-- commit funcional del bloque: `41353b4` — `feat(notificaciones): conectar push a destinos directos`.
-
-## Siguiente punto autorizado
-
-1. Validar en iPhone un Aviso push → ficha exacta.
-2. Validar solicitud de ingreso → pantalla de revisión del ministerio.
-3. Conectar aprobación/rechazo al usuario solicitante sin crear contadores artificiales.
-4. Auditar las demás acciones que ya generan push y aplicar destino directo solo cuando exista una superficie inequívoca.
+La actualización visual de algunos badges puede mostrar latencia ocasional aunque el estado termine corrigiéndose. La lógica funcional queda validada; la optimización final deberá medir y reducir latencia entre Supabase, refresco/revalidación del cliente, segundo plano de la PWA, service worker, red y comportamiento de iOS, evitando parches aislados por pantalla.
 
 # PRIORIDAD CERRADA — IDENTIDAD COMUNITARIA Y PERFIL
 
@@ -197,7 +185,7 @@ La navegación habitual continúa funcionando por rol y permisos existentes. No 
 
 # SIGUIENTE BLOQUE PROPUESTO — RECORRIDO GUIADO POR SECCIONES
 
-Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR LA PRIORIDAD ACTIVA Y LAS PRIORIDADES EN PAUSA QUE CORRESPONDAN**.
+Estado: **DOCUMENTADO, POSPUESTO HASTA CERRAR LA FASE ACTIVA Y LAS PRIORIDADES EN PAUSA QUE CORRESPONDAN**.
 
 Cuando corresponda, se construirá un recorrido de primera entrada que explique la aplicación por secciones.
 
@@ -239,9 +227,9 @@ P1 había alcanzado producción con infraestructura de análisis, onboarding, se
 
 La reactivación futura deberá comenzar desde ese estado conservado, no desde cero.
 
-# FASE D — ESTADO CONSERVADO EN PAUSA
+# FASE D — ACTIVA — BLOQUE 5: CRONOLOGÍAS Y MAPAS
 
-La FASE D permanece detenida en **Bloque 5 — Cronologías y Mapas**.
+Reactivada el 2026-08-11 después del cierre formal de Notificaciones y Badges Reales. Continuar desde el estado conservado; no reiniciar Bloques 1–4 ni ampliar todavía el catálogo.
 
 Estado preservado:
 
@@ -251,7 +239,9 @@ Estado preservado:
 - interfaz todavía no conectada;
 - Bloque 6 no iniciado.
 
-Cuando este documento reactive FASE D, el siguiente punto será integrar el servicio de cronologías y mapas en una superficie visual limitada a Roma. No ampliar el catálogo antes de validar ese piloto.
+## Punto activo autorizado
+
+Integrar el servicio de cronologías y mapas en una superficie visual limitada exclusivamente al piloto de **Roma**. Validar primero datos, servicio existente, permisos, interacción móvil y lenguaje visual antes de ampliar lugares, periodos o eventos. No iniciar Bloque 6 hasta cerrar formalmente este piloto visual.
 
 # Notas bíblicas y futura FASE F
 
@@ -266,9 +256,9 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 # Siguiente punto autorizado
 
-1. Validar en iPhone un Aviso push → ficha exacta.
-2. Validar solicitud de ingreso → pantalla de revisión del ministerio.
-3. Conectar aprobación/rechazo al usuario solicitante sin crear contadores artificiales.
-4. Auditar las demás acciones que ya generan push y aplicar destino directo solo cuando exista una superficie inequívoca.
+1. Revisar el servicio y datos reales de `rome-pilot-v1` sin modificar fuentes aprobadas.
+2. Identificar la superficie actual de Biblia/Estudios donde encaja el piloto sin degradar interfaces aprobadas.
+3. Integrar una primera visualización limitada a Roma con cronología y mapa usando exclusivamente los datos habilitados.
+4. Verificar móvil, permisos, estados vacíos y build/Preview antes de cualquier ampliación del catálogo.
 
-No reanudar piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras Notificaciones y Badges Reales siga activa.
+No reanudar piloto operativo, FASE E, FASE F ni el recorrido guiado mientras FASE D — Bloque 5 siga activa.
