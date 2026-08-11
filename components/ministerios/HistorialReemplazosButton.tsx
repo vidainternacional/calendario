@@ -168,7 +168,7 @@ export default function HistorialReemplazosButton({
         <History className="h-4 w-4" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[11px] font-extrabold text-slate-800">Historial de reemplazos</span>
+        <span className="block text-[11px] font-extrabold text-slate-800">Historial</span>
         <span className="mt-0.5 block text-[9px] text-slate-400">
           {historial.length > 0
             ? `${historial.length} ${historial.length === 1 ? 'movimiento registrado' : 'movimientos registrados'}`
