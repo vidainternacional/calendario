@@ -2,6 +2,13 @@ alter table public.publicaciones
   add column if not exists remitente_nombre text;
 
 alter table public.publicaciones
+  drop constraint if exists publicaciones_remitente_tipo_check;
+
+alter table public.publicaciones
+  add constraint publicaciones_remitente_tipo_check
+  check (remitente_tipo in ('autor', 'ministerio', 'lider', 'personalizado', 'vida'));
+
+alter table public.publicaciones
   drop constraint if exists publicaciones_remitente_nombre_longitud;
 
 alter table public.publicaciones
