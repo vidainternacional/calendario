@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import EquipoEstadoSync from '@/components/ministerios/EquipoEstadoSync'
-import EquipoServicioInline from '@/components/ministerios/EquipoServicioInline'
+import EquipoServicioManager from '@/components/ministerios/EquipoServicioManager'
 import ReemplazosServicioInline from '@/components/ministerios/ReemplazosServicioInline'
 
 function hoySV() {
@@ -38,9 +37,8 @@ export default function ProgramacionUXEnhancer() {
 
   return (
     <>
-      <EquipoServicioInline />
+      <EquipoServicioManager />
       <ReemplazosServicioInline />
-      <EquipoEstadoSync />
       <style jsx global>{`
         .programacion-ministerial input:not([type='color']):not([type='hidden']),
         .programacion-ministerial textarea,
