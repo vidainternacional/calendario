@@ -87,9 +87,8 @@ export async function obtenerCentroSolicitudesMinisterio(
       .eq('estado', 'pendiente'),
     admin
       .from('evento_asignaciones')
-      .select('id,evento_id')
-      .eq('ministerio_id', ministerioId)
-      .in('estado', ['no_disponible', 'declinado']),
+      .select('id,evento_id,estado')
+      .eq('ministerio_id', ministerioId),
   ])
 
   const asignacionIds = (asignaciones as any[]).map((row) => String(row.id))
@@ -210,9 +209,8 @@ export async function obtenerConteoSolicitudesGestionables() {
       .eq('estado', 'pendiente'),
     admin
       .from('evento_asignaciones')
-      .select('id,evento_id,ministerio_id')
-      .in('ministerio_id', ministerioIds)
-      .in('estado', ['no_disponible', 'declinado']),
+      .select('id,evento_id,ministerio_id,estado')
+      .in('ministerio_id', ministerioIds),
   ])
 
   const asignacionIds = (asignaciones as any[]).map((row) => String(row.id))
@@ -227,13 +225,17 @@ export async function obtenerConteoSolicitudesGestionables() {
   const asignacionMap = new Map(
     (asignaciones as any[]).map((row) => [
       String(row.id),
-      { eventoId: String(row.evento_id), ministerioId: String(row.ministerio_id) },
+      {
+        eventoId: String(row.evento_id),
+        ministerioId: String(row.ministerio_id),
+        estado: String(row.estado || ''),
+      },
     ]),
   )
   const grupos = new Set<string>()
   for (const row of pendientes as any[]) {
     const origen = asignacionMap.get(String(row.asignacion_origen_id))
-    if (!origen) continue
+    if (!origen || (origen.estado !== 'no_disponible' && origen.estado !== 'declinado')) continue
     grupos.add(`${origen.ministerioId}:${origen.eventoId}:${String(row.solicitante_id)}`)
   }
 
