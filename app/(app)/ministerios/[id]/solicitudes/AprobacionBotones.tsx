@@ -3,6 +3,7 @@
 import { actualizarEstadoSolicitud } from '@/app/actions/solicitudes'
 import { Check, X, Loader2 } from 'lucide-react'
 import { useTransition } from 'react'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 export function AprobacionBotones({ solicitudId, path }: { solicitudId: string, path: string }) {
   const [isPending, startTransition] = useTransition()
@@ -10,6 +11,7 @@ export function AprobacionBotones({ solicitudId, path }: { solicitudId: string, 
   function handleActualizar(estado: 'aprobada' | 'rechazada') {
     startTransition(async () => {
       await actualizarEstadoSolicitud(solicitudId, estado, path)
+      requestPendingIndicatorsRefresh()
     })
   }
 
