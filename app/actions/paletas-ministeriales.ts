@@ -52,10 +52,7 @@ async function obtenerAccesoPaleta(ministerioId: string): Promise<AccesoPaleta |
     }
   }
 
-  return {
-    userId: user.id,
-    puedePaleta: puedeProgramar || responsabilidadPaleta,
-  }
+  return { userId: user.id, puedePaleta: puedeProgramar || responsabilidadPaleta }
 }
 
 function leerColores(formData: FormData) {
@@ -74,10 +71,22 @@ function mapearPaleta(item: any): PaletaBibliotecaMinisterial {
   }
 }
 
+function datosPaleta(formData: FormData) {
+  const nombre = String(formData.get('nombre') || '').trim()
+  if (nombre.length < 2 || nombre.length > 80) fail('Escribe un nombre válido para la paleta.')
+  const colores = leerColores(formData)
+  if (colores.length < 2) fail('Selecciona al menos dos colores válidos.')
+  return {
+    nombre,
+    colores,
+    observaciones: String(formData.get('observaciones') || '').trim() || null,
+    referencia_url: String(formData.get('referencia_url') || '').trim() || null,
+  }
+}
+
 export async function listarPaletasBibliotecaMinisterial(ministerioId: string): Promise<PaletaBibliotecaMinisterial[]> {
   const acceso = await obtenerAccesoPaleta(ministerioId)
   if (!acceso?.puedePaleta) fail('No tienes permiso para ver la biblioteca de paletas.')
-
   const admin = createAdminClient() as any
   const { data, error } = await admin
     .from('ministerio_paletas')
@@ -86,47 +95,57 @@ export async function listarPaletasBibliotecaMinisterial(ministerioId: string): 
     .eq('activo', true)
     .order('updated_at', { ascending: false })
     .limit(100)
-
   if (error) fail(error.message)
   return (data || []).map(mapearPaleta)
 }
 
-export async function crearPaletaBibliotecaMinisterial(
-  ministerioId: string,
-  formData: FormData,
-): Promise<PaletaBibliotecaMinisterial> {
+export async function crearPaletaBibliotecaMinisterial(ministerioId: string, formData: FormData): Promise<PaletaBibliotecaMinisterial> {
   const acceso = await obtenerAccesoPaleta(ministerioId)
   if (!acceso?.puedePaleta) fail('No tienes permiso para crear paletas en este ministerio.')
-
-  const nombre = String(formData.get('nombre') || '').trim()
-  if (nombre.length < 2 || nombre.length > 80) fail('Escribe un nombre válido para la paleta.')
-
-  const colores = leerColores(formData)
-  if (colores.length < 2) fail('Selecciona al menos dos colores válidos.')
-
-  const observaciones = String(formData.get('observaciones') || '').trim() || null
-  const referenciaUrl = String(formData.get('referencia_url') || '').trim() || null
+  const valores = datosPaleta(formData)
   const admin = createAdminClient() as any
-
   const { data, error } = await admin
     .from('ministerio_paletas')
-    .insert({
-      ministerio_id: ministerioId,
-      nombre,
-      colores,
-      observaciones,
-      referencia_url: referenciaUrl,
-      creado_por: acceso.userId,
-      activo: true,
-      updated_at: new Date().toISOString(),
-    })
+    .insert({ ...valores, ministerio_id: ministerioId, creado_por: acceso.userId, activo: true, updated_at: new Date().toISOString() })
     .select('id,nombre,colores,observaciones,referencia_url')
     .single()
-
   if (error?.code === '23505') fail('Ya existe una paleta activa con ese nombre.')
   if (error) fail(error.message)
   if (!data) fail('La paleta no devolvió una confirmación válida.')
-
   revalidatePath(`/ministerios/${ministerioId}/programacion`)
   return mapearPaleta(data)
+}
+
+export async function actualizarPaletaBibliotecaMinisterial(ministerioId: string, formData: FormData): Promise<PaletaBibliotecaMinisterial> {
+  const acceso = await obtenerAccesoPaleta(ministerioId)
+  if (!acceso?.puedePaleta) fail('No tienes permiso para editar paletas en este ministerio.')
+  const paletaId = String(formData.get('paleta_id') || '')
+  if (!paletaId) fail('Paleta inválida.')
+  const valores = datosPaleta(formData)
+  const admin = createAdminClient() as any
+  const { data, error } = await admin
+    .from('ministerio_paletas')
+    .update({ ...valores, updated_at: new Date().toISOString() })
+    .eq('id', paletaId)
+    .eq('ministerio_id', ministerioId)
+    .eq('activo', true)
+    .select('id,nombre,colores,observaciones,referencia_url')
+    .single()
+  if (error?.code === '23505') fail('Ya existe otra paleta activa con ese nombre.')
+  if (error) fail(error.message)
+  if (!data) fail('La paleta ya no está disponible.')
+  revalidatePath(`/ministerios/${ministerioId}/programacion`)
+  return mapearPaleta(data)
+}
+
+export async function eliminarPaletaBibliotecaMinisterial(ministerioId: string, formData: FormData): Promise<{ id: string }> {
+  const acceso = await obtenerAccesoPaleta(ministerioId)
+  if (!acceso?.puedePaleta) fail('No tienes permiso para eliminar paletas en este ministerio.')
+  const paletaId = String(formData.get('paleta_id') || '')
+  if (!paletaId) fail('Paleta inválida.')
+  const admin = createAdminClient() as any
+  const { error } = await admin.from('ministerio_paletas').delete().eq('id', paletaId).eq('ministerio_id', ministerioId)
+  if (error) fail(error.message)
+  revalidatePath(`/ministerios/${ministerioId}/programacion`)
+  return { id: paletaId }
 }
