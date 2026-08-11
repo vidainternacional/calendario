@@ -1,0 +1,86 @@
+name: Validar importador multilingüe de Daniel
+
+on:
+  push:
+    branches:
+      - preview/fase-d-cobertura-biblica-universal
+    paths:
+      - 'scripts/stepbible/extract_daniel_book.py'
+      - 'scripts/stepbible/inspect_tahot_multilingual_affix_policy.py'
+      - 'scripts/stepbible/build_daniel_multilingual_affix_policy.py'
+      - 'scripts/stepbible/build_tahot_multilingual_import_payload.py'
+      - 'scripts/stepbible/test_daniel_multilingual_importer.py'
+      - 'scripts/stepbible/*_affix_lemma_policy.json'
+      - 'supabase/migration-drafts/20260811221500_importador_tahot_multilingue_daniel.sql'
+      - 'supabase/recovery/20260811221500_recover_daniel_tahot_v2.sql'
+      - 'tests/sql/obadiah_textual_schema_fixture.sql'
+      - '.github/workflows/validate-daniel-multilingual-importer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vida_daniel_v2_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vida_daniel_v2_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar cliente PostgreSQL
+        run: python -m pip install --disable-pip-version-check 'psycopg[binary]==3.2.9'
+      - name: Construir paquete y payload fijados
+        run: |
+          python scripts/stepbible/extract_daniel_book.py --output artifacts/daniel-importer
+          test "$(sha256sum artifacts/daniel-importer/dan.json.gz | cut -d' ' -f1)" = '7ca58a1c4804c23ffd6803ccb30321147a5d7f80e7a0d6255c0796163b74c582'
+          python scripts/stepbible/inspect_tahot_multilingual_affix_policy.py --package artifacts/daniel-importer/dan.json.gz --output artifacts/daniel-importer/affix
+          python scripts/stepbible/build_daniel_multilingual_affix_policy.py \
+            --package artifacts/daniel-importer/dan.json.gz \
+            --inspection artifacts/daniel-importer/affix/affix-policy-inspection-v2.json \
+            --policy-root scripts/stepbible \
+            --output artifacts/daniel-importer/daniel-affix-policy-v2.json
+          python scripts/stepbible/build_tahot_multilingual_import_payload.py \
+            artifacts/daniel-importer/dan.json.gz \
+            --policy artifacts/daniel-importer/daniel-affix-policy-v2.json \
+            --output artifacts/daniel-importer/import-payload-v2.json
+          test "$(sha256sum artifacts/daniel-importer/import-payload-v2.json | cut -d' ' -f1)" = '398ef9f6d25c95f8f401d40689e5916da92d4d948bf6d3ecb343c0ced37861b4'
+      - name: Validar candidato en PostgreSQL 16
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vida_daniel_v2_test
+        run: |
+          python scripts/stepbible/test_daniel_multilingual_importer.py \
+            --dsn "$TEST_DATABASE_URL" \
+            --fixture tests/sql/obadiah_textual_schema_fixture.sql \
+            --candidate supabase/migration-drafts/20260811221500_importador_tahot_multilingue_daniel.sql \
+            --recovery supabase/recovery/20260811221500_recover_daniel_tahot_v2.sql \
+            --payload artifacts/daniel-importer/import-payload-v2.json \
+            | tee artifacts/daniel-importer/importer-validation.json
+          git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daniel-multilingual-importer-validation
+          path: |
+            artifacts/daniel-importer/manifest.json
+            artifacts/daniel-importer/daniel-affix-policy-v2.json
+            artifacts/daniel-importer/importer-validation.json
+            supabase/migration-drafts/20260811221500_importador_tahot_multilingue_daniel.sql
+            supabase/recovery/20260811221500_recover_daniel_tahot_v2.sql
+          if-no-files-found: error
+          retention-days: 14
