@@ -14,49 +14,67 @@ export function requestPendingIndicatorsRefresh() {
 export function usePendingIndicators() {
   const unreadAvisos = useUnreadPublicationsCount()
   const [pendingMinisterioIngresos, setPendingMinisterioIngresos] = useState(0)
+  const [pendingServicios, setPendingServicios] = useState(0)
 
   useEffect(() => {
     let cancelled = false
 
-    async function refreshLeadershipPending() {
+    async function refreshPending() {
       const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
       if (!user) {
-        if (!cancelled) setPendingMinisterioIngresos(0)
+        if (!cancelled) {
+          setPendingMinisterioIngresos(0)
+          setPendingServicios(0)
+        }
         return
       }
 
-      const { data, error } = await (supabase as any)
-        .from('ministerio_solicitudes_ingreso')
-        .select('id, profile_id')
-        .eq('estado', 'pendiente')
+      const [leadershipReq, serviciosReq] = await Promise.all([
+        (supabase as any)
+          .from('ministerio_solicitudes_ingreso')
+          .select('id, profile_id')
+          .eq('estado', 'pendiente'),
+        (supabase as any)
+          .from('evento_asignaciones')
+          .select('evento_id, estado, eventos!inner(fecha_inicio)')
+          .eq('profile_id', user.id)
+          .in('estado', ['asignado', 'pendiente'])
+          .gte('eventos.fecha_inicio', new Date().toISOString()),
+      ])
 
-      if (error) {
-        console.error('No se pudieron cargar los pendientes de liderazgo', error)
-        return
+      if (leadershipReq.error) {
+        console.error('No se pudieron cargar los pendientes de liderazgo', leadershipReq.error)
+      } else {
+        const manageable = (leadershipReq.data || []).filter(
+          (row: any) => String(row.profile_id || '') !== user.id,
+        ).length
+        if (!cancelled) setPendingMinisterioIngresos(manageable)
       }
 
-      // RLS devuelve la solicitud propia de un usuario normal y, adicionalmente,
-      // las solicitudes que puede gestionar por liderazgo/pastoral/administración.
-      // La solicitud propia no es un pendiente de gestión y no debe sumarse al badge.
-      const manageable = (data || []).filter(
-        (row: any) => String(row.profile_id || '') !== user.id,
-      ).length
-
-      if (!cancelled) setPendingMinisterioIngresos(manageable)
+      if (serviciosReq.error) {
+        console.error('No se pudieron cargar los servicios pendientes', serviciosReq.error)
+      } else {
+        const eventosPendientes = new Set(
+          (serviciosReq.data || [])
+            .map((row: any) => String(row.evento_id || ''))
+            .filter(Boolean),
+        )
+        if (!cancelled) setPendingServicios(eventosPendientes.size)
+      }
     }
 
-    const handleFocus = () => void refreshLeadershipPending()
+    const handleFocus = () => void refreshPending()
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') void refreshLeadershipPending()
+      if (document.visibilityState === 'visible') void refreshPending()
     }
-    const handleExplicitRefresh = () => void refreshLeadershipPending()
+    const handleExplicitRefresh = () => void refreshPending()
 
-    void refreshLeadershipPending()
-    const interval = window.setInterval(refreshLeadershipPending, 45_000)
+    void refreshPending()
+    const interval = window.setInterval(refreshPending, 30_000)
     window.addEventListener('focus', handleFocus)
     window.addEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
     document.addEventListener('visibilitychange', handleVisibility)
@@ -71,8 +89,8 @@ export function usePendingIndicators() {
   }, [])
 
   const total = useMemo(
-    () => Math.max(0, unreadAvisos) + Math.max(0, pendingMinisterioIngresos),
-    [pendingMinisterioIngresos, unreadAvisos],
+    () => Math.max(0, unreadAvisos) + Math.max(0, pendingMinisterioIngresos) + Math.max(0, pendingServicios),
+    [pendingMinisterioIngresos, pendingServicios, unreadAvisos],
   )
 
   useEffect(() => {
@@ -91,6 +109,7 @@ export function usePendingIndicators() {
   return {
     unreadAvisos,
     pendingMinisterioIngresos,
+    pendingServicios,
     total,
   }
 }

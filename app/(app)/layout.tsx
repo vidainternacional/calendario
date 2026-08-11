@@ -3,6 +3,7 @@ import BibleVerseActionsNoFlash from '@/components/biblia/BibleVerseActionsNoFla
 import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPersistent'
 import BottomNav from '@/components/layout/BottomNav'
 import PushSubscriptionSync from '@/components/pwa/PushSubscriptionSync'
+import MisServiciosShortcut from '@/components/inicio/MisServiciosShortcut'
 
 export default function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default function AppLayout({
       <div className="flex-1 pb-16">
         {children}
       </div>
+      <MisServiciosShortcut />
       <BottomNav />
     </div>
   )
