@@ -6,7 +6,7 @@ export default function ProgramacionMinisterialLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="programacion-ministerial min-h-screen bg-[#f5f5f7] pt-10 sm:pt-0">
+    <div id="programacion-ministerial-root" className="programacion-ministerial min-h-screen bg-[#f5f5f7] pt-16 sm:pt-0">
       <ProgramacionUXEnhancer />
       {children}
     </div>
