@@ -184,7 +184,7 @@ export default function EquipoServicioInline() {
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-indigo-600 ring-1 ring-indigo-100"><Users className="h-4 w-4" /></span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-extrabold text-slate-800">Equipo de este servicio</p>
-            <p className="mt-1 text-[10px] leading-4 text-slate-500">Arriba quedan únicamente quienes servirán. Usa el banco inferior para agregar personas y elegir la función de esta fecha.</p>
+            <p className="mt-1 text-[10px] leading-4 text-slate-500">Elige arriba desde el banco de integrantes. Abajo quedan únicamente quienes servirán en esta fecha.</p>
           </div>
           <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-indigo-700 ring-1 ring-indigo-100">{integrantesActivos.length}</span>
         </div>
@@ -196,95 +196,6 @@ export default function EquipoServicioInline() {
         <p className="rounded-xl bg-white p-4 text-xs text-slate-400 ring-1 ring-slate-100">Cargando equipo...</p>
       ) : (
         <>
-          <section>
-            <div className="flex items-end justify-between gap-3 px-1">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Sirven en este servicio</p>
-                <p className="mt-0.5 text-[10px] text-slate-400">{integrantesActivos.length ? 'Toca una persona para editar sus funciones.' : 'Todavía no has agregado integrantes.'}</p>
-              </div>
-              {integrantesActivos.length > 0 && <span className="text-[9px] font-bold text-slate-400">{totalFuncionesServicio} funciones</span>}
-            </div>
-
-            {integrantesActivos.length === 0 ? (
-              <div className="mt-2 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-4 py-5 text-center">
-                <Users className="mx-auto h-5 w-5 text-indigo-300" />
-                <p className="mt-2 text-xs font-bold text-slate-600">Equipo todavía vacío</p>
-                <p className="mt-1 text-[10px] leading-4 text-slate-400">Selecciona personas desde el banco de integrantes.</p>
-              </div>
-            ) : (
-              <div className="mt-2 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
-                {integrantesActivos.map((miembro, index) => {
-                  const elegidasGuardadas = guardado[miembro.id] || []
-                  const editandoAhora = editando === miembro.id
-                  const elegidasEdicion = seleccion[miembro.id] || []
-                  const opciones = Array.from(new Set([...miembro.capacidades, ...elegidasGuardadas])).filter((id) => funcionesPorId.has(id))
-                  const estado = estados[miembro.id] || 'idle'
-                  const nombres = elegidasGuardadas.map((id) => funcionesPorId.get(id)?.nombre).filter(Boolean)
-
-                  return (
-                    <div key={miembro.id} className={index ? 'border-t border-slate-100' : ''}>
-                      <button type="button" onClick={() => abrirEdicion(miembro.id)} className="flex min-h-[64px] w-full items-center gap-3 px-3 py-2.5 text-left">
-                        <span className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-indigo-100 text-sm font-extrabold text-indigo-700 ring-2 ring-emerald-100">
-                          {miembro.avatar_url ? <img src={miembro.avatar_url} alt="" className="h-full w-full object-cover" /> : miembro.nombre_completo.charAt(0)}
-                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-extrabold text-slate-800">{miembro.nombre_completo}</span>
-                          <span className="mt-0.5 block truncate text-[10px] font-semibold text-indigo-500">{nombres.join(' · ')}</span>
-                        </span>
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-extrabold text-emerald-700">Asignado</span>
-                        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${editandoAhora ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {editandoAhora && (
-                        <div className="border-t border-slate-100 bg-slate-50/80 p-3">
-                          <p className="text-[10px] font-bold text-slate-500">Funciones para este servicio</p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {opciones.map((capacidadId) => {
-                              const funcion = funcionesPorId.get(capacidadId)
-                              if (!funcion) return null
-                              const activa = elegidasEdicion.includes(capacidadId)
-                              return (
-                                <button key={capacidadId} type="button" onClick={() => alternar(miembro.id, capacidadId)} className={`min-h-9 rounded-full px-3 text-[10px] font-extrabold ring-1 transition ${activa ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-slate-600 ring-slate-200'}`}>
-                                  {activa ? '✓ ' : ''}{funcion.nombre}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          {errores[miembro.id] && <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-semibold text-rose-700">{errores[miembro.id]}</p>}
-
-                          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                            <button
-                              type="button"
-                              onClick={() => persistir(miembro.id, elegidasEdicion, 'editar')}
-                              disabled={estado === 'saving' || elegidasEdicion.length === 0}
-                              className={`flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-extrabold transition ${estado === 'saved' ? 'bg-emerald-600 text-white' : estado === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white disabled:bg-slate-300'}`}
-                            >
-                              {estado === 'saved' && <Check className="h-4 w-4" />}
-                              {estado === 'saving' ? 'Guardando...' : estado === 'saved' ? 'Guardado' : estado === 'error' ? 'Reintentar' : 'Guardar cambios'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => persistir(miembro.id, [], 'quitar')}
-                              disabled={estado === 'saving'}
-                              className="grid h-10 w-10 place-items-center rounded-xl bg-rose-50 text-rose-600 ring-1 ring-rose-100 disabled:opacity-50"
-                              aria-label={`Quitar a ${miembro.nombre_completo} de este servicio`}
-                              title="Quitar del servicio"
-                            >
-                              <UserMinus className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <p className="mt-2 text-right text-[9px] font-semibold text-rose-400">El botón rojo quita a la persona solo de este servicio.</p>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-
           <section className="rounded-[22px] bg-slate-100/80 p-3 ring-1 ring-slate-200/80">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -368,6 +279,95 @@ export default function EquipoServicioInline() {
                   {(estados[candidatoActual.id] || 'idle') === 'saved' && <Check className="h-4 w-4" />}
                   {(estados[candidatoActual.id] || 'idle') === 'saving' ? 'Agregando...' : (estados[candidatoActual.id] || 'idle') === 'saved' ? 'Agregado' : (estados[candidatoActual.id] || 'idle') === 'error' ? 'Reintentar' : 'Agregar al servicio'}
                 </button>
+              </div>
+            )}
+          </section>
+
+          <section>
+            <div className="flex items-end justify-between gap-3 px-1">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Sirven en este servicio</p>
+                <p className="mt-0.5 text-[10px] text-slate-400">{integrantesActivos.length ? 'Toca una persona para editar sus funciones.' : 'Todavía no has agregado integrantes.'}</p>
+              </div>
+              {integrantesActivos.length > 0 && <span className="text-[9px] font-bold text-slate-400">{totalFuncionesServicio} funciones</span>}
+            </div>
+
+            {integrantesActivos.length === 0 ? (
+              <div className="mt-2 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-4 py-5 text-center">
+                <Users className="mx-auto h-5 w-5 text-indigo-300" />
+                <p className="mt-2 text-xs font-bold text-slate-600">Equipo todavía vacío</p>
+                <p className="mt-1 text-[10px] leading-4 text-slate-400">Selecciona personas desde el banco de integrantes de arriba.</p>
+              </div>
+            ) : (
+              <div className="mt-2 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
+                {integrantesActivos.map((miembro, index) => {
+                  const elegidasGuardadas = guardado[miembro.id] || []
+                  const editandoAhora = editando === miembro.id
+                  const elegidasEdicion = seleccion[miembro.id] || []
+                  const opciones = Array.from(new Set([...miembro.capacidades, ...elegidasGuardadas])).filter((id) => funcionesPorId.has(id))
+                  const estado = estados[miembro.id] || 'idle'
+                  const nombres = elegidasGuardadas.map((id) => funcionesPorId.get(id)?.nombre).filter(Boolean)
+
+                  return (
+                    <div key={miembro.id} className={index ? 'border-t border-slate-100' : ''}>
+                      <button type="button" onClick={() => abrirEdicion(miembro.id)} className="flex min-h-[64px] w-full items-center gap-3 px-3 py-2.5 text-left">
+                        <span className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-indigo-100 text-sm font-extrabold text-indigo-700 ring-2 ring-emerald-100">
+                          {miembro.avatar_url ? <img src={miembro.avatar_url} alt="" className="h-full w-full object-cover" /> : miembro.nombre_completo.charAt(0)}
+                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-extrabold text-slate-800">{miembro.nombre_completo}</span>
+                          <span className="mt-0.5 block truncate text-[10px] font-semibold text-indigo-500">{nombres.join(' · ')}</span>
+                        </span>
+                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-extrabold text-emerald-700">Asignado</span>
+                        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${editandoAhora ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {editandoAhora && (
+                        <div className="border-t border-slate-100 bg-slate-50/80 p-3">
+                          <p className="text-[10px] font-bold text-slate-500">Funciones para este servicio</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {opciones.map((capacidadId) => {
+                              const funcion = funcionesPorId.get(capacidadId)
+                              if (!funcion) return null
+                              const activa = elegidasEdicion.includes(capacidadId)
+                              return (
+                                <button key={capacidadId} type="button" onClick={() => alternar(miembro.id, capacidadId)} className={`min-h-9 rounded-full px-3 text-[10px] font-extrabold ring-1 transition ${activa ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-slate-600 ring-slate-200'}`}>
+                                  {activa ? '✓ ' : ''}{funcion.nombre}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          {errores[miembro.id] && <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-semibold text-rose-700">{errores[miembro.id]}</p>}
+
+                          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                            <button
+                              type="button"
+                              onClick={() => persistir(miembro.id, elegidasEdicion, 'editar')}
+                              disabled={estado === 'saving' || elegidasEdicion.length === 0}
+                              className={`flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-extrabold transition ${estado === 'saved' ? 'bg-emerald-600 text-white' : estado === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white disabled:bg-slate-300'}`}
+                            >
+                              {estado === 'saved' && <Check className="h-4 w-4" />}
+                              {estado === 'saving' ? 'Guardando...' : estado === 'saved' ? 'Guardado' : estado === 'error' ? 'Reintentar' : 'Guardar cambios'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => persistir(miembro.id, [], 'quitar')}
+                              disabled={estado === 'saving'}
+                              className="grid h-10 w-10 place-items-center rounded-xl bg-rose-50 text-rose-600 ring-1 ring-rose-100 disabled:opacity-50"
+                              aria-label={`Quitar a ${miembro.nombre_completo} de este servicio`}
+                              title="Quitar del servicio"
+                            >
+                              <UserMinus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <p className="mt-2 text-right text-[9px] font-semibold text-rose-400">El botón rojo quita a la persona solo de este servicio.</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </section>
