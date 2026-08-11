@@ -13,13 +13,14 @@ export type AvisoState = {
   mensaje?: string
 } | undefined
 
-type RemitenteTipo = 'autor' | 'ministerio' | 'vida'
+type RemitenteTipo = 'autor' | 'ministerio' | 'lider' | 'personalizado' | 'vida'
 
 type AvisoPushInput = {
   id: string
   ministerioId: string | null
   autorId: string | null
   remitenteTipo: RemitenteTipo
+  remitenteNombre?: string | null
   titulo: string
   cuerpo: string
 }
@@ -29,16 +30,20 @@ async function resolverOrigenAviso(
   ministerioId: string | null,
   autorId: string | null,
   remitenteTipo: RemitenteTipo,
+  remitenteNombre?: string | null,
 ) {
   if (remitenteTipo === 'vida') return 'VIDA Internacional'
+  if (remitenteTipo === 'personalizado' && remitenteNombre?.trim()) return remitenteNombre.trim()
 
-  if (remitenteTipo === 'ministerio' && ministerioId) {
+  if ((remitenteTipo === 'ministerio' || remitenteTipo === 'lider') && ministerioId) {
     const { data: ministerio } = await service
       .from('ministerios')
       .select('nombre')
       .eq('id', ministerioId)
       .single()
-    return (ministerio as any)?.nombre || 'Ministerio'
+
+    const nombreMinisterio = String((ministerio as any)?.nombre || 'Ministerio')
+    return remitenteTipo === 'lider' ? `Líder de ${nombreMinisterio}` : nombreMinisterio
   }
 
   if (autorId) {
@@ -81,7 +86,14 @@ async function enviarNotificacionAviso(input: AvisoPushInput): Promise<number> {
   const finalUserIds = targetUserIds.filter((profileId) => !disabledIds.has(profileId))
   if (finalUserIds.length === 0) return 0
 
-  const origen = await resolverOrigenAviso(service, input.ministerioId, input.autorId, input.remitenteTipo)
+  const origen = await resolverOrigenAviso(
+    service,
+    input.ministerioId,
+    input.autorId,
+    input.remitenteTipo,
+    input.remitenteNombre,
+  )
+
   const result = await notifyUsersOnceByReference(finalUserIds, {
     title: origen,
     body: composePushBody(input.titulo, input.cuerpo),
@@ -110,6 +122,7 @@ export async function crearAviso(
   const cuerpo = (formData.get('cuerpo') as string)?.trim()
   const minIdForm = ((formData.get('ministerio_id') as string) ?? ministerioId).trim()
   const remitenteSolicitado = String(formData.get('remitente_tipo') || 'autor') as RemitenteTipo
+  const remitenteNombreSolicitado = String(formData.get('remitente_nombre') || '').trim().slice(0, 60)
 
   if (!titulo || !cuerpo) return { error: 'Por favor completa todos los campos.' }
 
@@ -130,12 +143,18 @@ export async function crearAviso(
 
   if (isGlobal && !esPastorAdmin) estado = 'pendiente'
 
-  let remitenteTipo: RemitenteTipo = ['autor', 'ministerio', 'vida'].includes(remitenteSolicitado)
+  let remitenteTipo: RemitenteTipo = ['autor', 'ministerio', 'lider', 'personalizado', 'vida'].includes(remitenteSolicitado)
     ? remitenteSolicitado
     : 'autor'
 
-  if (remitenteTipo === 'ministerio' && !minIdForm) remitenteTipo = 'autor'
+  if (!minIdForm && ['ministerio', 'lider'].includes(remitenteTipo)) remitenteTipo = esPastorAdmin ? 'vida' : 'autor'
   if (remitenteTipo === 'vida' && !esPastorAdmin) remitenteTipo = minIdForm ? 'ministerio' : 'autor'
+
+  let remitenteNombre: string | null = null
+  if (remitenteTipo === 'personalizado') {
+    if (!remitenteNombreSolicitado) return { error: 'Escribe la etiqueta que quieres mostrar como remitente.' }
+    remitenteNombre = remitenteNombreSolicitado
+  }
 
   const { data: aviso, error } = await (supabase as any)
     .from('publicaciones')
@@ -147,6 +166,7 @@ export async function crearAviso(
       cuerpo,
       estado,
       remitente_tipo: remitenteTipo,
+      remitente_nombre: remitenteNombre,
     })
     .select('id')
     .single()
@@ -163,6 +183,7 @@ export async function crearAviso(
         ministerioId: minIdForm || null,
         autorId: user.id,
         remitenteTipo,
+        remitenteNombre,
         titulo,
         cuerpo,
       })
@@ -195,7 +216,7 @@ export async function aprobarAviso(avisoId: string) {
 
   const { data: aviso } = await (supabase as any)
     .from('publicaciones')
-    .select('id, titulo, cuerpo, ministerio_id, autor_id, remitente_tipo')
+    .select('id, titulo, cuerpo, ministerio_id, autor_id, remitente_tipo, remitente_nombre')
     .eq('id', avisoId)
     .single()
 
@@ -210,6 +231,7 @@ export async function aprobarAviso(avisoId: string) {
         ministerioId: aviso.ministerio_id || null,
         autorId: aviso.autor_id || null,
         remitenteTipo: (aviso.remitente_tipo || 'autor') as RemitenteTipo,
+        remitenteNombre: aviso.remitente_nombre || null,
         titulo: aviso.titulo,
         cuerpo: aviso.cuerpo,
       })
