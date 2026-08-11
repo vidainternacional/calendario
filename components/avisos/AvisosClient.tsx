@@ -24,7 +24,7 @@ type AvisosClientProps = {
   adminMode?: boolean
 }
 
-const CACHE_SCOPE = 'avisos:v3'
+const CACHE_SCOPE = 'avisos:v4'
 const CACHE_TTL = 10 * 60 * 1000
 
 const tipoLabel: Record<string, string> = {
@@ -82,6 +82,7 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
             tipo,
             ministerio_id,
             remitente_tipo,
+            remitente_nombre,
             created_at,
             profiles!autor_id (nombre_completo, avatar_url),
             ministerios (nombre)
@@ -186,11 +187,16 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 landscape:grid-cols-2">
           {items.map((pub) => {
             const remitenteTipo = String(pub.remitente_tipo || 'autor')
+            const nombreMinisterio = pub.ministerios?.nombre ?? 'Ministerio'
             const autor = remitenteTipo === 'vida'
               ? 'VIDA Internacional'
               : remitenteTipo === 'ministerio'
-                ? pub.ministerios?.nombre ?? 'Ministerio'
-                : pub.profiles?.nombre_completo ?? 'Autor desconocido'
+                ? nombreMinisterio
+                : remitenteTipo === 'lider'
+                  ? `Líder de ${nombreMinisterio}`
+                  : remitenteTipo === 'personalizado'
+                    ? pub.remitente_nombre || pub.profiles?.nombre_completo || 'Autor desconocido'
+                    : pub.profiles?.nombre_completo ?? 'Autor desconocido'
             const avatarUrl = remitenteTipo === 'autor' ? pub.profiles?.avatar_url ?? null : null
             const minNombre = pub.ministerios?.nombre
             const publicationId = String(pub.id)
