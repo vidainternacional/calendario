@@ -2,9 +2,20 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ChevronDown, Plus, Settings2, UserMinus, Users, X } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Settings2,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react'
 import {
   guardarEquipoPersonaServicio,
   obtenerDatosEquipoServicio,
@@ -12,6 +23,11 @@ import {
 } from '@/app/actions/equipo-ministerial'
 
 type Estado = 'idle' | 'saving' | 'saved' | 'error'
+
+type TouchInicio = {
+  profileId: string
+  x: number
+}
 
 function mensajeError(error: unknown) {
   return error instanceof Error ? error.message : 'No se pudieron guardar los cambios.'
@@ -30,8 +46,11 @@ export default function EquipoServicioInline() {
   const [seleccion, setSeleccion] = useState<Record<string, string[]>>({})
   const [editando, setEditando] = useState<string | null>(null)
   const [candidato, setCandidato] = useState<string | null>(null)
+  const [swipeAbierto, setSwipeAbierto] = useState<string | null>(null)
   const [estados, setEstados] = useState<Record<string, Estado>>({})
   const [errores, setErrores] = useState<Record<string, string>>({})
+  const touchInicio = useRef<TouchInicio | null>(null)
+  const ignorarClick = useRef(false)
 
   useEffect(() => {
     setTarget(null)
@@ -40,6 +59,7 @@ export default function EquipoServicioInline() {
     setSeleccion({})
     setEditando(null)
     setCandidato(null)
+    setSwipeAbierto(null)
     setEstados({})
     setErrores({})
 
@@ -104,8 +124,6 @@ export default function EquipoServicioInline() {
     return datos.miembros.filter((miembro) => (guardado[miembro.id] || []).length > 0)
   }, [datos, guardado])
 
-  // El banco siempre muestra a TODOS los integrantes del ministerio.
-  // Los ya asignados permanecen visibles con un check para poder editarlos desde arriba.
   const bancoIntegrantes = useMemo(() => datos?.miembros || [], [datos])
 
   const totalFuncionesServicio = useMemo(
@@ -126,6 +144,7 @@ export default function EquipoServicioInline() {
 
   function abrirEdicion(profileId: string) {
     setCandidato(null)
+    setSwipeAbierto(null)
     setEditando((actual) => (actual === profileId ? null : profileId))
     setSeleccion((prev) => ({ ...prev, [profileId]: [...(guardado[profileId] || [])] }))
     setEstados((prev) => ({ ...prev, [profileId]: 'idle' }))
@@ -134,6 +153,7 @@ export default function EquipoServicioInline() {
 
   function abrirCandidato(profileId: string) {
     setEditando(null)
+    setSwipeAbierto(null)
     const seCierra = candidato === profileId
     setCandidato(seCierra ? null : profileId)
     if (!seCierra) {
@@ -157,6 +177,31 @@ export default function EquipoServicioInline() {
     setErrores((prev) => ({ ...prev, [profileId]: '' }))
   }
 
+  function iniciarSwipe(profileId: string, x: number) {
+    touchInicio.current = { profileId, x }
+  }
+
+  function terminarSwipe(profileId: string, x: number) {
+    const inicio = touchInicio.current
+    touchInicio.current = null
+    if (!inicio || inicio.profileId !== profileId) return
+
+    const delta = x - inicio.x
+    if (Math.abs(delta) < 18) return
+
+    ignorarClick.current = true
+    window.setTimeout(() => {
+      ignorarClick.current = false
+    }, 180)
+
+    if (delta < -36) {
+      setSwipeAbierto(profileId)
+      setEditando(null)
+    } else if (delta > 28) {
+      setSwipeAbierto(null)
+    }
+  }
+
   async function persistir(profileId: string, capacidades: string[], modo: 'agregar' | 'editar' | 'quitar') {
     if (!ministerioId || !eventoId) return
     const formData = new FormData()
@@ -170,6 +215,7 @@ export default function EquipoServicioInline() {
       setGuardado((prev) => ({ ...prev, [profileId]: [...result.capacidades] }))
       setSeleccion((prev) => ({ ...prev, [profileId]: [...result.capacidades] }))
       setEstados((prev) => ({ ...prev, [profileId]: 'saved' }))
+      setSwipeAbierto(null)
 
       if (candidato === profileId) setCandidato(null)
       if (modo === 'quitar') setEditando(null)
@@ -403,7 +449,7 @@ export default function EquipoServicioInline() {
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Sirven en este servicio</p>
                 <p className="mt-0.5 text-[10px] text-slate-400">
-                  {integrantesActivos.length ? 'Toca una persona para editar sus funciones.' : 'Todavía no has agregado integrantes.'}
+                  {integrantesActivos.length ? 'Desliza una persona a la izquierda para ver acciones.' : 'Todavía no has agregado integrantes.'}
                 </p>
               </div>
               {integrantesActivos.length > 0 && (
@@ -426,28 +472,67 @@ export default function EquipoServicioInline() {
                   const opciones = Array.from(new Set([...miembro.capacidades, ...elegidasGuardadas])).filter((id) => funcionesPorId.has(id))
                   const estado = estados[miembro.id] || 'idle'
                   const nombres = elegidasGuardadas.map((id) => funcionesPorId.get(id)?.nombre).filter(Boolean)
+                  const swipeVisible = swipeAbierto === miembro.id
 
                   return (
                     <div key={miembro.id} className={index ? 'border-t border-slate-100' : ''}>
-                      <button
-                        type="button"
-                        onClick={() => abrirEdicion(miembro.id)}
-                        className="flex min-h-[64px] w-full items-center gap-3 px-3 py-2.5 text-left"
-                      >
-                        <span className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-indigo-100 text-sm font-extrabold text-indigo-700 ring-2 ring-emerald-100">
-                          {miembro.avatar_url ? (
-                            <img src={miembro.avatar_url} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            miembro.nombre_completo.charAt(0)
-                          )}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-extrabold text-slate-800">{miembro.nombre_completo}</span>
-                          <span className="mt-0.5 block truncate text-[10px] font-semibold text-indigo-500">{nombres.join(' · ')}</span>
-                        </span>
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-extrabold text-emerald-700">Asignado</span>
-                        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${editandoAhora ? 'rotate-180' : ''}`} />
-                      </button>
+                      <div className="relative overflow-hidden bg-white">
+                        <div className="absolute inset-y-0 right-0 flex w-[126px]">
+                          <button
+                            type="button"
+                            onClick={() => abrirEdicion(miembro.id)}
+                            className="flex w-[63px] flex-col items-center justify-center gap-1 bg-indigo-500 text-white"
+                            aria-label={`Editar funciones de ${miembro.nombre_completo}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            <span className="text-[9px] font-extrabold">Editar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => persistir(miembro.id, [], 'quitar')}
+                            disabled={estado === 'saving'}
+                            className="flex w-[63px] flex-col items-center justify-center gap-1 bg-rose-500 text-white disabled:opacity-60"
+                            aria-label={`Quitar a ${miembro.nombre_completo} de este servicio`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="text-[9px] font-extrabold">Quitar</span>
+                          </button>
+                        </div>
+
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onTouchStart={(event) => iniciarSwipe(miembro.id, event.touches[0]?.clientX || 0)}
+                          onTouchEnd={(event) => terminarSwipe(miembro.id, event.changedTouches[0]?.clientX || 0)}
+                          onClick={() => {
+                            if (ignorarClick.current) return
+                            if (swipeVisible) {
+                              setSwipeAbierto(null)
+                              return
+                            }
+                            abrirEdicion(miembro.id)
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') abrirEdicion(miembro.id)
+                          }}
+                          className="relative flex min-h-[66px] w-full cursor-pointer items-center gap-3 bg-white px-3 py-2.5 text-left transition-transform duration-200 ease-out"
+                          style={{ transform: swipeVisible ? 'translateX(-126px)' : 'translateX(0)' }}
+                        >
+                          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-indigo-100 text-sm font-extrabold text-indigo-700 ring-2 ring-emerald-100">
+                            {miembro.avatar_url ? (
+                              <img src={miembro.avatar_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              miembro.nombre_completo.charAt(0)
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-extrabold text-slate-800">{miembro.nombre_completo}</span>
+                            <span className="mt-0.5 block truncate text-[10px] font-semibold text-indigo-500">{nombres.join(' · ')}</span>
+                          </span>
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-extrabold text-emerald-700">Asignado</span>
+                          <MoreHorizontal className="h-4 w-4 shrink-0 text-slate-300" />
+                        </div>
+                      </div>
 
                       {editandoAhora && (
                         <div className="border-t border-slate-100 bg-slate-50/80 p-3">
@@ -480,40 +565,27 @@ export default function EquipoServicioInline() {
                             </p>
                           )}
 
-                          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                            <button
-                              type="button"
-                              onClick={() => persistir(miembro.id, elegidasEdicion, 'editar')}
-                              disabled={estado === 'saving' || elegidasEdicion.length === 0}
-                              className={`flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-extrabold transition ${
-                                estado === 'saved'
-                                  ? 'bg-emerald-600 text-white'
-                                  : estado === 'error'
-                                    ? 'bg-rose-600 text-white'
-                                    : 'bg-slate-900 text-white disabled:bg-slate-300'
-                              }`}
-                            >
-                              {estado === 'saved' && <Check className="h-4 w-4" />}
-                              {estado === 'saving'
-                                ? 'Guardando...'
-                                : estado === 'saved'
-                                  ? 'Guardado'
-                                  : estado === 'error'
-                                    ? 'Reintentar'
-                                    : 'Guardar cambios'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => persistir(miembro.id, [], 'quitar')}
-                              disabled={estado === 'saving'}
-                              className="grid h-10 w-10 place-items-center rounded-xl bg-rose-50 text-rose-600 ring-1 ring-rose-100 disabled:opacity-50"
-                              aria-label={`Quitar a ${miembro.nombre_completo} de este servicio`}
-                              title="Quitar del servicio"
-                            >
-                              <UserMinus className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <p className="mt-2 text-right text-[9px] font-semibold text-rose-400">El botón rojo quita a la persona solo de este servicio.</p>
+                          <button
+                            type="button"
+                            onClick={() => persistir(miembro.id, elegidasEdicion, 'editar')}
+                            disabled={estado === 'saving' || elegidasEdicion.length === 0}
+                            className={`mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-extrabold transition ${
+                              estado === 'saved'
+                                ? 'bg-emerald-600 text-white'
+                                : estado === 'error'
+                                  ? 'bg-rose-600 text-white'
+                                  : 'bg-slate-900 text-white disabled:bg-slate-300'
+                            }`}
+                          >
+                            {estado === 'saved' && <Check className="h-4 w-4" />}
+                            {estado === 'saving'
+                              ? 'Guardando...'
+                              : estado === 'saved'
+                                ? 'Guardado'
+                                : estado === 'error'
+                                  ? 'Reintentar'
+                                  : 'Guardar cambios'}
+                          </button>
                         </div>
                       )}
                     </div>
@@ -525,12 +597,16 @@ export default function EquipoServicioInline() {
 
           <Link
             href={`/ministerios/${ministerioId}/programacion/equipo?mes=${mes}&evento=${eventoId}`}
-            className="flex min-h-11 items-center justify-between rounded-xl bg-white px-3 text-[11px] font-extrabold text-slate-700 ring-1 ring-slate-200"
+            className="group flex min-h-[64px] items-center gap-3 rounded-[20px] bg-violet-50 px-3 py-2.5 ring-1 ring-violet-100 transition active:scale-[0.99]"
           >
-            <span className="inline-flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-indigo-600" /> Ajustes de funciones y capacidades
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-sm shadow-violet-200">
+              <Settings2 className="h-5 w-5" />
             </span>
-            <span className="text-slate-400">›</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-extrabold text-violet-900">Ajustes</span>
+              <span className="mt-0.5 block text-[10px] leading-4 text-violet-500">Funciones y capacidades permanentes del equipo</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-violet-400 transition-transform group-active:translate-x-0.5" />
           </Link>
         </>
       )}

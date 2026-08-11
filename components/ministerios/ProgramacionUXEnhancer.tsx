@@ -78,6 +78,29 @@ export default function ProgramacionUXEnhancer() {
         .programacion-ministerial #servicio-activo > details + details { border-top-width: 6px !important; border-top-color: #f1f5f9 !important; }
         .programacion-ministerial #servicio-activo > details > div { border-top-color: #e2e8f0 !important; }
         .programacion-ministerial [data-equipo-legacy='true'] { display: none !important; }
+
+        .programacion-ministerial a[href*='#servicio-activo'] {
+          min-height: 48px !important;
+          border-radius: 16px !important;
+          background: linear-gradient(135deg, #312e81 0%, #5b3df5 55%, #7c3aed 100%) !important;
+          color: #ffffff !important;
+          box-shadow: 0 10px 24px rgba(79, 70, 229, .22), inset 0 1px 0 rgba(255,255,255,.18) !important;
+          border: 1px solid rgba(255,255,255,.14) !important;
+          transition: transform .16s ease, box-shadow .16s ease !important;
+        }
+
+        .programacion-ministerial a[href*='#servicio-activo']:active {
+          transform: scale(.985);
+          box-shadow: 0 5px 14px rgba(79, 70, 229, .18) !important;
+        }
+
+        .programacion-ministerial a[href*='#servicio-activo'] svg {
+          background: rgba(255,255,255,.14);
+          border-radius: 9999px;
+          padding: 3px;
+          width: 22px;
+          height: 22px;
+        }
       `}</style>
     </>
   )
