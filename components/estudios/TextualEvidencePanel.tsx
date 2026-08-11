@@ -33,6 +33,8 @@ function WordDetails({ word, edition, palette }: {
   edition: Edition
   palette: ReturnType<typeof getPalette>
 }) {
+  const subtitle = [word.transliteration, word.glossEs].filter(Boolean).join(' · ')
+
   return (
     <details className={`group rounded-2xl border ${palette.card}`}>
       <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
@@ -46,9 +48,7 @@ function WordDetails({ word, edition, palette }: {
           >
             {word.surfaceForm}
           </span>
-          <span className={`mt-0.5 block break-words text-xs ${palette.muted}`}>
-            {[word.transliteration, word.glossEs].filter(Boolean).join(' · ')}
-          </span>
+          {subtitle && <span className={`mt-0.5 block break-words text-xs ${palette.muted}`}>{subtitle}</span>}
         </span>
         <ChevronDown className={`h-4 w-4 shrink-0 transition-transform group-open:rotate-180 ${palette.muted}`} aria-hidden="true" />
       </summary>
@@ -74,21 +74,27 @@ function WordDetails({ word, edition, palette }: {
                     {morpheme.lemmaTransliteration ? ` · ${morpheme.lemmaTransliteration}` : ''}
                   </dd>
                 </div>
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Strong</dt>
-                  <dd className="mt-0.5">{morpheme.strongNumber || 'No indicado'}</dd>
-                </div>
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Sentido en esta ocurrencia</dt>
-                  <dd className="mt-0.5 break-words">{morpheme.glossEs || 'No indicado'}</dd>
-                </div>
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Morfología</dt>
-                  <dd className="mt-0.5 break-words">
-                    {morpheme.morphologySummary || morpheme.morphologyCode || 'No indicada'}
-                    {morpheme.morphologySummary && morpheme.morphologyCode ? ` (${morpheme.morphologyCode})` : ''}
-                  </dd>
-                </div>
+                {morpheme.strongNumber && (
+                  <div>
+                    <dt className={`font-semibold ${palette.muted}`}>Strong</dt>
+                    <dd className="mt-0.5">{morpheme.strongNumber}</dd>
+                  </div>
+                )}
+                {morpheme.glossEs && (
+                  <div>
+                    <dt className={`font-semibold ${palette.muted}`}>Sentido en esta ocurrencia</dt>
+                    <dd className="mt-0.5 break-words">{morpheme.glossEs}</dd>
+                  </div>
+                )}
+                {(morpheme.morphologySummary || morpheme.morphologyCode) && (
+                  <div>
+                    <dt className={`font-semibold ${palette.muted}`}>Morfología</dt>
+                    <dd className="mt-0.5 break-words">
+                      {morpheme.morphologySummary || morpheme.morphologyCode}
+                      {morpheme.morphologySummary && morpheme.morphologyCode ? ` (${morpheme.morphologyCode})` : ''}
+                    </dd>
+                  </div>
+                )}
               </dl>
             </div>
           ))}
@@ -241,37 +247,42 @@ export default function TextualEvidencePanel({
 
             <div className={`rounded-2xl p-5 ${palette.textBox}`}>
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] opacity-60">Texto original</p>
-              <p
-                dir={edition.textDirection}
-                className={`mt-3 break-words text-2xl leading-[1.75] ${edition.textDirection === 'rtl' ? 'text-right font-serif' : 'text-left'}`}
-              >
+              <p dir={edition.textDirection} className={`mt-3 break-words text-2xl leading-[1.75] ${edition.textDirection === 'rtl' ? 'text-right font-serif' : 'text-left'}`}>
                 {edition.originalText}
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className={`rounded-2xl border p-4 ${palette.card}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Transliteración</p>
-                <p className="mt-2 break-words text-sm leading-6">{edition.transliteration || 'No disponible'}</p>
+            {(edition.transliteration || edition.literalTranslationEs) && (
+              <div className={`grid gap-3 ${edition.transliteration && edition.literalTranslationEs ? 'sm:grid-cols-2' : ''}`}>
+                {edition.transliteration && (
+                  <div className={`rounded-2xl border p-4 ${palette.card}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Transliteración</p>
+                    <p className="mt-2 break-words text-sm leading-6">{edition.transliteration}</p>
+                  </div>
+                )}
+                {edition.literalTranslationEs && (
+                  <div className={`rounded-2xl border p-4 ${palette.card}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Secuencia literal de glosas</p>
+                    <p className="mt-2 break-words text-sm leading-6">{edition.literalTranslationEs}</p>
+                    <p className={`mt-2 text-[10px] leading-4 ${palette.muted}`}>Ayuda a observar el orden de las palabras; no es una traducción española pulida.</p>
+                  </div>
+                )}
               </div>
-              <div className={`rounded-2xl border p-4 ${palette.card}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Secuencia literal de glosas</p>
-                <p className="mt-2 break-words text-sm leading-6">{edition.literalTranslationEs || 'No disponible'}</p>
-                <p className={`mt-2 text-[10px] leading-4 ${palette.muted}`}>Ayuda a observar el orden de las palabras; no es una traducción española pulida.</p>
-              </div>
-            </div>
+            )}
 
-            <details className={`group rounded-2xl border ${palette.card}`}>
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-                <span>Palabra por palabra ({edition.words.length})</span>
-                <ChevronDown className={`h-4 w-4 transition-transform group-open:rotate-180 ${palette.muted}`} aria-hidden="true" />
-              </summary>
-              <div className={`space-y-2 border-t p-3 ${palette.divider}`}>
-                {edition.words.map(word => (
-                  <WordDetails key={`${edition.language}-${word.displayWordIndex}`} word={word} edition={edition} palette={palette} />
-                ))}
-              </div>
-            </details>
+            {edition.words.length > 0 && (
+              <details className={`group rounded-2xl border ${palette.card}`}>
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                  <span>Palabra por palabra ({edition.words.length})</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform group-open:rotate-180 ${palette.muted}`} aria-hidden="true" />
+                </summary>
+                <div className={`space-y-2 border-t p-3 ${palette.divider}`}>
+                  {edition.words.map(word => (
+                    <WordDetails key={`${edition.language}-${word.displayWordIndex}`} word={word} edition={edition} palette={palette} />
+                  ))}
+                </div>
+              </details>
+            )}
 
             {(edition.variantOccurrences.length > 0 || edition.variants.length > 0) && (
               <details className={`group rounded-2xl border ${palette.variant}`}>
