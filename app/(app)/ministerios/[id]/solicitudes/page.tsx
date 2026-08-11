@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale'
 import { PlusCircle, FileText, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { AprobacionBotones } from './AprobacionBotones'
+import HistorialReemplazosButton from '@/components/ministerios/HistorialReemplazosButton'
 
 export const metadata: Metadata = {
   title: 'Solicitudes',
@@ -38,7 +39,7 @@ export default async function SolicitudesPage({
     esPastor = (profile as any)?.rol === 'pastor' || (profile as any)?.rol === 'administrador'
   }
 
-  const puedeAprobar = (membresia as any)?.es_lider || esPastor
+  const puedeAprobar = Boolean((membresia as any)?.es_lider || esPastor)
 
   const { data: solicitudes } = await supabase
     .from('solicitudes')
@@ -74,6 +75,8 @@ export default async function SolicitudesPage({
           Nueva solicitud
         </Link>
       </div>
+
+      <HistorialReemplazosButton ministerioId={id} puedeGestionar={puedeAprobar} />
 
       {!solicitudes || solicitudes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-12 text-center">
