@@ -6,6 +6,7 @@ import {
   responderAsignacionMinisterial,
   type EstadoAsignacionMusico,
 } from '@/app/actions/asignaciones-musico'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 type Props = {
   ministerioId: string
@@ -27,6 +28,7 @@ export default function EstadoAsignacionMusico({ ministerioId, eventoId, initial
         return
       }
       setEstado(nuevo)
+      requestPendingIndicatorsRefresh()
       setMensaje('Guardado')
       window.setTimeout(() => setMensaje(''), 2200)
     })
