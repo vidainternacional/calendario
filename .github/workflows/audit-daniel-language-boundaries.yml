@@ -1,0 +1,29 @@
+name: Auditar idiomas de Daniel
+
+on:
+  push:
+    branches:
+      - preview/fase-d-cobertura-biblica-universal
+    paths:
+      - 'scripts/stepbible/inspect_daniel_language_boundaries.py'
+      - 'scripts/stepbible/extract_ot_book.py'
+      - 'scripts/stepbible/inspect_ot_sources.py'
+      - '.github/workflows/audit-daniel-language-boundaries.yml'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Auditar Daniel
+        run: python scripts/stepbible/inspect_daniel_language_boundaries.py
+      - name: Publicar evidencia
+        uses: actions/upload-artifact@v4
+        with:
+          name: daniel-language-boundaries
+          path: artifacts/daniel-language-boundaries/report.json
+          if-no-files-found: error
