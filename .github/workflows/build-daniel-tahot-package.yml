@@ -1,0 +1,34 @@
+name: Construir paquete TAHOT de Daniel
+
+on:
+  push:
+    branches:
+      - preview/fase-d-cobertura-biblica-universal
+    paths:
+      - 'scripts/stepbible/extract_daniel_book.py'
+      - 'scripts/stepbible/extract_ot_book.py'
+      - 'scripts/stepbible/inspect_ot_sources.py'
+      - 'scripts/stepbible/inspect_tahot_affix_policy.py'
+      - 'scripts/stepbible/tahot_schema.py'
+      - 'scripts/stepbible/tahot_components.py'
+      - '.github/workflows/build-daniel-tahot-package.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Construir paquete fijado
+        run: python scripts/stepbible/extract_daniel_book.py --output artifacts/stepbible-daniel
+      - name: Inspeccionar política de lemas
+        run: python scripts/stepbible/inspect_tahot_affix_policy.py --package artifacts/stepbible-daniel/dan.json.gz --output artifacts/stepbible-daniel/affix
+      - name: Publicar evidencia
+        uses: actions/upload-artifact@v4
+        with:
+          name: stepbible-daniel-package
+          path: artifacts/stepbible-daniel
+          if-no-files-found: error
