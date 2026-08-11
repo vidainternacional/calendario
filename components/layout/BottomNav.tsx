@@ -49,8 +49,8 @@ export default function BottomNav() {
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
-  const { unreadAvisos, pendingServicios } = usePendingIndicators()
-  const avisosRequierenAtencion = Math.max(0, unreadAvisos) + Math.max(0, pendingServicios)
+  const { unreadAvisos } = usePendingIndicators()
+  const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
   useEffect(() => setPortalReady(true), [])
 
