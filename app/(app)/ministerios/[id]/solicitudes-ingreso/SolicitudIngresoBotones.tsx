@@ -1,8 +1,10 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { mostrarToast } from '@/lib/ui/toast'
 import { useState } from 'react'
 import { aprobarSolicitudIngreso, rechazarSolicitudIngreso } from '@/app/actions/ministerios'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 import { CheckCircle, XCircle } from 'lucide-react'
 
 export default function SolicitudIngresoBotones({
@@ -14,7 +16,14 @@ export default function SolicitudIngresoBotones({
   profileId: string
   ministerioId: string
 }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
+
+  const completar = () => {
+    requestPendingIndicatorsRefresh()
+    router.refresh()
+    setLoading(false)
+  }
 
   const handleAprobar = async () => {
     setLoading(true)
@@ -22,7 +31,9 @@ export default function SolicitudIngresoBotones({
     if (!res.success) {
       mostrarToast(res.error)
       setLoading(false)
+      return
     }
+    completar()
   }
 
   const handleRechazar = async () => {
@@ -32,7 +43,9 @@ export default function SolicitudIngresoBotones({
     if (!res.success) {
       mostrarToast(res.error)
       setLoading(false)
+      return
     }
+    completar()
   }
 
   return (
