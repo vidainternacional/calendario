@@ -45,6 +45,7 @@ export default function MisServiciosShortcut() {
   const ministerioEnPantalla = exactMinisterioId(pathname)
   const { pendingServicios } = usePendingIndicators()
   const [servicios, setServicios] = useState<ServicioResumen[]>([])
+  const [nextVisibleEventId, setNextVisibleEventId] = useState<string | null>(null)
   const [target, setTarget] = useState<HTMLElement | null>(null)
 
   const surface = pathname === '/inicio'
@@ -56,41 +57,6 @@ export default function MisServiciosShortcut() {
         : null
 
   useEffect(() => {
-    if (!surface) {
-      setTarget(null)
-      return
-    }
-
-    const main = document.querySelector<HTMLElement>('main')
-    if (!main) return
-
-    const mount = document.createElement('div')
-    mount.dataset.misServiciosInline = surface
-
-    if (surface === 'inicio') {
-      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
-      if (!content) return
-      const firstSection = Array.from(content.children).find((node) => node.tagName === 'SECTION')
-      if (firstSection?.nextSibling) content.insertBefore(mount, firstSection.nextSibling)
-      else content.appendChild(mount)
-    } else if (surface === 'avisos') {
-      const header = Array.from(main.children).find((node) => node.tagName === 'HEADER') as HTMLElement | undefined
-      if (header?.nextSibling) main.insertBefore(mount, header.nextSibling)
-      else main.appendChild(mount)
-    } else {
-      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
-      if (!content) return
-      content.prepend(mount)
-    }
-
-    setTarget(mount)
-    return () => {
-      setTarget(null)
-      mount.remove()
-    }
-  }, [surface, pathname])
-
-  useEffect(() => {
     if (!surface) return
     let cancelled = false
 
@@ -99,7 +65,7 @@ export default function MisServiciosShortcut() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data, error } = await (supabase as any)
+      const assignmentsQuery = (supabase as any)
         .from('evento_asignaciones')
         .select(`
           evento_id,
@@ -113,13 +79,20 @@ export default function MisServiciosShortcut() {
         .gte('eventos.fecha_inicio', new Date().toISOString())
         .limit(100)
 
-      if (error) {
-        console.error('No se pudo cargar el resumen de Mis servicios', error)
+      const [assignmentsResult, nextVisibleResult] = await Promise.all([
+        assignmentsQuery,
+        surface === 'inicio'
+          ? (supabase as any).rpc('get_next_visible_calendar_item')
+          : Promise.resolve({ data: [] }),
+      ])
+
+      if (assignmentsResult.error) {
+        console.error('No se pudo cargar el resumen de Mis servicios', assignmentsResult.error)
         return
       }
 
       const porServicio = new Map<string, { evento: any; ministerioId: string; funciones: string[]; estados: string[] }>()
-      for (const row of data || []) {
+      for (const row of assignmentsResult.data || []) {
         const evento = Array.isArray(row.eventos) ? row.eventos[0] : row.eventos
         if (!evento?.id || !evento?.fecha_inicio) continue
         const ministerioId = String(row.ministerio_id || '')
@@ -146,7 +119,15 @@ export default function MisServiciosShortcut() {
         }))
         .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())
 
-      if (!cancelled) setServicios(next)
+      const nextVisible = nextVisibleResult?.data?.[0] || null
+      const nextEventId = nextVisible?.item_type === 'event' && nextVisible?.id
+        ? String(nextVisible.id)
+        : null
+
+      if (!cancelled) {
+        setServicios(next)
+        setNextVisibleEventId(nextEventId)
+      }
     }
 
     const handleFocus = () => void refresh()
@@ -180,6 +161,55 @@ export default function MisServiciosShortcut() {
     return servicios[0] || null
   }, [ministerioEnPantalla, servicios, surface])
 
+  const integradoEnProximoEvento = Boolean(
+    surface === 'inicio'
+    && servicioVisible
+    && nextVisibleEventId
+    && servicioVisible.eventoId === nextVisibleEventId,
+  )
+
+  useEffect(() => {
+    setTarget(null)
+    if (!surface || !servicioVisible) return
+
+    const main = document.querySelector<HTMLElement>('main')
+    if (!main) return
+
+    const mount = document.createElement('div')
+    mount.dataset.misServiciosInline = integradoEnProximoEvento ? 'evento-integrado' : surface
+
+    if (surface === 'inicio') {
+      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
+      if (!content) return
+      const firstSection = Array.from(content.children).find((node) => node.tagName === 'SECTION') as HTMLElement | undefined
+      if (!firstSection) return
+
+      if (integradoEnProximoEvento) {
+        const eventCard = firstSection.querySelector<HTMLElement>('a')
+        if (!eventCard) return
+        eventCard.appendChild(mount)
+      } else if (firstSection.nextSibling) {
+        content.insertBefore(mount, firstSection.nextSibling)
+      } else {
+        content.appendChild(mount)
+      }
+    } else if (surface === 'avisos') {
+      const header = Array.from(main.children).find((node) => node.tagName === 'HEADER') as HTMLElement | undefined
+      if (header?.nextSibling) main.insertBefore(mount, header.nextSibling)
+      else main.appendChild(mount)
+    } else {
+      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
+      if (!content) return
+      content.prepend(mount)
+    }
+
+    setTarget(mount)
+    return () => {
+      setTarget(null)
+      mount.remove()
+    }
+  }, [integradoEnProximoEvento, servicioVisible?.key, surface])
+
   if (!surface || !target || !servicioVisible) return null
   if (surface === 'avisos' && pendingServicios === 0) return null
 
@@ -189,6 +219,31 @@ export default function MisServiciosShortcut() {
     : servicioVisible.estado === 'no_disponible'
       ? 'No disponible'
       : 'Requiere respuesta'
+
+  if (integradoEnProximoEvento) {
+    const integrated = (
+      <div className="-mx-4 -mb-4 mt-4 border-t border-violet-100 bg-gradient-to-r from-violet-50/85 to-white px-4 py-3 sm:-mx-5 sm:-mb-5 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="min-w-0">
+            <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-violet-600">
+              <span className={`h-2 w-2 rounded-full ${pendiente ? 'bg-rose-500' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+              También sirves en este evento
+            </span>
+            <span className="mt-1.5 flex flex-wrap gap-1.5">
+              {(servicioVisible.funciones.length ? servicioVisible.funciones : ['Asignado']).map((funcion) => (
+                <span key={funcion} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold text-slate-600 ring-1 ring-violet-100">{funcion}</span>
+              ))}
+            </span>
+          </span>
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-extrabold ${pendiente ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-100' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100' : 'bg-slate-100 text-slate-500'}`}>
+            {estadoTexto}
+          </span>
+        </div>
+        <p className="mt-2 text-[9px] font-semibold leading-4 text-violet-500">Abre la ficha para ver con quién sirves, repertorio, paleta y responder.</p>
+      </div>
+    )
+    return createPortal(integrated, target)
+  }
 
   const tituloSuperior = surface === 'ministerio'
     ? 'Tu próximo servicio aquí'
