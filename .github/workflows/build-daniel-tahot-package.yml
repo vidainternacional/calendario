@@ -9,6 +9,10 @@ on:
       - 'scripts/stepbible/extract_ot_book.py'
       - 'scripts/stepbible/inspect_ot_sources.py'
       - 'scripts/stepbible/inspect_tahot_multilingual_affix_policy.py'
+      - 'scripts/stepbible/build_daniel_multilingual_affix_policy.py'
+      - 'scripts/stepbible/build_tahot_multilingual_import_payload.py'
+      - 'scripts/stepbible/build_tahot_import_payload.py'
+      - 'scripts/stepbible/*_affix_lemma_policy.json'
       - 'scripts/stepbible/tahot_schema.py'
       - 'scripts/stepbible/tahot_components.py'
       - '.github/workflows/build-daniel-tahot-package.yml'
@@ -26,6 +30,35 @@ jobs:
         run: python scripts/stepbible/extract_daniel_book.py --output artifacts/stepbible-daniel
       - name: Inspeccionar política de lemas multilingüe
         run: python scripts/stepbible/inspect_tahot_multilingual_affix_policy.py --package artifacts/stepbible-daniel/dan.json.gz --output artifacts/stepbible-daniel/affix
+      - name: Derivar política reproducible
+        run: |
+          python scripts/stepbible/build_daniel_multilingual_affix_policy.py \
+            --package artifacts/stepbible-daniel/dan.json.gz \
+            --inspection artifacts/stepbible-daniel/affix/affix-policy-inspection-v2.json \
+            --policy-root scripts/stepbible \
+            --output artifacts/stepbible-daniel/daniel-affix-policy-v2.json
+      - name: Construir payload multilingüe
+        run: |
+          python scripts/stepbible/build_tahot_multilingual_import_payload.py \
+            artifacts/stepbible-daniel/dan.json.gz \
+            --policy artifacts/stepbible-daniel/daniel-affix-policy-v2.json \
+            --output artifacts/stepbible-daniel/import-payload-v2.json
+          sha256sum artifacts/stepbible-daniel/import-payload-v2.json | tee artifacts/stepbible-daniel/import-payload-v2.file.sha256
+      - name: Validar determinismo
+        run: |
+          mkdir -p artifacts/stepbible-daniel-repeat/affix
+          python scripts/stepbible/extract_daniel_book.py --output artifacts/stepbible-daniel-repeat
+          python scripts/stepbible/inspect_tahot_multilingual_affix_policy.py --package artifacts/stepbible-daniel-repeat/dan.json.gz --output artifacts/stepbible-daniel-repeat/affix
+          python scripts/stepbible/build_daniel_multilingual_affix_policy.py \
+            --package artifacts/stepbible-daniel-repeat/dan.json.gz \
+            --inspection artifacts/stepbible-daniel-repeat/affix/affix-policy-inspection-v2.json \
+            --policy-root scripts/stepbible \
+            --output artifacts/stepbible-daniel-repeat/daniel-affix-policy-v2.json
+          python scripts/stepbible/build_tahot_multilingual_import_payload.py \
+            artifacts/stepbible-daniel-repeat/dan.json.gz \
+            --policy artifacts/stepbible-daniel-repeat/daniel-affix-policy-v2.json \
+            --output artifacts/stepbible-daniel-repeat/import-payload-v2.json
+          cmp artifacts/stepbible-daniel/import-payload-v2.json artifacts/stepbible-daniel-repeat/import-payload-v2.json
       - name: Publicar evidencia
         uses: actions/upload-artifact@v4
         with:
