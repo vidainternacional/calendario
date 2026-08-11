@@ -51,6 +51,37 @@ async function notificarLideresSolicitudIngreso(ministerioId: string, solicitudI
   )
 }
 
+async function notificarResultadoSolicitudIngreso(
+  ministerioId: string,
+  solicitudId: string,
+  profileId: string,
+  estado: 'aprobada' | 'rechazada',
+) {
+  const service = createServiceClient() as any
+  const { data: ministerio } = await service
+    .from('ministerios')
+    .select('nombre')
+    .eq('id', ministerioId)
+    .maybeSingle()
+
+  const nombreMinisterio = String((ministerio as any)?.nombre || 'el ministerio')
+  const fueAprobada = estado === 'aprobada'
+
+  await notifyUsersOnceByReference(
+    [profileId],
+    {
+      title: 'VIDA Internacional',
+      body: fueAprobada
+        ? `Tu solicitud de ingreso a ${nombreMinisterio} fue aprobada.`
+        : `Tu solicitud de ingreso a ${nombreMinisterio} fue rechazada.`,
+      url: `/ministerios/${ministerioId}`,
+      tag: `solicitud-ingreso-resultado-${solicitudId}`,
+      renotify: true,
+    },
+    { tipo: 'solicitud_ingreso_resultado', referenciaId: solicitudId },
+  )
+}
+
 export async function solicitarIngreso(ministerioId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -111,6 +142,12 @@ export async function aprobarSolicitudIngreso(solicitudId: string, profileId: st
     return { success: false, error: e2.message }
   }
 
+  try {
+    await notificarResultadoSolicitudIngreso(ministerioId, solicitudId, profileId, 'aprobada')
+  } catch (pushError) {
+    console.error('[ministerios] Solicitud aprobada, pero falló la notificación al solicitante:', pushError)
+  }
+
   revalidatePath('/ministerios')
   revalidatePath('/inicio')
   revalidatePath(`/ministerios/${ministerioId}`)
@@ -120,12 +157,28 @@ export async function aprobarSolicitudIngreso(solicitudId: string, profileId: st
 
 export async function rechazarSolicitudIngreso(solicitudId: string, ministerioId: string) {
   const supabase = await createClient()
+  const { data: solicitud, error: solicitudError } = await (supabase as any)
+    .from('ministerio_solicitudes_ingreso')
+    .select('profile_id')
+    .eq('id', solicitudId)
+    .single()
+
+  if (solicitudError || !solicitud?.profile_id) {
+    return { success: false, error: solicitudError?.message || 'Solicitud no encontrada.' }
+  }
+
   const { error } = await (supabase as any)
     .from('ministerio_solicitudes_ingreso')
     .update({ estado: 'rechazada', resuelto_at: new Date().toISOString() })
     .eq('id', solicitudId)
 
   if (error) return { success: false, error: error.message }
+
+  try {
+    await notificarResultadoSolicitudIngreso(ministerioId, solicitudId, String(solicitud.profile_id), 'rechazada')
+  } catch (pushError) {
+    console.error('[ministerios] Solicitud rechazada, pero falló la notificación al solicitante:', pushError)
+  }
 
   revalidatePath('/inicio')
   revalidatePath(`/ministerios/${ministerioId}`)
