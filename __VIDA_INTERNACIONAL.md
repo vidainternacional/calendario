@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-09
+Última actualización: 2026-08-11
 
-Fase / prioridad activa: **PROGRAMACIÓN MINISTERIAL — ALABANZA Y EQUIPOS DE SERVICIO**
+Fase / prioridad activa: **NOTIFICACIONES Y BADGES REALES**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -36,64 +36,31 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
-# PRIORIDAD ACTIVA — PROGRAMACIÓN MINISTERIAL: ALABANZA Y EQUIPOS DE SERVICIO
+# PRIORIDAD CERRADA — PROGRAMACIÓN MINISTERIAL: ALABANZA Y EQUIPOS DE SERVICIO
 
-Activada el 2026-08-09 por decisión explícita del usuario después del cierre del pulido móvil y de la ficha integral de miembros.
+Cerrada el 2026-08-11 tras validación funcional del usuario, endurecimiento de permisos de reemplazos, protección del historial y despliegue READY en producción.
 
-El objetivo es convertir la organización de servidores en un flujo operativo real dentro de VIDA, comenzando por Alabanza y reutilizando los eventos existentes del Calendario. No se debe crear un calendario paralelo.
+Estado consolidado del cierre:
 
-## Objetivo inmediato
+- capacidades ministeriales y responsabilidades especiales conectadas a la ficha de miembro;
+- programación mensual reutiliza eventos reales del Calendario y no crea un calendario paralelo;
+- asignaciones por función conservan estados válidos al editar el equipo;
+- repertorio, enlaces y paleta permanecen vinculados al servicio;
+- dashboard del músico muestra función, preparación y estado;
+- confirmación, no disponibilidad, solicitud de reemplazo y resolución por liderazgo operan de extremo a extremo;
+- candidatos de reemplazo se limitan por ministerio, capacidad y disponibilidad;
+- historial de reemplazos se consulta desde botón independiente `Historial` en sheet/modal y no se mezcla con solicitudes pendientes;
+- las acciones de edición/quitar función bloquean el borrado de una asignación cuando destruiría historial relacionado;
+- RLS de `intercambios` fue endurecida para que un servidor común no pueda leer ni modificar solicitudes abiertas ajenas por `destinatario_id IS NULL`;
+- Administrador/Pastor conservan acceso autorizado global y Líder queda restringido a los ministerios que lidera;
+- índice único parcial evita dos solicitudes pendientes simultáneas para la misma asignación;
+- migración versionada: `supabase/migrations/20260811140500_endurecer_rls_intercambios_programacion.sql`;
+- commits finales del cierre: `4d63d04`, `19fed817` y `251ce679`;
+- `main` y producción quedaron alineados en `251ce679ad7845ca3f4e330697bf1ce2772edcd5`;
+- build y producción Vercel quedaron READY;
+- el usuario confirmó el 2026-08-11 que el flujo está correcto y autorizó avanzar.
 
-Permitir que Administración defina capacidades y responsabilidades, que el liderazgo de Alabanza programe mensualmente a los músicos por servicio y que cada persona asignada reciba repertorio, paleta de colores y un flujo claro para confirmar, rechazar o solicitar cambio.
-
-## Alcance autorizado
-
-1. Crear un catálogo reutilizable de capacidades ministeriales por persona y ministerio, por ejemplo guitarra, bajo, batería, teclado, voz, fotografía, dirección y otras funciones configurables.
-2. Permitir al Administrador asignar, modificar o retirar capacidades ministeriales cuando lo necesite.
-3. Diferenciar capacidades de responsabilidades especiales. Una responsabilidad no debe convertir automáticamente a la persona en líder del ministerio.
-4. Implementar como primer caso una responsabilidad especial `Gestión de paleta de colores para Alabanza`, asignable a una persona autorizada aunque pertenezca a Fotografía u otro ministerio.
-5. Vincular toda programación de servicio a un `evento` real del Calendario existente; no duplicar fechas ni crear otro calendario.
-6. Dar al líder de Alabanza una vista mensual de servicios/eventos donde pueda asignar músicos según sus capacidades.
-7. Registrar la función concreta de cada persona en cada servicio: guitarra, bajo, batería, teclado, voz, dirección u otra capacidad válida.
-8. Permitir repertorio por servicio con título de canción, tonalidad, enlace externo y notas de preparación.
-9. Permitir a la persona con responsabilidad de paleta publicar colores, referencia visual y observaciones para un servicio específico.
-10. Mostrar repertorio y paleta únicamente a las personas que deban verlo por asignación o permiso.
-11. Crear un dashboard del músico con próximo servicio, función, estado de confirmación, repertorio, enlaces, paleta y vista de sus próximas asignaciones del mes.
-12. Estados operativos mínimos de asignación: `pendiente`, `confirmado`, `no_disponible` y flujo de `solicitud_de_cambio`.
-13. Cuando una persona solicite cambio, priorizar candidatos del mismo ministerio con capacidad compatible; el líder conserva la decisión final.
-14. Mantener historial de sustituciones y cambios de estado para evitar perder quién estaba asignado originalmente.
-15. Reutilizar las estructuras existentes de eventos, asignaciones, membresías, liderazgo e intercambio siempre que sean compatibles antes de crear tablas nuevas.
-16. Diseñar el motor para reutilizarse posteriormente en Fotografía, Kids, Multimedia y otros ministerios sin codificar Alabanza como una excepción rígida.
-17. Mantener permisos: Administrador transversal; líder limitado a su ministerio salvo una responsabilidad especial explícita; servidor solo ve y responde a sus asignaciones.
-18. No incorporar todavía nuevas notificaciones push hasta estabilizar el flujo funcional; la prioridad de Notificaciones permanece en pausa.
-19. Mantener mobile first, safe areas y componentes aprobados, pero el objetivo principal de este bloque es funcional. El pulido visual fino se realizará después de validar el flujo completo.
-20. Agrupar migraciones y cambios de producción para evitar deployments de prueba innecesarios.
-
-## Orden de implementación autorizado
-
-1. Auditar tablas, migraciones y acciones existentes relacionadas con capacidades, asignaciones, intercambios y eventos para evitar duplicación.
-2. Implementar el modelo de capacidades ministeriales y responsabilidades especiales.
-3. Conectar Administración → ficha de usuario para asignar capacidades y responsabilidades.
-4. Construir la programación mensual de Alabanza sobre eventos reales del Calendario.
-5. Incorporar repertorio y enlaces por servicio.
-6. Incorporar publicación de paleta de colores por persona autorizada.
-7. Construir dashboard del músico y estados de confirmación.
-8. Conectar solicitud de cambio, candidatos compatibles, aprobación del líder e historial.
-9. Validar el flujo completo con un servicio real de prueba antes de ampliar a otros ministerios.
-
-## Criterio de cierre
-
-- Administrador puede asignar capacidades y responsabilidades especiales desde la ficha de un miembro;
-- líder de Alabanza puede programar músicos por evento/servicio sin duplicar el Calendario;
-- repertorio y enlaces quedan vinculados al servicio;
-- responsable autorizado puede publicar la paleta para ese servicio;
-- músico asignado ve en su dashboard función, repertorio, paleta y estado;
-- músico puede confirmar, indicar que no puede servir o solicitar cambio;
-- líder puede resolver el reemplazo con una persona de capacidad compatible;
-- el historial conserva los cambios;
-- permisos impiden gestionar ministerios ajenos sin autorización explícita;
-- build y producción quedan READY;
-- el usuario valida el flujo completo antes de ampliar el motor a otros ministerios o iniciar el pulido visual final.
+El motor queda preparado para reutilizarse posteriormente en Fotografía, Kids, Multimedia y otros ministerios. No ampliar ahora este bloque salvo bug comprobable.
 
 # PRIORIDAD CERRADA — ADMINISTRACIÓN: CONTROL Y ELIMINACIÓN PERMANENTE
 
@@ -141,13 +108,13 @@ Dar al rol `administrador` control explícito y seguro sobre eliminación perman
 - build y producción quedan READY;
 - el usuario validó el flujo y el panel administrativo antes de pasar a la siguiente prioridad.
 
-# PRIORIDAD EN PAUSA — NOTIFICACIONES Y BADGES REALES
+# PRIORIDAD ACTIVA — NOTIFICACIONES Y BADGES REALES
 
-Pausada temporalmente el 2026-08-09 por decisión explícita del usuario antes de ejecutar las pruebas finales en iPhone. No reiniciar esas pruebas ni avanzar aprobación/rechazo hasta que el usuario reactive este bloque.
+Reactivada el 2026-08-11 por decisión explícita del usuario después del cierre formal de Programación Ministerial. Retomar desde el estado conservado; no reiniciar el bloque desde cero.
 
 El usuario aprobó el 2026-08-08 continuar desde la identidad comunitaria hacia una lógica transversal de elementos pendientes y no leídos. VIDA ya cuenta con lectura real de avisos, suscripciones push, preferencias por ministerio, App Badge y contadores de solicitudes de ingreso; el objetivo es consolidarlos sin inventar cifras ni construir fuentes paralelas innecesarias.
 
-## Objetivo conservado
+## Objetivo activo
 
 Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla en badges, Inicio, navegación y notificaciones push cuando corresponda, manteniendo cada contador derivado del estado real en Supabase.
 
@@ -176,7 +143,7 @@ Crear una fuente coherente de estado pendiente para cada usuario y reutilizarla 
 - el service worker ya soportaba navegación por `payload.url` y no fue modificado.
 - commit funcional del bloque: `41353b4` — `feat(notificaciones): conectar push a destinos directos`.
 
-## Pendiente al reactivar
+## Siguiente punto autorizado
 
 1. Validar en iPhone un Aviso push → ficha exacta.
 2. Validar solicitud de ingreso → pantalla de revisión del ministerio.
@@ -299,9 +266,9 @@ Cuando este documento reactive FASE D, el siguiente punto será integrar el serv
 
 # Siguiente punto autorizado
 
-1. Auditar el esquema y las migraciones existentes de capacidades, asignaciones, eventos e intercambios.
-2. Definir el modelo mínimo reutilizable de capacidades ministeriales y responsabilidades especiales sin duplicar estructuras existentes.
-3. Conectar la primera gestión desde Administración → ficha de usuario.
-4. Verificar migración, permisos y build antes de construir la programación mensual de Alabanza.
+1. Validar en iPhone un Aviso push → ficha exacta.
+2. Validar solicitud de ingreso → pantalla de revisión del ministerio.
+3. Conectar aprobación/rechazo al usuario solicitante sin crear contadores artificiales.
+4. Auditar las demás acciones que ya generan push y aplicar destino directo solo cuando exista una superficie inequívoca.
 
-No reanudar Notificaciones, piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras la prioridad de Programación Ministerial siga activa.
+No reanudar piloto operativo, FASE D, FASE E, FASE F ni el recorrido guiado mientras Notificaciones y Badges Reales siga activa.
