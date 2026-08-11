@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useUnreadPublicationsCount } from '@/components/avisos/usePublicationReads'
+import { obtenerConteoSolicitudesGestionables } from '@/app/actions/centro-solicitudes-ministerio'
 
 export const PENDING_INDICATORS_EVENT = 'vida-pending-indicators-refresh'
 
@@ -15,6 +16,7 @@ export function usePendingIndicators() {
   const unreadAvisos = useUnreadPublicationsCount()
   const [pendingMinisterioIngresos, setPendingMinisterioIngresos] = useState(0)
   const [pendingServicios, setPendingServicios] = useState(0)
+  const [pendingSolicitudesGestionables, setPendingSolicitudesGestionables] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -29,11 +31,12 @@ export function usePendingIndicators() {
         if (!cancelled) {
           setPendingMinisterioIngresos(0)
           setPendingServicios(0)
+          setPendingSolicitudesGestionables(0)
         }
         return
       }
 
-      const [leadershipReq, serviciosReq] = await Promise.all([
+      const [leadershipReq, serviciosReq, solicitudesGestionables] = await Promise.all([
         (supabase as any)
           .from('ministerio_solicitudes_ingreso')
           .select('id, profile_id')
@@ -44,6 +47,10 @@ export function usePendingIndicators() {
           .eq('profile_id', user.id)
           .in('estado', ['asignado', 'pendiente'])
           .gte('eventos.fecha_inicio', new Date().toISOString()),
+        obtenerConteoSolicitudesGestionables().catch((error) => {
+          console.error('No se pudieron cargar las solicitudes gestionables', error)
+          return 0
+        }),
       ])
 
       if (leadershipReq.error) {
@@ -65,6 +72,8 @@ export function usePendingIndicators() {
         )
         if (!cancelled) setPendingServicios(eventosPendientes.size)
       }
+
+      if (!cancelled) setPendingSolicitudesGestionables(Math.max(0, Number(solicitudesGestionables || 0)))
     }
 
     const handleFocus = () => void refreshPending()
@@ -89,8 +98,12 @@ export function usePendingIndicators() {
   }, [])
 
   const total = useMemo(
-    () => Math.max(0, unreadAvisos) + Math.max(0, pendingMinisterioIngresos) + Math.max(0, pendingServicios),
-    [pendingMinisterioIngresos, pendingServicios, unreadAvisos],
+    () =>
+      Math.max(0, unreadAvisos) +
+      Math.max(0, pendingMinisterioIngresos) +
+      Math.max(0, pendingServicios) +
+      Math.max(0, pendingSolicitudesGestionables),
+    [pendingMinisterioIngresos, pendingServicios, pendingSolicitudesGestionables, unreadAvisos],
   )
 
   useEffect(() => {
@@ -110,6 +123,7 @@ export function usePendingIndicators() {
     unreadAvisos,
     pendingMinisterioIngresos,
     pendingServicios,
+    pendingSolicitudesGestionables,
     total,
   }
 }
