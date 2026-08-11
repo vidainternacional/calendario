@@ -50,32 +50,30 @@ def inspect(package: dict[str, Any]) -> dict[str, Any]:
                 entry["references"].add(row["reference"]["english"])
                 entry["occurrences"] += 1
 
-    conflicts = {
-        key: sorted(entry["source_lemmas"])
-        for key, entry in catalog.items()
-        if len(entry["source_lemmas"]) != 1
-    }
-    if conflicts:
-        raise RuntimeError(f"Lemas fuente conflictivos por idioma: {conflicts}")
-
+    conflicts: dict[str, Any] = {}
     missing: dict[str, Any] = {}
     language_counts: dict[str, int] = defaultdict(int)
+
     for key, entry in sorted(catalog.items()):
         language_counts[entry["language"]] += 1
-        source_lemma = next(iter(entry["source_lemmas"]))
-        if SCRIPT_RE.search(source_lemma):
-            continue
-        missing[key] = {
+        lemmas = sorted(entry["source_lemmas"])
+        common = {
             "language": entry["language"],
             "lexical_id": entry["lexical_id"],
             "strong_number": entry["strong_number"],
-            "source_lemma": source_lemma,
             "token_kinds": sorted(entry["token_kinds"]),
             "surface_forms": sorted(entry["surface_forms"]),
             "morphology_codes": sorted(entry["morphology_codes"]),
-            "sample_references": sorted(entry["references"])[:8],
+            "sample_references": sorted(entry["references"])[:12],
             "occurrences": entry["occurrences"],
         }
+        if len(lemmas) != 1:
+            conflicts[key] = {**common, "source_lemmas": lemmas}
+            continue
+        source_lemma = lemmas[0]
+        if SCRIPT_RE.search(source_lemma):
+            continue
+        missing[key] = {**common, "source_lemma": source_lemma}
 
     return {
         "schema_version": "vida-tahot-multilingual-affix-policy-inspection-v2",
@@ -84,9 +82,10 @@ def inspect(package: dict[str, Any]) -> dict[str, Any]:
         "summary": {
             "lexical_keys_total": len(catalog),
             "lexical_keys_by_language": dict(sorted(language_counts.items())),
-            "lexical_keys_with_script_lemma": len(catalog) - len(missing),
+            "lexical_keys_with_conflicting_source_lemmas": len(conflicts),
             "lexical_keys_requiring_explicit_policy": len(missing),
         },
+        "conflicts": conflicts,
         "required_policy": missing,
     }
 
