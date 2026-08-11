@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { cargarContextoHistoricoBiblico } from '@/app/actions/contexto-biblico'
+import BibleChronologyMapPanel from '@/components/biblia/BibleChronologyMapPanel'
 import BibleLexicalPanel from '@/components/biblia/BibleLexicalPanel'
 
 type Modo = 'claro' | 'oscuro' | 'sepia'
@@ -190,6 +191,7 @@ export default function BibleHistoricalContextPanel({
   return (
     <>
       {historicalPanel}
+      <BibleChronologyMapPanel pasaje={pasaje} modo={modo} />
       <BibleLexicalPanel pasaje={pasaje} modo={modo} />
     </>
   )
