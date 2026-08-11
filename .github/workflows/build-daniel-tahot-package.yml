@@ -8,7 +8,7 @@ on:
       - 'scripts/stepbible/extract_daniel_book.py'
       - 'scripts/stepbible/extract_ot_book.py'
       - 'scripts/stepbible/inspect_ot_sources.py'
-      - 'scripts/stepbible/inspect_tahot_affix_policy.py'
+      - 'scripts/stepbible/inspect_tahot_multilingual_affix_policy.py'
       - 'scripts/stepbible/tahot_schema.py'
       - 'scripts/stepbible/tahot_components.py'
       - '.github/workflows/build-daniel-tahot-package.yml'
@@ -24,8 +24,8 @@ jobs:
           python-version: '3.12'
       - name: Construir paquete fijado
         run: python scripts/stepbible/extract_daniel_book.py --output artifacts/stepbible-daniel
-      - name: Inspeccionar política de lemas
-        run: python scripts/stepbible/inspect_tahot_affix_policy.py --package artifacts/stepbible-daniel/dan.json.gz --output artifacts/stepbible-daniel/affix
+      - name: Inspeccionar política de lemas multilingüe
+        run: python scripts/stepbible/inspect_tahot_multilingual_affix_policy.py --package artifacts/stepbible-daniel/dan.json.gz --output artifacts/stepbible-daniel/affix
       - name: Publicar evidencia
         uses: actions/upload-artifact@v4
         with:
