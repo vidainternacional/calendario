@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vida-shell-v1.5'
+const CACHE_NAME = 'vida-shell-v1.6'
 const SHELL_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
@@ -77,7 +77,14 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || 'Vida Internacional', options)
+    Promise.all([
+      self.registration.showNotification(payload.title || 'Vida Internacional', options),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        clientList.forEach((client) => {
+          client.postMessage({ type: 'VIDA_PUSH_RECEIVED', tag, url: options.data.url })
+        })
+      }),
+    ])
   )
 })
 
