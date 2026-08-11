@@ -75,6 +75,19 @@ function idsUnicos(formData: FormData, key: string) {
   return Array.from(new Set(formData.getAll(key).map((value) => String(value)).filter(Boolean)))
 }
 
+async function asegurarAsignacionesSinHistorial(admin: any, asignacionIds: string[]) {
+  if (asignacionIds.length === 0) return
+
+  const [{ data: comoOrigen = [] }, { data: comoDestino = [] }] = await Promise.all([
+    admin.from('intercambios').select('id').in('asignacion_origen_id', asignacionIds).limit(1),
+    admin.from('intercambios').select('id').in('asignacion_destino_id', asignacionIds).limit(1),
+  ])
+
+  if ((comoOrigen as any[]).length > 0 || (comoDestino as any[]).length > 0) {
+    fail('No se puede quitar esta función porque forma parte del historial de reemplazos. El registro histórico debe conservarse.')
+  }
+}
+
 export async function obtenerDatosEquipoServicio(ministerioId: string, eventoId: string): Promise<DatosEquipoServicio> {
   const acceso = await obtenerAcceso(ministerioId)
   if (!acceso?.puedeProgramar) fail('No tienes permiso para programar este ministerio.')
@@ -159,6 +172,7 @@ export async function guardarEquipoPersonaServicio(ministerioId: string, eventoI
   const agregarIds = seleccionadas.filter((capacidadId) => !actuales.has(capacidadId))
 
   if (eliminarIds.length > 0) {
+    await asegurarAsignacionesSinHistorial(admin, eliminarIds)
     const { error } = await admin.from('evento_asignaciones').delete().in('id', eliminarIds).eq('evento_id', eventoId).eq('ministerio_id', ministerioId).eq('profile_id', profileId)
     if (error) fail(error.message)
   }
@@ -256,6 +270,7 @@ export async function quitarFuncionEquipoMinisterial(ministerioId: string, event
   if (!acceso?.puedeProgramar) fail('No tienes permiso para programar este ministerio.')
   const admin = createAdminClient() as any
   if (!(await validarEvento(admin, ministerioId, eventoId))) fail('El servicio no está preparado para este ministerio.')
+  await asegurarAsignacionesSinHistorial(admin, [asignacionId])
   const { error } = await admin.from('evento_asignaciones').delete().eq('id', asignacionId).eq('evento_id', eventoId).eq('ministerio_id', ministerioId)
   if (error) fail(error.message)
   revalidar(ministerioId)
