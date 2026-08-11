@@ -158,10 +158,13 @@ export default function MisServiciosShortcut() {
     if (surface === 'avisos') {
       return servicios.find((servicio) => servicio.estado === 'pendiente') || null
     }
+    if (surface === 'inicio') {
+      return servicios.find((servicio) => servicio.estado === 'pendiente') || servicios[0] || null
+    }
     return servicios[0] || null
   }, [ministerioEnPantalla, servicios, surface])
 
-  const integradoEnProximoEvento = Boolean(
+  const servicioEsProximoEvento = Boolean(
     surface === 'inicio'
     && servicioVisible
     && nextVisibleEventId
@@ -175,6 +178,36 @@ export default function MisServiciosShortcut() {
     let disposed = false
     let mount: HTMLElement | null = null
 
+    const restoreEventState = () => {
+      document.querySelectorAll<HTMLElement>('[data-servicio-state-hidden="true"]').forEach((element) => {
+        element.style.display = ''
+        delete element.dataset.servicioStateHidden
+      })
+    }
+
+    const hideDuplicatedEventState = (main: HTMLElement) => {
+      restoreEventState()
+      if (surface !== 'inicio' || !servicioEsProximoEvento) return
+
+      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
+      const firstSection = content
+        ? Array.from(content.children).find((node) => node.tagName === 'SECTION') as HTMLElement | undefined
+        : undefined
+      const eventCard = firstSection?.querySelector<HTMLElement>('a')
+      if (!eventCard) return
+
+      const assignmentLabels = new Set(['Asignado', 'Pendiente', 'Por confirmar', 'Confirmado', 'Declinado', 'No disponible'])
+      const statusPill = Array.from(eventCard.querySelectorAll<HTMLElement>('span')).find((element) => {
+        const text = element.textContent?.trim() || ''
+        return assignmentLabels.has(text) && element.className.includes('rounded-full')
+      })
+
+      if (statusPill) {
+        statusPill.dataset.servicioStateHidden = 'true'
+        statusPill.style.display = 'none'
+      }
+    }
+
     const ensureMount = () => {
       if (disposed) return
       if (mount?.isConnected) return
@@ -187,23 +220,16 @@ export default function MisServiciosShortcut() {
       if (!main) return
 
       const nextMount = document.createElement('div')
-      nextMount.dataset.misServiciosInline = integradoEnProximoEvento ? 'evento-integrado' : surface
+      nextMount.dataset.misServiciosInline = surface
+      nextMount.className = 'shrink-0'
 
       if (surface === 'inicio') {
-        const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
-        if (!content) return
-        const firstSection = Array.from(content.children).find((node) => node.tagName === 'SECTION') as HTMLElement | undefined
-        if (!firstSection) return
-
-        if (integradoEnProximoEvento) {
-          const eventCard = firstSection.querySelector<HTMLElement>('a')
-          if (!eventCard) return
-          eventCard.appendChild(nextMount)
-        } else if (firstSection.nextSibling) {
-          content.insertBefore(nextMount, firstSection.nextSibling)
-        } else {
-          content.appendChild(nextMount)
-        }
+        const header = Array.from(main.children).find((node) => node.tagName === 'HEADER') as HTMLElement | undefined
+        if (!header) return
+        const avatar = header.lastElementChild
+        if (avatar) header.insertBefore(nextMount, avatar)
+        else header.appendChild(nextMount)
+        hideDuplicatedEventState(main)
       } else if (surface === 'avisos') {
         const header = Array.from(main.children).find((node) => node.tagName === 'HEADER') as HTMLElement | undefined
         if (header?.nextSibling) main.insertBefore(nextMount, header.nextSibling)
@@ -227,10 +253,11 @@ export default function MisServiciosShortcut() {
       disposed = true
       observer.disconnect()
       window.clearInterval(retry)
+      restoreEventState()
       setTarget(null)
       mount?.remove()
     }
-  }, [integradoEnProximoEvento, servicioVisible?.key, surface])
+  }, [servicioEsProximoEvento, servicioVisible?.key, surface])
 
   if (!surface || !target || !servicioVisible) return null
   if (surface === 'avisos' && pendingServicios === 0) return null
@@ -242,41 +269,39 @@ export default function MisServiciosShortcut() {
       ? 'No disponible'
       : 'Requiere respuesta'
 
-  if (integradoEnProximoEvento) {
-    const integrated = (
-      <div className="-mx-4 -mb-4 mt-4 border-t border-teal-100 bg-gradient-to-r from-cyan-50 via-teal-50/90 to-emerald-50/80 px-4 py-3 sm:-mx-5 sm:-mb-5 sm:px-5">
-        <div className="flex items-start justify-between gap-3">
-          <span className="min-w-0">
-            <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.11em] text-teal-700">
-              <span className={`h-2 w-2 rounded-full ${pendiente ? 'bg-rose-500' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-              Tu asignación en este evento
-            </span>
-            <span className="mt-1.5 flex flex-wrap gap-1.5">
-              {(servicioVisible.funciones.length ? servicioVisible.funciones : ['Asignado']).map((funcion) => (
-                <span key={funcion} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold text-teal-800 ring-1 ring-teal-100">{funcion}</span>
-              ))}
-            </span>
+  if (surface === 'inicio') {
+    const circle = (
+      <Link
+        href={`/eventos/${servicioVisible.eventoId}`}
+        className={`relative grid h-12 w-12 place-items-center rounded-full ring-1 transition active:scale-95 ${
+          pendiente
+            ? 'bg-amber-50 text-amber-700 ring-amber-200 shadow-[0_7px_18px_rgba(245,158,11,0.16)]'
+            : servicioVisible.estado === 'confirmado'
+              ? 'bg-emerald-50 text-emerald-600 ring-emerald-100'
+              : 'bg-rose-50 text-rose-600 ring-rose-100'
+        }`}
+        aria-label={`Próximo servicio: ${servicioVisible.titulo}. ${estadoTexto}`}
+        title={`Próximo servicio: ${servicioVisible.titulo}`}
+      >
+        <CalendarCheck2 className="h-5 w-5" aria-hidden="true" />
+        {pendingServicios > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#f4f5f9] bg-rose-500 px-1 text-[9px] font-black leading-none text-white">
+            {pendingServicios > 99 ? '99+' : pendingServicios}
           </span>
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-extrabold ${pendiente ? 'bg-rose-100 text-rose-700' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-            {estadoTexto}
-          </span>
-        </div>
-        <p className="mt-2 text-[9px] font-semibold leading-4 text-teal-700/80">Toca el evento para abrir equipo, repertorio, paleta y tu respuesta en la misma ficha.</p>
-      </div>
+        )}
+      </Link>
     )
-    return createPortal(integrated, target)
+    return createPortal(circle, target)
   }
 
   const tituloSuperior = surface === 'ministerio'
     ? 'Tu próximo servicio aquí'
-    : surface === 'avisos'
-      ? 'Asignación que requiere tu atención'
-      : 'Tu próximo servicio'
+    : 'Asignación que requiere tu atención'
 
   const card = (
     <section className={surface === 'avisos' ? 'mb-6' : ''} aria-label="Mis servicios">
       <Link
-        href="/intercambios"
+        href={`/eventos/${servicioVisible.eventoId}`}
         className={`group block overflow-hidden rounded-[24px] border bg-white shadow-[0_8px_26px_rgba(15,23,42,0.055)] transition active:scale-[0.993] ${pendiente ? 'border-rose-100 ring-1 ring-rose-50' : 'border-white/90'}`}
         aria-label={`${tituloSuperior}: ${servicioVisible.titulo}. ${estadoTexto}`}
       >
@@ -317,7 +342,7 @@ export default function MisServiciosShortcut() {
 
         {pendiente && (
           <div className="border-t border-rose-100 bg-rose-50/60 px-4 py-2.5 text-[10px] font-bold text-rose-600 sm:px-5">
-            Toca para revisar los detalles y confirmar o solicitar un cambio.
+            Toca para revisar los detalles, confirmar o gestionar un reemplazo.
           </div>
         )}
       </Link>
