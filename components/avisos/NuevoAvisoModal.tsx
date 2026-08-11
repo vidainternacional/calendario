@@ -23,13 +23,13 @@ interface NuevoAvisoModalProps {
   esPastorAdmin: boolean
 }
 
-export default function NuevoAvisoModal({
-  ministeriosLider,
-  esPastorAdmin,
-}: NuevoAvisoModalProps) {
+type RemitenteTipo = 'autor' | 'ministerio' | 'vida'
+
+export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: NuevoAvisoModalProps) {
   const [open, setOpen] = useState(false)
   const [paso, setPaso] = useState<'redactar' | 'revisar' | 'resultado'>('redactar')
   const [ministerioId, setMinisterioId] = useState(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
+  const [remitenteTipo, setRemitenteTipo] = useState<RemitenteTipo>(esPastorAdmin ? 'vida' : 'ministerio')
   const [titulo, setTitulo] = useState('')
   const [cuerpo, setCuerpo] = useState('')
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -41,9 +41,16 @@ export default function NuevoAvisoModal({
     ? ministeriosLider.find((ministerio) => ministerio.id === ministerioId)?.nombre || 'Ministerio'
     : 'Todos los ministerios'
 
+  const remitenteNombre = remitenteTipo === 'vida'
+    ? 'VIDA Internacional'
+    : remitenteTipo === 'ministerio'
+      ? ministerioNombre
+      : 'Mi nombre'
+
   const limpiar = () => {
     setPaso('redactar')
     setMinisterioId(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
+    setRemitenteTipo(esPastorAdmin ? 'vida' : 'ministerio')
     setTitulo('')
     setCuerpo('')
   }
@@ -72,6 +79,12 @@ export default function NuevoAvisoModal({
   }, [open])
 
   const puedeRevisar = titulo.trim().length > 0 && cuerpo.trim().length > 0 && (esPastorAdmin || ministerioId)
+
+  const cambiarMinisterio = (nuevoId: string) => {
+    setMinisterioId(nuevoId)
+    if (!nuevoId && remitenteTipo === 'ministerio') setRemitenteTipo(esPastorAdmin ? 'vida' : 'autor')
+    if (nuevoId && remitenteTipo === 'vida' && !esPastorAdmin) setRemitenteTipo('ministerio')
+  }
 
   return (
     <>
@@ -123,9 +136,7 @@ export default function NuevoAvisoModal({
                 <div className={`mb-5 flex h-20 w-20 items-center justify-center rounded-full ${state?.pendiente ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
                   {state?.pendiente ? <span className="text-3xl">⏳</span> : <CheckCircle2 className="h-10 w-10" />}
                 </div>
-                <h3 className="text-xl font-bold text-[#171923]">
-                  {state?.pendiente ? 'Quedó pendiente de aprobación' : 'Publicación completada'}
-                </h3>
+                <h3 className="text-xl font-bold text-[#171923]">{state?.pendiente ? 'Quedó pendiente de aprobación' : 'Publicación completada'}</h3>
                 <p className="mt-2 max-w-sm text-sm leading-relaxed text-gray-500">
                   {state?.mensaje || (state?.pendiente
                     ? 'Un administrador o pastor general revisará el aviso antes de publicarlo.'
@@ -137,21 +148,18 @@ export default function NuevoAvisoModal({
                     {state.notificados} dispositivo{state.notificados === 1 ? '' : 's'} notificado{state.notificados === 1 ? '' : 's'}
                   </div>
                 )}
-                <button type="button" onClick={cerrar} className="mt-7 min-h-11 w-full rounded-xl bg-[#171923] px-6 py-3 text-sm font-semibold text-white sm:w-auto">
-                  Terminar
-                </button>
+                <button type="button" onClick={cerrar} className="mt-7 min-h-11 w-full rounded-xl bg-[#171923] px-6 py-3 text-sm font-semibold text-white sm:w-auto">Terminar</button>
               </div>
             ) : (
               <form action={action} className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <input type="hidden" name="ministerio_id" value={ministerioId} />
+                <input type="hidden" name="remitente_tipo" value={remitenteTipo} />
                 <input type="hidden" name="titulo" value={titulo} />
                 <input type="hidden" name="cuerpo" value={cuerpo} />
 
                 <div className="modal-body-safe flex-1 overflow-y-auto px-4 py-5 sm:px-6">
                   {state?.error && (
-                    <div role="alert" className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-                      {state.error}
-                    </div>
+                    <div role="alert" className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{state.error}</div>
                   )}
 
                   {paso === 'redactar' ? (
@@ -166,7 +174,7 @@ export default function NuevoAvisoModal({
                           <select
                             id="aviso-ministerio"
                             value={ministerioId}
-                            onChange={(event) => setMinisterioId(event.target.value)}
+                            onChange={(event) => cambiarMinisterio(event.target.value)}
                             required={!esPastorAdmin}
                             className="min-h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-base font-semibold text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm"
                           >
@@ -178,6 +186,24 @@ export default function NuevoAvisoModal({
                         <p className="mt-2 text-xs leading-relaxed text-slate-500">
                           {ministerioId ? 'Recibirán el aviso los miembros activos de este ministerio.' : 'Se publicará como aviso general para toda la congregación.'}
                         </p>
+                      </section>
+
+                      <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                        <label htmlFor="aviso-remitente" className="text-xs font-bold uppercase tracking-wide text-gray-500">Mostrar como</label>
+                        <div className="relative mt-2">
+                          <select
+                            id="aviso-remitente"
+                            value={remitenteTipo}
+                            onChange={(event) => setRemitenteTipo(event.target.value as RemitenteTipo)}
+                            className="min-h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-base font-semibold text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm"
+                          >
+                            <option value="autor">Mi nombre</option>
+                            {ministerioId && <option value="ministerio">{ministerioNombre}</option>}
+                            {esPastorAdmin && <option value="vida">VIDA Internacional</option>}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        </div>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500">Esta identidad aparecerá como remitente del aviso y de su notificación push.</p>
                       </section>
 
                       <div className="space-y-2">
@@ -202,6 +228,7 @@ export default function NuevoAvisoModal({
                         <div className="border-b border-slate-100 bg-indigo-50 px-4 py-3">
                           <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-500">Se publicará en</p>
                           <p className="mt-1 font-bold text-[#171923]">{ministerioNombre}</p>
+                          <p className="mt-1 text-xs font-semibold text-indigo-600">Como: {remitenteNombre}</p>
                         </div>
                         <div className="p-5">
                           <h3 className="break-words text-xl font-bold leading-tight text-[#171923]">{titulo}</h3>
@@ -209,7 +236,7 @@ export default function NuevoAvisoModal({
                         </div>
                       </section>
                       <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
-                        Revisa nombres, fechas, horarios y destinatarios. Después de publicar, el aviso podrá generar notificaciones push inmediatamente.
+                        Revisa identidad, nombres, fechas, horarios y destinatarios. Después de publicar, el aviso podrá generar notificaciones push inmediatamente.
                       </div>
                     </div>
                   )}
