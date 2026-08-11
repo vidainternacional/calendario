@@ -29,6 +29,7 @@ export default async function AvisoDetallePage({
       created_at,
       ministerio_id,
       remitente_tipo,
+      remitente_nombre,
       profiles!autor_id (nombre_completo, avatar_url),
       ministerios (nombre)
     `)
@@ -39,11 +40,16 @@ export default async function AvisoDetallePage({
   if (!data) notFound()
 
   const remitenteTipo = String(data.remitente_tipo || 'autor')
+  const nombreMinisterio = data.ministerios?.nombre || 'Ministerio'
   const autor = remitenteTipo === 'vida'
     ? 'VIDA Internacional'
     : remitenteTipo === 'ministerio'
-      ? data.ministerios?.nombre || 'Ministerio'
-      : data.profiles?.nombre_completo || 'Usuario'
+      ? nombreMinisterio
+      : remitenteTipo === 'lider'
+        ? `Líder de ${nombreMinisterio}`
+        : remitenteTipo === 'personalizado'
+          ? data.remitente_nombre || data.profiles?.nombre_completo || 'Usuario'
+          : data.profiles?.nombre_completo || 'Usuario'
   const autorAvatarUrl = remitenteTipo === 'autor' ? data.profiles?.avatar_url || null : null
 
   return (
