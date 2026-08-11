@@ -14,9 +14,7 @@ export default async function SolicitudesIngresoPage(
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -34,9 +32,7 @@ export default async function SolicitudesIngresoPage(
     .eq('ministerio_id', params.id)
     .single()
 
-  if (!isAdminOrPastor && !(membresiaLider as any)?.es_lider) {
-    redirect('/ministerios')
-  }
+  if (!isAdminOrPastor && !(membresiaLider as any)?.es_lider) redirect('/ministerios')
 
   const { data: ministerio } = await supabase
     .from('ministerios')
@@ -53,14 +49,9 @@ export default async function SolicitudesIngresoPage(
     .eq('estado', 'pendiente')
     .order('created_at', { ascending: false })
 
-  if (solicitudesError) {
-    console.error('[SolicitudesIngresoPage] No se pudieron cargar las solicitudes pendientes', solicitudesError)
-  }
+  if (solicitudesError) console.error('[SolicitudesIngresoPage] No se pudieron cargar las solicitudes pendientes', solicitudesError)
 
-  const profileIds = Array.from(
-    new Set((solicitudes || []).map((sol: any) => String(sol.profile_id)).filter(Boolean)),
-  )
-
+  const profileIds = Array.from(new Set((solicitudes || []).map((sol: any) => String(sol.profile_id)).filter(Boolean)))
   let perfilesPorId = new Map<string, any>()
 
   if (profileIds.length > 0) {
@@ -69,27 +60,18 @@ export default async function SolicitudesIngresoPage(
       .select('id, nombre_completo, avatar_url, telefono')
       .in('id', profileIds)
 
-    if (perfilesError) {
-      console.error('[SolicitudesIngresoPage] No se pudieron cargar los perfiles solicitantes', perfilesError)
-    } else {
-      perfilesPorId = new Map((perfiles || []).map((perfil: any) => [String(perfil.id), perfil]))
-    }
+    if (perfilesError) console.error('[SolicitudesIngresoPage] No se pudieron cargar los perfiles solicitantes', perfilesError)
+    else perfilesPorId = new Map((perfiles || []).map((perfil: any) => [String(perfil.id), perfil]))
   }
 
-  const solicitudesConPerfil = (solicitudes || []).map((sol: any) => ({
-    ...sol,
-    profile: perfilesPorId.get(String(sol.profile_id)) || null,
-  }))
-
+  const solicitudesConPerfil = (solicitudes || []).map((sol: any) => ({ ...sol, profile: perfilesPorId.get(String(sol.profile_id)) || null }))
   const min = ministerio as any
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-[calc(env(safe-area-inset-top)+8rem)] sm:pt-32">
+    <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-[calc(env(safe-area-inset-top)+10rem)] sm:pt-32">
       <header className="mb-6 px-1">
-        <h1 className="text-xl font-bold text-[#171923] sm:text-2xl">Solicitudes de ingreso</h1>
-        <p className="mt-1 text-sm leading-relaxed text-slate-500">
-          Personas que desean unirse a {min.nombre}
-        </p>
+        <h1 className="text-xl font-bold leading-tight text-[#171923] sm:text-2xl">Solicitudes de ingreso</h1>
+        <p className="mt-1 text-sm leading-relaxed text-slate-500">Personas que desean unirse a {min.nombre}</p>
       </header>
 
       {solicitudesError ? (
@@ -106,36 +88,17 @@ export default async function SolicitudesIngresoPage(
           {solicitudesConPerfil.map((sol: any) => (
             <article key={sol.id} className="overflow-hidden rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 flex min-w-0 items-start gap-3">
-                <UserAvatar
-                  nombre={sol.profile?.nombre_completo}
-                  avatarUrl={sol.profile?.avatar_url}
-                  size="md"
-                  className="shadow-sm"
-                />
-
+                <UserAvatar nombre={sol.profile?.nombre_completo} avatarUrl={sol.profile?.avatar_url} size="md" className="shadow-sm" />
                 <div className="min-w-0 flex-1">
-                  <h3 className="break-words text-sm font-bold text-[#171923] sm:text-base">
-                    {sol.profile?.nombre_completo || 'Usuario desconocido'}
-                  </h3>
+                  <h3 className="break-words text-sm font-bold text-[#171923] sm:text-base">{sol.profile?.nombre_completo || 'Usuario desconocido'}</h3>
                   <div className="mt-1 flex flex-col gap-0.5 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:gap-x-2">
                     <span className="break-words">{sol.profile?.telefono || 'Sin teléfono'}</span>
                     <span className="hidden sm:inline">•</span>
-                    <span>
-                      {new Date(sol.created_at).toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </span>
+                    <span>{new Date(sol.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                   </div>
                 </div>
               </div>
-
-              <SolicitudIngresoBotones
-                solicitudId={sol.id}
-                profileId={sol.profile_id}
-                ministerioId={params.id}
-              />
+              <SolicitudIngresoBotones solicitudId={sol.id} profileId={sol.profile_id} ministerioId={params.id} />
             </article>
           ))}
         </div>
