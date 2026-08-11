@@ -120,9 +120,9 @@ export default async function MinisterioLayout({
         </div>
       </div>
 
-      <MinisterioSolicitudesEnhancer ministerioId={id} puedeGestionar={puedePersonalizar} />
       <MinisterioBienvenida ministerioId={id} ministerioNombre={ministerio.nombre} />
-      <div>{children}</div>
+      <MinisterioSolicitudesEnhancer ministerioId={id} puedeGestionar={puedePersonalizar} />
+      <div className={styles.content}>{children}</div>
     </div>
   )
 }
