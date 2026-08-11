@@ -31,6 +31,20 @@ function asCalendar(value: any): CalendarioOrigen | null {
   }
 }
 
+const EVENT_SELECT = `
+  id,
+  titulo,
+  descripcion,
+  ubicacion,
+  fecha_inicio,
+  fecha_fin,
+  todo_el_dia,
+  tiempo_viaje_minutos,
+  calendar_id,
+  ministerio_id,
+  ministerios (nombre)
+`
+
 export function useCalendarEvents({
   userId,
   rangeStart,
@@ -44,6 +58,30 @@ export function useCalendarEvents({
   const [localRefresh, setLocalRefresh] = useState(0)
 
   const reload = useCallback(() => setLocalRefresh((value) => value + 1), [])
+
+  // Un calendario compartido puede cambiar mientras la PWA permanece abierta.
+  // Revalidamos al volver a primer plano/recuperar conexión y de forma periódica
+  // mientras esta pantalla está visible para que ningún usuario quede con una
+  // agenda obsoleta por haber dejado la app abierta.
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') reload()
+    }
+    const handleFocus = () => reload()
+    const handleOnline = () => reload()
+
+    const interval = window.setInterval(refreshIfVisible, 30_000)
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('online', handleOnline)
+    document.addEventListener('visibilitychange', refreshIfVisible)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('online', handleOnline)
+      document.removeEventListener('visibilitychange', refreshIfVisible)
+    }
+  }, [reload])
 
   useEffect(() => {
     let cancelled = false
@@ -98,11 +136,22 @@ export function useCalendarEvents({
           return
         }
 
-        const [linksResult, remindersResult] = await Promise.all([
+        // Cargamos por las dos rutas válidas del modelo:
+        // 1) evento_calendarios para eventos compartidos entre calendarios;
+        // 2) eventos.calendar_id como respaldo del calendario principal.
+        // Así un vínculo auxiliar incompleto nunca vuelve invisible una fecha real.
+        const [linksResult, directEventsResult, remindersResult] = await Promise.all([
           db
             .from('evento_calendarios')
             .select('evento_id, calendar_id')
             .in('calendar_id', visibleCalendarIds),
+          db
+            .from('eventos')
+            .select(EVENT_SELECT)
+            .in('calendar_id', visibleCalendarIds)
+            .gte('fecha_inicio', rangeStart.toISOString())
+            .lt('fecha_inicio', rangeEnd.toISOString())
+            .order('fecha_inicio', { ascending: true }),
           db
             .from('calendar_reminders')
             .select(`
@@ -128,6 +177,7 @@ export function useCalendarEvents({
         ])
 
         if (linksResult.error) throw linksResult.error
+        if (directEventsResult.error) throw directEventsResult.error
         if (remindersResult.error) throw remindersResult.error
 
         const eventCalendarMap = new Map<string, string[]>()
@@ -139,33 +189,38 @@ export function useCalendarEvents({
           eventCalendarMap.set(eventId, current)
         }
 
-        const linkedEventIds = Array.from(eventCalendarMap.keys())
-        let eventRows: any[] = []
+        const directEventRows = directEventsResult.data || []
+        const directEventIds = new Set<string>()
+        for (const row of directEventRows) {
+          const eventId = String(row.id)
+          const calendarId = String(row.calendar_id)
+          directEventIds.add(eventId)
+          const current = eventCalendarMap.get(eventId) || []
+          if (calendarId && !current.includes(calendarId)) current.push(calendarId)
+          eventCalendarMap.set(eventId, current)
+        }
 
-        if (linkedEventIds.length > 0) {
+        const linkedOnlyEventIds = Array.from(eventCalendarMap.keys()).filter((id) => !directEventIds.has(id))
+        let linkedEventRows: any[] = []
+
+        if (linkedOnlyEventIds.length > 0) {
           const { data: eventsData, error: eventsError } = await db
             .from('eventos')
-            .select(`
-              id,
-              titulo,
-              descripcion,
-              ubicacion,
-              fecha_inicio,
-              fecha_fin,
-              todo_el_dia,
-              tiempo_viaje_minutos,
-              calendar_id,
-              ministerio_id,
-              ministerios (nombre)
-            `)
-            .in('id', linkedEventIds)
+            .select(EVENT_SELECT)
+            .in('id', linkedOnlyEventIds)
             .gte('fecha_inicio', rangeStart.toISOString())
             .lt('fecha_inicio', rangeEnd.toISOString())
             .order('fecha_inicio', { ascending: true })
 
           if (eventsError) throw eventsError
-          eventRows = eventsData || []
+          linkedEventRows = eventsData || []
         }
+
+        const rowsById = new Map<string, any>()
+        for (const row of [...directEventRows, ...linkedEventRows]) {
+          rowsById.set(String(row.id), row)
+        }
+        const eventRows = Array.from(rowsById.values())
 
         const eventIds = eventRows.map((item) => String(item.id))
         const assignmentMap = new Map<string, { id: string; estado: string }>()
@@ -178,10 +233,13 @@ export function useCalendarEvents({
 
           if (assignmentsError) throw assignmentsError
           for (const assignment of assignmentsData || []) {
-            assignmentMap.set(String(assignment.evento_id), {
-              id: String(assignment.id),
-              estado: String(assignment.estado || 'asignado'),
-            })
+            const eventId = String(assignment.evento_id)
+            if (!assignmentMap.has(eventId)) {
+              assignmentMap.set(eventId, {
+                id: String(assignment.id),
+                estado: String(assignment.estado || 'asignado'),
+              })
+            }
           }
         }
 
