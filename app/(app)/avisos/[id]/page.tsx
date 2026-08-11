@@ -28,6 +28,7 @@ export default async function AvisoDetallePage({
       tipo,
       created_at,
       ministerio_id,
+      remitente_tipo,
       profiles!autor_id (nombre_completo, avatar_url),
       ministerios (nombre)
     `)
@@ -37,6 +38,14 @@ export default async function AvisoDetallePage({
 
   if (!data) notFound()
 
+  const remitenteTipo = String(data.remitente_tipo || 'autor')
+  const autor = remitenteTipo === 'vida'
+    ? 'VIDA Internacional'
+    : remitenteTipo === 'ministerio'
+      ? data.ministerios?.nombre || 'Ministerio'
+      : data.profiles?.nombre_completo || 'Usuario'
+  const autorAvatarUrl = remitenteTipo === 'autor' ? data.profiles?.avatar_url || null : null
+
   return (
     <PublicacionDetalle
       id={String(data.id)}
@@ -44,8 +53,8 @@ export default async function AvisoDetallePage({
       cuerpo={data.cuerpo}
       tipo={data.tipo || 'aviso'}
       fecha={formatDistanceToNow(new Date(data.created_at), { addSuffix: true, locale: es })}
-      autor={data.profiles?.nombre_completo || 'Usuario'}
-      autorAvatarUrl={data.profiles?.avatar_url || null}
+      autor={autor}
+      autorAvatarUrl={autorAvatarUrl}
       ministerioId={data.ministerio_id || null}
       ministerioNombre={data.ministerios?.nombre || null}
     />
