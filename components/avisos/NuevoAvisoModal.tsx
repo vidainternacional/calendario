@@ -23,13 +23,14 @@ interface NuevoAvisoModalProps {
   esPastorAdmin: boolean
 }
 
-type RemitenteTipo = 'autor' | 'ministerio' | 'vida'
+type RemitenteTipo = 'autor' | 'ministerio' | 'lider' | 'personalizado' | 'vida'
 
 export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: NuevoAvisoModalProps) {
   const [open, setOpen] = useState(false)
   const [paso, setPaso] = useState<'redactar' | 'revisar' | 'resultado'>('redactar')
   const [ministerioId, setMinisterioId] = useState(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
   const [remitenteTipo, setRemitenteTipo] = useState<RemitenteTipo>(esPastorAdmin ? 'vida' : 'ministerio')
+  const [remitenteNombrePersonalizado, setRemitenteNombrePersonalizado] = useState('')
   const [titulo, setTitulo] = useState('')
   const [cuerpo, setCuerpo] = useState('')
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -45,12 +46,17 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
     ? 'VIDA Internacional'
     : remitenteTipo === 'ministerio'
       ? ministerioNombre
-      : 'Mi nombre'
+      : remitenteTipo === 'lider'
+        ? `Líder de ${ministerioNombre}`
+        : remitenteTipo === 'personalizado'
+          ? remitenteNombrePersonalizado.trim() || 'Etiqueta personalizada'
+          : 'Mi nombre'
 
   const limpiar = () => {
     setPaso('redactar')
     setMinisterioId(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
     setRemitenteTipo(esPastorAdmin ? 'vida' : 'ministerio')
+    setRemitenteNombrePersonalizado('')
     setTitulo('')
     setCuerpo('')
   }
@@ -78,11 +84,14 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
     return () => { document.body.style.overflow = previousOverflow }
   }, [open])
 
-  const puedeRevisar = titulo.trim().length > 0 && cuerpo.trim().length > 0 && (esPastorAdmin || ministerioId)
+  const remitenteValido = remitenteTipo !== 'personalizado' || remitenteNombrePersonalizado.trim().length > 0
+  const puedeRevisar = titulo.trim().length > 0 && cuerpo.trim().length > 0 && (esPastorAdmin || ministerioId) && remitenteValido
 
   const cambiarMinisterio = (nuevoId: string) => {
     setMinisterioId(nuevoId)
-    if (!nuevoId && remitenteTipo === 'ministerio') setRemitenteTipo(esPastorAdmin ? 'vida' : 'autor')
+    if (!nuevoId && ['ministerio', 'lider'].includes(remitenteTipo)) {
+      setRemitenteTipo(esPastorAdmin ? 'vida' : 'autor')
+    }
     if (nuevoId && remitenteTipo === 'vida' && !esPastorAdmin) setRemitenteTipo('ministerio')
   }
 
@@ -154,6 +163,7 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
               <form action={action} className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <input type="hidden" name="ministerio_id" value={ministerioId} />
                 <input type="hidden" name="remitente_tipo" value={remitenteTipo} />
+                <input type="hidden" name="remitente_nombre" value={remitenteNombrePersonalizado} />
                 <input type="hidden" name="titulo" value={titulo} />
                 <input type="hidden" name="cuerpo" value={cuerpo} />
 
@@ -199,10 +209,27 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
                           >
                             <option value="autor">Mi nombre</option>
                             {ministerioId && <option value="ministerio">{ministerioNombre}</option>}
+                            {ministerioId && <option value="lider">Líder de {ministerioNombre}</option>}
+                            <option value="personalizado">Otra etiqueta…</option>
                             {esPastorAdmin && <option value="vida">VIDA Internacional</option>}
                           </select>
                           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         </div>
+                        {remitenteTipo === 'personalizado' && (
+                          <div className="mt-3">
+                            <label htmlFor="aviso-remitente-personalizado" className="sr-only">Etiqueta personalizada del remitente</label>
+                            <input
+                              id="aviso-remitente-personalizado"
+                              value={remitenteNombrePersonalizado}
+                              onChange={(event) => setRemitenteNombrePersonalizado(event.target.value)}
+                              type="text"
+                              maxLength={60}
+                              placeholder="Ej: Coordinación de Jóvenes"
+                              className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-base font-semibold text-[#171923] outline-none focus:bg-white focus:ring-2 focus:ring-indigo-400 sm:text-sm"
+                            />
+                            <p className="mt-1.5 text-right text-[11px] text-slate-400">{remitenteNombrePersonalizado.length}/60</p>
+                          </div>
+                        )}
                         <p className="mt-2 text-xs leading-relaxed text-slate-500">Esta identidad aparecerá como remitente del aviso y de su notificación push.</p>
                       </section>
 
