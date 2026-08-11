@@ -24,7 +24,7 @@ type AvisosClientProps = {
   adminMode?: boolean
 }
 
-const CACHE_SCOPE = 'avisos:v2'
+const CACHE_SCOPE = 'avisos:v3'
 const CACHE_TTL = 10 * 60 * 1000
 
 const tipoLabel: Record<string, string> = {
@@ -81,6 +81,7 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
             cuerpo,
             tipo,
             ministerio_id,
+            remitente_tipo,
             created_at,
             profiles!autor_id (nombre_completo, avatar_url),
             ministerios (nombre)
@@ -184,8 +185,13 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
       ) : (
         <div className="grid min-w-0 gap-4 sm:grid-cols-2 landscape:grid-cols-2">
           {items.map((pub) => {
-            const autor = pub.profiles?.nombre_completo ?? 'Autor desconocido'
-            const avatarUrl = pub.profiles?.avatar_url ?? null
+            const remitenteTipo = String(pub.remitente_tipo || 'autor')
+            const autor = remitenteTipo === 'vida'
+              ? 'VIDA Internacional'
+              : remitenteTipo === 'ministerio'
+                ? pub.ministerios?.nombre ?? 'Ministerio'
+                : pub.profiles?.nombre_completo ?? 'Autor desconocido'
+            const avatarUrl = remitenteTipo === 'autor' ? pub.profiles?.avatar_url ?? null : null
             const minNombre = pub.ministerios?.nombre
             const publicationId = String(pub.id)
             return <PublicacionCard key={pub.id} publicationId={publicationId} unread={unreadIds.has(publicationId)} titulo={pub.titulo} cuerpo={pub.cuerpo} tipo={pub.tipo} etiqueta={tipoLabel[pub.tipo] ?? pub.tipo} colorClass={tipoColor[pub.tipo] ?? tipoColor.aviso} fecha={formatDistanceToNow(new Date(pub.created_at), { addSuffix: true, locale: es })} autor={autor} autorAvatarUrl={avatarUrl} ministerio={minNombre} />
