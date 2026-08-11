@@ -15,6 +15,7 @@ type Props = {
   ministerioId: string
   eventoId: string
   initialEstado: EstadoAsignacionMusico
+  onEstadoChange?: (estado: EstadoAsignacionMusico) => void
 }
 
 type FuncionCambio = {
@@ -23,7 +24,7 @@ type FuncionCambio = {
   solicitado: boolean
 }
 
-export default function EstadoAsignacionMusico({ ministerioId, eventoId, initialEstado }: Props) {
+export default function EstadoAsignacionMusico({ ministerioId, eventoId, initialEstado, onEstadoChange }: Props) {
   const router = useRouter()
   const [estado, setEstado] = useState<EstadoAsignacionMusico>(initialEstado)
   const [mensaje, setMensaje] = useState('')
@@ -33,6 +34,11 @@ export default function EstadoAsignacionMusico({ ministerioId, eventoId, initial
   const [solicitandoId, setSolicitandoId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  function actualizarEstadoLocal(nuevo: EstadoAsignacionMusico) {
+    setEstado(nuevo)
+    onEstadoChange?.(nuevo)
+  }
+
   function responder(nuevo: EstadoAsignacionMusico) {
     setMensaje('')
     startTransition(async () => {
@@ -41,7 +47,7 @@ export default function EstadoAsignacionMusico({ ministerioId, eventoId, initial
         setMensaje(result.error)
         return
       }
-      setEstado(nuevo)
+      actualizarEstadoLocal(nuevo)
       requestPendingIndicatorsRefresh()
       setMensaje('Guardado')
       router.refresh()
@@ -121,7 +127,7 @@ export default function EstadoAsignacionMusico({ ministerioId, eventoId, initial
       setFunciones((current) => current.map((item) => (
         item.id === funcion.id ? { ...item, solicitado: true } : item
       )))
-      setEstado('no_disponible')
+      actualizarEstadoLocal('no_disponible')
       requestPendingIndicatorsRefresh()
       setMensaje(result?.alreadyPending ? 'La solicitud ya estaba pendiente.' : `Cambio solicitado para ${funcion.nombre}.`)
       router.refresh()

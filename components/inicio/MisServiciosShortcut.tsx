@@ -172,41 +172,63 @@ export default function MisServiciosShortcut() {
     setTarget(null)
     if (!surface || !servicioVisible) return
 
-    const main = document.querySelector<HTMLElement>('main')
-    if (!main) return
+    let disposed = false
+    let mount: HTMLElement | null = null
 
-    const mount = document.createElement('div')
-    mount.dataset.misServiciosInline = integradoEnProximoEvento ? 'evento-integrado' : surface
-
-    if (surface === 'inicio') {
-      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
-      if (!content) return
-      const firstSection = Array.from(content.children).find((node) => node.tagName === 'SECTION') as HTMLElement | undefined
-      if (!firstSection) return
-
-      if (integradoEnProximoEvento) {
-        const eventCard = firstSection.querySelector<HTMLElement>('a')
-        if (!eventCard) return
-        eventCard.appendChild(mount)
-      } else if (firstSection.nextSibling) {
-        content.insertBefore(mount, firstSection.nextSibling)
-      } else {
-        content.appendChild(mount)
+    const ensureMount = () => {
+      if (disposed) return
+      if (mount?.isConnected) return
+      if (mount && !mount.isConnected) {
+        mount = null
+        setTarget(null)
       }
-    } else if (surface === 'avisos') {
-      const header = Array.from(main.children).find((node) => node.tagName === 'HEADER') as HTMLElement | undefined
-      if (header?.nextSibling) main.insertBefore(mount, header.nextSibling)
-      else main.appendChild(mount)
-    } else {
-      const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
-      if (!content) return
-      content.prepend(mount)
+
+      const main = document.querySelector<HTMLElement>('main')
+      if (!main) return
+
+      const nextMount = document.createElement('div')
+      nextMount.dataset.misServiciosInline = integradoEnProximoEvento ? 'evento-integrado' : surface
+
+      if (surface === 'inicio') {
+        const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
+        if (!content) return
+        const firstSection = Array.from(content.children).find((node) => node.tagName === 'SECTION') as HTMLElement | undefined
+        if (!firstSection) return
+
+        if (integradoEnProximoEvento) {
+          const eventCard = firstSection.querySelector<HTMLElement>('a')
+          if (!eventCard) return
+          eventCard.appendChild(nextMount)
+        } else if (firstSection.nextSibling) {
+          content.insertBefore(nextMount, firstSection.nextSibling)
+        } else {
+          content.appendChild(nextMount)
+        }
+      } else if (surface === 'avisos') {
+        const header = Array.from(main.children).find((node) => node.tagName === 'HEADER') as HTMLElement | undefined
+        if (header?.nextSibling) main.insertBefore(nextMount, header.nextSibling)
+        else main.appendChild(nextMount)
+      } else {
+        const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
+        if (!content) return
+        content.prepend(nextMount)
+      }
+
+      mount = nextMount
+      setTarget(nextMount)
     }
 
-    setTarget(mount)
+    ensureMount()
+    const observer = new MutationObserver(ensureMount)
+    observer.observe(document.body, { childList: true, subtree: true })
+    const retry = window.setInterval(ensureMount, 500)
+
     return () => {
+      disposed = true
+      observer.disconnect()
+      window.clearInterval(retry)
       setTarget(null)
-      mount.remove()
+      mount?.remove()
     }
   }, [integradoEnProximoEvento, servicioVisible?.key, surface])
 
@@ -222,24 +244,24 @@ export default function MisServiciosShortcut() {
 
   if (integradoEnProximoEvento) {
     const integrated = (
-      <div className="-mx-4 -mb-4 mt-4 border-t border-violet-100 bg-gradient-to-r from-violet-50/85 to-white px-4 py-3 sm:-mx-5 sm:-mb-5 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="-mx-4 -mb-4 mt-4 border-t border-teal-100 bg-gradient-to-r from-cyan-50 via-teal-50/90 to-emerald-50/80 px-4 py-3 sm:-mx-5 sm:-mb-5 sm:px-5">
+        <div className="flex items-start justify-between gap-3">
           <span className="min-w-0">
-            <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-violet-600">
-              <span className={`h-2 w-2 rounded-full ${pendiente ? 'bg-rose-500' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-400' : 'bg-slate-400'}`} />
-              También sirves en este evento
+            <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.11em] text-teal-700">
+              <span className={`h-2 w-2 rounded-full ${pendiente ? 'bg-rose-500' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+              Tu asignación en este evento
             </span>
             <span className="mt-1.5 flex flex-wrap gap-1.5">
               {(servicioVisible.funciones.length ? servicioVisible.funciones : ['Asignado']).map((funcion) => (
-                <span key={funcion} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold text-slate-600 ring-1 ring-violet-100">{funcion}</span>
+                <span key={funcion} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-extrabold text-teal-800 ring-1 ring-teal-100">{funcion}</span>
               ))}
             </span>
           </span>
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-extrabold ${pendiente ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-100' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100' : 'bg-slate-100 text-slate-500'}`}>
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-extrabold ${pendiente ? 'bg-rose-100 text-rose-700' : servicioVisible.estado === 'confirmado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
             {estadoTexto}
           </span>
         </div>
-        <p className="mt-2 text-[9px] font-semibold leading-4 text-violet-500">Abre la ficha para ver con quién sirves, repertorio, paleta y responder.</p>
+        <p className="mt-2 text-[9px] font-semibold leading-4 text-teal-700/80">Toca el evento para abrir equipo, repertorio, paleta y tu respuesta en la misma ficha.</p>
       </div>
     )
     return createPortal(integrated, target)

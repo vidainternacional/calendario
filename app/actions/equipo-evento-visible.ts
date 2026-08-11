@@ -13,12 +13,36 @@ export type MiembroEquipoEvento = {
   esYo: boolean
 }
 
+export type RepertorioEventoVisible = {
+  id: string
+  ministerioId: string
+  orden: number
+  titulo: string
+  artista: string | null
+  tonalidad: string | null
+  enlace: string | null
+  notas: string | null
+  spotifyUrl: string | null
+  youtubeUrl: string | null
+}
+
+export type PaletaEventoVisible = {
+  id: string
+  ministerioId: string
+  colores: string[]
+  observaciones: string | null
+  referenciaUrl: string | null
+}
+
 export type EquipoEventoVisible = {
   eventoId: string
   ministerioIds: string[]
+  ministerioIdRespuesta: string | null
   misFunciones: string[]
   miEstado: EstadoEquipoEvento | null
   equipo: MiembroEquipoEvento[]
+  repertorio: RepertorioEventoVisible[]
+  paletas: PaletaEventoVisible[]
 }
 
 function normalizarEstado(estados: string[]): EstadoEquipoEvento {
@@ -69,8 +93,8 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
   if (esAdminPastor) {
     ministeriosVisibles = ministerioIdsEvento
   } else if (ministeriosPropios.length > 0) {
-    // Un servidor ve únicamente el equipo de los ministerios en los que está
-    // programado para este mismo evento.
+    // Un servidor ve únicamente el equipo y la preparación de los ministerios
+    // en los que está programado para este mismo evento.
     ministeriosVisibles = ministeriosPropios
   } else if (ministerioIdsEvento.length > 0) {
     const { data: liderazgos = [] } = await (supabase as any)
@@ -99,13 +123,26 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
     asignacionesVisibles.map((row) => String(row.capacidad_id || '')).filter(Boolean),
   ))
 
-  const [profilesReq, capacidadesReq] = await Promise.all([
+  const [profilesReq, capacidadesReq, repertorioReq, paletasReq] = await Promise.all([
     profileIds.length
       ? admin.from('profiles').select('id,nombre_completo,avatar_url,activo,estado_cuenta').in('id', profileIds)
       : Promise.resolve({ data: [] }),
     capacidadIds.length
       ? admin.from('ministerio_capacidades').select('id,nombre').in('id', capacidadIds)
       : Promise.resolve({ data: [] }),
+    admin
+      .from('evento_repertorio')
+      .select('id,ministerio_id,orden,titulo,tonalidad,enlace,notas,spotify_url,youtube_url,cancion_id')
+      .eq('evento_id', eventoId)
+      .in('ministerio_id', ministeriosVisibles)
+      .order('orden', { ascending: true })
+      .order('created_at', { ascending: true }),
+    admin
+      .from('evento_paletas')
+      .select('id,ministerio_id,colores,observaciones,referencia_url,updated_at')
+      .eq('evento_id', eventoId)
+      .in('ministerio_id', ministeriosVisibles)
+      .order('updated_at', { ascending: false }),
   ])
 
   const profilesMap = new Map(
@@ -145,13 +182,64 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
       return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
     })
 
+  const repertorioRows = (repertorioReq.data || []) as any[]
+  const cancionIds = Array.from(new Set(
+    repertorioRows.map((row) => String(row.cancion_id || '')).filter(Boolean),
+  ))
+
+  const { data: canciones = [] } = cancionIds.length
+    ? await admin
+      .from('ministerio_canciones')
+      .select('id,titulo,artista,spotify_url,youtube_url')
+      .in('id', cancionIds)
+    : { data: [] as any[] }
+
+  const cancionesMap = new Map(
+    (canciones as any[]).map((row) => [String(row.id), row]),
+  )
+
+  const repertorio: RepertorioEventoVisible[] = repertorioRows.map((row) => {
+    const cancion = row.cancion_id ? cancionesMap.get(String(row.cancion_id)) as any : null
+    return {
+      id: String(row.id),
+      ministerioId: String(row.ministerio_id),
+      orden: Number(row.orden || 0),
+      titulo: String(cancion?.titulo || row.titulo || 'Canción'),
+      artista: cancion?.artista ? String(cancion.artista) : null,
+      tonalidad: row.tonalidad ? String(row.tonalidad) : null,
+      enlace: row.enlace ? String(row.enlace) : null,
+      notas: row.notas ? String(row.notas) : null,
+      spotifyUrl: cancion?.spotify_url
+        ? String(cancion.spotify_url)
+        : row.spotify_url
+          ? String(row.spotify_url)
+          : null,
+      youtubeUrl: cancion?.youtube_url
+        ? String(cancion.youtube_url)
+        : row.youtube_url
+          ? String(row.youtube_url)
+          : null,
+    }
+  })
+
+  const paletas: PaletaEventoVisible[] = ((paletasReq.data || []) as any[]).map((row) => ({
+    id: String(row.id),
+    ministerioId: String(row.ministerio_id),
+    colores: Array.isArray(row.colores) ? row.colores.map((color: unknown) => String(color)) : [],
+    observaciones: row.observaciones ? String(row.observaciones) : null,
+    referenciaUrl: row.referencia_url ? String(row.referencia_url) : null,
+  }))
+
   const yo = equipo.find((item) => item.esYo) || null
 
   return {
     eventoId,
     ministerioIds: ministeriosVisibles,
+    ministerioIdRespuesta: ministeriosPropios[0] || null,
     misFunciones: yo?.funciones || [],
     miEstado: yo?.estado || null,
     equipo,
+    repertorio,
+    paletas,
   }
 }
