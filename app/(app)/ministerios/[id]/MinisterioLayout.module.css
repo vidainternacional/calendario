@@ -3,8 +3,18 @@
   min-width: 0;
 }
 
+.content {
+  min-width: 0;
+}
+
+/* Todas las subpáginas ministeriales comparten el mismo encabezado flotante.
+   El espacio superior se controla aquí para evitar solapamientos por ruta. */
+.content > :is(main, div):not(:has(> section[class*="rounded-b-[30px]"])) {
+  padding-top: calc(env(safe-area-inset-top) + 7.25rem) !important;
+}
+
 /* El dashboard del ministerio debe comenzar como una superficie nativa de borde a borde. */
-.shell main:has(> section[class*="rounded-b-[30px]"]) {
+.content > main:has(> section[class*="rounded-b-[30px]"]) {
   width: 100%;
   max-width: none;
   padding-top: 0 !important;
@@ -12,28 +22,31 @@
   padding-left: 0 !important;
 }
 
-.shell main:has(> section[class*="rounded-b-[30px]"]) > section:first-child {
+.content > main:has(> section[class*="rounded-b-[30px]"]) > section:first-child {
   width: 100%;
   min-height: 370px !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
 }
 
-.shell main:has(> section[class*="rounded-b-[30px]"]) > section:first-child + div {
+.content > main:has(> section[class*="rounded-b-[30px]"]) > section:first-child + div {
   margin-top: 1.5rem !important;
 }
 
-/* La lista de avisos necesita espacio real bajo los controles flotantes del ministerio. */
-.shell main[class*="pt-[calc(env(safe-area-inset-top)+5.75rem)]"] {
+/* La lista de avisos mantiene ancho de borde a borde, pero reutiliza el mismo espacio seguro superior. */
+.content > main[class*="bg-[#f5f5f7]"]:not(:has(> section[class*="rounded-b-[30px]"])) {
   width: 100%;
   max-width: none;
-  padding-top: calc(env(safe-area-inset-top) + 7.25rem) !important;
   padding-right: 0 !important;
   padding-left: 0 !important;
 }
 
 @media (min-width: 640px) {
-  .shell main:has(> section[class*="rounded-b-[30px]"]) > section:first-child {
+  .content > :is(main, div):not(:has(> section[class*="rounded-b-[30px]"])) {
+    padding-top: 7rem !important;
+  }
+
+  .content > main:has(> section[class*="rounded-b-[30px]"]) > section:first-child {
     min-height: 400px !important;
   }
 }
