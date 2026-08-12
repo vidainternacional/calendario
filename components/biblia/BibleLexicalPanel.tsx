@@ -124,7 +124,7 @@ export default function BibleLexicalPanel({
           <p className="text-[11px] font-black uppercase tracking-[0.15em] text-indigo-700">Datos lingüísticos verificados</p>
           <h2 id="biblia-lexico-title" className="mt-1 text-base font-bold">Palabras clave del texto original</h2>
           <p className={`mt-1 text-xs leading-5 ${palette.muted}`}>
-            Selección piloto para {resultado.referenceLabel}. Estos datos provienen de una fuente aprobada y no fueron generados por IA.
+            Datos disponibles para {resultado.referenceLabel}. Provienen de una fuente aprobada y no fueron generados por IA durante esta consulta.
           </p>
         </div>
         <BadgeCheck className="h-5 w-5 shrink-0 text-emerald-600" aria-label="Datos aprobados" />
@@ -144,7 +144,7 @@ export default function BibleLexicalPanel({
               <span className="min-w-0">
                 <span className="block text-lg font-bold leading-none" dir="auto">{item.surfaceForm}</span>
                 <span className="mt-1 block truncate text-xs font-semibold opacity-75">
-                  {item.entry.displayGlossEs || item.entry.sourceGloss || item.entry.transliteration || item.entry.lexicalId}
+                  {item.entry.displayGlossEs || item.entry.transliteration || item.entry.lexicalId}
                 </span>
               </span>
               {active ? <ChevronUp className="h-4 w-4 shrink-0" aria-hidden="true" /> : <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />}
