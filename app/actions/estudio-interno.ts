@@ -8,10 +8,8 @@ import {
   type BiblicalContextBundle,
   type BiblicalContextUnit,
 } from '@/lib/estudios/biblical-context-corpus'
-import {
-  getResolvedBiblicalTextualStudy,
-  type ResolvedBiblicalTextualStudyBundle,
-} from '@/lib/estudios/resolved-biblical-textual-study'
+import { getVidaBiblicalTextualStudy } from '@/lib/estudios/multilingual-biblical-textual-study'
+import type { ResolvedBiblicalTextualStudyBundle } from '@/lib/estudios/resolved-biblical-textual-study'
 import {
   listarCronologiaBiblicaParaReferencia,
   type PaqueteCronologicoBiblico,
@@ -57,30 +55,21 @@ function apartado(unit: BiblicalContextUnit | null, key: keyof BiblicalContextUn
 }
 
 function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResultado {
-  const { reference, bookProfile, sectionContext, version } = bundle
+  const { reference, bookProfile, sectionContext } = bundle
   const languages = reference.book.originalLanguages.map(nombreIdioma)
   const terms = Array.from(new Set([
     ...(bookProfile?.keyTerms ?? []),
     ...(sectionContext?.keyTerms ?? []),
   ]))
 
-  const alcance = sectionContext
-    ? `${sectionContext.title} (${reference.book.nameEs} ${sectionContext.chapterStart}–${sectionContext.chapterEnd})`
-    : `${reference.book.nameEs}, panorama general del libro`
-
   return {
-    texto_original: unirSecciones(
-      `Idioma original principal: ${languages.join(' y ') || 'pendiente de clasificación'}.`,
-      'El contexto general de este pasaje está disponible. El texto original exacto se adjunta por separado cuando existe un paquete textual aprobado para la referencia.'
-    ),
-    transliteracion: 'La transliteración exacta aparece en la evidencia textual aprobada cuando está disponible para esta referencia.',
-    traduccion_literal: 'La secuencia literal palabra por palabra aparece en la evidencia textual aprobada. No debe confundirse con una traducción española pulida.',
-    traduccion_interpretativa: unirSecciones(
-      `Síntesis contextual de la unidad «${alcance}»:`,
-      apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
-      `Versión interna del paquete: ${version}.`
-    ),
-    comparacion_versiones: 'La comparación de traducciones permanece en Biblia → Comparar. Las diferencias de versificación se resuelven según la traducción seleccionada.',
+    texto_original: '',
+    transliteracion: '',
+    traduccion_literal: '',
+    // Una síntesis contextual no es una traducción del texto. Esta capa permanece vacía
+    // hasta que exista una traducción interpretativa aprobada con procedencia propia.
+    traduccion_interpretativa: '',
+    comparacion_versiones: '',
     contexto_historico: unirSecciones(
       'Contexto general del libro:',
       apartado(bookProfile, 'historicalContext'),
@@ -90,9 +79,8 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
       apartado(sectionContext, 'jewishContext') || apartado(bookProfile, 'jewishContext')
     ),
     analisis_linguistico: unirSecciones(
-      `Idioma(s) del libro: ${languages.join(', ') || 'no especificado'}.`,
-      terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null,
-      'Las palabras, lemas, números Strong y códigos morfológicos se muestran únicamente desde ocurrencias textuales aprobadas.'
+      languages.length > 0 ? `Idioma(s) del libro: ${languages.join(', ')}.` : null,
+      terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null
     ),
     que_quiso_comunicar: unirSecciones(
       apartado(sectionContext, 'authorialIntent'),
@@ -104,12 +92,10 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
     ),
     explicacion: unirSecciones(
       apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
-      'Estructura y función literaria:',
       apartado(sectionContext, 'literaryContext') || apartado(bookProfile, 'literaryContext')
     ),
     reflexion: apartado(sectionContext, 'theologicalReflection')
-      || apartado(bookProfile, 'theologicalReflection')
-      || 'La reflexión espiritual se añadirá cuando exista una unidad editorial aprobada para este pasaje.',
+      || apartado(bookProfile, 'theologicalReflection'),
   }
 }
 
@@ -138,7 +124,9 @@ export async function analizarPasaje(
     return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
   }
 
-  const textualEvidence = await getResolvedBiblicalTextualStudy(query, translationId)
+  // Usa el mismo resolver multilingüe de Biblia → Estudio. Esto es esencial para
+  // referencias mixtas como Daniel 2:4 (hebreo → arameo dentro del mismo versículo).
+  const textualEvidence = await getVidaBiblicalTextualStudy(query, translationId)
   const contexto = await getInternalBiblicalContext(query)
   const chronology = contexto
     ? await listarCronologiaBiblicaParaReferencia({
@@ -151,12 +139,23 @@ export async function analizarPasaje(
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
+    const resultado = textualEvidence
+      ? estudio.resultado
+      : {
+          ...estudio.resultado,
+          // El piloto histórico no debe actuar como respaldo textual sin la evidencia
+          // aprobada. Ante una falla/ausencia de la capa textual, estos campos se ocultan.
+          texto_original: '',
+          transliteracion: '',
+          traduccion_literal: '',
+        }
+
     return {
       status: 'success',
       kind: 'study',
       query,
       pasaje: estudio.pasaje,
-      resultado: estudio.resultado,
+      resultado,
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
     }
@@ -177,7 +176,7 @@ export async function analizarPasaje(
   if (contexto?.status === 'indexed') {
     return {
       status: 'error',
-      error: `${contexto.reference.book.nameEs} está reconocido dentro del índice completo de 66 libros, pero su lote contextual todavía no ha sido incorporado. La aplicación no inventó un estudio para ${contexto.reference.canonicalReference}.`,
+      error: `${contexto.reference.book.nameEs} está reconocido dentro del índice completo de 66 libros, pero no existe contenido contextual aprobado para ${contexto.reference.canonicalReference}.`,
     }
   }
 
