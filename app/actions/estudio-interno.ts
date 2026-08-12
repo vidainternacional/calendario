@@ -14,6 +14,7 @@ import {
   listarCronologiaBiblicaParaReferencia,
   type PaqueteCronologicoBiblico,
 } from '@/lib/estudios/biblical-chronology-maps'
+import { cargarTraduccionEspanolaEstudio } from '@/app/actions/traduccion-espanola-estudio'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -54,7 +55,24 @@ function apartado(unit: BiblicalContextUnit | null, key: keyof BiblicalContextUn
   return typeof value === 'string' ? value : ''
 }
 
-function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResultado {
+function formatearTraduccionEspanola(
+  translation: Awaited<ReturnType<typeof cargarTraduccionEspanolaEstudio>>
+) {
+  if (!translation) return ''
+  const texto = translation.verses
+    .map(item => `${item.verse}. ${item.text}`)
+    .join('\n')
+  return unirSecciones(
+    `${translation.sourceName} — ${translation.canonicalReference}`,
+    texto,
+    'Traducción bíblica española aprobada para lectura del pasaje. Se mantiene separada de la traducción literal palabra por palabra del texto original.'
+  )
+}
+
+function ensamblarEstudioContextual(
+  bundle: BiblicalContextBundle,
+  traduccionEspanola = ''
+): EstudioResultado {
   const { reference, bookProfile, sectionContext } = bundle
   const languages = reference.book.originalLanguages.map(nombreIdioma)
   const terms = Array.from(new Set([
@@ -69,7 +87,10 @@ function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResul
     // Una síntesis contextual no es una traducción del texto. Esta capa permanece vacía
     // hasta que exista una traducción interpretativa aprobada con procedencia propia.
     traduccion_interpretativa: '',
-    comparacion_versiones: '',
+    // Durante el checklist usamos esta superficie existente para garantizar que el texto
+    // español aprobado del pasaje esté presente también en estudios de capítulo. El
+    // rediseño posterior lo moverá a su propio panel/acordeón de traducción.
+    comparacion_versiones: traduccionEspanola,
     contexto_historico: unirSecciones(
       'Contexto general del libro:',
       apartado(bookProfile, 'historicalContext'),
@@ -126,8 +147,12 @@ export async function analizarPasaje(
 
   // Usa el mismo resolver multilingüe de Biblia → Estudio. Esto es esencial para
   // referencias mixtas como Daniel 2:4 (hebreo → arameo dentro del mismo versículo).
-  const textualEvidence = await getVidaBiblicalTextualStudy(query, translationId)
-  const contexto = await getInternalBiblicalContext(query)
+  const [textualEvidence, contexto, traduccionEspanolaData] = await Promise.all([
+    getVidaBiblicalTextualStudy(query, translationId),
+    getInternalBiblicalContext(query),
+    cargarTraduccionEspanolaEstudio(query),
+  ])
+  const traduccionEspanola = formatearTraduccionEspanola(traduccionEspanolaData)
   const chronology = contexto
     ? await listarCronologiaBiblicaParaReferencia({
         bookCode: contexto.reference.book.code,
@@ -139,7 +164,7 @@ export async function analizarPasaje(
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
-    const resultado = textualEvidence
+    const resultadoBase = textualEvidence
       ? estudio.resultado
       : {
           ...estudio.resultado,
@@ -149,6 +174,13 @@ export async function analizarPasaje(
           transliteracion: '',
           traduccion_literal: '',
         }
+    const resultado = {
+      ...resultadoBase,
+      comparacion_versiones: unirSecciones(
+        traduccionEspanola,
+        resultadoBase.comparacion_versiones
+      ),
+    }
 
     return {
       status: 'success',
@@ -167,7 +199,7 @@ export async function analizarPasaje(
       kind: 'study',
       query,
       pasaje: contexto.reference.canonicalReference,
-      resultado: ensamblarEstudioContextual(contexto),
+      resultado: ensamblarEstudioContextual(contexto, traduccionEspanola),
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
     }
