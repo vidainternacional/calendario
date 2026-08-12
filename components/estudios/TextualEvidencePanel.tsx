@@ -46,52 +46,63 @@ function WordDetails({ word, edition, palette }: {
           >
             {word.surfaceForm}
           </span>
-          <span className={`mt-0.5 block break-words text-xs ${palette.muted}`}>
-            {[word.transliteration, word.glossEs].filter(Boolean).join(' · ')}
-          </span>
+          {(word.transliteration || word.glossEs) && (
+            <span className={`mt-0.5 block break-words text-xs ${palette.muted}`}>
+              {[word.transliteration, word.glossEs].filter(Boolean).join(' · ')}
+            </span>
+          )}
         </span>
         <ChevronDown className={`h-4 w-4 shrink-0 transition-transform group-open:rotate-180 ${palette.muted}`} aria-hidden="true" />
       </summary>
 
       <div className={`border-t px-4 py-4 ${palette.divider}`}>
         <div className="space-y-3">
-          {word.morphemes.map(morpheme => (
-            <div key={`${word.displayWordIndex}-${morpheme.morphemeIndex}-${morpheme.lexicalId}`} className={`rounded-xl p-3 ${palette.inner}`}>
-              {word.morphemes.length > 1 && (
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">
-                    {morpheme.tokenKind === 'suffix' ? 'Sufijo' : morpheme.tokenKind === 'prefix' ? 'Prefijo' : 'Raíz'}
-                  </span>
-                  <span dir={edition.textDirection} className="text-lg font-semibold">{morpheme.surfaceForm}</span>
-                </div>
-              )}
+          {word.morphemes.map(morpheme => {
+            const morphology = morpheme.morphologySummary || morpheme.morphologyCode
+            return (
+              <div key={`${word.displayWordIndex}-${morpheme.morphemeIndex}-${morpheme.lexicalId}`} className={`rounded-xl p-3 ${palette.inner}`}>
+                {word.morphemes.length > 1 && (
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">
+                      {morpheme.tokenKind === 'suffix' ? 'Sufijo' : morpheme.tokenKind === 'prefix' ? 'Prefijo' : 'Raíz'}
+                    </span>
+                    <span dir={edition.textDirection} className="text-lg font-semibold">{morpheme.surfaceForm}</span>
+                  </div>
+                )}
 
-              <dl className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Lema</dt>
-                  <dd className="mt-0.5 break-words">
-                    <span dir={edition.textDirection}>{morpheme.lemma}</span>
-                    {morpheme.lemmaTransliteration ? ` · ${morpheme.lemmaTransliteration}` : ''}
-                  </dd>
-                </div>
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Strong</dt>
-                  <dd className="mt-0.5">{morpheme.strongNumber || 'No indicado'}</dd>
-                </div>
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Sentido en esta ocurrencia</dt>
-                  <dd className="mt-0.5 break-words">{morpheme.glossEs || 'No indicado'}</dd>
-                </div>
-                <div>
-                  <dt className={`font-semibold ${palette.muted}`}>Morfología</dt>
-                  <dd className="mt-0.5 break-words">
-                    {morpheme.morphologySummary || morpheme.morphologyCode || 'No indicada'}
-                    {morpheme.morphologySummary && morpheme.morphologyCode ? ` (${morpheme.morphologyCode})` : ''}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          ))}
+                <dl className="grid gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className={`font-semibold ${palette.muted}`}>Lema</dt>
+                    <dd className="mt-0.5 break-words">
+                      <span dir={edition.textDirection}>{morpheme.lemma}</span>
+                      {morpheme.lemmaTransliteration ? ` · ${morpheme.lemmaTransliteration}` : ''}
+                    </dd>
+                  </div>
+                  {morpheme.strongNumber && (
+                    <div>
+                      <dt className={`font-semibold ${palette.muted}`}>Strong</dt>
+                      <dd className="mt-0.5">{morpheme.strongNumber}</dd>
+                    </div>
+                  )}
+                  {morpheme.glossEs && (
+                    <div>
+                      <dt className={`font-semibold ${palette.muted}`}>Sentido en esta ocurrencia</dt>
+                      <dd className="mt-0.5 break-words">{morpheme.glossEs}</dd>
+                    </div>
+                  )}
+                  {morphology && (
+                    <div>
+                      <dt className={`font-semibold ${palette.muted}`}>Morfología</dt>
+                      <dd className="mt-0.5 break-words">
+                        {morphology}
+                        {morpheme.morphologySummary && morpheme.morphologyCode ? ` (${morpheme.morphologyCode})` : ''}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )
+          })}
         </div>
       </div>
     </details>
@@ -249,29 +260,37 @@ export default function TextualEvidencePanel({
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className={`rounded-2xl border p-4 ${palette.card}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Transliteración</p>
-                <p className="mt-2 break-words text-sm leading-6">{edition.transliteration || 'No disponible'}</p>
+            {(edition.transliteration || edition.literalTranslationEs) && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {edition.transliteration && (
+                  <div className={`rounded-2xl border p-4 ${palette.card}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Transliteración</p>
+                    <p className="mt-2 break-words text-sm leading-6">{edition.transliteration}</p>
+                  </div>
+                )}
+                {edition.literalTranslationEs && (
+                  <div className={`rounded-2xl border p-4 ${palette.card}`}>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Secuencia literal de glosas</p>
+                    <p className="mt-2 break-words text-sm leading-6">{edition.literalTranslationEs}</p>
+                    <p className={`mt-2 text-[10px] leading-4 ${palette.muted}`}>Ayuda a observar el orden de las palabras; no es una traducción española pulida.</p>
+                  </div>
+                )}
               </div>
-              <div className={`rounded-2xl border p-4 ${palette.card}`}>
-                <p className={`text-[10px] font-bold uppercase tracking-[0.14em] ${palette.muted}`}>Secuencia literal de glosas</p>
-                <p className="mt-2 break-words text-sm leading-6">{edition.literalTranslationEs || 'No disponible'}</p>
-                <p className={`mt-2 text-[10px] leading-4 ${palette.muted}`}>Ayuda a observar el orden de las palabras; no es una traducción española pulida.</p>
-              </div>
-            </div>
+            )}
 
-            <details className={`group rounded-2xl border ${palette.card}`}>
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-                <span>Palabra por palabra ({edition.words.length})</span>
-                <ChevronDown className={`h-4 w-4 transition-transform group-open:rotate-180 ${palette.muted}`} aria-hidden="true" />
-              </summary>
-              <div className={`space-y-2 border-t p-3 ${palette.divider}`}>
-                {edition.words.map(word => (
-                  <WordDetails key={`${edition.language}-${word.displayWordIndex}`} word={word} edition={edition} palette={palette} />
-                ))}
-              </div>
-            </details>
+            {edition.words.length > 0 && (
+              <details className={`group rounded-2xl border ${palette.card}`}>
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
+                  <span>Palabra por palabra ({edition.words.length})</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform group-open:rotate-180 ${palette.muted}`} aria-hidden="true" />
+                </summary>
+                <div className={`space-y-2 border-t p-3 ${palette.divider}`}>
+                  {edition.words.map(word => (
+                    <WordDetails key={`${edition.language}-${word.displayWordIndex}`} word={word} edition={edition} palette={palette} />
+                  ))}
+                </div>
+              </details>
+            )}
 
             {(edition.variantOccurrences.length > 0 || edition.variants.length > 0) && (
               <details className={`group rounded-2xl border ${palette.variant}`}>
