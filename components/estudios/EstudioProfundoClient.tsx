@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { mostrarToast } from '@/lib/ui/toast'
 import { useActionState, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   AlertCircle,
@@ -18,6 +17,7 @@ import {
   Search,
   Share2,
 } from 'lucide-react'
+import { mostrarToast } from '@/lib/ui/toast'
 import {
   analizarPasaje,
   obtenerHistorial,
@@ -48,7 +48,6 @@ const RELATION_LABELS = {
 } as const
 
 type Tab = 'study' | 'concordance'
-
 type DashboardItem = {
   id: string
   label: string
@@ -85,7 +84,6 @@ export default function EstudioProfundoClient({
 
   const dashboardItems = useMemo<DashboardItem[]>(() => {
     if (state.status !== 'success' || state.kind !== 'study') return []
-
     const items: DashboardItem[] = []
 
     const spanish = sectionsWithContent.find(section => section.key === 'comparacion_versiones')
@@ -109,17 +107,18 @@ export default function EstudioProfundoClient({
       })
     }
 
-    const contextualSections = sectionsWithContent.filter(section => section.key !== 'comparacion_versiones')
-    contextualSections.forEach(section => {
-      const content = String(state.resultado[section.key] || '').trim()
-      items.push({
-        id: String(section.key),
-        label: section.label,
-        shortLabel: section.shortLabel,
-        plainText: content,
-        content: <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{content}</div>,
+    sectionsWithContent
+      .filter(section => section.key !== 'comparacion_versiones')
+      .forEach(section => {
+        const content = String(state.resultado[section.key] || '').trim()
+        items.push({
+          id: String(section.key),
+          label: section.label,
+          shortLabel: section.shortLabel,
+          plainText: content,
+          content: <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{content}</div>,
+        })
       })
-    })
 
     if (state.chronology) {
       items.push({
@@ -145,7 +144,6 @@ export default function EstudioProfundoClient({
   useEffect(() => {
     if (state.status !== 'success') return
     setActiveTab(state.kind)
-
     if (state.kind === 'study') {
       setActiveSection(null)
       obtenerHistorial().then(setHistorial).catch(() => {})
@@ -164,7 +162,6 @@ export default function EstudioProfundoClient({
     setNotaSuccess(false)
     const response = await guardarNota(state.pasaje, nota)
     setNotaGuardando(false)
-
     if (response.success) {
       setNotaSuccess(true)
       setTimeout(() => setNotaSuccess(false), 3000)
@@ -205,7 +202,6 @@ export default function EstudioProfundoClient({
   const shareStudy = async () => {
     if (state.status !== 'success' || state.kind !== 'study') return
     const text = buildFullStudy()
-
     try {
       if (navigator.share) await navigator.share({ title: `Estudio de ${state.pasaje}`, text })
       else {
@@ -224,12 +220,8 @@ export default function EstudioProfundoClient({
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
       <nav className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1" aria-label="Herramientas de Estudio Profundo">
-        <button type="button" onClick={() => setActiveTab('study')} className={`min-h-11 rounded-xl px-3 text-sm font-bold transition ${activeTab === 'study' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}>
-          Estudio
-        </button>
-        <button type="button" onClick={() => setActiveTab('concordance')} className={`min-h-11 rounded-xl px-3 text-sm font-bold transition ${activeTab === 'concordance' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}>
-          Concordancias
-        </button>
+        <button type="button" onClick={() => setActiveTab('study')} className={`min-h-11 rounded-xl px-3 text-sm font-bold transition ${activeTab === 'study' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}>Estudio</button>
+        <button type="button" onClick={() => setActiveTab('concordance')} className={`min-h-11 rounded-xl px-3 text-sm font-bold transition ${activeTab === 'concordance' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'}`}>Concordancias</button>
       </nav>
 
       <form id="estudio-form" action={formAction} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -268,33 +260,31 @@ export default function EstudioProfundoClient({
             </div>
           </div>
 
-          <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex w-max min-w-full gap-2">
-              {dashboardItems.map(item => {
-                const active = activeSection === item.id
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleSection(item.id)}
-                    aria-expanded={active}
-                    className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition ${active ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
-                  >
-                    {item.shortLabel}
-                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${active ? 'rotate-180' : ''}`} />
-                  </button>
-                )
-              })}
-              <button
-                type="button"
-                onClick={() => toggleSection('notas')}
-                aria-expanded={activeSection === 'notas'}
-                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition ${activeSection === 'notas' ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
-              >
-                Notas
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeSection === 'notas' ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
+          <div className="flex flex-wrap gap-2 px-1">
+            {dashboardItems.map(item => {
+              const active = activeSection === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => toggleSection(item.id)}
+                  aria-expanded={active}
+                  className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-3.5 text-[11px] font-bold transition sm:min-h-10 sm:px-4 sm:text-xs ${active ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
+                >
+                  {item.shortLabel}
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${active ? 'rotate-180' : ''}`} />
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => toggleSection('notas')}
+              aria-expanded={activeSection === 'notas'}
+              className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-3.5 text-[11px] font-bold transition sm:min-h-10 sm:px-4 sm:text-xs ${activeSection === 'notas' ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
+            >
+              Notas
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeSection === 'notas' ? 'rotate-180' : ''}`} />
+            </button>
           </div>
 
           {activeItem && (
@@ -340,7 +330,6 @@ export default function EstudioProfundoClient({
             <h2 className="mt-1 text-xl font-bold text-slate-950">Resultados para “{state.query}”</h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">Temas y pasajes ordenados según coincidencias revisadas en la biblioteca.</p>
           </header>
-
           {state.results.map(result => (
             <article key={result.termId} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <header className="border-b border-slate-100 px-5 py-4 sm:px-6">
