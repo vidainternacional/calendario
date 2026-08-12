@@ -18,6 +18,11 @@ export type ConcordanciaResultado = {
   }>
 }
 
+export type ConcordanciaReferenciaResultado = {
+  scope: 'verse' | 'chapter'
+  results: ConcordanciaResultado[]
+}
+
 const STOP_WORDS = new Set([
   'a', 'al', 'algo', 'como', 'con', 'cual', 'cuando', 'de', 'del', 'dios', 'donde',
   'el', 'ella', 'en', 'es', 'esta', 'este', 'esto', 'hay', 'la', 'las', 'lo', 'los',
@@ -203,22 +208,20 @@ export async function buscarConcordanciasBiblicas(
   }
 }
 
-export async function buscarConcordanciasParaReferencia({
+async function resolverConcordanciasDesdeAnclas({
   bookCode,
   chapter,
   verse,
-  limit = 80,
+  limit,
 }: {
   bookCode: string
   chapter: number
   verse?: number | null
-  limit?: number
+  limit: number
 }): Promise<ConcordanciaResultado[]> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
-
   const safeLimit = Math.min(Math.max(limit, 1), 100)
+
   let anchorQuery = (supabase as any)
     .from('biblical_concordance_occurrences')
     .select('term_id, relevance')
@@ -293,4 +296,28 @@ export async function buscarConcordanciasParaReferencia({
   return Array.from(grouped.values())
     .filter(result => result.matches.length > 0)
     .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term, 'es'))
+}
+
+export async function buscarConcordanciasParaReferencia({
+  bookCode,
+  chapter,
+  verse,
+  limit = 80,
+}: {
+  bookCode: string
+  chapter: number
+  verse?: number | null
+  limit?: number
+}): Promise<ConcordanciaReferenciaResultado> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { scope: verse ? 'verse' : 'chapter', results: [] }
+
+  if (verse) {
+    const verseResults = await resolverConcordanciasDesdeAnclas({ bookCode, chapter, verse, limit })
+    if (verseResults.length > 0) return { scope: 'verse', results: verseResults }
+  }
+
+  const chapterResults = await resolverConcordanciasDesdeAnclas({ bookCode, chapter, limit })
+  return { scope: 'chapter', results: chapterResults }
 }
