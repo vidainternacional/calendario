@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import EstudioProfundoClient from '@/components/estudios/EstudioProfundoClient'
+import AutoSubmitStudyQuery from '@/components/estudios/AutoSubmitStudyQuery'
 import FuentesBiblicasAprobadas from '@/components/estudios/FuentesBiblicasAprobadas'
 import BibliotecaBiblicaVerificada from '@/components/estudios/BibliotecaBiblicaVerificada'
 import ContextoHistoricoVerificado from '@/components/estudios/ContextoHistoricoVerificado'
@@ -24,26 +25,29 @@ export const metadata: Metadata = {
 export default async function EstudioProfundoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pasaje?: string; q?: string; tab?: string; from?: string }>
+  searchParams: Promise<{ pasaje?: string; q?: string; tab?: string; from?: string; auto?: string }>
 }) {
-  const { pasaje, q, tab, from } = await searchParams
+  const { pasaje, q, tab, from, auto } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
   const desdePastoral = from === 'pastoral'
+  const desdeBiblia = from === 'biblia'
   const initialQuery = q ?? pasaje ?? ''
   const initialTab = tab === 'concordancias' ? 'concordance' : 'study'
+  const backHref = desdePastoral ? '/pastoral' : desdeBiblia ? '/biblia' : '/estudios'
+  const backLabel = desdePastoral ? 'Volver al Panel Pastoral' : desdeBiblia ? 'Volver a Biblia' : 'Volver a Estudios'
 
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
       <Link
-        href={desdePastoral ? '/pastoral' : '/estudios'}
+        href={backHref}
         className="mb-4 inline-flex min-h-10 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        {desdePastoral ? 'Volver al Panel Pastoral' : 'Volver a Estudios'}
+        {backLabel}
       </Link>
 
       <header className="mb-5 flex items-start gap-3 sm:mb-6">
@@ -59,6 +63,7 @@ export default async function EstudioProfundoPage({
       </header>
 
       <EstudioProfundoClient initialPasaje={initialQuery} initialTab={initialTab} />
+      <AutoSubmitStudyQuery query={initialQuery} enabled={auto === '1' && Boolean(initialQuery.trim())} />
 
       <details className="group mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
