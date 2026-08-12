@@ -2,7 +2,7 @@
 
 Última actualización: 2026-08-12
 
-Fase / prioridad activa: **FASE D — CHECKLIST FINAL DE COBERTURA BÍBLICA**
+Fase / prioridad activa: **FASE D — UX Y NAVEGACIÓN FINAL DEL CENTRO DE ESTUDIO**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -24,8 +24,9 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 4. Los hallazgos fuera de alcance se documentan para una fase posterior, sin ampliar el bloque activo.
 5. No borrar datos, migraciones o estructuras de una fase pausada cuando basta con desactivar su experiencia visible.
 6. Los cambios de permisos, roles, liderazgo o datos sensibles requieren una decisión explícita y recuperación definida.
-7. Durante el checklist final de cobertura bíblica, **no iterar UX, navegación o presentación salvo que sea indispensable para corregir un fallo de datos comprobado**.
+7. Durante la UX final del Centro de Estudio, preservar íntegramente la cobertura bíblica aprobada y no reabrir importaciones/auditorías salvo bug de datos comprobable.
 8. Una capa bíblica ausente no debe sustituirse por texto explicando que falta. Si no existe información aprobada, la capa simplemente no se muestra.
+9. El rediseño debe mejorar presentación y navegación sin cambiar la procedencia, significado o nivel de certeza de los datos.
 
 ## Estado de fases
 
@@ -34,7 +35,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE A | Experiencia profesional mobile first | COMPLETADA |
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
-| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **ACTIVA — CHECKLIST FINAL DE COBERTURA** |
+| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **ACTIVA — UX FINAL DEL CENTRO DE ESTUDIO** |
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
@@ -68,9 +69,9 @@ Estado desde 2026-08-07: **PAUSADO POR DECISIÓN DEL USUARIO**.
 
 Se conservan tablas, RLS, Centro de Análisis, datos, reportes, onboarding y Ayuda Solidaria, pero no debe ejecutarse telemetría exclusiva del piloto ni reactivarse P1/P2/P3 mientras esta prioridad siga en pausa.
 
-# FASE D — ACTIVA — CHECKLIST FINAL DE COBERTURA BÍBLICA
+# FASE D — COBERTURA BÍBLICA — COMPLETADA Y APROBADA
 
-El 2026-08-11 el usuario autorizó explícitamente completar toda la información bíblica faltante y auditarla antes de continuar con presentación, navegación o diseño del Centro de Estudio. La auditoría técnica integral terminó el 2026-08-12 y la prioridad pasa a validación funcional mediante checklist del usuario.
+El 2026-08-11 el usuario autorizó explícitamente completar toda la información bíblica faltante y auditarla antes de continuar con presentación, navegación o diseño del Centro de Estudio. La auditoría técnica integral terminó el 2026-08-12 y el checklist funcional fue aprobado expresamente por el usuario el 2026-08-12.
 
 ## Cobertura final auditada — 2026-08-12
 
@@ -154,16 +155,16 @@ Fuente principal: STEPBible Data (`STEPBible-Data@b86d26cdb1f51729e73b5b4eb7f7cc
 
 ### Motor de Estudio
 
-Producción `main` incluye el paquete validado en `89a8855eaa38ca40fdf341e9fdaae4d407e3ce9d`.
+Producción `main` incluye la corrección validada para omitir capas ausentes y soportar evidencia multilingüe, además de RV1909 para versículos y capítulos.
 
 - Se eliminó el uso de síntesis contextual como sustituto de texto original/traducción.
 - Las capas textuales ausentes devuelven vacío y no deben renderizar tarjetas de “no disponible”, “próximamente” o equivalentes.
 - El resolver textual soporta referencias multilingües reales como Daniel 2:4.
-- La búsqueda de código en `main` no encontró frases residuales `no disponible`, `próximamente`, `aparecerá cuando` o `Seleccione un versículo` en las superficies auditadas.
+- RV1909 se muestra como traducción bíblica española separada de la secuencia literal de estudio.
 - Preview y producción compilaron correctamente con Next.js 16.2.10 y TypeScript; 34/34 páginas estáticas generadas.
-- Vercel no reportó errores de runtime en la comprobación final posterior al despliegue.
+- Vercel no reportó errores de runtime en las comprobaciones posteriores al despliegue.
 
-## Muestras técnicas ya verificadas
+## Muestras técnicas verificadas y aprobadas
 
 Las siguientes referencias tienen texto original, análisis palabra por palabra, RV1909 y contexto aprobados:
 
@@ -175,38 +176,43 @@ Las siguientes referencias tienen texto original, análisis palabra por palabra,
 - Jonás 1:1 — Profeta menor — hebreo.
 - Juan 3:16 — Evangelios — griego.
 - Hechos 28:16 — Hechos — griego.
-- Romanos 1:1 — Cartas — griego.
+- Romanos 1:1 / Romanos 1 — Cartas — griego + piloto Roma.
 - Apocalipsis 1:1 — Apocalipsis — griego.
 
-Geografía solo aparece en esas muestras cuando existe una relación real; por ejemplo Daniel 2:4 y Hechos 28:16 sí tienen referencias geográficas, mientras otras muestras no deben mostrar mapa/lugar si la fuente no los relaciona.
+Geografía solo aparece cuando existe una relación real; no debe mostrarse una tarjeta de ausencia cuando no exista relación geográfica aprobada.
 
-# CHECKLIST FINAL ACTIVO — VALIDACIÓN DEL USUARIO
+# CHECKLIST FINAL DE COBERTURA — COMPLETADO Y APROBADO — 2026-08-12
 
-No cerrar FASE D hasta completar este checklist en producción:
+El usuario aprobó expresamente el cierre del checklist en producción. Quedan validados:
 
-1. **Génesis 1:1** — confirmar texto original hebreo, transliteración y análisis palabra por palabra; no debe aparecer una traducción literal española inventada si no existe.
-2. **Salmos 23:1** — confirmar hebreo, transliteración, morfología y contexto; no mostrar capas vacías.
-3. **Daniel 2:4** — confirmar que aparecen hebreo y arameo como segmentos reales de la misma referencia, sin mezclarlos ni sustituirlos por explicación de ausencia.
-4. **Jonás 1:1** — confirmar cobertura de profeta menor y análisis textual real.
-5. **Juan 3:16** — confirmar griego, transliteración, palabra por palabra, glosa española disponible y traducción literal de estudio.
-6. **Hechos 28:16** — confirmar texto griego y geografía cuando corresponda; el piloto de Roma debe continuar funcionando en Hechos 28 dentro de su rango aprobado.
-7. **Romanos 1** / **Romanos 1:1** — confirmar contexto y que Cronología/Mapa de Roma siga disponible según el piloto aprobado.
-8. **Apocalipsis 1:1** — confirmar cobertura textual y contextual del extremo final del canon.
-9. **Una referencia sin geografía** — confirmar que no aparece una tarjeta diciendo que el mapa “no está disponible”.
-10. **Una capa léxica sin glosa española AT** — confirmar que la interfaz muestra únicamente los datos reales (lema/transliteración/morfología/glosa fuente si la superficie la admite) y no fabrica una traducción española.
-11. **RV1909** — confirmar que puede leerse como traducción española completa disponible y que no aparecen versículos vacíos de versificación.
-12. **NVI/RVR1960** — confirmar que no se presenta su texto completo mientras estén pendientes de licencia.
-13. Recorrer Estudio con varias referencias y confirmar que no aparezcan mensajes tipo **“no disponible”**, **“próximamente”** o **“aparecerá cuando exista”** como sustituto de datos.
-14. Confirmar que no haya errores visibles, pantallas rotas o pérdida de navegación al cambiar entre referencias durante estas pruebas.
+1. Texto original hebreo, arameo y griego donde corresponde.
+2. Transliteración y análisis palabra por palabra.
+3. Daniel 2:4 como referencia multilingüe hebreo + arameo.
+4. Cobertura representativa de Pentateuco, históricos, poesía, profetas, Evangelios, Hechos, cartas y Apocalipsis.
+5. Glosas/traducción literal solo donde existen capas aprobadas; no se fabrican capas ausentes.
+6. RV1909 como traducción española completa disponible para versículos y capítulos.
+7. NVI/RVR1960 permanecen sin texto completo mientras estén pendientes de licencia.
+8. Cronología/Mapa de Roma sigue operativo en los rangos aprobados.
+9. Las referencias sin geografía no muestran placeholders de mapa.
+10. No se muestran mensajes tipo “no disponible”, “próximamente” o equivalentes como sustituto de datos.
+11. Navegación entre referencias sin errores visibles ni pantallas rotas durante la validación.
 
-## Fuera de alcance mientras el checklist esté activo
+# FASE D — BLOQUE ACTIVO — UX Y NAVEGACIÓN FINAL DEL CENTRO DE ESTUDIO
 
-- no seguir refinando acordeones, dashboard o navegación del Estudio;
-- no rediseñar Centro Pastoral ni Biblia → Notas;
-- no implementar todavía navegación especial entre ministerios, filtros de Avisos, recorrido interactivo, pronunciación/voz, Centro de Historia Bíblica o reorganización de notas; estos requisitos están documentados en `docs/REQUISITOS_DIFERIDOS_UX_2026-08-12.md`;
-- no abrir FASE E o FASE F;
-- no activar analytics de estudios todavía;
-- no importar traducciones con copyright sin licencia.
+Con la cobertura ya cerrada, se reabre exclusivamente la UX del ecosistema bíblico/Estudio. Este bloque debe consumir los datos ya aprobados sin reabrir auditorías de cobertura.
+
+## Objetivos autorizados
+
+1. Convertir Estudio en una superficie tipo dashboard profesional y móvil, manteniendo identidad VIDA e integración natural con Biblia.
+2. Organizar las capas en bloques/acordeones claros: traducción española, texto original, transliteración, palabra por palabra, variantes, contexto, cronología/geografía, intención, cautelas, explicación y reflexión, mostrando únicamente las que tengan datos.
+3. Añadir una vista **Ver todo** que reúna el estudio completo de forma ordenada.
+4. Para capítulos largos, mantener la traducción española y demás bloques extensos plegables por defecto; para versículos individuales, priorizar acceso inmediato al contenido principal.
+5. Mantener explícitamente separadas: **texto original**, **transliteración**, **secuencia literal de estudio** y **traducción bíblica española**.
+6. Integrar mapas históricos en la superficie del estudio cuando exista geografía aprobada, conservando certeza, aproximación y debate; no inventar rutas ni precisión.
+7. Preparar la futura ayuda de pronunciación/voz para hebreo, arameo y griego como requisito de UX, sin afirmar una pronunciación histórica única cuando exista debate.
+8. Preservar compartir, PDF, historial y notas existentes; la reorganización profunda de notas sigue reservada para su bloque documentado/FASE F.
+9. No activar todavía analytics de estudios; se mantiene diferido hasta después del cierre de UX final.
+10. No mezclar en este bloque navegación de ministerios, filtros de Avisos ni onboarding general; esos requisitos siguen documentados en `docs/REQUISITOS_DIFERIDOS_UX_2026-08-12.md` y deberán abrirse mediante prioridad propia.
 
 # Requisito diferido — Centro de Estudio y analíticas
 
@@ -218,4 +224,4 @@ Después de cerrar cobertura y UX final, el Centro de Estudio debe evolucionar e
 
 # Siguiente punto autorizado
 
-**Ejecutar exclusivamente el checklist final de cobertura bíblica con el usuario.** Corregir únicamente fallos comprobados de datos/recuperación derivados de ese checklist. Solo después de que el usuario valide el checklist se podrá actualizar este documento para reabrir UX/navegación y decidir formalmente el siguiente bloque de FASE D.
+**Iniciar exclusivamente la UX y navegación final del Centro de Estudio sobre la cobertura bíblica ya aprobada.** Comenzar por la jerarquía visual y los acordeones del estudio, incluyendo traducción española del pasaje, evidencia textual real, contexto y cronología/geografía, sin modificar ni reabrir las fuentes de datos ya cerradas.
