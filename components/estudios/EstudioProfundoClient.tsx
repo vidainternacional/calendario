@@ -78,13 +78,16 @@ export default function EstudioProfundoClient({
   const [copiado, setCopiado] = useState<string | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
 
+  const isStudyResult = state.status === 'success' && state.kind === 'study'
+  const isConcordanceResult = state.status === 'success' && state.kind === 'concordance'
+
   const sectionsWithContent = useMemo(() => {
-    if (state.status !== 'success' || state.kind !== 'study') return []
+    if (!isStudyResult) return []
     return SECTIONS.filter(section => hasContent(state.resultado[section.key]))
-  }, [state])
+  }, [isStudyResult, state])
 
   const dashboardItems = useMemo<DashboardItem[]>(() => {
-    if (state.status !== 'success' || state.kind !== 'study') return []
+    if (!isStudyResult) return []
     const items: DashboardItem[] = []
 
     const spanish = sectionsWithContent.find(section => section.key === 'comparacion_versiones')
@@ -131,7 +134,7 @@ export default function EstudioProfundoClient({
     }
 
     return items
-  }, [sectionsWithContent, state])
+  }, [isStudyResult, sectionsWithContent, state])
 
   const activeItem = useMemo(
     () => dashboardItems.find(item => item.id === activeSection) ?? null,
@@ -158,7 +161,7 @@ export default function EstudioProfundoClient({
   }
 
   const handleSaveNota = async () => {
-    if (state.status !== 'success' || state.kind !== 'study') return
+    if (!isStudyResult) return
     setNotaGuardando(true)
     setNotaSuccess(false)
     const response = await guardarNota(state.pasaje, nota)
@@ -190,7 +193,7 @@ export default function EstudioProfundoClient({
   }
 
   const buildFullStudy = () => {
-    if (state.status !== 'success' || state.kind !== 'study') return ''
+    if (!isStudyResult) return ''
     return [
       `Estudio Profundo: ${state.pasaje}`,
       '',
@@ -201,7 +204,7 @@ export default function EstudioProfundoClient({
   }
 
   const shareStudy = async () => {
-    if (state.status !== 'success' || state.kind !== 'study') return
+    if (!isStudyResult) return
     const text = buildFullStudy()
     try {
       if (navigator.share) await navigator.share({ title: `Estudio de ${state.pasaje}`, text })
@@ -252,7 +255,7 @@ export default function EstudioProfundoClient({
         </section>
       )}
 
-      {!isPending && state.status === 'success' && state.kind === 'study' && activeTab === 'study' && (
+      {!isPending && isStudyResult && activeTab === 'study' && (
         <section className="space-y-3">
           <div className="flex items-end justify-between gap-3 px-1">
             <div className="min-w-0">
@@ -336,7 +339,7 @@ export default function EstudioProfundoClient({
         </section>
       )}
 
-      {!isPending && activeTab === 'concordance' && state.kind !== 'concordance' && (
+      {!isPending && activeTab === 'concordance' && !isConcordanceResult && (
         <section className="overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-[0_0_28px_rgba(245,158,11,0.16)]">
           <div className="p-5 text-center sm:p-6">
             <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-amber-100 text-amber-700 shadow-inner"><Sparkles className="h-5 w-5" /></span>
@@ -348,7 +351,7 @@ export default function EstudioProfundoClient({
         </section>
       )}
 
-      {!isPending && state.status === 'success' && state.kind === 'concordance' && activeTab === 'concordance' && (
+      {!isPending && isConcordanceResult && activeTab === 'concordance' && (
         <section className="space-y-4" aria-label="Resultados de concordancias">
           <div className="flex flex-wrap justify-center gap-2 px-1">
             <button type="button" onClick={() => setActiveTab('study')} className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-600 shadow-sm">Estudio</button>
