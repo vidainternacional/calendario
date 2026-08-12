@@ -2,7 +2,11 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { obtenerEstudioInterno, referenciasInternasDisponibles } from '@/lib/estudios/internal-study'
-import { buscarConcordanciasBiblicas, type ConcordanciaResultado } from '@/lib/estudios/biblical-concordance'
+import {
+  buscarConcordanciasBiblicas,
+  buscarConcordanciasParaReferencia,
+  type ConcordanciaResultado,
+} from '@/lib/estudios/biblical-concordance'
 import {
   getInternalBiblicalContext,
   type BiblicalContextBundle,
@@ -34,6 +38,7 @@ export type EstudioState =
       resultado: EstudioResultado
       textualEvidence?: ResolvedBiblicalTextualStudyBundle
       chronology?: PaqueteCronologicoBiblico
+      relatedConcordances?: ConcordanciaResultado[]
     }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
   | { status: 'error'; error: string }
@@ -84,12 +89,7 @@ function ensamblarEstudioContextual(
     texto_original: '',
     transliteracion: '',
     traduccion_literal: '',
-    // Una síntesis contextual no es una traducción del texto. Esta capa permanece vacía
-    // hasta que exista una traducción interpretativa aprobada con procedencia propia.
     traduccion_interpretativa: '',
-    // Durante el checklist usamos esta superficie existente para garantizar que el texto
-    // español aprobado del pasaje esté presente también en estudios de capítulo. El
-    // rediseño posterior lo moverá a su propio panel/acordeón de traducción.
     comparacion_versiones: traduccionEspanola,
     contexto_historico: unirSecciones(
       'Contexto general del libro:',
@@ -130,78 +130,65 @@ export async function analizarPasaje(
     ? requestedTranslation
     : 'spa_r09'
 
-  if (!query) {
-    return { status: 'error', error: 'Escriba un versículo, una palabra o una pregunta.' }
-  }
-
-  if (query.length > 500) {
-    return { status: 'error', error: 'La consulta ingresada es demasiado larga.' }
-  }
+  if (!query) return { status: 'error', error: 'Escriba un versículo, una palabra o una pregunta.' }
+  if (query.length > 500) return { status: 'error', error: 'La consulta ingresada es demasiado larga.' }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
 
-  if (!user) {
-    return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
-  }
-
-  // Usa el mismo resolver multilingüe de Biblia → Estudio. Esto es esencial para
-  // referencias mixtas como Daniel 2:4 (hebreo → arameo dentro del mismo versículo).
   const [textualEvidence, contexto, traduccionEspanolaData] = await Promise.all([
     getVidaBiblicalTextualStudy(query, translationId),
     getInternalBiblicalContext(query),
     cargarTraduccionEspanolaEstudio(query),
   ])
   const traduccionEspanola = formatearTraduccionEspanola(traduccionEspanolaData)
-  const chronology = contexto
-    ? await listarCronologiaBiblicaParaReferencia({
-        bookCode: contexto.reference.book.code,
-        chapter: contexto.reference.chapter,
-        verse: contexto.reference.verse,
-      })
-    : undefined
+
+  const [chronology, relatedConcordances] = contexto
+    ? await Promise.all([
+        listarCronologiaBiblicaParaReferencia({
+          bookCode: contexto.reference.book.code,
+          chapter: contexto.reference.chapter,
+          verse: contexto.reference.verse,
+        }),
+        buscarConcordanciasParaReferencia({
+          bookCode: contexto.reference.book.code,
+          chapter: contexto.reference.chapter,
+          verse: contexto.reference.verse,
+          limit: 80,
+        }),
+      ])
+    : [undefined, [] as ConcordanciaResultado[]]
+
   const chronologyEvidence = chronology?.events.length ? chronology : undefined
+  const concordanceEvidence = relatedConcordances.length ? relatedConcordances : undefined
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
     const resultadoBase = textualEvidence
       ? estudio.resultado
-      : {
-          ...estudio.resultado,
-          // El piloto histórico no debe actuar como respaldo textual sin la evidencia
-          // aprobada. Ante una falla/ausencia de la capa textual, estos campos se ocultan.
-          texto_original: '',
-          transliteracion: '',
-          traduccion_literal: '',
-        }
+      : { ...estudio.resultado, texto_original: '', transliteracion: '', traduccion_literal: '' }
     const resultado = {
       ...resultadoBase,
-      comparacion_versiones: unirSecciones(
-        traduccionEspanola,
-        resultadoBase.comparacion_versiones
-      ),
+      comparacion_versiones: unirSecciones(traduccionEspanola, resultadoBase.comparacion_versiones),
     }
 
     return {
-      status: 'success',
-      kind: 'study',
-      query,
-      pasaje: estudio.pasaje,
-      resultado,
+      status: 'success', kind: 'study', query, pasaje: estudio.pasaje, resultado,
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
+      relatedConcordances: concordanceEvidence,
     }
   }
 
   if (contexto?.status === 'covered') {
     return {
-      status: 'success',
-      kind: 'study',
-      query,
+      status: 'success', kind: 'study', query,
       pasaje: contexto.reference.canonicalReference,
       resultado: ensamblarEstudioContextual(contexto, traduccionEspanola),
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
+      relatedConcordances: concordanceEvidence,
     }
   }
 
@@ -214,12 +201,7 @@ export async function analizarPasaje(
 
   const concordancias = await buscarConcordanciasBiblicas(query, 80)
   if (concordancias.results.length > 0) {
-    return {
-      status: 'success',
-      kind: 'concordance',
-      query,
-      results: concordancias.results,
-    }
+    return { status: 'success', kind: 'concordance', query, results: concordancias.results }
   }
 
   const disponibles = referenciasInternasDisponibles().join(' y ')
@@ -229,14 +211,6 @@ export async function analizarPasaje(
   }
 }
 
-export async function obtenerHistorial() {
-  return obtenerHistorialBase()
-}
-
-export async function obtenerNota(pasaje: string) {
-  return obtenerNotaBase(pasaje)
-}
-
-export async function guardarNota(pasaje: string, nota: string) {
-  return guardarNotaBase(pasaje, nota)
-}
+export async function obtenerHistorial() { return obtenerHistorialBase() }
+export async function obtenerNota(pasaje: string) { return obtenerNotaBase(pasaje) }
+export async function guardarNota(pasaje: string, nota: string) { return guardarNotaBase(pasaje, nota) }
