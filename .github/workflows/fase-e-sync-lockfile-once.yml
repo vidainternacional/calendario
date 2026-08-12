@@ -1,0 +1,50 @@
+name: FASE E — sincronizar lockfile una vez
+
+on:
+  push:
+    branches:
+      - agent/fase-e-linea-base-optimizacion-1
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fase-e-sync-lockfile-once
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    if: github.event.head_commit.message == 'chore(fase-e): preparar sincronización reproducible del lockfile'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout de la rama
+        uses: actions/checkout@v4
+        with:
+          ref: agent/fase-e-linea-base-optimizacion-1
+          fetch-depth: 1
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Regenerar únicamente package-lock.json
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Verificar instalación congelada
+        run: npm ci --ignore-scripts
+
+      - name: Retirar workflow temporal y guardar lockfile
+        run: |
+          git config user.name "vidainternacional"
+          git config user.email "publiartsv.info@gmail.com"
+          git rm .github/workflows/fase-e-sync-lockfile-once.yml
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "No hubo cambios para guardar" >&2
+            exit 1
+          fi
+          git commit -m "chore(fase-e): sincronizar lockfile y recuperar CI"
+          git push origin HEAD:agent/fase-e-linea-base-optimizacion-1
