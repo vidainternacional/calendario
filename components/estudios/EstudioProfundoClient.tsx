@@ -5,16 +5,14 @@ import { mostrarToast } from '@/lib/ui/toast'
 import { useActionState, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   AlertCircle,
-  BookOpenText,
+  Check,
   ChevronDown,
   Clock,
   Copy,
   Download,
   Edit3,
   FileText,
-  LayoutList,
   Loader2,
-  PanelsTopLeft,
   RefreshCw,
   Save,
   Search,
@@ -31,15 +29,15 @@ import {
 import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'
 import ChronologyMapPanel from '@/components/estudios/ChronologyMapPanel'
 
-const SECTIONS: { key: keyof EstudioResultado; label: string }[] = [
-  { key: 'comparacion_versiones', label: 'Traducción en español' },
-  { key: 'traduccion_interpretativa', label: 'Síntesis del pasaje' },
-  { key: 'contexto_historico', label: 'Contexto histórico y judío' },
-  { key: 'analisis_linguistico', label: 'Idioma y análisis lingüístico' },
-  { key: 'que_quiso_comunicar', label: 'Qué quiso comunicar el texto' },
-  { key: 'que_no_quiso_decir', label: 'Qué no quiso decir' },
-  { key: 'explicacion', label: 'Explicación del pasaje' },
-  { key: 'reflexion', label: 'Reflexión espiritual' },
+const SECTIONS: { key: keyof EstudioResultado; label: string; shortLabel: string }[] = [
+  { key: 'comparacion_versiones', label: 'Traducción en español', shortLabel: 'Español' },
+  { key: 'traduccion_interpretativa', label: 'Síntesis del pasaje', shortLabel: 'Síntesis' },
+  { key: 'contexto_historico', label: 'Contexto histórico y judío', shortLabel: 'Contexto' },
+  { key: 'analisis_linguistico', label: 'Idioma y análisis lingüístico', shortLabel: 'Lingüística' },
+  { key: 'que_quiso_comunicar', label: 'Qué quiso comunicar el texto', shortLabel: 'Mensaje' },
+  { key: 'que_no_quiso_decir', label: 'Qué no quiso decir', shortLabel: 'Cautelas' },
+  { key: 'explicacion', label: 'Explicación del pasaje', shortLabel: 'Explicación' },
+  { key: 'reflexion', label: 'Reflexión espiritual', shortLabel: 'Reflexión' },
 ]
 
 const RELATION_LABELS = {
@@ -50,54 +48,17 @@ const RELATION_LABELS = {
 } as const
 
 type Tab = 'study' | 'concordance'
-type StudyView = 'sections' | 'all'
 
 type DashboardItem = {
   id: string
   label: string
+  shortLabel: string
   content: ReactNode
   plainText?: string
-  defaultOpen?: boolean
 }
 
 function hasContent(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0
-}
-
-function AccordionItem({
-  item,
-  onCopy,
-}: {
-  item: DashboardItem
-  onCopy: (key: string, text: string) => void
-}) {
-  return (
-    <details open={item.defaultOpen} className="group border-b border-slate-100 last:border-b-0">
-      <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-5 py-4 sm:px-7 [&::-webkit-details-marker]:hidden">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
-          <BookOpenText className="h-4 w-4" aria-hidden="true" />
-        </span>
-        <span className="min-w-0 flex-1 text-left text-[15px] font-bold text-slate-900">{item.label}</span>
-        {item.plainText && (
-          <button
-            type="button"
-            onClick={event => {
-              event.preventDefault()
-              event.stopPropagation()
-              onCopy(item.id, item.plainText || '')
-            }}
-            className="hidden min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold text-slate-400 hover:bg-slate-50 hover:text-slate-700 sm:inline-flex"
-          >
-            <Copy className="h-3.5 w-3.5" aria-hidden="true" /> Copiar
-          </button>
-        )}
-        <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
-      </summary>
-      <div className="border-t border-slate-100 bg-slate-50/40 px-5 py-5 sm:px-7">
-        {item.content}
-      </div>
-    </details>
-  )
 }
 
 export default function EstudioProfundoClient({
@@ -109,7 +70,7 @@ export default function EstudioProfundoClient({
 }) {
   const [state, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
-  const [studyView, setStudyView] = useState<StudyView>('sections')
+  const [activeSection, setActiveSection] = useState<string | null>(null)
   const [historial, setHistorial] = useState<{ pasaje: string; created_at: string }[]>([])
   const [nota, setNota] = useState('')
   const [notaGuardando, setNotaGuardando] = useState(false)
@@ -126,7 +87,6 @@ export default function EstudioProfundoClient({
     if (state.status !== 'success' || state.kind !== 'study') return []
 
     const items: DashboardItem[] = []
-    const isSingleVerse = /:\d+\b/.test(state.pasaje)
 
     const spanish = sectionsWithContent.find(section => section.key === 'comparacion_versiones')
     if (spanish) {
@@ -134,8 +94,8 @@ export default function EstudioProfundoClient({
       items.push({
         id: String(spanish.key),
         label: spanish.label,
+        shortLabel: spanish.shortLabel,
         plainText: content,
-        defaultOpen: isSingleVerse,
         content: <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{content}</div>,
       })
     }
@@ -144,8 +104,8 @@ export default function EstudioProfundoClient({
       items.push({
         id: 'evidencia-textual',
         label: 'Texto original y análisis palabra por palabra',
-        defaultOpen: isSingleVerse,
-        content: <div className="-mx-5 -my-5 sm:-mx-7"><TextualEvidencePanel evidence={state.textualEvidence} /></div>,
+        shortLabel: 'Original',
+        content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><TextualEvidencePanel evidence={state.textualEvidence} /></div>,
       })
     }
 
@@ -155,6 +115,7 @@ export default function EstudioProfundoClient({
       items.push({
         id: String(section.key),
         label: section.label,
+        shortLabel: section.shortLabel,
         plainText: content,
         content: <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{content}</div>,
       })
@@ -164,12 +125,18 @@ export default function EstudioProfundoClient({
       items.push({
         id: 'cronologia-mapa',
         label: 'Cronología y mapa',
-        content: <div className="-mx-5 -my-5 sm:-mx-7"><ChronologyMapPanel bundle={state.chronology} /></div>,
+        shortLabel: 'Mapa',
+        content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><ChronologyMapPanel bundle={state.chronology} /></div>,
       })
     }
 
     return items
   }, [sectionsWithContent, state])
+
+  const activeItem = useMemo(
+    () => dashboardItems.find(item => item.id === activeSection) ?? null,
+    [activeSection, dashboardItems]
+  )
 
   useEffect(() => {
     obtenerHistorial().then(setHistorial).catch(() => setHistorial([]))
@@ -178,9 +145,9 @@ export default function EstudioProfundoClient({
   useEffect(() => {
     if (state.status !== 'success') return
     setActiveTab(state.kind)
-    setStudyView('sections')
 
     if (state.kind === 'study') {
+      setActiveSection(null)
       obtenerHistorial().then(setHistorial).catch(() => {})
       obtenerNota(state.pasaje).then(value => setNota(value || '')).catch(() => setNota(''))
     }
@@ -250,6 +217,10 @@ export default function EstudioProfundoClient({
     }
   }
 
+  const toggleSection = (id: string) => {
+    setActiveSection(current => current === id ? null : id)
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
       <nav className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1" aria-label="Herramientas de Estudio Profundo">
@@ -285,57 +256,81 @@ export default function EstudioProfundoClient({
       )}
 
       {!isPending && state.status === 'success' && state.kind === 'study' && activeTab === 'study' && (
-        <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-          <header className="bg-gradient-to-b from-white to-slate-50/70 px-5 pb-5 pt-6 sm:px-7">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Estudio bíblico</p>
-            <h2 className="mt-1 break-words text-3xl font-bold tracking-tight text-slate-950">{state.pasaje}</h2>
-
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <div className="inline-flex rounded-xl bg-slate-100 p-1">
-                <button type="button" onClick={() => setStudyView('sections')} className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold ${studyView === 'sections' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><PanelsTopLeft className="h-3.5 w-3.5" /> Secciones</button>
-                <button type="button" onClick={() => setStudyView('all')} className={`inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold ${studyView === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><LayoutList className="h-3.5 w-3.5" /> Ver todo</button>
-              </div>
-              <div className="ml-auto flex gap-2">
-                <button type="button" onClick={shareStudy} className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600"><Share2 className="h-3.5 w-3.5" /> Compartir</button>
-                <button type="button" onClick={() => window.print()} className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600"><Download className="h-3.5 w-3.5" /> PDF</button>
-              </div>
+        <section className="space-y-3">
+          <div className="flex items-end justify-between gap-3 px-1">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#C0392B]">Estudio bíblico</p>
+              <h2 className="mt-0.5 break-words text-2xl font-bold tracking-tight text-slate-950">{state.pasaje}</h2>
             </div>
-          </header>
+            <div className="flex shrink-0 gap-1.5">
+              <button type="button" onClick={shareStudy} aria-label="Compartir estudio" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"><Share2 className="h-4 w-4" /></button>
+              <button type="button" onClick={() => window.print()} aria-label="Exportar PDF" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"><Download className="h-4 w-4" /></button>
+            </div>
+          </div>
 
-          {dashboardItems.length > 0 && (
-            studyView === 'sections' ? (
-              <div className="border-t border-slate-100">
-                {dashboardItems.map(item => <AccordionItem key={item.id} item={item} onCopy={copyText} />)}
-              </div>
-            ) : (
-              <div className="space-y-4 border-t border-slate-100 bg-slate-50/50 p-4 sm:p-6">
-                {dashboardItems.map(item => (
-                  <section key={item.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
-                      <h3 className="text-sm font-bold text-slate-900">{item.label}</h3>
-                      {item.plainText && <button type="button" onClick={() => copyText(item.id, item.plainText || '')} className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-slate-400 hover:bg-slate-50"><Copy className="h-3.5 w-3.5" /> {copiado === item.id ? 'Copiado' : 'Copiar'}</button>}
-                    </div>
-                    <div className="p-4 sm:p-5">{item.content}</div>
-                  </section>
-                ))}
-              </div>
-            )
+          <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max min-w-full gap-2">
+              {dashboardItems.map(item => {
+                const active = activeSection === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => toggleSection(item.id)}
+                    aria-expanded={active}
+                    className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition ${active ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
+                  >
+                    {item.shortLabel}
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${active ? 'rotate-180' : ''}`} />
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                onClick={() => toggleSection('notas')}
+                aria-expanded={activeSection === 'notas'}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 text-xs font-bold transition ${activeSection === 'notas' ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
+              >
+                Notas
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeSection === 'notas' ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {activeItem && (
+            <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <header className="flex min-h-14 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
+                <h3 className="min-w-0 flex-1 text-sm font-bold text-slate-900">{activeItem.label}</h3>
+                {activeItem.plainText && (
+                  <button type="button" onClick={() => copyText(activeItem.id, activeItem.plainText || '')} className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">
+                    {copiado === activeItem.id ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiado === activeItem.id ? 'Copiado' : 'Copiar'}
+                  </button>
+                )}
+              </header>
+              <div className="p-4 sm:p-5">{activeItem.content}</div>
+            </article>
           )}
 
-          <details className="border-t border-slate-100 bg-white">
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-slate-700 sm:px-7 [&::-webkit-details-marker]:hidden">
-              <span className="flex items-center gap-2"><Edit3 className="h-4 w-4 text-[#C0392B]" /> Mis notas personales</span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </summary>
-            <div className="border-t border-slate-100 px-5 py-5 sm:px-7">
-              <textarea value={nota} onChange={event => setNota(event.target.value)} placeholder="Escriba reflexiones, preguntas o apuntes personales…" className="min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-white p-4 text-base leading-7 text-slate-700 outline-none focus:ring-2 focus:ring-[#C0392B]/30" />
-              <div className="mt-3 flex items-center justify-end gap-3">
-                {notaSuccess && <span className="text-xs font-semibold text-emerald-600">Nota guardada</span>}
-                <button type="button" onClick={handleSaveNota} disabled={notaGuardando} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white disabled:opacity-50">{notaGuardando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{notaGuardando ? 'Guardando…' : 'Guardar nota'}</button>
+          {activeSection === 'notas' && (
+            <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <header className="flex min-h-14 items-center gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
+                <Edit3 className="h-4 w-4 text-[#C0392B]" />
+                <h3 className="text-sm font-bold text-slate-900">Mis notas personales</h3>
+              </header>
+              <div className="p-4 sm:p-5">
+                <textarea value={nota} onChange={event => setNota(event.target.value)} placeholder="Escriba reflexiones, preguntas o apuntes personales…" className="min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-white p-4 text-base leading-7 text-slate-700 outline-none focus:ring-2 focus:ring-[#C0392B]/30" />
+                <div className="mt-3 flex items-center justify-end gap-3">
+                  {notaSuccess && <span className="text-xs font-semibold text-emerald-600">Nota guardada</span>}
+                  <button type="button" onClick={handleSaveNota} disabled={notaGuardando} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-900 px-5 text-xs font-bold text-white disabled:opacity-50">
+                    {notaGuardando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {notaGuardando ? 'Guardando…' : 'Guardar nota'}
+                  </button>
+                </div>
               </div>
-            </div>
-          </details>
-        </article>
+            </article>
+          )}
+        </section>
       )}
 
       {!isPending && state.status === 'success' && state.kind === 'concordance' && activeTab === 'concordance' && (
