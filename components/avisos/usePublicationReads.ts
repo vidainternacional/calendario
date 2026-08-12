@@ -5,6 +5,91 @@ import { createClient } from '@/lib/supabase/client'
 
 export const PUBLICATION_READ_EVENT = 'vida-publicacion-leida'
 
+const UNREAD_REFRESH_INTERVAL_MS = 60_000
+const UNREAD_REFRESH_DEDUPE_MS = 1_500
+
+type UnreadCountListener = (count: number) => void
+
+const unreadCountListeners = new Set<UnreadCountListener>()
+let unreadCountValue = 0
+let unreadCountLoaded = false
+let unreadCountLastFetchAt = 0
+let unreadCountInFlight: Promise<number> | null = null
+let unreadCountStopGlobalListeners: (() => void) | null = null
+
+function publishUnreadCount(nextValue: number) {
+  unreadCountValue = Math.max(0, Number(nextValue || 0))
+  unreadCountLoaded = true
+  unreadCountListeners.forEach((listener) => listener(unreadCountValue))
+}
+
+async function refreshUnreadCount(options: { force?: boolean } = {}) {
+  const now = Date.now()
+
+  if (unreadCountInFlight) return unreadCountInFlight
+  if (!options.force && unreadCountLoaded && now - unreadCountLastFetchAt < UNREAD_REFRESH_DEDUPE_MS) {
+    return unreadCountValue
+  }
+
+  unreadCountLastFetchAt = now
+  const request = (async () => {
+    const supabase = createClient()
+    const { data, error } = await (supabase as any).rpc('get_unread_publications_count')
+
+    if (error) {
+      console.error('No se pudo cargar el contador de avisos no leídos', error)
+      return unreadCountValue
+    }
+
+    const nextValue = Math.max(0, Number(data || 0))
+    publishUnreadCount(nextValue)
+    return nextValue
+  })()
+
+  unreadCountInFlight = request
+  try {
+    return await request
+  } finally {
+    if (unreadCountInFlight === request) unreadCountInFlight = null
+  }
+}
+
+function startUnreadCountGlobalListeners() {
+  if (typeof window === 'undefined' || unreadCountStopGlobalListeners) return
+
+  const handleRead = () => void refreshUnreadCount({ force: true })
+  const handleFocus = () => void refreshUnreadCount()
+  const handleVisibility = () => {
+    if (document.visibilityState === 'visible') void refreshUnreadCount()
+  }
+  const interval = window.setInterval(() => void refreshUnreadCount(), UNREAD_REFRESH_INTERVAL_MS)
+
+  window.addEventListener(PUBLICATION_READ_EVENT, handleRead)
+  window.addEventListener('focus', handleFocus)
+  document.addEventListener('visibilitychange', handleVisibility)
+
+  unreadCountStopGlobalListeners = () => {
+    window.clearInterval(interval)
+    window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
+    window.removeEventListener('focus', handleFocus)
+    document.removeEventListener('visibilitychange', handleVisibility)
+    unreadCountStopGlobalListeners = null
+  }
+}
+
+function subscribeUnreadCount(listener: UnreadCountListener) {
+  unreadCountListeners.add(listener)
+  listener(unreadCountValue)
+
+  if (unreadCountListeners.size === 1) startUnreadCountGlobalListeners()
+  void refreshUnreadCount()
+
+  return () => {
+    unreadCountListeners.delete(listener)
+    if (unreadCountListeners.size === 0) unreadCountStopGlobalListeners?.()
+  }
+}
+
 export async function markPublicationRead(publicationId: string) {
   if (!publicationId) return
 
@@ -77,41 +162,9 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
 }
 
 export function useUnreadPublicationsCount() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(unreadCountValue)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function refresh() {
-      const supabase = createClient()
-      const { data, error } = await (supabase as any).rpc('get_unread_publications_count')
-      if (error) {
-        console.error('No se pudo cargar el contador de avisos no leídos', error)
-        return
-      }
-      if (!cancelled) setCount(Math.max(0, Number(data || 0)))
-    }
-
-    const handleRead = () => void refresh()
-    const handleFocus = () => void refresh()
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') void refresh()
-    }
-
-    void refresh()
-    const interval = window.setInterval(refresh, 60_000)
-    window.addEventListener(PUBLICATION_READ_EVENT, handleRead)
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibility)
-
-    return () => {
-      cancelled = true
-      window.clearInterval(interval)
-      window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
-  }, [])
+  useEffect(() => subscribeUnreadCount(setCount), [])
 
   return count
 }
