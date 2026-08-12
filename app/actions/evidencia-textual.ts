@@ -1,6 +1,6 @@
 'use server'
 
-import { getResolvedBiblicalTextualStudy } from '@/lib/estudios/resolved-biblical-textual-study'
+import { getVidaBiblicalTextualStudy } from '@/lib/estudios/multilingual-biblical-textual-study'
 
 // La evidencia se recupera únicamente desde fuentes internas aprobadas en el servidor.
 export async function cargarEvidenciaTextualBiblica(
@@ -14,5 +14,5 @@ export async function cargarEvidenciaTextualBiblica(
   if (!/^[a-z0-9_-]{2,80}$/i.test(translation)) return null
   if (!/:\d+\b/.test(query)) return null
 
-  return getResolvedBiblicalTextualStudy(query, translation)
+  return getVidaBiblicalTextualStudy(query, translation)
 }
