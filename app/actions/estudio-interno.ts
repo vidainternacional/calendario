@@ -39,7 +39,7 @@ export type EstudioState =
       textualEvidence?: ResolvedBiblicalTextualStudyBundle
       chronology?: PaqueteCronologicoBiblico
       relatedConcordances?: ConcordanciaResultado[]
-      relatedConcordanceScope?: 'verse' | 'chapter'
+      relatedConcordanceScope?: 'verse' | 'chapter' | 'section'
     }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
   | { status: 'error'; error: string }
@@ -65,9 +65,7 @@ function formatearTraduccionEspanola(
   translation: Awaited<ReturnType<typeof cargarTraduccionEspanolaEstudio>>
 ) {
   if (!translation) return ''
-  const texto = translation.verses
-    .map(item => `${item.verse}. ${item.text}`)
-    .join('\n')
+  const texto = translation.verses.map(item => `${item.verse}. ${item.text}`).join('\n')
   return unirSecciones(
     `${translation.sourceName} — ${translation.canonicalReference}`,
     texto,
@@ -116,9 +114,48 @@ function ensamblarEstudioContextual(
       apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
       apartado(sectionContext, 'literaryContext') || apartado(bookProfile, 'literaryContext')
     ),
-    reflexion: apartado(sectionContext, 'theologicalReflection')
-      || apartado(bookProfile, 'theologicalReflection'),
+    reflexion: apartado(sectionContext, 'theologicalReflection') || apartado(bookProfile, 'theologicalReflection'),
   }
+}
+
+async function buscarConcordanciasDesdeContexto(bundle: BiblicalContextBundle) {
+  const terms = Array.from(new Set([
+    ...(bundle.sectionContext?.keyTerms ?? []),
+    ...(bundle.bookProfile?.keyTerms ?? []),
+  ]))
+    .map(term => term.trim())
+    .filter(Boolean)
+    .slice(0, 10)
+
+  if (terms.length === 0) return [] as ConcordanciaResultado[]
+
+  const searches = await Promise.all(terms.map(term => buscarConcordanciasBiblicas(term, 60)))
+  const merged = new Map<string, ConcordanciaResultado>()
+
+  for (const search of searches) {
+    for (const result of search.results) {
+      const previous = merged.get(result.termId)
+      if (!previous) {
+        merged.set(result.termId, result)
+        continue
+      }
+
+      const seen = new Set(previous.matches.map(match => `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`))
+      for (const match of result.matches) {
+        const key = `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`
+        if (!seen.has(key) && previous.matches.length < 12) {
+          previous.matches.push(match)
+          seen.add(key)
+        }
+      }
+      previous.score = Math.max(previous.score, result.score)
+    }
+  }
+
+  return Array.from(merged.values())
+    .filter(result => result.matches.length > 0)
+    .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term, 'es'))
+    .slice(0, 8)
 }
 
 export async function analizarPasaje(
@@ -145,25 +182,38 @@ export async function analizarPasaje(
   ])
   const traduccionEspanola = formatearTraduccionEspanola(traduccionEspanolaData)
 
-  const [chronology, concordanceBundle] = contexto
-    ? await Promise.all([
-        listarCronologiaBiblicaParaReferencia({
-          bookCode: contexto.reference.book.code,
-          chapter: contexto.reference.chapter,
-          verse: contexto.reference.verse,
-        }),
-        buscarConcordanciasParaReferencia({
-          bookCode: contexto.reference.book.code,
-          chapter: contexto.reference.chapter,
-          verse: contexto.reference.verse,
-          limit: 80,
-        }),
-      ])
-    : [undefined, { scope: 'chapter' as const, results: [] as ConcordanciaResultado[] }]
+  let chronology: PaqueteCronologicoBiblico | undefined
+  let concordanceEvidence: ConcordanciaResultado[] | undefined
+  let concordanceScope: 'verse' | 'chapter' | 'section' | undefined
 
-  const chronologyEvidence = chronology?.events.length ? chronology : undefined
-  const concordanceEvidence = concordanceBundle.results.length ? concordanceBundle.results : undefined
-  const concordanceScope = concordanceEvidence ? concordanceBundle.scope : undefined
+  if (contexto) {
+    const [chronologyResult, referenceConcordances] = await Promise.all([
+      listarCronologiaBiblicaParaReferencia({
+        bookCode: contexto.reference.book.code,
+        chapter: contexto.reference.chapter,
+        verse: contexto.reference.verse,
+      }),
+      buscarConcordanciasParaReferencia({
+        bookCode: contexto.reference.book.code,
+        chapter: contexto.reference.chapter,
+        verse: contexto.reference.verse,
+        limit: 80,
+      }),
+    ])
+
+    chronology = chronologyResult?.events.length ? chronologyResult : undefined
+
+    if (referenceConcordances.results.length > 0) {
+      concordanceEvidence = referenceConcordances.results
+      concordanceScope = referenceConcordances.scope
+    } else if (contexto.status === 'covered') {
+      const thematic = await buscarConcordanciasDesdeContexto(contexto)
+      if (thematic.length > 0) {
+        concordanceEvidence = thematic
+        concordanceScope = 'section'
+      }
+    }
+  }
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
@@ -178,7 +228,7 @@ export async function analizarPasaje(
     return {
       status: 'success', kind: 'study', query, pasaje: estudio.pasaje, resultado,
       textualEvidence: textualEvidence ?? undefined,
-      chronology: chronologyEvidence,
+      chronology,
       relatedConcordances: concordanceEvidence,
       relatedConcordanceScope: concordanceScope,
     }
@@ -190,7 +240,7 @@ export async function analizarPasaje(
       pasaje: contexto.reference.canonicalReference,
       resultado: ensamblarEstudioContextual(contexto, traduccionEspanola),
       textualEvidence: textualEvidence ?? undefined,
-      chronology: chronologyEvidence,
+      chronology,
       relatedConcordances: concordanceEvidence,
       relatedConcordanceScope: concordanceScope,
     }
