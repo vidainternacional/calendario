@@ -35,6 +35,11 @@ revoke all on table public.biblical_place_references from anon;
 revoke all on table public.biblical_place_references from authenticated;
 grant select on table public.biblical_place_references to authenticated;
 
+-- La misma política puede existir si el dataset fue promovido/controlado antes de registrar
+-- esta migración. Reemplazarla dentro de la transacción mantiene exactamente la semántica.
+drop policy if exists "Usuarios activos leen referencias geográficas aprobadas"
+on public.biblical_place_references;
+
 create policy "Usuarios activos leen referencias geográficas aprobadas"
 on public.biblical_place_references
 for select
