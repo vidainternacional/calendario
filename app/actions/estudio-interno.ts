@@ -8,10 +8,8 @@ import {
   type BiblicalContextBundle,
   type BiblicalContextUnit,
 } from '@/lib/estudios/biblical-context-corpus'
-import {
-  getResolvedBiblicalTextualStudy,
-  type ResolvedBiblicalTextualStudyBundle,
-} from '@/lib/estudios/resolved-biblical-textual-study'
+import { getVidaBiblicalTextualStudy } from '@/lib/estudios/multilingual-biblical-textual-study'
+import type { ResolvedBiblicalTextualStudyBundle } from '@/lib/estudios/resolved-biblical-textual-study'
 import {
   listarCronologiaBiblicaParaReferencia,
   type PaqueteCronologicoBiblico,
@@ -57,26 +55,20 @@ function apartado(unit: BiblicalContextUnit | null, key: keyof BiblicalContextUn
 }
 
 function ensamblarEstudioContextual(bundle: BiblicalContextBundle): EstudioResultado {
-  const { reference, bookProfile, sectionContext, version } = bundle
+  const { reference, bookProfile, sectionContext } = bundle
   const languages = reference.book.originalLanguages.map(nombreIdioma)
   const terms = Array.from(new Set([
     ...(bookProfile?.keyTerms ?? []),
     ...(sectionContext?.keyTerms ?? []),
   ]))
 
-  const alcance = sectionContext
-    ? `${sectionContext.title} (${reference.book.nameEs} ${sectionContext.chapterStart}–${sectionContext.chapterEnd})`
-    : `${reference.book.nameEs}, panorama general del libro`
-
   return {
     texto_original: '',
     transliteracion: '',
     traduccion_literal: '',
-    traduccion_interpretativa: unirSecciones(
-      `Síntesis contextual de la unidad «${alcance}»:`,
-      apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
-      `Versión interna del paquete: ${version}.`
-    ),
+    // Una síntesis contextual no es una traducción del texto. Esta capa permanece vacía
+    // hasta que exista una traducción interpretativa aprobada con procedencia propia.
+    traduccion_interpretativa: '',
     comparacion_versiones: '',
     contexto_historico: unirSecciones(
       'Contexto general del libro:',
@@ -132,7 +124,9 @@ export async function analizarPasaje(
     return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
   }
 
-  const textualEvidence = await getResolvedBiblicalTextualStudy(query, translationId)
+  // Usa el mismo resolver multilingüe de Biblia → Estudio. Esto es esencial para
+  // referencias mixtas como Daniel 2:4 (hebreo → arameo dentro del mismo versículo).
+  const textualEvidence = await getVidaBiblicalTextualStudy(query, translationId)
   const contexto = await getInternalBiblicalContext(query)
   const chronology = contexto
     ? await listarCronologiaBiblicaParaReferencia({
@@ -145,12 +139,23 @@ export async function analizarPasaje(
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
+    const resultado = textualEvidence
+      ? estudio.resultado
+      : {
+          ...estudio.resultado,
+          // El piloto histórico no debe actuar como respaldo textual sin la evidencia
+          // aprobada. Ante una falla/ausencia de la capa textual, estos campos se ocultan.
+          texto_original: '',
+          transliteracion: '',
+          traduccion_literal: '',
+        }
+
     return {
       status: 'success',
       kind: 'study',
       query,
       pasaje: estudio.pasaje,
-      resultado: estudio.resultado,
+      resultado,
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
     }
@@ -171,7 +176,7 @@ export async function analizarPasaje(
   if (contexto?.status === 'indexed') {
     return {
       status: 'error',
-      error: `${contexto.reference.book.nameEs} está reconocido dentro del índice completo de 66 libros, pero su lote contextual todavía no ha sido incorporado. La aplicación no inventó un estudio para ${contexto.reference.canonicalReference}.`,
+      error: `${contexto.reference.book.nameEs} está reconocido dentro del índice completo de 66 libros, pero no existe contenido contextual aprobado para ${contexto.reference.canonicalReference}.`,
     }
   }
 
