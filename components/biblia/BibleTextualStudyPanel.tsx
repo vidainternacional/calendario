@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { cargarEvidenciaTextualBiblica } from '@/app/actions/evidencia-textual'
+import {
+  cargarTraduccionEspanolaEstudio,
+  type TraduccionEspanolaEstudio,
+} from '@/app/actions/traduccion-espanola-estudio'
+import SpanishPassagePanel from '@/components/estudios/SpanishPassagePanel'
 import TextualEvidencePanel from '@/components/estudios/TextualEvidencePanel'
 
 type Modo = 'claro' | 'oscuro' | 'sepia'
@@ -18,27 +23,29 @@ export default function BibleTextualStudyPanel({
   modo: Modo
 }) {
   const [resultado, setResultado] = useState<Resultado | null>(null)
+  const [traduccion, setTraduccion] = useState<TraduccionEspanolaEstudio | null>(null)
   const [cargando, setCargando] = useState(false)
   const tieneVersiculo = /:\d+\b/.test(pasaje)
 
   useEffect(() => {
     let activo = true
-
-    if (!tieneVersiculo) {
-      setResultado(null)
-      setCargando(false)
-      return () => { activo = false }
-    }
-
     setCargando(true)
     setResultado(null)
+    setTraduccion(null)
 
-    cargarEvidenciaTextualBiblica(pasaje, translationId)
-      .then(data => {
-        if (activo) setResultado(data)
+    Promise.all([
+      cargarTraduccionEspanolaEstudio(pasaje),
+      tieneVersiculo ? cargarEvidenciaTextualBiblica(pasaje, translationId) : Promise.resolve(null),
+    ])
+      .then(([spanish, textual]) => {
+        if (!activo) return
+        setTraduccion(spanish)
+        setResultado(textual)
       })
       .catch(() => {
-        if (activo) setResultado(null)
+        if (!activo) return
+        setTraduccion(null)
+        setResultado(null)
       })
       .finally(() => {
         if (activo) setCargando(false)
@@ -53,20 +60,23 @@ export default function BibleTextualStudyPanel({
     sepia: 'border-[#c9ad78] bg-[#f3e3c2] text-[#493c2d]',
   }[modo]
 
-  if (!tieneVersiculo) return null
-
   if (cargando) {
     return (
-      <section className={`rounded-3xl border p-5 ${palette}`} aria-label="Cargando análisis textual">
+      <section className={`rounded-3xl border p-5 ${palette}`} aria-label="Cargando estudio textual">
         <div className="flex items-center gap-3">
           <Loader2 className="h-5 w-5 animate-spin text-indigo-500" aria-hidden="true" />
-          <p className="text-sm font-semibold">Cargando texto original aprobado…</p>
+          <p className="text-sm font-semibold">Cargando texto aprobado…</p>
         </div>
       </section>
     )
   }
 
-  if (!resultado) return null
+  if (!resultado && !traduccion) return null
 
-  return <TextualEvidencePanel evidence={resultado} modo={modo} />
+  return (
+    <div className="space-y-4">
+      {traduccion && <SpanishPassagePanel translation={traduccion} modo={modo} />}
+      {resultado && <TextualEvidencePanel evidence={resultado} modo={modo} />}
+    </div>
+  )
 }
