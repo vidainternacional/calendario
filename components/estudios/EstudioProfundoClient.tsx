@@ -10,12 +10,15 @@ import {
   Copy,
   Download,
   Edit3,
+  ExternalLink,
   FileText,
   Loader2,
+  MapPin,
   RefreshCw,
   Save,
   Search,
   Share2,
+  ShieldCheck,
   Sparkles,
 } from 'lucide-react'
 import { mostrarToast } from '@/lib/ui/toast'
@@ -47,6 +50,33 @@ const RELATION_LABELS = {
   original_language: 'Idioma original',
 } as const
 
+const PLACE_KIND_LABELS: Record<string, string> = {
+  island: 'Isla',
+  city: 'Ciudad',
+  town: 'Población',
+  village: 'Aldea',
+  mountain: 'Monte',
+  river: 'Río',
+  sea: 'Mar',
+  lake: 'Lago',
+  region: 'Región',
+  country: 'Región histórica',
+}
+
+const PLACE_PRECISION_LABELS: Record<string, string> = {
+  exact: 'Exacta',
+  approximate: 'Aproximada',
+  regional: 'Regional',
+  unknown: 'Sin precisión editorial',
+}
+
+const PLACE_CERTAINTY_LABELS: Record<string, string> = {
+  high: 'Certeza alta',
+  medium: 'Certeza media',
+  low: 'Certeza baja',
+  disputed: 'Identificación debatida',
+}
+
 type Tab = 'study' | 'concordance'
 type DashboardItem = {
   id: string
@@ -58,6 +88,16 @@ type DashboardItem = {
 
 function hasContent(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function normalizeLabel(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export default function EstudioProfundoClient({
@@ -243,7 +283,7 @@ export default function EstudioProfundoClient({
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-            <input type="text" id="pasaje" name="pasaje" required disabled={isPending} placeholder="Ejemplo: Juan 3:16, Daniel 2 o perdón" className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50" defaultValue={initialPasaje} />
+            <input type="text" id="pasaje" name="pasaje" required disabled={isPending} placeholder="Ejemplo: Juan 3:16, Patmos, Daniel 2 o perdón" className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50" defaultValue={initialPasaje} />
           </div>
           <button type="submit" disabled={isPending} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-7 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#a93226] disabled:cursor-not-allowed disabled:opacity-70">
             {isPending ? <><RefreshCw className="h-4 w-4 animate-spin" /> Buscando…</> : <><Search className="h-4 w-4" /> Buscar</>}
@@ -256,9 +296,98 @@ export default function EstudioProfundoClient({
         <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm" aria-live="polite">
           <RefreshCw className="mx-auto h-7 w-7 animate-spin text-[#C0392B]" aria-hidden="true" />
           <h2 className="mt-4 text-lg font-bold text-slate-900">Preparando el estudio</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">Reuniendo únicamente las capas verificadas disponibles para esta referencia.</p>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">Buscando referencias, lugares, temas y capas verificadas relacionadas con su consulta.</p>
         </section>
       )}
+
+      {!isPending && state.status === 'suggestions' && (
+        <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-sm">
+          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">Ayuda de búsqueda</p>
+          <h2 className="mt-1 text-lg font-bold text-slate-950">¿Quisiste decir alguno de estos lugares?</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">Encontramos coincidencias cercanas para “{state.query}”. Elige una para continuar sin perder el flujo del estudio.</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {state.suggestions.map(suggestion => (
+              <button key={`${suggestion.label}-${suggestion.query}`} type="button" onClick={() => loadQuery(suggestion.query)} className="min-h-14 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-left shadow-sm transition hover:bg-amber-50">
+                <span className="block text-sm font-bold text-slate-900">{suggestion.label}</span>
+                <span className="mt-1 block text-xs text-slate-500">{suggestion.detail}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!isPending && state.status === 'place' && (() => {
+        const place = state.place
+        const hasCoordinates = place.latitude !== null && place.longitude !== null
+        const mapHref = hasCoordinates
+          ? `https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}#map=10/${place.latitude}/${place.longitude}`
+          : null
+        const interpreted = normalizeLabel(state.query) !== normalizeLabel(place.name)
+
+        return (
+          <section className="space-y-3" aria-label={`Lugar bíblico ${place.name}`}>
+            <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <header className="border-b border-slate-100 bg-gradient-to-br from-slate-50 via-white to-red-50/40 p-5 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#C0392B]/10 text-[#C0392B]"><MapPin className="h-5 w-5" /></span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#C0392B]">Lugar bíblico</p>
+                    <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{place.name}</h2>
+                    <p className="mt-1 text-sm text-slate-500">{PLACE_KIND_LABELS[place.kind] ?? 'Lugar'} · {PLACE_CERTAINTY_LABELS[place.certainty] ?? place.certainty}</p>
+                  </div>
+                </div>
+                {interpreted && (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                    Interpretamos “{state.query}” como <strong>{place.name}</strong> usando el índice geográfico aprobado.
+                  </div>
+                )}
+              </header>
+
+              <div className="p-5 sm:p-6">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ubicación</p>
+                      <p className="mt-1 text-sm font-bold text-slate-900">{place.name}</p>
+                    </div>
+                    <MapPin className="h-5 w-5 shrink-0 text-[#C0392B]" />
+                  </div>
+                  {hasCoordinates && (
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{place.latitude}, {place.longitude} · {PLACE_PRECISION_LABELS[place.coordinatePrecision] ?? place.coordinatePrecision}</p>
+                  )}
+                  {mapHref && (
+                    <a href={mapHref} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white">
+                      Abrir mapa <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+
+                {place.references.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Pasajes relacionados</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">Toca un pasaje para continuar directamente con su estudio completo.</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {place.references.map(reference => (
+                        <button key={reference.reference} type="button" onClick={() => loadQuery(reference.reference)} className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-[#C0392B]/30 hover:bg-red-50/30">
+                          <span className="font-bold text-slate-900">{reference.reference}</span>
+                          <ChevronDown className="h-4 w-4 -rotate-90 text-slate-400" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-emerald-600" /> {place.provider ?? 'Fuente geográfica aprobada'}</span>
+                  {place.sourceLocator && (
+                    <a href={place.sourceLocator} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-slate-600 hover:underline">Ver fuente <ExternalLink className="h-3.5 w-3.5" /></a>
+                  )}
+                </footer>
+              </div>
+            </article>
+          </section>
+        )
+      })()}
 
       {!isPending && isStudyResult && activeTab === 'study' && (
         <section className="space-y-3">
