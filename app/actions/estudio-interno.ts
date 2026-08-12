@@ -39,6 +39,7 @@ export type EstudioState =
       textualEvidence?: ResolvedBiblicalTextualStudyBundle
       chronology?: PaqueteCronologicoBiblico
       relatedConcordances?: ConcordanciaResultado[]
+      relatedConcordanceScope?: 'verse' | 'chapter'
     }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
   | { status: 'error'; error: string }
@@ -144,7 +145,7 @@ export async function analizarPasaje(
   ])
   const traduccionEspanola = formatearTraduccionEspanola(traduccionEspanolaData)
 
-  const [chronology, relatedConcordances] = contexto
+  const [chronology, concordanceBundle] = contexto
     ? await Promise.all([
         listarCronologiaBiblicaParaReferencia({
           bookCode: contexto.reference.book.code,
@@ -158,10 +159,11 @@ export async function analizarPasaje(
           limit: 80,
         }),
       ])
-    : [undefined, [] as ConcordanciaResultado[]]
+    : [undefined, { scope: 'chapter' as const, results: [] as ConcordanciaResultado[] }]
 
   const chronologyEvidence = chronology?.events.length ? chronology : undefined
-  const concordanceEvidence = relatedConcordances.length ? relatedConcordances : undefined
+  const concordanceEvidence = concordanceBundle.results.length ? concordanceBundle.results : undefined
+  const concordanceScope = concordanceEvidence ? concordanceBundle.scope : undefined
 
   const estudio = obtenerEstudioInterno(query)
   if (estudio) {
@@ -178,6 +180,7 @@ export async function analizarPasaje(
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
       relatedConcordances: concordanceEvidence,
+      relatedConcordanceScope: concordanceScope,
     }
   }
 
@@ -189,6 +192,7 @@ export async function analizarPasaje(
       textualEvidence: textualEvidence ?? undefined,
       chronology: chronologyEvidence,
       relatedConcordances: concordanceEvidence,
+      relatedConcordanceScope: concordanceScope,
     }
   }
 
