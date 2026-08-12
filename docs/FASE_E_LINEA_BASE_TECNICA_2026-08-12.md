@@ -1,8 +1,8 @@
 # FASE E — Línea base técnica — 2026-08-12
 
-Estado: línea base inicial levantada sobre `main` después del cierre de FASE D.
+Estado: línea base inicial levantada sobre `main` después del cierre de FASE D; primer bloque seguro de confiabilidad y rendimiento en validación sobre Preview.
 
-Esta revisión es diagnóstica. No se modificaron RLS, grants, políticas, índices ni datos sensibles de Supabase durante el levantamiento.
+Esta revisión es diagnóstica. No se modificaron RLS, grants, políticas, índices ni datos sensibles de Supabase durante el levantamiento ni durante los ajustes seguros documentados aquí.
 
 ## 1. Aplicación y build
 
@@ -16,23 +16,36 @@ Esta revisión es diagnóstica. No se modificaron RLS, grants, políticas, índi
 
 ## 2. Confiabilidad de dependencias y CI
 
-Hallazgo de prioridad alta: GitHub Actions no puede ejecutar una instalación reproducible con `npm ci`.
+### Hallazgo inicial — prioridad alta
+
+GitHub Actions no podía ejecutar una instalación reproducible con `npm ci`.
 
 Causa comprobada:
 
 - `package.json` incluye `framer-motion@^12.43.0`.
 - `package-lock.json` no fue actualizado cuando se añadió esa dependencia.
-- CI reporta faltantes `framer-motion@12.43.0`, `motion-dom@12.43.0` y `motion-utils@12.39.0`.
-- `framer-motion` sí es dependencia funcional del Calendario aprobado; no debe retirarse como atajo para reparar CI.
+- CI reportaba faltantes `framer-motion@12.43.0`, `motion-dom@12.43.0` y `motion-utils@12.39.0`.
+- `framer-motion` sí es dependencia funcional del Calendario aprobado; no debía retirarse como atajo para reparar CI.
 
-Consecuencia: Vercel compila actualmente, pero GitHub CI falla antes de lint/build. El lockfile debe regenerarse de forma reproducible conservando Framer Motion.
+### Resolución aplicada en Preview
+
+El lockfile fue regenerado mediante npm en un runner limpio de GitHub con Node 24, sin editar manualmente las resoluciones del árbol de dependencias.
+
+Validación ejecutada antes de guardar el resultado:
+
+- `npm install --package-lock-only --ignore-scripts`: **OK**;
+- `npm ci --ignore-scripts`: **OK**;
+- commit resultante: `90c01fc2a70c49f45b1d6fc5a2ff05a72259f58e`;
+- el workflow temporal usado únicamente para regenerar y verificar el lockfile se eliminó a sí mismo antes de guardar el commit final, por lo que no permanece como infraestructura del proyecto.
+
+Con esto queda resuelta la desincronización de `package.json` / `package-lock.json`. La validación final del workflow general `ci-temporal.yml` se ejecuta sobre el mismo lockfile mediante el siguiente commit normal de la rama.
 
 ## 3. Pruebas automatizadas
 
 - `package.json` no define script `test`.
 - El directorio `tests/` contiene actualmente un fixture SQL histórico de Abdías.
-- El workflow general `ci-temporal.yml` valida instalación, lint informativo y build, pero actualmente se detiene en `npm ci` por el lockfile desincronizado.
-- FASE E deberá evolucionar esta base hacia pruebas de regresión reproducibles sin rediseñar módulos ya aprobados.
+- El workflow general `ci-temporal.yml` valida instalación, lint informativo y build.
+- La barrera previa de `npm ci` quedó corregida en Preview; el siguiente nivel de FASE E es convertir el CI recuperado en una base de regresión gradual sin rediseñar módulos ya aprobados.
 
 ## 4. Supabase — tamaño y actividad
 
@@ -85,8 +98,8 @@ No se revocaron permisos ni se reescribieron políticas durante este bloque.
 | Impacto | Hallazgo | Tipo | Acción |
 |---|---|---|---|
 | Alto | función de sincronización de calendarios con privilegio amplio | Seguridad sensible | presentar plan + reversión antes de tocar |
-| Alto | `package-lock.json` desincronizado; CI roto | Confiabilidad | regenerar lock conservando Framer Motion |
-| Medio | tormenta de llamadas duplicadas al contador de Avisos | Rendimiento seguro | deduplicar cliente y volver a medir |
+| Alto | `package-lock.json` desincronizado; CI bloqueado en `npm ci` | Confiabilidad | **resuelto en Preview; validar CI general** |
+| Medio | tormenta de llamadas duplicadas al contador de Avisos | Rendimiento seguro | **deduplicado en Preview; volver a medir tras promoción** |
 | Medio | RLS `auth_rls_initplan` / políticas permisivas múltiples | Seguridad/rendimiento sensible | analizar por tabla y migrar solo con plan |
 | Medio | `get_next_visible_calendar_item()` ~17 ms medio | Rendimiento | revisar frecuencia y plan de ejecución antes de optimizar |
 | Medio | falta de suite general de regresión | Pruebas | construir cobertura gradual en FASE E |
@@ -94,12 +107,19 @@ No se revocaron permisos ni se reescribieron políticas durante este bloque.
 
 ## 8. Primer bloque seguro
 
-Se inicia con deduplicación compartida del contador de Avisos:
+El primer bloque seguro agrupa dos correcciones sin cambios de permisos ni datos:
 
-- una sola solicitud en vuelo para `get_unread_publications_count()`;
-- un único ciclo global de polling por documento;
-- colapso de ráfagas mount/focus/visibility mediante ventana corta de deduplicación;
-- actualización forzada después de marcar una publicación como leída;
-- sin cambiar el significado ni la apariencia del badge.
+1. Deduplicación compartida del contador de Avisos:
+   - una sola solicitud en vuelo para `get_unread_publications_count()`;
+   - un único ciclo global de polling por documento;
+   - colapso de ráfagas mount/focus/visibility mediante ventana corta de deduplicación;
+   - actualización forzada después de marcar una publicación como leída;
+   - sin cambiar el significado ni la apariencia del badge.
 
-La corrección del lockfile es el siguiente ajuste de confiabilidad. Las modificaciones de seguridad/RLS/grants permanecen bloqueadas hasta presentar alcance, impacto y reversión.
+2. Recuperación de instalación reproducible:
+   - `package-lock.json` regenerado por npm conservando Framer Motion;
+   - instalación congelada con `npm ci --ignore-scripts` verificada en runner limpio;
+   - sin reducir ni sustituir la funcionalidad de transiciones del Calendario;
+   - sin dejar workflows temporales en el árbol final.
+
+Las modificaciones de seguridad/RLS/grants permanecen bloqueadas hasta presentar alcance, impacto y reversión.
