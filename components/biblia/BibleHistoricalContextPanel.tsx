@@ -29,13 +29,14 @@ function licenseLabel(url: string | null) {
   return 'Licencia verificada'
 }
 
-export default function BibleHistoricalContextPanel({
-  pasaje,
-  modo,
-}: {
-  pasaje: string
-  modo: Modo
-}) {
+function languageLabel(value: string) {
+  if (value === 'hebrew') return 'Hebreo'
+  if (value === 'aramaic') return 'Arameo'
+  if (value === 'greek') return 'Griego koiné'
+  return value
+}
+
+export default function BibleHistoricalContextPanel({ pasaje, modo }: { pasaje: string; modo: Modo }) {
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const [cargando, setCargando] = useState(true)
 
@@ -49,22 +50,13 @@ export default function BibleHistoricalContextPanel({
         if (activo) setResultado(data)
       })
       .catch(() => {
-        if (activo) {
-          setResultado({
-            status: 'empty',
-            referenceLabel: pasaje,
-            version: 'no-disponible',
-            fragments: [],
-          })
-        }
+        if (activo) setResultado(null)
       })
       .finally(() => {
         if (activo) setCargando(false)
       })
 
-    return () => {
-      activo = false
-    }
+    return () => { activo = false }
   }, [pasaje])
 
   const palette = {
@@ -88,7 +80,7 @@ export default function BibleHistoricalContextPanel({
     },
   }[modo]
 
-  let historicalPanel
+  let historicalPanel = null
 
   if (cargando) {
     historicalPanel = (
@@ -99,24 +91,7 @@ export default function BibleHistoricalContextPanel({
         </div>
       </section>
     )
-  } else if (!resultado || resultado.status !== 'available') {
-    historicalPanel = (
-      <section className={`rounded-3xl border p-5 ${palette.shell}`} aria-labelledby="biblia-contexto-title">
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-700">
-            <Landmark className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-amber-700">Capa de evidencia</p>
-            <h2 id="biblia-contexto-title" className="mt-1 text-base font-bold">Contexto histórico verificado</h2>
-            <p className={`mt-1 text-xs leading-5 ${palette.muted}`}>
-              Aún no hay contexto aprobado para {resultado?.referenceLabel || pasaje}. La cobertura inicial incluye Roma en Romanos y Hechos 28.
-            </p>
-          </div>
-        </div>
-      </section>
-    )
-  } else {
+  } else if (resultado?.status === 'available') {
     historicalPanel = (
       <section className={`rounded-3xl border p-4 sm:p-5 ${palette.shell}`} aria-labelledby="biblia-contexto-title">
         <div className="flex items-start gap-3">
@@ -126,9 +101,7 @@ export default function BibleHistoricalContextPanel({
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-black uppercase tracking-[0.15em] text-amber-700">Evidencia revisada</p>
             <h2 id="biblia-contexto-title" className="mt-1 text-base font-bold">Contexto histórico verificado</h2>
-            <p className={`mt-1 text-xs leading-5 ${palette.muted}`}>
-              Resultado para {resultado.referenceLabel}. Se muestra separado y no se envía al proveedor de IA.
-            </p>
+            <p className={`mt-1 text-xs leading-5 ${palette.muted}`}>Resultado para {resultado.referenceLabel}.</p>
           </div>
           <BadgeCheck className="h-5 w-5 shrink-0 text-emerald-600" aria-label="Contenido aprobado" />
         </div>
@@ -150,9 +123,7 @@ export default function BibleHistoricalContextPanel({
                   </span>
                 )}
               </div>
-
               <p className="mt-3 text-sm leading-6">{fragment.content}</p>
-
               <div className={`mt-4 rounded-xl border p-3 ${palette.source}`}>
                 <div className="flex items-start gap-2">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
@@ -160,17 +131,9 @@ export default function BibleHistoricalContextPanel({
                     <p className="font-bold">{fragment.source.name}</p>
                     <p>{fragment.source.attribution}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-white/70 px-2 py-0.5 font-semibold ring-1 ring-slate-300/60">
-                        {licenseLabel(fragment.source.licenseUrl)}
-                      </span>
-                      <a
-                        href={fragment.sourceLocator}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-center font-sans text-sm font-bold leading-none text-amber-700 sm:w-auto"
-                      >
-                        Abrir fuente
-                        <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span className="rounded-full bg-white/70 px-2 py-0.5 font-semibold ring-1 ring-slate-300/60">{licenseLabel(fragment.source.licenseUrl)}</span>
+                      <a href={fragment.sourceLocator} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-xs font-bold text-amber-700">
+                        Abrir fuente <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       </a>
                     </div>
                   </div>
@@ -183,6 +146,58 @@ export default function BibleHistoricalContextPanel({
         <div className={`mt-4 flex items-center gap-2 border-t border-amber-500/25 pt-3 text-[10px] font-medium ${palette.muted}`}>
           <Fingerprint className="h-3.5 w-3.5" aria-hidden="true" />
           Versión del paquete: <code className="font-mono">{resultado.version}</code>
+        </div>
+      </section>
+    )
+  } else if (resultado?.status === 'editorial' && resultado.editorialContext) {
+    const context = resultado.editorialContext
+    const sections = [
+      ['Contexto histórico', context.historicalContext],
+      ['Contexto judío', context.jewishContext],
+      ['Contexto literario', context.literaryContext],
+      ['Intención comunicativa', context.authorialIntent],
+      ['Precauciones interpretativas', context.interpretiveCautions],
+    ].filter(([, value]) => Boolean(value?.trim()))
+
+    historicalPanel = (
+      <section className={`rounded-3xl border p-4 sm:p-5 ${palette.shell}`} aria-labelledby="biblia-contexto-title">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-700">
+            <Landmark className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-amber-700">Contexto canónico</p>
+            <h2 id="biblia-contexto-title" className="mt-1 text-base font-bold">{context.title}</h2>
+            {context.bookLanguages.length > 0 && (
+              <p className={`mt-1 text-xs leading-5 ${palette.muted}`}>Idioma(s) original(es): {context.bookLanguages.map(languageLabel).join(' y ')}</p>
+            )}
+          </div>
+        </div>
+
+        {context.summary?.trim() && <p className="mt-4 text-sm leading-6">{context.summary}</p>}
+        {sections.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {sections.map(([label, value]) => (
+              <article key={label} className={`rounded-2xl border p-4 ${palette.card}`}>
+                <h3 className="text-xs font-black uppercase tracking-wide text-amber-700">{label}</h3>
+                <p className="mt-2 text-sm leading-6">{value}</p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {(context.places.length > 0 || context.peopleGroups.length > 0 || context.keyTerms.length > 0) && (
+          <div className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${palette.source}`}>
+            {context.places.length > 0 && <p><strong>Lugares:</strong> {context.places.join(', ')}</p>}
+            {context.peopleGroups.length > 0 && <p><strong>Pueblos:</strong> {context.peopleGroups.join(', ')}</p>}
+            {context.keyTerms.length > 0 && <p><strong>Términos clave:</strong> {context.keyTerms.join(', ')}</p>}
+          </div>
+        )}
+
+        <div className={`mt-4 border-t border-amber-500/25 pt-3 text-[10px] leading-5 ${palette.muted}`}>
+          <p className="font-semibold">{context.attribution}</p>
+          <p>{context.disclosure}</p>
+          <p className="mt-1 font-mono">Paquete {resultado.version}</p>
         </div>
       </section>
     )
