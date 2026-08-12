@@ -202,3 +202,95 @@ export async function buscarConcordanciasBiblicas(
       .sort((a, b) => b.score - a.score),
   }
 }
+
+export async function buscarConcordanciasParaReferencia({
+  bookCode,
+  chapter,
+  verse,
+  limit = 80,
+}: {
+  bookCode: string
+  chapter: number
+  verse?: number | null
+  limit?: number
+}): Promise<ConcordanciaResultado[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const safeLimit = Math.min(Math.max(limit, 1), 100)
+  let anchorQuery = (supabase as any)
+    .from('biblical_concordance_occurrences')
+    .select('term_id, relevance')
+    .eq('book_code', bookCode)
+    .eq('chapter', chapter)
+    .eq('enabled', true)
+    .eq('review_status', 'approved')
+    .order('relevance', { ascending: false })
+    .limit(24)
+
+  if (verse) anchorQuery = anchorQuery.eq('verse', verse)
+
+  const { data: anchors, error: anchorError } = await anchorQuery
+  if (anchorError || !anchors?.length) {
+    if (anchorError) console.error('[biblical-concordance] No se pudieron cargar concordancias de referencia:', anchorError)
+    return []
+  }
+
+  const anchorRelevance = new Map<string, number>()
+  for (const row of anchors) {
+    anchorRelevance.set(row.term_id, Math.max(anchorRelevance.get(row.term_id) ?? 0, Number(row.relevance) || 0))
+  }
+  const termIds = Array.from(anchorRelevance.keys()).slice(0, 8)
+
+  const [{ data: terms, error: termError }, { data: occurrences, error: occurrenceError }] = await Promise.all([
+    (supabase as any)
+      .from('biblical_concordance_terms')
+      .select('id, canonical_term, description')
+      .in('id', termIds)
+      .eq('enabled', true)
+      .eq('review_status', 'approved'),
+    (supabase as any)
+      .from('biblical_concordance_occurrences')
+      .select('term_id, book_code, chapter, verse, reference_label, verse_excerpt, relevance, relation_kind')
+      .in('term_id', termIds)
+      .eq('enabled', true)
+      .eq('review_status', 'approved')
+      .order('relevance', { ascending: false })
+      .limit(safeLimit),
+  ])
+
+  if (termError || occurrenceError) {
+    console.error('[biblical-concordance] No se pudieron resolver concordancias relacionadas:', termError ?? occurrenceError)
+    return []
+  }
+
+  const grouped = new Map<string, ConcordanciaResultado>()
+  for (const term of terms ?? []) {
+    grouped.set(term.id, {
+      termId: term.id,
+      term: term.canonical_term,
+      description: term.description,
+      score: anchorRelevance.get(term.id) ?? 0,
+      matches: [],
+    })
+  }
+
+  for (const occurrence of occurrences ?? []) {
+    const group = grouped.get(occurrence.term_id)
+    if (!group || group.matches.length >= 12) continue
+    group.matches.push({
+      reference: occurrence.reference_label,
+      bookCode: occurrence.book_code,
+      chapter: occurrence.chapter,
+      verse: occurrence.verse,
+      excerpt: occurrence.verse_excerpt,
+      relevance: occurrence.relevance,
+      relationKind: occurrence.relation_kind,
+    })
+  }
+
+  return Array.from(grouped.values())
+    .filter(result => result.matches.length > 0)
+    .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term, 'es'))
+}
