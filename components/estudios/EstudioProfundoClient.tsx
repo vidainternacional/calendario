@@ -32,7 +32,6 @@ import ChronologyMapPanel from '@/components/estudios/ChronologyMapPanel'
 
 const SECTIONS: { key: keyof EstudioResultado; label: string; shortLabel: string }[] = [
   { key: 'comparacion_versiones', label: 'Traducción en español', shortLabel: 'Español' },
-  { key: 'traduccion_interpretativa', label: 'Síntesis del pasaje', shortLabel: 'Síntesis' },
   { key: 'contexto_historico', label: 'Contexto histórico y judío', shortLabel: 'Contexto' },
   { key: 'analisis_linguistico', label: 'Idioma y análisis lingüístico', shortLabel: 'Lingüística' },
   { key: 'que_quiso_comunicar', label: 'Qué quiso comunicar el texto', shortLabel: 'Mensaje' },
@@ -90,6 +89,15 @@ export default function EstudioProfundoClient({
     if (!isStudyResult) return []
     const items: DashboardItem[] = []
 
+    if (state.textualEvidence) {
+      items.push({
+        id: 'evidencia-textual',
+        label: 'Texto original y análisis palabra por palabra',
+        shortLabel: 'Original',
+        content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><TextualEvidencePanel evidence={state.textualEvidence} /></div>,
+      })
+    }
+
     const spanish = sectionsWithContent.find(section => section.key === 'comparacion_versiones')
     if (spanish) {
       const content = String(state.resultado[spanish.key] || '').trim()
@@ -102,35 +110,35 @@ export default function EstudioProfundoClient({
       })
     }
 
-    if (state.textualEvidence) {
-      items.push({
-        id: 'evidencia-textual',
-        label: 'Texto original y análisis palabra por palabra',
-        shortLabel: 'Original',
-        content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><TextualEvidencePanel evidence={state.textualEvidence} /></div>,
-      })
-    }
+    const orderedKeys: Array<keyof EstudioResultado> = [
+      'contexto_historico',
+      'analisis_linguistico',
+      'que_quiso_comunicar',
+      'que_no_quiso_decir',
+      'explicacion',
+      'reflexion',
+    ]
 
-    sectionsWithContent
-      .filter(section => section.key !== 'comparacion_versiones')
-      .forEach(section => {
-        const content = String(state.resultado[section.key] || '').trim()
+    for (const key of orderedKeys) {
+      const section = sectionsWithContent.find(item => item.key === key)
+      if (!section) continue
+      const content = String(state.resultado[section.key] || '').trim()
+      items.push({
+        id: String(section.key),
+        label: section.label,
+        shortLabel: section.shortLabel,
+        plainText: content,
+        content: <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{content}</div>,
+      })
+
+      if (key === 'contexto_historico' && state.chronology) {
         items.push({
-          id: String(section.key),
-          label: section.label,
-          shortLabel: section.shortLabel,
-          plainText: content,
-          content: <div className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700">{content}</div>,
+          id: 'cronologia-mapa',
+          label: 'Cronología y mapa',
+          shortLabel: 'Mapa',
+          content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><ChronologyMapPanel bundle={state.chronology} /></div>,
         })
-      })
-
-    if (state.chronology) {
-      items.push({
-        id: 'cronologia-mapa',
-        label: 'Cronología y mapa',
-        shortLabel: 'Mapa',
-        content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><ChronologyMapPanel bundle={state.chronology} /></div>,
-      })
+      }
     }
 
     return items
@@ -140,6 +148,8 @@ export default function EstudioProfundoClient({
     () => dashboardItems.find(item => item.id === activeSection) ?? null,
     [activeSection, dashboardItems]
   )
+
+  const relatedConcordances = isStudyResult ? (state.relatedConcordances ?? []) : []
 
   useEffect(() => {
     obtenerHistorial().then(setHistorial).catch(() => setHistorial([]))
@@ -221,11 +231,6 @@ export default function EstudioProfundoClient({
     setActiveSection(current => current === id ? null : id)
   }
 
-  const openConcordance = () => {
-    setActiveSection(null)
-    setActiveTab('concordance')
-  }
-
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
       <form id="estudio-form" action={formAction} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -268,7 +273,7 @@ export default function EstudioProfundoClient({
             </div>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-2 px-1">
+          <div className="grid grid-cols-3 gap-2 px-1">
             {dashboardItems.map(item => {
               const active = activeSection === item.id
               return (
@@ -277,10 +282,10 @@ export default function EstudioProfundoClient({
                   type="button"
                   onClick={() => toggleSection(item.id)}
                   aria-expanded={active}
-                  className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-3.5 text-[11px] font-bold transition sm:min-h-10 sm:px-4 sm:text-xs ${active ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
+                  className={`inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-2xl border px-2 text-[11px] font-bold leading-tight transition sm:min-h-12 sm:text-xs ${active ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
                 >
-                  {item.shortLabel}
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${active ? 'rotate-180' : ''}`} />
+                  <span>{item.shortLabel}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${active ? 'rotate-180' : ''}`} />
                 </button>
               )
             })}
@@ -288,19 +293,24 @@ export default function EstudioProfundoClient({
               type="button"
               onClick={() => toggleSection('notas')}
               aria-expanded={activeSection === 'notas'}
-              className={`inline-flex min-h-9 items-center gap-1 rounded-full border px-3.5 text-[11px] font-bold transition sm:min-h-10 sm:px-4 sm:text-xs ${activeSection === 'notas' ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
+              className={`inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-2xl border px-2 text-[11px] font-bold transition sm:min-h-12 sm:text-xs ${activeSection === 'notas' ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}
             >
               Notas
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeSection === 'notas' ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${activeSection === 'notas' ? 'rotate-180' : ''}`} />
             </button>
-            <button
-              type="button"
-              onClick={openConcordance}
-              className="relative inline-flex min-h-9 items-center gap-1.5 overflow-hidden rounded-full border border-amber-300 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-3.5 text-[11px] font-black text-amber-800 shadow-[0_0_18px_rgba(245,158,11,0.22)] ring-1 ring-amber-100 transition hover:shadow-[0_0_24px_rgba(245,158,11,0.34)] sm:min-h-10 sm:px-4 sm:text-xs"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              Concordancias
-            </button>
+
+            {relatedConcordances.length > 0 && (
+              <button
+                type="button"
+                onClick={() => toggleSection('concordancias')}
+                aria-expanded={activeSection === 'concordancias'}
+                className={`col-span-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border px-4 text-xs font-black transition sm:min-h-12 ${activeSection === 'concordancias' ? 'border-amber-400 bg-amber-500 text-white shadow-[0_0_22px_rgba(245,158,11,0.30)]' : 'border-amber-300 bg-gradient-to-r from-amber-50 via-white to-amber-50 text-amber-800 shadow-[0_0_18px_rgba(245,158,11,0.20)] ring-1 ring-amber-100'}`}
+              >
+                <Sparkles className="h-4 w-4" />
+                Concordancias relacionadas
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeSection === 'concordancias' ? 'rotate-180' : ''}`} />
+              </button>
+            )}
           </div>
 
           {activeItem && (
@@ -336,27 +346,40 @@ export default function EstudioProfundoClient({
               </div>
             </article>
           )}
-        </section>
-      )}
 
-      {!isPending && activeTab === 'concordance' && !isConcordanceResult && (
-        <section className="overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-[0_0_28px_rgba(245,158,11,0.16)]">
-          <div className="p-5 text-center sm:p-6">
-            <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-amber-100 text-amber-700 shadow-inner"><Sparkles className="h-5 w-5" /></span>
-            <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-amber-700">Concordancias</p>
-            <h2 className="mt-1 text-lg font-bold text-slate-950">Busca una palabra, tema o concepto</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Usa el mismo buscador de arriba. Los resultados de concordancia aparecerán aquí dentro del Centro de Estudio.</p>
-            <button type="button" onClick={() => setActiveTab('study')} className="mt-4 inline-flex min-h-10 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm">Volver al estudio</button>
-          </div>
+          {activeSection === 'concordancias' && relatedConcordances.length > 0 && (
+            <section className="space-y-3" aria-label={`Concordancias relacionadas con ${state.pasaje}`}>
+              <header className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-[0_0_24px_rgba(245,158,11,0.14)]">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Concordancias relacionadas</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-950">Temas vinculados a {state.pasaje}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Relaciones aprobadas del índice bíblico para esta referencia y otros pasajes donde aparecen esos mismos temas.</p>
+              </header>
+              {relatedConcordances.map(result => (
+                <article key={result.termId} className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">
+                  <header className="border-b border-amber-100 bg-amber-50/40 px-5 py-4">
+                    <h4 className="text-base font-bold text-slate-950">{result.term}</h4>
+                    {result.description && <p className="mt-1 text-sm leading-6 text-slate-500">{result.description}</p>}
+                  </header>
+                  <div className="divide-y divide-slate-100">
+                    {result.matches.map(match => (
+                      <Link key={`${result.termId}-${match.bookCode}-${match.chapter}-${match.verse}-${match.relationKind}`} href={`/biblia?book=${encodeURIComponent(match.bookCode)}&chapter=${match.chapter}&verse=${match.verse}`} className="block px-5 py-4 hover:bg-amber-50/40">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h5 className="font-bold text-slate-900">{match.reference}</h5>
+                          <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-800">{RELATION_LABELS[match.relationKind]}</span>
+                        </div>
+                        {match.excerpt && <p className="mt-2 text-sm leading-6 text-slate-600">{match.excerpt}</p>}
+                      </Link>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </section>
+          )}
         </section>
       )}
 
       {!isPending && isConcordanceResult && activeTab === 'concordance' && (
         <section className="space-y-4" aria-label="Resultados de concordancias">
-          <div className="flex flex-wrap justify-center gap-2 px-1">
-            <button type="button" onClick={() => setActiveTab('study')} className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-600 shadow-sm">Estudio</button>
-            <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-amber-300 bg-gradient-to-r from-amber-100 via-white to-amber-100 px-4 text-xs font-black text-amber-800 shadow-[0_0_20px_rgba(245,158,11,0.25)] ring-1 ring-amber-100"><Sparkles className="h-3.5 w-3.5" /> Concordancias</button>
-          </div>
           <header className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-[0_0_28px_rgba(245,158,11,0.14)]">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Concordancias internas</p>
             <h2 className="mt-1 text-xl font-bold text-slate-950">Resultados para “{state.query}”</h2>
@@ -381,13 +404,6 @@ export default function EstudioProfundoClient({
               </div>
             </article>
           ))}
-        </section>
-      )}
-
-      {state.status === 'success' && state.kind !== activeTab && activeTab !== 'concordance' && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-sm leading-6 text-slate-500">La última búsqueda produjo un resultado de {state.kind === 'study' ? 'Estudio' : 'Concordancias'}.</p>
-          <button type="button" onClick={() => setActiveTab(state.kind)} className="mt-3 min-h-11 rounded-xl bg-slate-900 px-5 text-sm font-bold text-white">Ver resultado</button>
         </section>
       )}
 
