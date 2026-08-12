@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-11
+Última actualización: 2026-08-12
 
-Fase / prioridad activa: **FASE D — COBERTURA BÍBLICA INTEGRAL: DATOS ANTES DE UX**
+Fase / prioridad activa: **FASE D — CHECKLIST FINAL DE COBERTURA BÍBLICA**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -24,7 +24,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 4. Los hallazgos fuera de alcance se documentan para una fase posterior, sin ampliar el bloque activo.
 5. No borrar datos, migraciones o estructuras de una fase pausada cuando basta con desactivar su experiencia visible.
 6. Los cambios de permisos, roles, liderazgo o datos sensibles requieren una decisión explícita y recuperación definida.
-7. Durante la prioridad activa de cobertura bíblica, **no iterar UX, navegación o presentación salvo que sea indispensable para comprobar datos**. Primero se completa y audita la información; después se diseña la experiencia final.
+7. Durante el checklist final de cobertura bíblica, **no iterar UX, navegación o presentación salvo que sea indispensable para corregir un fallo de datos comprobado**.
 8. Una capa bíblica ausente no debe sustituirse por texto explicando que falta. Si no existe información aprobada, la capa simplemente no se muestra.
 
 ## Estado de fases
@@ -34,7 +34,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE A | Experiencia profesional mobile first | COMPLETADA |
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
-| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **ACTIVA — COBERTURA BÍBLICA INTEGRAL** |
+| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **ACTIVA — CHECKLIST FINAL DE COBERTURA** |
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | PENDIENTE |
 | FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
 
@@ -68,48 +68,144 @@ Estado desde 2026-08-07: **PAUSADO POR DECISIÓN DEL USUARIO**.
 
 Se conservan tablas, RLS, Centro de Análisis, datos, reportes, onboarding y Ayuda Solidaria, pero no debe ejecutarse telemetría exclusiva del piloto ni reactivarse P1/P2/P3 mientras esta prioridad siga en pausa.
 
-# FASE D — ACTIVA — COBERTURA BÍBLICA INTEGRAL: DATOS ANTES DE UX
+# FASE D — ACTIVA — CHECKLIST FINAL DE COBERTURA BÍBLICA
 
-El 2026-08-11 el usuario autorizó explícitamente completar toda la información bíblica faltante y auditarla antes de continuar con presentación, navegación o diseño del Centro de Estudio.
+El 2026-08-11 el usuario autorizó explícitamente completar toda la información bíblica faltante y auditarla antes de continuar con presentación, navegación o diseño del Centro de Estudio. La auditoría técnica integral terminó el 2026-08-12 y la prioridad pasa a validación funcional mediante checklist del usuario.
 
-## Estado preservado de FASE D
+## Cobertura final auditada — 2026-08-12
 
-- Bloques 1–4 permanecen cerrados y no deben reiniciarse.
-- Los 66 libros y 1,189 capítulos cuentan con contexto histórico/cultural base ya incorporado.
-- El Nuevo Testamento textual completo ya fue importado y validado con TAGNT.
-- TAHOT del Antiguo Testamento fue verificado como fuente aprobada; existen importaciones parciales y pilotos previos.
-- El piloto cronológico/geográfico `rome-pilot-v1` permanece publicado y aprobado con 1 lugar, 1 periodo, 2 eventos y 2 relaciones.
-- Roma ya está conectada a Biblia → Estudio y Estudio Profundo como prueba de infraestructura.
-- El rediseño visual posterior —dashboard, acordeones, `Ver todo`, mapa integrado y unificación de superficies— queda **congelado en Preview** hasta cerrar datos.
-- La rama `preview/fase-d-cobertura-biblica-universal` conserva el trabajo reproducible de Daniel y el soporte multilingüe hebreo/arameo preparado para validación.
+### Canon y contexto
 
-## Objetivo activo autorizado
+- 66 libros aprobados y habilitados.
+- 1,189 capítulos canónicos.
+- 0 capítulos sin cobertura contextual aprobada.
+- Se conserva contexto histórico, cultural/judío, literario, intención autoral, reflexión teológica y cautelas interpretativas según las unidades editoriales disponibles.
 
-Dejar la base bíblica en estado de **pruebas finales mediante checklist**, completando y auditando primero toda la información que pueda obtenerse legalmente y de fuentes aprobadas.
+### Texto original y análisis palabra por palabra
 
-### Orden obligatorio
+Fuente principal: STEPBible Data (`STEPBible-Data@b86d26cdb1f51729e73b5b4eb7f7ccadc5dfba39`, CC BY 4.0).
 
-1. Levantar matriz real de cobertura de los 66 libros por capa de información.
-2. Cerrar Daniel como caso de control multilingüe hebreo/arameo, incluyendo el cambio interno de idioma de Daniel 2:4.
-3. Generalizar el pipeline TAHOT y completar los libros faltantes del Antiguo Testamento sin importaciones manuales libro por libro.
-4. Verificar para AT y NT: texto original, idioma, transliteración cuando la fuente la provea, lema, morfología, identificadores léxicos, palabra por palabra, variantes y procedencia/hashes.
-5. Incorporar traducción literal de estudio únicamente cuando pueda derivarse/documentarse con rigor y licencia adecuada; nunca etiquetar una síntesis contextual como traducción literal.
-6. Mantener contextos histórico, cultural, judío, literario y teológico ya aprobados; auditar huecos reales sin fabricar contenido.
-7. Auditar traducciones españolas disponibles y sus licencias. **Resultado 2026-08-11:** los repositorios públicos `mrk214/bible-data-es-spa`, `thiagobodruk/biblia` y `xtiam57/church-utils` pueden servir como referencia de estructura, pero su disponibilidad pública no constituye evidencia suficiente de licencia de redistribución de RVR1960 o NVI. American Bible Society exige permiso escrito para integrar RVR1960 en aplicaciones/software; Biblica declara NVI protegida, no pública y no duplicable sin permiso. Por tanto, **NVI y RVR1960 no se importan completas sin autorización/licencia del titular**. Como fuente española libre aprobada para integración completa se admite **Reina-Valera 1909 (`spaRV1909`) de eBible.org**, declarada en dominio público y distribuida en formatos de desarrollador como USFM/USFX/SQL. La arquitectura debe conservar slots compatibles para RVR1960/NVI cuando exista permiso.
-8. Completar cronología y geografía únicamente con datos verificables y fuentes autorizadas. Distinguir certeza, aproximación y debate; no dibujar rutas históricas inventadas.
-9. Auditar el motor de Estudio para que devuelva solo capas con contenido real. Si una capa no existe, no mostrar texto de relleno ni “próximamente”.
-10. Mantener fuentes, versión, licencia, hash y trazabilidad por dataset/importación.
-11. Verificar integridad, idempotencia, duplicados, conteos, permisos existentes y recuperación server-only. No modificar RLS sensible sin plan explícito y aprobación previa.
-12. Ejecutar pruebas de muestra en Pentateuco, históricos, poesía, profetas mayores/menores, Evangelios, Hechos, cartas y Apocalipsis.
-13. Documentar cobertura final y generar un checklist de pruebas para el usuario.
+- 31,104 segmentos textuales aprobados sobre 31,103 referencias distintas.
+- 22,878 segmentos hebreos.
+- 268 segmentos arameos.
+- 7,958 segmentos griegos.
+- 0 segmentos sin transliteración.
+- Daniel 2:4 conserva correctamente dos segmentos dentro de la misma referencia: hebreo + arameo.
+- 610,657 componentes/ocurrencias morfológicas.
+- 0 ocurrencias huérfanas.
+- 0 ocurrencias sin transliteración.
+- 8 componentes sin código morfológico; todos son conectores ortográficos maqaf (`־`, `H9014`, `token_kind=connector`) y no deben recibir morfología inventada.
+- 0 duplicados funcionales de textos u ocurrencias.
 
-## Fuera de alcance hasta cerrar datos
+### Léxico y glosas
+
+- 16,946 entradas léxicas aprobadas.
+- 0 entradas sin lema.
+- 0 entradas sin glosa fuente.
+- 5,464 entradas cuentan actualmente con glosa española editorial aprobada, concentradas principalmente en la capa griega/NT.
+- El hebreo/arameo conserva glosa fuente trazable, pero **no existe en la fuente aprobada una traducción española universal equivalente**. No se generará una traducción masiva opaca solo para rellenar la interfaz.
+- La interfaz debe omitir la glosa española cuando no exista una traducción editorial aprobada.
+
+### Traducción literal de estudio
+
+- Los 7,958 segmentos griegos/NT cuentan con `literal_translation_es` aprobada.
+- El AT no recibe una “traducción literal” fabricada a partir de una síntesis contextual o de una traducción bíblica publicada.
+- Si en el futuro se incorpora una capa literal española del hebreo/arameo, deberá tener procedencia, metodología y revisión propias.
+
+### Traducciones españolas
+
+- **Reina-Valera 1909 (`spaRV1909`)**: importada y aprobada como traducción española de dominio público.
+- 31,084 versículos con texto real visibles.
+- 0 textos vacíos visibles.
+- Los marcadores de versificación sin contenido permanecen deshabilitados y no se presentan como versículos vacíos.
+- **NVI**: slot preparado, sin texto, `restricted/pending`, pendiente de licencia del titular.
+- **RVR1960**: slot preparado, sin texto, `restricted/pending`, pendiente de autorización/licencia del titular.
+- No importar NVI/RVR1960 completas mientras no exista permiso verificable.
+
+### Variantes textuales
+
+- 9,326 variantes textuales aprobadas y trazadas entre AT/NT según la fuente disponible.
+- 0 hashes inválidos detectados en la tabla de variantes.
+
+### Geografía bíblica
+
+- 1,343 lugares visibles/aprobados en total, incluyendo el piloto de Roma y la capa de OpenBible.info.
+- 8,742 relaciones lugar↔versículo aprobadas.
+- 5,616 versículos distintos con relación geográfica explícita.
+- La ausencia de un lugar para un versículo/libro no se sustituye con geografía inventada.
+- Se conserva certeza/precisión y alternativas de identificación cuando la fuente las ofrece.
+
+### Cronología
+
+- El piloto visible de Roma conserva 2 eventos aprobados y sirve como prueba funcional.
+- 450 eventos narrativos Theographic permanecen **staged/deshabilitados** con 17,570 relaciones evento↔versículo mientras no se localice/audite su presentación final.
+- 0 fechas absolutas dudosas de Theographic se exponen como hechos.
+- Los eventos staged pueden utilizar orden narrativo y referencias en una etapa posterior, pero no deben activarse con cronologías absolutas no verificadas.
+
+### Integridad, hashes y seguridad
+
+- 0 duplicados funcionales detectados en textos y ocurrencias.
+- 0 ocurrencias léxicas huérfanas.
+- 0 hashes inválidos en textos, ocurrencias, léxico, variantes, referencias geográficas y referencias cronológicas auditadas.
+- RLS activa en las tablas bíblicas principales.
+- `anon` no tiene grants directos sobre las tablas bíblicas auditadas.
+- Las funciones de importación TAHOT/OpenBible/Theographic auditadas no son ejecutables por `anon` ni `authenticated`.
+- Las tablas de concordancia conservan grants SQL amplios heredados para `authenticated`, pero RLS solo define políticas `SELECT`, por lo que no existe una política de escritura efectiva para clientes autenticados. El endurecimiento de grants redundantes se difiere a seguridad/FASE E salvo aprobación explícita para cambiar permisos.
+
+### Motor de Estudio
+
+Producción `main` incluye el paquete validado en `89a8855eaa38ca40fdf341e9fdaae4d407e3ce9d`.
+
+- Se eliminó el uso de síntesis contextual como sustituto de texto original/traducción.
+- Las capas textuales ausentes devuelven vacío y no deben renderizar tarjetas de “no disponible”, “próximamente” o equivalentes.
+- El resolver textual soporta referencias multilingües reales como Daniel 2:4.
+- La búsqueda de código en `main` no encontró frases residuales `no disponible`, `próximamente`, `aparecerá cuando` o `Seleccione un versículo` en las superficies auditadas.
+- Preview y producción compilaron correctamente con Next.js 16.2.10 y TypeScript; 34/34 páginas estáticas generadas.
+- Vercel no reportó errores de runtime en la comprobación final posterior al despliegue.
+
+## Muestras técnicas ya verificadas
+
+Las siguientes referencias tienen texto original, análisis palabra por palabra, RV1909 y contexto aprobados:
+
+- Génesis 1:1 — Pentateuco — hebreo.
+- Josué 1:1 — Históricos — hebreo.
+- Salmos 23:1 — Poesía — hebreo.
+- Isaías 6:1 — Profeta mayor — hebreo.
+- Daniel 2:4 — Profeta mayor/multilingüe — hebreo + arameo.
+- Jonás 1:1 — Profeta menor — hebreo.
+- Juan 3:16 — Evangelios — griego.
+- Hechos 28:16 — Hechos — griego.
+- Romanos 1:1 — Cartas — griego.
+- Apocalipsis 1:1 — Apocalipsis — griego.
+
+Geografía solo aparece en esas muestras cuando existe una relación real; por ejemplo Daniel 2:4 y Hechos 28:16 sí tienen referencias geográficas, mientras otras muestras no deben mostrar mapa/lugar si la fuente no los relaciona.
+
+# CHECKLIST FINAL ACTIVO — VALIDACIÓN DEL USUARIO
+
+No cerrar FASE D hasta completar este checklist en producción:
+
+1. **Génesis 1:1** — confirmar texto original hebreo, transliteración y análisis palabra por palabra; no debe aparecer una traducción literal española inventada si no existe.
+2. **Salmos 23:1** — confirmar hebreo, transliteración, morfología y contexto; no mostrar capas vacías.
+3. **Daniel 2:4** — confirmar que aparecen hebreo y arameo como segmentos reales de la misma referencia, sin mezclarlos ni sustituirlos por explicación de ausencia.
+4. **Jonás 1:1** — confirmar cobertura de profeta menor y análisis textual real.
+5. **Juan 3:16** — confirmar griego, transliteración, palabra por palabra, glosa española disponible y traducción literal de estudio.
+6. **Hechos 28:16** — confirmar texto griego y geografía cuando corresponda; el piloto de Roma debe continuar funcionando en Hechos 28 dentro de su rango aprobado.
+7. **Romanos 1** / **Romanos 1:1** — confirmar contexto y que Cronología/Mapa de Roma siga disponible según el piloto aprobado.
+8. **Apocalipsis 1:1** — confirmar cobertura textual y contextual del extremo final del canon.
+9. **Una referencia sin geografía** — confirmar que no aparece una tarjeta diciendo que el mapa “no está disponible”.
+10. **Una capa léxica sin glosa española AT** — confirmar que la interfaz muestra únicamente los datos reales (lema/transliteración/morfología/glosa fuente si la superficie la admite) y no fabrica una traducción española.
+11. **RV1909** — confirmar que puede leerse como traducción española completa disponible y que no aparecen versículos vacíos de versificación.
+12. **NVI/RVR1960** — confirmar que no se presenta su texto completo mientras estén pendientes de licencia.
+13. Recorrer Estudio con varias referencias y confirmar que no aparezcan mensajes tipo **“no disponible”**, **“próximamente”** o **“aparecerá cuando exista”** como sustituto de datos.
+14. Confirmar que no haya errores visibles, pantallas rotas o pérdida de navegación al cambiar entre referencias durante estas pruebas.
+
+## Fuera de alcance mientras el checklist esté activo
 
 - no seguir refinando acordeones, dashboard o navegación del Estudio;
 - no rediseñar Centro Pastoral ni Biblia → Notas;
+- no implementar todavía navegación especial entre ministerios, filtros de Avisos, recorrido interactivo, pronunciación/voz, Centro de Historia Bíblica o reorganización de notas; estos requisitos están documentados en `docs/REQUISITOS_DIFERIDOS_UX_2026-08-12.md`;
 - no abrir FASE E o FASE F;
-- no activar analytics de estudios todavía; el requisito está documentado para después de cerrar la base de datos;
-- no convertir datos aproximados en afirmaciones exactas;
+- no activar analytics de estudios todavía;
 - no importar traducciones con copyright sin licencia.
 
 # Requisito diferido — Centro de Estudio y analíticas
@@ -122,4 +218,4 @@ Después de cerrar cobertura y UX final, el Centro de Estudio debe evolucionar e
 
 # Siguiente punto autorizado
 
-Continuar exclusivamente con la auditoría y carga de cobertura bíblica integral descrita arriba. Al terminar, entregar al usuario un checklist único de pruebas. Solo después de validar ese checklist se reabre el trabajo de UX/navegación y se decide formalmente el cierre o siguiente bloque de FASE D.
+**Ejecutar exclusivamente el checklist final de cobertura bíblica con el usuario.** Corregir únicamente fallos comprobados de datos/recuperación derivados de ese checklist. Solo después de que el usuario valide el checklist se podrá actualizar este documento para reabrir UX/navegación y decidir formalmente el siguiente bloque de FASE D.
