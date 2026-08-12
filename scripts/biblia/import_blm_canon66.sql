@@ -30,11 +30,20 @@ with raw as (
   cross join lateral jsonb_array_elements(b->'chapters') c
   cross join lateral jsonb_array_elements(c->'chapter'->'content') v
   where v->>'type'='verse'
-), validated as (
-  select *,
-    count(*) over() total_verses,
-    count(distinct book_code) over() total_books
+), counts as (
+  select
+    count(*) total_verses,
+    count(distinct book_code) total_books,
+    count(distinct (book_code,chapter)) total_chapters,
+    count(*) filter(where btrim(verse_text)='') empty_verses
   from verses
+), validated as (
+  select v.*
+  from verses v cross join counts c
+  where c.total_verses=31103
+    and c.total_books=66
+    and c.total_chapters=1189
+    and c.empty_verses=0
 ), upserted as (
   insert into public.biblical_verse_texts(
     source_id,book_code,chapter,verse,language,original_text,normalized_text,transliteration,literal_translation_es,
@@ -54,7 +63,6 @@ with raw as (
       'canon_filter','VIDA-66','text_unmodified',true,'generated_by_ai',false
     )
   from validated
-  where total_verses=31103 and total_books=66 and btrim(verse_text)<>''
   on conflict(source_id,book_code,chapter,verse,language) do update set
     original_text=excluded.original_text,normalized_text=excluded.normalized_text,transliteration=excluded.transliteration,
     literal_translation_es=excluded.literal_translation_es,text_direction=excluded.text_direction,
