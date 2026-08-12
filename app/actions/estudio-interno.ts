@@ -8,6 +8,11 @@ import {
   type ConcordanciaResultado,
 } from '@/lib/estudios/biblical-concordance'
 import {
+  buscarLugarBiblico,
+  type LugarBiblicoBusqueda,
+  type SugerenciaLugarBiblico,
+} from '@/lib/estudios/biblical-place-search'
+import {
   getInternalBiblicalContext,
   type BiblicalContextBundle,
   type BiblicalContextUnit,
@@ -42,6 +47,8 @@ export type EstudioState =
       relatedConcordanceScope?: 'verse' | 'chapter' | 'section'
     }
   | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
+  | { status: 'place'; query: string; place: LugarBiblicoBusqueda }
+  | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[] }
   | { status: 'error'; error: string }
 
 function unirSecciones(...values: Array<string | null | undefined>) {
@@ -253,6 +260,14 @@ export async function analizarPasaje(
     }
   }
 
+  const placeSearch = await buscarLugarBiblico(query)
+  if (placeSearch?.kind === 'place') {
+    return { status: 'place', query, place: placeSearch.place }
+  }
+  if (placeSearch?.kind === 'suggestions') {
+    return { status: 'suggestions', query, suggestions: placeSearch.suggestions }
+  }
+
   const concordancias = await buscarConcordanciasBiblicas(query, 80)
   if (concordancias.results.length > 0) {
     return { status: 'success', kind: 'concordance', query, results: concordancias.results }
@@ -261,7 +276,7 @@ export async function analizarPasaje(
   const disponibles = referenciasInternasDisponibles().join(' y ')
   return {
     status: 'error',
-    error: `No encontramos contenido interno aprobado para “${query}”. Puede probar otra palabra, pregunta o referencia bíblica válida, o consultar ${disponibles}. No se utilizó IA ni se inventó información.`,
+    error: `No pudimos relacionar “${query}” con una referencia, lugar o tema aprobado. Pruebe con otra forma de escribirlo o con ${disponibles}.`,
   }
 }
 
