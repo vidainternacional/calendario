@@ -1,8 +1,6 @@
 # Requisitos diferidos de UX y Centro de Estudio — 2026-08-12
 
-Estos requisitos fueron confirmados por el usuario mientras la prioridad activa es **FASE D — Cobertura Bíblica Integral: datos antes de UX**.
-
-No deben implementarse durante el cierre de cobertura salvo cuando el requisito forme parte explícita del checklist activo. Se conservan aquí para retomarlos cuando `__VIDA_INTERNACIONAL.md` autorice nuevamente UX/navegación.
+Estos requisitos fueron confirmados por el usuario durante FASE D y se conservan para abrirse únicamente cuando `__VIDA_INTERNACIONAL.md` autorice su prioridad correspondiente.
 
 ## 1. Navegación entre ministerios
 
@@ -41,14 +39,16 @@ Requisitos:
 - incluir un paso guiado para activar las notificaciones y explicar qué mensajes de la congregación puede recibir;
 - no mostrar funciones que el rol no tenga autorizadas.
 
-## 4. Pronunciación del texto original
+## 4. Pronunciación del texto original — DIFERIDA POR DECISIÓN DEL USUARIO
 
-Para hebreo, arameo y griego, evaluar dos ayudas complementarias:
+No implementar todavía pronunciación/voz. El usuario decidió el 2026-08-12 dejar esta función para después hasta definir si se utilizará y cuál será la metodología adecuada.
+
+Si se retoma, para hebreo, arameo y griego se podrán evaluar:
 
 - guía de pronunciación legible junto a la transliteración;
 - reproducción por voz cuando exista una solución de calidad suficientemente fiable.
 
-La voz debe presentarse como ayuda de pronunciación, no como reconstrucción infalible de pronunciación histórica. Debe distinguirse cuando existan convenciones modernas o académicas diferentes.
+La voz deberá presentarse como ayuda pedagógica, no como reconstrucción infalible de pronunciación histórica, y distinguir convenciones modernas o académicas cuando corresponda.
 
 ## 5. Centro general de Historia y Contexto Bíblico
 
@@ -67,22 +67,24 @@ Debe permitir comprender, de manera organizada y con fuentes aprobadas:
 
 Esta superficie es distinta del contexto puntual de cada versículo. Debe funcionar como un **centro de aprendizaje bíblico general**, enlazable desde los estudios cuando corresponda.
 
-## 6. Organización de notas personales de Estudio
+## 6. Cuaderno de estudio personal unificado — FASE F
 
-Evolucionar las notas personales con una organización desplegable sencilla.
+La app debe tener **un solo Cuaderno de estudio por usuario**, accesible desde la pestaña **Estudios**. No deben existir cuadernos independientes que hagan sentir que Biblia, Estudio Profundo y Centro Pastoral guardan notas en sistemas distintos.
 
-Dirección inicial a validar en UX:
+Dirección aprobada:
 
-- notas vinculadas al pasaje/estudio actual;
-- notas generales de estudio;
-- posibilidad de clasificar o mover una nota sin duplicarla;
-- mantener integración con el cuaderno existente de Biblia → Notas en vez de crear un segundo sistema aislado;
-- respetar el requisito ya documentado de que las notas personales no formen parte de la telemetría pastoral.
+- **Biblia → Notas** es la base funcional existente y debe evolucionar, no duplicarse.
+- Una nota creada desde **Biblia**, **Estudio Profundo** o **Centro Pastoral** debe pertenecer al mismo cuaderno personal del usuario.
+- Cada nota conserva su origen y contexto: referencia bíblica, pasaje/capítulo, estudio, bosquejo/material pastoral u otra relación real disponible.
+- Desde el Cuaderno debe poder verse todo junto y también filtrarse por origen/contexto, por ejemplo **Todas / Biblia / Estudio / Pastoral**, sin duplicar la nota.
+- Al abrir una nota debe poder recuperarse el contexto donde nació cuando exista un destino válido.
+- El cuaderno es **privado por usuario por defecto**. Ser Administrador, Pastor o Líder no concede acceso automático a las notas personales de otra persona.
+- Cualquier función futura de compartir una nota deberá ser explícita por parte del propietario.
+- Las notas personales no forman parte de la telemetría pastoral ni de analíticas de comportamiento.
+- La futura FASE F podrá añadir sincronización entre dispositivos, respaldo en Supabase, metadatos correlativos de prédica/estudio, fecha, serie, lugar, predicador, estado y exportación sobre este mismo cuaderno.
 
-## 7. Requisito que sí pertenece a la prioridad activa
+## 7. Regla permanente de capas bíblicas
 
 **No mostrar capas bíblicas inexistentes.**
 
-Mientras se cierra FASE D, cualquier tarjeta/sección para la que no exista contenido real, aprobado y trazable debe omitirse completamente. No debe mostrarse texto tipo “no disponible”, “próximamente”, “seleccione para ver cuando exista” o relleno equivalente como sustituto de datos.
-
-Este punto forma parte de las reglas y del punto 9 de `__VIDA_INTERNACIONAL.md` y debe resolverse antes del checklist final de cobertura.
+Cualquier tarjeta/sección para la que no exista contenido real, aprobado y trazable debe omitirse completamente. No debe mostrarse texto tipo “no disponible”, “próximamente”, “seleccione para ver cuando exista” o relleno equivalente como sustituto de datos.
