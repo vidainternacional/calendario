@@ -12,6 +12,7 @@ import {
   type LugarBiblicoBusqueda,
   type SugerenciaLugarBiblico,
 } from '@/lib/estudios/biblical-place-search'
+import { asistirTemaBiblico } from '@/lib/estudios/biblical-search-assist'
 import {
   getInternalBiblicalContext,
   type BiblicalContextBundle,
@@ -46,7 +47,14 @@ export type EstudioState =
       relatedConcordances?: ConcordanciaResultado[]
       relatedConcordanceScope?: 'verse' | 'chapter' | 'section'
     }
-  | { status: 'success'; kind: 'concordance'; query: string; results: ConcordanciaResultado[] }
+  | {
+      status: 'success'
+      kind: 'concordance'
+      query: string
+      results: ConcordanciaResultado[]
+      interpretedFrom?: string
+      interpretedAs?: string
+    }
   | { status: 'place'; query: string; place: LugarBiblicoBusqueda }
   | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[] }
   | { status: 'error'; error: string }
@@ -271,6 +279,24 @@ export async function analizarPasaje(
   const concordancias = await buscarConcordanciasBiblicas(query, 80)
   if (concordancias.results.length > 0) {
     return { status: 'success', kind: 'concordance', query, results: concordancias.results }
+  }
+
+  const assistedTopic = await asistirTemaBiblico(query)
+  if (assistedTopic?.kind === 'resolved') {
+    const corrected = await buscarConcordanciasBiblicas(assistedTopic.query, 80)
+    if (corrected.results.length > 0) {
+      return {
+        status: 'success',
+        kind: 'concordance',
+        query: assistedTopic.query,
+        results: corrected.results,
+        interpretedFrom: query,
+        interpretedAs: assistedTopic.label,
+      }
+    }
+  }
+  if (assistedTopic?.kind === 'suggestions') {
+    return { status: 'suggestions', query, suggestions: assistedTopic.suggestions }
   }
 
   const disponibles = referenciasInternasDisponibles().join(' y ')
