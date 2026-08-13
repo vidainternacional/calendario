@@ -17,6 +17,7 @@ import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 import './biblia.css'
 import './biblia-first-paint.css'
 import './biblia-stability.css'
+import './biblia-verse-actions-theme.css'
 
 export const metadata: Metadata = { title: 'Biblia' }
 
