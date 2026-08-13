@@ -11,10 +11,9 @@ export default function BibliaReadingFooterEnhancer() {
 
   useEffect(() => {
     let mount: HTMLDivElement | null = null
-    let select: HTMLSelectElement | null = null
 
     const sincronizar = () => {
-      select = document.querySelector<HTMLSelectElement>('select[aria-label="Capítulo"]')
+      const select = document.querySelector<HTMLSelectElement>('select[aria-label="Capítulo"]')
       if (!select) return false
 
       setCapitulo(Number(select.value) || 1)
@@ -44,21 +43,22 @@ export default function BibliaReadingFooterEnhancer() {
       return true
     }
 
-    const onChange = () => sincronizar()
-    if (sincronizar()) select?.addEventListener('change', onChange)
-
-    const observer = new MutationObserver(() => {
-      sincronizar()
-      if (select) {
-        select.removeEventListener('change', onChange)
-        select.addEventListener('change', onChange)
+    const onChange = (event: Event) => {
+      const elemento = event.target
+      if (elemento instanceof HTMLSelectElement && elemento.getAttribute('aria-label') === 'Capítulo') {
+        sincronizar()
       }
-    })
+    }
+
+    sincronizar()
+    document.addEventListener('change', onChange)
+
+    const observer = new MutationObserver(() => sincronizar())
     observer.observe(document.body, { childList: true, subtree: true })
 
     return () => {
       observer.disconnect()
-      select?.removeEventListener('change', onChange)
+      document.removeEventListener('change', onChange)
       mount?.remove()
       document.querySelector('[data-biblia-isla-extendida="true"]')?.removeAttribute('data-biblia-isla-extendida')
       document.querySelector('[data-biblia-envoltura-extendida="true"]')?.removeAttribute('data-biblia-envoltura-extendida')
