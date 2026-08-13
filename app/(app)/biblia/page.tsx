@@ -10,6 +10,9 @@ import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhanc
 import BibliaPastoralCollectionEnhancer from '@/components/biblia/BibliaPastoralCollectionEnhancer'
 import BibliaProyectoEnhancer from '@/components/biblia/BibliaProyectoEnhancer'
 import BibliaDeepStudyEnhancer from '@/components/biblia/BibliaDeepStudyEnhancer'
+import BibliaQuickReferenceSearch from '@/components/biblia/BibliaQuickReferenceSearch'
+import BibliaReadingFooterEnhancer from '@/components/biblia/BibliaReadingFooterEnhancer'
+import BibliaThemeStateBridge from '@/components/biblia/BibliaThemeStateBridge'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 import './biblia.css'
 import './biblia-first-paint.css'
@@ -63,6 +66,9 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
 
       {esProyectoPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
       <BibliaClient />
+      {from !== 'pastoral' && <BibliaThemeStateBridge />}
+      {from !== 'pastoral' && <BibliaQuickReferenceSearch />}
+      {from !== 'pastoral' && <BibliaReadingFooterEnhancer />}
       {from !== 'pastoral' && <BibliaDeepStudyEnhancer />}
       <BibliaVoiceControl />
       <BibliaFavoritesEmptyEnhancer />
