@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-12
+Última actualización: 2026-08-13
 
-Fase / prioridad activa: **FASE E — RENDIMIENTO, SEGURIDAD, ESCALABILIDAD, PRUEBAS Y DOCUMENTACIÓN**
+Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -36,8 +36,8 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE B | Optimización de UX, transiciones, carga, errores y retroalimentación | COMPLETADA |
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
 | FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |
-| FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **ACTIVA — 2026-08-12** |
-| FASE F | Evolución correlativa de Biblia → Notas | PENDIENTE |
+| FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |
+| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |
 
 # PRIORIDADES RECIENTES CERRADAS
 
@@ -173,30 +173,54 @@ La evolución del historial hacia analíticas de pasajes, libros, temas, pregunt
 
 Debe existir un único cuaderno personal por usuario, no sistemas paralelos. Biblia, Estudio Profundo y las superficies pastorales autorizadas podrán alimentar ese mismo espacio conservando origen y contexto de cada nota. Las notas serán privadas por defecto y deberán poder organizarse/filtrarse sin duplicarlas. `Biblia → Notas` permanece como base funcional a evolucionar en FASE F con sincronización entre dispositivos, respaldo en Supabase, número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación.
 
-# FASE E — ACTIVA — RENDIMIENTO, SEGURIDAD, ESCALABILIDAD, PRUEBAS Y DOCUMENTACIÓN
+# FASE E — COMPLETADA — RENDIMIENTO, SEGURIDAD, ESCALABILIDAD, PRUEBAS Y DOCUMENTACIÓN — 2026-08-13
 
-FASE E se abre formalmente el 2026-08-12 después del cierre aprobado de FASE D.
+FASE E se abrió formalmente el 2026-08-12 después del cierre aprobado de FASE D y queda cerrada el 2026-08-13 tras completar auditoría, cambios seguros, validación funcional y documentación.
 
-## Objetivos de FASE E
+La evidencia consolidada se conserva en:
 
-1. Auditar rendimiento real de las superficies principales y detectar cuellos de botella verificables antes de optimizar.
-2. Revisar seguridad y permisos de Supabase/RLS/grants, incluyendo los grants redundantes heredados de concordancias identificados durante FASE D.
-3. Revisar escalabilidad de consultas, índices, cargas de datos, cachés y flujos que puedan crecer con usuarios, ministerios y contenido bíblico.
-4. Ejecutar pruebas integrales de regresión sobre los módulos ya aprobados sin rediseñarlos.
-5. Revisar errores de runtime, estados de carga, fallos de red y recuperación en flujos críticos.
-6. Revisar latencia transversal de badges/push documentada previamente, evitando parches aislados por pantalla.
-7. Consolidar documentación técnica y evidencia de validación necesaria para considerar la aplicación preparada para crecimiento y mantenimiento.
-8. Mantener el Piloto Operativo en pausa mientras el documento maestro no indique lo contrario.
-9. No iniciar FASE F hasta que FASE E figure formalmente como completada en este documento.
+- `docs/FASE_E_LINEA_BASE_TECNICA_2026-08-12.md`;
+- `docs/FASE_E_CIERRE_TECNICO_2026-08-13.md`.
 
-## Orden inicial autorizado de FASE E
+## Resultado final de FASE E
 
-1. Levantar una línea base técnica del estado actual: build, dependencias, rutas críticas, consultas y políticas relevantes.
-2. Clasificar hallazgos por impacto: seguridad, rendimiento, escalabilidad, regresión y documentación.
-3. Separar cambios seguros de optimización de cambios sensibles de permisos/datos.
-4. Presentar cualquier cambio sensible de RLS/grants con plan de reversión antes de aplicarlo.
-5. Aplicar y verificar primero los cambios seguros de mayor impacto, agrupándolos para evitar commits/deploys innecesarios.
+1. Rendimiento auditado sobre superficies principales, navegación y consultas reales; se optimizó precarga y se eliminaron llamadas duplicadas verificables sin degradar UX.
+2. Seguridad de Supabase revisada y endurecida de forma conservadora: grants redundantes, funciones SECURITY DEFINER y RPC internas quedaron restringidas según su uso legítimo, con migraciones versionadas.
+3. Escalabilidad revisada con tamaños y `pg_stat_statements`; no se añadieron índices especulativos donde el volumen y latencia actuales no los justifican.
+4. Regresiones críticas automatizadas con `node:test` e integradas al CI antes de lint/build.
+5. Runtime y recuperación de red revisados; la PWA recupera Avisos al reconectar, enfocar o volver visible sin exigir recarga manual.
+6. Latencia transversal de badges/push corregida para que badge y contenido visible compartan señales de refresco y no dependan de la llegada final del push en iOS.
+7. Validación funcional real en iPhone completada: tras reconexión/reanudación, badge de Avisos y `Avisos para ti` actualizaron rápido y prácticamente al mismo tiempo.
+8. Producción, CI y documentación técnica quedaron alineados. El warning Node `DEP0169` asociado a la dependencia de Web Push queda documentado como deuda no bloqueante, sin error funcional comprobado.
+9. El Piloto Operativo permanece pausado.
+
+Hitos finales de cierre:
+
+- recuperación/reanudación PWA validada: `2927f18ecb2a69ea44e720a2895a4b52cc046796`;
+- seguridad final versionada: `5718db3dd4da671ea36ecbad15f486f7e79f479f`.
+
+FASE E queda **COMPLETADA** y no debe reabrirse salvo bug comprobable.
+
+# FASE F — ACTIVA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS
+
+FASE F se activa formalmente el 2026-08-13 después del cierre documentado de FASE E.
+
+## Objetivo de FASE F
+
+Evolucionar `Biblia → Notas` hacia un único cuaderno personal por usuario, evitando sistemas paralelos y preservando la privacidad por defecto.
+
+La fase debe partir del estado funcional existente y conservar el origen/contexto de cada nota. Biblia, Estudio Profundo y las superficies pastorales autorizadas podrán alimentar el mismo cuaderno cuando corresponda.
+
+## Alcance inicial documentado
+
+1. Auditar el estado real actual de `Biblia → Notas`, tablas, RLS, acciones y UI antes de modificar.
+2. Definir y consolidar un único modelo de nota personal por usuario, sin duplicar notas entre superficies.
+3. Mantener las notas privadas por defecto y revisar acceso/RLS antes de ampliar campos o sincronización.
+4. Garantizar sincronización entre dispositivos y respaldo en Supabase.
+5. Evolucionar el cuaderno para soportar número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación.
+6. Conservar origen y contexto bíblico de cada nota para permitir organización y filtrado sin duplicación.
+7. Preservar las interfaces aprobadas y avanzar por bloques verificables, con Preview antes de cualquier cambio visual relevante.
 
 # Siguiente punto autorizado
 
-**Iniciar exclusivamente FASE E levantando la línea base técnica del estado actual, sin modificar todavía RLS, grants ni datos sensibles.** No reabrir FASE D ni avanzar a FASE F.
+**Iniciar exclusivamente FASE F levantando el estado real actual de `Biblia → Notas`: UI, tablas, RLS, acciones, datos y relaciones existentes. No modificar todavía RLS, datos ni diseño; primero documentar la línea base y proponer el primer bloque seguro.**
