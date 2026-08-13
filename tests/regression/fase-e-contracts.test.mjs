@@ -74,15 +74,21 @@ test('la lista completa de Avisos refresca al volver Internet', () => {
   assert.match(avisosClient, /window\.removeEventListener\('online', handleOnline\)/)
 })
 
-test('Inicio remonta su contenido al volver Internet y al llegar un Aviso', () => {
+test('Inicio refresca Avisos de forma independiente al volver Internet o llegar push', () => {
   const inicioOnlineRefresh = source('components/inicio/InicioOnlineRefresh.tsx')
   const inicioPage = source('app/(app)/inicio/page.tsx')
 
+  assert.match(inicioOnlineRefresh, /readUserCache/)
+  assert.match(inicioOnlineRefresh, /writeUserCache/)
+  assert.match(inicioOnlineRefresh, /\.from\('publicaciones'\)/)
+  assert.match(inicioOnlineRefresh, /\.eq\('estado', 'aprobado'\)/)
   assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', handleOnline\)/)
-  assert.match(inicioOnlineRefresh, /window\.addEventListener\(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh\)/)
-  assert.match(inicioOnlineRefresh, /window\.setTimeout\(refresh, 2000\)/)
+  assert.match(inicioOnlineRefresh, /window\.addEventListener\(PUBLICATIONS_CONTENT_REFRESH_EVENT, handleContentRefresh\)/)
+  assert.match(inicioOnlineRefresh, /window\.setTimeout\(\(\) => void refreshPublicaciones\(\), 2000\)/)
   assert.match(inicioOnlineRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(inicioOnlineRefresh, /<InicioClient key=\{refreshKey\}/)
+  assert.doesNotMatch(inicioOnlineRefresh, /get_next_visible_calendar_item/)
+  assert.doesNotMatch(inicioOnlineRefresh, /get_visible_pastoral_packages/)
   assert.match(inicioPage, /<InicioOnlineRefresh userId=\{user\.id\}/)
 })
 
