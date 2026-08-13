@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AvisosClient from '@/components/avisos/AvisosClient'
+import AvisosContentRefresh from '@/components/avisos/AvisosContentRefresh'
 
 export const metadata: Metadata = {
   title: 'Avisos',
@@ -14,5 +14,5 @@ export default async function AvisosPage() {
 
   if (!user) redirect('/login')
 
-  return <AvisosClient userId={user.id} />
+  return <AvisosContentRefresh userId={user.id} />
 }
