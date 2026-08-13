@@ -1,0 +1,58 @@
+/*
+ * Menú contextual que aparece al seleccionar un versículo.
+ * La lógica del lector no cambia; únicamente se armoniza su superficie con
+ * la paleta activa de lectura para que claro, sepia y oscuro se sientan como
+ * una sola experiencia visual.
+ */
+
+html[data-biblia-tema] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg {
+  transition: none !important;
+}
+
+/* Claro: una bandeja ligeramente más profunda que la página, con acciones
+   blancas y contraste suave. */
+html[data-biblia-tema="claro"] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg {
+  border-color: #dbe3ec !important;
+  background: #eef2f6 !important;
+  color: #334155 !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-biblia-tema="claro"] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg > :is(button, a) {
+  border: 1px solid #dbe3ec !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Sepia: bandeja cálida y botones crema, con el mismo marrón del texto del
+   lector. Se mantiene suficiente separación visual sin introducir gris frío. */
+html[data-biblia-tema="sepia"] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg {
+  border-color: #cdb991 !important;
+  background: #e3d0a8 !important;
+  color: #493c2d !important;
+  box-shadow: 0 8px 22px rgba(73, 60, 45, 0.12) !important;
+}
+
+html[data-biblia-tema="sepia"] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg > :is(button, a) {
+  border: 1px solid #cdb991 !important;
+  background: #fff8e8 !important;
+  color: #493c2d !important;
+  box-shadow: 0 1px 2px rgba(73, 60, 45, 0.06) !important;
+}
+
+/* Oscuro: conservar la lectura visual ya aprobada, únicamente declarada aquí
+   para que las tres variantes dependan de la misma fuente de tema. */
+html[data-biblia-tema="oscuro"] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg {
+  border-color: #475569 !important;
+  background: #475569 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 8px 22px rgba(2, 6, 23, 0.32) !important;
+}
+
+html[data-biblia-tema="oscuro"] article > [id^="versiculo-"] > div.mb-3.mt-1.grid.grid-cols-2.rounded-2xl.shadow-lg > :is(button, a) {
+  border: 1px solid #475569 !important;
+  background: #334155 !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
