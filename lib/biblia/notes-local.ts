@@ -1,3 +1,12 @@
+'use client'
+
+import {
+  VIDA_BIBLE_NOTES_SYNC_EVENT,
+  encolarDeleteNotaBiblica,
+  encolarUpsertNotaBiblica,
+} from '@/lib/biblia/notes-queue'
+import { sincronizarNotasBiblicasPendientes } from '@/lib/biblia/notes-sync'
+
 export type TipoNotaBiblica = 'versiculo' | 'estudio' | 'predicacion' | 'personal'
 
 export type NotaBiblicaLocal = {
@@ -13,6 +22,9 @@ export type NotaBiblicaLocal = {
 }
 
 export const VIDA_BIBLE_NOTES_STORAGE_KEY = 'vida-biblia-notas-v2'
+
+let syncTimer: ReturnType<typeof setTimeout> | null = null
+let listenersInstalados = false
 
 function ahoraIso() {
   return new Date().toISOString()
@@ -33,14 +45,43 @@ function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
   }
 }
 
+function programarSincronizacion(delay = 700) {
+  if (typeof window === 'undefined') return
+  if (syncTimer) clearTimeout(syncTimer)
+  syncTimer = setTimeout(() => {
+    syncTimer = null
+    void sincronizarNotasBiblicasPendientes()
+  }, delay)
+}
+
+function instalarListenersSincronizacion() {
+  if (typeof window === 'undefined' || listenersInstalados) return
+  listenersInstalados = true
+
+  window.addEventListener(VIDA_BIBLE_NOTES_SYNC_EVENT, () => programarSincronizacion())
+  window.addEventListener('online', () => programarSincronizacion(0))
+  window.addEventListener('focus', () => programarSincronizacion(0))
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') programarSincronizacion(0)
+  })
+
+  programarSincronizacion(0)
+}
+
 export function leerNotasBiblicasLocales(): NotaBiblicaLocal[] {
   if (typeof window === 'undefined') return []
+  instalarListenersSincronizacion()
   try {
     const raw = localStorage.getItem(VIDA_BIBLE_NOTES_STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.map((nota) => normalizarNota(nota as Partial<NotaBiblicaLocal>))
+    const normalizadas = parsed.map((nota) => normalizarNota(nota as Partial<NotaBiblicaLocal>))
+    const normalizadasRaw = JSON.stringify(normalizadas)
+    if (normalizadasRaw !== raw) {
+      localStorage.setItem(VIDA_BIBLE_NOTES_STORAGE_KEY, normalizadasRaw)
+    }
+    return normalizadas
   } catch {
     return []
   }
@@ -48,8 +89,25 @@ export function leerNotasBiblicasLocales(): NotaBiblicaLocal[] {
 
 export function guardarNotasBiblicasLocales(notas: NotaBiblicaLocal[]) {
   if (typeof window === 'undefined') return false
+  instalarListenersSincronizacion()
   try {
+    const anteriores = leerNotasBiblicasLocales()
+    const anterioresPorId = new Map(anteriores.map((nota) => [nota.id, nota]))
+    const siguientesPorId = new Map(notas.map((nota) => [nota.id, nota]))
+
     localStorage.setItem(VIDA_BIBLE_NOTES_STORAGE_KEY, JSON.stringify(notas))
+
+    for (const nota of notas) {
+      const anterior = anterioresPorId.get(nota.id)
+      if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
+        encolarUpsertNotaBiblica(nota)
+      }
+    }
+
+    for (const anterior of anteriores) {
+      if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id)
+    }
+
     return true
   } catch {
     return false
