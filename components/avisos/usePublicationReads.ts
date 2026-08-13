@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export const PUBLICATION_READ_EVENT = 'vida-publicacion-leida'
+export const PUBLICATIONS_CONTENT_REFRESH_EVENT = 'vida-avisos-contenido-actualizar'
 
 const UNREAD_REFRESH_INTERVAL_MS = 60_000
 const UNREAD_REFRESH_DEDUPE_MS = 1_500
@@ -106,6 +107,12 @@ function subscribeUnreadCount(listener: UnreadCountListener) {
 export function requestUnreadPublicationsRefresh() {
   if (typeof window === 'undefined') return
   void refreshUnreadCount({ force: true })
+  requestPublicationsContentRefresh()
+}
+
+export function requestPublicationsContentRefresh() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(PUBLICATIONS_CONTENT_REFRESH_EVENT))
 }
 
 export async function markPublicationRead(publicationId: string) {
