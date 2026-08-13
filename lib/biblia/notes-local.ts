@@ -5,7 +5,10 @@ import {
   encolarDeleteNotaBiblica,
   encolarUpsertNotaBiblica,
 } from '@/lib/biblia/notes-queue'
-import { sincronizarNotasBiblicasPendientes } from '@/lib/biblia/notes-sync'
+import {
+  obtenerUsuarioActualNotas,
+  sincronizarNotasBiblicasPendientes,
+} from '@/lib/biblia/notes-sync'
 
 export type TipoNotaBiblica = 'versiculo' | 'estudio' | 'predicacion' | 'personal'
 
@@ -94,18 +97,21 @@ export function guardarNotasBiblicasLocales(notas: NotaBiblicaLocal[]) {
     const anteriores = leerNotasBiblicasLocales()
     const anterioresPorId = new Map(anteriores.map((nota) => [nota.id, nota]))
     const siguientesPorId = new Map(notas.map((nota) => [nota.id, nota]))
+    const ownerId = obtenerUsuarioActualNotas()
 
     localStorage.setItem(VIDA_BIBLE_NOTES_STORAGE_KEY, JSON.stringify(notas))
 
-    for (const nota of notas) {
-      const anterior = anterioresPorId.get(nota.id)
-      if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
-        encolarUpsertNotaBiblica(nota)
+    if (ownerId) {
+      for (const nota of notas) {
+        const anterior = anterioresPorId.get(nota.id)
+        if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
+          encolarUpsertNotaBiblica(nota, ownerId)
+        }
       }
-    }
 
-    for (const anterior of anteriores) {
-      if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id)
+      for (const anterior of anteriores) {
+        if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId)
+      }
     }
 
     return true
