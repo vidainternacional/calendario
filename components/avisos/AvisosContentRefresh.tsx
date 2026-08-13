@@ -12,10 +12,20 @@ export default function AvisosContentRefresh({ userId }: AvisosContentRefreshPro
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
+    let retryTimer: number | null = null
     const refresh = () => setRefreshKey((current) => current + 1)
+    const handleOnline = () => {
+      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      retryTimer = window.setTimeout(refresh, 2000)
+    }
 
+    window.addEventListener('online', handleOnline)
     window.addEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh)
-    return () => window.removeEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh)
+    return () => {
+      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh)
+    }
   }, [])
 
   return <AvisosClient key={refreshKey} userId={userId} />
