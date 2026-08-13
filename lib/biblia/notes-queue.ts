@@ -4,8 +4,8 @@ export const VIDA_BIBLE_NOTES_SYNC_QUEUE_KEY = 'vida-biblia-notas-sync-v1'
 export const VIDA_BIBLE_NOTES_SYNC_EVENT = 'vida-biblia-notas-sync-pending'
 
 export type OperacionNotaBiblicaPendiente =
-  | { tipo: 'upsert'; id: string; token: string; nota: NotaBiblicaLocal; encoladaEn: string }
-  | { tipo: 'delete'; id: string; token: string; encoladaEn: string }
+  | { tipo: 'upsert'; id: string; token: string; ownerId: string; nota: NotaBiblicaLocal; encoladaEn: string }
+  | { tipo: 'delete'; id: string; token: string; ownerId: string; encoladaEn: string }
 
 function leerColaCruda(): OperacionNotaBiblicaPendiente[] {
   if (typeof window === 'undefined') return []
@@ -13,7 +13,8 @@ function leerColaCruda(): OperacionNotaBiblicaPendiente[] {
     const raw = localStorage.getItem(VIDA_BIBLE_NOTES_SYNC_QUEUE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item) => item && typeof item === 'object' && typeof item.ownerId === 'string') as OperacionNotaBiblicaPendiente[]
   } catch {
     return []
   }
@@ -31,35 +32,44 @@ export function leerOperacionesNotasPendientes() {
   return leerColaCruda()
 }
 
-export function contarOperacionesNotasPendientes() {
-  return leerColaCruda().length
+export function contarOperacionesNotasPendientes(ownerId?: string | null) {
+  const operaciones = leerColaCruda()
+  return ownerId ? operaciones.filter((item) => item.ownerId === ownerId).length : operaciones.length
 }
 
-export function encolarUpsertNotaBiblica(nota: NotaBiblicaLocal) {
+export function encolarUpsertNotaBiblica(nota: NotaBiblicaLocal, ownerId: string) {
   const operacion: OperacionNotaBiblicaPendiente = {
     tipo: 'upsert',
     id: nota.id,
     token: crypto.randomUUID(),
+    ownerId,
     nota,
     encoladaEn: new Date().toISOString(),
   }
-  guardarCola([...leerColaCruda().filter((item) => item.id !== nota.id), operacion])
+  guardarCola([
+    ...leerColaCruda().filter((item) => !(item.id === nota.id && item.ownerId === ownerId)),
+    operacion,
+  ])
   return operacion
 }
 
-export function encolarDeleteNotaBiblica(id: string) {
+export function encolarDeleteNotaBiblica(id: string, ownerId: string) {
   const operacion: OperacionNotaBiblicaPendiente = {
     tipo: 'delete',
     id,
     token: crypto.randomUUID(),
+    ownerId,
     encoladaEn: new Date().toISOString(),
   }
-  guardarCola([...leerColaCruda().filter((item) => item.id !== id), operacion])
+  guardarCola([
+    ...leerColaCruda().filter((item) => !(item.id === id && item.ownerId === ownerId)),
+    operacion,
+  ])
   return operacion
 }
 
-export function completarOperacionNotaBiblica(id: string, token: string) {
+export function completarOperacionNotaBiblica(id: string, token: string, ownerId: string) {
   const actuales = leerColaCruda()
-  const siguientes = actuales.filter((item) => !(item.id === id && item.token === token))
+  const siguientes = actuales.filter((item) => !(item.id === id && item.token === token && item.ownerId === ownerId))
   if (siguientes.length !== actuales.length) guardarCola(siguientes)
 }
