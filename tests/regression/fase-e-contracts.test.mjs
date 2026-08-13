@@ -42,6 +42,15 @@ test('el refresco del badge también avisa al contenido visible', () => {
   assert.match(publicationReads, /window\.dispatchEvent\(new Event\(PUBLICATIONS_CONTENT_REFRESH_EVENT\)\)/)
 })
 
+test('el aumento confirmado del badge refresca el contenido visible', () => {
+  const publicationReads = source('components/avisos/usePublicationReads.ts')
+
+  assert.match(publicationReads, /const previousValue = unreadCountValue/)
+  assert.match(publicationReads, /const wasLoaded = unreadCountLoaded/)
+  assert.match(publicationReads, /if \(wasLoaded && unreadCountValue > previousValue\)/)
+  assert.match(publicationReads, /requestPublicationsContentRefresh\(\)/)
+})
+
 test('un refresco forzado no se pierde si ya hay una consulta en vuelo', () => {
   const publicationReads = source('components/avisos/usePublicationReads.ts')
 
