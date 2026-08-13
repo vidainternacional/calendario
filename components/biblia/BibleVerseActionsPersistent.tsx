@@ -5,13 +5,53 @@ import { usePathname, useRouter } from 'next/navigation'
 
 const NOTAS_KEY = 'vida-biblia-notas-v2'
 
-const claseBase = 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-0 text-[0px] leading-none text-slate-700 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
-const claseFavorito = 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-0 text-[0px] leading-none text-amber-400 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800'
-const claseNota = 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-0 leading-none text-slate-700 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-white'
+type TemaBiblia = 'claro' | 'sepia' | 'oscuro'
 
 const accionesValidas = ['Guardar', 'Quitar', 'Escuchar', 'Compartir', 'Profundo', 'Estudiar']
 const iconoNota = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>'
 const iconoFavoritoVersiculo = '<svg data-vida-optimistic-verse-star="true" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ml-1.5 inline h-3 w-3 text-amber-400"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg>'
+
+function temaBibliaActual(): TemaBiblia {
+  const dataset = document.body.dataset.bibliaTema || document.documentElement.dataset.bibliaTema
+  if (dataset === 'oscuro' || dataset === 'sepia' || dataset === 'claro') return dataset
+
+  try {
+    const raw = localStorage.getItem('vida-biblia-preferencias')
+    const guardado = raw ? JSON.parse(raw)?.modo : 'claro'
+    return guardado === 'oscuro' || guardado === 'sepia' ? guardado : 'claro'
+  } catch {
+    return 'claro'
+  }
+}
+
+function clasePanel(tema: TemaBiblia) {
+  if (tema === 'oscuro') {
+    return 'mb-4 mt-2 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-600 bg-slate-700 p-3 shadow-sm transition-[opacity,transform] duration-150 ease-out'
+  }
+  if (tema === 'sepia') {
+    return 'mb-4 mt-2 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-2xl border border-[#cdb991] bg-[#ead9b5] p-3 shadow-sm transition-[opacity,transform] duration-150 ease-out'
+  }
+  return 'mb-4 mt-2 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 p-3 shadow-sm transition-[opacity,transform] duration-150 ease-out'
+}
+
+function claseBase(tema: TemaBiblia) {
+  if (tema === 'oscuro') {
+    return 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-600 bg-slate-800 p-0 text-[0px] leading-none text-white shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95'
+  }
+  if (tema === 'sepia') {
+    return 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#cdb991] bg-[#fff8e8] p-0 text-[0px] leading-none text-[#493c2d] shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95'
+  }
+  return 'inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white p-0 text-[0px] leading-none text-slate-700 shadow-sm transition-[transform,background-color,border-color,color] duration-150 active:scale-95'
+}
+
+function claseFavorito(tema: TemaBiblia) {
+  const base = claseBase(tema)
+  return `${base} text-amber-400`
+}
+
+function claseNota(tema: TemaBiblia) {
+  return claseBase(tema).replace('text-[0px] ', '')
+}
 
 function texto(elemento: Element | null) {
   return (elemento?.textContent ?? '').replace(/\s+/g, ' ').trim()
@@ -42,7 +82,8 @@ function estilizarIconoOriginal(accion: HTMLElement, favoritoActivo: boolean) {
 }
 
 function aplicarFavoritoVisual(accion: HTMLElement, activo: boolean) {
-  accion.className = activo ? claseFavorito : claseBase
+  const tema = temaBibliaActual()
+  accion.className = activo ? claseFavorito(tema) : claseBase(tema)
   estilizarIconoOriginal(accion, activo)
 }
 
@@ -125,6 +166,7 @@ export default function BibleVerseActionsPersistent() {
 
     const preparar = () => {
       frame = 0
+      const tema = temaBibliaActual()
 
       document.querySelectorAll<HTMLElement>('button, a').forEach((accionInicial) => {
         const etiquetaInicial = nombreAccion(accionInicial)
@@ -139,7 +181,7 @@ export default function BibleVerseActionsPersistent() {
         if (!etiquetas.includes('Compartir')) return
 
         panel.dataset.vidaVerseActions = 'true'
-        panel.className = 'mb-4 mt-2 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-sm transition-[opacity,transform] duration-150 ease-out dark:border-slate-700 dark:bg-slate-900/70'
+        panel.className = clasePanel(tema)
 
         acciones.forEach((accion, indice) => {
           const nombre = etiquetas[indice]
@@ -191,12 +233,15 @@ export default function BibleVerseActionsPersistent() {
               })
             }
           } else {
-            accion.className = claseBase
+            accion.className = claseBase(tema)
             estilizarIconoOriginal(accion, false)
           }
         })
 
-        if (!panel.querySelector('[data-vida-note-action="true"]')) {
+        const notaExistente = panel.querySelector<HTMLElement>('[data-vida-note-action="true"]')
+        if (notaExistente) notaExistente.className = claseNota(tema)
+
+        if (!notaExistente) {
           const contenedorVerso = panel.parentElement
           const parrafo = contenedorVerso?.querySelector<HTMLElement>(':scope > p') ?? null
           const numero = texto(parrafo?.querySelector('sup') ?? null)
@@ -208,7 +253,7 @@ export default function BibleVerseActionsPersistent() {
             botonNota.dataset.vidaNoteAction = 'true'
             botonNota.setAttribute('aria-label', 'Crear nota de este versículo')
             botonNota.setAttribute('title', 'Crear nota de este versículo')
-            botonNota.className = claseNota
+            botonNota.className = claseNota(tema)
             botonNota.innerHTML = iconoNota
             botonNota.addEventListener('click', () => {
               const copia = parrafo.cloneNode(true) as HTMLElement
@@ -239,7 +284,7 @@ export default function BibleVerseActionsPersistent() {
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ['aria-label', 'title'],
+      attributeFilter: ['aria-label', 'title', 'data-biblia-tema'],
     })
 
     return () => {
