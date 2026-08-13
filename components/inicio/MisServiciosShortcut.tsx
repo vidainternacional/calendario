@@ -45,7 +45,6 @@ export default function MisServiciosShortcut() {
   const ministerioEnPantalla = exactMinisterioId(pathname)
   const { pendingServicios } = usePendingIndicators()
   const [servicios, setServicios] = useState<ServicioResumen[]>([])
-  const [nextVisibleEventId, setNextVisibleEventId] = useState<string | null>(null)
   const [target, setTarget] = useState<HTMLElement | null>(null)
 
   const surface = pathname === '/inicio'
@@ -62,10 +61,11 @@ export default function MisServiciosShortcut() {
 
     async function refresh() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) return
 
-      const assignmentsQuery = (supabase as any)
+      const assignmentsResult = await (supabase as any)
         .from('evento_asignaciones')
         .select(`
           evento_id,
@@ -78,13 +78,6 @@ export default function MisServiciosShortcut() {
         .eq('profile_id', user.id)
         .gte('eventos.fecha_inicio', new Date().toISOString())
         .limit(100)
-
-      const [assignmentsResult, nextVisibleResult] = await Promise.all([
-        assignmentsQuery,
-        surface === 'inicio'
-          ? (supabase as any).rpc('get_next_visible_calendar_item')
-          : Promise.resolve({ data: [] }),
-      ])
 
       if (assignmentsResult.error) {
         console.error('No se pudo cargar el resumen de Mis servicios', assignmentsResult.error)
@@ -119,15 +112,7 @@ export default function MisServiciosShortcut() {
         }))
         .sort((a, b) => new Date(a.fechaInicio).getTime() - new Date(b.fechaInicio).getTime())
 
-      const nextVisible = nextVisibleResult?.data?.[0] || null
-      const nextEventId = nextVisible?.item_type === 'event' && nextVisible?.id
-        ? String(nextVisible.id)
-        : null
-
-      if (!cancelled) {
-        setServicios(next)
-        setNextVisibleEventId(nextEventId)
-      }
+      if (!cancelled) setServicios(next)
     }
 
     const handleFocus = () => void refresh()
@@ -164,13 +149,6 @@ export default function MisServiciosShortcut() {
     return servicios[0] || null
   }, [ministerioEnPantalla, servicios, surface])
 
-  const servicioEsProximoEvento = Boolean(
-    surface === 'inicio'
-    && servicioVisible
-    && nextVisibleEventId
-    && servicioVisible.eventoId === nextVisibleEventId,
-  )
-
   useEffect(() => {
     setTarget(null)
     if (!surface || !servicioVisible) return
@@ -187,14 +165,21 @@ export default function MisServiciosShortcut() {
 
     const hideDuplicatedEventState = (main: HTMLElement) => {
       restoreEventState()
-      if (surface !== 'inicio' || !servicioEsProximoEvento) return
+      if (surface !== 'inicio') return
 
       const content = Array.from(main.children).find((node) => node.tagName === 'DIV') as HTMLElement | undefined
       const firstSection = content
         ? Array.from(content.children).find((node) => node.tagName === 'SECTION') as HTMLElement | undefined
         : undefined
-      const eventCard = firstSection?.querySelector<HTMLElement>('a')
+      const eventCard = firstSection?.querySelector<HTMLAnchorElement>('a')
       if (!eventCard) return
+
+      const fechaParam = new URL(eventCard.href, window.location.origin).searchParams.get('fecha')
+      const mismoEvento = Boolean(
+        fechaParam
+        && new Date(fechaParam).getTime() === new Date(servicioVisible.fechaInicio).getTime(),
+      )
+      if (!mismoEvento) return
 
       const assignmentLabels = new Set(['Asignado', 'Pendiente', 'Por confirmar', 'Confirmado', 'Declinado', 'No disponible'])
       const statusPill = Array.from(eventCard.querySelectorAll<HTMLElement>('span')).find((element) => {
@@ -257,7 +242,7 @@ export default function MisServiciosShortcut() {
       setTarget(null)
       mount?.remove()
     }
-  }, [servicioEsProximoEvento, servicioVisible?.key, surface])
+  }, [servicioVisible?.fechaInicio, servicioVisible?.key, surface])
 
   if (!surface || !target || !servicioVisible) return null
   if (surface === 'avisos' && pendingServicios === 0) return null
