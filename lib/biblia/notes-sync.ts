@@ -7,9 +7,14 @@ import {
 } from '@/lib/biblia/notes-queue'
 
 let sincronizacionEnCurso: Promise<{ sincronizadas: number; pendientes: number }> | null = null
+let usuarioActualNotas: string | null = null
 
 function uuidONull(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null
+}
+
+export function obtenerUsuarioActualNotas() {
+  return usuarioActualNotas
 }
 
 export async function sincronizarNotasBiblicasPendientes() {
@@ -23,10 +28,11 @@ export async function sincronizarNotasBiblicasPendientes() {
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     const user = session?.user
+    usuarioActualNotas = user?.id ?? null
     if (!user) return { sincronizadas: 0, pendientes: leerOperacionesNotasPendientes().length }
 
     let sincronizadas = 0
-    const operaciones = leerOperacionesNotasPendientes()
+    const operaciones = leerOperacionesNotasPendientes().filter((operacion) => operacion.ownerId === user.id)
 
     for (const operacion of operaciones) {
       let error: unknown = null
@@ -66,13 +72,13 @@ export async function sincronizarNotasBiblicasPendientes() {
         continue
       }
 
-      completarOperacionNotaBiblica(operacion.id, operacion.token)
+      completarOperacionNotaBiblica(operacion.id, operacion.token, operacion.ownerId)
       sincronizadas += 1
     }
 
     return {
       sincronizadas,
-      pendientes: leerOperacionesNotasPendientes().length,
+      pendientes: leerOperacionesNotasPendientes().filter((operacion) => operacion.ownerId === user.id).length,
     }
   })().finally(() => {
     sincronizacionEnCurso = null
