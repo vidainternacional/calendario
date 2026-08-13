@@ -69,6 +69,7 @@ function startUnreadCountGlobalListeners() {
 
   const handleRead = () => void refreshUnreadCount({ force: true })
   const handleFocus = () => void refreshUnreadCount()
+  const handleOnline = () => void refreshUnreadCount({ force: true })
   const handleVisibility = () => {
     if (document.visibilityState === 'visible') void refreshUnreadCount()
   }
@@ -76,12 +77,14 @@ function startUnreadCountGlobalListeners() {
 
   window.addEventListener(PUBLICATION_READ_EVENT, handleRead)
   window.addEventListener('focus', handleFocus)
+  window.addEventListener('online', handleOnline)
   document.addEventListener('visibilitychange', handleVisibility)
 
   unreadCountStopGlobalListeners = () => {
     window.clearInterval(interval)
     window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
     window.removeEventListener('focus', handleFocus)
+    window.removeEventListener('online', handleOnline)
     document.removeEventListener('visibilitychange', handleVisibility)
     unreadCountStopGlobalListeners = null
   }

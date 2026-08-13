@@ -25,6 +25,7 @@ const EMPTY_PENDING_SNAPSHOT: PendingSnapshot = {
 let pendingSnapshot: PendingSnapshot = EMPTY_PENDING_SNAPSHOT
 let pendingUserId: string | null = null
 let pendingRefreshPromise: Promise<void> | null = null
+let pendingForceRefreshQueued = false
 let pendingLastRefreshAt = 0
 let pendingLifecycleCleanup: (() => void) | null = null
 let lastAppliedAppBadge: number | null = null
@@ -48,7 +49,10 @@ function resetPendingSnapshot() {
 }
 
 async function refreshSharedPending(force = false) {
-  if (pendingRefreshPromise) return pendingRefreshPromise
+  if (pendingRefreshPromise) {
+    if (force) pendingForceRefreshQueued = true
+    return pendingRefreshPromise
+  }
 
   const now = Date.now()
   if (!force && now - pendingLastRefreshAt < PENDING_FRESH_WINDOW_MS) return
@@ -124,6 +128,11 @@ async function refreshSharedPending(force = false) {
   } finally {
     pendingLastRefreshAt = Date.now()
     if (pendingRefreshPromise === refreshPromise) pendingRefreshPromise = null
+
+    if (pendingForceRefreshQueued) {
+      pendingForceRefreshQueued = false
+      void refreshSharedPending(true)
+    }
   }
 }
 
@@ -136,6 +145,7 @@ function ensurePendingLifecycle() {
   if (pendingLifecycleCleanup || typeof window === 'undefined') return
 
   const handleFocus = () => void refreshSharedPending()
+  const handleOnline = () => void refreshSharedPending(true)
   const handleVisibility = () => {
     if (document.visibilityState === 'visible') void refreshSharedPending()
   }
@@ -143,12 +153,14 @@ function ensurePendingLifecycle() {
 
   const interval = window.setInterval(() => void refreshSharedPending(), PENDING_POLL_INTERVAL_MS)
   window.addEventListener('focus', handleFocus)
+  window.addEventListener('online', handleOnline)
   window.addEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
   document.addEventListener('visibilitychange', handleVisibility)
 
   pendingLifecycleCleanup = () => {
     window.clearInterval(interval)
     window.removeEventListener('focus', handleFocus)
+    window.removeEventListener('online', handleOnline)
     window.removeEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
     document.removeEventListener('visibilitychange', handleVisibility)
   }
