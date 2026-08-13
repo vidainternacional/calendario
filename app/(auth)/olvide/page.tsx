@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import Link from 'next/link'
+import { Mail, Loader2 } from 'lucide-react'
 import { solicitarRecuperacion } from '@/app/actions/recuperacion'
+import AuthFrame from '@/components/auth/AuthFrame'
 
 export default function OlvidePage() {
   const [msg, setMsg] = useState<string | null>(null)
@@ -11,24 +12,47 @@ export default function OlvidePage() {
   const enviar = (fd: FormData) =>
     startTransition(async () => {
       const r = await solicitarRecuperacion(fd.get('email') as string)
-      setMsg(r.error ?? '✓ Si el correo existe, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja (y spam).')
+      setMsg(r.error ?? '✓ Si el correo existe, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja y spam.')
     })
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#f4f5f9] px-4">
-      <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-[0_4px_24px_rgba(20,24,40,0.08)] border border-slate-100">
-        <h1 className="text-xl font-bold text-[#171923] mb-2">Recuperar contraseña</h1>
-        <p className="text-sm text-slate-500 mb-6">Escribe tu correo y te enviaremos un enlace para crear una nueva.</p>
-        <form action={enviar} className="space-y-4">
-          <input name="email" type="email" required placeholder="tu@correo.com"
-            className="w-full text-sm px-4 py-3 bg-white text-slate-800 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" style={{ colorScheme: 'light' }} />
-          {msg && <p className={`text-xs font-medium ${msg.startsWith('✓') ? 'text-emerald-600' : 'text-rose-600'}`}>{msg}</p>}
-          <button disabled={pending} className="w-full py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl disabled:opacity-50">
-            {pending ? 'Enviando…' : 'Enviar enlace'}
-          </button>
-        </form>
-        <Link href="/login" className="block text-center text-xs text-slate-400 mt-5 hover:text-[#171923]">← Volver a iniciar sesión</Link>
-      </div>
-    </main>
+    <AuthFrame
+      title="Recupera tu acceso"
+      subtitle="Escribe el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña."
+      backHref="/login"
+      backLabel="Iniciar sesión"
+    >
+      <form action={enviar} className="space-y-5">
+        <div className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-bold text-slate-700">Correo electrónico</label>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="tu@correo.com"
+              className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
+              style={{ colorScheme: 'light' }}
+            />
+          </div>
+        </div>
+
+        {msg && (
+          <p className={`rounded-2xl border px-4 py-3 text-sm font-medium leading-5 ${msg.startsWith('✓') ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+            {msg}
+          </p>
+        )}
+
+        <button
+          disabled={pending}
+          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3.5 text-[15px] font-black text-white shadow-lg shadow-violet-600/20 transition active:scale-[0.985] disabled:opacity-50"
+        >
+          {pending ? <><Loader2 className="h-4 w-4 animate-spin" />Enviando…</> : 'Enviar enlace'}
+        </button>
+      </form>
+    </AuthFrame>
   )
 }
