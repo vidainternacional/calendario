@@ -13,12 +13,19 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
+    let retryTimer: number | null = null
     const refresh = () => setRefreshKey((current) => current + 1)
+    const handleOnline = () => {
+      refresh()
+      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      retryTimer = window.setTimeout(refresh, 2000)
+    }
 
-    window.addEventListener('online', refresh)
+    window.addEventListener('online', handleOnline)
     window.addEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh)
     return () => {
-      window.removeEventListener('online', refresh)
+      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      window.removeEventListener('online', handleOnline)
       window.removeEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh)
     }
   }, [])

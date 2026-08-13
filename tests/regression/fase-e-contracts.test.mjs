@@ -78,18 +78,21 @@ test('Inicio remonta su contenido al volver Internet y al llegar un Aviso', () =
   const inicioOnlineRefresh = source('components/inicio/InicioOnlineRefresh.tsx')
   const inicioPage = source('app/(app)/inicio/page.tsx')
 
-  assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', refresh\)/)
+  assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', handleOnline\)/)
   assert.match(inicioOnlineRefresh, /window\.addEventListener\(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh\)/)
+  assert.match(inicioOnlineRefresh, /window\.setTimeout\(refresh, 2000\)/)
   assert.match(inicioOnlineRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(inicioOnlineRefresh, /<InicioClient key=\{refreshKey\}/)
   assert.match(inicioPage, /<InicioOnlineRefresh userId=\{user\.id\}/)
 })
 
-test('Avisos remonta su contenido cuando llega la señal compartida', () => {
+test('Avisos remonta su contenido cuando llega la señal compartida y reintenta al reconectar', () => {
   const avisosContentRefresh = source('components/avisos/AvisosContentRefresh.tsx')
   const avisosPage = source('app/(app)/avisos/page.tsx')
 
   assert.match(avisosContentRefresh, /PUBLICATIONS_CONTENT_REFRESH_EVENT/)
+  assert.match(avisosContentRefresh, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(avisosContentRefresh, /window\.setTimeout\(refresh, 2000\)/)
   assert.match(avisosContentRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(avisosContentRefresh, /<AvisosClient key=\{refreshKey\}/)
   assert.match(avisosPage, /<AvisosContentRefresh userId=\{user\.id\}/)
