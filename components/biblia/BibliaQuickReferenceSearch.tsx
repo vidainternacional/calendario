@@ -1,7 +1,8 @@
 'use client'
 
 import { FormEvent, useEffect, useRef, useState } from 'react'
-import { ArrowRight, Search, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { ArrowRight, Search } from 'lucide-react'
 
 const BOOK_ALIASES: Record<string, string> = {
   gen: 'genesis', ex: 'exodo', lev: 'levitico', num: 'numeros', dt: 'deuteronomio',
@@ -58,23 +59,48 @@ async function esperarHasta<T>(resolver: () => T | null, timeout = 4000): Promis
 }
 
 export default function BibliaQuickReferenceSearch() {
-  const [abierto, setAbierto] = useState(false)
   const [consulta, setConsulta] = useState('')
   const [error, setError] = useState('')
   const [buscando, setBuscando] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+  const mountRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (!abierto) return
-    const timer = window.setTimeout(() => inputRef.current?.focus(), 80)
-    return () => window.clearTimeout(timer)
-  }, [abierto])
+    const colocar = () => {
+      const libro = document.querySelector<HTMLSelectElement>('select[aria-label="Libro de la Biblia"]')
+      const grid = libro?.closest('div.mx-auto.grid') as HTMLElement | null
+      const sticky = grid?.parentElement as HTMLElement | null
+      if (!grid || !sticky) return false
 
-  const cerrar = () => {
-    if (buscando) return
-    setAbierto(false)
-    setError('')
-  }
+      const existente = sticky.querySelector<HTMLElement>('[data-biblia-buscador-rapido="true"]')
+      if (existente) {
+        setPortalTarget(existente)
+        return true
+      }
+
+      const mount = document.createElement('div')
+      mount.dataset.bibliaBuscadorRapido = 'true'
+      mount.className = 'mx-auto mt-2.5 max-w-2xl'
+      mountRef.current = mount
+
+      const tabs = grid.nextElementSibling
+      if (tabs) sticky.insertBefore(mount, tabs)
+      else sticky.appendChild(mount)
+      setPortalTarget(mount)
+      return true
+    }
+
+    if (colocar()) return
+    const observer = new MutationObserver(() => {
+      if (colocar()) observer.disconnect()
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => () => {
+    mountRef.current?.remove()
+  }, [])
 
   const buscar = async (event: FormEvent) => {
     event.preventDefault()
@@ -82,7 +108,7 @@ export default function BibliaQuickReferenceSearch() {
 
     const referencia = parsearReferencia(consulta)
     if (!referencia) {
-      setError('Escriba una referencia como Juan 3:16 o Salmos 23:1.')
+      setError('Escriba una referencia como Juan 3:16.')
       return
     }
 
@@ -91,7 +117,7 @@ export default function BibliaQuickReferenceSearch() {
       const libroSelect = document.querySelector<HTMLSelectElement>('select[aria-label="Libro de la Biblia"]')
       const capituloSelect = document.querySelector<HTMLSelectElement>('select[aria-label="Capítulo"]')
       if (!libroSelect || !capituloSelect) {
-        setError('La Biblia todavía se está cargando. Intente de nuevo en un momento.')
+        setError('La Biblia todavía se está cargando.')
         return
       }
 
@@ -104,7 +130,7 @@ export default function BibliaQuickReferenceSearch() {
       })
 
       if (!libroOpcion) {
-        setError(`No encontré “${referencia.libro}”. Pruebe con el nombre completo o una abreviatura común.`)
+        setError(`No encontré “${referencia.libro}”.`)
         return
       }
 
@@ -141,66 +167,46 @@ export default function BibliaQuickReferenceSearch() {
         if (versiculoSelect) dispararCambio(versiculoSelect, String(referencia.versiculo))
       }
 
-      setAbierto(false)
       setConsulta('')
     } finally {
       setBuscando(false)
     }
   }
 
-  return (
+  if (!portalTarget) return null
+
+  return createPortal(
     <>
-      <button
-        type="button"
-        onClick={() => setAbierto(true)}
-        aria-label="Buscar versículo"
-        className="fixed bottom-[calc(5.6rem+env(safe-area-inset-bottom))] right-4 z-[88] inline-flex h-12 items-center gap-2 rounded-full bg-[#C0392B] px-4 text-sm font-bold text-white shadow-xl shadow-black/15 transition active:scale-95"
-      >
-        <Search className="h-5 w-5" />
-        <span>Buscar</span>
-      </button>
-
-      {abierto && (
-        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/35 p-3 backdrop-blur-[2px] sm:items-center" onMouseDown={event => event.target === event.currentTarget && cerrar()}>
-          <section className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-5 shadow-2xl" role="dialog" aria-modal="true" aria-label="Buscar versículo">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-black text-slate-950">Buscar versículo</h2>
-                <p className="mt-1 text-sm leading-5 text-slate-500">Escriba la referencia y vaya directo al pasaje.</p>
-              </div>
-              <button type="button" onClick={cerrar} aria-label="Cerrar buscador" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={buscar} className="space-y-3">
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Referencia</span>
-                <div className="flex h-13 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
-                  <Search className="h-5 w-5 shrink-0 text-slate-400" />
-                  <input
-                    ref={inputRef}
-                    value={consulta}
-                    onChange={event => setConsulta(event.target.value)}
-                    placeholder="Ej. Juan 3:16"
-                    autoComplete="off"
-                    enterKeyHint="go"
-                    className="h-12 min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-950 outline-none placeholder:font-normal placeholder:text-slate-400"
-                  />
-                </div>
-              </label>
-
-              <p className="text-xs text-slate-500">También funciona con abreviaturas como <strong>1 Cor 13:4</strong>, <strong>Mt 5:14</strong> o <strong>Sal 23:1</strong>.</p>
-              {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p>}
-
-              <button type="submit" disabled={buscando || !consulta.trim()} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50">
-                {buscando ? 'Buscando…' : 'Ir al versículo'}
-                {!buscando && <ArrowRight className="h-4 w-4" />}
-              </button>
-            </form>
-          </section>
-        </div>
-      )}
-    </>
+      <form onSubmit={buscar} className="vida-biblia-search-shell flex h-11 w-full items-center rounded-2xl border border-slate-200/90 bg-white/90 px-1.5 shadow-sm backdrop-blur-xl transition focus-within:border-violet-300 focus-within:ring-2 focus-within:ring-violet-100">
+        <Search className="ml-2 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        <input
+          value={consulta}
+          onChange={event => { setConsulta(event.target.value); if (error) setError('') }}
+          placeholder="Buscar un versículo…  Ej. Juan 3:16"
+          aria-label="Buscar un versículo por referencia"
+          autoComplete="off"
+          enterKeyHint="go"
+          className="vida-biblia-search-input h-full min-w-0 flex-1 bg-transparent px-2.5 text-[13px] font-semibold text-slate-800 outline-none placeholder:font-medium placeholder:text-slate-400"
+        />
+        <button
+          type="submit"
+          disabled={buscando || !consulta.trim()}
+          aria-label="Ir al versículo"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-violet-600 text-white shadow-sm transition active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+        >
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </form>
+      {error && <p className="vida-biblia-search-error mt-1.5 px-2 text-[11px] font-semibold text-red-600">{error}</p>}
+      <style>{`
+        [data-biblia-tema="oscuro"] .vida-biblia-search-shell { border-color: rgb(51 65 85 / .95); background: rgb(15 23 42 / .9); }
+        [data-biblia-tema="oscuro"] .vida-biblia-search-input { color: rgb(241 245 249); }
+        [data-biblia-tema="oscuro"] .vida-biblia-search-input::placeholder { color: rgb(100 116 139); }
+        [data-biblia-tema="sepia"] .vida-biblia-search-shell { border-color: #cdb991; background: rgb(255 248 232 / .92); }
+        [data-biblia-tema="sepia"] .vida-biblia-search-input { color: #493c2d; }
+        [data-biblia-tema="sepia"] .vida-biblia-search-input::placeholder { color: #8f7b60; }
+      `}</style>
+    </>,
+    portalTarget,
   )
 }
