@@ -15,6 +15,7 @@ let unreadCountValue = 0
 let unreadCountLoaded = false
 let unreadCountLastFetchAt = 0
 let unreadCountInFlight: Promise<number> | null = null
+let unreadCountForceRefreshQueued = false
 let unreadCountStopGlobalListeners: (() => void) | null = null
 
 function publishUnreadCount(nextValue: number) {
@@ -26,7 +27,11 @@ function publishUnreadCount(nextValue: number) {
 async function refreshUnreadCount(options: { force?: boolean } = {}) {
   const now = Date.now()
 
-  if (unreadCountInFlight) return unreadCountInFlight
+  if (unreadCountInFlight) {
+    if (options.force) unreadCountForceRefreshQueued = true
+    return unreadCountInFlight
+  }
+
   if (!options.force && unreadCountLoaded && now - unreadCountLastFetchAt < UNREAD_REFRESH_DEDUPE_MS) {
     return unreadCountValue
   }
@@ -51,6 +56,11 @@ async function refreshUnreadCount(options: { force?: boolean } = {}) {
     return await request
   } finally {
     if (unreadCountInFlight === request) unreadCountInFlight = null
+
+    if (unreadCountForceRefreshQueued) {
+      unreadCountForceRefreshQueued = false
+      void refreshUnreadCount({ force: true })
+    }
   }
 }
 
