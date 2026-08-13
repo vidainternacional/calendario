@@ -4,22 +4,17 @@ import Link from 'next/link'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, BookOpen, CheckSquare, Clock3, FileText, List, Mic2, NotebookPen, Plus, Search, Trash2 } from 'lucide-react'
 import { listarPaquetesPastoralesParaNotas } from '@/app/actions/pastoral-paquetes'
+import {
+  crearNotaBiblicaLocal,
+  guardarNotasBiblicasLocales,
+  leerNotasBiblicasLocales,
+  type NotaBiblicaLocal,
+  type TipoNotaBiblica,
+} from '@/lib/biblia/notes-local'
 
 export type ModoLecturaBiblia = 'claro' | 'oscuro' | 'sepia'
-type TipoNota = 'versiculo' | 'estudio' | 'predicacion' | 'personal'
-
-type NotaBiblica = {
-  id: string
-  titulo: string
-  contenido: string
-  tipo: TipoNota
-  referencia: string
-  paqueteId: string
-  paquete: string
-  creadaEn: string
-  actualizadaEn: string
-}
-
+type TipoNota = TipoNotaBiblica
+type NotaBiblica = NotaBiblicaLocal
 type Paquete = { id: string; titulo: string }
 
 type Props = {
@@ -27,7 +22,6 @@ type Props = {
   embedded?: boolean
 }
 
-const STORAGE_KEY = 'vida-biblia-notas-v2'
 const PREF_KEY = 'vida-biblia-preferencias'
 
 const tipos: Array<{ id: TipoNota; nombre: string; icono: typeof BookOpen }> = [
@@ -36,26 +30,6 @@ const tipos: Array<{ id: TipoNota; nombre: string; icono: typeof BookOpen }> = [
   { id: 'predicacion', nombre: 'Predicación', icono: Mic2 },
   { id: 'personal', nombre: 'Personal', icono: NotebookPen },
 ]
-
-function cargarNotas(): NotaBiblica[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    return (JSON.parse(raw) as Array<Partial<NotaBiblica>>).map((nota) => ({
-      id: nota.id ?? crypto.randomUUID(),
-      titulo: nota.titulo ?? 'Sin título',
-      contenido: nota.contenido ?? '',
-      tipo: nota.tipo ?? 'personal',
-      referencia: nota.referencia ?? '',
-      paqueteId: nota.paqueteId ?? '',
-      paquete: nota.paquete ?? '',
-      creadaEn: nota.creadaEn ?? new Date().toISOString(),
-      actualizadaEn: nota.actualizadaEn ?? new Date().toISOString(),
-    }))
-  } catch {
-    return []
-  }
-}
 
 function esModoLectura(value: string | undefined): value is ModoLecturaBiblia {
   return value === 'claro' || value === 'oscuro' || value === 'sepia'
@@ -95,7 +69,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   }, [modoExterno])
 
   useLayoutEffect(() => {
-    const guardadas = cargarNotas()
+    const guardadas = leerNotasBiblicasLocales()
     const solicitada = embedded ? null : new URLSearchParams(window.location.search).get('nota')
     setNotas(guardadas)
     setSeleccionadaId(solicitada && guardadas.some((nota) => nota.id === solicitada) ? solicitada : guardadas[0]?.id ?? null)
@@ -110,7 +84,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
 
   useEffect(() => {
     if (!notasCargadas) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notas))
+    guardarNotasBiblicasLocales(notas)
   }, [notas, notasCargadas])
 
   const tema = modo ? {
@@ -128,18 +102,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   }, [notas, busqueda, filtro])
 
   const nuevaNota = () => {
-    const ahora = new Date().toISOString()
-    const nota: NotaBiblica = {
-      id: crypto.randomUUID(),
-      titulo: 'Nueva nota',
-      contenido: '',
-      tipo: 'personal',
-      referencia: '',
-      paqueteId: '',
-      paquete: '',
-      creadaEn: ahora,
-      actualizadaEn: ahora,
-    }
+    const nota = crearNotaBiblicaLocal()
     setNotas((actuales) => [nota, ...actuales])
     setSeleccionadaId(nota.id)
   }
