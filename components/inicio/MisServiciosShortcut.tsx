@@ -61,7 +61,8 @@ export default function MisServiciosShortcut() {
 
     async function refresh() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       if (!user) return
 
       const assignmentsResult = await (supabase as any)
