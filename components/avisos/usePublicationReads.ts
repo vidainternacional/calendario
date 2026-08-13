@@ -90,6 +90,11 @@ function subscribeUnreadCount(listener: UnreadCountListener) {
   }
 }
 
+export function requestUnreadPublicationsRefresh() {
+  if (typeof window === 'undefined') return
+  void refreshUnreadCount({ force: true })
+}
+
 export async function markPublicationRead(publicationId: string) {
   if (!publicationId) return
 
