@@ -43,7 +43,7 @@ test('un refresco forzado no se pierde si ya hay una consulta en vuelo', () => {
   assert.match(publicationReads, /void refreshUnreadCount\(\{ force: true \}\)/)
 })
 
-test('Avisos escucha el regreso de Internet', () => {
+test('el contador de Avisos escucha el regreso de Internet', () => {
   const publicationReads = source('components/avisos/usePublicationReads.ts')
 
   assert.match(publicationReads, /window\.addEventListener\('online', handleOnline\)/)
@@ -56,4 +56,22 @@ test('push reintenta sincronización al volver Internet', () => {
   assert.match(pushSync, /const handleOnline = \(\) => void sincronizar\(\)/)
   assert.match(pushSync, /window\.addEventListener\('online', handleOnline\)/)
   assert.match(pushSync, /window\.removeEventListener\('online', handleOnline\)/)
+})
+
+test('la lista completa de Avisos refresca al volver Internet', () => {
+  const avisosClient = source('components/avisos/AvisosClient.tsx')
+
+  assert.match(avisosClient, /const handleOnline = \(\) => void refresh\(\)/)
+  assert.match(avisosClient, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(avisosClient, /window\.removeEventListener\('online', handleOnline\)/)
+})
+
+test('Inicio remonta su contenido al volver Internet', () => {
+  const inicioOnlineRefresh = source('components/inicio/InicioOnlineRefresh.tsx')
+  const inicioPage = source('app/(app)/inicio/page.tsx')
+
+  assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(inicioOnlineRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
+  assert.match(inicioOnlineRefresh, /<InicioClient key=\{refreshKey\}/)
+  assert.match(inicioPage, /<InicioOnlineRefresh userId=\{user\.id\}/)
 })

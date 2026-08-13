@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import InicioClient from '@/components/inicio/InicioClient'
+import InicioOnlineRefresh from '@/components/inicio/InicioOnlineRefresh'
 
 export const metadata: Metadata = {
   title: 'Inicio',
@@ -17,7 +17,7 @@ export default async function InicioPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f5f9]">
-      <InicioClient userId={user.id} email={user.email} />
+      <InicioOnlineRefresh userId={user.id} email={user.email} />
     </div>
   )
 }
