@@ -42,3 +42,18 @@ test('un refresco forzado no se pierde si ya hay una consulta en vuelo', () => {
   assert.match(publicationReads, /if \(unreadCountForceRefreshQueued\)/)
   assert.match(publicationReads, /void refreshUnreadCount\(\{ force: true \}\)/)
 })
+
+test('Avisos escucha el regreso de Internet', () => {
+  const publicationReads = source('components/avisos/usePublicationReads.ts')
+
+  assert.match(publicationReads, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(publicationReads, /window\.removeEventListener\('online', handleOnline\)/)
+})
+
+test('push reintenta sincronización al volver Internet', () => {
+  const pushSync = source('components/pwa/PushSubscriptionSync.tsx')
+
+  assert.match(pushSync, /const handleOnline = \(\) => void sincronizar\(\)/)
+  assert.match(pushSync, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(pushSync, /window\.removeEventListener\('online', handleOnline\)/)
+})
