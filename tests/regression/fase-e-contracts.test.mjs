@@ -83,7 +83,7 @@ test('la lista completa de Avisos refresca al volver Internet', () => {
   assert.match(avisosClient, /window\.removeEventListener\('online', handleOnline\)/)
 })
 
-test('Inicio refresca Avisos de forma independiente al volver Internet o llegar push', () => {
+test('Inicio refresca Avisos de forma independiente al reconectar o reanudar la PWA', () => {
   const inicioOnlineRefresh = source('components/inicio/InicioOnlineRefresh.tsx')
   const inicioPage = source('app/(app)/inicio/page.tsx')
 
@@ -91,9 +91,12 @@ test('Inicio refresca Avisos de forma independiente al volver Internet o llegar 
   assert.match(inicioOnlineRefresh, /writeUserCache/)
   assert.match(inicioOnlineRefresh, /\.from\('publicaciones'\)/)
   assert.match(inicioOnlineRefresh, /\.eq\('estado', 'aprobado'\)/)
+  assert.match(inicioOnlineRefresh, /const scheduleResumeRefresh/)
   assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(inicioOnlineRefresh, /window\.addEventListener\('focus', handleFocus\)/)
+  assert.match(inicioOnlineRefresh, /document\.addEventListener\('visibilitychange', handleVisibility\)/)
   assert.match(inicioOnlineRefresh, /window\.addEventListener\(PUBLICATIONS_CONTENT_REFRESH_EVENT, handleContentRefresh\)/)
-  assert.match(inicioOnlineRefresh, /window\.setTimeout\(\(\) => void refreshPublicaciones\(\), 2000\)/)
+  assert.match(inicioOnlineRefresh, /window\.setTimeout\(\(\) => void refreshPublicaciones\(\), RESUME_RETRY_MS\)/)
   assert.match(inicioOnlineRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(inicioOnlineRefresh, /<InicioClient key=\{refreshKey\}/)
   assert.doesNotMatch(inicioOnlineRefresh, /get_next_visible_calendar_item/)
@@ -101,13 +104,16 @@ test('Inicio refresca Avisos de forma independiente al volver Internet o llegar 
   assert.match(inicioPage, /<InicioOnlineRefresh userId=\{user\.id\}/)
 })
 
-test('Avisos remonta su contenido cuando llega la señal compartida y reintenta al reconectar', () => {
+test('Avisos remonta contenido al reconectar, enfocar o volver visible la PWA', () => {
   const avisosContentRefresh = source('components/avisos/AvisosContentRefresh.tsx')
   const avisosPage = source('app/(app)/avisos/page.tsx')
 
   assert.match(avisosContentRefresh, /PUBLICATIONS_CONTENT_REFRESH_EVENT/)
+  assert.match(avisosContentRefresh, /const scheduleResumeRefresh/)
   assert.match(avisosContentRefresh, /window\.addEventListener\('online', handleOnline\)/)
-  assert.match(avisosContentRefresh, /window\.setTimeout\(refresh, 2000\)/)
+  assert.match(avisosContentRefresh, /window\.addEventListener\('focus', handleFocus\)/)
+  assert.match(avisosContentRefresh, /document\.addEventListener\('visibilitychange', handleVisibility\)/)
+  assert.match(avisosContentRefresh, /window\.setTimeout\(refresh, RESUME_RETRY_MS\)/)
   assert.match(avisosContentRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(avisosContentRefresh, /<AvisosClient key=\{refreshKey\}/)
   assert.match(avisosPage, /<AvisosContentRefresh userId=\{user\.id\}/)
