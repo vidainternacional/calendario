@@ -49,10 +49,12 @@ export default function BottomNav() {
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
+  const [pendingHref, setPendingHref] = useState<string | null>(null)
   const { unreadAvisos } = usePendingIndicators()
   const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
   useEffect(() => setPortalReady(true), [])
+  useEffect(() => setPendingHref(null), [pathname])
 
   useEffect(() => {
     if (!dentroBiblia) return
@@ -84,18 +86,33 @@ export default function BottomNav() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
+          const isVisuallyActive = pendingHref ? pendingHref === item.href : isActive
           const showUnreadBadge = item.href === '/avisos' && avisosRequierenAtencion > 0
           const badgeValue = item.href === '/avisos' ? avisosRequierenAtencion : 0
           const prepareDestination = () => {
             if (!isActive) router.prefetch(item.href)
           }
+          const markPending = () => {
+            if (!isActive) setPendingHref(item.href)
+          }
           return (
-            <Link key={item.name} href={item.href} prefetch={false} aria-current={isActive ? 'page' : undefined} aria-label={showUnreadBadge ? `${item.name}, ${badgeValue} elementos requieren atención` : item.name} onPointerDown={prepareDestination} onPointerEnter={prepareDestination} onFocus={prepareDestination} className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}>
-              <span className={`relative flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
+            <Link
+              key={item.name}
+              href={item.href}
+              prefetch={false}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={showUnreadBadge ? `${item.name}, ${badgeValue} elementos requieren atención` : item.name}
+              onPointerDown={() => { prepareDestination(); markPending() }}
+              onPointerEnter={prepareDestination}
+              onFocus={prepareDestination}
+              onClick={markPending}
+              className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isVisuallyActive ? tema.active : tema.inactive}`}
+            >
+              <span className={`relative flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isVisuallyActive ? tema.activeBg : 'bg-transparent'}`}>
                 <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
                 {showUnreadBadge && <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-black leading-none text-white shadow-sm">{badgeValue > 99 ? '99+' : badgeValue}</span>}
               </span>
-              <span className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
+              <span className={`app-bottom-nav-label -mt-0.5 max-w-full truncate text-[10px] ${isVisuallyActive ? 'font-bold opacity-100' : 'font-medium opacity-80'}`}>{item.name}</span>
             </Link>
           )
         })}
