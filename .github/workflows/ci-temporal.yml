@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   validar:
-    name: Instalación, lint informativo y build
+    name: Instalación, regresión, lint informativo y build
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -34,6 +34,9 @@ jobs:
 
       - name: Instalar dependencias reproducibles
         run: npm ci
+
+      - name: Ejecutar regresiones críticas
+        run: npm run test:regression
 
       - name: Ejecutar lint informativo
         continue-on-error: true
