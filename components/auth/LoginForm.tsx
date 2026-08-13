@@ -35,7 +35,7 @@ export default function LoginForm({ nextPath = '/inicio' }: { nextPath?: string 
             placeholder="tu@correo.com"
             required
             autoComplete="email"
-            className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
+            className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-medium text-slate-900 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
           />
         </div>
       </div>
@@ -58,7 +58,7 @@ export default function LoginForm({ nextPath = '/inicio' }: { nextPath?: string 
             placeholder="••••••••"
             required
             autoComplete="current-password"
-            className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
+            className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
           />
           <button
             type="button"
@@ -75,7 +75,7 @@ export default function LoginForm({ nextPath = '/inicio' }: { nextPath?: string 
       <button
         type="submit"
         disabled={pending}
-        className="flex min-h-13 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3.5 text-[15px] font-black text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-500 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3.5 text-[15px] font-black text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-500 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? <><Loader2 className="h-4 w-4 animate-spin" />Ingresando...</> : 'Iniciar sesión'}
       </button>
