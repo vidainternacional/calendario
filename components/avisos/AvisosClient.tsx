@@ -108,8 +108,14 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
       }
     }
 
+    const handleOnline = () => void refresh()
+
     void refresh()
-    return () => { cancelled = true }
+    window.addEventListener('online', handleOnline)
+    return () => {
+      cancelled = true
+      window.removeEventListener('online', handleOnline)
+    }
   }, [userId])
 
   const currentItems = data?.publicaciones || []
