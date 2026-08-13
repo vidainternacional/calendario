@@ -20,9 +20,16 @@ let unreadCountForceRefreshQueued = false
 let unreadCountStopGlobalListeners: (() => void) | null = null
 
 function publishUnreadCount(nextValue: number) {
+  const previousValue = unreadCountValue
+  const wasLoaded = unreadCountLoaded
+
   unreadCountValue = Math.max(0, Number(nextValue || 0))
   unreadCountLoaded = true
   unreadCountListeners.forEach((listener) => listener(unreadCountValue))
+
+  if (wasLoaded && unreadCountValue > previousValue) {
+    requestPublicationsContentRefresh()
+  }
 }
 
 async function refreshUnreadCount(options: { force?: boolean } = {}) {
