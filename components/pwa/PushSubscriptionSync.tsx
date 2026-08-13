@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { guardarSuscripcionPush } from '@/app/actions/push'
+import { requestUnreadPublicationsRefresh } from '@/components/avisos/usePublicationReads'
 import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
@@ -21,9 +22,12 @@ export default function PushSubscriptionSync() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
-    const handleServiceWorkerMessage = (event: MessageEvent<{ type?: string }>) => {
+    const handleServiceWorkerMessage = (event: MessageEvent<{ type?: string; url?: string }>) => {
       if (event.data?.type === 'VIDA_PUSH_RECEIVED') {
         requestPendingIndicatorsRefresh()
+        if (event.data.url?.startsWith('/avisos')) {
+          requestUnreadPublicationsRefresh()
+        }
       }
     }
 
