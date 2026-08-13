@@ -34,6 +34,14 @@ test('un push de Avisos solicita refresco inmediato del badge', () => {
   assert.match(pushSync, /requestUnreadPublicationsRefresh\(\)/)
 })
 
+test('el refresco del badge también avisa al contenido visible', () => {
+  const publicationReads = source('components/avisos/usePublicationReads.ts')
+
+  assert.match(publicationReads, /PUBLICATIONS_CONTENT_REFRESH_EVENT/)
+  assert.match(publicationReads, /requestUnreadPublicationsRefresh\(\)[\s\S]*requestPublicationsContentRefresh\(\)/)
+  assert.match(publicationReads, /window\.dispatchEvent\(new Event\(PUBLICATIONS_CONTENT_REFRESH_EVENT\)\)/)
+})
+
 test('un refresco forzado no se pierde si ya hay una consulta en vuelo', () => {
   const publicationReads = source('components/avisos/usePublicationReads.ts')
 
@@ -66,12 +74,23 @@ test('la lista completa de Avisos refresca al volver Internet', () => {
   assert.match(avisosClient, /window\.removeEventListener\('online', handleOnline\)/)
 })
 
-test('Inicio remonta su contenido al volver Internet', () => {
+test('Inicio remonta su contenido al volver Internet y al llegar un Aviso', () => {
   const inicioOnlineRefresh = source('components/inicio/InicioOnlineRefresh.tsx')
   const inicioPage = source('app/(app)/inicio/page.tsx')
 
-  assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', handleOnline\)/)
+  assert.match(inicioOnlineRefresh, /window\.addEventListener\('online', refresh\)/)
+  assert.match(inicioOnlineRefresh, /window\.addEventListener\(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh\)/)
   assert.match(inicioOnlineRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(inicioOnlineRefresh, /<InicioClient key=\{refreshKey\}/)
   assert.match(inicioPage, /<InicioOnlineRefresh userId=\{user\.id\}/)
+})
+
+test('Avisos remonta su contenido cuando llega la señal compartida', () => {
+  const avisosContentRefresh = source('components/avisos/AvisosContentRefresh.tsx')
+  const avisosPage = source('app/(app)/avisos/page.tsx')
+
+  assert.match(avisosContentRefresh, /PUBLICATIONS_CONTENT_REFRESH_EVENT/)
+  assert.match(avisosContentRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
+  assert.match(avisosContentRefresh, /<AvisosClient key=\{refreshKey\}/)
+  assert.match(avisosPage, /<AvisosContentRefresh userId=\{user\.id\}/)
 })
