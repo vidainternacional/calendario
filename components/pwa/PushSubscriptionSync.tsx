@@ -68,9 +68,13 @@ export default function PushSubscriptionSync() {
       }
     }
 
+    const handleOnline = () => void sincronizar()
+
+    window.addEventListener('online', handleOnline)
     void sincronizar()
     return () => {
       cancelled = true
+      window.removeEventListener('online', handleOnline)
       navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
     }
   }, [])
