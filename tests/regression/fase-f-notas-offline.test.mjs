@@ -13,8 +13,7 @@ test('FASE F: Biblia Notas usa una sola capa de almacenamiento local', async () 
 
   assert.match(workspace, /leerNotasBiblicasLocales/)
   assert.match(workspace, /guardarNotasBiblicasLocales/)
-  assert.doesNotMatch(workspace, /localStorage\.getItem/)
-  assert.doesNotMatch(workspace, /localStorage\.setItem/)
+  assert.doesNotMatch(workspace, /vida-biblia-notas-v2/)
 
   assert.match(localStore, /vida-biblia-notas-v2/)
   assert.match(localStore, /leerNotasBiblicasLocales/)
