@@ -21,15 +21,19 @@ export async function sincronizarNotasBiblicasPendientes() {
   if (sincronizacionEnCurso) return sincronizacionEnCurso
 
   sincronizacionEnCurso = (async () => {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { sincronizadas: 0, pendientes: leerOperacionesNotasPendientes().length }
-    }
-
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     const user = session?.user
     usuarioActualNotas = user?.id ?? null
-    if (!user) return { sincronizadas: 0, pendientes: leerOperacionesNotasPendientes().length }
+
+    const pendientesDelUsuario = user
+      ? leerOperacionesNotasPendientes().filter((operacion) => operacion.ownerId === user.id).length
+      : leerOperacionesNotasPendientes().length
+
+    if (!user) return { sincronizadas: 0, pendientes: pendientesDelUsuario }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { sincronizadas: 0, pendientes: pendientesDelUsuario }
+    }
 
     let sincronizadas = 0
     const operaciones = leerOperacionesNotasPendientes().filter((operacion) => operacion.ownerId === user.id)
