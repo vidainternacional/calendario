@@ -86,8 +86,11 @@ export default function BottomNav() {
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
           const showUnreadBadge = item.href === '/avisos' && avisosRequierenAtencion > 0
           const badgeValue = item.href === '/avisos' ? avisosRequierenAtencion : 0
+          const prepareDestination = () => {
+            if (!isActive) router.prefetch(item.href)
+          }
           return (
-            <Link key={item.name} href={item.href} prefetch={false} aria-current={isActive ? 'page' : undefined} aria-label={showUnreadBadge ? `${item.name}, ${badgeValue} elementos requieren atención` : item.name} onPointerEnter={() => router.prefetch(item.href)} onTouchStart={() => router.prefetch(item.href)} className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}>
+            <Link key={item.name} href={item.href} prefetch={false} aria-current={isActive ? 'page' : undefined} aria-label={showUnreadBadge ? `${item.name}, ${badgeValue} elementos requieren atención` : item.name} onPointerDown={prepareDestination} onPointerEnter={prepareDestination} onFocus={prepareDestination} className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}>
               <span className={`relative flex h-8 min-w-11 items-center justify-center rounded-2xl px-3 transition-colors ${isActive ? tema.activeBg : 'bg-transparent'}`}>
                 <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
                 {showUnreadBadge && <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1 text-[9px] font-black leading-none text-white shadow-sm">{badgeValue > 99 ? '99+' : badgeValue}</span>}
