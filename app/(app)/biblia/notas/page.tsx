@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import BibleNotesWorkspace from '@/components/biblia/BibleNotesWorkspace'
+import OfflineNotesOwnerMarker from '@/components/biblia/OfflineNotesOwnerMarker'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function NotasBibliaPage() {
@@ -7,5 +8,10 @@ export default async function NotasBibliaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  return <BibleNotesWorkspace userId={user.id} />
+  return (
+    <>
+      <OfflineNotesOwnerMarker userId={user.id} />
+      <BibleNotesWorkspace userId={user.id} />
+    </>
+  )
 }

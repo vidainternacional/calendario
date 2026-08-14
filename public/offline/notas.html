@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#7c3aed" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Notas bíblicas · Vida Internacional</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f7f7f4;
+      --panel: #ffffff;
+      --editor: #fafaf8;
+      --soft: #f1f5f9;
+      --field: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --violet: #7c3aed;
+      --selected: #ede9fe;
+      --danger: #e11d48;
+    }
+    :root[data-biblia-tema="sepia"] {
+      --page: #efe5d0;
+      --panel: #fff8e8;
+      --editor: #f7ecd6;
+      --soft: #ead9b5;
+      --field: #fff8e8;
+      --text: #382d21;
+      --muted: #7d6b54;
+      --border: #d4c09b;
+      --selected: #e4cea3;
+    }
+    :root[data-biblia-tema="oscuro"] {
+      color-scheme: dark;
+      --page: #020617;
+      --panel: #0f172a;
+      --editor: #07101f;
+      --soft: #1e293b;
+      --field: #0f172a;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --selected: #2e1065;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--page); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .page { min-height: 100vh; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 32px); }
+    .wrap { width: min(100%, 980px); margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .header-left { display: flex; min-width: 0; align-items: center; gap: 12px; }
+    .circle { width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; border: 1px solid var(--border); background: var(--field); color: var(--text); flex: 0 0 auto; }
+    .new { border: 0; background: var(--violet); color: white; font-size: 24px; }
+    h1 { margin: 0; font-size: 21px; line-height: 1.2; }
+    .subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .offline-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 5px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 700; }
+    .dot { width: 7px; height: 7px; border-radius: 999px; background: #f59e0b; }
+    .panel { overflow: hidden; border: 1px solid var(--border); border-radius: 26px; background: var(--panel); box-shadow: 0 1px 4px rgba(15,23,42,.06); }
+    .top { padding: 12px; border-bottom: 1px solid var(--border); }
+    .search { min-height: 44px; display: flex; align-items: center; gap: 8px; border-radius: 16px; padding: 0 12px; background: var(--soft); }
+    .search input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 14px; }
+    .cards { display: flex; gap: 12px; overflow-x: auto; min-height: 104px; padding: 14px 0 6px; scrollbar-width: none; }
+    .cards::-webkit-scrollbar { display: none; }
+    .card { width: 80px; height: 80px; flex: 0 0 80px; border: 0; border-radius: 999px; padding: 8px; background: var(--soft); color: var(--text); box-shadow: inset 0 0 0 1px transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .card.selected { background: var(--selected); box-shadow: inset 0 0 0 1px rgba(124,58,237,.35); }
+    .card-title { width: 100%; font-size: 11px; font-weight: 800; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .card-meta { width: 100%; margin-top: 4px; color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .editor { min-height: calc(100vh - 300px); padding: 18px; background: var(--editor); }
+    .title-row { display: flex; gap: 12px; align-items: flex-start; }
+    .title { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; font-size: 25px; font-weight: 800; }
+    .delete { border: 0; background: rgba(225,29,72,.1); color: var(--danger); font-size: 17px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    label span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .field { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 11px; outline: 0; background: var(--field); }
+    .package { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+    .save-state { margin: 14px 0 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--field); color: var(--muted); font-size: 11px; text-align: right; }
+    textarea { width: 100%; min-height: 48vh; margin-top: 14px; border: 0; outline: 0; resize: none; background: transparent; font-size: 17px; line-height: 1.85; }
+    .empty, .protected { min-height: 55vh; padding: 36px 22px; display: grid; place-items: center; text-align: center; background: var(--editor); }
+    .empty-inner { max-width: 360px; }
+    .icon { margin: 0 auto 12px; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: var(--selected); color: var(--violet); font-size: 24px; }
+    .empty h2, .protected h2 { margin: 0; font-size: 19px; }
+    .empty p, .protected p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .primary { min-height: 44px; margin-top: 18px; border: 0; border-radius: 999px; padding: 0 18px; background: var(--violet); color: white; font-weight: 800; font-size: 13px; }
+    [hidden] { display: none !important; }
+    @media (min-width: 640px) {
+      .page { padding-inline: 24px; }
+      .editor { padding: 24px; }
+      .fields { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="wrap">
+      <header class="header">
+        <div class="header-left">
+          <button id="back" class="circle" type="button" aria-label="Volver">‹</button>
+          <div style="min-width:0">
+            <h1>Notas bíblicas</h1>
+            <p class="subtitle">Cuaderno de versículos, estudios y predicaciones</p>
+            <span id="status" class="offline-pill"><span class="dot"></span>Sin conexión · guardado local</span>
+          </div>
+        </div>
+        <button id="new" class="circle new" type="button" aria-label="Nueva nota">+</button>
+      </header>
+
+      <section class="panel">
+        <div id="protected" class="protected" hidden>
+          <div class="empty-inner">
+            <div class="icon">🔒</div>
+            <h2>Tus notas están protegidas</h2>
+            <p>Para identificar tu cuaderno sin Internet, abre Biblia → Notas una vez mientras tengas conexión y vuelve a intentarlo.</p>
+            <button id="retry" class="primary" type="button">Reintentar</button>
+          </div>
+        </div>
+
+        <div id="notebook" hidden>
+          <div class="top">
+            <label class="search" aria-label="Buscar notas"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar notas" autocomplete="off" /></label>
+            <div id="cards" class="cards"></div>
+          </div>
+
+          <section id="editor" class="editor" hidden>
+            <div class="title-row">
+              <input id="title" class="title" type="text" placeholder="Título" maxlength="300" />
+              <button id="delete" class="circle delete" type="button" aria-label="Eliminar nota">⌫</button>
+            </div>
+            <div class="fields">
+              <label><span>Tipo</span><select id="type" class="field"><option value="versiculo">Versículo</option><option value="estudio">Estudio</option><option value="predicacion">Predicación</option><option value="personal">Personal</option></select></label>
+              <label><span>Referencia</span><input id="reference" class="field" type="text" placeholder="Ej. Juan 3:16" maxlength="300" /></label>
+              <div id="package" class="package" hidden></div>
+            </div>
+            <div class="save-state">Guardado automático en este dispositivo</div>
+            <textarea id="content" placeholder="Empieza a escribir…"></textarea>
+          </section>
+
+          <div id="empty" class="empty" hidden>
+            <div class="empty-inner">
+              <div class="icon">✎</div>
+              <h2>Tu cuaderno está disponible sin Internet</h2>
+              <p>Puedes crear o editar notas. Los cambios se sincronizarán cuando vuelva la conexión.</p>
+              <button id="empty-new" class="primary" type="button">Crear nota</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const ACTIVE_OWNER_KEY = 'vida-biblia-notas-active-owner-v1'
+      const USER_STORAGE_PREFIX = 'vida-biblia-notas-v3'
+      const QUEUE_KEY = 'vida-biblia-notas-sync-v1'
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      const TYPES = new Set(['versiculo', 'estudio', 'predicacion', 'personal'])
+
+      const el = (id) => document.getElementById(id)
+      const protectedView = el('protected')
+      const notebook = el('notebook')
+      const cards = el('cards')
+      const editor = el('editor')
+      const empty = el('empty')
+      const search = el('search')
+      const title = el('title')
+      const type = el('type')
+      const reference = el('reference')
+      const packageEl = el('package')
+      const content = el('content')
+      const status = el('status')
+
+      try {
+        const raw = localStorage.getItem('vida-biblia-preferencias')
+        const mode = raw ? JSON.parse(raw)?.modo : 'claro'
+        document.documentElement.dataset.bibliaTema = mode === 'oscuro' || mode === 'sepia' ? mode : 'claro'
+      } catch {}
+
+      const resolverOwnerId = () => {
+        try {
+          const activo = localStorage.getItem(ACTIVE_OWNER_KEY) || ''
+          if (UUID_RE.test(activo)) return activo
+
+          const owners = []
+          for (let index = 0; index < localStorage.length; index += 1) {
+            const key = localStorage.key(index) || ''
+            if (!key.startsWith(`${USER_STORAGE_PREFIX}:`)) continue
+            const candidate = key.slice(USER_STORAGE_PREFIX.length + 1)
+            if (UUID_RE.test(candidate) && !owners.includes(candidate)) owners.push(candidate)
+          }
+
+          if (owners.length !== 1) return null
+          localStorage.setItem(ACTIVE_OWNER_KEY, owners[0])
+          return owners[0]
+        } catch {
+          return null
+        }
+      }
+
+      const ownerId = resolverOwnerId()
+
+      if (!ownerId) {
+        protectedView.hidden = false
+        el('new').hidden = true
+        el('retry').addEventListener('click', () => location.reload())
+        el('back').addEventListener('click', () => history.length > 1 ? history.back() : undefined)
+        return
+      }
+
+      const storageKey = `${USER_STORAGE_PREFIX}:${ownerId}`
+      let selectedId = null
+      let notes = []
+
+      const now = () => new Date().toISOString()
+      const normalize = (value) => {
+        const stamp = now()
+        return {
+          id: typeof value?.id === 'string' && UUID_RE.test(value.id) ? value.id : crypto.randomUUID(),
+          titulo: typeof value?.titulo === 'string' ? value.titulo : 'Sin título',
+          contenido: typeof value?.contenido === 'string' ? value.contenido : '',
+          tipo: TYPES.has(value?.tipo) ? value.tipo : 'personal',
+          referencia: typeof value?.referencia === 'string' ? value.referencia : '',
+          paqueteId: typeof value?.paqueteId === 'string' ? value.paqueteId : '',
+          paquete: typeof value?.paquete === 'string' ? value.paquete : '',
+          creadaEn: typeof value?.creadaEn === 'string' ? value.creadaEn : stamp,
+          actualizadaEn: typeof value?.actualizadaEn === 'string' ? value.actualizadaEn : (typeof value?.creadaEn === 'string' ? value.creadaEn : stamp),
+        }
+      }
+
+      const readArray = (key) => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '[]')
+          return Array.isArray(parsed) ? parsed : []
+        } catch { return [] }
+      }
+
+      const writeNotes = () => {
+        try { localStorage.setItem(storageKey, JSON.stringify(notes)) } catch {}
+      }
+
+      const enqueue = (kind, noteOrId) => {
+        try {
+          const id = typeof noteOrId === 'string' ? noteOrId : noteOrId.id
+          const operation = kind === 'delete'
+            ? { tipo: 'delete', id, token: crypto.randomUUID(), ownerId, encoladaEn: now() }
+            : { tipo: 'upsert', id, token: crypto.randomUUID(), ownerId, nota: noteOrId, encoladaEn: now() }
+          const queue = readArray(QUEUE_KEY).filter((item) => !(item && item.id === id && item.ownerId === ownerId))
+          queue.push(operation)
+          localStorage.setItem(QUEUE_KEY, JSON.stringify(queue))
+        } catch {}
+      }
+
+      const selected = () => notes.find((note) => note.id === selectedId) || null
+
+      const persistSelected = () => {
+        const note = selected()
+        if (!note) return
+        note.actualizadaEn = now()
+        writeNotes()
+        enqueue('upsert', note)
+      }
+
+      const cardMeta = (note) => note.referencia || ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
+
+      const renderCards = () => {
+        cards.replaceChildren()
+        const term = (search.value || '').trim().toLowerCase()
+        const filtered = [...notes]
+          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete}`.toLowerCase().includes(term))
+          .sort((a, b) => String(b.actualizadaEn).localeCompare(String(a.actualizadaEn)))
+
+        filtered.forEach((note) => {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = `card${note.id === selectedId ? ' selected' : ''}`
+          const name = document.createElement('span')
+          name.className = 'card-title'
+          name.textContent = note.titulo || 'Sin título'
+          const meta = document.createElement('span')
+          meta.className = 'card-meta'
+          meta.textContent = cardMeta(note)
+          button.append(name, meta)
+          button.addEventListener('click', () => { selectedId = note.id; render() })
+          cards.append(button)
+        })
+      }
+
+      const renderEditor = () => {
+        const note = selected()
+        const hasNote = Boolean(note)
+        editor.hidden = !hasNote
+        empty.hidden = hasNote
+        if (!note) return
+        title.value = note.titulo
+        type.value = note.tipo
+        reference.value = note.referencia
+        content.value = note.contenido
+        packageEl.hidden = !note.paquete
+        packageEl.textContent = note.paquete ? `Paquete pastoral: ${note.paquete}` : ''
+      }
+
+      const render = () => {
+        renderCards()
+        renderEditor()
+      }
+
+      const createNote = () => {
+        const stamp = now()
+        const note = normalize({
+          id: crypto.randomUUID(),
+          titulo: 'Nueva nota',
+          contenido: '',
+          tipo: 'personal',
+          referencia: '',
+          paqueteId: '',
+          paquete: '',
+          creadaEn: stamp,
+          actualizadaEn: stamp,
+        })
+        notes.unshift(note)
+        selectedId = note.id
+        writeNotes()
+        enqueue('upsert', note)
+        render()
+        requestAnimationFrame(() => title.focus())
+      }
+
+      const deleteSelected = () => {
+        const note = selected()
+        if (!note) return
+        notes = notes.filter((item) => item.id !== note.id)
+        enqueue('delete', note.id)
+        writeNotes()
+        selectedId = notes[0]?.id || null
+        render()
+      }
+
+      notes = readArray(storageKey).map(normalize)
+      writeNotes()
+      selectedId = notes[0]?.id || null
+      notebook.hidden = false
+      render()
+
+      el('new').addEventListener('click', createNote)
+      el('empty-new').addEventListener('click', createNote)
+      el('delete').addEventListener('click', deleteSelected)
+      el('back').addEventListener('click', () => { if (history.length > 1) history.back() })
+      search.addEventListener('input', renderCards)
+      title.addEventListener('input', () => { const note = selected(); if (!note) return; note.titulo = title.value; persistSelected(); renderCards() })
+      type.addEventListener('change', () => { const note = selected(); if (!note) return; note.tipo = TYPES.has(type.value) ? type.value : 'personal'; persistSelected(); renderCards() })
+      reference.addEventListener('input', () => { const note = selected(); if (!note) return; note.referencia = reference.value; persistSelected(); renderCards() })
+      content.addEventListener('input', () => { const note = selected(); if (!note) return; note.contenido = content.value; persistSelected() })
+
+      window.addEventListener('online', () => {
+        status.textContent = 'Conexión recuperada · sincronizando…'
+        setTimeout(() => location.reload(), 250)
+      })
+    })()
+  </script>
+</body>
+</html>

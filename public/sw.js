@@ -1,8 +1,12 @@
-const CACHE_NAME = 'vida-shell-v1.6'
+const CACHE_NAME = 'vida-shell-v1.8-notas-owner'
+const OFFLINE_NOTES_SHELL = '/offline/notas.html'
+const OFFLINE_NOTES_OWNER_MARKER = '/offline/notas-owner'
+const OWNER_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const SHELL_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  OFFLINE_NOTES_SHELL,
 ]
 
 self.addEventListener('install', (event) => {
@@ -27,11 +31,72 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+self.addEventListener('message', (event) => {
+  const data = event.data
+  if (!data || typeof data.type !== 'string') return
+
+  if (data.type === 'VIDA_NOTES_OWNER_SET' && OWNER_UUID_RE.test(data.userId || '')) {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.put(
+          OFFLINE_NOTES_OWNER_MARKER,
+          new Response(data.userId, {
+            headers: { 'content-type': 'text/plain; charset=utf-8' },
+          })
+        )
+      )
+    )
+    return
+  }
+
+  if (data.type === 'VIDA_NOTES_OWNER_CLEAR') {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => cache.delete(OFFLINE_NOTES_OWNER_MARKER))
+    )
+  }
+})
+
+async function respuestaNotasOffline() {
+  const cache = await caches.open(CACHE_NAME)
+  const shell = await cache.match(OFFLINE_NOTES_SHELL)
+  if (!shell) return Response.error()
+
+  const ownerResponse = await cache.match(OFFLINE_NOTES_OWNER_MARKER)
+  if (!ownerResponse) return shell
+
+  const ownerId = (await ownerResponse.text()).trim()
+  if (!OWNER_UUID_RE.test(ownerId)) return shell
+
+  const html = await shell.text()
+  const ownerBootstrap = `<script>try{localStorage.setItem('vida-biblia-notas-active-owner-v1',${JSON.stringify(ownerId)})}catch{}</script>`
+  const headers = new Headers(shell.headers)
+  headers.delete('content-encoding')
+  headers.delete('content-length')
+  headers.set('content-type', 'text/html; charset=utf-8')
+
+  return new Response(html.replace('<head>', `<head>${ownerBootstrap}`), {
+    status: shell.status,
+    statusText: shell.statusText,
+    headers,
+  })
+}
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
-  if (event.request.mode === 'navigate') return
 
   const url = new URL(event.request.url)
+
+  if (event.request.mode === 'navigate') {
+    const pathname = url.pathname.replace(/\/+$/, '') || '/'
+
+    if (url.origin === self.location.origin && pathname === '/biblia/notas') {
+      event.respondWith(
+        fetch(event.request).catch(() => respuestaNotasOffline())
+      )
+    }
+    return
+  }
+
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/_next/') ||

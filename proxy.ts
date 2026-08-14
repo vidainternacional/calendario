@@ -14,8 +14,9 @@ export const config = {
      * - favicon.ico (favicon)
      * - manifest.json
      * - sw.js (service worker)
+     * - offline/notas.html (shell estático sin datos privados)
      * - icons/
      */
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|offline/notas\\.html|icons|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
