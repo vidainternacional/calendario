@@ -178,12 +178,28 @@
         document.documentElement.dataset.bibliaTema = mode === 'oscuro' || mode === 'sepia' ? mode : 'claro'
       } catch {}
 
-      const ownerId = (() => {
+      const resolverOwnerId = () => {
         try {
-          const value = localStorage.getItem(ACTIVE_OWNER_KEY) || ''
-          return UUID_RE.test(value) ? value : null
-        } catch { return null }
-      })()
+          const activo = localStorage.getItem(ACTIVE_OWNER_KEY) || ''
+          if (UUID_RE.test(activo)) return activo
+
+          const owners = []
+          for (let index = 0; index < localStorage.length; index += 1) {
+            const key = localStorage.key(index) || ''
+            if (!key.startsWith(`${USER_STORAGE_PREFIX}:`)) continue
+            const candidate = key.slice(USER_STORAGE_PREFIX.length + 1)
+            if (UUID_RE.test(candidate) && !owners.includes(candidate)) owners.push(candidate)
+          }
+
+          if (owners.length !== 1) return null
+          localStorage.setItem(ACTIVE_OWNER_KEY, owners[0])
+          return owners[0]
+        } catch {
+          return null
+        }
+      }
+
+      const ownerId = resolverOwnerId()
 
       if (!ownerId) {
         protectedView.hidden = false
