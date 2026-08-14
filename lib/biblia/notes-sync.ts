@@ -6,6 +6,7 @@ import {
   leerOperacionesNotasPendientes,
   type OperacionNotaBiblicaPendiente,
 } from '@/lib/biblia/notes-queue'
+import type { NotaBiblicaLocal } from '@/lib/biblia/notes-local'
 
 let sincronizacionEnCurso: Promise<{ sincronizadas: number; pendientes: number }> | null = null
 let usuarioActualNotas: string | null = null
@@ -14,9 +15,21 @@ function uuidONull(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null
 }
 
-function textoONull(value: string, max: number) {
-  const limpio = value.trim()
+function textoONull(value: string | null | undefined, max: number) {
+  const limpio = typeof value === 'string' ? value.trim() : ''
   return limpio ? limpio.slice(0, max) : null
+}
+
+function contextoParaNota(nota: NotaBiblicaLocal) {
+  const base = nota.contexto && typeof nota.contexto === 'object' && !Array.isArray(nota.contexto)
+    ? { ...nota.contexto }
+    : {}
+
+  const paquete = nota.paquete.trim()
+  if (paquete) base.paquete = paquete
+  else delete base.paquete
+
+  return base
 }
 
 export function obtenerUsuarioActualNotas() {
@@ -40,18 +53,21 @@ async function ejecutarOperacionPendiente(
   if (operacion.tipo === 'upsert') {
     const nota = operacion.nota
     const esPredicacion = nota.tipo === 'predicacion'
+    const origen = textoONull(nota.origen, 100) ?? 'biblia_notas'
+    const origenKey = textoONull(nota.origenKey, 800)
+      ?? (origen === 'biblia_notas' ? `biblia-notas:${nota.id}` : null)
     const resultado = await (supabase as any)
       .from('notas_estudio')
       .upsert({
         id: nota.id,
         profile_id: userId,
-        pasaje_normalizado: null,
+        pasaje_normalizado: textoONull(nota.pasajeNormalizado, 1000),
         nota: nota.contenido.slice(0, 50_000),
         titulo: nota.titulo.slice(0, 300),
         tipo: nota.tipo,
         referencia: nota.referencia.slice(0, 300),
-        origen: 'biblia_notas',
-        origen_key: `biblia-notas:${nota.id}`,
+        origen,
+        origen_key: origenKey,
         paquete_id: uuidONull(nota.paqueteId),
         numero_predicacion: esPredicacion ? nota.numeroPredicacion : null,
         fecha_predicacion: esPredicacion ? textoONull(nota.fechaPredicacion, 10) : null,
@@ -60,7 +76,7 @@ async function ejecutarOperacionPendiente(
         predicador: esPredicacion ? textoONull(nota.predicador, 300) : null,
         estado_predicacion: esPredicacion ? textoONull(nota.estadoPredicacion, 100) : null,
         estado: 'activo',
-        contexto: nota.paquete ? { paquete: nota.paquete } : {},
+        contexto: contextoParaNota(nota),
         created_at: nota.creadaEn,
         updated_at: nota.actualizadaEn,
       }, { onConflict: 'id' })
@@ -78,6 +94,7 @@ async function ejecutarOperacionPendiente(
 
   // Para el cuaderno canónico el borrado se conserva como tombstone sin
   // contenido. Otro dispositivo podrá saber que debe quitar la misma nota.
+  // La identidad canónica (origen/origen_key/pasaje_normalizado) no se toca.
   return (supabase as any)
     .from('notas_estudio')
     .update({

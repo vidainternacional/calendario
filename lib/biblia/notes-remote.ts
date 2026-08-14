@@ -5,7 +5,7 @@ import {
   leerOperacionesNotasPendientes,
   type OperacionNotaBiblicaPendiente,
 } from '@/lib/biblia/notes-queue'
-import type { NotaBiblicaLocal, TipoNotaBiblica } from '@/lib/biblia/notes-local'
+import type { ContextoNotaBiblica, NotaBiblicaLocal, TipoNotaBiblica } from '@/lib/biblia/notes-local'
 
 export type NotaBiblicaRemota = {
   id: string
@@ -14,6 +14,9 @@ export type NotaBiblicaRemota = {
   tipo: string | null
   referencia: string | null
   paquete_id: string | null
+  origen: string | null
+  origen_key: string | null
+  pasaje_normalizado: string | null
   numero_predicacion: number | null
   fecha_predicacion: string | null
   serie: string | null
@@ -42,9 +45,14 @@ function fechaMs(value: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function contextoValido(contexto: unknown): ContextoNotaBiblica {
+  if (!contexto || typeof contexto !== 'object' || Array.isArray(contexto)) return {}
+  return contexto as ContextoNotaBiblica
+}
+
 function paqueteDesdeContexto(contexto: unknown) {
-  if (!contexto || typeof contexto !== 'object' || Array.isArray(contexto)) return ''
-  const paquete = (contexto as Record<string, unknown>).paquete
+  const normalizado = contextoValido(contexto)
+  const paquete = normalizado.paquete
   return typeof paquete === 'string' ? paquete : ''
 }
 
@@ -64,6 +72,10 @@ function mapearNotaRemota(row: NotaBiblicaRemota): NotaBiblicaLocal {
     referencia: row.referencia ?? '',
     paqueteId: row.paquete_id ?? '',
     paquete: paqueteDesdeContexto(row.contexto),
+    origen: row.origen ?? 'biblia_notas',
+    origenKey: row.origen_key ?? '',
+    pasajeNormalizado: row.pasaje_normalizado ?? '',
+    contexto: contextoValido(row.contexto),
     numeroPredicacion: numeroPredicacionValido(row.numero_predicacion),
     fechaPredicacion: row.fecha_predicacion ?? '',
     serie: row.serie ?? '',
@@ -132,7 +144,7 @@ export async function obtenerNotasBiblicasRemotasMezcladas(
 
   const { data, error } = await (supabase as any)
     .from('notas_estudio')
-    .select('id,nota,titulo,tipo,referencia,paquete_id,numero_predicacion,fecha_predicacion,serie,lugar,predicador,estado_predicacion,contexto,estado,created_at,updated_at')
+    .select('id,nota,titulo,tipo,referencia,paquete_id,origen,origen_key,pasaje_normalizado,numero_predicacion,fecha_predicacion,serie,lugar,predicador,estado_predicacion,contexto,estado,created_at,updated_at')
     .eq('profile_id', ownerId)
     .eq('origen', 'biblia_notas')
     .order('updated_at', { ascending: false })

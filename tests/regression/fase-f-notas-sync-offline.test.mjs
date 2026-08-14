@@ -15,12 +15,18 @@ test('FASE F: la cola offline conserva dueño y última operación por nota', as
   assert.match(queue, /item\.ownerId === ownerId/)
 })
 
-test('FASE F: la sincronización usa UUID local y no ocupa pasaje único de Estudio Profundo', async () => {
-  const sync = await readFile(syncPath, 'utf8')
+test('FASE F: la sincronización usa UUID local y las notas nuevas de Biblia no ocupan pasaje único de Estudio Profundo', async () => {
+  const [localStore, sync] = await Promise.all([
+    readFile(localStorePath, 'utf8'),
+    readFile(syncPath, 'utf8'),
+  ])
+
   assert.match(sync, /id: nota\.id/)
   assert.match(sync, /profile_id: userId/)
-  assert.match(sync, /pasaje_normalizado: null/)
-  assert.match(sync, /origen: 'biblia_notas'/)
+  assert.match(localStore, /pasajeNormalizado: ''/)
+  assert.match(sync, /pasaje_normalizado: textoONull\(nota\.pasajeNormalizado, 1000\)/)
+  assert.match(localStore, /origen: 'biblia_notas'/)
+  assert.match(sync, /origen === 'biblia_notas'/)
   assert.match(sync, /operacion\.ownerId === user\.id/)
   assert.match(sync, /onConflict: 'id'/)
 })
