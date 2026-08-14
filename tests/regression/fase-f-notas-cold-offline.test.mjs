@@ -31,6 +31,13 @@ test('el shell offline no incluye datos privados y usa la caché y cola canónic
   assert.doesNotMatch(shell, /\/_next\//)
 })
 
+test('el shell puede inferir de forma segura un único cuaderno local', () => {
+  assert.match(shell, /const resolverOwnerId = \(\) =>/)
+  assert.match(shell, /key\.startsWith\(`\$\{USER_STORAGE_PREFIX\}:`\)/)
+  assert.match(shell, /if \(owners\.length !== 1\) return null/)
+  assert.match(shell, /localStorage\.setItem\(ACTIVE_OWNER_KEY, owners\[0\]\)/)
+})
+
 test('el service worker respalda solo el UUID activo y puede restaurarlo antes del shell', () => {
   assert.match(sw, /OFFLINE_NOTES_OWNER_MARKER = '\/offline\/notas-owner'/)
   assert.match(sw, /VIDA_NOTES_OWNER_SET/)
