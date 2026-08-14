@@ -1,7 +1,10 @@
 'use client'
 
 import { logout } from '@/app/actions/auth'
-import { VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY } from '@/components/biblia/OfflineNotesOwnerMarker'
+import {
+  VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY,
+  VIDA_BIBLE_NOTES_OWNER_CLEAR_MESSAGE,
+} from '@/components/biblia/OfflineNotesOwnerMarker'
 import { LogOut } from 'lucide-react'
 import { useTransition } from 'react'
 
@@ -12,6 +15,14 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
     try {
       localStorage.removeItem(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY)
     } catch {}
+
+    if ('serviceWorker' in navigator) {
+      const mensaje = { type: VIDA_BIBLE_NOTES_OWNER_CLEAR_MESSAGE }
+      navigator.serviceWorker.controller?.postMessage(mensaje)
+      void navigator.serviceWorker.ready
+        .then((registration) => registration.active?.postMessage(mensaje))
+        .catch(() => undefined)
+    }
 
     startTransition(async () => {
       await logout()
