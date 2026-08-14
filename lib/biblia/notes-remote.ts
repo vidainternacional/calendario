@@ -14,6 +14,12 @@ export type NotaBiblicaRemota = {
   tipo: string | null
   referencia: string | null
   paquete_id: string | null
+  numero_predicacion: number | null
+  fecha_predicacion: string | null
+  serie: string | null
+  lugar: string | null
+  predicador: string | null
+  estado_predicacion: string | null
   contexto: unknown
   estado: string | null
   created_at: string | null
@@ -42,6 +48,10 @@ function paqueteDesdeContexto(contexto: unknown) {
   return typeof paquete === 'string' ? paquete : ''
 }
 
+function numeroPredicacionValido(value: number | null) {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
+}
+
 function mapearNotaRemota(row: NotaBiblicaRemota): NotaBiblicaLocal {
   const creadaEn = row.created_at ?? row.updated_at ?? new Date(0).toISOString()
   const actualizadaEn = row.updated_at ?? creadaEn
@@ -54,6 +64,12 @@ function mapearNotaRemota(row: NotaBiblicaRemota): NotaBiblicaLocal {
     referencia: row.referencia ?? '',
     paqueteId: row.paquete_id ?? '',
     paquete: paqueteDesdeContexto(row.contexto),
+    numeroPredicacion: numeroPredicacionValido(row.numero_predicacion),
+    fechaPredicacion: row.fecha_predicacion ?? '',
+    serie: row.serie ?? '',
+    lugar: row.lugar ?? '',
+    predicador: row.predicador ?? '',
+    estadoPredicacion: row.estado_predicacion ?? '',
     creadaEn,
     actualizadaEn,
   }
@@ -116,7 +132,7 @@ export async function obtenerNotasBiblicasRemotasMezcladas(
 
   const { data, error } = await (supabase as any)
     .from('notas_estudio')
-    .select('id,nota,titulo,tipo,referencia,paquete_id,contexto,estado,created_at,updated_at')
+    .select('id,nota,titulo,tipo,referencia,paquete_id,numero_predicacion,fecha_predicacion,serie,lugar,predicador,estado_predicacion,contexto,estado,created_at,updated_at')
     .eq('profile_id', ownerId)
     .eq('origen', 'biblia_notas')
     .order('updated_at', { ascending: false })
