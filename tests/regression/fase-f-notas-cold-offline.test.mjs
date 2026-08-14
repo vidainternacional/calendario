@@ -7,6 +7,7 @@ const shell = fs.readFileSync('public/offline/notas.html', 'utf8')
 const page = fs.readFileSync('app/(app)/biblia/notas/page.tsx', 'utf8')
 const logout = fs.readFileSync('components/auth/LogoutButton.tsx', 'utf8')
 const marker = fs.readFileSync('components/biblia/OfflineNotesOwnerMarker.tsx', 'utf8')
+const proxy = fs.readFileSync('proxy.ts', 'utf8')
 
 test('el service worker usa fallback offline solo para Biblia Notas', () => {
   assert.match(sw, /OFFLINE_NOTES_SHELL = '\/offline\/notas\.html'/)
@@ -28,6 +29,11 @@ test('el shell offline no incluye datos privados y usa la caché y cola canónic
   assert.doesNotMatch(shell, /supabase\.co/i)
   assert.doesNotMatch(shell, /notas_estudio/i)
   assert.doesNotMatch(shell, /\/_next\//)
+})
+
+test('solo el shell estático offline queda fuera del proxy autenticado', () => {
+  assert.match(proxy, /offline\/notas\\\\\.html/)
+  assert.doesNotMatch(proxy, /biblia\/notas/)
 })
 
 test('la ruta autenticada recuerda el dueño y logout lo olvida', () => {
