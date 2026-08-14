@@ -2,22 +2,10 @@
 
 import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { agregarNotaBiblicaLocal } from '@/lib/biblia/notes-local'
 
 const PREF_KEY = 'vida-biblia-preferencias'
-const NOTAS_KEY = 'vida-biblia-notas-v2'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
-
-type NotaBiblica = {
-  id: string
-  titulo: string
-  contenido: string
-  tipo: 'versiculo' | 'estudio' | 'predicacion' | 'personal'
-  referencia: string
-  paquete: string
-  paqueteId?: string
-  creadaEn: string
-  actualizadaEn: string
-}
 
 function textoNormalizado(value: string | null | undefined) {
   return (value ?? '').replace(/\s+/g, ' ').trim()
@@ -46,26 +34,14 @@ function estiloPanelVoz(panel: HTMLElement, modo: ModoBiblia) {
 }
 
 function guardarNotaDeVersiculo(referencia: string, contenido: string) {
-  const ahora = new Date().toISOString()
-  const id = crypto.randomUUID()
-  const nota: NotaBiblica = {
-    id,
+  return agregarNotaBiblicaLocal({
     titulo: referencia,
     contenido,
     tipo: 'versiculo',
     referencia,
+    paqueteId: '',
     paquete: '',
-    creadaEn: ahora,
-    actualizadaEn: ahora,
-  }
-  try {
-    const raw = localStorage.getItem(NOTAS_KEY)
-    const actuales = raw ? JSON.parse(raw) as NotaBiblica[] : []
-    localStorage.setItem(NOTAS_KEY, JSON.stringify([nota, ...actuales]))
-  } catch {
-    localStorage.setItem(NOTAS_KEY, JSON.stringify([nota]))
-  }
-  return id
+  }).id
 }
 
 export default function BibleExperienceFixes() {
