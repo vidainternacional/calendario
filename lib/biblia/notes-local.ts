@@ -6,7 +6,7 @@ import {
   encolarUpsertNotaBiblica,
 } from '@/lib/biblia/notes-queue'
 import {
-  obtenerUsuarioActualNotas,
+  resolverUsuarioActualNotas,
   sincronizarNotasBiblicasPendientes,
 } from '@/lib/biblia/notes-sync'
 
@@ -28,6 +28,7 @@ export const VIDA_BIBLE_NOTES_STORAGE_KEY = 'vida-biblia-notas-v2'
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null
 let listenersInstalados = false
+let colaEncolado: Promise<void> = Promise.resolve()
 
 function ahoraIso() {
   return new Date().toISOString()
@@ -71,6 +72,30 @@ function instalarListenersSincronizacion() {
   programarSincronizacion(0)
 }
 
+function encolarCambiosTrasResolverUsuario(
+  anteriores: NotaBiblicaLocal[],
+  siguientes: NotaBiblicaLocal[]
+) {
+  colaEncolado = colaEncolado.then(async () => {
+    const ownerId = await resolverUsuarioActualNotas()
+    if (!ownerId) return
+
+    const anterioresPorId = new Map(anteriores.map((nota) => [nota.id, nota]))
+    const siguientesPorId = new Map(siguientes.map((nota) => [nota.id, nota]))
+
+    for (const nota of siguientes) {
+      const anterior = anterioresPorId.get(nota.id)
+      if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
+        encolarUpsertNotaBiblica(nota, ownerId)
+      }
+    }
+
+    for (const anterior of anteriores) {
+      if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId)
+    }
+  }).catch(() => {})
+}
+
 export function leerNotasBiblicasLocales(): NotaBiblicaLocal[] {
   if (typeof window === 'undefined') return []
   instalarListenersSincronizacion()
@@ -95,25 +120,8 @@ export function guardarNotasBiblicasLocales(notas: NotaBiblicaLocal[]) {
   instalarListenersSincronizacion()
   try {
     const anteriores = leerNotasBiblicasLocales()
-    const anterioresPorId = new Map(anteriores.map((nota) => [nota.id, nota]))
-    const siguientesPorId = new Map(notas.map((nota) => [nota.id, nota]))
-    const ownerId = obtenerUsuarioActualNotas()
-
     localStorage.setItem(VIDA_BIBLE_NOTES_STORAGE_KEY, JSON.stringify(notas))
-
-    if (ownerId) {
-      for (const nota of notas) {
-        const anterior = anterioresPorId.get(nota.id)
-        if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
-          encolarUpsertNotaBiblica(nota, ownerId)
-        }
-      }
-
-      for (const anterior of anteriores) {
-        if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId)
-      }
-    }
-
+    encolarCambiosTrasResolverUsuario(anteriores, notas)
     return true
   } catch {
     return false
