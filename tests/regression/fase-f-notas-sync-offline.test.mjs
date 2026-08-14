@@ -25,6 +25,16 @@ test('FASE F: la sincronización usa UUID local y no ocupa pasaje único de Estu
   assert.match(sync, /onConflict: 'id'/)
 })
 
+test('FASE F: al iniciar offline identifica la sesión antes de comprobar la red', async () => {
+  const sync = await readFile(syncPath, 'utf8')
+  const sessionIndex = sync.indexOf('supabase.auth.getSession()')
+  const onlineIndex = sync.indexOf('navigator.onLine')
+
+  assert.ok(sessionIndex >= 0)
+  assert.ok(onlineIndex >= 0)
+  assert.ok(sessionIndex < onlineIndex)
+})
+
 test('FASE F: Notas reintenta sincronización al recuperar la PWA', async () => {
   const localStore = await readFile(localStorePath, 'utf8')
   assert.match(localStore, /addEventListener\('online'/)
