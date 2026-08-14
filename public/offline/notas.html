@@ -76,6 +76,13 @@
     label span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
     .field { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 11px; outline: 0; background: var(--field); }
     .package { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+    .sermon { margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--field); }
+    .sermon-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .sermon-title { margin: 0; font-size: 14px; font-weight: 800; }
+    .sermon-note { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .sermon .fields { margin-top: 12px; }
+    .secondary { min-height: 36px; flex: 0 0 auto; border: 0; border-radius: 999px; padding: 0 12px; background: var(--soft); color: var(--text); font-size: 11px; font-weight: 800; }
+    .readonly { font-weight: 800; }
     .save-state { margin: 14px 0 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--field); color: var(--muted); font-size: 11px; text-align: right; }
     textarea { width: 100%; min-height: 48vh; margin-top: 14px; border: 0; outline: 0; resize: none; background: transparent; font-size: 17px; line-height: 1.85; }
     .empty, .protected { min-height: 55vh; padding: 36px 22px; display: grid; place-items: center; text-align: center; background: var(--editor); }
@@ -133,6 +140,25 @@
               <label><span>Referencia</span><input id="reference" class="field" type="text" placeholder="Ej. Juan 3:16" maxlength="300" /></label>
               <div id="package" class="package" hidden></div>
             </div>
+
+            <section id="sermon" class="sermon" hidden>
+              <div class="sermon-head">
+                <div>
+                  <p class="sermon-title">Datos de predicación</p>
+                  <p id="sermon-note" class="sermon-note">El número correlativo se asignará al sincronizar con Internet.</p>
+                </div>
+                <button id="sermon-export" class="secondary" type="button">Exportar</button>
+              </div>
+              <div class="fields">
+                <label><span>N.º de prédica</span><input id="sermon-number" class="field readonly" type="text" value="Pendiente" readonly /></label>
+                <label><span>Fecha</span><input id="sermon-date" class="field" type="date" /></label>
+                <label><span>Serie</span><input id="sermon-series" class="field" type="text" placeholder="Nombre de la serie" maxlength="300" /></label>
+                <label><span>Lugar</span><input id="sermon-place" class="field" type="text" placeholder="Lugar" maxlength="300" /></label>
+                <label><span>Predicador</span><input id="sermon-preacher" class="field" type="text" placeholder="Nombre" maxlength="300" /></label>
+                <label><span>Estado</span><input id="sermon-state" class="field" type="text" placeholder="Ej. Borrador" maxlength="100" /></label>
+              </div>
+            </section>
+
             <div class="save-state">Guardado automático en este dispositivo</div>
             <textarea id="content" placeholder="Empieza a escribir…"></textarea>
           </section>
@@ -169,6 +195,14 @@
       const type = el('type')
       const reference = el('reference')
       const packageEl = el('package')
+      const sermon = el('sermon')
+      const sermonNote = el('sermon-note')
+      const sermonNumber = el('sermon-number')
+      const sermonDate = el('sermon-date')
+      const sermonSeries = el('sermon-series')
+      const sermonPlace = el('sermon-place')
+      const sermonPreacher = el('sermon-preacher')
+      const sermonState = el('sermon-state')
       const content = el('content')
       const status = el('status')
 
@@ -224,6 +258,12 @@
           referencia: typeof value?.referencia === 'string' ? value.referencia : '',
           paqueteId: typeof value?.paqueteId === 'string' ? value.paqueteId : '',
           paquete: typeof value?.paquete === 'string' ? value.paquete : '',
+          numeroPredicacion: Number.isInteger(value?.numeroPredicacion) && value.numeroPredicacion > 0 ? value.numeroPredicacion : null,
+          fechaPredicacion: typeof value?.fechaPredicacion === 'string' ? value.fechaPredicacion : '',
+          serie: typeof value?.serie === 'string' ? value.serie : '',
+          lugar: typeof value?.lugar === 'string' ? value.lugar : '',
+          predicador: typeof value?.predicador === 'string' ? value.predicador : '',
+          estadoPredicacion: typeof value?.estadoPredicacion === 'string' ? value.estadoPredicacion : '',
           creadaEn: typeof value?.creadaEn === 'string' ? value.creadaEn : stamp,
           actualizadaEn: typeof value?.actualizadaEn === 'string' ? value.actualizadaEn : (typeof value?.creadaEn === 'string' ? value.creadaEn : stamp),
         }
@@ -262,13 +302,16 @@
         enqueue('upsert', note)
       }
 
-      const cardMeta = (note) => note.referencia || ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
+      const cardMeta = (note) => {
+        if (note.tipo === 'predicacion' && note.numeroPredicacion) return `Prédica #${note.numeroPredicacion}`
+        return note.referencia || ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
+      }
 
       const renderCards = () => {
         cards.replaceChildren()
         const term = (search.value || '').trim().toLowerCase()
         const filtered = [...notes]
-          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete}`.toLowerCase().includes(term))
+          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete} ${note.numeroPredicacion || ''} ${note.fechaPredicacion} ${note.serie} ${note.lugar} ${note.predicador} ${note.estadoPredicacion}`.toLowerCase().includes(term))
           .sort((a, b) => String(b.actualizadaEn).localeCompare(String(a.actualizadaEn)))
 
         filtered.forEach((note) => {
@@ -299,6 +342,20 @@
         content.value = note.contenido
         packageEl.hidden = !note.paquete
         packageEl.textContent = note.paquete ? `Paquete pastoral: ${note.paquete}` : ''
+
+        const isSermon = note.tipo === 'predicacion'
+        sermon.hidden = !isSermon
+        if (isSermon) {
+          sermonNumber.value = note.numeroPredicacion ? `#${note.numeroPredicacion}` : 'Pendiente'
+          sermonNote.textContent = note.numeroPredicacion
+            ? `Prédica #${note.numeroPredicacion}`
+            : 'El número correlativo se asignará al sincronizar con Internet.'
+          sermonDate.value = note.fechaPredicacion
+          sermonSeries.value = note.serie
+          sermonPlace.value = note.lugar
+          sermonPreacher.value = note.predicador
+          sermonState.value = note.estadoPredicacion
+        }
       }
 
       const render = () => {
@@ -316,6 +373,12 @@
           referencia: '',
           paqueteId: '',
           paquete: '',
+          numeroPredicacion: null,
+          fechaPredicacion: '',
+          serie: '',
+          lugar: '',
+          predicador: '',
+          estadoPredicacion: '',
           creadaEn: stamp,
           actualizadaEn: stamp,
         })
@@ -337,6 +400,14 @@
         render()
       }
 
+      const updateSermonField = (field, value) => {
+        const note = selected()
+        if (!note || note.tipo !== 'predicacion') return
+        note[field] = value
+        persistSelected()
+        renderCards()
+      }
+
       notes = readArray(storageKey).map(normalize)
       writeNotes()
       selectedId = notes[0]?.id || null
@@ -347,10 +418,31 @@
       el('empty-new').addEventListener('click', createNote)
       el('delete').addEventListener('click', deleteSelected)
       el('back').addEventListener('click', () => { if (history.length > 1) history.back() })
+      el('sermon-export').addEventListener('click', () => window.print())
       search.addEventListener('input', renderCards)
       title.addEventListener('input', () => { const note = selected(); if (!note) return; note.titulo = title.value; persistSelected(); renderCards() })
-      type.addEventListener('change', () => { const note = selected(); if (!note) return; note.tipo = TYPES.has(type.value) ? type.value : 'personal'; persistSelected(); renderCards() })
+      type.addEventListener('change', () => {
+        const note = selected()
+        if (!note) return
+        const nextType = TYPES.has(type.value) ? type.value : 'personal'
+        note.tipo = nextType
+        if (nextType !== 'predicacion') {
+          note.numeroPredicacion = null
+          note.fechaPredicacion = ''
+          note.serie = ''
+          note.lugar = ''
+          note.predicador = ''
+          note.estadoPredicacion = ''
+        }
+        persistSelected()
+        render()
+      })
       reference.addEventListener('input', () => { const note = selected(); if (!note) return; note.referencia = reference.value; persistSelected(); renderCards() })
+      sermonDate.addEventListener('input', () => updateSermonField('fechaPredicacion', sermonDate.value))
+      sermonSeries.addEventListener('input', () => updateSermonField('serie', sermonSeries.value))
+      sermonPlace.addEventListener('input', () => updateSermonField('lugar', sermonPlace.value))
+      sermonPreacher.addEventListener('input', () => updateSermonField('predicador', sermonPreacher.value))
+      sermonState.addEventListener('input', () => updateSermonField('estadoPredicacion', sermonState.value))
       content.addEventListener('input', () => { const note = selected(); if (!note) return; note.contenido = content.value; persistSelected() })
 
       window.addEventListener('online', () => {
