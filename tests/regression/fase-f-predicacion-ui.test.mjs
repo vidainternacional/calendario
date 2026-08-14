@@ -50,7 +50,7 @@ test('FASE F: el shell offline conserva y encola metadatos de predicación', () 
 })
 
 test('FASE F: el service worker renueva únicamente el shell offline', () => {
-  assert.match(sw, /vida-shell-v1\.9-predicacion/)
+  assert.match(sw, /vida-shell-v2\.0-notas-contexto/)
   assert.match(sw, /OFFLINE_NOTES_SHELL/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
