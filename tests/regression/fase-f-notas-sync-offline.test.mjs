@@ -18,7 +18,7 @@ test('FASE F: la cola offline conserva dueño y última operación por nota', as
 test('FASE F: la sincronización usa UUID local y no ocupa pasaje único de Estudio Profundo', async () => {
   const sync = await readFile(syncPath, 'utf8')
   assert.match(sync, /id: nota\.id/)
-  assert.match(sync, /profile_id: user\.id/)
+  assert.match(sync, /profile_id: userId/)
   assert.match(sync, /pasaje_normalizado: null/)
   assert.match(sync, /origen: 'biblia_notas'/)
   assert.match(sync, /operacion\.ownerId === user\.id/)
@@ -46,6 +46,17 @@ test('FASE F: cada guardado resuelve el usuario antes de encolar y preserva el o
   assert.match(localStore, /colaEncolado = colaEncolado\.then/)
   assert.match(localStore, /encolarCambiosTrasResolverUsuario\(anteriores, notas\)/)
   assert.doesNotMatch(localStore, /obtenerUsuarioActualNotas/)
+})
+
+test('FASE F: la sincronización drena reemplazos hasta alcanzar la última versión', async () => {
+  const sync = await readFile(syncPath, 'utf8')
+
+  assert.match(sync, /while \(true\)/)
+  assert.match(sync, /const operaciones = leerOperacionesNotasPendientes\(\)/)
+  assert.match(sync, /const pendientesActuales = leerOperacionesNotasPendientes\(\)/)
+  assert.match(sync, /if \(pendientesActuales\.length === 0\) break/)
+  assert.match(sync, /if \(huboError \|\| !huboProgreso\) break/)
+  assert.match(sync, /completarOperacionNotaBiblica\(operacion\.id, operacion\.token, operacion\.ownerId\)/)
 })
 
 test('FASE F: Notas reintenta sincronización al recuperar la PWA', async () => {
