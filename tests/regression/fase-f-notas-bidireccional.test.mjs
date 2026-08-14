@@ -38,7 +38,8 @@ test('FASE F: borrar una nota publica tombstone sin conservar su contenido', asy
   assert.match(sync, /estado: 'eliminado'/)
   assert.match(sync, /nota: ''/)
   assert.match(sync, /updated_at: operacion\.encoladaEn/)
-  assert.match(sync, /\.eq\('origen', 'biblia_notas'\)/)
+  assert.match(sync, /const origenBorrado = textoONull\(operacion\.origen, 100\) \?\? 'biblia_notas'/)
+  assert.match(sync, /\.eq\('origen', origenBorrado\)/)
   assert.doesNotMatch(sync, /\.delete\(\)/)
 })
 

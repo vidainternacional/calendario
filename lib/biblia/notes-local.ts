@@ -149,7 +149,7 @@ function encolarCambiosConUsuario(
   }
 
   for (const anterior of anteriores) {
-    if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId)
+    if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId, anterior.origen)
   }
 }
 
