@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   completarOperacionNotaBiblica,
   leerOperacionesNotasPendientes,
+  type OperacionNotaBiblicaPendiente,
 } from '@/lib/biblia/notes-queue'
 
 let sincronizacionEnCurso: Promise<{ sincronizadas: number; pendientes: number }> | null = null
@@ -26,6 +27,40 @@ export async function resolverUsuarioActualNotas() {
   return usuarioActualNotas
 }
 
+async function ejecutarOperacionPendiente(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  operacion: OperacionNotaBiblicaPendiente
+) {
+  if (operacion.tipo === 'upsert') {
+    const nota = operacion.nota
+    return (supabase as any)
+      .from('notas_estudio')
+      .upsert({
+        id: nota.id,
+        profile_id: userId,
+        pasaje_normalizado: null,
+        nota: nota.contenido.slice(0, 50_000),
+        titulo: nota.titulo.slice(0, 300),
+        tipo: nota.tipo,
+        referencia: nota.referencia.slice(0, 300),
+        origen: 'biblia_notas',
+        origen_key: `biblia-notas:${nota.id}`,
+        paquete_id: uuidONull(nota.paqueteId),
+        estado: 'activo',
+        contexto: nota.paquete ? { paquete: nota.paquete } : {},
+        created_at: nota.creadaEn,
+        updated_at: nota.actualizadaEn,
+      }, { onConflict: 'id' })
+  }
+
+  return (supabase as any)
+    .from('notas_estudio')
+    .delete()
+    .eq('id', operacion.id)
+    .eq('profile_id', userId)
+}
+
 export async function sincronizarNotasBiblicasPendientes() {
   if (sincronizacionEnCurso) return sincronizacionEnCurso
 
@@ -45,48 +80,33 @@ export async function sincronizarNotasBiblicasPendientes() {
     }
 
     let sincronizadas = 0
-    const operaciones = leerOperacionesNotasPendientes().filter((operacion) => operacion.ownerId === user.id)
 
-    for (const operacion of operaciones) {
-      let error: unknown = null
+    while (true) {
+      const operaciones = leerOperacionesNotasPendientes().filter((operacion) => operacion.ownerId === user.id)
+      if (operaciones.length === 0) break
 
-      if (operacion.tipo === 'upsert') {
-        const nota = operacion.nota
-        const resultado = await (supabase as any)
-          .from('notas_estudio')
-          .upsert({
-            id: nota.id,
-            profile_id: user.id,
-            pasaje_normalizado: null,
-            nota: nota.contenido.slice(0, 50_000),
-            titulo: nota.titulo.slice(0, 300),
-            tipo: nota.tipo,
-            referencia: nota.referencia.slice(0, 300),
-            origen: 'biblia_notas',
-            origen_key: `biblia-notas:${nota.id}`,
-            paquete_id: uuidONull(nota.paqueteId),
-            estado: 'activo',
-            contexto: nota.paquete ? { paquete: nota.paquete } : {},
-            created_at: nota.creadaEn,
-            updated_at: nota.actualizadaEn,
-          }, { onConflict: 'id' })
-        error = resultado.error
-      } else {
-        const resultado = await (supabase as any)
-          .from('notas_estudio')
-          .delete()
-          .eq('id', operacion.id)
-          .eq('profile_id', user.id)
-        error = resultado.error
+      let huboError = false
+      let huboProgreso = false
+
+      for (const operacion of operaciones) {
+        const resultado = await ejecutarOperacionPendiente(supabase, user.id, operacion)
+
+        if (resultado.error) {
+          console.error('[notas-sync] operación pendiente:', resultado.error)
+          huboError = true
+          continue
+        }
+
+        completarOperacionNotaBiblica(operacion.id, operacion.token, operacion.ownerId)
+        sincronizadas += 1
+        huboProgreso = true
       }
 
-      if (error) {
-        console.error('[notas-sync] operación pendiente:', error)
-        continue
-      }
+      const pendientesActuales = leerOperacionesNotasPendientes()
+        .filter((operacion) => operacion.ownerId === user.id)
 
-      completarOperacionNotaBiblica(operacion.id, operacion.token, operacion.ownerId)
-      sincronizadas += 1
+      if (pendientesActuales.length === 0) break
+      if (huboError || !huboProgreso) break
     }
 
     return {
