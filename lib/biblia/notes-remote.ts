@@ -146,7 +146,7 @@ export async function obtenerNotasBiblicasRemotasMezcladas(
     .from('notas_estudio')
     .select('id,nota,titulo,tipo,referencia,paquete_id,origen,origen_key,pasaje_normalizado,numero_predicacion,fecha_predicacion,serie,lugar,predicador,estado_predicacion,contexto,estado,created_at,updated_at')
     .eq('profile_id', ownerId)
-    .eq('origen', 'biblia_notas')
+    .in('origen', ['biblia_notas', 'estudio_profundo'])
     .order('updated_at', { ascending: false })
 
   if (error) {
