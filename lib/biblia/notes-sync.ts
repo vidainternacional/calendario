@@ -17,6 +17,15 @@ export function obtenerUsuarioActualNotas() {
   return usuarioActualNotas
 }
 
+export async function resolverUsuarioActualNotas() {
+  if (usuarioActualNotas) return usuarioActualNotas
+
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  usuarioActualNotas = session?.user?.id ?? null
+  return usuarioActualNotas
+}
+
 export async function sincronizarNotasBiblicasPendientes() {
   if (sincronizacionEnCurso) return sincronizacionEnCurso
 
