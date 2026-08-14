@@ -11,6 +11,7 @@ import {
 } from '@/lib/biblia/notes-sync'
 
 export type TipoNotaBiblica = 'versiculo' | 'estudio' | 'predicacion' | 'personal'
+export type ContextoNotaBiblica = Record<string, unknown>
 
 export type NotaBiblicaLocal = {
   id: string
@@ -20,6 +21,10 @@ export type NotaBiblicaLocal = {
   referencia: string
   paqueteId: string
   paquete: string
+  origen: string
+  origenKey: string
+  pasajeNormalizado: string
+  contexto: ContextoNotaBiblica
   numeroPredicacion: number | null
   fechaPredicacion: string
   serie: string
@@ -55,6 +60,11 @@ function normalizarNumeroPredicacion(value: unknown) {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
 }
 
+function normalizarContexto(value: unknown): ContextoNotaBiblica {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return value as ContextoNotaBiblica
+}
+
 function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
   const ahora = ahoraIso()
   return {
@@ -65,6 +75,10 @@ function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
     referencia: nota.referencia ?? '',
     paqueteId: nota.paqueteId ?? '',
     paquete: nota.paquete ?? '',
+    origen: nota.origen ?? 'biblia_notas',
+    origenKey: nota.origenKey ?? '',
+    pasajeNormalizado: nota.pasajeNormalizado ?? '',
+    contexto: normalizarContexto(nota.contexto),
     numeroPredicacion: normalizarNumeroPredicacion(nota.numeroPredicacion),
     fechaPredicacion: nota.fechaPredicacion ?? '',
     serie: nota.serie ?? '',
@@ -231,6 +245,10 @@ export function crearNotaBiblicaLocal(cambios: Partial<NotaBiblicaLocal> = {}): 
     referencia: '',
     paqueteId: '',
     paquete: '',
+    origen: 'biblia_notas',
+    origenKey: '',
+    pasajeNormalizado: '',
+    contexto: {},
     numeroPredicacion: null,
     fechaPredicacion: '',
     serie: '',
