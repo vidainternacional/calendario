@@ -60,20 +60,41 @@ function numeroPredicacionValido(value: number | null) {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
 }
 
+function tipoDesdeFila(row: NotaBiblicaRemota): TipoNotaBiblica {
+  if (esTipoNota(row.tipo)) return row.tipo
+  return row.pasaje_normalizado ? 'estudio' : 'personal'
+}
+
+function origenDesdeFila(row: NotaBiblicaRemota) {
+  const explicito = row.origen?.trim()
+  if (explicito) return explicito
+  return row.pasaje_normalizado ? 'estudio_profundo' : 'legado'
+}
+
+function origenKeyDesdeFila(row: NotaBiblicaRemota, origen: string) {
+  const explicito = row.origen_key?.trim()
+  if (explicito) return explicito
+  if (origen === 'estudio_profundo' && row.pasaje_normalizado) {
+    return `estudio-profundo:${row.pasaje_normalizado}`
+  }
+  return ''
+}
+
 function mapearNotaRemota(row: NotaBiblicaRemota): NotaBiblicaLocal {
   const creadaEn = row.created_at ?? row.updated_at ?? new Date(0).toISOString()
   const actualizadaEn = row.updated_at ?? creadaEn
+  const origen = origenDesdeFila(row)
 
   return {
     id: row.id,
     titulo: row.titulo ?? 'Sin título',
     contenido: row.nota ?? '',
-    tipo: esTipoNota(row.tipo) ? row.tipo : 'personal',
+    tipo: tipoDesdeFila(row),
     referencia: row.referencia ?? '',
     paqueteId: row.paquete_id ?? '',
     paquete: paqueteDesdeContexto(row.contexto),
-    origen: row.origen ?? 'biblia_notas',
-    origenKey: row.origen_key ?? '',
+    origen,
+    origenKey: origenKeyDesdeFila(row, origen),
     pasajeNormalizado: row.pasaje_normalizado ?? '',
     contexto: contextoValido(row.contexto),
     numeroPredicacion: numeroPredicacionValido(row.numero_predicacion),
@@ -146,7 +167,6 @@ export async function obtenerNotasBiblicasRemotasMezcladas(
     .from('notas_estudio')
     .select('id,nota,titulo,tipo,referencia,paquete_id,origen,origen_key,pasaje_normalizado,numero_predicacion,fecha_predicacion,serie,lugar,predicador,estado_predicacion,contexto,estado,created_at,updated_at')
     .eq('profile_id', ownerId)
-    .eq('origen', 'biblia_notas')
     .order('updated_at', { ascending: false })
 
   if (error) {
