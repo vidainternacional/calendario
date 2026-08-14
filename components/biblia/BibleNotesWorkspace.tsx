@@ -8,9 +8,15 @@ import {
   crearNotaBiblicaLocal,
   guardarNotasBiblicasLocales,
   leerNotasBiblicasLocales,
+  reemplazarNotasBiblicasLocalesDesdeServidor,
   type NotaBiblicaLocal,
   type TipoNotaBiblica,
 } from '@/lib/biblia/notes-local'
+import { obtenerNotasBiblicasRemotasMezcladas } from '@/lib/biblia/notes-remote'
+import {
+  resolverUsuarioActualNotas,
+  sincronizarNotasBiblicasPendientes,
+} from '@/lib/biblia/notes-sync'
 
 export type ModoLecturaBiblia = 'claro' | 'oscuro' | 'sepia'
 type TipoNota = TipoNotaBiblica
@@ -20,6 +26,7 @@ type Paquete = { id: string; titulo: string }
 type Props = {
   modo?: ModoLecturaBiblia
   embedded?: boolean
+  userId?: string
 }
 
 const PREF_KEY = 'vida-biblia-preferencias'
@@ -48,7 +55,7 @@ function cargarTema(): ModoLecturaBiblia {
   }
 }
 
-export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false }: Props) {
+export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false, userId }: Props) {
   const [notas, setNotas] = useState<NotaBiblica[]>([])
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
@@ -56,6 +63,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const [modoInterno, setModoInterno] = useState<ModoLecturaBiblia | null>(modoExterno ?? null)
   const [paquetes, setPaquetes] = useState<Paquete[]>([])
   const [notasCargadas, setNotasCargadas] = useState(false)
+  const [usuarioId, setUsuarioId] = useState<string | null>(userId ?? null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const modo = modoExterno ?? modoInterno
   const seleccionada = notas.find((nota) => nota.id === seleccionadaId) ?? null
@@ -68,13 +76,28 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     setModoInterno(temaInicial)
   }, [modoExterno])
 
+  useEffect(() => {
+    if (userId) {
+      setUsuarioId(userId)
+      return
+    }
+
+    let activo = true
+    resolverUsuarioActualNotas().then((id) => {
+      if (activo) setUsuarioId(id)
+    }).catch(() => {})
+    return () => { activo = false }
+  }, [userId])
+
   useLayoutEffect(() => {
-    const guardadas = leerNotasBiblicasLocales()
+    if (!usuarioId) return
+    setNotasCargadas(false)
+    const guardadas = leerNotasBiblicasLocales(usuarioId)
     const solicitada = embedded ? null : new URLSearchParams(window.location.search).get('nota')
     setNotas(guardadas)
     setSeleccionadaId(solicitada && guardadas.some((nota) => nota.id === solicitada) ? solicitada : guardadas[0]?.id ?? null)
     setNotasCargadas(true)
-  }, [embedded])
+  }, [embedded, usuarioId])
 
   useEffect(() => {
     listarPaquetesPastoralesParaNotas().then((resultado) => {
@@ -83,9 +106,56 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   }, [])
 
   useEffect(() => {
-    if (!notasCargadas) return
-    guardarNotasBiblicasLocales(notas)
-  }, [notas, notasCargadas])
+    if (!notasCargadas || !usuarioId) return
+    guardarNotasBiblicasLocales(notas, usuarioId)
+  }, [notas, notasCargadas, usuarioId])
+
+  useEffect(() => {
+    if (!notasCargadas || !usuarioId) return
+
+    let activo = true
+    let reconciliando = false
+
+    const reconciliar = async () => {
+      if (reconciliando) return
+      reconciliando = true
+      try {
+        // Primero vacía cambios locales. Después descarga para que el merge vea
+        // la versión canónica más reciente y preserve cualquier pendiente.
+        await sincronizarNotasBiblicasPendientes()
+        if (!activo) return
+
+        const locales = leerNotasBiblicasLocales(usuarioId)
+        const resultado = await obtenerNotasBiblicasRemotasMezcladas(usuarioId, locales)
+        if (!activo || !resultado.actualizadas) return
+
+        reemplazarNotasBiblicasLocalesDesdeServidor(resultado.notas, usuarioId)
+        setNotas(resultado.notas)
+        setSeleccionadaId((actual) => actual && resultado.notas.some((nota) => nota.id === actual)
+          ? actual
+          : resultado.notas[0]?.id ?? null)
+      } finally {
+        reconciliando = false
+      }
+    }
+
+    const recuperar = () => { void reconciliar() }
+    const alVolverVisible = () => {
+      if (document.visibilityState === 'visible') void reconciliar()
+    }
+
+    void reconciliar()
+    window.addEventListener('online', recuperar)
+    window.addEventListener('focus', recuperar)
+    document.addEventListener('visibilitychange', alVolverVisible)
+
+    return () => {
+      activo = false
+      window.removeEventListener('online', recuperar)
+      window.removeEventListener('focus', recuperar)
+      document.removeEventListener('visibilitychange', alVolverVisible)
+    }
+  }, [notasCargadas, usuarioId])
 
   const tema = modo ? {
     claro: { page: 'bg-[#f7f7f4] text-slate-900', panel: 'border-slate-200 bg-white', soft: 'bg-slate-100 text-slate-700', editor: 'bg-[#fafaf8]', field: 'border-slate-200 bg-white text-slate-900', muted: 'text-slate-500', selected: 'bg-violet-100 ring-violet-300' },
@@ -134,7 +204,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     })
   }
 
-  if (!modo || !tema) {
+  if (!modo || !tema || !notasCargadas) {
     return <div className="min-h-[55vh] bg-[var(--background)] text-[var(--foreground)]" aria-hidden="true" />
   }
 

@@ -24,7 +24,12 @@ export type NotaBiblicaLocal = {
   actualizadaEn: string
 }
 
+/**
+ * Clave histórica. Se conserva intacta para no perder notas locales previas a
+ * FASE F. Las notas canónicas nuevas usan una clave separada por usuario.
+ */
 export const VIDA_BIBLE_NOTES_STORAGE_KEY = 'vida-biblia-notas-v2'
+export const VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX = 'vida-biblia-notas-v3'
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null
 let listenersInstalados = false
@@ -32,6 +37,12 @@ let colaEncolado: Promise<void> = Promise.resolve()
 
 function ahoraIso() {
   return new Date().toISOString()
+}
+
+function claveNotas(ownerId?: string | null) {
+  return ownerId
+    ? `${VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX}:${ownerId}`
+    : VIDA_BIBLE_NOTES_STORAGE_KEY
 }
 
 function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
@@ -47,6 +58,26 @@ function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
     creadaEn: nota.creadaEn ?? ahora,
     actualizadaEn: nota.actualizadaEn ?? nota.creadaEn ?? ahora,
   }
+}
+
+function leerNotasDesdeClave(storageKey: string): NotaBiblicaLocal[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    const normalizadas = parsed.map((nota) => normalizarNota(nota as Partial<NotaBiblicaLocal>))
+    const normalizadasRaw = JSON.stringify(normalizadas)
+    if (normalizadasRaw !== raw) localStorage.setItem(storageKey, normalizadasRaw)
+    return normalizadas
+  } catch {
+    return []
+  }
+}
+
+function escribirNotasEnClave(storageKey: string, notas: NotaBiblicaLocal[]) {
+  localStorage.setItem(storageKey, JSON.stringify(notas))
 }
 
 function programarSincronizacion(delay = 700) {
@@ -72,6 +103,26 @@ function instalarListenersSincronizacion() {
   programarSincronizacion(0)
 }
 
+function encolarCambiosConUsuario(
+  anteriores: NotaBiblicaLocal[],
+  siguientes: NotaBiblicaLocal[],
+  ownerId: string
+) {
+  const anterioresPorId = new Map(anteriores.map((nota) => [nota.id, nota]))
+  const siguientesPorId = new Map(siguientes.map((nota) => [nota.id, nota]))
+
+  for (const nota of siguientes) {
+    const anterior = anterioresPorId.get(nota.id)
+    if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
+      encolarUpsertNotaBiblica(nota, ownerId)
+    }
+  }
+
+  for (const anterior of anteriores) {
+    if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId)
+  }
+}
+
 function encolarCambiosTrasResolverUsuario(
   anteriores: NotaBiblicaLocal[],
   siguientes: NotaBiblicaLocal[]
@@ -79,49 +130,75 @@ function encolarCambiosTrasResolverUsuario(
   colaEncolado = colaEncolado.then(async () => {
     const ownerId = await resolverUsuarioActualNotas()
     if (!ownerId) return
-
-    const anterioresPorId = new Map(anteriores.map((nota) => [nota.id, nota]))
-    const siguientesPorId = new Map(siguientes.map((nota) => [nota.id, nota]))
-
-    for (const nota of siguientes) {
-      const anterior = anterioresPorId.get(nota.id)
-      if (!anterior || JSON.stringify(anterior) !== JSON.stringify(nota)) {
-        encolarUpsertNotaBiblica(nota, ownerId)
-      }
-    }
-
-    for (const anterior of anteriores) {
-      if (!siguientesPorId.has(anterior.id)) encolarDeleteNotaBiblica(anterior.id, ownerId)
-    }
+    encolarCambiosConUsuario(anteriores, siguientes, ownerId)
   }).catch(() => {})
 }
 
-export function leerNotasBiblicasLocales(): NotaBiblicaLocal[] {
-  if (typeof window === 'undefined') return []
-  instalarListenersSincronizacion()
-  try {
-    const raw = localStorage.getItem(VIDA_BIBLE_NOTES_STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    const normalizadas = parsed.map((nota) => normalizarNota(nota as Partial<NotaBiblicaLocal>))
-    const normalizadasRaw = JSON.stringify(normalizadas)
-    if (normalizadasRaw !== raw) {
-      localStorage.setItem(VIDA_BIBLE_NOTES_STORAGE_KEY, normalizadasRaw)
-    }
-    return normalizadas
-  } catch {
-    return []
-  }
+function migrarNotaNuevaAlUsuario(nota: NotaBiblicaLocal) {
+  colaEncolado = colaEncolado.then(async () => {
+    const ownerId = await resolverUsuarioActualNotas()
+    if (!ownerId) return
+
+    const storageUsuario = claveNotas(ownerId)
+    const anterioresUsuario = leerNotasDesdeClave(storageUsuario)
+    const siguientesUsuario = [
+      nota,
+      ...anterioresUsuario.filter((item) => item.id !== nota.id),
+    ]
+
+    escribirNotasEnClave(storageUsuario, siguientesUsuario)
+
+    // Quita únicamente la nota cuya autoría acaba de quedar probada por la
+    // sesión actual. Las demás notas históricas sin dueño permanecen intactas.
+    const legadas = leerNotasDesdeClave(VIDA_BIBLE_NOTES_STORAGE_KEY)
+      .filter((item) => item.id !== nota.id)
+    escribirNotasEnClave(VIDA_BIBLE_NOTES_STORAGE_KEY, legadas)
+
+    encolarCambiosConUsuario(anterioresUsuario, siguientesUsuario, ownerId)
+  }).catch(() => {})
 }
 
-export function guardarNotasBiblicasLocales(notas: NotaBiblicaLocal[]) {
+export function leerNotasBiblicasLocales(ownerId?: string | null): NotaBiblicaLocal[] {
+  if (typeof window === 'undefined') return []
+  instalarListenersSincronizacion()
+  return leerNotasDesdeClave(claveNotas(ownerId))
+}
+
+export function leerNotasBiblicasLegadas(): NotaBiblicaLocal[] {
+  return leerNotasBiblicasLocales(null)
+}
+
+export function guardarNotasBiblicasLocales(
+  notas: NotaBiblicaLocal[],
+  ownerId?: string | null
+) {
   if (typeof window === 'undefined') return false
   instalarListenersSincronizacion()
   try {
-    const anteriores = leerNotasBiblicasLocales()
-    localStorage.setItem(VIDA_BIBLE_NOTES_STORAGE_KEY, JSON.stringify(notas))
-    encolarCambiosTrasResolverUsuario(anteriores, notas)
+    const storageKey = claveNotas(ownerId)
+    const anteriores = leerNotasDesdeClave(storageKey)
+    escribirNotasEnClave(storageKey, notas)
+
+    if (ownerId) encolarCambiosConUsuario(anteriores, notas, ownerId)
+    else encolarCambiosTrasResolverUsuario(anteriores, notas)
+
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Reemplaza la caché canónica de un usuario con datos ya reconciliados desde
+ * Supabase. No genera operaciones de salida, para evitar bucles de sync.
+ */
+export function reemplazarNotasBiblicasLocalesDesdeServidor(
+  notas: NotaBiblicaLocal[],
+  ownerId: string
+) {
+  if (typeof window === 'undefined') return false
+  try {
+    escribirNotasEnClave(claveNotas(ownerId), notas)
     return true
   } catch {
     return false
@@ -144,9 +221,32 @@ export function crearNotaBiblicaLocal(cambios: Partial<NotaBiblicaLocal> = {}): 
   })
 }
 
-export function agregarNotaBiblicaLocal(cambios: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
+export function agregarNotaBiblicaLocal(
+  cambios: Partial<NotaBiblicaLocal>,
+  ownerId?: string | null
+): NotaBiblicaLocal {
+  instalarListenersSincronizacion()
   const nota = crearNotaBiblicaLocal(cambios)
-  const actuales = leerNotasBiblicasLocales().filter((item) => item.id !== nota.id)
-  guardarNotasBiblicasLocales([nota, ...actuales])
+
+  if (ownerId) {
+    const actuales = leerNotasBiblicasLocales(ownerId).filter((item) => item.id !== nota.id)
+    guardarNotasBiblicasLocales([nota, ...actuales], ownerId)
+    return nota
+  }
+
+  // Compatibilidad con acciones que crean la nota antes de navegar al
+  // workspace. Se guarda de inmediato para funcionar offline y después se
+  // migra solo esa nota cuando la sesión local confirma el usuario.
+  const legadas = leerNotasDesdeClave(VIDA_BIBLE_NOTES_STORAGE_KEY)
+    .filter((item) => item.id !== nota.id)
+  escribirNotasEnClave(VIDA_BIBLE_NOTES_STORAGE_KEY, [nota, ...legadas])
+  migrarNotaNuevaAlUsuario(nota)
   return nota
+}
+
+export async function agregarNotaBiblicaDelUsuario(
+  cambios: Partial<NotaBiblicaLocal>
+): Promise<NotaBiblicaLocal> {
+  const ownerId = await resolverUsuarioActualNotas()
+  return agregarNotaBiblicaLocal(cambios, ownerId)
 }

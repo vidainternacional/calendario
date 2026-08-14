@@ -54,11 +54,28 @@ async function ejecutarOperacionPendiente(
       }, { onConflict: 'id' })
   }
 
+  // Para el cuaderno canónico el borrado se conserva como tombstone sin
+  // contenido. Otro dispositivo podrá saber que debe quitar la misma nota.
   return (supabase as any)
     .from('notas_estudio')
-    .delete()
+    .update({
+      nota: '',
+      titulo: null,
+      tipo: null,
+      referencia: null,
+      paquete_id: null,
+      numero_predicacion: null,
+      fecha_predicacion: null,
+      serie: null,
+      lugar: null,
+      predicador: null,
+      estado: 'eliminado',
+      contexto: {},
+      updated_at: operacion.encoladaEn,
+    })
     .eq('id', operacion.id)
     .eq('profile_id', userId)
+    .eq('origen', 'biblia_notas')
 }
 
 export async function sincronizarNotasBiblicasPendientes() {
