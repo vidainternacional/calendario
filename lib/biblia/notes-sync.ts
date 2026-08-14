@@ -115,7 +115,6 @@ async function ejecutarOperacionPendiente(
     })
     .eq('id', operacion.id)
     .eq('profile_id', userId)
-    .eq('origen', 'biblia_notas')
 }
 
 export async function sincronizarNotasBiblicasPendientes() {
