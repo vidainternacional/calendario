@@ -13,7 +13,7 @@ test('el service worker usa fallback offline solo para Biblia Notas', () => {
   assert.match(sw, /OFFLINE_NOTES_SHELL = '\/offline\/notas\.html'/)
   assert.match(sw, /pathname === '\/biblia\/notas'/)
   assert.match(sw, /fetch\(event\.request\)\.catch/)
-  assert.match(sw, /cache\.match\(OFFLINE_NOTES_SHELL\)/)
+  assert.match(sw, /respuestaNotasOffline/)
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
@@ -31,13 +31,27 @@ test('el shell offline no incluye datos privados y usa la caché y cola canónic
   assert.doesNotMatch(shell, /\/_next\//)
 })
 
+test('el service worker respalda solo el UUID activo y puede restaurarlo antes del shell', () => {
+  assert.match(sw, /OFFLINE_NOTES_OWNER_MARKER = '\/offline\/notas-owner'/)
+  assert.match(sw, /VIDA_NOTES_OWNER_SET/)
+  assert.match(sw, /VIDA_NOTES_OWNER_CLEAR/)
+  assert.match(sw, /OWNER_UUID_RE\.test/)
+  assert.match(sw, /cache\.put\(\s*OFFLINE_NOTES_OWNER_MARKER/)
+  assert.match(sw, /localStorage\.setItem\('vida-biblia-notas-active-owner-v1'/)
+  assert.doesNotMatch(sw, /vida-biblia-notas-v3/)
+  assert.doesNotMatch(sw, /vida-biblia-notas-sync-v1/)
+})
+
 test('solo el shell estático offline queda fuera del proxy autenticado', () => {
-  assert.match(proxy, /offline\/notas\\\\\.html/)
+  assert.match(proxy, /offline\/notas\\\.html/)
   assert.doesNotMatch(proxy, /biblia\/notas/)
 })
 
-test('la ruta autenticada recuerda el dueño y logout lo olvida', () => {
+test('la ruta autenticada recuerda el dueño y logout lo olvida en ambos almacenamientos', () => {
   assert.match(page, /OfflineNotesOwnerMarker userId=\{user\.id\}/)
   assert.match(marker, /localStorage\.setItem\(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY, userId\)/)
+  assert.match(marker, /VIDA_BIBLE_NOTES_OWNER_SET_MESSAGE/)
+  assert.match(marker, /controllerchange/)
   assert.match(logout, /localStorage\.removeItem\(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY\)/)
+  assert.match(logout, /VIDA_BIBLE_NOTES_OWNER_CLEAR_MESSAGE/)
 })
