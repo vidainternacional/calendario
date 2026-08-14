@@ -14,6 +14,11 @@ function uuidONull(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null
 }
 
+function textoONull(value: string, max: number) {
+  const limpio = value.trim()
+  return limpio ? limpio.slice(0, max) : null
+}
+
 export function obtenerUsuarioActualNotas() {
   return usuarioActualNotas
 }
@@ -34,7 +39,8 @@ async function ejecutarOperacionPendiente(
 ) {
   if (operacion.tipo === 'upsert') {
     const nota = operacion.nota
-    return (supabase as any)
+    const esPredicacion = nota.tipo === 'predicacion'
+    const resultado = await (supabase as any)
       .from('notas_estudio')
       .upsert({
         id: nota.id,
@@ -47,11 +53,27 @@ async function ejecutarOperacionPendiente(
         origen: 'biblia_notas',
         origen_key: `biblia-notas:${nota.id}`,
         paquete_id: uuidONull(nota.paqueteId),
+        numero_predicacion: esPredicacion ? nota.numeroPredicacion : null,
+        fecha_predicacion: esPredicacion ? textoONull(nota.fechaPredicacion, 10) : null,
+        serie: esPredicacion ? textoONull(nota.serie, 300) : null,
+        lugar: esPredicacion ? textoONull(nota.lugar, 300) : null,
+        predicador: esPredicacion ? textoONull(nota.predicador, 300) : null,
+        estado_predicacion: esPredicacion ? textoONull(nota.estadoPredicacion, 100) : null,
         estado: 'activo',
         contexto: nota.paquete ? { paquete: nota.paquete } : {},
         created_at: nota.creadaEn,
         updated_at: nota.actualizadaEn,
       }, { onConflict: 'id' })
+
+    if (resultado.error) return resultado
+
+    if (esPredicacion && nota.numeroPredicacion == null) {
+      const correlativo = await (supabase as any)
+        .rpc('asignar_numero_predicacion_nota', { p_nota_id: nota.id })
+      if (correlativo.error) return correlativo
+    }
+
+    return resultado
   }
 
   // Para el cuaderno canónico el borrado se conserva como tombstone sin
@@ -69,6 +91,7 @@ async function ejecutarOperacionPendiente(
       serie: null,
       lugar: null,
       predicador: null,
+      estado_predicacion: null,
       estado: 'eliminado',
       contexto: {},
       updated_at: operacion.encoladaEn,
