@@ -92,6 +92,8 @@ async function ejecutarOperacionPendiente(
     return resultado
   }
 
+  const origenBorrado = textoONull(operacion.origen, 100) ?? 'biblia_notas'
+
   // Para el cuaderno canónico el borrado se conserva como tombstone sin
   // contenido. Otro dispositivo podrá saber que debe quitar la misma nota.
   // La identidad canónica (origen/origen_key/pasaje_normalizado) no se toca.
@@ -115,7 +117,7 @@ async function ejecutarOperacionPendiente(
     })
     .eq('id', operacion.id)
     .eq('profile_id', userId)
-    .eq('origen', 'biblia_notas')
+    .eq('origen', origenBorrado)
 }
 
 export async function sincronizarNotasBiblicasPendientes() {
