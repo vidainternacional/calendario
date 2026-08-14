@@ -253,6 +253,11 @@ export async function guardarNota(pasaje: string, nota: string) {
       profile_id: user.id,
       pasaje_normalizado: pasajeNormalizado,
       nota: nota.slice(0, 50_000),
+      tipo: 'estudio',
+      referencia: pasaje.slice(0, 300),
+      origen: 'estudio_profundo',
+      origen_key: `estudio-profundo:${pasajeNormalizado}`,
+      estado: 'activo',
       updated_at: new Date().toISOString(),
     }, {
       onConflict: 'profile_id, pasaje_normalizado',
