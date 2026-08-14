@@ -35,11 +35,23 @@ test('FASE F: al iniciar offline identifica la sesión antes de comprobar la red
   assert.ok(sessionIndex < onlineIndex)
 })
 
+test('FASE F: cada guardado resuelve el usuario antes de encolar y preserva el orden', async () => {
+  const [localStore, sync] = await Promise.all([
+    readFile(localStorePath, 'utf8'),
+    readFile(syncPath, 'utf8'),
+  ])
+
+  assert.match(sync, /export async function resolverUsuarioActualNotas/)
+  assert.match(localStore, /resolverUsuarioActualNotas/)
+  assert.match(localStore, /colaEncolado = colaEncolado\.then/)
+  assert.match(localStore, /encolarCambiosTrasResolverUsuario\(anteriores, notas\)/)
+  assert.doesNotMatch(localStore, /obtenerUsuarioActualNotas/)
+})
+
 test('FASE F: Notas reintenta sincronización al recuperar la PWA', async () => {
   const localStore = await readFile(localStorePath, 'utf8')
   assert.match(localStore, /addEventListener\('online'/)
   assert.match(localStore, /addEventListener\('focus'/)
   assert.match(localStore, /visibilitychange/)
   assert.match(localStore, /sincronizarNotasBiblicasPendientes/)
-  assert.match(localStore, /obtenerUsuarioActualNotas/)
 })
