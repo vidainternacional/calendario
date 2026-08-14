@@ -5,7 +5,7 @@ export const VIDA_BIBLE_NOTES_SYNC_EVENT = 'vida-biblia-notas-sync-pending'
 
 export type OperacionNotaBiblicaPendiente =
   | { tipo: 'upsert'; id: string; token: string; ownerId: string; nota: NotaBiblicaLocal; encoladaEn: string }
-  | { tipo: 'delete'; id: string; token: string; ownerId: string; encoladaEn: string }
+  | { tipo: 'delete'; id: string; token: string; ownerId: string; origen?: string; encoladaEn: string }
 
 function leerColaCruda(): OperacionNotaBiblicaPendiente[] {
   if (typeof window === 'undefined') return []
@@ -53,12 +53,13 @@ export function encolarUpsertNotaBiblica(nota: NotaBiblicaLocal, ownerId: string
   return operacion
 }
 
-export function encolarDeleteNotaBiblica(id: string, ownerId: string) {
+export function encolarDeleteNotaBiblica(id: string, ownerId: string, origen?: string) {
   const operacion: OperacionNotaBiblicaPendiente = {
     tipo: 'delete',
     id,
     token: crypto.randomUUID(),
     ownerId,
+    origen: origen?.trim() || 'biblia_notas',
     encoladaEn: new Date().toISOString(),
   }
   guardarCola([
