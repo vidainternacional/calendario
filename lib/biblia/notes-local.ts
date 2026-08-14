@@ -134,6 +134,30 @@ function encolarCambiosTrasResolverUsuario(
   }).catch(() => {})
 }
 
+function migrarNotaNuevaAlUsuario(nota: NotaBiblicaLocal) {
+  colaEncolado = colaEncolado.then(async () => {
+    const ownerId = await resolverUsuarioActualNotas()
+    if (!ownerId) return
+
+    const storageUsuario = claveNotas(ownerId)
+    const anterioresUsuario = leerNotasDesdeClave(storageUsuario)
+    const siguientesUsuario = [
+      nota,
+      ...anterioresUsuario.filter((item) => item.id !== nota.id),
+    ]
+
+    escribirNotasEnClave(storageUsuario, siguientesUsuario)
+
+    // Quita únicamente la nota cuya autoría acaba de quedar probada por la
+    // sesión actual. Las demás notas históricas sin dueño permanecen intactas.
+    const legadas = leerNotasDesdeClave(VIDA_BIBLE_NOTES_STORAGE_KEY)
+      .filter((item) => item.id !== nota.id)
+    escribirNotasEnClave(VIDA_BIBLE_NOTES_STORAGE_KEY, legadas)
+
+    encolarCambiosConUsuario(anterioresUsuario, siguientesUsuario, ownerId)
+  }).catch(() => {})
+}
+
 export function leerNotasBiblicasLocales(ownerId?: string | null): NotaBiblicaLocal[] {
   if (typeof window === 'undefined') return []
   instalarListenersSincronizacion()
@@ -201,9 +225,22 @@ export function agregarNotaBiblicaLocal(
   cambios: Partial<NotaBiblicaLocal>,
   ownerId?: string | null
 ): NotaBiblicaLocal {
+  instalarListenersSincronizacion()
   const nota = crearNotaBiblicaLocal(cambios)
-  const actuales = leerNotasBiblicasLocales(ownerId).filter((item) => item.id !== nota.id)
-  guardarNotasBiblicasLocales([nota, ...actuales], ownerId)
+
+  if (ownerId) {
+    const actuales = leerNotasBiblicasLocales(ownerId).filter((item) => item.id !== nota.id)
+    guardarNotasBiblicasLocales([nota, ...actuales], ownerId)
+    return nota
+  }
+
+  // Compatibilidad con acciones que crean la nota antes de navegar al
+  // workspace. Se guarda de inmediato para funcionar offline y después se
+  // migra solo esa nota cuando la sesión local confirma el usuario.
+  const legadas = leerNotasDesdeClave(VIDA_BIBLE_NOTES_STORAGE_KEY)
+    .filter((item) => item.id !== nota.id)
+  escribirNotasEnClave(VIDA_BIBLE_NOTES_STORAGE_KEY, [nota, ...legadas])
+  migrarNotaNuevaAlUsuario(nota)
   return nota
 }
 
