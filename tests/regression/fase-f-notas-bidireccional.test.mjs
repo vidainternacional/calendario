@@ -23,22 +23,25 @@ test('FASE F: la página identifica al usuario antes de abrir su cuaderno', asyn
   assert.match(page, /<BibleNotesWorkspace userId=\{user\.id\}/)
 })
 
-test('FASE F: el merge remoto preserva pendientes locales y usa tombstones', async () => {
+test('FASE F: el merge remoto preserva pendientes locales y usa tombstones en todo el cuaderno propio', async () => {
   const remote = await readFile(remotePath, 'utf8')
   assert.match(remote, /pendientePorId\.has\(row\.id\)/)
   assert.match(remote, /operacion\.tipo === 'upsert'/)
   assert.match(remote, /row\.estado === 'eliminado'/)
   assert.match(remote, /remotaActualizada >= localActualizada/)
   assert.match(remote, /\.eq\('profile_id', ownerId\)/)
-  assert.match(remote, /\.eq\('origen', 'biblia_notas'\)/)
+  assert.doesNotMatch(remote, /\.eq\('origen', 'biblia_notas'\)/)
 })
 
-test('FASE F: borrar una nota publica tombstone sin conservar su contenido', async () => {
+test('FASE F: borrar una nota publica tombstone sin conservar su contenido ni limitar el origen', async () => {
   const sync = await readFile(syncPath, 'utf8')
-  assert.match(sync, /estado: 'eliminado'/)
-  assert.match(sync, /nota: ''/)
-  assert.match(sync, /updated_at: operacion\.encoladaEn/)
-  assert.match(sync, /\.eq\('origen', 'biblia_notas'\)/)
+  const deleteSection = sync.slice(sync.indexOf(".update({\n      nota: ''"))
+  assert.match(deleteSection, /estado: 'eliminado'/)
+  assert.match(deleteSection, /nota: ''/)
+  assert.match(deleteSection, /updated_at: operacion\.encoladaEn/)
+  assert.match(deleteSection, /\.eq\('id', operacion\.id\)/)
+  assert.match(deleteSection, /\.eq\('profile_id', userId\)/)
+  assert.doesNotMatch(deleteSection, /\.eq\('origen', 'biblia_notas'\)/)
   assert.doesNotMatch(sync, /\.delete\(\)/)
 })
 
