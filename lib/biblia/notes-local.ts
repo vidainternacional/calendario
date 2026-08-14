@@ -20,6 +20,12 @@ export type NotaBiblicaLocal = {
   referencia: string
   paqueteId: string
   paquete: string
+  numeroPredicacion: number | null
+  fechaPredicacion: string
+  serie: string
+  lugar: string
+  predicador: string
+  estadoPredicacion: string
   creadaEn: string
   actualizadaEn: string
 }
@@ -45,6 +51,10 @@ function claveNotas(ownerId?: string | null) {
     : VIDA_BIBLE_NOTES_STORAGE_KEY
 }
 
+function normalizarNumeroPredicacion(value: unknown) {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
+}
+
 function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
   const ahora = ahoraIso()
   return {
@@ -55,6 +65,12 @@ function normalizarNota(nota: Partial<NotaBiblicaLocal>): NotaBiblicaLocal {
     referencia: nota.referencia ?? '',
     paqueteId: nota.paqueteId ?? '',
     paquete: nota.paquete ?? '',
+    numeroPredicacion: normalizarNumeroPredicacion(nota.numeroPredicacion),
+    fechaPredicacion: nota.fechaPredicacion ?? '',
+    serie: nota.serie ?? '',
+    lugar: nota.lugar ?? '',
+    predicador: nota.predicador ?? '',
+    estadoPredicacion: nota.estadoPredicacion ?? '',
     creadaEn: nota.creadaEn ?? ahora,
     actualizadaEn: nota.actualizadaEn ?? nota.creadaEn ?? ahora,
   }
@@ -215,6 +231,12 @@ export function crearNotaBiblicaLocal(cambios: Partial<NotaBiblicaLocal> = {}): 
     referencia: '',
     paqueteId: '',
     paquete: '',
+    numeroPredicacion: null,
+    fechaPredicacion: '',
+    serie: '',
+    lugar: '',
+    predicador: '',
+    estadoPredicacion: '',
     creadaEn: ahora,
     actualizadaEn: ahora,
     ...cambios,
