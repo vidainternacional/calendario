@@ -43,7 +43,7 @@ test('el service worker respalda solo el UUID activo y puede restaurarlo antes d
 })
 
 test('solo el shell estático offline queda fuera del proxy autenticado', () => {
-  assert.match(proxy, /offline\/notas\\\.html/)
+  assert.ok(proxy.includes('offline/notas\\\\.html'))
   assert.doesNotMatch(proxy, /biblia\/notas/)
 })
 
