@@ -1,6 +1,7 @@
 'use client'
 
 import { logout } from '@/app/actions/auth'
+import { VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY } from '@/components/biblia/OfflineNotesOwnerMarker'
 import { LogOut } from 'lucide-react'
 import { useTransition } from 'react'
 
@@ -8,6 +9,10 @@ export default function LogoutButton({ compact = false }: { compact?: boolean })
   const [pending, startTransition] = useTransition()
 
   function handleLogout() {
+    try {
+      localStorage.removeItem(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY)
+    } catch {}
+
     startTransition(async () => {
       await logout()
     })
