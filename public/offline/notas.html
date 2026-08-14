@@ -258,6 +258,10 @@
           referencia: typeof value?.referencia === 'string' ? value.referencia : '',
           paqueteId: typeof value?.paqueteId === 'string' ? value.paqueteId : '',
           paquete: typeof value?.paquete === 'string' ? value.paquete : '',
+          origen: typeof value?.origen === 'string' && value.origen.trim() ? value.origen : 'biblia_notas',
+          origenKey: typeof value?.origenKey === 'string' ? value.origenKey : '',
+          pasajeNormalizado: typeof value?.pasajeNormalizado === 'string' ? value.pasajeNormalizado : '',
+          contexto: value?.contexto && typeof value.contexto === 'object' && !Array.isArray(value.contexto) ? value.contexto : {},
           numeroPredicacion: Number.isInteger(value?.numeroPredicacion) && value.numeroPredicacion > 0 ? value.numeroPredicacion : null,
           fechaPredicacion: typeof value?.fechaPredicacion === 'string' ? value.fechaPredicacion : '',
           serie: typeof value?.serie === 'string' ? value.serie : '',
@@ -282,9 +286,10 @@
 
       const enqueue = (kind, noteOrId) => {
         try {
+          const note = typeof noteOrId === 'string' ? null : noteOrId
           const id = typeof noteOrId === 'string' ? noteOrId : noteOrId.id
           const operation = kind === 'delete'
-            ? { tipo: 'delete', id, token: crypto.randomUUID(), ownerId, encoladaEn: now() }
+            ? { tipo: 'delete', id, token: crypto.randomUUID(), ownerId, origen: note?.origen?.trim() || 'biblia_notas', encoladaEn: now() }
             : { tipo: 'upsert', id, token: crypto.randomUUID(), ownerId, nota: noteOrId, encoladaEn: now() }
           const queue = readArray(QUEUE_KEY).filter((item) => !(item && item.id === id && item.ownerId === ownerId))
           queue.push(operation)
@@ -394,7 +399,7 @@
         const note = selected()
         if (!note) return
         notes = notes.filter((item) => item.id !== note.id)
-        enqueue('delete', note.id)
+        enqueue('delete', note)
         writeNotes()
         selectedId = notes[0]?.id || null
         render()
