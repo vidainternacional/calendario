@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vida-shell-v1.8-notas-owner'
+const CACHE_NAME = 'vida-shell-v1.9-predicacion'
 const OFFLINE_NOTES_SHELL = '/offline/notas.html'
 const OFFLINE_NOTES_OWNER_MARKER = '/offline/notas-owner'
 const OWNER_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
