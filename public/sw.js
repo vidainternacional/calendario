@@ -1,8 +1,10 @@
-const CACHE_NAME = 'vida-shell-v1.6'
+const CACHE_NAME = 'vida-shell-v1.7-notas-offline'
+const OFFLINE_NOTES_SHELL = '/offline/notas.html'
 const SHELL_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  OFFLINE_NOTES_SHELL,
 ]
 
 self.addEventListener('install', (event) => {
@@ -29,9 +31,23 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
-  if (event.request.mode === 'navigate') return
 
   const url = new URL(event.request.url)
+
+  if (event.request.mode === 'navigate') {
+    const pathname = url.pathname.replace(/\/+$/, '') || '/'
+
+    if (url.origin === self.location.origin && pathname === '/biblia/notas') {
+      event.respondWith(
+        fetch(event.request).catch(async () => {
+          const cache = await caches.open(CACHE_NAME)
+          return cache.match(OFFLINE_NOTES_SHELL) || Response.error()
+        })
+      )
+    }
+    return
+  }
+
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/_next/') ||
