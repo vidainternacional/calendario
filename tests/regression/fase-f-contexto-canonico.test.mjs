@@ -15,11 +15,12 @@ test('FASE F: el modelo local conserva identidad y contexto canónicos', () => {
   assert.match(local, /contexto: normalizarContexto\(nota\.contexto\)/)
 })
 
-test('FASE F: Supabase devuelve identidad y contexto sin ampliar todavía los orígenes visibles', () => {
+test('FASE F: Supabase devuelve solo los orígenes canónicos autorizados con su contexto', () => {
   assert.match(remote, /origen_key/)
   assert.match(remote, /pasaje_normalizado/)
   assert.match(remote, /contexto: contextoValido\(row\.contexto\)/)
-  assert.match(remote, /\.eq\('origen', 'biblia_notas'\)/)
+  assert.match(remote, /\.in\('origen', \['biblia_notas', 'estudio_profundo'\]\)/)
+  assert.doesNotMatch(remote, /\.eq\('origen', 'biblia_notas'\)/)
 })
 
 test('FASE F: la sincronización no destruye origen ni pasaje normalizado', () => {
