@@ -242,10 +242,22 @@ La evidencia inicial se conserva en:
 10. El bloque fue fusionado en `main` mediante PR #268 (`97f96996ddb62d8434cf30bd5b6c58a8c6825c90`) y el despliegue de producción correspondiente quedó READY.
 11. Las migraciones de estructura de este bloque quedaron versionadas, incluida `20260813233955_fase_f_permitir_notas_sin_pasaje.sql` mediante PR #269 (`ca5893861c0f92b8c4d4d127060d11a8a3aa581a`).
 12. No se modificaron grants ni políticas RLS durante este bloque.
-13. Alcance offline validado hasta aquí: crear/editar con la superficie ya cargada y sincronizar al volver Internet. La apertura en frío de la PWA completamente sin red todavía no está declarada como resuelta y deberá abordarse sin volver a cachear bundles obsoletos de Next.js.
 
-Este bloque queda **VALIDADO**. FASE F permanece **ACTIVA**.
+### Sincronización bidireccional y apertura en frío offline
+
+13. El camino `Crear nota de este versículo` fue unificado con el mismo motor local/canónico mediante PR #271, eliminando la escritura paralela directa de esa nota sobre la clave histórica.
+14. La caché local canónica quedó separada por usuario y la sincronización `Supabase → dispositivo` fue incorporada con mezcla determinista: los cambios locales pendientes tienen prioridad y, cuando no hay pendientes, se conserva la versión más reciente.
+15. Los borrados de `biblia_notas` utilizan tombstones sincronizables sin conservar el contenido eliminado, permitiendo que otro dispositivo conozca el borrado sin exponer texto privado.
+16. La sincronización bidireccional fue validada funcionalmente en iPhone con un origen de Preview nuevo: la nota existente en Supabase apareció automáticamente en una caché local nueva, demostrando `Supabase → dispositivo`. El bloque fue fusionado mediante PR #272 (`000de127cccab1be45f4f69026a2b6e9b780d10a`) y producción quedó READY.
+17. Se implementó un fallback de apertura en frío exclusivo para `/biblia/notas`. El service worker no cachea `/_next/`, API, Supabase ni HTML autenticado privado; utiliza un shell estático sin datos personales y lee el cuaderno únicamente desde la caché local del usuario.
+18. La identificación del cuaderno offline conserva privacidad: utiliza el marcador del usuario activo, un respaldo mínimo del UUID dentro del service worker y, si ambos faltan, solo infiere el dueño cuando existe exactamente un único cuaderno local con UUID válido. Con múltiples cuadernos no adivina y mantiene el bloqueo protector.
+19. El cierre de sesión elimina el marcador local y el respaldo del service worker. El contenido de las notas nunca se guarda dentro del service worker.
+20. Validación funcional real en iPhone completada con Wi-Fi apagado/modo avión: Safari abrió `/biblia/notas` desde cero, mostró `Sin conexión · guardado local` y presentó correctamente las notas y contenido existentes del usuario.
+21. El cold-start offline fue fusionado mediante PR #273 (`7d6cf9e995dca7e1de2f4d5488c98cdb110c3ccc`) y el despliegue de producción exacto quedó READY.
+22. No se modificaron grants, políticas RLS ni esquema de Supabase durante los bloques #271–#273.
+
+Los bloques de **sincronización bidireccional, respaldo entre dispositivos y apertura en frío de `Biblia → Notas` sin Internet quedan VALIDADOS**. FASE F permanece **ACTIVA**.
 
 # Siguiente punto autorizado
 
-**Continuar exclusivamente FASE F con la sincronización canónica `Supabase → dispositivo` y entre dispositivos para `Biblia → Notas`. La descarga/mezcla debe preservar cambios locales pendientes, UUID, privacidad por usuario, origen/contexto y evitar duplicados o sobrescrituras silenciosas. No modificar RLS, grants ni diseño visual sin un alcance y plan de recuperación explícitos. Después de estabilizar la sincronización bidireccional, abordar la apertura en frío de Notas sin Internet de forma compatible con el service worker actual.**
+**Continuar exclusivamente FASE F con el punto 5 del alcance: evolucionar el cuaderno para soportar número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación. Antes de cambios visuales, auditar cómo los campos canónicos ya existentes en `notas_estudio` se relacionan con el modelo local/offline y definir el contrato de datos sin duplicar notas. Conservar origen/contexto bíblico, privacidad por usuario y sincronización offline ya validados. No modificar RLS, grants ni diseño visual sin un alcance y plan de recuperación explícitos; cualquier cambio visual deberá pasar por Preview antes de producción.**
