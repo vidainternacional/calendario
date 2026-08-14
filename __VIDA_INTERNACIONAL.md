@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-13
+Última actualización: 2026-08-14
 
 Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**
 
@@ -221,6 +221,31 @@ La fase debe partir del estado funcional existente y conservar el origen/context
 6. Conservar origen y contexto bíblico de cada nota para permitir organización y filtrado sin duplicación.
 7. Preservar las interfaces aprobadas y avanzar por bloques verificables, con Preview antes de cualquier cambio visual relevante.
 
+## Avance validado de FASE F — 2026-08-14
+
+La evidencia inicial se conserva en:
+
+- `docs/FASE_F_LINEA_BASE_NOTAS_2026-08-13.md`;
+- `docs/FASE_F_NOTAS_OFFLINE_FIRST_2026-08-13.md`.
+
+### Cuaderno canónico y offline-first
+
+1. La línea base confirmó dos sistemas paralelos: `Biblia → Notas` guardaba en `localStorage` y Estudio Profundo utilizaba `public.notas_estudio` en Supabase.
+2. `notas_estudio` fue ampliada de forma aditiva para convertirse progresivamente en el cuaderno canónico, sin borrar datos ni modificar las políticas RLS existentes.
+3. `pasaje_normalizado` ahora puede ser `NULL`, permitiendo notas personales sin inventar una referencia bíblica; la unicidad existente por `(profile_id, pasaje_normalizado)` se conserva para Estudio Profundo.
+4. El almacenamiento local de Biblia → Notas quedó centralizado sobre la clave histórica `vida-biblia-notas-v2`, preservando notas existentes del dispositivo.
+5. Se implementó una cola offline por usuario con UUID estable, última operación por nota y reintento al recuperar conexión, foco o visibilidad.
+6. Los cambios se guardan primero localmente. Cuando vuelve Internet, la cola sincroniza con `notas_estudio` usando la sesión autenticada y RLS existente.
+7. La sincronización drena la cola hasta alcanzar la última versión de cada nota, evitando que una edición intermedia quede como estado final cuando hay cambios rápidos.
+8. La cola está aislada por `ownerId`; una operación de una cuenta no puede ser atribuida automáticamente a otra sesión del mismo dispositivo.
+9. Validación funcional real en iPhone completada: se creó y editó una nota sin Internet, se recuperó la conexión sin recargar y Supabase recibió una sola fila con el título final, contenido completo, UUID estable y usuario autenticado correcto, sin duplicados.
+10. El bloque fue fusionado en `main` mediante PR #268 (`97f96996ddb62d8434cf30bd5b6c58a8c6825c90`) y el despliegue de producción correspondiente quedó READY.
+11. Las migraciones de estructura de este bloque quedaron versionadas, incluida `20260813233955_fase_f_permitir_notas_sin_pasaje.sql` mediante PR #269 (`ca5893861c0f92b8c4d4d127060d11a8a3aa581a`).
+12. No se modificaron grants ni políticas RLS durante este bloque.
+13. Alcance offline validado hasta aquí: crear/editar con la superficie ya cargada y sincronizar al volver Internet. La apertura en frío de la PWA completamente sin red todavía no está declarada como resuelta y deberá abordarse sin volver a cachear bundles obsoletos de Next.js.
+
+Este bloque queda **VALIDADO**. FASE F permanece **ACTIVA**.
+
 # Siguiente punto autorizado
 
-**Iniciar exclusivamente FASE F levantando el estado real actual de `Biblia → Notas`: UI, tablas, RLS, acciones, datos y relaciones existentes. No modificar todavía RLS, datos ni diseño; primero documentar la línea base y proponer el primer bloque seguro.**
+**Continuar exclusivamente FASE F con la sincronización canónica `Supabase → dispositivo` y entre dispositivos para `Biblia → Notas`. La descarga/mezcla debe preservar cambios locales pendientes, UUID, privacidad por usuario, origen/contexto y evitar duplicados o sobrescrituras silenciosas. No modificar RLS, grants ni diseño visual sin un alcance y plan de recuperación explícitos. Después de estabilizar la sincronización bidireccional, abordar la apertura en frío de Notas sin Internet de forma compatible con el service worker actual.**
