@@ -104,6 +104,13 @@ function notasEquivalentes(a: NotaBiblica | null, b: NotaBiblica | null) {
   return JSON.stringify(sinMarcaActualizacion(a)) === JSON.stringify(sinMarcaActualizacion(b))
 }
 
+function tipoRegresoPredicacion(nota: NotaBiblica): Exclude<TipoNota, 'predicacion'> {
+  const guardado = nota.contexto.tipoAntesPredicacion
+  return guardado === 'versiculo' || guardado === 'estudio' || guardado === 'personal'
+    ? guardado
+    : 'personal'
+}
+
 export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false, userId }: Props) {
   const [notas, setNotas] = useState<NotaBiblica[]>([])
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null)
@@ -391,19 +398,47 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     setHistoryVersion((version) => version + 1)
   }
 
+  const activarPredicacion = (cambios: Partial<NotaBiblica> = {}, options?: RichNoteChangeOptions) => {
+    if (!seleccionada) return
+    const contexto = seleccionada.tipo !== 'predicacion'
+      ? { ...seleccionada.contexto, tipoAntesPredicacion: seleccionada.tipo }
+      : seleccionada.contexto
+    actualizar({ tipo: 'predicacion', contexto, ...cambios }, options ?? { checkpoint: true })
+  }
+
   const actualizarPredicacion = (cambios: Partial<NotaBiblica>, options?: RichNoteChangeOptions) => {
-    actualizar({ tipo: 'predicacion', ...cambios }, options)
+    activarPredicacion(cambios, options)
+  }
+
+  const dejarPredicacion = () => {
+    if (!seleccionada || seleccionada.tipo !== 'predicacion') return
+    const tipo = tipoRegresoPredicacion(seleccionada)
+    const contexto = { ...seleccionada.contexto }
+    delete contexto.tipoAntesPredicacion
+    actualizar({
+      tipo,
+      contexto,
+      numeroPredicacion: null,
+      fechaPredicacion: '',
+      serie: '',
+      lugar: '',
+      predicador: '',
+      estadoPredicacion: '',
+    }, { checkpoint: true })
   }
 
   const cambiarTipo = (tipo: TipoNota) => {
     if (tipo === 'predicacion') {
-      actualizar({ tipo }, { checkpoint: true })
+      activarPredicacion({}, { checkpoint: true })
       return
     }
 
     if (menuAbierto === 'predicacion') setMenuAbierto(null)
+    const contexto = { ...(seleccionada?.contexto ?? {}) }
+    delete contexto.tipoAntesPredicacion
     actualizar({
       tipo,
+      contexto,
       numeroPredicacion: null,
       fechaPredicacion: '',
       serie: '',
@@ -530,8 +565,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             <div className="mb-2 flex items-center justify-between gap-3 px-0.5">
               <p className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Identidad</p>
               {seleccionada.tipo === 'predicacion'
-                ? <button type="button" onClick={exportarPredicacion} className={`flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold ${tema.glassStrong}`} aria-label="Exportar predicación PDF"><Download className="h-3.5 w-3.5" /><span>Exportar</span></button>
-                : <button type="button" onClick={() => cambiarTipo('predicacion')} className="min-h-8 rounded-full bg-amber-500/15 px-3 text-[10px] font-bold text-amber-800 ring-1 ring-amber-400/25">Usar como predicación</button>}
+                ? <div className="flex items-center gap-1.5">
+                    <button type="button" onClick={dejarPredicacion} className={`flex min-h-8 items-center gap-1 rounded-full px-2.5 text-[10px] font-bold ${tema.glassStrong}`} aria-label={`Dejar de usar como predicación y volver a ${tipos.find((tipo) => tipo.id === tipoRegresoPredicacion(seleccionada))?.nombre ?? 'Personal'}`}><ArrowLeft className="h-3.5 w-3.5" /><span>Volver</span></button>
+                    <button type="button" onClick={exportarPredicacion} className={`flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold ${tema.glassStrong}`} aria-label="Exportar predicación PDF"><Download className="h-3.5 w-3.5" /><span>Exportar</span></button>
+                  </div>
+                : <button type="button" onClick={() => activarPredicacion({}, { checkpoint: true })} className="min-h-8 rounded-full bg-amber-500/15 px-3 text-[10px] font-bold text-amber-800 ring-1 ring-amber-400/25">Usar como predicación</button>}
             </div>
 
             <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2">
