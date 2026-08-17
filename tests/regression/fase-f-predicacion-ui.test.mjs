@@ -20,8 +20,9 @@ test('FASE F: Predicación muestra sus metadatos sin afectar otros tipos', () =>
 test('FASE F: el correlativo vuelve a la pantalla después de sincronizar', () => {
   assert.match(workspace, /VIDA_BIBLE_NOTES_SYNC_EVENT/)
   assert.match(workspace, /window\.addEventListener\(VIDA_BIBLE_NOTES_SYNC_EVENT, recuperar\)/)
-  assert.match(workspace, /Prédica #\$\{seleccionada\.numeroPredicacion\}/)
-  assert.match(workspace, /Pendiente/)
+  assert.match(workspace, /seleccionada\.numeroPredicacion \? `#\$\{seleccionada\.numeroPredicacion\}` : '—'/)
+  assert.match(workspace, /reemplazarNotasBiblicasLocalesDesdeServidor\(resultado\.notas, usuarioId\)/)
+  assert.match(workspace, /setNotas\(resultado\.notas\)/)
 })
 
 test('FASE F: exportación reutiliza el patrón de impresión aprobado', () => {
