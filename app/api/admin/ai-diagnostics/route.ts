@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { vidaAI, VidaAiError } from '@/lib/ai/vida-ai'
+import { vidaAI, VidaAiError, type VidaAiProviderName } from '@/lib/ai/vida-ai'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +31,10 @@ async function requireAdministrator() {
   return { user }
 }
 
+function providerDefinition(name: VidaAiProviderName) {
+  return PROVIDERS.find((provider) => provider.name === name)
+}
+
 export async function GET() {
   const auth = await requireAdministrator()
   if ('error' in auth) return auth.error
@@ -44,9 +48,20 @@ export async function GET() {
   })
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireAdministrator()
   if ('error' in auth) return auth.error
+
+  const body = await request.json().catch(() => ({})) as { provider?: unknown }
+  if (body.provider !== undefined && (typeof body.provider !== 'string' || !PROVIDERS.some((provider) => provider.name === body.provider))) {
+    return NextResponse.json({ ok: false, error: 'provider_invalid' }, { status: 400 })
+  }
+
+  const requestedProvider = typeof body.provider === 'string' ? body.provider as VidaAiProviderName : undefined
+  const requestedDefinition = requestedProvider ? providerDefinition(requestedProvider) : undefined
+  if (requestedDefinition && !requestedDefinition.configured()) {
+    return NextResponse.json({ ok: false, error: 'provider_not_configured', provider: requestedProvider }, { status: 409 })
+  }
 
   const startedAt = Date.now()
   try {
@@ -56,10 +71,12 @@ export async function POST() {
       input: 'Prueba técnica mínima del router VIDA.',
       instructions: 'Responde únicamente con VIDA_OK. No agregues ninguna otra palabra.',
       bypassCache: true,
+      provider: requestedProvider,
     })
 
     return NextResponse.json({
       ok: true,
+      requestedProvider: requestedProvider ?? 'auto',
       provider: result.provider,
       model: result.model,
       inputTokens: result.inputTokens ?? null,
@@ -71,7 +88,10 @@ export async function POST() {
     const code = error instanceof VidaAiError ? error.code : 'unexpected_error'
     return NextResponse.json({
       ok: false,
+      requestedProvider: requestedProvider ?? 'auto',
+      provider: requestedProvider ?? null,
       error: code,
+      attempts: error instanceof VidaAiError ? error.attempts ?? [] : [],
       latencyMs: Date.now() - startedAt,
     }, { status: 503 })
   }

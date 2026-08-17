@@ -20,6 +20,7 @@ type VidaAiRequest = {
   input: string
   instructions: string
   bypassCache?: boolean
+  provider?: VidaAiProviderName
 }
 
 type ProviderResult = {
@@ -34,6 +35,12 @@ export type VidaAiResult = ProviderResult & {
   cached: boolean
 }
 
+export type VidaAiProviderAttempt = {
+  provider: VidaAiProviderName
+  model: string
+  status: number | null
+}
+
 type CachedResult = { expiresAt: number; result: VidaAiResult }
 type BurstWindow = { startedAt: number; count: number }
 
@@ -41,10 +48,12 @@ export type VidaAiErrorCode = 'not_configured' | 'input_too_large' | 'provider_u
 
 export class VidaAiError extends Error {
   code: VidaAiErrorCode
-  constructor(code: VidaAiErrorCode, message: string) {
+  attempts?: VidaAiProviderAttempt[]
+  constructor(code: VidaAiErrorCode, message: string, attempts?: VidaAiProviderAttempt[]) {
     super(message)
     this.name = 'VidaAiError'
     this.code = code
+    this.attempts = attempts
   }
 }
 
@@ -98,7 +107,7 @@ function providerKey(provider: VidaAiProviderName) {
 }
 
 function ownerTaskKey(ownerId: string, task: VidaAiTask) { return createHash('sha256').update(`${ownerId}\u0000${task}`).digest('hex') }
-function cacheKey(request: VidaAiRequest) { return createHash('sha256').update(`${request.ownerId}\u0000${request.task}\u0000${request.instructions}\u0000${request.input}`).digest('hex') }
+function cacheKey(request: VidaAiRequest) { return createHash('sha256').update(`${request.ownerId}\u0000${request.task}\u0000${request.provider ?? 'auto'}\u0000${request.instructions}\u0000${request.input}`).digest('hex') }
 function readCache(key: string) {
   const entry = privateCache.get(key)
   if (!entry) return null
@@ -207,12 +216,16 @@ export async function vidaAI(request: VidaAiRequest): Promise<VidaAiResult> {
   const key = cacheKey({ ...request, input })
   if (!request.bypassCache) { const cached = readCache(key); if (cached) return cached }
   enforceBurstLimit(request.ownerId, request.task)
-  const providers = configuredProviderOrder(policy.level).map((provider) => ({ provider, apiKey: providerKey(provider), model: providerModel(provider, policy.level) })).filter((entry) => Boolean(entry.apiKey)).filter((entry) => providerAvailable(entry.provider, entry.model))
+
+  const requestedProviders = request.provider ? [request.provider] : configuredProviderOrder(policy.level)
+  const providers = requestedProviders.map((provider) => ({ provider, apiKey: providerKey(provider), model: providerModel(provider, policy.level) })).filter((entry) => Boolean(entry.apiKey)).filter((entry) => providerAvailable(entry.provider, entry.model))
   if (providers.length === 0) {
-    const configured = configuredProviderOrder(policy.level).some((provider) => Boolean(providerKey(provider)))
+    const configured = requestedProviders.some((provider) => Boolean(providerKey(provider)))
     if (configured) throw new VidaAiError('provider_unavailable', 'Los proveedores configurados están temporalmente en espera.')
     throw new VidaAiError('not_configured', 'No hay un proveedor de IA configurado en el servidor.')
   }
+
+  const attempts: VidaAiProviderAttempt[] = []
   for (const entry of providers) {
     try {
       const generated = await callProvider(entry.provider, entry.model, entry.apiKey, { ...request, input }, policy)
@@ -221,7 +234,12 @@ export async function vidaAI(request: VidaAiRequest): Promise<VidaAiResult> {
       return result
     } catch (error) {
       coolDownProvider(entry.provider, entry.model, error)
+      attempts.push({
+        provider: entry.provider,
+        model: entry.model,
+        status: error instanceof ProviderError && typeof error.status === 'number' ? error.status : null,
+      })
     }
   }
-  throw new VidaAiError('provider_unavailable', 'Los proveedores de IA configurados no están disponibles en este momento.')
+  throw new VidaAiError('provider_unavailable', 'Los proveedores de IA configurados no están disponibles en este momento.', attempts)
 }

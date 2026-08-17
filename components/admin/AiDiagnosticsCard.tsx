@@ -8,14 +8,22 @@ type ProviderStatus = {
   configured: boolean
 }
 
+type ProviderAttempt = {
+  provider: string
+  model: string
+  status: number | null
+}
+
 type DiagnosticResult = {
   ok: boolean
-  provider?: string
+  requestedProvider?: string
+  provider?: string | null
   model?: string
   inputTokens?: number | null
   outputTokens?: number | null
   latencyMs?: number
   responseValid?: boolean
+  attempts?: ProviderAttempt[]
   error?: string
 }
 
@@ -28,11 +36,61 @@ const LABELS: Record<string, string> = {
   perplexity: 'Perplexity',
 }
 
+function errorLabel(result: DiagnosticResult) {
+  if (result.error === 'provider_not_configured') return 'No configurado en este Preview'
+  if (result.error === 'rate_limited') return 'Límite temporal de pruebas alcanzado'
+  if (result.error === 'provider_unavailable') return 'El proveedor no respondió correctamente'
+  return result.error || 'Error no identificado'
+}
+
+function ResultDetails({ result, compact = false }: { result: DiagnosticResult; compact?: boolean }) {
+  const failedAttempt = result.attempts?.[0]
+  if (!result.ok) {
+    return (
+      <div className={`${compact ? 'mt-2 px-1 pb-1' : 'mt-4 rounded-2xl bg-rose-50 p-4'}`}>
+        <div className="flex items-start gap-2">
+          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-extrabold text-rose-800">{errorLabel(result)}</p>
+            {failedAttempt ? <p className="mt-0.5 break-all text-[9px] text-rose-600">{failedAttempt.model}{typeof failedAttempt.status === 'number' ? ` · HTTP ${failedAttempt.status}` : ''}</p> : null}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <div className="mt-2 grid grid-cols-3 gap-1 px-1 pb-1 text-[9px]">
+        <div><p className="text-slate-400">ms</p><p className="font-bold text-slate-700">{result.latencyMs ?? '—'}</p></div>
+        <div><p className="text-slate-400">entrada</p><p className="font-bold text-slate-700">{result.inputTokens ?? '—'}</p></div>
+        <div><p className="text-slate-400">salida</p><p className="font-bold text-slate-700">{result.outputTokens ?? '—'}</p></div>
+        <p className="col-span-3 mt-1 break-all text-[9px] font-semibold text-emerald-700">{result.model || 'Modelo no reportado'}{result.responseValid ? ' · correcto' : ' · respuesta distinta'}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
+      <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><p className="text-xs font-extrabold text-emerald-800">Router operativo</p></div>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
+        <div><p className="text-slate-400">Proveedor</p><p className="mt-0.5 font-bold text-slate-700">{LABELS[result.provider || ''] || result.provider || '—'}</p></div>
+        <div><p className="text-slate-400">Modelo</p><p className="mt-0.5 break-all font-bold text-slate-700">{result.model || '—'}</p></div>
+        <div><p className="text-slate-400">Latencia</p><p className="mt-0.5 font-bold text-slate-700">{typeof result.latencyMs === 'number' ? `${result.latencyMs} ms` : '—'}</p></div>
+        <div><p className="text-slate-400">Contrato</p><p className="mt-0.5 font-bold text-slate-700">{result.responseValid ? 'Correcto' : 'Respuesta distinta'}</p></div>
+        <div><p className="text-slate-400">Tokens entrada</p><p className="mt-0.5 font-bold text-slate-700">{result.inputTokens ?? 'No reportado'}</p></div>
+        <div><p className="text-slate-400">Tokens salida</p><p className="mt-0.5 font-bold text-slate-700">{result.outputTokens ?? 'No reportado'}</p></div>
+      </div>
+    </div>
+  )
+}
+
 export default function AiDiagnosticsCard() {
   const [providers, setProviders] = useState<ProviderStatus[]>([])
   const [loadingProviders, setLoadingProviders] = useState(true)
-  const [testing, setTesting] = useState(false)
-  const [result, setResult] = useState<DiagnosticResult | null>(null)
+  const [testingTarget, setTestingTarget] = useState<string | null>(null)
+  const [routerResult, setRouterResult] = useState<DiagnosticResult | null>(null)
+  const [providerResults, setProviderResults] = useState<Record<string, DiagnosticResult>>({})
   const [statusError, setStatusError] = useState<string | null>(null)
 
   const loadProviders = useCallback(async () => {
@@ -52,33 +110,39 @@ export default function AiDiagnosticsCard() {
 
   useEffect(() => { void loadProviders() }, [loadProviders])
 
-  const configuredCount = providers.filter((provider) => provider.configured).length
-
-  async function runDiagnostic() {
-    setResult(null)
-
-    if (configuredCount === 0) {
-      setResult({
-        ok: false,
-        error: 'Este Preview no está recibiendo variables de IA. Vincula las Shared Environment Variables al proyecto calendario para Preview y genera un nuevo deployment.',
+  async function runDiagnostic(provider?: string) {
+    const target = provider || 'router'
+    setTestingTarget(target)
+    if (provider) {
+      setProviderResults((current) => {
+        const next = { ...current }
+        delete next[provider]
+        return next
       })
-      return
+    } else {
+      setRouterResult(null)
     }
 
-    setTesting(true)
     try {
       const response = await fetch('/api/admin/ai-diagnostics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(provider ? { provider } : {}),
       })
       const payload = await response.json() as DiagnosticResult
-      setResult(payload)
+      if (provider) setProviderResults((current) => ({ ...current, [provider]: payload }))
+      else setRouterResult(payload)
     } catch {
-      setResult({ ok: false, error: 'No se pudo ejecutar la prueba' })
+      const failure = { ok: false, error: 'No se pudo ejecutar la prueba' } as DiagnosticResult
+      if (provider) setProviderResults((current) => ({ ...current, [provider]: failure }))
+      else setRouterResult(failure)
     } finally {
-      setTesting(false)
+      setTestingTarget(null)
     }
   }
+
+  const configuredCount = providers.filter((provider) => provider.configured).length
+  const noProviders = !loadingProviders && !statusError && configuredCount === 0
 
   return (
     <section className="mt-5 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
@@ -89,7 +153,7 @@ export default function AiDiagnosticsCard() {
               <BrainCircuit className="h-4 w-4 text-violet-500" />
               <h2 className="text-sm font-extrabold text-[#171923]">Diagnóstico de IA</h2>
             </div>
-            <p className="mt-1 text-[10px] leading-4 text-slate-400">Prueba técnica mínima del router. No muestra claves ni guarda el contenido de la prueba.</p>
+            <p className="mt-1 text-[10px] leading-4 text-slate-400">Pruebas mínimas del router. No muestra claves ni guarda el contenido de las pruebas.</p>
           </div>
           {!loadingProviders && !statusError ? (
             <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-600">{configuredCount}/{providers.length}</span>
@@ -103,50 +167,50 @@ export default function AiDiagnosticsCard() {
         ) : statusError ? (
           <p className="rounded-2xl bg-rose-50 p-3 text-xs text-rose-600">{statusError}</p>
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {providers.map((provider) => (
-                <div key={provider.provider} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5">
-                  <span className="text-[11px] font-bold text-slate-600">{LABELS[provider.provider] || provider.provider}</span>
-                  {provider.configured ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <XCircle className="h-4 w-4 text-slate-300" />}
+          <div className="space-y-2">
+            {providers.map((provider) => {
+              const result = providerResults[provider.provider]
+              const isTesting = testingTarget === provider.provider
+              return (
+                <div key={provider.provider} className="rounded-2xl bg-slate-50 px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      {provider.configured ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" /> : <XCircle className="h-4 w-4 shrink-0 text-slate-300" />}
+                      <span className="truncate text-[11px] font-bold text-slate-600">{LABELS[provider.provider] || provider.provider}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void runDiagnostic(provider.provider)}
+                      disabled={!provider.configured || Boolean(testingTarget)}
+                      className="min-h-8 shrink-0 rounded-xl bg-white px-3 text-[10px] font-extrabold text-violet-600 shadow-sm ring-1 ring-black/[0.04] disabled:cursor-not-allowed disabled:text-slate-300"
+                    >
+                      {isTesting ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Probando</span> : `Probar ${LABELS[provider.provider] || provider.provider}`}
+                    </button>
+                  </div>
+                  {result ? <ResultDetails result={result} compact /> : null}
                 </div>
-              ))}
-            </div>
-            {configuredCount === 0 ? (
-              <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-[10px] leading-4 text-amber-700">Este Preview no está recibiendo las variables de IA. Revisa que las variables compartidas de Vercel estén vinculadas al proyecto <strong>calendario</strong> y habilitadas para <strong>Preview</strong>.</p>
-            ) : null}
-          </>
+              )
+            })}
+          </div>
         )}
+
+        {noProviders ? (
+          <div className="mt-4 rounded-2xl bg-amber-50 p-3 text-[10px] leading-4 text-amber-800">
+            Ninguna API de IA está disponible en este Preview. Vincula las variables compartidas al proyecto <strong>calendario</strong>, habilita <strong>Preview</strong> y genera un deployment nuevo.
+          </div>
+        ) : null}
 
         <button
           type="button"
-          onClick={runDiagnostic}
-          disabled={testing || loadingProviders || Boolean(statusError)}
+          onClick={() => void runDiagnostic()}
+          disabled={Boolean(testingTarget) || loadingProviders || Boolean(statusError) || configuredCount === 0}
           className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#171923] px-4 text-xs font-extrabold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-          {testing ? 'Probando router…' : 'Probar router'}
+          {testingTarget === 'router' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+          {testingTarget === 'router' ? 'Probando router…' : configuredCount === 0 && !loadingProviders ? 'Sin proveedores configurados' : 'Probar router'}
         </button>
 
-        {result ? (
-          <div className={`mt-4 rounded-2xl p-4 ${result.ok ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-            {result.ok ? (
-              <>
-                <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><p className="text-xs font-extrabold text-emerald-800">Router operativo</p></div>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
-                  <div><p className="text-slate-400">Proveedor</p><p className="mt-0.5 font-bold text-slate-700">{LABELS[result.provider || ''] || result.provider || '—'}</p></div>
-                  <div><p className="text-slate-400">Modelo</p><p className="mt-0.5 break-all font-bold text-slate-700">{result.model || '—'}</p></div>
-                  <div><p className="text-slate-400">Latencia</p><p className="mt-0.5 font-bold text-slate-700">{typeof result.latencyMs === 'number' ? `${result.latencyMs} ms` : '—'}</p></div>
-                  <div><p className="text-slate-400">Contrato</p><p className="mt-0.5 font-bold text-slate-700">{result.responseValid ? 'Correcto' : 'Respuesta distinta'}</p></div>
-                  <div><p className="text-slate-400">Tokens entrada</p><p className="mt-0.5 font-bold text-slate-700">{result.inputTokens ?? 'No reportado'}</p></div>
-                  <div><p className="text-slate-400">Tokens salida</p><p className="mt-0.5 font-bold text-slate-700">{result.outputTokens ?? 'No reportado'}</p></div>
-                </div>
-              </>
-            ) : (
-              <div className="flex items-start gap-2"><XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" /><div><p className="text-xs font-extrabold text-rose-800">La prueba no respondió</p><p className="mt-1 text-[10px] text-rose-600">{result.error || 'Error no identificado'}</p></div></div>
-            )}
-          </div>
-        ) : null}
+        {routerResult ? <ResultDetails result={routerResult} /> : null}
       </div>
     </section>
   )
