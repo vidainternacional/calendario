@@ -4,13 +4,15 @@ import test from 'node:test'
 
 const toolbar = fs.readFileSync('components/biblia/NotesEditingToolbar.tsx', 'utf8')
 
-test('FASE F: las herramientas quedan visibles y agrupadas sin depender de scroll horizontal', () => {
-  assert.match(toolbar, /grid grid-cols-5/)
+test('FASE F: la IA queda por encima de los submenús y las herramientas siguen agrupadas sin scroll horizontal', () => {
+  assert.match(toolbar, /aria-label="Barra de asistencia con IA"/)
+  assert.match(toolbar, /¿Qué quieres hacer con esta nota\?/)
+  assert.match(toolbar, /grid grid-cols-4/)
   assert.match(toolbar, /Texto/)
   assert.match(toolbar, /Listas/)
-  assert.match(toolbar, /IA/)
   assert.match(toolbar, /Insertar/)
   assert.match(toolbar, /Vista/)
+  assert.doesNotMatch(toolbar, /id: 'organizar'/)
   assert.doesNotMatch(toolbar, /overflow-x-auto rounded-2xl/)
   assert.match(toolbar, /min-h-14/)
 })
