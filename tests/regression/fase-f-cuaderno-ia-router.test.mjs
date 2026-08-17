@@ -10,9 +10,10 @@ const workspace = fs.readFileSync('components/biblia/BibleNotesWorkspace.tsx', '
 test('FASE F: vidaAI centraliza presupuestos y fallback entre proveedores sin exponer claves al cliente', () => {
   assert.match(router, /import 'server-only'/)
   assert.match(router, /export type VidaAiLevel = 1 \| 2/)
-  assert.match(router, /VidaAiProviderName = 'gemini' \| 'openai' \| 'grok' \| 'perplexity' \| 'kimi'/)
+  assert.match(router, /VidaAiProviderName = 'gemini' \| 'openai' \| 'grok' \| 'perplexity' \| 'kimi' \| 'claude'/)
   assert.match(router, /GEMINI_API_KEY/)
   assert.match(router, /OPENAI_API_KEY/)
+  assert.match(router, /ANTHROPIC_API_KEY/)
   assert.match(router, /XAI_API_KEY/)
   assert.match(router, /PERPLEXITY_API_KEY/)
   assert.match(router, /MOONSHOT_API_KEY/)
@@ -22,7 +23,7 @@ test('FASE F: vidaAI centraliza presupuestos y fallback entre proveedores sin ex
   assert.match(router, /maxInputChars: 16_000/)
   assert.match(router, /maxOutputTokens: 1_200/)
   assert.match(router, /cacheTtlMs: 10 \* 60 \* 1000/)
-  assert.doesNotMatch(toolbar, /OPENAI_API_KEY|GEMINI_API_KEY|XAI_API_KEY|PERPLEXITY_API_KEY|MOONSHOT_API_KEY|api\.openai\.com|generativelanguage\.googleapis\.com|api\.x\.ai|api\.perplexity\.ai|api\.moonshot\.ai/)
+  assert.doesNotMatch(toolbar, /OPENAI_API_KEY|GEMINI_API_KEY|ANTHROPIC_API_KEY|XAI_API_KEY|PERPLEXITY_API_KEY|MOONSHOT_API_KEY|api\.openai\.com|generativelanguage\.googleapis\.com|api\.anthropic\.com|api\.x\.ai|api\.perplexity\.ai|api\.moonshot\.ai/)
 })
 
 test('FASE F: router permite modelos configurables por proveedor y nivel', () => {
@@ -30,6 +31,8 @@ test('FASE F: router permite modelos configurables por proveedor y nivel', () =>
   assert.match(router, /VIDA_GEMINI_ADVANCED_MODEL/)
   assert.match(router, /VIDA_OPENAI_ECONOMY_MODEL/)
   assert.match(router, /VIDA_OPENAI_ADVANCED_MODEL/)
+  assert.match(router, /VIDA_CLAUDE_ECONOMY_MODEL/)
+  assert.match(router, /VIDA_CLAUDE_ADVANCED_MODEL/)
   assert.match(router, /VIDA_GROK_ECONOMY_MODEL/)
   assert.match(router, /VIDA_GROK_ADVANCED_MODEL/)
   assert.match(router, /VIDA_PERPLEXITY_ECONOMY_MODEL/)
@@ -44,6 +47,7 @@ test('FASE F: los adaptadores minimizan persistencia y limitan salida', () => {
   assert.match(router, /max_output_tokens: policy\.maxOutputTokens/)
   assert.match(router, /x-goog-api-key/)
   assert.match(router, /generationConfig: \{ maxOutputTokens: policy\.maxOutputTokens \}/)
+  assert.match(router, /https:\/\/api\.anthropic\.com\/v1\/messages/)
   assert.match(router, /https:\/\/api\.x\.ai\/v1\/chat\/completions/)
   assert.match(router, /https:\/\/api\.perplexity\.ai\/v1\/sonar/)
   assert.match(router, /https:\/\/api\.moonshot\.ai\/v1\/chat\/completions/)
@@ -51,14 +55,22 @@ test('FASE F: los adaptadores minimizan persistencia y limitan salida', () => {
   assert.match(router, /cache: 'no-store'/)
 })
 
-test('FASE F: el router protege consumo y salta temporalmente proveedores con cuota o servicio agotado', () => {
+test('FASE F: el router protege consumo y aplica cooldown según la causa real del proveedor', () => {
   assert.match(router, /BURST_WINDOW_MS = 60_000/)
   assert.match(router, /BURST_MAX_REQUESTS = 8/)
   assert.match(router, /enforceBurstLimit\(request\.ownerId, request\.task\)/)
-  assert.match(router, /error\.status !== 429/)
-  assert.match(router, /PROVIDER_COOLDOWN_MS = 2 \* 60 \* 1000/)
+  assert.match(router, /readProviderFailureFingerprint/)
+  assert.match(router, /classifyVidaAiProviderFailure/)
+  assert.match(router, /providerFailureCooldownMs/)
   assert.match(router, /providerAvailable\(entry\.provider, entry\.model\)/)
+  assert.match(router, /category: error instanceof ProviderError \? error\.category : 'error_proveedor'/)
   assert.match(action, /error\.code === 'rate_limited'/)
+})
+
+test('FASE F: Gemini es el primer proveedor automático para las tareas Nivel 1 activas', () => {
+  assert.match(router, /organizar_notas: \{ level: 1/)
+  assert.match(router, /interpretar_busqueda_biblica: \{ level: 1/)
+  assert.match(router, /VIDA_AI_ECONOMY_ORDER \|\| 'gemini,openai,claude,grok,kimi,perplexity'/)
 })
 
 test('FASE F: organización IA autentica al dueño y envía solo la nota actual con su referencia', () => {
