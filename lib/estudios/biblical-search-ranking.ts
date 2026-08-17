@@ -81,11 +81,24 @@ function similarity(a: string, b: string) {
   return 1 - (levenshtein(a, b) / Math.max(a.length, b.length))
 }
 
+function adjacentTransposition(a: string, b: string) {
+  if (a.length !== b.length) return false
+  const mismatches: number[] = []
+  for (let index = 0; index < a.length; index += 1) {
+    if (a[index] !== b[index]) mismatches.push(index)
+    if (mismatches.length > 2) return false
+  }
+  if (mismatches.length !== 2 || mismatches[1] !== mismatches[0] + 1) return false
+  const [first, second] = mismatches
+  return a[first] === b[second] && a[second] === b[first]
+}
+
 function tokensRelated(a: string, b: string) {
   if (a === b) return 1
   const aForms = lexicalForms(a)
   const bForms = lexicalForms(b)
   if (Array.from(aForms).some(form => bForms.has(form) && form.length >= 3)) return 0.92
+  if (adjacentTransposition(a, b)) return 0.94
   if ((a.startsWith(b) || b.startsWith(a)) && Math.min(a.length, b.length) >= 4) return 0.84
   const fuzzy = similarity(a, b)
   return fuzzy >= 0.78 ? fuzzy * 0.86 : 0
