@@ -1,0 +1,28 @@
+/* Ajustes visuales exclusivos del bloque activo del Cuaderno. */
+[aria-label="Historial global del cuaderno"] {
+  width: 100%;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+}
+
+[aria-label="Historial global del cuaderno"] > button:first-child {
+  margin-right: auto;
+}
+
+[aria-label="Historial global del cuaderno"] > button:last-child {
+  margin-left: auto;
+}
+
+/* iOS puede promover elementos fijos a otra capa durante el scroll. */
+[data-bottom-nav-fixed="true"] {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: translate3d(0, 0, 0) !important;
+  -webkit-transform: translate3d(0, 0, 0) !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overscroll-behavior: none;
+}
