@@ -6,10 +6,10 @@ import {
   normalizeBiblicalSearchQuery,
   scoreBiblicalSearchCandidate,
 } from '../../lib/estudios/biblical-search-ranking.ts'
-import { relatedApprovedThemeLabels } from '../../lib/estudios/biblical-search-relations.ts'
 
 const assist = fs.readFileSync('lib/estudios/biblical-search-assist.ts', 'utf8')
 const router = fs.readFileSync('lib/ai/vida-ai.ts', 'utf8')
+const relations = fs.readFileSync('lib/estudios/biblical-search-relations.ts', 'utf8')
 const action = fs.readFileSync('app/actions/estudio-interno.ts', 'utf8')
 const deepLink = fs.readFileSync('components/biblia/BibliaDeepLinkNavigation.tsx', 'utf8')
 
@@ -36,13 +36,18 @@ test('Centro de Estudio tolera errores ortográficos razonables', () => {
   assert.ok(score('ansiedaad', ['ansiedad']) >= 0.62)
 })
 
-test('Odio/odiar y otros conceptos sin concordancia propia producen temas aprobados relacionados, no referencias inventadas', () => {
-  const odio = relatedApprovedThemeLabels('Odio')
-  const pregunta = relatedApprovedThemeLabels('¿Qué dice la Biblia sobre odiar a alguien?')
-  assert.deepEqual(odio.slice(0, 3), ['Amor', 'Perdón', 'Paz'])
-  assert.deepEqual(pregunta.slice(0, 3), ['Amor', 'Perdón', 'Paz'])
-  assert.ok(relatedApprovedThemeLabels('estoy muy triste').includes('Esperanza'))
-  assert.deepEqual(relatedApprovedThemeLabels('zxqv inexistente 999'), [])
+test('Odio/odiar y otros conceptos sin concordancia propia tienen relaciones controladas hacia temas aprobados', () => {
+  assert.ok(score('Odio', ['odio', 'odiar', 'enemistad']) >= 0.9)
+  assert.ok(score('¿Qué dice la Biblia sobre odiar a alguien?', ['odio', 'odiar', 'enemistad']) >= 0.82)
+  assert.ok(score('estoy muy triste', ['tristeza', 'triste', 'desconsuelo']) >= 0.82)
+  assert.match(relations, /cues: \['odio', 'odiar', 'enemistad', 'rencor', 'resentimiento', 'aborrecer', 'hostilidad'\]/)
+  assert.match(relations, /themes: \['Amor', 'Perdón', 'Paz'\]/)
+  assert.match(relations, /cues: \['tristeza', 'triste', 'melancolia'/)
+  assert.doesNotMatch(relations, /Salmos 23:1|Juan 3:16/)
+})
+
+test('Un término inexistente no obtiene una coincidencia artificial del matcher', () => {
+  assert.ok(score('zxqv inexistente 999', ['Amor', 'Perdón', 'Miedo', 'Familia']) < 0.62)
 })
 
 test('Nivel 1 solo interpreta hacia temas aprobados y un fallo de proveedor mantiene fallback determinístico', () => {
