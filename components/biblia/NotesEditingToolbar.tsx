@@ -684,6 +684,7 @@ export default function NotesEditingToolbar({
   const [aiReused, setAiReused] = useState(false)
   const savedRangeRef = useRef<Range | null>(null)
   const selectionSyncLockRef = useRef(0)
+  const inlineSelectionStateRef = useRef<InlineState>({ ...emptyInlineState })
 
   const emitEditor = (checkpoint = true) => {
     const editor = editorRef.current
@@ -701,6 +702,7 @@ export default function NotesEditingToolbar({
     const list = selected.closest('ul,ol') as HTMLElement | null
     const kind = listKindOf(list)
     const inline = inlineStateAtSelection(editor, selection)
+    inlineSelectionStateRef.current = inline
     setFormatState({
       block: blockStyleAtSelection(editor, selection),
       ...inline,
@@ -760,6 +762,7 @@ export default function NotesEditingToolbar({
       rememberSelection()
       emitEditor(true)
       if (command === 'removeFormat') {
+        inlineSelectionStateRef.current = { ...emptyInlineState }
         setFormatState((current) => ({ ...current, ...emptyInlineState }))
       } else {
         requestAnimationFrame(readSelectionState)
@@ -777,20 +780,20 @@ export default function NotesEditingToolbar({
       const range = selection.getRangeAt(0)
       if (!editor.contains(range.commonAncestorContainer)) return
 
-      const inlineBefore = inlineStateAtSelection(editor, selection)
-      const nextActive = !inlineBefore[key]
+      const inlineBefore = inlineSelectionStateRef.current
+      const nextInline: InlineState = { ...inlineBefore, [key]: !inlineBefore[key] }
       selectionSyncLockRef.current = Date.now() + 320
 
-      // Fuerza marcas semánticas cuando el navegador lo permite. La serialización
-      // también soporta estilos inline de Safari para no perder combinaciones.
+      // Safari puede reconstruir la selección al tocar una herramienta. El estado
+      // explícito conserva todas las marcas activadas para que B, I, U y S se
+      // combinen de forma independiente en lugar de reemplazarse entre sí.
       document.execCommand('styleWithCSS', false, 'false')
       document.execCommand(command, false)
       rememberSelection()
+      inlineSelectionStateRef.current = nextInline
       emitEditor(true)
 
-      // Solo cambia el botón pulsado. Título/Encabezado y los otros énfasis
-      // permanecen completamente independientes y se pueden combinar.
-      setFormatState((current) => ({ ...current, [key]: nextActive }))
+      setFormatState((current) => ({ ...current, ...nextInline }))
     })
   }
 
