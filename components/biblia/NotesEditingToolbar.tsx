@@ -12,6 +12,7 @@ import {
   Italic,
   List,
   ListOrdered,
+  Loader2,
   Minus,
   Printer,
   Quote,
@@ -20,6 +21,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
+import { organizarApuntesConIA } from '@/app/actions/cuaderno-ai'
 
 type Props = {
   textareaRef: RefObject<HTMLTextAreaElement | null>
@@ -33,12 +35,12 @@ type Props = {
 }
 
 type ToolGroup = 'texto' | 'listas' | 'organizar' | 'insertar' | 'vista'
+type AiMode = 'ideas' | 'estudio' | 'predicacion'
 
 type HistoryState = {
   past: string[]
   current: string
   lastAt: number
-  suppressNext: boolean
 }
 
 function clampFontSize(value: number) {
@@ -70,7 +72,13 @@ export default function NotesEditingToolbar({
   const [previewMode, setPreviewMode] = useState(false)
   const [activeGroup, setActiveGroup] = useState<ToolGroup>('texto')
   const [canUndo, setCanUndo] = useState(false)
-  const historyRef = useRef<HistoryState>({ past: [], current: value, lastAt: 0, suppressNext: false })
+  const [aiMode, setAiMode] = useState<AiMode>('ideas')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiProposal, setAiProposal] = useState<string | null>(null)
+  const [aiSource, setAiSource] = useState('')
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiReused, setAiReused] = useState(false)
+  const historyRef = useRef<HistoryState>({ past: [], current: value, lastAt: 0 })
 
   useEffect(() => {
     const area = textareaRef.current
@@ -82,14 +90,6 @@ export default function NotesEditingToolbar({
   useEffect(() => {
     const history = historyRef.current
     if (value === history.current) return
-
-    if (history.suppressNext) {
-      history.suppressNext = false
-      history.current = value
-      history.lastAt = Date.now()
-      setCanUndo(history.past.length > 0)
-      return
-    }
 
     const previous = history.current
     const now = Date.now()
@@ -108,14 +108,12 @@ export default function NotesEditingToolbar({
   const commitChange = (next: string) => {
     if (next === value) return
     const history = historyRef.current
-    history.current = value
     if (history.past[history.past.length - 1] !== value) {
       history.past.push(value)
       if (history.past.length > 50) history.past.shift()
     }
     history.current = next
     history.lastAt = Date.now()
-    history.suppressNext = true
     setCanUndo(true)
     onChange(next)
   }
@@ -127,9 +125,10 @@ export default function NotesEditingToolbar({
 
     history.current = previous
     history.lastAt = Date.now()
-    history.suppressNext = true
     setCanUndo(history.past.length > 0)
     setPreviewMode(false)
+    setAiProposal(null)
+    setAiError(null)
     onChange(previous)
     requestAnimationFrame(() => textareaRef.current?.focus())
   }
@@ -162,6 +161,54 @@ export default function NotesEditingToolbar({
     else if (line.trimStart().startsWith('☑ ')) lines[lineIndex] = line.replace('☑ ', '☐ ')
     else return
     commitChange(lines.join('\n'))
+  }
+
+  const requestAiOrganization = async (regenerar = false) => {
+    if (aiLoading || !value.trim()) return
+    const source = value
+    setAiLoading(true)
+    setAiError(null)
+    setAiReused(false)
+
+    try {
+      const result = await organizarApuntesConIA({
+        contenido: source,
+        referencia: reference,
+        modo: aiMode,
+        regenerar,
+      })
+
+      if (!result.success) {
+        setAiProposal(null)
+        setAiError(result.error)
+        return
+      }
+
+      setAiSource(source)
+      setAiProposal(result.propuesta)
+      setAiReused(result.reutilizada)
+    } catch {
+      setAiProposal(null)
+      setAiError('No se pudo conectar con la asistencia de IA. Tus apuntes no cambiaron.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const applyAiProposal = () => {
+    if (!aiProposal) return
+    if (value !== aiSource) {
+      setAiProposal(null)
+      setAiError('Tus apuntes cambiaron después de generar la propuesta. Genera una nueva para evitar sobrescribir cambios recientes.')
+      return
+    }
+    commitChange(aiProposal)
+    setAiProposal(null)
+    setAiSource('')
+    setAiError(null)
+    setActiveGroup('texto')
+    setPreviewMode(false)
+    requestAnimationFrame(() => textareaRef.current?.focus())
   }
 
   const preview = useMemo(() => value.split('\n').map((line, index) => {
@@ -221,6 +268,12 @@ export default function NotesEditingToolbar({
     { id: 'organizar', label: 'IA' },
     { id: 'insertar', label: 'Insertar' },
     { id: 'vista', label: 'Vista' },
+  ]
+
+  const aiModes: Array<{ id: AiMode; label: string }> = [
+    { id: 'ideas', label: 'Ideas sueltas' },
+    { id: 'estudio', label: 'Estudio' },
+    { id: 'predicacion', label: 'Predicación' },
   ]
 
   return (
@@ -285,19 +338,59 @@ export default function NotesEditingToolbar({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-extrabold">Organizar con IA</p>
-                  <p className={`mt-1 text-[10px] leading-4 ${mutedClass}`}>La IA tomará tus propios apuntes y propondrá una estructura más clara sin imponerte un bosquejo fijo.</p>
+                  <p className={`mt-1 text-[10px] leading-4 ${mutedClass}`}>Usa IA solo cuando la necesites. Trabaja únicamente con esta nota y primero te muestra una propuesta.</p>
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-1.5" aria-label="Usos previstos de organización con IA">
-                {['Ideas sueltas', 'Estudio', 'Predicación'].map((label) => <span key={label} className={`rounded-full border border-current/10 px-2 py-2 text-center text-[9px] font-bold ${buttonClass}`}>{label}</span>)}
+              <div className="mt-3 grid grid-cols-3 gap-1.5" aria-label="Tipo de organización con IA">
+                {aiModes.map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    onClick={() => { setAiMode(mode.id); setAiError(null) }}
+                    aria-pressed={aiMode === mode.id}
+                    className={`rounded-full border px-2 py-2 text-center text-[9px] font-bold transition ${aiMode === mode.id ? 'border-violet-500/35 bg-violet-600 text-white' : `border-current/10 ${buttonClass}`}`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
               </div>
 
-              <button type="button" disabled className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-xs font-extrabold text-white opacity-65" aria-label="Organizar con IA, pendiente de conexión">
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Organizar mis apuntes
-              </button>
-              <p className={`mt-2 px-1 text-center text-[9px] leading-4 ${mutedClass}`}>Primero te mostrará una propuesta. Nada reemplazará tu nota sin tu aprobación.</p>
+              {!aiProposal && (
+                <button
+                  type="button"
+                  onClick={() => void requestAiOrganization(false)}
+                  disabled={aiLoading || !value.trim()}
+                  className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-xs font-extrabold text-white transition active:scale-[0.99] disabled:cursor-default disabled:opacity-45"
+                  aria-label="Organizar mis apuntes con IA"
+                >
+                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
+                  {aiLoading ? 'Preparando propuesta…' : 'Organizar mis apuntes'}
+                </button>
+              )}
+
+              {aiError && <p className="mt-2 rounded-2xl bg-rose-500/10 px-3 py-2 text-[10px] leading-4 text-rose-700" role="status">{aiError}</p>}
+
+              {aiProposal && (
+                <div className="mt-3" aria-live="polite">
+                  <div className="flex items-center justify-between gap-2 px-1">
+                    <p className="text-[10px] font-extrabold">Propuesta</p>
+                    {aiReused && <span className={`text-[9px] ${mutedClass}`}>Reutilizada para ahorrar tokens</span>}
+                  </div>
+                  <div className="mt-1.5 max-h-64 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-current/10 bg-current/[0.025] px-3 py-3 text-[11px] leading-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {aiProposal}
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    <button type="button" onClick={applyAiProposal} className="min-h-11 rounded-2xl bg-violet-600 px-3 text-[11px] font-extrabold text-white">Aplicar propuesta</button>
+                    <button type="button" onClick={() => { setAiProposal(null); setAiSource(''); setAiError(null) }} className={`min-h-11 rounded-2xl px-3 text-[11px] font-bold ${buttonClass}`}>Descartar</button>
+                  </div>
+                  <button type="button" onClick={() => void requestAiOrganization(true)} disabled={aiLoading} className={`mt-1.5 min-h-10 w-full rounded-2xl px-3 text-[10px] font-bold disabled:opacity-45 ${buttonClass}`}>
+                    {aiLoading ? 'Generando…' : 'Volver a generar'}
+                  </button>
+                </div>
+              )}
+
+              <p className={`mt-2 px-1 text-center text-[9px] leading-4 ${mutedClass}`}>Nada reemplaza tus apuntes hasta que toques Aplicar. Después puedes usar Deshacer.</p>
             </div>
           )}
 
