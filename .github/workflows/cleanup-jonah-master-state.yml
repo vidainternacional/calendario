@@ -17,45 +17,46 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validar prioridad vigente del piloto
+      - name: Validar fase activa y reglas globales
         run: |
           python - <<'PY'
           from pathlib import Path
 
           text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
 
-          required = [
-              'Fase activa: **PILOTO OPERATIVO — Validación funcional con cuentas reales**',
-              '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **EN PAUSA OPERATIVA — BLOQUE 5 CONSERVADO** |',
-              '- PR #185 abierto y listo para revisión final y fusión.',
-              '- migraciones `ayuda_solidaria_solicitudes_aportes` y `optimizar_ayuda_solidaria_rls_indices` aplicadas en Supabase;',
-              'No iniciar P2 hasta cerrar P1.',
-              'qué cuenta usaremos como líder o pastor para completar la jerarquía de P1.',
-              'No reanudar el estudio bíblico avanzado, no iniciar P2 y no crear un cuaderno separado durante este bloque.'
+          required_once = [
+              'Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**',
+              '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |',
+              '| FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |',
+              '| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |',
+              '# PILOTO OPERATIVO — EN PAUSA',
+              '# FASE F — ACTIVA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS',
+              '# Siguiente punto autorizado',
+              '**Principio visual global:**',
+              '**Navegación móvil global:**',
+              '**Historial reversible:**',
           ]
-          missing = [value for value in required if text.count(value) != 1]
+          missing = [value for value in required_once if text.count(value) != 1]
           if missing:
-              raise SystemExit(f'Estado maestro del piloto inválido o duplicado: {missing}')
+              raise SystemExit(f'Estado maestro vigente inválido o duplicado: {missing}')
 
-          combined_status = 'Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO; EXTENSIÓN INTERACTIVA PENDIENTE DE DESPLIEGUE**.'
-          split_status = (
-              'Estado: **PRODUCCIÓN READY — VALIDACIÓN FUNCIONAL EN CURSO**.' in text
-              and 'Extensión interactiva implementada y pendiente de despliegue productivo.' in text
-          )
-          if combined_status not in text and not split_status:
-              raise SystemExit('El documento maestro no conserva el estado vigente de P1 y su extensión interactiva')
+          if 'Continuar exclusivamente FASE F con el punto 6 del alcance' not in text:
+              raise SystemExit('El documento maestro perdió el siguiente punto autorizado de FASE F')
+
+          active_lines = [line for line in text.splitlines() if line.startswith('Fase / prioridad activa:')]
+          if active_lines != ['Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**']:
+              raise SystemExit(f'La prioridad activa no es única o no coincide con FASE F: {active_lines}')
 
           forbidden = [
-              'Fase activa: **FASE D — IA Bíblica Avanzada**',
-              '**ACTIVA — BLOQUE 5**',
-              'Bloque 6 — IA bíblica avanzada y proveedores: **ACTIVO**',
+              'Fase / prioridad activa: **FASE D — IA Bíblica Avanzada**',
+              'Fase activa: **PILOTO OPERATIVO — Validación funcional con cuentas reales**',
               '## Bloque P2 — Recorridos operativos por rol\n\nEstado: **ACTIVO**',
               '## Bloque P3 — Prueba controlada de siete días\n\nEstado: **ACTIVO**',
           ]
           present = [value for value in forbidden if value in text]
           if present:
-              raise SystemExit(f'El documento maestro reactivó un bloque no autorizado: {present}')
+              raise SystemExit(f'El documento maestro reactivó una prioridad cerrada o pausada: {present}')
 
-          print('Documento maestro del piloto operativo: OK')
+          print('Documento maestro: FASE F activa, piloto pausado y reglas globales vigentes: OK')
           PY
           git diff --check

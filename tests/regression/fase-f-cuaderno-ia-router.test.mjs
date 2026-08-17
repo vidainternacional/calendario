@@ -64,10 +64,10 @@ test('FASE F: IA queda sobre submenús y propone antes de aplicar', () => {
 
 test('FASE F: deshacer y rehacer son herramientas globales fuera de Edición', () => {
   assert.match(workspace, /Historial global del cuaderno/)
-  assert.match(workspace, /Deshacer último cambio/)
-  assert.match(workspace, /Rehacer último cambio/)
-  assert.match(workspace, /contentHistoryRef/)
-  assert.match(workspace, /deshacerContenido/)
-  assert.match(workspace, /rehacerContenido/)
-  assert.doesNotMatch(toolbar, /Deshacer último cambio|Rehacer último cambio/)
+  assert.match(workspace, /Deshacer última acción/)
+  assert.match(workspace, /Rehacer última acción/)
+  assert.match(workspace, /noteHistoryRef/)
+  assert.match(workspace, /deshacerNota/)
+  assert.match(workspace, /rehacerNota/)
+  assert.doesNotMatch(toolbar, /Deshacer última acción|Rehacer última acción/)
 })
