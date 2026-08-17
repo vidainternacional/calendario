@@ -52,9 +52,20 @@ export default function AiDiagnosticsCard() {
 
   useEffect(() => { void loadProviders() }, [loadProviders])
 
+  const configuredCount = providers.filter((provider) => provider.configured).length
+
   async function runDiagnostic() {
-    setTesting(true)
     setResult(null)
+
+    if (configuredCount === 0) {
+      setResult({
+        ok: false,
+        error: 'Este Preview no está recibiendo variables de IA. Vincula las Shared Environment Variables al proyecto calendario para Preview y genera un nuevo deployment.',
+      })
+      return
+    }
+
+    setTesting(true)
     try {
       const response = await fetch('/api/admin/ai-diagnostics', {
         method: 'POST',
@@ -68,8 +79,6 @@ export default function AiDiagnosticsCard() {
       setTesting(false)
     }
   }
-
-  const configuredCount = providers.filter((provider) => provider.configured).length
 
   return (
     <section className="mt-5 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
@@ -94,20 +103,25 @@ export default function AiDiagnosticsCard() {
         ) : statusError ? (
           <p className="rounded-2xl bg-rose-50 p-3 text-xs text-rose-600">{statusError}</p>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {providers.map((provider) => (
-              <div key={provider.provider} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5">
-                <span className="text-[11px] font-bold text-slate-600">{LABELS[provider.provider] || provider.provider}</span>
-                {provider.configured ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <XCircle className="h-4 w-4 text-slate-300" />}
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {providers.map((provider) => (
+                <div key={provider.provider} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5">
+                  <span className="text-[11px] font-bold text-slate-600">{LABELS[provider.provider] || provider.provider}</span>
+                  {provider.configured ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <XCircle className="h-4 w-4 text-slate-300" />}
+                </div>
+              ))}
+            </div>
+            {configuredCount === 0 ? (
+              <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-[10px] leading-4 text-amber-700">Este Preview no está recibiendo las variables de IA. Revisa que las variables compartidas de Vercel estén vinculadas al proyecto <strong>calendario</strong> y habilitadas para <strong>Preview</strong>.</p>
+            ) : null}
+          </>
         )}
 
         <button
           type="button"
           onClick={runDiagnostic}
-          disabled={testing || loadingProviders || Boolean(statusError) || configuredCount === 0}
+          disabled={testing || loadingProviders || Boolean(statusError)}
           className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#171923] px-4 text-xs font-extrabold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
