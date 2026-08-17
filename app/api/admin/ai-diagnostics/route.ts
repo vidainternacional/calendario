@@ -16,6 +16,8 @@ const PROVIDERS = [
 const TEST_INPUT = 'Prueba técnica mínima del router VIDA.'
 const TEST_INSTRUCTIONS = 'Responde únicamente con VIDA_OK. No agregues ninguna otra palabra.'
 
+type ProviderFailureCategory = 'sin_creditos' | 'rate_limit' | 'autenticacion' | 'sin_permisos' | 'error_proveedor'
+
 async function requireAdministrator() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,21 +28,21 @@ async function requireAdministrator() {
 }
 
 function providerDefinition(name: VidaAiProviderName) { return PROVIDERS.find((provider) => provider.name === name) }
-function safeProviderMessage(value: unknown) {
-  if (typeof value !== 'string') return null
-  const clean = value.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim()
-  if (!clean || clean.length > 220) return null
-  if (/api[_ -]?key|authorization|bearer|sk-[a-z0-9_-]+/i.test(clean)) return null
-  return clean
+function classifyProviderFailure(status: number, type?: unknown, message?: unknown): ProviderFailureCategory {
+  const fingerprint = `${typeof type === 'string' ? type : ''} ${typeof message === 'string' ? message : ''}`.toLowerCase()
+  if (/credit|balance|billing|quota|insufficient|recharge|license/.test(fingerprint)) return 'sin_creditos'
+  if (status === 401 || /unauthori|authentication|invalid[_ -]?api[_ -]?key/.test(fingerprint)) return 'autenticacion'
+  if (status === 403 || /forbidden|permission|not allowed|access denied/.test(fingerprint)) return 'sin_permisos'
+  if (status === 429 || /rate[_ -]?limit|too many requests/.test(fingerprint)) return 'rate_limit'
+  return 'error_proveedor'
 }
 function diagnosticFailure(provider: VidaAiProviderName, model: string, status: number, startedAt: number, type?: unknown, message?: unknown) {
-  const safeType = safeProviderMessage(type)
-  const safeMessage = safeProviderMessage(message)
+  const category = classifyProviderFailure(status, type, message)
   return NextResponse.json({
     ok: false,
     requestedProvider: provider,
     provider,
-    error: [safeType, safeMessage].filter(Boolean).join(': ') || `${provider} HTTP ${status}`,
+    error: category,
     attempts: [{ provider, model, status }],
     latencyMs: Date.now() - startedAt,
   }, { status: 503 })
