@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validar fase activa y reglas globales
+      - name: Validar cierre de FASE F y reglas globales
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -25,12 +25,13 @@ jobs:
           text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
 
           required_once = [
-              'Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**',
+              'Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**',
               '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |',
               '| FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |',
-              '| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |',
+              '| FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |',
               '# PILOTO OPERATIVO — EN PAUSA',
-              '# FASE F — ACTIVA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS',
+              '# FASE F — COMPLETADA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS — 2026-08-17',
+              'FASE F queda **COMPLETADA — 2026-08-17**',
               '# Siguiente punto autorizado',
               '**Principio visual global:**',
               '**Navegación móvil global:**',
@@ -38,21 +39,21 @@ jobs:
           ]
           missing = [value for value in required_once if text.count(value) != 1]
           if missing:
-              raise SystemExit(f'Estado maestro vigente inválido o duplicado: {missing}')
+              raise SystemExit(f'Estado maestro de cierre inválido o duplicado: {missing}')
 
-          allowed_next_gates = [
-              'Continuar exclusivamente FASE F con el punto 6 del alcance',
-              'Realizar exclusivamente el cierre técnico/documental de FASE F',
-          ]
-          present_gates = [value for value in allowed_next_gates if value in text]
-          if len(present_gates) != 1:
-              raise SystemExit(f'El documento maestro no tiene un único siguiente punto autorizado de FASE F: {present_gates}')
+          next_gate = 'No iniciar una fase posterior hasta que se agregue explícitamente al documento maestro'
+          if text.count(next_gate) != 1:
+              raise SystemExit('El documento maestro perdió el gate de espera posterior a FASE F')
 
           active_lines = [line for line in text.splitlines() if line.startswith('Fase / prioridad activa:')]
-          if active_lines != ['Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**']:
-              raise SystemExit(f'La prioridad activa no es única o no coincide con FASE F: {active_lines}')
+          expected_active = ['Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**']
+          if active_lines != expected_active:
+              raise SystemExit(f'La prioridad activa no coincide con el cierre de FASE F: {active_lines}')
 
           forbidden = [
+              'Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**',
+              '| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |',
+              '# FASE F — ACTIVA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS',
               'Fase / prioridad activa: **FASE D — IA Bíblica Avanzada**',
               'Fase activa: **PILOTO OPERATIVO — Validación funcional con cuentas reales**',
               '## Bloque P2 — Recorridos operativos por rol\n\nEstado: **ACTIVO**',
@@ -60,8 +61,8 @@ jobs:
           ]
           present = [value for value in forbidden if value in text]
           if present:
-              raise SystemExit(f'El documento maestro reactivó una prioridad cerrada o pausada: {present}')
+              raise SystemExit(f'El documento maestro reactivó una fase cerrada o una prioridad pausada: {present}')
 
-          print('Documento maestro: FASE F activa, piloto pausado y siguiente gate único: OK')
+          print('Documento maestro: FASE F completada, sin fase posterior activa y piloto pausado: OK')
           PY
           git diff --check

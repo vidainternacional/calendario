@@ -2,7 +2,7 @@
 
 Última actualización: 2026-08-17
 
-Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**
+Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -40,7 +40,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE C | Panel Pastoral, versículos, bosquejos, biblioteca y materiales | **COMPLETADA — 2026-07-29** |
 | FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |
-| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |
+| FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |
 
 # PRIORIDADES RECIENTES CERRADAS
 
@@ -204,15 +204,15 @@ Hitos finales de cierre:
 
 FASE E queda **COMPLETADA** y no debe reabrirse salvo bug comprobable.
 
-# FASE F — ACTIVA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS
+# FASE F — COMPLETADA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS — 2026-08-17
 
-FASE F se activa formalmente el 2026-08-13 después del cierre documentado de FASE E.
+FASE F se activó formalmente el 2026-08-13 después del cierre documentado de FASE E y queda formalmente cerrada el 2026-08-17 tras completar validación funcional en iPhone, integración a `main`, verificación de producción y documentación final.
 
 ## Objetivo de FASE F
 
 Evolucionar `Biblia → Notas` hacia un único cuaderno personal por usuario, evitando sistemas paralelos y preservando la privacidad por defecto.
 
-La fase debe partir del estado funcional existente y conservar el origen/contexto de cada nota. Biblia, Estudio Profundo y las superficies pastorales autorizadas podrán alimentar el mismo cuaderno cuando corresponda.
+La fase partió del estado funcional existente y conserva el origen/contexto de cada nota. Biblia, Estudio Profundo y las superficies pastorales autorizadas pueden alimentar el mismo cuaderno cuando corresponde.
 
 ## Alcance inicial documentado
 
@@ -273,9 +273,9 @@ La evidencia inicial se conserva en:
 32. Con el teléfono sin conexión se cambió `estado_predicacion` de `Borrador` a `Lista para predicar`; al recuperar Internet sin recargar, Supabase recibió `Lista para predicar` conservando el mismo UUID y **Prédica #1**, confirmando que el estado pastoral permanece separado del estado técnico.
 33. La experiencia visual/offline quedó fusionada mediante PR #277 (`35da346a5fbb0919cca49d2c27e022844df7b3f4`) y el despliegue de producción exacto quedó READY.
 
-Los bloques de **sincronización bidireccional, respaldo entre dispositivos, apertura en frío offline y predicación correlativa con metadatos/exportación quedan VALIDADOS**. FASE F permanece **ACTIVA**.
+Los bloques de **sincronización bidireccional, respaldo entre dispositivos, apertura en frío offline y predicación correlativa con metadatos/exportación quedan VALIDADOS**.
 
-## Punto 6 — origen, contexto, organización y filtrado — VALIDADO EN PREVIEW — 2026-08-17
+## Punto 6 — origen, contexto, organización y filtrado — VALIDADO EN PREVIEW E INTEGRADO EN PRODUCCIÓN — 2026-08-17
 
 La evidencia detallada se conserva en:
 
@@ -292,11 +292,22 @@ La evidencia detallada se conserva en:
 42. La identidad offline continúa ligada al UUID validado del usuario; si falta el marcador activo, solo se infiere un dueño cuando existe exactamente un único cuaderno local válido.
 43. La sincronización evita consultas remotas cuando `navigator.onLine === false` y conserva la misma caché/cola canónicas ya validadas.
 44. Validación funcional real completada en iPhone: el usuario confirmó que, tras actualizar el service worker y activar modo avión, el Cuaderno offline conserva la apariencia y experiencia actual online en lugar de mostrar la versión histórica.
-45. La validación técnica del head `53ecb57988df1f0dd3558141a45e190483fd6d41` completó 122 regresiones, lint y build en verde; la evidencia documental final quedó añadida posteriormente en la misma PR.
+45. La validación técnica del head `2060977789b73949b4db049726143b40d227f52e` completó regresiones, lint, build y validaciones del documento maestro/TAHOT en verde antes de la integración.
 46. Este bloque no requirió cambios adicionales de esquema, RLS, grants ni datos de producción.
 
-El **punto 6 queda VALIDADO EN PREVIEW y listo para integración a `main`**. FASE F permanece **ACTIVA** hasta que esta integración esté fusionada, producción sea verificada y el documento maestro en `main` refleje formalmente el cierre.
+El **punto 6 queda VALIDADO e integrado a `main`** mediante PR #284. La producción correspondiente al merge `d67e7db7916f4dd32f2c1cf40ef266229d92f931` quedó READY.
+
+## Cierre formal de FASE F — 2026-08-17
+
+47. PR #284 fue fusionado a `main` en `d67e7db7916f4dd32f2c1cf40ef266229d92f931` después de autorización explícita del usuario.
+48. Vercel creó el deployment de producción `dpl_7HTxXy2f1hTycqtdT3BVy5btdfPq`, que quedó **READY** y asignó correctamente los aliases de producción.
+49. La ruta pública `/biblia/notas-offline` respondió HTTP 200 en producción como contenido prerenderizado y el service worker correspondiente quedó disponible para el cold-start offline.
+50. La revisión de runtime del deployment productivo no mostró errores ni eventos fatales en la ventana de verificación posterior al despliegue.
+51. El cierre no añadió cambios de esquema, RLS, grants ni datos de Supabase; las garantías de privacidad por usuario y sincronización ya validadas se preservan.
+52. El usuario había validado previamente en iPhone el flujo de origen/contexto, guardado desde Estudio Profundo, editor sin límite artificial y paridad visual/funcional online-offline.
+
+FASE F queda **COMPLETADA — 2026-08-17** y no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
 
 # Siguiente punto autorizado
 
-**Realizar exclusivamente el cierre técnico/documental de FASE F: mantener PR #284 sin fusionar hasta autorización explícita del usuario; verificar CI del head final; al recibir autorización, integrar el bloque a `main`, validar producción y actualizar este documento para marcar FASE F como COMPLETADA si no aparece ningún bug comprobable. No iniciar una fase posterior mientras `main` no refleje formalmente ese cierre.**
+**No iniciar una fase posterior hasta que se agregue explícitamente al documento maestro. No existe actualmente una FASE G ni otra prioridad activa documentada. Mientras tanto, las fases cerradas solo pueden reabrirse por un bug comprobable y el Piloto Operativo permanece en pausa.**
