@@ -1,3 +1,4 @@
+// Preview reintentado 2026-08-16 tras liberación esperada del límite de builds de Vercel.
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import test from 'node:test'
