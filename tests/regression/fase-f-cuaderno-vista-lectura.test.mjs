@@ -3,34 +3,42 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const toolbar = fs.readFileSync('components/biblia/NotesEditingToolbar.tsx', 'utf8')
+const workspace = fs.readFileSync('components/biblia/BibleNotesWorkspace.tsx', 'utf8')
 
-test('FASE F: la IA queda por encima de los submenús y las herramientas siguen agrupadas sin scroll horizontal', () => {
-  assert.match(toolbar, /aria-label="Barra de asistencia con IA"/)
-  assert.match(toolbar, /¿Qué quieres hacer con esta nota\?/)
-  assert.match(toolbar, /grid grid-cols-4/)
-  assert.match(toolbar, /Texto/)
-  assert.match(toolbar, /Listas/)
-  assert.match(toolbar, /Insertar/)
-  assert.match(toolbar, /Vista/)
-  assert.doesNotMatch(toolbar, /id: 'organizar'/)
-  assert.doesNotMatch(toolbar, /overflow-x-auto rounded-2xl/)
-  assert.match(toolbar, /min-h-14/)
+test('FASE F: el editor muestra formato WYSIWYG sin exponer marcadores al usuario', () => {
+  assert.match(toolbar, /contentEditable=!\{readOnly\}/)
+  assert.match(toolbar, /canonicalToRichHtml/)
+  assert.match(toolbar, /richElementToCanonical/)
+  assert.match(toolbar, /document\.execCommand\('formatBlock'/)
+  assert.match(toolbar, /document\.execCommand\(command/)
+  assert.match(toolbar, /Negrita/)
+  assert.match(toolbar, /Cursiva/)
+  assert.match(toolbar, /Subrayado/)
+  assert.match(toolbar, /Tachado/)
+  assert.doesNotMatch(workspace, /<textarea/)
 })
 
-test('FASE F: el editor ofrece Vista de lectura segura sin inyectar HTML', () => {
-  assert.match(toolbar, /Vista de lectura/)
-  assert.match(toolbar, /const preview = useMemo/)
-  assert.match(toolbar, /inlineNodes/)
-  assert.match(toolbar, /<strong key=/)
-  assert.match(toolbar, /<em key=/)
-  assert.match(toolbar, /<blockquote key=/)
-  assert.match(toolbar, /aria-label="Vista de lectura de la nota"/)
+test('FASE F: estilos de párrafo equivalentes a Notas permanecen visibles', () => {
+  for (const label of ['Título', 'Encabezado', 'Subtítulo', 'Cuerpo', 'Mono']) assert.match(toolbar, new RegExp(label))
+  assert.match(toolbar, /styleButton\('h1'/)
+  assert.match(toolbar, /styleButton\('h2'/)
+  assert.match(toolbar, /styleButton\('h3'/)
+  assert.match(toolbar, /styleButton\('p'/)
+  assert.match(toolbar, /styleButton\('pre'/)
+})
+
+test('FASE F: listas usan estructura editable real y tareas interactivas', () => {
+  assert.match(toolbar, /insertUnorderedList/)
+  assert.match(toolbar, /insertOrderedList/)
+  assert.match(toolbar, /data-task-checkbox/)
+  assert.match(toolbar, /target\.dataset\.taskCheckbox/)
+  assert.match(toolbar, /handleTaskEnter/)
+  assert.match(toolbar, /Enter continúa automáticamente/)
+  assert.match(toolbar, /li::marker/)
+})
+
+test('FASE F: edición conserva salida segura y no usa dangerouslySetInnerHTML', () => {
+  assert.match(toolbar, /event\.clipboardData\.getData\('text\/plain'\)/)
+  assert.match(toolbar, /onDrop=\{\(event\) => event\.preventDefault\(\)\}/)
   assert.doesNotMatch(toolbar, /dangerouslySetInnerHTML/)
-})
-
-test('FASE F: la vista de lectura no cambia el formato canónico guardado', () => {
-  assert.match(toolbar, /area\.style\.display = previewMode \? 'none' : ''/)
-  assert.match(toolbar, /const commitChange = \(next: string\) =>/)
-  assert.match(toolbar, /onChange\(next\)/)
-  assert.doesNotMatch(toolbar, /innerHTML\s*=/)
 })
