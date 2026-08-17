@@ -7,39 +7,35 @@ const fixes = fs.readFileSync('app/notebook-fixes.css', 'utf8')
 const toolbar = fs.readFileSync('components/biblia/NotesEditingToolbar.tsx', 'utf8')
 const bottomNav = fs.readFileSync('components/layout/BottomNav.tsx', 'utf8')
 
-test('FASE F: el menú global conserva el borde inferior del layout y no sube con el teclado', () => {
+test('FASE F: el cuaderno mantiene el menú global fuera del scroll y el teclado no lo levanta sobre la nota', () => {
   assert.match(layout, /import '\.\/notebook-fixes\.css'/)
   assert.match(fixes, /body:has\(\.note-rich-editor\)/)
   assert.match(fixes, /overflow: hidden !important/)
   assert.match(fixes, /main:has\(\.note-rich-editor\)/)
   assert.match(fixes, /overflow-y: auto/)
-  assert.doesNotMatch(fixes, /body:has\(\.note-rich-editor\) \.app-bottom-nav/)
-  assert.match(bottomNav, /bottom: 0/)
-  assert.match(bottomNav, /data-keyboard-policy="layout-bottom"/)
-  assert.doesNotMatch(bottomNav, /window\.visualViewport/)
-  assert.doesNotMatch(bottomNav, /visualBottomGap/)
+  assert.match(bottomNav, /window\.visualViewport/)
+  assert.match(bottomNav, /calcularDesplazamientoTeclado/)
+  assert.match(bottomNav, /translate3d\(0, \$\{keyboardOffset\}px, 0\)/)
+  assert.match(bottomNav, /data-keyboard-policy="layout-bottom-covered"/)
+  assert.doesNotMatch(bottomNav, /bottom: `\$\{visualBottomGap\}px`/)
 })
 
-test('FASE F: deshacer y rehacer quedan en extremos opuestos y el guardado permanece discreto', () => {
+test('FASE F: edición usa una sola superficie visual y conserva áreas táctiles suficientes', () => {
+  assert.match(fixes, /Principio visual del Cuaderno/)
+  assert.match(fixes, /#cuaderno-panel-herramientas/)
+  assert.match(fixes, /border: 0 !important/)
+  assert.match(fixes, /background: transparent !important/)
+  assert.match(fixes, /min-height: 2\.55rem !important/)
+})
+
+test('FASE F: deshacer y rehacer quedan en extremos opuestos y el guardado aparece al inicio de la nota', () => {
   assert.match(fixes, /Historial global del cuaderno/)
   assert.match(fixes, /justify-content: space-between !important/)
   assert.match(fixes, /margin-right: auto/)
   assert.match(fixes, /margin-left: auto/)
   assert.match(toolbar, /note-rich-editor-shell/)
   assert.match(toolbar, /Guardado automático/)
-  assert.match(fixes, /Estado de guardado discreto/)
-})
-
-test('FASE F: la barra de edición es compacta y conserva selección visual', () => {
-  assert.match(fixes, /Barra de edición compacta/)
-  assert.match(fixes, /grid-template-columns: repeat\(5, minmax\(0, 1fr\)\) !important/)
-  assert.match(fixes, /button:nth-child\(1\)::before/)
-  assert.match(fixes, /content: 'T'/)
-  assert.match(fixes, /button:nth-child\(4\)::before/)
-  assert.match(fixes, /content: 'Aa'/)
-  assert.match(fixes, /button:has\(svg\) > span/)
-  assert.match(toolbar, /aria-pressed=\{active\}/)
-  assert.match(toolbar, /bg-violet-600 text-white shadow-sm/)
+  assert.match(toolbar, /note-rich-editor-shell ~ p:last-child/)
 })
 
 test('FASE F: numeración visible y referencia se insertan como bloques deterministas', () => {
@@ -51,7 +47,7 @@ test('FASE F: numeración visible y referencia se insertan como bloques determin
   assert.match(toolbar, /\[data-note-reference\]::before/)
 })
 
-test('FASE F: los estilos tipo Notas mantienen nombres accesibles sin iconos H1 H2 H3 visibles', () => {
+test('FASE F: los estilos tipo Notas muestran nombres visuales sin iconos H1 H2 H3', () => {
   assert.match(toolbar, /styleButton\('h1', 'Título'/)
   assert.match(toolbar, /styleButton\('h2', 'Encabezado'/)
   assert.match(toolbar, /styleButton\('h3', 'Subtítulo'/)

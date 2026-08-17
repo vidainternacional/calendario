@@ -27,10 +27,19 @@ type Paquete = { id: string; titulo: string }
 type FiltroOrigen = 'todos' | 'estudio_profundo' | 'biblia_notas'
 type MenuCuaderno = 'detalles' | 'predicacion' | 'herramientas' | null
 
-type ContentHistory = {
-  past: string[]
-  future: string[]
-  current: string
+type NoteHistoryEntry = {
+  noteId: string
+  before: NotaBiblica | null
+  after: NotaBiblica | null
+  indexBefore: number
+  indexAfter: number
+  selectedBefore: string | null
+  selectedAfter: string | null
+}
+
+type NoteHistory = {
+  past: NoteHistoryEntry[]
+  future: NoteHistoryEntry[]
   lastCheckpointAt: number
 }
 
@@ -73,6 +82,28 @@ function cargarTema(): ModoLecturaBiblia {
   }
 }
 
+function clonarNota(nota: NotaBiblica): NotaBiblica {
+  return { ...nota, contexto: { ...nota.contexto } }
+}
+
+function clonarEntrada(entry: NoteHistoryEntry): NoteHistoryEntry {
+  return {
+    ...entry,
+    before: entry.before ? clonarNota(entry.before) : null,
+    after: entry.after ? clonarNota(entry.after) : null,
+  }
+}
+
+function sinMarcaActualizacion(nota: NotaBiblica) {
+  const { actualizadaEn: _actualizadaEn, ...resto } = nota
+  return resto
+}
+
+function notasEquivalentes(a: NotaBiblica | null, b: NotaBiblica | null) {
+  if (!a || !b) return a === b
+  return JSON.stringify(sinMarcaActualizacion(a)) === JSON.stringify(sinMarcaActualizacion(b))
+}
+
 export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false, userId }: Props) {
   const [notas, setNotas] = useState<NotaBiblica[]>([])
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null)
@@ -88,9 +119,15 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const [menuAbierto, setMenuAbierto] = useState<MenuCuaderno>(null)
   const [, setHistoryVersion] = useState(0)
   const editorRef = useRef<HTMLDivElement>(null)
-  const contentHistoryRef = useRef<Map<string, ContentHistory>>(new Map())
+  const notasRef = useRef<NotaBiblica[]>([])
+  const noteHistoryRef = useRef<NoteHistory>({ past: [], future: [], lastCheckpointAt: 0 })
   const modo = modoExterno ?? modoInterno
   const seleccionada = notas.find((nota) => nota.id === seleccionadaId) ?? null
+
+  const establecerNotas = (siguientes: NotaBiblica[]) => {
+    notasRef.current = siguientes
+    setNotas(siguientes)
+  }
 
   useLayoutEffect(() => {
     if (modoExterno) return
@@ -129,8 +166,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     setNotasCargadas(false)
     const guardadas = leerNotasBiblicasLocales(usuarioId)
     const solicitada = embedded ? null : new URLSearchParams(window.location.search).get('nota')
-    setNotas(guardadas)
-    setSeleccionadaId(solicitada && guardadas.some((nota) => nota.id === solicitada) ? solicitada : guardadas[0]?.id ?? null)
+    const inicialId = solicitada && guardadas.some((nota) => nota.id === solicitada) ? solicitada : guardadas[0]?.id ?? null
+    establecerNotas(guardadas)
+    setSeleccionadaId(inicialId)
+    noteHistoryRef.current = { past: [], future: [], lastCheckpointAt: 0 }
+    setHistoryVersion((version) => version + 1)
     setNotasCargadas(true)
   }, [embedded, usuarioId])
 
@@ -163,7 +203,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
         if (!activo || !resultado.actualizadas) return
 
         reemplazarNotasBiblicasLocalesDesdeServidor(resultado.notas, usuarioId)
-        setNotas(resultado.notas)
+        establecerNotas(resultado.notas)
         setSeleccionadaId((actual) => actual && resultado.notas.some((nota) => nota.id === actual)
           ? actual
           : resultado.notas[0]?.id ?? null)
@@ -191,19 +231,6 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
       document.removeEventListener('visibilitychange', alVolverVisible)
     }
   }, [notasCargadas, usuarioId])
-
-  useEffect(() => {
-    if (!seleccionada) return
-    const history = contentHistoryRef.current.get(seleccionada.id)
-    if (history?.current === seleccionada.contenido) return
-    contentHistoryRef.current.set(seleccionada.id, {
-      past: [],
-      future: [],
-      current: seleccionada.contenido,
-      lastCheckpointAt: 0,
-    })
-    setHistoryVersion((version) => version + 1)
-  }, [seleccionada?.id, seleccionada?.contenido])
 
   const tema = modo ? {
     claro: {
@@ -244,76 +271,133 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
       .sort((a, b) => b.actualizadaEn.localeCompare(a.actualizadaEn))
   }, [notas, busqueda, filtro, filtroOrigen])
 
+  const registrarAccion = (entry: NoteHistoryEntry, options?: RichNoteChangeOptions) => {
+    const history = noteHistoryRef.current
+    const now = Date.now()
+    const last = history.past[history.past.length - 1]
+    const continuous = options?.checkpoint === false
+    const canCoalesce = continuous
+      && last
+      && last.noteId === entry.noteId
+      && last.after !== null
+      && entry.before !== null
+      && now - history.lastCheckpointAt < 1200
+
+    if (canCoalesce) {
+      last.after = entry.after ? clonarNota(entry.after) : null
+      last.indexAfter = entry.indexAfter
+      last.selectedAfter = entry.selectedAfter
+    } else {
+      history.past.push(clonarEntrada(entry))
+      if (history.past.length > 80) history.past.shift()
+    }
+
+    history.future = []
+    history.lastCheckpointAt = now
+    setHistoryVersion((version) => version + 1)
+  }
+
   const nuevaNota = () => {
+    const actuales = notasRef.current
     const nota = crearNotaBiblicaLocal()
-    setNotas((actuales) => [nota, ...actuales])
-    contentHistoryRef.current.set(nota.id, { past: [], future: [], current: '', lastCheckpointAt: 0 })
+    const siguientes = [nota, ...actuales]
+    registrarAccion({
+      noteId: nota.id,
+      before: null,
+      after: nota,
+      indexBefore: -1,
+      indexAfter: 0,
+      selectedBefore: seleccionadaId,
+      selectedAfter: nota.id,
+    }, { checkpoint: true })
+    establecerNotas(siguientes)
     setSeleccionadaId(nota.id)
     setEditorReadOnly(false)
     setMenuAbierto(null)
-    setHistoryVersion((version) => version + 1)
   }
 
-  const actualizar = (cambios: Partial<NotaBiblica>) => {
+  const actualizar = (cambios: Partial<NotaBiblica>, options?: RichNoteChangeOptions) => {
     if (!seleccionadaId) return
-    setNotas((actuales) => actuales.map((nota) => nota.id === seleccionadaId
-      ? { ...nota, ...cambios, actualizadaEn: new Date().toISOString() }
-      : nota))
+    const actuales = notasRef.current
+    const index = actuales.findIndex((nota) => nota.id === seleccionadaId)
+    if (index < 0) return
+    const actual = actuales[index]
+    const siguiente: NotaBiblica = {
+      ...actual,
+      ...cambios,
+      contexto: cambios.contexto ? { ...cambios.contexto } : actual.contexto,
+      actualizadaEn: new Date().toISOString(),
+    }
+    if (notasEquivalentes(actual, siguiente)) return
+
+    registrarAccion({
+      noteId: actual.id,
+      before: actual,
+      after: siguiente,
+      indexBefore: index,
+      indexAfter: index,
+      selectedBefore: seleccionadaId,
+      selectedAfter: seleccionadaId,
+    }, options ?? { checkpoint: true })
+
+    const siguientes = actuales.map((nota, currentIndex) => currentIndex === index ? siguiente : nota)
+    establecerNotas(siguientes)
   }
 
   const actualizarContenido = (contenido: string, options?: RichNoteChangeOptions) => {
-    if (!seleccionadaId || !seleccionada) return
-    let history = contentHistoryRef.current.get(seleccionadaId)
-    if (!history) {
-      history = { past: [], future: [], current: seleccionada.contenido, lastCheckpointAt: 0 }
-      contentHistoryRef.current.set(seleccionadaId, history)
+    actualizar({ contenido }, options)
+  }
+
+  const aplicarEntradaHistorial = (entry: NoteHistoryEntry, direction: 'undo' | 'redo') => {
+    const target = direction === 'undo' ? entry.before : entry.after
+    const targetIndex = direction === 'undo' ? entry.indexBefore : entry.indexAfter
+    const targetSelection = direction === 'undo' ? entry.selectedBefore : entry.selectedAfter
+    const actuales = notasRef.current
+    const sinNota = actuales.filter((nota) => nota.id !== entry.noteId)
+    const siguientes = [...sinNota]
+
+    if (target) {
+      const restaurada = { ...clonarNota(target), actualizadaEn: new Date().toISOString() }
+      const insertAt = Math.max(0, Math.min(targetIndex < 0 ? siguientes.length : targetIndex, siguientes.length))
+      siguientes.splice(insertAt, 0, restaurada)
     }
-    if (contenido === history.current) return
 
-    const now = Date.now()
-    const checkpoint = Boolean(options?.checkpoint) || history.past.length === 0 || now - history.lastCheckpointAt >= 1200
-    if (checkpoint && history.past[history.past.length - 1] !== history.current) {
-      history.past.push(history.current)
-      if (history.past.length > 80) history.past.shift()
-      history.lastCheckpointAt = now
-    }
-    history.current = contenido
-    history.future = []
-    setHistoryVersion((version) => version + 1)
-    actualizar({ contenido })
+    establecerNotas(siguientes)
+    const seleccionValida = targetSelection && siguientes.some((nota) => nota.id === targetSelection)
+      ? targetSelection
+      : siguientes[0]?.id ?? null
+    setSeleccionadaId(seleccionValida)
+    setEditorReadOnly(false)
+    setMenuAbierto(null)
   }
 
-  const deshacerContenido = () => {
-    if (!seleccionadaId) return
-    const history = contentHistoryRef.current.get(seleccionadaId)
-    const previous = history?.past.pop()
-    if (!history || previous === undefined) return
-    history.future.push(history.current)
-    history.current = previous
+  const deshacerNota = () => {
+    const history = noteHistoryRef.current
+    const entry = history.past.pop()
+    if (!entry) return
+    history.future.push(clonarEntrada(entry))
     history.lastCheckpointAt = Date.now()
+    aplicarEntradaHistorial(entry, 'undo')
     setHistoryVersion((version) => version + 1)
-    actualizar({ contenido: previous })
   }
 
-  const rehacerContenido = () => {
-    if (!seleccionadaId) return
-    const history = contentHistoryRef.current.get(seleccionadaId)
-    const next = history?.future.pop()
-    if (!history || next === undefined) return
-    history.past.push(history.current)
-    history.current = next
+  const rehacerNota = () => {
+    const history = noteHistoryRef.current
+    const entry = history.future.pop()
+    if (!entry) return
+    history.past.push(clonarEntrada(entry))
     history.lastCheckpointAt = Date.now()
+    aplicarEntradaHistorial(entry, 'redo')
     setHistoryVersion((version) => version + 1)
-    actualizar({ contenido: next })
   }
 
-  const actualizarPredicacion = (cambios: Partial<NotaBiblica>) => {
-    actualizar({ tipo: 'predicacion', ...cambios })
+  const actualizarPredicacion = (cambios: Partial<NotaBiblica>, options?: RichNoteChangeOptions) => {
+    actualizar({ tipo: 'predicacion', ...cambios }, options)
   }
 
   const cambiarTipo = (tipo: TipoNota) => {
     if (tipo === 'predicacion') {
-      actualizar({ tipo })
+      actualizar({ tipo }, { checkpoint: true })
       return
     }
 
@@ -326,18 +410,32 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
       lugar: '',
       predicador: '',
       estadoPredicacion: '',
-    })
+    }, { checkpoint: true })
   }
 
   const eliminar = () => {
     if (!seleccionadaId) return
-    const restantes = notas.filter((nota) => nota.id !== seleccionadaId)
-    contentHistoryRef.current.delete(seleccionadaId)
-    setNotas(restantes)
-    setSeleccionadaId(restantes[0]?.id ?? null)
+    const actuales = notasRef.current
+    const index = actuales.findIndex((nota) => nota.id === seleccionadaId)
+    if (index < 0) return
+    const eliminada = actuales[index]
+    const restantes = actuales.filter((nota) => nota.id !== seleccionadaId)
+    const siguienteSeleccion = restantes[Math.min(index, restantes.length - 1)]?.id ?? restantes[0]?.id ?? null
+
+    registrarAccion({
+      noteId: eliminada.id,
+      before: eliminada,
+      after: null,
+      indexBefore: index,
+      indexAfter: -1,
+      selectedBefore: seleccionadaId,
+      selectedAfter: siguienteSeleccion,
+    }, { checkpoint: true })
+
+    establecerNotas(restantes)
+    setSeleccionadaId(siguienteSeleccion)
     setEditorReadOnly(false)
     setMenuAbierto(null)
-    setHistoryVersion((version) => version + 1)
   }
 
   const exportarPredicacion = () => {
@@ -349,9 +447,9 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     setMenuAbierto((actual) => actual === menu ? null : menu)
   }
 
-  const currentHistory = seleccionada ? contentHistoryRef.current.get(seleccionada.id) : null
-  const puedeDeshacer = Boolean(currentHistory?.past.length)
-  const puedeRehacer = Boolean(currentHistory?.future.length)
+  const history = noteHistoryRef.current
+  const puedeDeshacer = Boolean(history.past.length)
+  const puedeRehacer = Boolean(history.future.length)
 
   if (!modo || !tema || !notasCargadas) {
     return <div className="min-h-[55vh] bg-[var(--background)] text-[var(--foreground)]" aria-hidden="true" />
@@ -396,7 +494,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
       {seleccionada ? <section className="mt-3 min-h-[calc(100vh-300px)]">
         <div className="mx-auto flex max-w-3xl flex-col">
           <div className="flex items-start justify-between gap-3 px-1">
-            <input value={seleccionada.titulo} onChange={(event) => actualizar({ titulo: event.target.value })} className="min-w-0 flex-1 bg-transparent text-[28px] font-bold tracking-tight outline-none sm:text-3xl" placeholder="Título de la nota" />
+            <input value={seleccionada.titulo} onChange={(event) => actualizar({ titulo: event.target.value }, { checkpoint: false })} className="min-w-0 flex-1 bg-transparent text-[28px] font-bold tracking-tight outline-none sm:text-3xl" placeholder="Título de la nota" />
             <button type="button" onClick={eliminar} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-500/10 text-rose-500" aria-label="Eliminar nota"><Trash2 className="h-4 w-4" /></button>
           </div>
 
@@ -405,8 +503,8 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
           </div>
 
           <div className="mt-1 flex items-center justify-end gap-1.5 px-0.5" aria-label="Historial global del cuaderno">
-            <button type="button" onClick={deshacerContenido} disabled={!puedeDeshacer} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${tema.glassStrong}`} aria-label="Deshacer último cambio"><Undo2 className="h-4 w-4" aria-hidden="true" />Deshacer</button>
-            <button type="button" onClick={rehacerContenido} disabled={!puedeRehacer} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${tema.glassStrong}`} aria-label="Rehacer último cambio"><Redo2 className="h-4 w-4" aria-hidden="true" />Rehacer</button>
+            <button type="button" onClick={deshacerNota} disabled={!puedeDeshacer} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${tema.glassStrong}`} aria-label="Deshacer última acción"><Undo2 className="h-4 w-4" aria-hidden="true" />Deshacer</button>
+            <button type="button" onClick={rehacerNota} disabled={!puedeRehacer} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${tema.glassStrong}`} aria-label="Rehacer última acción"><Redo2 className="h-4 w-4" aria-hidden="true" />Rehacer</button>
           </div>
 
           <div className="mt-2 grid grid-cols-3 gap-2 px-0.5" aria-label="Opciones de la nota">
@@ -421,11 +519,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             <p className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Organización</p>
             <div className="grid grid-cols-2 gap-2">
               <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Tipo</span><select value={seleccionada.tipo} onChange={(event) => cambiarTipo(event.target.value as TipoNota)} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm ${tema.field}`}>{tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>)}</select></label>
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Paquete pastoral</span><select value={seleccionada.paqueteId} onChange={(event) => { const paquete = paquetes.find((item) => item.id === event.target.value); actualizar({ paqueteId: event.target.value, paquete: paquete?.titulo ?? '' }) }} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm ${tema.field}`}><option value="">Sin paquete</option>{paquetes.map((paquete) => <option key={paquete.id} value={paquete.id}>{paquete.titulo}</option>)}</select></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Paquete pastoral</span><select value={seleccionada.paqueteId} onChange={(event) => { const paquete = paquetes.find((item) => item.id === event.target.value); actualizar({ paqueteId: event.target.value, paquete: paquete?.titulo ?? '' }, { checkpoint: true }) }} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm ${tema.field}`}><option value="">Sin paquete</option>{paquetes.map((paquete) => <option key={paquete.id} value={paquete.id}>{paquete.titulo}</option>)}</select></label>
             </div>
             <div className="my-3 h-px bg-current/10" />
             <p className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Contexto bíblico</p>
-            <label><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Referencia bíblica</span><input value={seleccionada.referencia} onChange={(event) => actualizar({ referencia: event.target.value })} placeholder="Ej. Juan 3:16" className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+            <label><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Referencia bíblica</span><input value={seleccionada.referencia} onChange={(event) => actualizar({ referencia: event.target.value }, { checkpoint: false })} placeholder="Ej. Juan 3:16" className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
           </section>}
 
           {menuAbierto === 'predicacion' && <section id="cuaderno-panel-predicacion" className={`mt-2 rounded-[22px] p-3 ${tema.glass}`} aria-label="Datos de predicación">
@@ -438,19 +536,19 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
 
             <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2">
               <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>N.º de prédica</span><input readOnly tabIndex={-1} value={seleccionada.numeroPredicacion ? `#${seleccionada.numeroPredicacion}` : '—'} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm font-bold ${tema.field}`} /></label>
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizarPredicacion({ fechaPredicacion: event.target.value })} className={`min-h-10 w-full min-w-0 rounded-xl border px-2.5 text-sm ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizarPredicacion({ fechaPredicacion: event.target.value }, { checkpoint: true })} className={`min-h-10 w-full min-w-0 rounded-xl border px-2.5 text-sm ${tema.field}`} /></label>
             </div>
 
-            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Estado</span><input value={seleccionada.estadoPredicacion} onChange={(event) => actualizarPredicacion({ estadoPredicacion: event.target.value })} placeholder="Ej. Lista para predicar" maxLength={100} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Estado</span><input value={seleccionada.estadoPredicacion} onChange={(event) => actualizarPredicacion({ estadoPredicacion: event.target.value }, { checkpoint: false })} placeholder="Ej. Lista para predicar" maxLength={100} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
 
             <div className="my-3 h-px bg-current/10" />
             <p className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Contexto</p>
 
             <div className="grid grid-cols-2 gap-2">
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Serie</span><input value={seleccionada.serie} onChange={(event) => actualizarPredicacion({ serie: event.target.value })} placeholder="Serie" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Lugar</span><input value={seleccionada.lugar} onChange={(event) => actualizarPredicacion({ lugar: event.target.value })} placeholder="Lugar" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Serie</span><input value={seleccionada.serie} onChange={(event) => actualizarPredicacion({ serie: event.target.value }, { checkpoint: false })} placeholder="Serie" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Lugar</span><input value={seleccionada.lugar} onChange={(event) => actualizarPredicacion({ lugar: event.target.value }, { checkpoint: false })} placeholder="Lugar" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
             </div>
-            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Predicador</span><input value={seleccionada.predicador} onChange={(event) => actualizarPredicacion({ predicador: event.target.value })} placeholder="Nombre del predicador" maxLength={300} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Predicador</span><input value={seleccionada.predicador} onChange={(event) => actualizarPredicacion({ predicador: event.target.value }, { checkpoint: false })} placeholder="Nombre del predicador" maxLength={300} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
           </section>}
 
           {menuAbierto === 'herramientas' && <section id="cuaderno-panel-herramientas" className={`mt-2 rounded-[22px] px-3 pb-3 pt-1 ${tema.glass}`} aria-label="Herramientas de edición">

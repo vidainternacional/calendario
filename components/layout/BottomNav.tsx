@@ -43,16 +43,58 @@ function cargarTema(): ModoBiblia {
   }
 }
 
+function calcularDesplazamientoTeclado() {
+  const viewport = window.visualViewport
+  if (!viewport || viewport.scale !== 1) return 0
+
+  const layoutHeight = document.documentElement.clientHeight || window.innerHeight
+  const visibleBottom = viewport.offsetTop + viewport.height
+  const overlap = Math.max(0, Math.round(layoutHeight - visibleBottom))
+
+  // Las barras del navegador pueden producir diferencias pequeñas. Solo una
+  // reducción grande se considera teclado para no mover la navegación por el
+  // chrome normal de Safari.
+  return overlap >= 120 ? overlap : 0
+}
+
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
+  const [keyboardOffset, setKeyboardOffset] = useState(0)
   const { unreadAvisos } = usePendingIndicators()
   const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
   useEffect(() => setPortalReady(true), [])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    let frame = 0
+
+    const syncKeyboard = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const next = calcularDesplazamientoTeclado()
+        setKeyboardOffset((current) => current === next ? current : next)
+      })
+    }
+
+    syncKeyboard()
+    window.addEventListener('resize', syncKeyboard, { passive: true })
+    window.addEventListener('orientationchange', syncKeyboard, { passive: true })
+    viewport?.addEventListener('resize', syncKeyboard, { passive: true })
+    viewport?.addEventListener('scroll', syncKeyboard, { passive: true })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', syncKeyboard)
+      window.removeEventListener('orientationchange', syncKeyboard)
+      viewport?.removeEventListener('resize', syncKeyboard)
+      viewport?.removeEventListener('scroll', syncKeyboard)
+    }
+  }, [])
 
   useEffect(() => {
     if (!dentroBiblia) return
@@ -78,9 +120,10 @@ export default function BottomNav() {
     oscuro: { nav: 'border-slate-800 bg-slate-950', inactive: 'text-slate-400', active: 'text-violet-300', activeBg: 'bg-violet-950/70', shadow: 'shadow-[0_-4px_18px_rgba(0,0,0,0.35)]' },
   }[modo]
 
-  // La navegación pertenece a la aplicación completa, no al viewport visual del
-  // teclado. En iOS debe permanecer en el borde inferior del layout y quedar
-  // detrás del teclado cuando este aparece, en vez de subir sobre el contenido.
+  // iOS fija elementos al viewport visual cuando aparece el teclado. Para que
+  // la navegación siga perteneciendo al borde inferior de la aplicación y no
+  // flote encima del editor, compensamos esa reducción desplazándola hacia
+  // abajo. El teclado la cubre en vez de levantarla sobre el contenido.
   const fixedStyle: CSSProperties = {
     position: 'fixed',
     insetInline: 0,
@@ -93,17 +136,20 @@ export default function BottomNav() {
     paddingLeft: 'env(safe-area-inset-left, 0px)',
     isolation: 'isolate',
     touchAction: 'manipulation',
-    transform: 'translate3d(0,0,0)',
-    WebkitTransform: 'translate3d(0,0,0)',
+    transform: `translate3d(0, ${keyboardOffset}px, 0)`,
+    WebkitTransform: `translate3d(0, ${keyboardOffset}px, 0)`,
     backfaceVisibility: 'hidden',
     WebkitBackfaceVisibility: 'hidden',
+    willChange: 'transform',
     contain: 'layout paint style',
+    pointerEvents: keyboardOffset > 0 ? 'none' : 'auto',
   }
 
   const navigation = (
     <div
       data-bottom-nav-fixed="true"
-      data-keyboard-policy="layout-bottom"
+      data-keyboard-policy="layout-bottom-covered"
+      data-keyboard-open={keyboardOffset > 0 ? 'true' : 'false'}
       className={`app-bottom-nav !fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
       style={fixedStyle}
     >
