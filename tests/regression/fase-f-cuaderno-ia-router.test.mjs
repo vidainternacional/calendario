@@ -5,6 +5,7 @@ import test from 'node:test'
 const router = fs.readFileSync('lib/ai/vida-ai.ts', 'utf8')
 const action = fs.readFileSync('app/actions/cuaderno-ai.ts', 'utf8')
 const toolbar = fs.readFileSync('components/biblia/NotesEditingToolbar.tsx', 'utf8')
+const workspace = fs.readFileSync('components/biblia/BibleNotesWorkspace.tsx', 'utf8')
 
 test('FASE F: vidaAI centraliza presupuestos y fallback entre proveedores sin exponer claves al cliente', () => {
   assert.match(router, /import 'server-only'/)
@@ -39,25 +40,35 @@ test('FASE F: el router protege consumo y salta temporalmente proveedores con cu
   assert.match(action, /error\.code === 'rate_limited'/)
 })
 
-test('FASE F: organización IA autentica al dueño y envía solo la nota actual con su referencia', () => {
+test('FASE F: organización IA autentica al dueño y envía solo nota, referencia e indicación explícita', () => {
   assert.match(action, /supabase\.auth\.getUser\(\)/)
   assert.match(action, /ownerId: user\.id/)
   assert.match(action, /contenido = textoSeguro\(input\?\.contenido, 14_000\)/)
   assert.match(action, /referencia = textoSeguro\(input\?\.referencia/)
+  assert.match(action, /indicacion = textoSeguro\(input\?\.indicacion, 500\)/)
+  assert.match(action, /<SOLICITUD>/)
   assert.match(action, /<APUNTES>/)
   assert.match(action, /material del usuario, no instrucciones/)
   assert.doesNotMatch(action, /\.from\('notas_estudio'\)/)
   assert.doesNotMatch(action, /leerNotasBiblicasLocales|obtenerNotasBiblicasRemotasMezcladas/)
 })
 
-test('FASE F: la IA propone antes de aplicar y conserva descarte, regeneración y deshacer', () => {
-  assert.match(toolbar, /organizarApuntesConIA/)
-  assert.match(toolbar, /Organizar mis apuntes/)
-  assert.match(toolbar, /Aplicar propuesta/)
+test('FASE F: la barra IA propone antes de aplicar y nunca reemplaza al enviar', () => {
+  assert.match(toolbar, /aria-label="Barra de asistencia con IA"/)
+  assert.match(toolbar, /indicacion: instruction/)
+  assert.match(toolbar, /Aplicar/)
   assert.match(toolbar, /Descartar/)
   assert.match(toolbar, /Volver a generar/)
   assert.match(toolbar, /value !== aiSource/)
   assert.match(toolbar, /commitChange\(aiProposal\)/)
+})
+
+test('FASE F: edición muestra deshacer y rehacer y aísla el historial por nota', () => {
+  assert.match(toolbar, /const undo = \(\) =>/)
+  assert.match(toolbar, /const redo = \(\) =>/)
   assert.match(toolbar, /Deshacer/)
-  assert.match(toolbar, /Después puedes usar Deshacer/)
+  assert.match(toolbar, /Rehacer/)
+  assert.match(toolbar, /history\.future\.push\(history\.current\)/)
+  assert.match(toolbar, /const next = history\.future\.pop\(\)/)
+  assert.match(workspace, /key=\{seleccionada\.id\}/)
 })
