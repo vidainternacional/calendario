@@ -1,3 +1,3 @@
-2026-08-10T06:55:00-06:00
-commit objetivo: a7f27dc5f3d1da5645dc8853c7c4f579f5127a24
-motivo: reintento manual del deployment pendiente de producción después de build-rate-limit, sin cambios funcionales.
+2026-08-17T13:16:00-06:00
+commit objetivo: 50d41b7e2b644e092da91be64d0de8067ee215eb
+motivo: regenerar únicamente el Preview de la rama después de vincular las variables compartidas de IA al proyecto calendario; sin cambios funcionales ni producción.
