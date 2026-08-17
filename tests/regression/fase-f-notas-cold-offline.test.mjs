@@ -3,55 +3,60 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const sw = fs.readFileSync('public/sw.js', 'utf8')
-const shell = fs.readFileSync('public/offline/notas.html', 'utf8')
+const legacyShell = fs.readFileSync('public/offline/notas.html', 'utf8')
+const offlinePage = fs.readFileSync('app/(app)/biblia/notas-offline/page.tsx', 'utf8')
+const offlineWorkspace = fs.readFileSync('components/biblia/OfflineBibleNotesWorkspace.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/biblia/notas/page.tsx', 'utf8')
 const logout = fs.readFileSync('components/auth/LogoutButton.tsx', 'utf8')
 const marker = fs.readFileSync('components/biblia/OfflineNotesOwnerMarker.tsx', 'utf8')
 const proxy = fs.readFileSync('proxy.ts', 'utf8')
 
-test('el service worker usa fallback offline solo para Biblia Notas', () => {
-  assert.match(sw, /OFFLINE_NOTES_SHELL = '\/offline\/notas\.html'/)
+test('el service worker usa el Cuaderno React real como fallback solo para Biblia Notas', () => {
+  assert.match(sw, /OFFLINE_NOTES_APP = '\/biblia\/notas-offline'/)
   assert.match(sw, /pathname === '\/biblia\/notas'/)
-  assert.match(sw, /fetch\(event\.request\)\.catch/)
-  assert.match(sw, /respuestaNotasOffline/)
+  assert.match(sw, /respuestaNotasPrincipal/)
+  assert.match(sw, /respuestaOfflineNotesApp/)
+  assert.match(sw, /Response\.redirect\(fallbackUrl\.toString\(\), 302\)/)
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
+  assert.doesNotMatch(sw, /OFFLINE_NOTES_SHELL|respuestaNotasOffline/)
 })
 
-test('el shell offline no incluye datos privados y usa la caché y cola canónicas', () => {
-  assert.match(shell, /vida-biblia-notas-active-owner-v1/)
-  assert.match(shell, /vida-biblia-notas-v3/)
-  assert.match(shell, /vida-biblia-notas-sync-v1/)
-  assert.match(shell, /ownerId/)
-  assert.match(shell, /tipo: 'upsert'/)
-  assert.match(shell, /tipo: 'delete'/)
-  assert.doesNotMatch(shell, /supabase\.co/i)
-  assert.doesNotMatch(shell, /notas_estudio/i)
-  assert.doesNotMatch(shell, /\/_next\//)
+test('la pantalla offline comparte el workspace canónico y el HTML legado deja de ser fallback activo', () => {
+  assert.match(offlinePage, /dynamic = 'force-static'/)
+  assert.match(offlinePage, /OfflineBibleNotesWorkspace/)
+  assert.match(offlineWorkspace, /BibleNotesWorkspace userId=\{ownerId\}/)
+  assert.doesNotMatch(sw, /\/offline\/notas\.html/)
+  assert.match(legacyShell, /vida-biblia-notas-v3/)
+  assert.doesNotMatch(legacyShell, /supabase\.co/i)
+  assert.doesNotMatch(legacyShell, /notas_estudio/i)
 })
 
-test('el shell puede inferir de forma segura un único cuaderno local', () => {
-  assert.match(shell, /const resolverOwnerId = \(\) =>/)
-  assert.match(shell, /key\.startsWith\(`\$\{USER_STORAGE_PREFIX\}:`\)/)
-  assert.match(shell, /if \(owners\.length !== 1\) return null/)
-  assert.match(shell, /localStorage\.setItem\(ACTIVE_OWNER_KEY, owners\[0\]\)/)
+test('el bootstrap React puede inferir de forma segura un único cuaderno local', () => {
+  assert.match(offlineWorkspace, /VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX/)
+  assert.match(offlineWorkspace, /function resolverUnicoOwnerLocal/)
+  assert.match(offlineWorkspace, /key\.startsWith\(prefix\)/)
+  assert.match(offlineWorkspace, /if \(owners\.size !== 1\) return null/)
+  assert.match(offlineWorkspace, /localStorage\.setItem\(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY, owner\)/)
+  assert.match(offlineWorkspace, /resolverUsuarioActualNotas/)
 })
 
-test('el service worker respalda solo el UUID activo y puede restaurarlo antes del shell', () => {
+test('el service worker respalda solo el UUID activo y nunca guarda el contenido de las notas', () => {
   assert.match(sw, /OFFLINE_NOTES_OWNER_MARKER = '\/offline\/notas-owner'/)
   assert.match(sw, /VIDA_NOTES_OWNER_SET/)
   assert.match(sw, /VIDA_NOTES_OWNER_CLEAR/)
   assert.match(sw, /OWNER_UUID_RE\.test/)
-  assert.match(sw, /cache\.put\(\s*OFFLINE_NOTES_OWNER_MARKER/)
-  assert.match(sw, /localStorage\.setItem\('vida-biblia-notas-active-owner-v1'/)
+  assert.match(sw, /cache\.put\(OFFLINE_NOTES_OWNER_MARKER/)
   assert.doesNotMatch(sw, /vida-biblia-notas-v3/)
   assert.doesNotMatch(sw, /vida-biblia-notas-sync-v1/)
+  assert.doesNotMatch(sw, /notas_estudio/)
 })
 
-test('solo el shell estático offline queda fuera del proxy autenticado', () => {
-  assert.ok(proxy.includes('offline/notas\\\\.html'))
-  assert.doesNotMatch(proxy, /biblia\/notas/)
+test('solo la ruta React pública de soporte offline queda fuera del proxy, no Biblia Notas autenticada', () => {
+  assert.match(proxy, /biblia\/notas-offline/)
+  assert.doesNotMatch(proxy, /\|biblia\/notas\|/)
+  assert.match(offlineWorkspace, /OfflineNotesOwnerMarker userId=\{ownerId\}/)
 })
 
 test('la ruta autenticada recuerda el dueño y logout lo olvida en ambos almacenamientos', () => {
