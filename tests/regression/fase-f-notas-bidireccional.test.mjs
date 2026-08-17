@@ -23,14 +23,14 @@ test('FASE F: la página identifica al usuario antes de abrir su cuaderno', asyn
   assert.match(page, /<BibleNotesWorkspace userId=\{user\.id\}/)
 })
 
-test('FASE F: el merge remoto preserva pendientes locales y usa tombstones', async () => {
+test('FASE F: el merge remoto preserva pendientes locales y usa tombstones en ambos orígenes canónicos', async () => {
   const remote = await readFile(remotePath, 'utf8')
   assert.match(remote, /pendientePorId\.has\(row\.id\)/)
   assert.match(remote, /operacion\.tipo === 'upsert'/)
   assert.match(remote, /row\.estado === 'eliminado'/)
   assert.match(remote, /remotaActualizada >= localActualizada/)
   assert.match(remote, /\.eq\('profile_id', ownerId\)/)
-  assert.match(remote, /\.eq\('origen', 'biblia_notas'\)/)
+  assert.match(remote, /\.in\('origen', \['biblia_notas', 'estudio_profundo'\]\)/)
 })
 
 test('FASE F: borrar una nota publica tombstone sin conservar su contenido', async () => {

@@ -2,8 +2,7 @@
 
 import { useLayoutEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-
-const NOTAS_KEY = 'vida-biblia-notas-v2'
+import { agregarNotaBiblicaDelUsuario } from '@/lib/biblia/notes-local'
 
 type TemaBiblia = 'claro' | 'sepia' | 'oscuro'
 
@@ -55,6 +54,15 @@ function claseNota(tema: TemaBiblia) {
 
 function texto(elemento: Element | null) {
   return (elemento?.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function normalizarReferencia(referencia: string) {
+  return referencia
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function nombreAccion(accion: HTMLElement) {
@@ -118,30 +126,16 @@ function aplicarFavoritoEnVersiculo(panel: HTMLElement, activo: boolean) {
   })
 }
 
-function guardarNota(referencia: string, contenido: string) {
-  const ahora = new Date().toISOString()
-  const id = crypto.randomUUID()
-  const nota = {
-    id,
+async function guardarNotaBiblica(referencia: string, contenido: string) {
+  return agregarNotaBiblicaDelUsuario({
     titulo: referencia,
     contenido,
     tipo: 'versiculo',
     referencia,
-    paqueteId: '',
-    paquete: '',
-    creadaEn: ahora,
-    actualizadaEn: ahora,
-  }
-
-  try {
-    const raw = localStorage.getItem(NOTAS_KEY)
-    const actuales = raw ? JSON.parse(raw) : []
-    localStorage.setItem(NOTAS_KEY, JSON.stringify([nota, ...actuales]))
-  } catch {
-    localStorage.setItem(NOTAS_KEY, JSON.stringify([nota]))
-  }
-
-  return id
+    origen: 'biblia_notas',
+    pasajeNormalizado: normalizarReferencia(referencia),
+    contexto: { superficieOrigen: 'biblia' },
+  })
 }
 
 export default function BibleVerseActionsPersistent() {
@@ -255,11 +249,17 @@ export default function BibleVerseActionsPersistent() {
             botonNota.setAttribute('title', 'Crear nota de este versículo')
             botonNota.className = claseNota(tema)
             botonNota.innerHTML = iconoNota
-            botonNota.addEventListener('click', () => {
+            botonNota.addEventListener('click', async () => {
+              if (botonNota.dataset.vidaNoteSaving === 'true') return
+              botonNota.dataset.vidaNoteSaving = 'true'
               const copia = parrafo.cloneNode(true) as HTMLElement
               copia.querySelectorAll('sup, svg').forEach((elemento) => elemento.remove())
-              const id = guardarNota(`${pasaje}:${numero}`, texto(copia))
-              router.push(`/biblia/notas?nota=${encodeURIComponent(id)}`)
+              try {
+                const nota = await guardarNotaBiblica(`${pasaje}:${numero}`, texto(copia))
+                router.push(`/biblia/notas?nota=${encodeURIComponent(nota.id)}`)
+              } finally {
+                delete botonNota.dataset.vidaNoteSaving
+              }
             })
             panel.append(botonNota)
           }

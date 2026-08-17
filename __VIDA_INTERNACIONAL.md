@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-14
+Última actualización: 2026-08-17
 
 Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**
 
@@ -27,6 +27,9 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 7. Durante FASE E, preservar íntegramente las funcionalidades y UX aprobadas; optimizar sin degradar comportamientos cerrados.
 8. No reabrir cobertura bíblica, Programación Ministerial, Calendario, Notificaciones u otras prioridades cerradas salvo bug comprobable.
 9. Los cambios sensibles de seguridad/RLS/grants deben presentarse con alcance y recuperación antes de aplicarse cuando puedan afectar producción.
+10. **Principio visual global:** priorizar superficies integradas, jerarquía por espaciado, tipografía, color y separadores; evitar contenedores o tarjetas anidadas tipo “cuadro dentro de cuadro” cuando no exista una necesidad funcional clara. En móvil, conservar la mayor superficie útil posible sin reducir las áreas táctiles a tamaños incómodos.
+11. **Navegación móvil global:** la barra principal pertenece al layout de la aplicación y no a cada módulo. La aparición del teclado no debe levantarla ni hacerla flotar sobre el contenido de trabajo; en iOS debe permanecer en el borde inferior del layout y quedar cubierta por el teclado cuando corresponda.
+12. **Historial reversible:** cuando una superficie exponga Deshacer/Rehacer, toda acción que modifique contenido o metadatos creados por el usuario debe entrar en el mismo historial reversible; no limitar el historial únicamente al texto visible.
 
 ## Estado de fases
 
@@ -272,6 +275,28 @@ La evidencia inicial se conserva en:
 
 Los bloques de **sincronización bidireccional, respaldo entre dispositivos, apertura en frío offline y predicación correlativa con metadatos/exportación quedan VALIDADOS**. FASE F permanece **ACTIVA**.
 
+## Punto 6 — origen, contexto, organización y filtrado — VALIDADO EN PREVIEW — 2026-08-17
+
+La evidencia detallada se conserva en:
+
+- `docs/FASE_F_PUNTO_6_VALIDACION_2026-08-17.md`.
+
+34. `Biblia → Notas` y Estudio Profundo alimentan un único cuaderno canónico y no crean copias para representar filtros, categorías u origen.
+35. Las notas conservan `origen`, referencia, pasaje normalizado, contexto disponible y metadatos de predicación; la organización visual se deriva de esos mismos datos reales.
+36. Los filtros por tipo y origen operan sobre la misma implementación del Cuaderno y mantienen la misma taxonomía online y offline.
+37. Estudio Profundo puede guardar y abrir el mismo cuaderno; repetir el guardado del mismo estudio reutiliza la nota canónica correspondiente en vez de crear un sistema paralelo.
+38. La navegación de concordancias/búsqueda asistida conserva libro, capítulo y versículo exactos y no inventa referencias cuando no existe respaldo determinístico.
+39. El editor aprobado conserva formato WYSIWYG, historial global Deshacer/Rehacer, datos de predicación reversibles, exportación y áreas táctiles móviles.
+40. El modo offline dejó de utilizar `public/offline/notas.html` como experiencia activa. El service worker usa `/biblia/notas-offline`, que monta literalmente el mismo `BibleNotesWorkspace` React del Cuaderno online.
+41. El service worker `vida-shell-v2.3-cuaderno-react-real` precachea el shell público y únicamente los recursos `/_next/static/` necesarios para hidratarlo; no cachea notas, API, Supabase ni HTML autenticado privado.
+42. La identidad offline continúa ligada al UUID validado del usuario; si falta el marcador activo, solo se infiere un dueño cuando existe exactamente un único cuaderno local válido.
+43. La sincronización evita consultas remotas cuando `navigator.onLine === false` y conserva la misma caché/cola canónicas ya validadas.
+44. Validación funcional real completada en iPhone: el usuario confirmó que, tras actualizar el service worker y activar modo avión, el Cuaderno offline conserva la apariencia y experiencia actual online en lugar de mostrar la versión histórica.
+45. La validación técnica del head `53ecb57988df1f0dd3558141a45e190483fd6d41` completó 122 regresiones, lint y build en verde; la evidencia documental final quedó añadida posteriormente en la misma PR.
+46. Este bloque no requirió cambios adicionales de esquema, RLS, grants ni datos de producción.
+
+El **punto 6 queda VALIDADO EN PREVIEW y listo para integración a `main`**. FASE F permanece **ACTIVA** hasta que esta integración esté fusionada, producción sea verificada y el documento maestro en `main` refleje formalmente el cierre.
+
 # Siguiente punto autorizado
 
-**Continuar exclusivamente FASE F con el punto 6 del alcance: conservar y aprovechar origen y contexto bíblico de cada nota para organización y filtrado sin duplicación. Antes de cambios visuales, auditar qué valores reales de `origen`, `referencia`, `pasaje_normalizado`, `paquete_id`, `contexto` y metadatos de predicación existen hoy en el cuaderno canónico; definir una taxonomía mínima y reglas de filtrado que funcionen igual online y offline; no crear copias de una misma nota para representar categorías. Conservar privacidad por usuario, RLS/grants actuales, sincronización bidireccional y cold-start offline ya validados. Cualquier cambio visual deberá pasar por Preview antes de producción.**
+**Realizar exclusivamente el cierre técnico/documental de FASE F: mantener PR #284 sin fusionar hasta autorización explícita del usuario; verificar CI del head final; al recibir autorización, integrar el bloque a `main`, validar producción y actualizar este documento para marcar FASE F como COMPLETADA si no aparece ningún bug comprobable. No iniciar una fase posterior mientras `main` no refleje formalmente ese cierre.**

@@ -1,0 +1,1154 @@
+'use client'
+
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type RefObject,
+} from 'react'
+import {
+  Bold,
+  BookMarked,
+  CalendarClock,
+  CheckSquare,
+  ChevronLeft,
+  ChevronRight,
+  Eraser,
+  Eye,
+  Italic,
+  List,
+  ListOrdered,
+  Loader2,
+  Minus,
+  Printer,
+  Quote,
+  Send,
+  Sparkles,
+  Strikethrough,
+  Underline,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'
+import { organizarApuntesConIA } from '@/app/actions/cuaderno-ai'
+
+export type RichNoteChangeOptions = {
+  checkpoint?: boolean
+}
+
+type Props = {
+  editorRef: RefObject<HTMLDivElement | null>
+  value: string
+  onChange: (value: string, options?: RichNoteChangeOptions) => void
+  reference?: string
+  fontSize: number
+  onFontSizeChange: (size: number) => void
+  buttonClass: string
+  mutedClass: string
+  readOnly: boolean
+  onReadOnlyChange: (value: boolean) => void
+}
+
+type EditorProps = {
+  editorRef: RefObject<HTMLDivElement | null>
+  value: string
+  onChange: (value: string, options?: RichNoteChangeOptions) => void
+  fontSize: number
+  readOnly?: boolean
+  mutedClass: string
+}
+
+type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
+type BlockStyle = 'h1' | 'h2' | 'h3' | 'p' | 'pre'
+type StandardListKind = 'bullet' | 'dash' | 'numbered'
+type InlineFormatKey = 'bold' | 'italic' | 'underline' | 'strike'
+type InlineState = Record<InlineFormatKey, boolean>
+
+type FormatState = InlineState & {
+  block: BlockStyle
+  bullet: boolean
+  dash: boolean
+  numbered: boolean
+}
+
+const emptyInlineState: InlineState = {
+  bold: false,
+  italic: false,
+  underline: false,
+  strike: false,
+}
+
+const defaultFormatState: FormatState = {
+  block: 'p',
+  ...emptyInlineState,
+  bullet: false,
+  dash: false,
+  numbered: false,
+}
+
+function clampFontSize(value: number) {
+  return Math.min(22, Math.max(16, value))
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
+
+function inlineToHtml(value: string) {
+  let html = escapeHtml(value)
+  // Triple asterisco se procesa primero para conservar combinaciones
+  // negrita + cursiva sin que un formato active o destruya al otro.
+  html = html.replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+  html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>')
+  html = html.replace(/~~([^~\n]+)~~/g, '<s>$1</s>')
+  html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+  return html
+}
+
+function referenceHtml(text: string) {
+  return `<p data-note-reference="true"><span data-note-reference-text="true">${inlineToHtml(text)}</span></p>`
+}
+
+export function canonicalToRichHtml(value: string) {
+  if (!value.trim()) return ''
+
+  const lines = value.replace(/\r\n?/g, '\n').split('\n')
+  const blocks: string[] = []
+  let index = 0
+
+  while (index < lines.length) {
+    const line = lines[index] ?? ''
+
+    if (!line) {
+      blocks.push('<p><br></p>')
+      index += 1
+      continue
+    }
+
+    if (/^─{4,}$/.test(line.trim())) {
+      blocks.push('<hr>')
+      index += 1
+      continue
+    }
+
+    if (line.startsWith('# ')) {
+      blocks.push(`<h1>${inlineToHtml(line.slice(2))}</h1>`)
+      index += 1
+      continue
+    }
+    if (line.startsWith('## ')) {
+      blocks.push(`<h2>${inlineToHtml(line.slice(3))}</h2>`)
+      index += 1
+      continue
+    }
+    if (line.startsWith('### ')) {
+      blocks.push(`<h3>${inlineToHtml(line.slice(4))}</h3>`)
+      index += 1
+      continue
+    }
+    if (line.startsWith('≋ ')) {
+      blocks.push(`<pre>${inlineToHtml(line.slice(2))}</pre>`)
+      index += 1
+      continue
+    }
+    if (line.startsWith('> ')) {
+      blocks.push(`<blockquote>${inlineToHtml(line.slice(2))}</blockquote>`)
+      index += 1
+      continue
+    }
+    if (line === '◈' || line.startsWith('◈ ')) {
+      blocks.push(referenceHtml(line.replace(/^◈\s?/, '')))
+      index += 1
+      continue
+    }
+
+    if (/^[☐☑](?:\s|$)/.test(line)) {
+      const items: string[] = []
+      while (index < lines.length && /^[☐☑](?:\s|$)/.test(lines[index] ?? '')) {
+        const task = lines[index] ?? ''
+        const checked = task.startsWith('☑')
+        const body = task.replace(/^[☐☑]\s?/, '')
+        items.push(`<li data-task-item="true"><input type="checkbox" data-task-checkbox="true" contenteditable="false"${checked ? ' checked' : ''}><span data-task-text="true">${inlineToHtml(body) || '<br>'}</span></li>`)
+        index += 1
+      }
+      blocks.push(`<ul data-task-list="true">${items.join('')}</ul>`)
+      continue
+    }
+
+    if (line === '•' || line.startsWith('• ')) {
+      const items: string[] = []
+      while (index < lines.length && ((lines[index] ?? '') === '•' || (lines[index] ?? '').startsWith('• '))) {
+        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^•\s?/, '')) || '<br>'}</li>`)
+        index += 1
+      }
+      blocks.push(`<ul data-note-list-style="bullet">${items.join('')}</ul>`)
+      continue
+    }
+
+    if (/^[-–](?:\s|$)/.test(line)) {
+      const items: string[] = []
+      while (index < lines.length && /^[-–](?:\s|$)/.test(lines[index] ?? '')) {
+        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^[-–]\s?/, '')) || '<br>'}</li>`)
+        index += 1
+      }
+      blocks.push(`<ul data-note-list-style="dash">${items.join('')}</ul>`)
+      continue
+    }
+
+    const numbered = line.match(/^(\d+)\.(?:\s(.*))?$/)
+    if (numbered) {
+      const start = Number(numbered[1]) || 1
+      const items: string[] = []
+      while (index < lines.length) {
+        const match = (lines[index] ?? '').match(/^\d+\.(?:\s(.*))?$/)
+        if (!match) break
+        items.push(`<li>${inlineToHtml(match[1] ?? '') || '<br>'}</li>`)
+        index += 1
+      }
+      blocks.push(`<ol${start !== 1 ? ` start="${start}"` : ''}>${items.join('')}</ol>`)
+      continue
+    }
+
+    blocks.push(`<p>${inlineToHtml(line)}</p>`)
+    index += 1
+  }
+
+  return blocks.join('')
+}
+
+function mergeInlineState(base: InlineState, extra: Partial<InlineState>): InlineState {
+  return {
+    bold: base.bold || Boolean(extra.bold),
+    italic: base.italic || Boolean(extra.italic),
+    underline: base.underline || Boolean(extra.underline),
+    strike: base.strike || Boolean(extra.strike),
+  }
+}
+
+function inlineStateFromElement(element: HTMLElement): Partial<InlineState> {
+  const tag = element.tagName
+  const weight = element.style.fontWeight.trim().toLowerCase()
+  const numericWeight = Number.parseInt(weight, 10)
+  const decoration = `${element.style.textDecoration} ${element.style.textDecorationLine}`.toLowerCase()
+
+  return {
+    bold: tag === 'STRONG' || tag === 'B' || weight === 'bold' || (!Number.isNaN(numericWeight) && numericWeight >= 600),
+    italic: tag === 'EM' || tag === 'I' || element.style.fontStyle.toLowerCase() === 'italic',
+    underline: tag === 'U' || decoration.includes('underline'),
+    strike: tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || decoration.includes('line-through'),
+  }
+}
+
+function wrapCanonicalInline(text: string, state: InlineState) {
+  if (!text) return text
+  let output = text
+  if (state.strike) output = `~~${output}~~`
+  if (state.underline) output = `++${output}++`
+  if (state.italic) output = `*${output}*`
+  if (state.bold) output = `**${output}**`
+  return output
+}
+
+function serializeInlineNode(node: Node, inherited: InlineState = emptyInlineState): string {
+  if (node.nodeType === Node.TEXT_NODE) return wrapCanonicalInline(node.textContent ?? '', inherited)
+  if (node.nodeType !== Node.ELEMENT_NODE) return ''
+
+  const element = node as HTMLElement
+  const tag = element.tagName
+  if (tag === 'BR') return '\n'
+  if (tag === 'INPUT') return ''
+  if (element.dataset.noteReferenceIcon === 'true') return ''
+
+  const nextState = mergeInlineState(inherited, inlineStateFromElement(element))
+  return Array.from(element.childNodes).map((child) => serializeInlineNode(child, nextState)).join('')
+}
+
+function serializeInlineChildren(element: Element) {
+  return Array.from(element.childNodes).map((node) => serializeInlineNode(node)).join('').replace(/\n+$/g, '')
+}
+
+function serializeList(element: HTMLElement) {
+  const children = Array.from(element.children).filter((child) => child.tagName === 'LI') as HTMLElement[]
+
+  if (element.dataset.taskList === 'true') {
+    return children.map((li) => {
+      const checkbox = li.querySelector<HTMLInputElement>('input[data-task-checkbox="true"]')
+      const text = li.querySelector<HTMLElement>('[data-task-text="true"]')
+      const body = text ? serializeInlineChildren(text) : serializeInlineChildren(li)
+      return `${checkbox?.checked ? '☑' : '☐'} ${body}`
+    }).join('\n')
+  }
+
+  if (element.tagName === 'OL') {
+    const start = Number(element.getAttribute('start') || 1) || 1
+    return children.map((li, offset) => `${start + offset}. ${serializeInlineChildren(li)}`).join('\n')
+  }
+
+  const prefix = element.dataset.noteListStyle === 'dash' ? '– ' : '• '
+  return children.map((li) => `${prefix}${serializeInlineChildren(li)}`).join('\n')
+}
+
+function serializeBlockNode(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return (node.textContent ?? '').trimEnd()
+  if (node.nodeType !== Node.ELEMENT_NODE) return ''
+
+  const element = node as HTMLElement
+  const tag = element.tagName
+
+  if (tag === 'UL' || tag === 'OL') return serializeList(element)
+  if (tag === 'HR') return '──────────'
+  if (tag === 'H1') return `# ${serializeInlineChildren(element)}`.trimEnd()
+  if (tag === 'H2') return `## ${serializeInlineChildren(element)}`.trimEnd()
+  if (tag === 'H3') return `### ${serializeInlineChildren(element)}`.trimEnd()
+  if (tag === 'PRE') return `≋ ${serializeInlineChildren(element)}`.trimEnd()
+  if (tag === 'BLOCKQUOTE') return `> ${serializeInlineChildren(element)}`.trimEnd()
+  if (element.dataset.noteReference === 'true') {
+    const text = element.querySelector<HTMLElement>('[data-note-reference-text="true"]')
+    return `◈ ${text ? serializeInlineChildren(text) : serializeInlineChildren(element)}`
+  }
+
+  if (tag === 'DIV' && Array.from(element.children).some((child) => ['P', 'DIV', 'H1', 'H2', 'H3', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'HR'].includes(child.tagName))) {
+    return Array.from(element.childNodes).map(serializeBlockNode).join('\n')
+  }
+
+  return serializeInlineChildren(element)
+}
+
+export function richElementToCanonical(root: HTMLElement) {
+  return Array.from(root.childNodes)
+    .map(serializeBlockNode)
+    .join('\n')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{4,}/g, '\n\n\n')
+    .replace(/\n+$/g, '')
+}
+
+function normalizeAiProposal(value: string) {
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/^\s*[-*]\s+\[x\]\s+/gim, '☑ ')
+    .replace(/^\s*[-*]\s+\[\s\]\s+/gm, '☐ ')
+    .replace(/^\s*[-*]\s+/gm, '• ')
+    .trim()
+}
+
+export function plainTextFromCanonical(value: string) {
+  return value
+    .replace(/^#{1,3}\s+/gm, '')
+    .replace(/^≋\s+/gm, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/^◈\s+/gm, '')
+    .replace(/^[•–-]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^[☐☑]\s+/gm, '')
+    .replace(/\*\*\*([^*\n]+)\*\*\*/g, '$1')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/\+\+([^+\n]+)\+\+/g, '$1')
+    .replace(/~~([^~\n]+)~~/g, '$1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+}
+
+function caretOffsetWithin(element: HTMLElement) {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return 0
+  const range = selection.getRangeAt(0)
+  const prefix = range.cloneRange()
+  prefix.selectNodeContents(element)
+  prefix.setEnd(range.endContainer, range.endOffset)
+  return prefix.toString().length
+}
+
+function placeCaret(element: HTMLElement, offset = 0) {
+  const selection = window.getSelection()
+  if (!selection) return
+  const range = document.createRange()
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+  let remaining = Math.max(0, offset)
+  let node = walker.nextNode()
+
+  while (node) {
+    const length = node.textContent?.length ?? 0
+    if (remaining <= length) {
+      range.setStart(node, remaining)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      return
+    }
+    remaining -= length
+    node = walker.nextNode()
+  }
+
+  range.selectNodeContents(element)
+  range.collapse(false)
+  selection.removeAllRanges()
+  selection.addRange(range)
+}
+
+function closestEditorElement(editor: HTMLElement, node: Node | null) {
+  const element = node?.nodeType === Node.ELEMENT_NODE ? node as Element : node?.parentElement
+  return element && editor.contains(element) ? element : null
+}
+
+function topLevelEditorBlock(editor: HTMLElement, node: Node | null) {
+  let element = closestEditorElement(editor, node)
+  if (!element) return null
+  while (element.parentElement && element.parentElement !== editor) element = element.parentElement
+  return element.parentElement === editor ? element as HTMLElement : null
+}
+
+function inlineStateAtSelection(editor: HTMLElement, selection: Selection): InlineState {
+  const selected = closestEditorElement(editor, selection.anchorNode)
+  if (!selected) return emptyInlineState
+
+  let current: Element | null = selected
+  let state = { ...emptyInlineState }
+  while (current && current !== editor) {
+    if (current instanceof HTMLElement) state = mergeInlineState(state, inlineStateFromElement(current))
+    current = current.parentElement
+  }
+  return state
+}
+
+function blockStyleAtSelection(editor: HTMLElement, selection: Selection): BlockStyle {
+  const selected = closestEditorElement(editor, selection.anchorNode)
+  const block = selected?.closest('h1,h2,h3,pre,p,div,li,blockquote')
+  if (block?.tagName === 'H1') return 'h1'
+  if (block?.tagName === 'H2') return 'h2'
+  if (block?.tagName === 'H3') return 'h3'
+  if (block?.tagName === 'PRE') return 'pre'
+  return 'p'
+}
+
+function insertStandaloneBlock(editor: HTMLElement, block: HTMLElement, focusTarget: HTMLElement) {
+  const selection = window.getSelection()
+  const topLevel = topLevelEditorBlock(editor, selection?.anchorNode ?? null)
+  const isEmptyParagraph = topLevel?.tagName === 'P' && !(topLevel.textContent ?? '').trim() && !topLevel.querySelector('img,input,hr')
+
+  if (topLevel && isEmptyParagraph) topLevel.replaceWith(block)
+  else if (topLevel) topLevel.insertAdjacentElement('afterend', block)
+  else editor.appendChild(block)
+
+  placeCaret(focusTarget, focusTarget.textContent?.length ?? 0)
+}
+
+function createParagraphFromListItem(item: HTMLElement) {
+  const paragraph = document.createElement('p')
+  while (item.firstChild) paragraph.appendChild(item.firstChild)
+  if (!paragraph.childNodes.length) paragraph.appendChild(document.createElement('br'))
+  return paragraph
+}
+
+function unwrapList(list: HTMLElement, selectedItem: HTMLElement | null) {
+  const fragment = document.createDocumentFragment()
+  const paragraphs: Array<{ element: HTMLElement; selected: boolean }> = []
+
+  for (const child of Array.from(list.children)) {
+    if (!(child instanceof HTMLElement) || child.tagName !== 'LI') continue
+    const paragraph = createParagraphFromListItem(child)
+    paragraphs.push({ element: paragraph, selected: child === selectedItem })
+    fragment.appendChild(paragraph)
+  }
+
+  list.replaceWith(fragment)
+  const focusParagraph = paragraphs.find((item) => item.selected)?.element
+  if (focusParagraph) placeCaret(focusParagraph, focusParagraph.textContent?.length ?? 0)
+}
+
+function convertList(list: HTMLElement, kind: StandardListKind) {
+  const target = document.createElement(kind === 'numbered' ? 'ol' : 'ul')
+  if (kind !== 'numbered') target.dataset.noteListStyle = kind
+  while (list.firstChild) target.appendChild(list.firstChild)
+  list.replaceWith(target)
+  return target
+}
+
+export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly = false, mutedClass }: EditorProps) {
+  useLayoutEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
+    const current = richElementToCanonical(editor)
+    if (current === value) return
+    editor.innerHTML = canonicalToRichHtml(value)
+  }, [editorRef, value])
+
+  const emit = (checkpoint = false) => {
+    const editor = editorRef.current
+    if (!editor) return
+    onChange(richElementToCanonical(editor), { checkpoint })
+  }
+
+  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
+    if (readOnly) return
+    event.preventDefault()
+    document.execCommand('insertText', false, event.clipboardData.getData('text/plain'))
+    emit(true)
+  }
+
+  const handleCheckbox = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target
+    if (!(target instanceof HTMLInputElement) || target.dataset.taskCheckbox !== 'true') return
+    requestAnimationFrame(() => emit(true))
+  }
+
+  const handleTaskEnter = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || readOnly) return false
+    const selection = window.getSelection()
+    if (!selection?.anchorNode) return false
+    const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE
+      ? selection.anchorNode as Element
+      : selection.anchorNode.parentElement
+    const item = anchorElement?.closest<HTMLElement>('li[data-task-item="true"]')
+    if (!item) return false
+
+    event.preventDefault()
+    const list = item.closest<HTMLElement>('ul[data-task-list="true"]')
+    const text = item.querySelector<HTMLElement>('[data-task-text="true"]')
+    if (!list || !text) return true
+
+    const current = text.textContent ?? ''
+    const offset = Math.min(caretOffsetWithin(text), current.length)
+    const before = current.slice(0, offset)
+    const after = current.slice(offset)
+
+    if (!current.trim()) {
+      const paragraph = document.createElement('p')
+      paragraph.appendChild(document.createElement('br'))
+      list.insertAdjacentElement('afterend', paragraph)
+      item.remove()
+      if (!list.querySelector('li[data-task-item="true"]')) list.remove()
+      placeCaret(paragraph)
+      emit(true)
+      return true
+    }
+
+    text.textContent = before
+    const next = document.createElement('li')
+    next.dataset.taskItem = 'true'
+    const checkbox = document.createElement('input')
+    checkbox.type = 'checkbox'
+    checkbox.dataset.taskCheckbox = 'true'
+    checkbox.contentEditable = 'false'
+    const span = document.createElement('span')
+    span.dataset.taskText = 'true'
+    span.textContent = after
+    if (!after) span.appendChild(document.createElement('br'))
+    next.append(checkbox, span)
+    item.insertAdjacentElement('afterend', next)
+    placeCaret(span)
+    emit(true)
+    return true
+  }
+
+  const handleStandardListEnter = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || readOnly) return false
+    const selection = window.getSelection()
+    if (!selection?.anchorNode) return false
+    const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE
+      ? selection.anchorNode as Element
+      : selection.anchorNode.parentElement
+    const item = anchorElement?.closest<HTMLElement>('li')
+    const list = item?.closest<HTMLElement>('ol,ul')
+    if (!item || !list || list.dataset.taskList === 'true') return false
+
+    event.preventDefault()
+    const current = item.textContent ?? ''
+    const offset = Math.min(caretOffsetWithin(item), current.length)
+    const before = current.slice(0, offset)
+    const after = current.slice(offset)
+
+    if (!current.trim()) {
+      const paragraph = document.createElement('p')
+      paragraph.appendChild(document.createElement('br'))
+      list.insertAdjacentElement('afterend', paragraph)
+      item.remove()
+      if (!list.querySelector('li')) list.remove()
+      placeCaret(paragraph)
+      emit(true)
+      return true
+    }
+
+    item.textContent = before
+    if (!before) item.appendChild(document.createElement('br'))
+    const next = document.createElement('li')
+    next.textContent = after
+    if (!after) next.appendChild(document.createElement('br'))
+    item.insertAdjacentElement('afterend', next)
+    placeCaret(next, 0)
+    emit(true)
+    return true
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (handleTaskEnter(event)) return
+    if (handleStandardListEnter(event)) return
+    if (readOnly || !(event.metaKey || event.ctrlKey)) return
+    const key = event.key.toLowerCase()
+    const command = key === 'b' ? 'bold' : key === 'i' ? 'italic' : key === 'u' ? 'underline' : null
+    if (!command) return
+    event.preventDefault()
+    document.execCommand('styleWithCSS', false, 'false')
+    document.execCommand(command, false)
+    emit(true)
+  }
+
+  return (
+    <>
+      <div className="note-rich-editor-shell relative mt-3 min-h-[58vh]">
+        <div className={`mb-1 flex min-h-6 items-center justify-start px-1 text-[10px] ${mutedClass}`} aria-live="polite">
+          <span className="rounded-full bg-current/[0.045] px-2.5 py-1">{readOnly ? 'Solo lectura' : 'Guardado automático'}</span>
+        </div>
+        <div
+          ref={editorRef}
+          contentEditable={!readOnly}
+          suppressContentEditableWarning
+          role="textbox"
+          aria-multiline="true"
+          aria-readonly={readOnly}
+          onInput={() => emit(false)}
+          onPaste={handlePaste}
+          onDrop={(event) => event.preventDefault()}
+          onClick={handleCheckbox}
+          onKeyDown={handleKeyDown}
+          className={`note-rich-editor min-h-[58vh] px-1 py-2 outline-none ${readOnly ? 'cursor-default select-text' : ''}`}
+          style={{ fontSize: `${fontSize}px`, lineHeight: 1.78 }}
+        />
+        {!value.trim() && <p className={`pointer-events-none absolute inset-x-1 top-9 opacity-55 ${mutedClass}`} style={{ fontSize: `${fontSize}px`, lineHeight: 1.78 }} aria-hidden="true">Empieza a escribir tus apuntes, ideas, estudio o predicación…</p>}
+      </div>
+      <style>{`
+        .note-rich-editor-shell ~ p:last-child { display: none !important; }
+        .note-rich-editor h1 { font-size: 1.62em; line-height: 1.2; font-weight: 800; letter-spacing: -0.025em; margin: .55em 0 .28em; }
+        .note-rich-editor h2 { font-size: 1.28em; line-height: 1.28; font-weight: 800; letter-spacing: -0.018em; margin: .55em 0 .25em; }
+        .note-rich-editor h3 { font-size: 1.08em; line-height: 1.35; font-weight: 700; opacity: .82; margin: .5em 0 .2em; }
+        .note-rich-editor p { min-height: 1.25em; margin: .12em 0; }
+        .note-rich-editor pre { margin: .35em 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .92em; }
+        .note-rich-editor blockquote { margin: .5em 0; border-left: 3px solid rgb(167 139 250 / .8); padding-left: .8em; font-style: italic; opacity: .84; }
+        .note-rich-editor hr { margin: 1em 0; border: 0; border-top: 1px solid currentColor; opacity: .14; }
+        .note-rich-editor ol { display: block !important; list-style-type: decimal !important; list-style-position: outside !important; margin: .3em 0 !important; padding-inline-start: 2.15em !important; }
+        .note-rich-editor ol > li { display: list-item !important; list-style-type: decimal !important; padding-inline-start: .2em; margin: .16em 0; }
+        .note-rich-editor ol > li::marker { color: currentColor; font-size: 1em; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .note-rich-editor ul:not([data-task-list]) { display: block !important; list-style: none !important; margin: .3em 0 !important; padding-inline-start: 1.75em !important; }
+        .note-rich-editor ul:not([data-task-list]) > li { display: list-item !important; position: relative; padding-inline-start: .18em; margin: .16em 0; }
+        .note-rich-editor ul:not([data-task-list]):not([data-note-list-style="dash"]) > li::before { content: '•'; position: absolute; left: -1.05em; top: 50%; transform: translateY(-52%); font-size: 1.46em; line-height: 1; font-weight: 900; }
+        .note-rich-editor ul[data-note-list-style="dash"] > li::before { content: '–'; position: absolute; left: -1em; top: 50%; transform: translateY(-50%); font-size: 1.12em; line-height: 1; font-weight: 800; }
+        .note-rich-editor ul[data-task-list] { list-style: none; margin: .3em 0; padding: 0; }
+        .note-rich-editor li[data-task-item] { display: flex; align-items: flex-start; gap: .58em; margin: .3em 0; }
+        .note-rich-editor input[data-task-checkbox] { appearance: none; -webkit-appearance: none; width: 1.12em; height: 1.12em; flex: 0 0 auto; margin-top: .24em; border: 1.5px solid currentColor; border-radius: .34em; opacity: .58; display: grid; place-items: center; }
+        .note-rich-editor input[data-task-checkbox]:checked { background: rgb(124 58 237); border-color: rgb(124 58 237); opacity: 1; }
+        .note-rich-editor input[data-task-checkbox]:checked::after { content: '✓'; color: white; font-size: .72em; line-height: 1; font-weight: 900; }
+        .note-rich-editor li[data-task-item]:has(input:checked) [data-task-text] { text-decoration: line-through; opacity: .5; }
+        .note-rich-editor [data-note-reference] { display: flex; align-items: baseline; gap: .52em; clear: both; margin: .6em 0; padding: .08em 0; }
+        .note-rich-editor [data-note-reference]::before { content: '◆'; color: rgb(124 58 237); flex: 0 0 auto; font-size: .82em; line-height: 1; transform: translateY(-.03em); }
+        .note-rich-editor [data-note-reference-text] { display: inline-block; min-width: 8ch; }
+        .note-rich-editor [data-note-reference-text]:empty::before { content: 'Escribe una referencia bíblica'; opacity: .45; pointer-events: none; }
+      `}</style>
+    </>
+  )
+}
+
+function listKindOf(list: HTMLElement | null): StandardListKind | null {
+  if (!list || list.dataset.taskList === 'true') return null
+  if (list.tagName === 'OL') return 'numbered'
+  return list.dataset.noteListStyle === 'dash' ? 'dash' : 'bullet'
+}
+
+export default function NotesEditingToolbar({
+  editorRef,
+  value,
+  onChange,
+  reference = '',
+  fontSize,
+  onFontSizeChange,
+  buttonClass,
+  mutedClass,
+  readOnly,
+  onReadOnlyChange,
+}: Props) {
+  const [activeGroup, setActiveGroup] = useState<ToolGroup>('texto')
+  const [formatState, setFormatState] = useState<FormatState>(defaultFormatState)
+  const [aiInstruction, setAiInstruction] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiProposal, setAiProposal] = useState<string | null>(null)
+  const [aiSource, setAiSource] = useState('')
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiReused, setAiReused] = useState(false)
+  const savedRangeRef = useRef<Range | null>(null)
+  const selectionSyncLockRef = useRef(0)
+  const inlineSelectionStateRef = useRef<InlineState>({ ...emptyInlineState })
+  const blockSelectionStateRef = useRef<BlockStyle>('p')
+  const inlineCaretOverrideRef = useRef<{ block: HTMLElement; offset: number; state: InlineState } | null>(null)
+
+  const emitEditor = (checkpoint = true) => {
+    const editor = editorRef.current
+    if (!editor) return
+    onChange(richElementToCanonical(editor), { checkpoint })
+  }
+
+  const readSelectionState = () => {
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    if (!editor || !selection?.anchorNode || selection.rangeCount === 0) return
+    const selected = closestEditorElement(editor, selection.anchorNode)
+    if (!selected) return
+
+    const list = selected.closest('ul,ol') as HTMLElement | null
+    const kind = listKindOf(list)
+    const range = selection.getRangeAt(0)
+    const override = inlineCaretOverrideRef.current
+    let inline = inlineStateAtSelection(editor, selection)
+
+    if (range.collapsed && override) {
+      const block = topLevelEditorBlock(editor, selection.anchorNode)
+      const offset = block ? caretOffsetWithin(block) : -1
+      if (block === override.block && offset === override.offset) inline = override.state
+      else inlineCaretOverrideRef.current = null
+    } else if (!range.collapsed) {
+      inlineCaretOverrideRef.current = null
+    }
+
+    const block = blockStyleAtSelection(editor, selection)
+    inlineSelectionStateRef.current = inline
+    blockSelectionStateRef.current = block
+    setFormatState({
+      block,
+      ...inline,
+      bullet: kind === 'bullet',
+      dash: kind === 'dash',
+      numbered: kind === 'numbered',
+    })
+  }
+
+  useEffect(() => {
+    const capture = () => {
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (!editor || !selection || selection.rangeCount === 0) return
+      const range = selection.getRangeAt(0)
+      if (!editor.contains(range.commonAncestorContainer)) return
+      savedRangeRef.current = range.cloneRange()
+      if (Date.now() < selectionSyncLockRef.current) return
+      readSelectionState()
+    }
+    document.addEventListener('selectionchange', capture)
+    return () => document.removeEventListener('selectionchange', capture)
+  })
+
+  const restoreSelection = () => {
+    const editor = editorRef.current
+    if (!editor) return false
+    editor.focus()
+    const range = savedRangeRef.current
+    if (!range) return true
+    const selection = window.getSelection()
+    if (!selection) return false
+    try {
+      selection.removeAllRanges()
+      selection.addRange(range)
+      return true
+    } catch {
+      savedRangeRef.current = null
+      return false
+    }
+  }
+
+  const rememberSelection = () => {
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    if (!editor || !selection || selection.rangeCount === 0) return
+    const range = selection.getRangeAt(0)
+    if (editor.contains(range.commonAncestorContainer)) savedRangeRef.current = range.cloneRange()
+  }
+
+  const runCommand = (command: string, argument?: string) => {
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) return
+      selectionSyncLockRef.current = Date.now() + 700
+      inlineCaretOverrideRef.current = null
+      document.execCommand(command, false, argument)
+      rememberSelection()
+      emitEditor(true)
+      if (command === 'removeFormat') {
+        inlineSelectionStateRef.current = { ...emptyInlineState }
+        setFormatState((current) => ({ ...current, ...emptyInlineState }))
+      } else {
+        requestAnimationFrame(readSelectionState)
+      }
+    })
+  }
+
+  const runInlineCommand = (command: string, key: InlineFormatKey) => {
+    const previousInline = inlineSelectionStateRef.current
+    const nextInline: InlineState = { ...previousInline, [key]: !previousInline[key] }
+
+    // El botón responde inmediatamente al toque. La operación del DOM ocurre en
+    // el siguiente frame para conservar la selección de Safari sin hacer parpadear
+    // el estado visual entre activo e inactivo.
+    inlineSelectionStateRef.current = nextInline
+    setFormatState((current) => ({ ...current, ...nextInline }))
+
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) {
+        inlineSelectionStateRef.current = previousInline
+        setFormatState((current) => ({ ...current, ...previousInline }))
+        return
+      }
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (!editor || !selection || selection.rangeCount === 0) return
+      const range = selection.getRangeAt(0)
+      if (!editor.contains(range.commonAncestorContainer)) return
+
+      selectionSyncLockRef.current = Date.now() + 1400
+      document.execCommand('styleWithCSS', false, 'false')
+      document.execCommand(command, false)
+      rememberSelection()
+
+      const appliedSelection = window.getSelection()
+      if (appliedSelection?.anchorNode && appliedSelection.rangeCount > 0 && appliedSelection.getRangeAt(0).collapsed) {
+        const block = topLevelEditorBlock(editor, appliedSelection.anchorNode)
+        if (block) {
+          inlineCaretOverrideRef.current = {
+            block,
+            offset: caretOffsetWithin(block),
+            state: nextInline,
+          }
+        }
+      } else {
+        inlineCaretOverrideRef.current = null
+      }
+
+      emitEditor(true)
+    })
+  }
+
+  const setBlock = (block: BlockStyle) => {
+    const previousBlock = blockSelectionStateRef.current
+    const nextBlock: BlockStyle = block !== 'p' && previousBlock === block ? 'p' : block
+    blockSelectionStateRef.current = nextBlock
+    setFormatState((current) => ({ ...current, block: nextBlock }))
+
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) {
+        blockSelectionStateRef.current = previousBlock
+        setFormatState((current) => ({ ...current, block: previousBlock }))
+        return
+      }
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (!editor || !selection || selection.rangeCount === 0) return
+
+      selectionSyncLockRef.current = Date.now() + 1000
+      const ok = document.execCommand('formatBlock', false, nextBlock)
+      if (!ok) document.execCommand('formatBlock', false, `<${nextBlock}>`)
+      rememberSelection()
+      emitEditor(true)
+    })
+  }
+
+  const toggleStandardList = (kind: StandardListKind) => {
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) return
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (!editor || !selection?.anchorNode) return
+
+      const selected = closestEditorElement(editor, selection.anchorNode)
+      const currentItem = selected?.closest<HTMLElement>('li') ?? null
+      const currentList = currentItem?.closest<HTMLElement>('ol,ul') ?? null
+      const currentKind = listKindOf(currentList)
+
+      if (currentList && currentKind === kind) {
+        unwrapList(currentList, currentItem)
+        emitEditor(true)
+        readSelectionState()
+        return
+      }
+
+      if (currentList && currentKind) {
+        const itemIndex = currentItem ? Math.max(0, Array.from(currentList.children).indexOf(currentItem)) : 0
+        const converted = convertList(currentList, kind)
+        const targetItem = converted.children.item(itemIndex) as HTMLElement | null
+        if (targetItem) placeCaret(targetItem, targetItem.textContent?.length ?? 0)
+        emitEditor(true)
+        readSelectionState()
+        return
+      }
+
+      const topLevel = topLevelEditorBlock(editor, selection.anchorNode)
+      const list = document.createElement(kind === 'numbered' ? 'ol' : 'ul')
+      if (kind !== 'numbered') list.dataset.noteListStyle = kind
+      const item = document.createElement('li')
+
+      if (topLevel && !['UL', 'OL'].includes(topLevel.tagName)) {
+        while (topLevel.firstChild) item.appendChild(topLevel.firstChild)
+        if (!item.childNodes.length) item.appendChild(document.createElement('br'))
+        list.appendChild(item)
+        topLevel.replaceWith(list)
+      } else {
+        item.appendChild(document.createElement('br'))
+        list.appendChild(item)
+        editor.appendChild(list)
+      }
+
+      placeCaret(item, item.textContent?.length ?? 0)
+      rememberSelection()
+      emitEditor(true)
+      readSelectionState()
+    })
+  }
+
+  const insertChecklist = () => {
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) return
+      const editor = editorRef.current
+      if (!editor) return
+
+      const list = document.createElement('ul')
+      list.dataset.taskList = 'true'
+      const item = document.createElement('li')
+      item.dataset.taskItem = 'true'
+      const checkbox = document.createElement('input')
+      checkbox.type = 'checkbox'
+      checkbox.dataset.taskCheckbox = 'true'
+      checkbox.contentEditable = 'false'
+      const text = document.createElement('span')
+      text.dataset.taskText = 'true'
+      text.appendChild(document.createElement('br'))
+      item.append(checkbox, text)
+      list.appendChild(item)
+      insertStandaloneBlock(editor, list, text)
+      rememberSelection()
+      emitEditor(true)
+    })
+  }
+
+  const insertReference = () => {
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) return
+      const editor = editorRef.current
+      if (!editor) return
+
+      const block = document.createElement('p')
+      block.dataset.noteReference = 'true'
+      const text = document.createElement('span')
+      text.dataset.noteReferenceText = 'true'
+      text.textContent = reference.trim()
+      block.appendChild(text)
+
+      insertStandaloneBlock(editor, block, text)
+      rememberSelection()
+      emitEditor(true)
+    })
+  }
+
+  const insertDateTime = () => {
+    const now = new Date().toLocaleString('es-SV', { dateStyle: 'medium', timeStyle: 'short' })
+    runCommand('insertText', now)
+  }
+
+  const requestAi = async (regenerar = false) => {
+    if (aiLoading || !value.trim() || !aiInstruction.trim()) return
+    const source = value
+    setAiLoading(true)
+    setAiError(null)
+    setAiReused(false)
+
+    try {
+      const result = await organizarApuntesConIA({
+        contenido: plainTextFromCanonical(source),
+        referencia: reference,
+        indicacion: aiInstruction.trim(),
+        regenerar,
+      })
+      if (!result.success) {
+        setAiProposal(null)
+        setAiError(result.error)
+        return
+      }
+      setAiSource(source)
+      setAiProposal(normalizeAiProposal(result.propuesta))
+      setAiReused(result.reutilizada)
+    } catch {
+      setAiProposal(null)
+      setAiError('No se pudo conectar con la asistencia de IA. Tus apuntes no cambiaron.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const applyAiProposal = () => {
+    if (!aiProposal) return
+    if (value !== aiSource) {
+      setAiProposal(null)
+      setAiError('Tus apuntes cambiaron después de generar la propuesta. Genera una nueva para evitar sobrescribir cambios recientes.')
+      return
+    }
+    onChange(aiProposal, { checkpoint: true })
+    setAiProposal(null)
+    setAiSource('')
+    setAiError(null)
+    onReadOnlyChange(false)
+  }
+
+  const groups: Array<{ id: ToolGroup; label: string }> = [
+    { id: 'texto', label: 'Texto' },
+    { id: 'listas', label: 'Listas' },
+    { id: 'insertar', label: 'Insertar' },
+    { id: 'vista', label: 'Vista' },
+  ]
+
+  const preventBlur = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault()
+
+  const commandButton = (label: string, Icon: typeof Bold, action: () => void, active = false, compactLabel?: string) => (
+    <button
+      type="button"
+      onPointerDown={(event) => event.preventDefault()}
+      onMouseDown={preventBlur}
+      onClick={action}
+      data-format-active={active ? 'true' : 'false'}
+      className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97] ${active ? 'bg-violet-600 text-white shadow-sm ring-1 ring-violet-300/60' : buttonClass}`}
+      aria-pressed={active}
+      aria-label={label}
+      title={label}
+    >
+      <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      <span className="max-w-full truncate">{compactLabel ?? label}</span>
+    </button>
+  )
+
+  const styleButton = (block: BlockStyle, label: string, className: string) => (
+    <button
+      type="button"
+      onPointerDown={(event) => event.preventDefault()}
+      onMouseDown={preventBlur}
+      onClick={() => setBlock(block)}
+      data-format-active={formatState.block === block ? 'true' : 'false'}
+      aria-pressed={formatState.block === block}
+      aria-label={`Aplicar estilo ${label}`}
+      className={`flex min-h-14 min-w-0 items-center justify-center rounded-2xl px-2 text-center transition-colors duration-150 active:scale-[0.98] ${formatState.block === block ? 'bg-violet-600 text-white shadow-sm ring-1 ring-violet-300/60' : buttonClass}`}
+      title={label}
+    >
+      <span className={`block max-w-full truncate leading-tight ${className}`}>{label}</span>
+    </button>
+  )
+
+  return (
+    <section aria-label="Herramientas de edición" className="mt-2">
+      <div className="rounded-[22px] border border-current/10 bg-current/[0.025] p-1.5 backdrop-blur-xl">
+        <div className="rounded-[19px] border border-violet-400/20 bg-violet-500/[0.07] p-2">
+          <div className="flex items-center gap-2">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-sm"><Sparkles className="h-4 w-4" aria-hidden="true" /></span>
+            <div className="min-w-0 flex-1">
+              <input
+                value={aiInstruction}
+                onChange={(event) => { setAiInstruction(event.target.value); setAiError(null) }}
+                onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void requestAi(false) } }}
+                placeholder="¿Qué quieres hacer con esta nota?"
+                className="min-h-10 w-full bg-transparent px-1 text-sm font-medium outline-none placeholder:font-normal placeholder:opacity-55"
+                aria-label="Instrucción para la IA"
+              />
+            </div>
+            <button type="button" onClick={() => void requestAi(false)} disabled={aiLoading || !value.trim() || !aiInstruction.trim()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-violet-600 text-white transition active:scale-95 disabled:opacity-35" aria-label="Enviar instrucción a IA">
+              {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+            </button>
+          </div>
+
+          {aiError && <p className="mt-2 rounded-2xl bg-rose-500/10 px-3 py-2 text-[10px] leading-4 text-rose-700" role="status">{aiError}</p>}
+          {aiProposal && (
+            <div className="mt-2" aria-live="polite">
+              <div className="flex items-center justify-between gap-2 px-1"><p className="text-[10px] font-extrabold">Propuesta</p>{aiReused && <span className={`text-[9px] ${mutedClass}`}>Reutilizada para ahorrar tokens</span>}</div>
+              <div className="mt-1.5 max-h-60 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-current/10 bg-current/[0.025] px-3 py-3 text-[11px] leading-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{plainTextFromCanonical(aiProposal)}</div>
+              <div className="mt-2 grid grid-cols-2 gap-1.5">
+                <button type="button" onClick={applyAiProposal} className="min-h-11 rounded-2xl bg-violet-600 px-3 text-[11px] font-extrabold text-white">Aplicar propuesta</button>
+                <button type="button" onClick={() => { setAiProposal(null); setAiSource(''); setAiError(null) }} className={`min-h-11 rounded-2xl px-3 text-[11px] font-bold ${buttonClass}`}>Descartar</button>
+              </div>
+              <button type="button" onClick={() => void requestAi(true)} disabled={aiLoading} className={`mt-1.5 min-h-10 w-full rounded-2xl px-3 text-[10px] font-bold disabled:opacity-45 ${buttonClass}`}>{aiLoading ? 'Generando…' : 'Volver a generar'}</button>
+            </div>
+          )}
+        </div>
+
+        <div role="tablist" aria-label="Categorías de herramientas" className="mt-1.5 grid grid-cols-4 gap-1">
+          {groups.map((group) => (
+            <button key={group.id} type="button" role="tab" aria-selected={activeGroup === group.id} onClick={() => { setActiveGroup(group.id); if (group.id !== 'vista') onReadOnlyChange(false) }} className={`min-h-9 min-w-0 rounded-[15px] px-1 text-[10px] font-extrabold transition ${activeGroup === group.id ? 'bg-violet-600 text-white shadow-sm' : mutedClass}`}><span className="block truncate">{group.label}</span></button>
+          ))}
+        </div>
+
+        <div className="mt-1.5 rounded-[18px] p-1.5">
+          {activeGroup === 'texto' && (
+            <div>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+                {styleButton('h1', 'Título', 'text-[16px] font-black tracking-[-0.025em]')}
+                {styleButton('h2', 'Encabezado', 'text-[13px] font-extrabold tracking-[-0.015em]')}
+                {styleButton('h3', 'Subtítulo', 'text-[12px] font-bold opacity-85')}
+                {styleButton('p', 'Cuerpo', 'text-[11px] font-medium')}
+                {styleButton('pre', 'Monoespaciado', 'text-[10px] font-mono')}
+              </div>
+              <div className="mt-1.5 grid grid-cols-7 gap-1.5">
+                {commandButton('Negrita', Bold, () => runInlineCommand('bold', 'bold'), formatState.bold, 'B')}
+                {commandButton('Cursiva', Italic, () => runInlineCommand('italic', 'italic'), formatState.italic, 'I')}
+                {commandButton('Subrayado', Underline, () => runInlineCommand('underline', 'underline'), formatState.underline, 'U')}
+                {commandButton('Tachado', Strikethrough, () => runInlineCommand('strikeThrough', 'strike'), formatState.strike, 'S')}
+                {commandButton('Limpiar formato', Eraser, () => runCommand('removeFormat'), false, 'Limpiar')}
+                {commandButton('Reducir tamaño del texto', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)), false, 'A−')}
+                {commandButton('Aumentar tamaño del texto', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)), false, 'A+')}
+              </div>
+            </div>
+          )}
+
+          {activeGroup === 'listas' && (
+            <div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {commandButton('Viñetas', List, () => toggleStandardList('bullet'), formatState.bullet, 'Viñetas')}
+                {commandButton('Guiones', Minus, () => toggleStandardList('dash'), formatState.dash, 'Guiones')}
+                {commandButton('Numerada', ListOrdered, () => toggleStandardList('numbered'), formatState.numbered, 'Numerada')}
+                {commandButton('Tareas', CheckSquare, insertChecklist, false, 'Tareas')}
+              </div>
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                {commandButton('Disminuir sangría', ChevronLeft, () => runCommand('outdent'), false, 'Menos sangría')}
+                {commandButton('Aumentar sangría', ChevronRight, () => runCommand('indent'), false, 'Más sangría')}
+              </div>
+              <p className={`mt-2 px-1 text-[10px] leading-4 ${mutedClass}`}>Enter continúa automáticamente viñetas, guiones, numeración y tareas. En una línea vacía, Enter termina la lista.</p>
+            </div>
+          )}
+
+          {activeGroup === 'insertar' && (
+            <div className="grid grid-cols-4 gap-1.5">
+              {commandButton('Cita', Quote, () => runCommand('formatBlock', 'blockquote'), false, 'Cita')}
+              {commandButton('Separador', Minus, () => runCommand('insertHorizontalRule'), false, 'Separador')}
+              {commandButton('Fecha y hora actual', CalendarClock, insertDateTime, false, 'Fecha y hora')}
+              {commandButton('Referencia bíblica', BookMarked, insertReference, false, 'Referencia')}
+            </div>
+          )}
+
+          {activeGroup === 'vista' && (
+            <div className="grid grid-cols-2 gap-1.5">
+              <button type="button" onClick={() => onReadOnlyChange(!readOnly)} className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-3 text-xs font-bold transition active:scale-[0.98] ${buttonClass}`} aria-pressed={readOnly}><Eye className="h-[18px] w-[18px]" aria-hidden="true" />{readOnly ? 'Seguir editando' : 'Solo lectura'}</button>
+              <button type="button" onClick={() => window.print()} className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-3 text-xs font-bold transition active:scale-[0.98] ${buttonClass}`} aria-label="Imprimir o guardar PDF"><Printer className="h-[18px] w-[18px]" aria-hidden="true" />Imprimir / PDF</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={`mt-1.5 flex items-center justify-between px-2 text-[10px] ${mutedClass}`}>
+        <span>{activeGroup === 'texto' ? 'Formato visible mientras escribes' : activeGroup === 'listas' ? 'Listas automáticas' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
+        <span className="font-bold">{fontSize}px</span>
+      </div>
+    </section>
+  )
+}

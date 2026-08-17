@@ -149,6 +149,8 @@ export default function EstudioProfundoClient({
   const [nota, setNota] = useState('')
   const [notaGuardando, setNotaGuardando] = useState(false)
   const [notaSuccess, setNotaSuccess] = useState(false)
+  const [estudioGuardando, setEstudioGuardando] = useState(false)
+  const [estudioGuardado, setEstudioGuardado] = useState(false)
   const [copiado, setCopiado] = useState<string | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
 
@@ -239,6 +241,7 @@ export default function EstudioProfundoClient({
     setActiveTab(state.kind)
     if (state.kind === 'study') {
       setActiveSection(null)
+      setEstudioGuardado(false)
       obtenerHistorial().then(setHistorial).catch(() => {})
       obtenerNota(state.pasaje).then(value => setNota(value || '')).catch(() => setNota(''))
     }
@@ -281,15 +284,60 @@ export default function EstudioProfundoClient({
     }
   }
 
-  const buildFullStudy = () => {
+  const buildStudySnapshot = () => {
     if (!isStudyResult) return ''
     return [
       `Estudio Profundo: ${state.pasaje}`,
       '',
       ...dashboardItems.flatMap(item => item.plainText ? [item.label, item.plainText, ''] : []),
-      nota.trim() ? `Mis notas\n${nota.trim()}` : '',
       'Vida Internacional',
     ].filter(Boolean).join('\n')
+  }
+
+  const mergeStudySnapshot = (existing: string, snapshot: string) => {
+    if (!isStudyResult) return existing
+    const start = `━━ Estudio guardado · ${state.pasaje} ━━`
+    const end = '━━ Fin del estudio guardado ━━'
+    const block = `${start}\n${snapshot}\n${end}`
+    const startIndex = existing.indexOf(start)
+    const endIndex = existing.indexOf(end)
+
+    if (startIndex >= 0 && endIndex >= startIndex) {
+      return `${existing.slice(0, startIndex)}${block}${existing.slice(endIndex + end.length)}`.trim()
+    }
+
+    return existing.trim()
+      ? `${block}\n\n━━ Mis apuntes ━━\n${existing.trim()}`
+      : block
+  }
+
+  const buildFullStudy = () => {
+    if (!isStudyResult) return ''
+    const marker = `━━ Estudio guardado · ${state.pasaje} ━━`
+    if (nota.includes(marker)) return nota
+    const snapshot = buildStudySnapshot()
+    return nota.trim() ? `${snapshot}\n\nMis notas\n${nota.trim()}` : snapshot
+  }
+
+  const handleSaveStudy = async () => {
+    if (!isStudyResult || estudioGuardando) return
+    const snapshot = buildStudySnapshot()
+    if (!snapshot.trim()) return
+
+    const contenido = mergeStudySnapshot(nota, snapshot)
+    setEstudioGuardando(true)
+    setEstudioGuardado(false)
+    const response = await guardarNota(state.pasaje, contenido)
+    setEstudioGuardando(false)
+
+    if (!response.success) {
+      mostrarToast(response.error)
+      return
+    }
+
+    setNota(contenido)
+    setEstudioGuardado(true)
+    avisar('Estudio guardado en Mis notas')
   }
 
   const shareStudy = async () => {
@@ -490,7 +538,7 @@ export default function EstudioProfundoClient({
             })}
 
             <button type="button" onClick={() => toggleSection('notas')} aria-expanded={activeSection === 'notas'} className={`inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-2xl border px-2 text-[11px] font-bold transition sm:min-h-12 sm:text-xs ${activeSection === 'notas' ? 'border-[#C0392B] bg-[#C0392B] text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50'}`}>
-              Notas
+              Mis notas
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${activeSection === 'notas' ? 'rotate-180' : ''}`} />
             </button>
 
@@ -506,6 +554,17 @@ export default function EstudioProfundoClient({
               Ver todo el estudio
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${activeSection === 'ver-todo' ? 'rotate-180' : ''}`} />
             </button>
+          </div>
+
+          <div className="grid gap-2 px-1 sm:grid-cols-2">
+            <button type="button" onClick={handleSaveStudy} disabled={estudioGuardando} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-4 text-xs font-black shadow-sm transition disabled:opacity-60 ${estudioGuardado ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+              {estudioGuardando ? <Loader2 className="h-4 w-4 animate-spin" /> : estudioGuardado ? <Check className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+              {estudioGuardando ? 'Guardando…' : estudioGuardado ? 'Estudio guardado' : 'Guardar estudio en Notas'}
+            </button>
+            <Link href="/biblia/notas" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <Edit3 className="h-4 w-4 text-[#C0392B]" />
+              Abrir mi cuaderno
+            </Link>
           </div>
 
           {activeItem && (

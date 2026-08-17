@@ -43,16 +43,57 @@ function cargarTema(): ModoBiblia {
   }
 }
 
+function elementoEditableActivo() {
+  const active = document.activeElement
+  if (!(active instanceof HTMLElement)) return false
+  if (active.isContentEditable) return true
+  if (active instanceof HTMLTextAreaElement) return true
+  if (active instanceof HTMLInputElement) {
+    return !['button', 'checkbox', 'radio', 'range', 'submit', 'reset'].includes(active.type)
+  }
+  return false
+}
+
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
   const { unreadAvisos } = usePendingIndicators()
   const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
   useEffect(() => setPortalReady(true), [])
+
+  useEffect(() => {
+    let frame = 0
+
+    const syncKeyboardImmediately = () => {
+      window.cancelAnimationFrame(frame)
+      const mobile = window.matchMedia('(pointer: coarse)').matches
+      setKeyboardOpen(mobile && elementoEditableActivo())
+    }
+
+    const syncAfterFocusOut = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(syncKeyboardImmediately)
+    }
+
+    // En iOS el focusin sucede antes de que el teclado termine de animarse.
+    // Ocultar la barra desde ese instante evita incluso el pequeño salto visual
+    // que produce Safari cuando recoloca elementos fixed al viewport visible.
+    document.addEventListener('focusin', syncKeyboardImmediately)
+    document.addEventListener('focusout', syncAfterFocusOut)
+    window.addEventListener('orientationchange', syncAfterFocusOut, { passive: true })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      document.removeEventListener('focusin', syncKeyboardImmediately)
+      document.removeEventListener('focusout', syncAfterFocusOut)
+      window.removeEventListener('orientationchange', syncAfterFocusOut)
+    }
+  }, [])
 
   useEffect(() => {
     if (!dentroBiblia) return
@@ -79,7 +120,18 @@ export default function BottomNav() {
   }[modo]
 
   const navigation = (
-    <div className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] w-full border-t transition-colors ${tema.nav} ${tema.shadow}`} style={{ position: 'fixed', insetInline: 0, bottom: 0, width: '100%', paddingRight: 'env(safe-area-inset-right, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)', paddingLeft: 'env(safe-area-inset-left, 0px)', transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', isolation: 'isolate' }}>
+    <div
+      data-bottom-nav-fixed="true"
+      data-keyboard-policy="layout-bottom-covered"
+      data-keyboard-open={keyboardOpen ? 'true' : 'false'}
+      aria-hidden={keyboardOpen ? 'true' : undefined}
+      className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${keyboardOpen ? 'hidden' : 'block'} ${tema.nav} ${tema.shadow}`}
+      style={{
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+      }}
+    >
       <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon

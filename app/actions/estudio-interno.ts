@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { obtenerEstudioInterno, referenciasInternasDisponibles } from '@/lib/estudios/internal-study'
+import { obtenerEstudioInterno } from '@/lib/estudios/internal-study'
 import {
   buscarConcordanciasBiblicas,
   buscarConcordanciasParaReferencia,
@@ -173,6 +173,41 @@ async function buscarConcordanciasDesdeContexto(bundle: BiblicalContextBundle) {
     .slice(0, 8)
 }
 
+async function resolverConcordanciasSugeridas(suggestions: SugerenciaLugarBiblico[]) {
+  const searches = await Promise.all(
+    suggestions.slice(0, 4).map(suggestion => buscarConcordanciasBiblicas(suggestion.query, 80))
+  )
+  const merged = new Map<string, ConcordanciaResultado>()
+
+  for (const search of searches) {
+    for (const result of search.results) {
+      const previous = merged.get(result.termId)
+      if (!previous) {
+        merged.set(result.termId, { ...result, matches: [...result.matches] })
+        continue
+      }
+
+      const seen = new Set(previous.matches.map(match => `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`))
+      for (const match of result.matches) {
+        const key = `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`
+        if (!seen.has(key) && previous.matches.length < 12) {
+          previous.matches.push(match)
+          seen.add(key)
+        }
+      }
+      previous.score = Math.max(previous.score, result.score)
+    }
+  }
+
+  return {
+    labels: suggestions.slice(0, 4).map(suggestion => suggestion.label),
+    results: Array.from(merged.values())
+      .filter(result => result.matches.length > 0)
+      .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term, 'es'))
+      .slice(0, 8),
+  }
+}
+
 export async function analizarPasaje(
   _prev: EstudioState,
   formData: FormData
@@ -296,13 +331,23 @@ export async function analizarPasaje(
     }
   }
   if (assistedTopic?.kind === 'suggestions') {
+    const related = await resolverConcordanciasSugeridas(assistedTopic.suggestions)
+    if (related.results.length > 0) {
+      return {
+        status: 'success',
+        kind: 'concordance',
+        query,
+        results: related.results,
+        interpretedFrom: query,
+        interpretedAs: related.labels.join(', '),
+      }
+    }
     return { status: 'suggestions', query, suggestions: assistedTopic.suggestions }
   }
 
-  const disponibles = referenciasInternasDisponibles().join(' y ')
   return {
     status: 'error',
-    error: `No pudimos relacionar “${query}” con una referencia, lugar o tema aprobado. Pruebe con otra forma de escribirlo o con ${disponibles}.`,
+    error: `No encontramos un tema aprobado suficientemente relacionado con “${query}”. Pruebe con otra forma de expresarlo o use una referencia bíblica concreta.`,
   }
 }
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#7c3aed" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>Notas bíblicas · Vida Internacional</title>
+  <title>Cuaderno · Vida Internacional</title>
   <style>
     :root {
       color-scheme: light;
@@ -18,6 +18,7 @@
       --muted: #64748b;
       --border: #e2e8f0;
       --violet: #7c3aed;
+      --violet-soft: #f5f3ff;
       --selected: #ede9fe;
       --danger: #e11d48;
     }
@@ -30,6 +31,7 @@
       --text: #382d21;
       --muted: #7d6b54;
       --border: #d4c09b;
+      --violet-soft: #eee1c3;
       --selected: #e4cea3;
     }
     :root[data-biblia-tema="oscuro"] {
@@ -42,60 +44,94 @@
       --text: #f8fafc;
       --muted: #94a3b8;
       --border: #334155;
+      --violet-soft: #2e1065;
       --selected: #2e1065;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: var(--page); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     button, input, textarea, select { font: inherit; color: inherit; }
-    button { cursor: pointer; }
-    .page { min-height: 100vh; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 32px); }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+    .page { min-height: 100vh; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 36px); }
     .wrap { width: min(100%, 980px); margin: 0 auto; }
-    .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
     .header-left { display: flex; min-width: 0; align-items: center; gap: 12px; }
-    .circle { width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; border: 1px solid var(--border); background: var(--field); color: var(--text); flex: 0 0 auto; }
-    .new { border: 0; background: var(--violet); color: white; font-size: 24px; }
-    h1 { margin: 0; font-size: 21px; line-height: 1.2; }
-    .subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .offline-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 5px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 700; }
+    .circle { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; border: 1px solid var(--border); background: var(--field); color: var(--text); flex: 0 0 auto; }
+    .new { min-height: 48px; border: 0; border-radius: 999px; background: var(--violet); color: white; padding: 0 16px; font-size: 13px; font-weight: 850; }
+    h1 { margin: 0; font-size: 23px; line-height: 1.15; }
+    .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .offline-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 7px; padding: 6px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 750; }
     .dot { width: 7px; height: 7px; border-radius: 999px; background: #f59e0b; }
-    .panel { overflow: hidden; border: 1px solid var(--border); border-radius: 26px; background: var(--panel); box-shadow: 0 1px 4px rgba(15,23,42,.06); }
-    .top { padding: 12px; border-bottom: 1px solid var(--border); }
-    .search { min-height: 44px; display: flex; align-items: center; gap: 8px; border-radius: 16px; padding: 0 12px; background: var(--soft); }
-    .search input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 14px; }
-    .cards { display: flex; gap: 12px; overflow-x: auto; min-height: 104px; padding: 14px 0 6px; scrollbar-width: none; }
-    .cards::-webkit-scrollbar { display: none; }
-    .card { width: 80px; height: 80px; flex: 0 0 80px; border: 0; border-radius: 999px; padding: 8px; background: var(--soft); color: var(--text); box-shadow: inset 0 0 0 1px transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-    .card.selected { background: var(--selected); box-shadow: inset 0 0 0 1px rgba(124,58,237,.35); }
-    .card-title { width: 100%; font-size: 11px; font-weight: 800; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .card-meta { width: 100%; margin-top: 4px; color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .editor { min-height: calc(100vh - 300px); padding: 18px; background: var(--editor); }
+    .panel { overflow: hidden; border: 1px solid var(--border); border-radius: 28px; background: var(--panel); box-shadow: 0 1px 5px rgba(15,23,42,.07); }
+    .top { padding: 14px; border-bottom: 1px solid var(--border); }
+    .search { min-height: 48px; display: flex; align-items: center; gap: 9px; border-radius: 17px; padding: 0 14px; background: var(--soft); }
+    .search input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 16px; }
+    .filter-label { margin: 12px 2px 0; color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+    .filters { display: flex; gap: 8px; overflow-x: auto; padding-top: 7px; scrollbar-width: none; }
+    .filters::-webkit-scrollbar, .cards::-webkit-scrollbar { display: none; }
+    .filter { min-height: 38px; flex: 0 0 auto; border: 1px solid var(--border); border-radius: 999px; padding: 0 13px; background: var(--field); color: var(--muted); font-size: 12px; font-weight: 800; }
+    .filter.active { border-color: rgba(124,58,237,.48); background: var(--violet-soft); color: #7c3aed; }
+    .cards { display: flex; gap: 10px; overflow-x: auto; min-height: 112px; padding: 14px 0 4px; scrollbar-width: none; }
+    .card { width: 154px; height: 94px; flex: 0 0 154px; border: 1px solid var(--border); border-radius: 18px; padding: 12px; background: var(--field); color: var(--text); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; text-align: left; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+    .card.selected { border-color: rgba(124,58,237,.52); background: var(--selected); box-shadow: 0 0 0 1px rgba(124,58,237,.18); }
+    .card-title { width: 100%; font-size: 12px; font-weight: 850; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .card-meta { width: 100%; color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .editor { min-height: calc(100vh - 320px); padding: 18px; background: var(--editor); }
     .title-row { display: flex; gap: 12px; align-items: flex-start; }
-    .title { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; font-size: 25px; font-weight: 800; }
-    .delete { border: 0; background: rgba(225,29,72,.1); color: var(--danger); font-size: 17px; }
-    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-    label span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-    .field { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 11px; outline: 0; background: var(--field); }
-    .package { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
-    .sermon { margin-top: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--field); }
+    .title { min-width: 0; flex: 1; min-height: 48px; border: 0; outline: 0; background: transparent; font-size: 27px; font-weight: 850; }
+    .delete { border: 0; background: rgba(225,29,72,.1); color: var(--danger); font-size: 18px; }
+    .origin-banner { margin-top: 12px; display: flex; align-items: center; gap: 8px; min-height: 42px; border: 1px solid var(--border); border-radius: 14px; padding: 8px 12px; background: var(--field); color: var(--text); font-size: 12px; font-weight: 800; }
+    .origin-banner span:last-child { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-weight: 700; }
+    .fields { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+    label span, .field-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .04em; }
+    .field { width: 100%; min-height: 48px; border: 1px solid var(--border); border-radius: 13px; padding: 0 12px; outline: 0; background: var(--field); font-size: 16px; }
+    .package { color: var(--muted); font-size: 12px; }
+    .sermon { margin-top: 16px; padding: 14px; border: 1px solid var(--border); border-radius: 18px; background: var(--field); }
     .sermon-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .sermon-title { margin: 0; font-size: 14px; font-weight: 800; }
-    .sermon-note { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
-    .sermon .fields { margin-top: 12px; }
-    .secondary { min-height: 36px; flex: 0 0 auto; border: 0; border-radius: 999px; padding: 0 12px; background: var(--soft); color: var(--text); font-size: 11px; font-weight: 800; }
-    .readonly { font-weight: 800; }
+    .sermon-title { margin: 0; font-size: 15px; font-weight: 850; }
+    .sermon-note { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .secondary { min-height: 42px; flex: 0 0 auto; border: 0; border-radius: 999px; padding: 0 13px; background: var(--soft); color: var(--text); font-size: 12px; font-weight: 800; }
+    .readonly { font-weight: 850; }
+    .tools-wrap { margin-top: 16px; }
+    .tools-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+    .tools-title { margin: 0; font-size: 14px; font-weight: 850; }
+    .tools-help { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .font-pill { flex: 0 0 auto; border-radius: 999px; padding: 5px 8px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 800; }
+    .format-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 9px; border: 1px solid var(--border); border-radius: 17px; background: var(--field); }
+    .tool { min-height: 54px; min-width: 0; border: 0; border-radius: 12px; padding: 6px 4px; background: var(--soft); color: var(--text); font-size: 11px; font-weight: 800; line-height: 1.15; }
+    .tool:disabled { opacity: .45; cursor: default; }
+    .tool-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+    .tool-row .tool { min-height: 48px; }
     .save-state { margin: 14px 0 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--field); color: var(--muted); font-size: 11px; text-align: right; }
-    textarea { width: 100%; min-height: 48vh; margin-top: 14px; border: 0; outline: 0; resize: none; background: transparent; font-size: 17px; line-height: 1.85; }
+    textarea { width: 100%; min-height: 48vh; margin-top: 14px; border: 0; outline: 0; resize: none; background: transparent; color: var(--text); font-size: 17px; line-height: 1.85; }
+    .preview { min-height: 48vh; margin-top: 14px; border: 1px solid var(--border); border-radius: 18px; padding: 16px; background: var(--field); line-height: 1.8; }
+    .preview h3 { margin: 20px 0 6px; font-size: 1.25em; line-height: 1.25; }
+    .preview p { margin: 0; }
+    .preview-row { display: flex; gap: 10px; }
+    .preview-quote { margin: 8px 0; border-left: 4px solid rgba(124,58,237,.55); padding-left: 12px; font-style: italic; color: var(--muted); }
+    .preview hr { margin: 16px 0; border: 0; border-top: 1px solid var(--border); }
     .empty, .protected { min-height: 55vh; padding: 36px 22px; display: grid; place-items: center; text-align: center; background: var(--editor); }
-    .empty-inner { max-width: 360px; }
-    .icon { margin: 0 auto 12px; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: var(--selected); color: var(--violet); font-size: 24px; }
-    .empty h2, .protected h2 { margin: 0; font-size: 19px; }
-    .empty p, .protected p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
-    .primary { min-height: 44px; margin-top: 18px; border: 0; border-radius: 999px; padding: 0 18px; background: var(--violet); color: white; font-weight: 800; font-size: 13px; }
+    .empty-inner { max-width: 380px; }
+    .icon { margin: 0 auto 12px; width: 52px; height: 52px; border-radius: 17px; display: grid; place-items: center; background: var(--selected); color: var(--violet); font-size: 25px; }
+    .empty h2, .protected h2 { margin: 0; font-size: 20px; }
+    .empty p, .protected p { margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .primary { min-height: 48px; margin-top: 18px; border: 0; border-radius: 999px; padding: 0 18px; background: var(--violet); color: white; font-weight: 850; font-size: 14px; }
     [hidden] { display: none !important; }
     @media (min-width: 640px) {
       .page { padding-inline: 24px; }
       .editor { padding: 24px; }
-      .fields { grid-template-columns: 1fr 1fr; }
+      .fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .format-tools { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .tool-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media print {
+      body { background: white !important; color: #111827 !important; }
+      .header, .top, .tools-wrap, .save-state, .delete, .origin-banner, .sermon-head button { display: none !important; }
+      .page { padding: 0 !important; }
+      .panel { border: 0 !important; box-shadow: none !important; }
+      .editor { padding: 24px !important; background: white !important; }
+      .field { border-color: #d1d5db !important; }
+      textarea { min-height: auto !important; color: #111827 !important; }
     }
   </style>
 </head>
@@ -106,12 +142,12 @@
         <div class="header-left">
           <button id="back" class="circle" type="button" aria-label="Volver">‹</button>
           <div style="min-width:0">
-            <h1>Notas bíblicas</h1>
-            <p class="subtitle">Cuaderno de versículos, estudios y predicaciones</p>
+            <h1>Cuaderno</h1>
+            <p id="subtitle" class="subtitle">Todas tus notas en un solo lugar</p>
             <span id="status" class="offline-pill"><span class="dot"></span>Sin conexión · guardado local</span>
           </div>
         </div>
-        <button id="new" class="circle new" type="button" aria-label="Nueva nota">+</button>
+        <button id="new" class="new" type="button" aria-label="Nueva nota">＋ Nueva</button>
       </header>
 
       <section class="panel">
@@ -119,14 +155,28 @@
           <div class="empty-inner">
             <div class="icon">🔒</div>
             <h2>Tus notas están protegidas</h2>
-            <p>Para identificar tu cuaderno sin Internet, abre Biblia → Notas una vez mientras tengas conexión y vuelve a intentarlo.</p>
+            <p>Para identificar tu cuaderno sin Internet, abre el Cuaderno una vez mientras tengas conexión y vuelve a intentarlo.</p>
             <button id="retry" class="primary" type="button">Reintentar</button>
           </div>
         </div>
 
         <div id="notebook" hidden>
           <div class="top">
-            <label class="search" aria-label="Buscar notas"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar notas" autocomplete="off" /></label>
+            <label class="search" aria-label="Buscar notas"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar en todo el cuaderno" autocomplete="off" /></label>
+            <p class="filter-label">Tipo de nota</p>
+            <div id="type-filters" class="filters" aria-label="Filtrar notas por tipo">
+              <button class="filter active" type="button" data-type="todas">Todas</button>
+              <button class="filter" type="button" data-type="versiculo">Versículos</button>
+              <button class="filter" type="button" data-type="estudio">Estudios</button>
+              <button class="filter" type="button" data-type="predicacion">Predicaciones</button>
+              <button class="filter" type="button" data-type="personal">Personales</button>
+            </div>
+            <p class="filter-label">Origen</p>
+            <div id="origin-filters" class="filters" aria-label="Filtrar notas por origen">
+              <button class="filter active" type="button" data-origin="todos">Todos los orígenes</button>
+              <button class="filter" type="button" data-origin="estudio_profundo">Estudio Profundo</button>
+              <button class="filter" type="button" data-origin="biblia_notas">Cuaderno</button>
+            </div>
             <div id="cards" class="cards"></div>
           </div>
 
@@ -135,6 +185,7 @@
               <input id="title" class="title" type="text" placeholder="Título" maxlength="300" />
               <button id="delete" class="circle delete" type="button" aria-label="Eliminar nota">⌫</button>
             </div>
+            <div id="origin-banner" class="origin-banner" hidden><span>Origen: Estudio Profundo</span><span id="origin-reference"></span></div>
             <div class="fields">
               <label><span>Tipo</span><select id="type" class="field"><option value="versiculo">Versículo</option><option value="estudio">Estudio</option><option value="predicacion">Predicación</option><option value="personal">Personal</option></select></label>
               <label><span>Referencia</span><input id="reference" class="field" type="text" placeholder="Ej. Juan 3:16" maxlength="300" /></label>
@@ -147,7 +198,7 @@
                   <p class="sermon-title">Datos de predicación</p>
                   <p id="sermon-note" class="sermon-note">El número correlativo se asignará al sincronizar con Internet.</p>
                 </div>
-                <button id="sermon-export" class="secondary" type="button">Exportar</button>
+                <button id="sermon-export" class="secondary" type="button">Imprimir / PDF</button>
               </div>
               <div class="fields">
                 <label><span>N.º de prédica</span><input id="sermon-number" class="field readonly" type="text" value="Pendiente" readonly /></label>
@@ -159,15 +210,41 @@
               </div>
             </section>
 
+            <section class="tools-wrap" aria-label="Herramientas de edición offline">
+              <div class="tools-head">
+                <div><p class="tools-title">Herramientas de edición</p><p class="tools-help">Selecciona texto y toca una herramienta. Usa Vista de lectura para comprobar cómo quedará.</p></div>
+                <span id="font-pill" class="font-pill">17px</span>
+              </div>
+              <div id="format-tools" class="format-tools">
+                <button class="tool" type="button" data-format="heading">Título</button>
+                <button class="tool" type="button" data-format="bold">Negrita</button>
+                <button class="tool" type="button" data-format="italic">Cursiva</button>
+                <button class="tool" type="button" data-format="bullet">Lista</button>
+                <button class="tool" type="button" data-format="numbered">Numerada</button>
+                <button class="tool" type="button" data-format="task">Tareas</button>
+                <button class="tool" type="button" data-format="quote">Cita</button>
+                <button class="tool" type="button" data-format="separator">Separador</button>
+                <button class="tool" type="button" data-format="date">Fecha</button>
+                <button class="tool" type="button" data-format="reference">Referencia</button>
+              </div>
+              <div class="tool-row">
+                <button id="font-down" class="tool" type="button">Texto −</button>
+                <button id="font-up" class="tool" type="button">Texto +</button>
+                <button id="preview-toggle" class="tool" type="button">Vista de lectura</button>
+                <button id="print-note" class="tool" type="button">Imprimir / PDF</button>
+              </div>
+            </section>
+
             <div class="save-state">Guardado automático en este dispositivo</div>
             <textarea id="content" placeholder="Empieza a escribir…"></textarea>
+            <article id="preview" class="preview" aria-label="Vista de lectura de la nota" hidden></article>
           </section>
 
           <div id="empty" class="empty" hidden>
             <div class="empty-inner">
               <div class="icon">✎</div>
               <h2>Tu cuaderno está disponible sin Internet</h2>
-              <p>Puedes crear o editar notas. Los cambios se sincronizarán cuando vuelva la conexión.</p>
+              <p>Puedes crear, ordenar y editar notas. Los cambios se sincronizarán cuando vuelva la conexión.</p>
               <button id="empty-new" class="primary" type="button">Crear nota</button>
             </div>
           </div>
@@ -181,9 +258,9 @@
       const ACTIVE_OWNER_KEY = 'vida-biblia-notas-active-owner-v1'
       const USER_STORAGE_PREFIX = 'vida-biblia-notas-v3'
       const QUEUE_KEY = 'vida-biblia-notas-sync-v1'
+      const FONT_KEY = 'vida-cuaderno-font-size-v1'
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
       const TYPES = new Set(['versiculo', 'estudio', 'predicacion', 'personal'])
-
       const el = (id) => document.getElementById(id)
       const protectedView = el('protected')
       const notebook = el('notebook')
@@ -195,6 +272,8 @@
       const type = el('type')
       const reference = el('reference')
       const packageEl = el('package')
+      const originBanner = el('origin-banner')
+      const originReference = el('origin-reference')
       const sermon = el('sermon')
       const sermonNote = el('sermon-note')
       const sermonNumber = el('sermon-number')
@@ -204,7 +283,14 @@
       const sermonPreacher = el('sermon-preacher')
       const sermonState = el('sermon-state')
       const content = el('content')
+      const preview = el('preview')
+      const previewToggle = el('preview-toggle')
+      const formatTools = Array.from(document.querySelectorAll('[data-format]'))
+      const typeFilters = Array.from(document.querySelectorAll('[data-type]'))
+      const originFilters = Array.from(document.querySelectorAll('[data-origin]'))
       const status = el('status')
+      const subtitle = el('subtitle')
+      const fontPill = el('font-pill')
 
       try {
         const raw = localStorage.getItem('vida-biblia-preferencias')
@@ -216,7 +302,6 @@
         try {
           const activo = localStorage.getItem(ACTIVE_OWNER_KEY) || ''
           if (UUID_RE.test(activo)) return activo
-
           const owners = []
           for (let index = 0; index < localStorage.length; index += 1) {
             const key = localStorage.key(index) || ''
@@ -224,17 +309,13 @@
             const candidate = key.slice(USER_STORAGE_PREFIX.length + 1)
             if (UUID_RE.test(candidate) && !owners.includes(candidate)) owners.push(candidate)
           }
-
           if (owners.length !== 1) return null
           localStorage.setItem(ACTIVE_OWNER_KEY, owners[0])
           return owners[0]
-        } catch {
-          return null
-        }
+        } catch { return null }
       }
 
       const ownerId = resolverOwnerId()
-
       if (!ownerId) {
         protectedView.hidden = false
         el('new').hidden = true
@@ -246,6 +327,11 @@
       const storageKey = `${USER_STORAGE_PREFIX}:${ownerId}`
       let selectedId = null
       let notes = []
+      let activeType = 'todas'
+      let activeOrigin = 'todos'
+      let previewMode = false
+      let fontSize = 17
+      try { fontSize = Math.min(22, Math.max(16, Number(localStorage.getItem(FONT_KEY)) || 17)) } catch {}
 
       const now = () => new Date().toISOString()
       const normalize = (value) => {
@@ -258,6 +344,10 @@
           referencia: typeof value?.referencia === 'string' ? value.referencia : '',
           paqueteId: typeof value?.paqueteId === 'string' ? value.paqueteId : '',
           paquete: typeof value?.paquete === 'string' ? value.paquete : '',
+          origen: typeof value?.origen === 'string' && value.origen.trim() ? value.origen : 'biblia_notas',
+          origenKey: typeof value?.origenKey === 'string' ? value.origenKey : '',
+          pasajeNormalizado: typeof value?.pasajeNormalizado === 'string' ? value.pasajeNormalizado : '',
+          contexto: value?.contexto && typeof value.contexto === 'object' && !Array.isArray(value.contexto) ? value.contexto : {},
           numeroPredicacion: Number.isInteger(value?.numeroPredicacion) && value.numeroPredicacion > 0 ? value.numeroPredicacion : null,
           fechaPredicacion: typeof value?.fechaPredicacion === 'string' ? value.fechaPredicacion : '',
           serie: typeof value?.serie === 'string' ? value.serie : '',
@@ -270,30 +360,22 @@
       }
 
       const readArray = (key) => {
-        try {
-          const parsed = JSON.parse(localStorage.getItem(key) || '[]')
-          return Array.isArray(parsed) ? parsed : []
-        } catch { return [] }
+        try { const parsed = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(parsed) ? parsed : [] } catch { return [] }
       }
-
-      const writeNotes = () => {
-        try { localStorage.setItem(storageKey, JSON.stringify(notes)) } catch {}
-      }
-
+      const writeNotes = () => { try { localStorage.setItem(storageKey, JSON.stringify(notes)) } catch {} }
       const enqueue = (kind, noteOrId) => {
         try {
+          const note = typeof noteOrId === 'string' ? null : noteOrId
           const id = typeof noteOrId === 'string' ? noteOrId : noteOrId.id
           const operation = kind === 'delete'
-            ? { tipo: 'delete', id, token: crypto.randomUUID(), ownerId, encoladaEn: now() }
+            ? { tipo: 'delete', id, token: crypto.randomUUID(), ownerId, origen: note?.origen?.trim() || 'biblia_notas', encoladaEn: now() }
             : { tipo: 'upsert', id, token: crypto.randomUUID(), ownerId, nota: noteOrId, encoladaEn: now() }
           const queue = readArray(QUEUE_KEY).filter((item) => !(item && item.id === id && item.ownerId === ownerId))
           queue.push(operation)
           localStorage.setItem(QUEUE_KEY, JSON.stringify(queue))
         } catch {}
       }
-
       const selected = () => notes.find((note) => note.id === selectedId) || null
-
       const persistSelected = () => {
         const note = selected()
         if (!note) return
@@ -301,19 +383,22 @@
         writeNotes()
         enqueue('upsert', note)
       }
-
+      const typeName = (note) => ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
       const cardMeta = (note) => {
         if (note.tipo === 'predicacion' && note.numeroPredicacion) return `Prédica #${note.numeroPredicacion}`
-        return note.referencia || ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
+        const base = note.referencia || typeName(note)
+        return note.origen === 'estudio_profundo' ? `Estudio · ${base}` : base
       }
+      const refreshSubtitle = () => { subtitle.textContent = `${notes.length} ${notes.length === 1 ? 'nota' : 'notas'} · cuaderno personal` }
 
       const renderCards = () => {
         cards.replaceChildren()
         const term = (search.value || '').trim().toLowerCase()
         const filtered = [...notes]
-          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete} ${note.numeroPredicacion || ''} ${note.fechaPredicacion} ${note.serie} ${note.lugar} ${note.predicador} ${note.estadoPredicacion}`.toLowerCase().includes(term))
+          .filter((note) => activeType === 'todas' || note.tipo === activeType)
+          .filter((note) => activeOrigin === 'todos' || note.origen === activeOrigin)
+          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete} ${note.origen} ${note.numeroPredicacion || ''} ${note.fechaPredicacion} ${note.serie} ${note.lugar} ${note.predicador} ${note.estadoPredicacion}`.toLowerCase().includes(term))
           .sort((a, b) => String(b.actualizadaEn).localeCompare(String(a.actualizadaEn)))
-
         filtered.forEach((note) => {
           const button = document.createElement('button')
           button.type = 'button'
@@ -325,9 +410,87 @@
           meta.className = 'card-meta'
           meta.textContent = cardMeta(note)
           button.append(name, meta)
-          button.addEventListener('click', () => { selectedId = note.id; render() })
+          button.addEventListener('click', () => { selectedId = note.id; setPreviewMode(false); render() })
           cards.append(button)
         })
+      }
+
+      const appendInline = (parent, text) => {
+        const parts = text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g).filter(Boolean)
+        parts.forEach((part) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            const strong = document.createElement('strong'); strong.textContent = part.slice(2, -2); parent.append(strong)
+          } else if (part.startsWith('*') && part.endsWith('*')) {
+            const em = document.createElement('em'); em.textContent = part.slice(1, -1); parent.append(em)
+          } else parent.append(document.createTextNode(part))
+        })
+      }
+      const renderPreview = () => {
+        preview.replaceChildren()
+        const note = selected()
+        if (!note || !note.contenido.trim()) {
+          const emptyText = document.createElement('p'); emptyText.textContent = 'La nota está vacía. Toca Editar para comenzar a escribir.'; emptyText.style.color = 'var(--muted)'; preview.append(emptyText); return
+        }
+        note.contenido.split('\n').forEach((line) => {
+          const trimmed = line.trim()
+          if (!trimmed) { const spacer = document.createElement('div'); spacer.style.height = '12px'; preview.append(spacer); return }
+          if (/^─{4,}$/.test(trimmed)) { preview.append(document.createElement('hr')); return }
+          if (trimmed.startsWith('## ')) { const h = document.createElement('h3'); appendInline(h, trimmed.slice(3)); preview.append(h); return }
+          if (trimmed.startsWith('> ')) { const q = document.createElement('blockquote'); q.className = 'preview-quote'; appendInline(q, trimmed.slice(2)); preview.append(q); return }
+          const numbered = trimmed.match(/^(\d+)\.\s+(.*)$/)
+          if (trimmed.startsWith('• ') || trimmed.startsWith('☐ ') || numbered) {
+            const row = document.createElement('div'); row.className = 'preview-row'
+            const marker = document.createElement('strong')
+            let body = trimmed
+            if (trimmed.startsWith('• ')) { marker.textContent = '•'; body = trimmed.slice(2) }
+            else if (trimmed.startsWith('☐ ')) { marker.textContent = '☐'; body = trimmed.slice(2) }
+            else { marker.textContent = `${numbered[1]}.`; body = numbered[2] }
+            const p = document.createElement('p'); appendInline(p, body); row.append(marker, p); preview.append(row); return
+          }
+          const p = document.createElement('p'); appendInline(p, line); preview.append(p)
+        })
+      }
+      const setPreviewMode = (next) => {
+        previewMode = Boolean(next)
+        content.hidden = previewMode
+        preview.hidden = !previewMode
+        formatTools.forEach((button) => { button.disabled = previewMode })
+        previewToggle.textContent = previewMode ? 'Editar' : 'Vista de lectura'
+        if (previewMode) renderPreview()
+        else requestAnimationFrame(() => content.focus())
+      }
+      const updateFont = (next) => {
+        fontSize = Math.min(22, Math.max(16, next))
+        content.style.fontSize = `${fontSize}px`
+        preview.style.fontSize = `${fontSize}px`
+        fontPill.textContent = `${fontSize}px`
+        try { localStorage.setItem(FONT_KEY, String(fontSize)) } catch {}
+      }
+
+      const applySelection = (transform, fallback = '') => {
+        if (previewMode) return
+        const start = content.selectionStart
+        const end = content.selectionEnd
+        const selectedText = content.value.slice(start, end)
+        const replacement = transform(selectedText || fallback)
+        content.value = `${content.value.slice(0, start)}${replacement}${content.value.slice(end)}`
+        const note = selected(); if (!note) return
+        note.contenido = content.value
+        persistSelected()
+        requestAnimationFrame(() => { content.focus(); content.setSelectionRange(start + replacement.length, start + replacement.length) })
+      }
+      const prefixLines = (prefix) => applySelection((selectedText) => selectedText.split('\n').map((line, index) => `${prefix(index)}${line}`).join('\n'), '')
+      const runFormat = (format) => {
+        if (format === 'heading') prefixLines(() => '## ')
+        else if (format === 'bold') applySelection((text) => `**${text}**`, 'texto')
+        else if (format === 'italic') applySelection((text) => `*${text}*`, 'texto')
+        else if (format === 'bullet') prefixLines(() => '• ')
+        else if (format === 'numbered') prefixLines((index) => `${index + 1}. `)
+        else if (format === 'task') prefixLines(() => '☐ ')
+        else if (format === 'quote') prefixLines(() => '> ')
+        else if (format === 'separator') applySelection(() => '\n\n──────────\n\n')
+        else if (format === 'date') applySelection(() => `${new Date().toLocaleString('es-SV')} — `)
+        else if (format === 'reference') applySelection(() => reference.value ? `${reference.value} — ` : 'Referencia — ')
       }
 
       const renderEditor = () => {
@@ -342,100 +505,85 @@
         content.value = note.contenido
         packageEl.hidden = !note.paquete
         packageEl.textContent = note.paquete ? `Paquete pastoral: ${note.paquete}` : ''
-
+        originBanner.hidden = note.origen !== 'estudio_profundo'
+        originReference.textContent = note.origen === 'estudio_profundo' ? note.referencia : ''
         const isSermon = note.tipo === 'predicacion'
         sermon.hidden = !isSermon
         if (isSermon) {
           sermonNumber.value = note.numeroPredicacion ? `#${note.numeroPredicacion}` : 'Pendiente'
-          sermonNote.textContent = note.numeroPredicacion
-            ? `Prédica #${note.numeroPredicacion}`
-            : 'El número correlativo se asignará al sincronizar con Internet.'
+          sermonNote.textContent = note.numeroPredicacion ? `Prédica #${note.numeroPredicacion}` : 'El número correlativo se asignará al sincronizar con Internet.'
           sermonDate.value = note.fechaPredicacion
           sermonSeries.value = note.serie
           sermonPlace.value = note.lugar
           sermonPreacher.value = note.predicador
           sermonState.value = note.estadoPredicacion
         }
+        updateFont(fontSize)
+        if (previewMode) renderPreview()
       }
-
-      const render = () => {
-        renderCards()
-        renderEditor()
-      }
+      const render = () => { refreshSubtitle(); renderCards(); renderEditor() }
 
       const createNote = () => {
         const stamp = now()
-        const note = normalize({
-          id: crypto.randomUUID(),
-          titulo: 'Nueva nota',
-          contenido: '',
-          tipo: 'personal',
-          referencia: '',
-          paqueteId: '',
-          paquete: '',
-          numeroPredicacion: null,
-          fechaPredicacion: '',
-          serie: '',
-          lugar: '',
-          predicador: '',
-          estadoPredicacion: '',
-          creadaEn: stamp,
-          actualizadaEn: stamp,
-        })
+        const note = normalize({ id: crypto.randomUUID(), titulo: 'Nueva nota', contenido: '', tipo: 'personal', referencia: '', paqueteId: '', paquete: '', origen: 'biblia_notas', origenKey: '', pasajeNormalizado: '', contexto: {}, numeroPredicacion: null, fechaPredicacion: '', serie: '', lugar: '', predicador: '', estadoPredicacion: '', creadaEn: stamp, actualizadaEn: stamp })
         notes.unshift(note)
         selectedId = note.id
         writeNotes()
         enqueue('upsert', note)
+        setPreviewMode(false)
         render()
         requestAnimationFrame(() => title.focus())
       }
-
       const deleteSelected = () => {
         const note = selected()
         if (!note) return
         notes = notes.filter((item) => item.id !== note.id)
-        enqueue('delete', note.id)
+        enqueue('delete', note)
         writeNotes()
         selectedId = notes[0]?.id || null
+        setPreviewMode(false)
         render()
       }
-
       const updateSermonField = (field, value) => {
-        const note = selected()
-        if (!note || note.tipo !== 'predicacion') return
-        note[field] = value
-        persistSelected()
-        renderCards()
+        const note = selected(); if (!note || note.tipo !== 'predicacion') return
+        note[field] = value; persistSelected(); renderCards()
       }
 
       notes = readArray(storageKey).map(normalize)
       writeNotes()
       selectedId = notes[0]?.id || null
       notebook.hidden = false
+      updateFont(fontSize)
       render()
 
       el('new').addEventListener('click', createNote)
       el('empty-new').addEventListener('click', createNote)
       el('delete').addEventListener('click', deleteSelected)
-      el('back').addEventListener('click', () => { if (history.length > 1) history.back() })
+      el('back').addEventListener('click', () => { if (history.length > 1) history.back(); else location.href = '/estudios' })
       el('sermon-export').addEventListener('click', () => window.print())
+      el('print-note').addEventListener('click', () => window.print())
+      el('font-down').addEventListener('click', () => updateFont(fontSize - 1))
+      el('font-up').addEventListener('click', () => updateFont(fontSize + 1))
+      previewToggle.addEventListener('click', () => setPreviewMode(!previewMode))
+      formatTools.forEach((button) => button.addEventListener('click', () => runFormat(button.dataset.format || '')))
       search.addEventListener('input', renderCards)
+      typeFilters.forEach((button) => button.addEventListener('click', () => {
+        activeType = button.dataset.type || 'todas'
+        typeFilters.forEach((item) => item.classList.toggle('active', item === button))
+        renderCards()
+      }))
+      originFilters.forEach((button) => button.addEventListener('click', () => {
+        activeOrigin = button.dataset.origin || 'todos'
+        originFilters.forEach((item) => item.classList.toggle('active', item === button))
+        renderCards()
+      }))
       title.addEventListener('input', () => { const note = selected(); if (!note) return; note.titulo = title.value; persistSelected(); renderCards() })
       type.addEventListener('change', () => {
-        const note = selected()
-        if (!note) return
+        const note = selected(); if (!note) return
         const nextType = TYPES.has(type.value) ? type.value : 'personal'
         note.tipo = nextType
-        if (nextType !== 'predicacion') {
-          note.numeroPredicacion = null
-          note.fechaPredicacion = ''
-          note.serie = ''
-          note.lugar = ''
-          note.predicador = ''
-          note.estadoPredicacion = ''
-        }
-        persistSelected()
-        render()
+        if (nextType !== 'predicacion') { note.numeroPredicacion = null; note.fechaPredicacion = ''; note.serie = ''; note.lugar = ''; note.predicador = ''; note.estadoPredicacion = '' }
+        persistSelected(); render()
       })
       reference.addEventListener('input', () => { const note = selected(); if (!note) return; note.referencia = reference.value; persistSelected(); renderCards() })
       sermonDate.addEventListener('input', () => updateSermonField('fechaPredicacion', sermonDate.value))
