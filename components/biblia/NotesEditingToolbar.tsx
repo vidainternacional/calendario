@@ -41,39 +41,10 @@ function inlineNodes(text: string, keyPrefix: string): ReactNode[] {
     .filter((part) => part.length > 0)
     .map((part, index) => {
       const key = `${keyPrefix}-${index}`
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={key}>{part.slice(2, -2)}</strong>
-      }
-      if (part.startsWith('*') && part.endsWith('*')) {
-        return <em key={key}>{part.slice(1, -1)}</em>
-      }
+      if (part.startsWith('**') && part.endsWith('**')) return <strong key={key}>{part.slice(2, -2)}</strong>
+      if (part.startsWith('*') && part.endsWith('*')) return <em key={key}>{part.slice(1, -1)}</em>
       return <span key={key}>{part}</span>
     })
-}
-
-function previewLine(line: string, index: number): ReactNode {
-  const trimmed = line.trim()
-  const key = `line-${index}`
-
-  if (!trimmed) return <div key={key} className="h-3" aria-hidden="true" />
-  if (/^─{4,}$/.test(trimmed)) return <hr key={key} className="my-4 border-current/15" />
-  if (trimmed.startsWith('## ')) {
-    return <h3 key={key} className="mt-5 text-[1.25em] font-extrabold leading-tight first:mt-0">{inlineNodes(trimmed.slice(3), key)}</h3>
-  }
-  if (trimmed.startsWith('• ')) {
-    return <div key={key} className="flex gap-3"><span className="mt-[0.1em] font-black" aria-hidden="true">•</span><p className="min-w-0 flex-1">{inlineNodes(trimmed.slice(2), key)}</p></div>
-  }
-  const numbered = trimmed.match(/^(\d+)\.\s+(.*)$/)
-  if (numbered) {
-    return <div key={key} className="flex gap-3"><span className="min-w-6 font-bold">{numbered[1]}.</span><p className="min-w-0 flex-1">{inlineNodes(numbered[2], key)}</p></div>
-  }
-  if (trimmed.startsWith('☐ ')) {
-    return <div key={key} className="flex gap-3"><span className="mt-[0.1em]" aria-hidden="true">☐</span><p className="min-w-0 flex-1">{inlineNodes(trimmed.slice(2), key)}</p></div>
-  }
-  if (trimmed.startsWith('> ')) {
-    return <blockquote key={key} className="my-2 border-l-4 border-violet-400/60 pl-4 italic opacity-85">{inlineNodes(trimmed.slice(2), key)}</blockquote>
-  }
-  return <p key={key}>{inlineNodes(line, key)}</p>
 }
 
 export default function NotesEditingToolbar({
@@ -87,15 +58,12 @@ export default function NotesEditingToolbar({
   mutedClass,
 }: Props) {
   const [previewMode, setPreviewMode] = useState(false)
-  const preview = useMemo(() => value.split('\n').map(previewLine), [value])
 
   useEffect(() => {
     const area = textareaRef.current
     if (!area) return
     area.style.display = previewMode ? 'none' : ''
-    return () => {
-      area.style.display = ''
-    }
+    return () => { area.style.display = '' }
   }, [previewMode, textareaRef])
 
   const applySelection = (transform: (selected: string) => string, fallback = '') => {
@@ -119,18 +87,43 @@ export default function NotesEditingToolbar({
       .join('\n'), '')
   }
 
-  const tools = [
-    { label: 'Título', icon: Heading2, action: () => prefixLines(() => '## ') },
-    { label: 'Negrita', icon: Bold, action: () => applySelection((text) => `**${text}**`, 'texto') },
-    { label: 'Cursiva', icon: Italic, action: () => applySelection((text) => `*${text}*`, 'texto') },
-    { label: 'Lista', icon: List, action: () => prefixLines(() => '• ') },
-    { label: 'Numerada', icon: ListOrdered, action: () => prefixLines((index) => `${index + 1}. `) },
-    { label: 'Tareas', icon: CheckSquare, action: () => prefixLines(() => '☐ ') },
-    { label: 'Cita', icon: Quote, action: () => prefixLines(() => '> ') },
-    { label: 'Separador', icon: Minus, action: () => applySelection(() => '\n\n──────────\n\n') },
-    { label: 'Fecha', icon: CalendarDays, action: () => applySelection(() => `${new Date().toLocaleString('es-SV')} — `) },
-    { label: 'Referencia', icon: BookMarked, action: () => applySelection(() => reference ? `${reference} — ` : 'Referencia — ') },
-  ]
+  const toggleTask = (lineIndex: number) => {
+    const lines = value.split('\n')
+    const line = lines[lineIndex] ?? ''
+    if (line.trimStart().startsWith('☐ ')) lines[lineIndex] = line.replace('☐ ', '☑ ')
+    else if (line.trimStart().startsWith('☑ ')) lines[lineIndex] = line.replace('☑ ', '☐ ')
+    else return
+    onChange(lines.join('\n'))
+  }
+
+  const preview = useMemo(() => value.split('\n').map((line, index) => {
+    const trimmed = line.trim()
+    const key = `line-${index}`
+    if (!trimmed) return <div key={key} className="h-3" aria-hidden="true" />
+    if (/^─{4,}$/.test(trimmed)) return <hr key={key} className="my-4 border-current/15" />
+    if (trimmed.startsWith('## ')) return <h3 key={key} className="mt-5 text-[1.25em] font-extrabold leading-tight first:mt-0">{inlineNodes(trimmed.slice(3), key)}</h3>
+    if (trimmed.startsWith('• ')) return <div key={key} className="flex gap-3"><span className="mt-[0.1em] font-black" aria-hidden="true">•</span><p className="min-w-0 flex-1">{inlineNodes(trimmed.slice(2), key)}</p></div>
+    const numbered = trimmed.match(/^(\d+)\.\s+(.*)$/)
+    if (numbered) return <div key={key} className="flex gap-3"><span className="min-w-6 font-bold">{numbered[1]}.</span><p className="min-w-0 flex-1">{inlineNodes(numbered[2], key)}</p></div>
+    if (trimmed.startsWith('☐ ') || trimmed.startsWith('☑ ')) {
+      const checked = trimmed.startsWith('☑ ')
+      return (
+        <button key={key} type="button" onClick={() => toggleTask(index)} className="flex w-full items-start gap-3 rounded-xl px-1 py-1.5 text-left" aria-pressed={checked}>
+          <span className={`mt-[0.05em] grid h-5 w-5 shrink-0 place-items-center rounded-md border text-[12px] font-black ${checked ? 'border-violet-500 bg-violet-500 text-white' : 'border-current/30'}`} aria-hidden="true">{checked ? '✓' : ''}</span>
+          <span className={`min-w-0 flex-1 ${checked ? 'line-through opacity-55' : ''}`}>{inlineNodes(trimmed.slice(2), key)}</span>
+        </button>
+      )
+    }
+    if (trimmed.startsWith('> ')) return <blockquote key={key} className="my-2 border-l-4 border-violet-400/60 pl-4 italic opacity-85">{inlineNodes(trimmed.slice(2), key)}</blockquote>
+    return <p key={key}>{inlineNodes(line, key)}</p>
+  }), [value])
+
+  const toolButton = (label: string, Icon: typeof Bold, action: () => void) => (
+    <button type="button" onClick={action} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label={label} title={label}>
+      <Icon className="h-4 w-4" aria-hidden="true" />
+      <span>{label}</span>
+    </button>
+  )
 
   const togglePreview = () => {
     setPreviewMode((current) => {
@@ -141,45 +134,53 @@ export default function NotesEditingToolbar({
   }
 
   return (
-    <section aria-label="Herramientas de edición" className="mt-4 space-y-3">
-      <div className="flex items-start justify-between gap-3 px-1">
+    <section aria-label="Herramientas de edición" className="mt-2 space-y-4">
+      {!previewMode && <>
         <div>
-          <div className="flex items-center gap-2">
-            <Type className="h-4 w-4" aria-hidden="true" />
-            <span className="text-sm font-bold">Herramientas de edición</span>
+          <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Texto</p>
+          <div className="grid grid-cols-3 gap-2">
+            {toolButton('Título', Heading2, () => prefixLines(() => '## '))}
+            {toolButton('Negrita', Bold, () => applySelection((text) => `**${text}**`, 'texto'))}
+            {toolButton('Cursiva', Italic, () => applySelection((text) => `*${text}*`, 'texto'))}
           </div>
-          <p className={`mt-1 text-xs leading-5 ${mutedClass}`}>Selecciona texto y toca una herramienta. Usa Vista de lectura para comprobar cómo quedará.</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {toolButton('Texto −', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)))}
+            {toolButton('Texto +', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)))}
+          </div>
+          <p className={`mt-1 px-1 text-right text-[10px] ${mutedClass}`}>{fontSize}px</p>
         </div>
-        <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-bold ${mutedClass}`}>{fontSize}px</span>
-      </div>
 
-      {!previewMode && (
-        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-current/10 p-2 sm:grid-cols-5">
-          {tools.map(({ label, icon: Icon, action }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={action}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-bold ${buttonClass}`}
-              aria-label={label}
-              title={label}
-            >
-              <Icon className="h-4 w-4" aria-hidden="true" />
-              <span className="truncate">{label}</span>
-            </button>
-          ))}
+        <div>
+          <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Listas</p>
+          <div className="grid grid-cols-3 gap-2">
+            {toolButton('Viñetas', List, () => prefixLines(() => '• '))}
+            {toolButton('Numerada', ListOrdered, () => prefixLines((index) => `${index + 1}. `))}
+            {toolButton('Tareas', CheckSquare, () => prefixLines(() => '☐ '))}
+          </div>
+          <p className={`mt-2 px-1 text-[11px] leading-4 ${mutedClass}`}>Las tareas se convierten en checklist interactivo en Vista de lectura.</p>
         </div>
-      )}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <button type="button" onClick={() => onFontSizeChange(clampFontSize(fontSize - 1))} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label="Reducir tamaño del texto"><ZoomOut className="h-4 w-4" /> Texto −</button>
-        <button type="button" onClick={() => onFontSizeChange(clampFontSize(fontSize + 1))} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label="Aumentar tamaño del texto"><ZoomIn className="h-4 w-4" /> Texto +</button>
-        <button type="button" onClick={togglePreview} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-pressed={previewMode} aria-label={previewMode ? 'Seguir editando' : 'Vista de lectura'}>{previewMode ? <Edit3 className="h-4 w-4" /> : <Eye className="h-4 w-4" />}{previewMode ? 'Editar' : 'Vista de lectura'}</button>
-        <button type="button" onClick={() => window.print()} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label="Imprimir o guardar PDF"><Printer className="h-4 w-4" /> Imprimir / PDF</button>
+        <div>
+          <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Insertar</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {toolButton('Cita', Quote, () => prefixLines(() => '> '))}
+            {toolButton('Separador', Minus, () => applySelection(() => '\n\n──────────\n\n'))}
+            {toolButton('Fecha', CalendarDays, () => applySelection(() => `${new Date().toLocaleString('es-SV')} — `))}
+            {toolButton('Referencia', BookMarked, () => applySelection(() => reference ? `${reference} — ` : 'Referencia — '))}
+          </div>
+        </div>
+      </>}
+
+      <div>
+        <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Vista y salida</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={togglePreview} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-pressed={previewMode} aria-label={previewMode ? 'Seguir editando' : 'Vista de lectura'}>{previewMode ? <Edit3 className="h-4 w-4" /> : <Eye className="h-4 w-4" />}{previewMode ? 'Editar' : 'Vista de lectura'}</button>
+          <button type="button" onClick={() => window.print()} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label="Imprimir o guardar PDF"><Printer className="h-4 w-4" /> Imprimir / PDF</button>
+        </div>
       </div>
 
       {previewMode && (
-        <article className="min-h-52 rounded-2xl border border-current/10 bg-current/[0.025] p-4 sm:p-5" aria-label="Vista de lectura de la nota" style={{ fontSize, lineHeight: 1.8 }}>
+        <article className="min-h-52 rounded-2xl bg-current/[0.025] px-1 py-3 sm:px-2" aria-label="Vista de lectura de la nota" style={{ fontSize, lineHeight: 1.8 }}>
           {value.trim() ? <div className="space-y-1">{preview}</div> : <p className={mutedClass}>La nota está vacía. Toca Editar para comenzar a escribir.</p>}
         </article>
       )}
