@@ -5,6 +5,7 @@ import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDash
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
 import MinisterioSolicitudesEnhancer from '@/components/ministerios/MinisterioSolicitudesEnhancer'
 import MinisterioBienvenida from '@/components/ministerios/MinisterioBienvenida'
+import MinisterioRoleContextSync from '@/components/ministerios/MinisterioRoleContextSync'
 import styles from './MinisterioLayout.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -60,6 +61,7 @@ export default async function MinisterioLayout({
     profile?.rol === 'pastor' ||
     profile?.rol === 'administrador' ||
     profile?.es_pastor_general
+  const esMiembroMinisterio = Boolean(membresiaReq.data)
   const esLider = Boolean((membresiaReq.data as any)?.es_lider)
   const puedePersonalizar = esLider || isAdminOrPastor
 
@@ -98,6 +100,11 @@ export default async function MinisterioLayout({
 
   return (
     <div className={`${styles.shell} relative min-h-screen overflow-x-hidden bg-[#f4f5f9]`}>
+      <MinisterioRoleContextSync
+        esLiderMinisterio={esLider}
+        esMiembroMinisterio={esMiembroMinisterio}
+        gestionGlobal={Boolean(isAdminOrPastor)}
+      />
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-30 mx-auto max-w-2xl px-4"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
