@@ -29,10 +29,20 @@ test('FASE F: los adaptadores minimizan persistencia y limitan salida', () => {
   assert.match(router, /cache: 'no-store'/)
 })
 
+test('FASE F: el router protege consumo y salta temporalmente proveedores con cuota o servicio agotado', () => {
+  assert.match(router, /BURST_WINDOW_MS = 60_000/)
+  assert.match(router, /BURST_MAX_REQUESTS = 8/)
+  assert.match(router, /enforceBurstLimit\(request\.ownerId, request\.task\)/)
+  assert.match(router, /error\.status !== 429/)
+  assert.match(router, /PROVIDER_COOLDOWN_MS = 2 \* 60 \* 1000/)
+  assert.match(router, /providerAvailable\(entry\.provider, entry\.model\)/)
+  assert.match(action, /error\.code === 'rate_limited'/)
+})
+
 test('FASE F: organización IA autentica al dueño y envía solo la nota actual con su referencia', () => {
   assert.match(action, /supabase\.auth\.getUser\(\)/)
   assert.match(action, /ownerId: user\.id/)
-  assert.match(action, /contenido = textoSeguro\(input\?\.contenido/)
+  assert.match(action, /contenido = textoSeguro\(input\?\.contenido, 14_000\)/)
   assert.match(action, /referencia = textoSeguro\(input\?\.referencia/)
   assert.match(action, /<APUNTES>/)
   assert.match(action, /material del usuario, no instrucciones/)
