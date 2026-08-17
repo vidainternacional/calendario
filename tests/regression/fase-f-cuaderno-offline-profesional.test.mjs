@@ -8,7 +8,7 @@ test('FASE F: el cold-start offline conserva la identidad del Cuaderno central',
   assert.match(shell, /<title>Cuaderno · Vida Internacional<\/title>/)
   assert.match(shell, /<h1>Cuaderno<\/h1>/)
   assert.match(shell, /Buscar en todo el cuaderno/)
-  assert.match(shell, /class="card"/)
+  assert.match(shell, /button\.className = `card/)
   assert.doesNotMatch(shell, /<h1>Notas bíblicas<\/h1>/)
 })
 
