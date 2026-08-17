@@ -3,7 +3,7 @@ import 'server-only'
 import { createHash } from 'node:crypto'
 
 export type VidaAiLevel = 1 | 2
-export type VidaAiTask = 'organizar_notas'
+export type VidaAiTask = 'organizar_notas' | 'interpretar_busqueda_biblica'
 export type VidaAiProviderName = 'gemini' | 'openai'
 
 type VidaAiPolicy = {
@@ -73,6 +73,13 @@ const POLICIES: Record<VidaAiTask, VidaAiPolicy> = {
     maxOutputTokens: 1_200,
     timeoutMs: 25_000,
     cacheTtlMs: 10 * 60 * 1000,
+  },
+  interpretar_busqueda_biblica: {
+    level: 1,
+    maxInputChars: 5_000,
+    maxOutputTokens: 240,
+    timeoutMs: 12_000,
+    cacheTtlMs: 30 * 60 * 1000,
   },
 }
 
@@ -249,7 +256,7 @@ async function callGemini(model: string, apiKey: string, request: VidaAiRequest,
 
   if (!response.ok) throw new ProviderError(`Gemini HTTP ${response.status}`, response.status)
   const payload = await response.json() as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }>
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number }
   }
   const text = payload.candidates?.[0]?.content?.parts
