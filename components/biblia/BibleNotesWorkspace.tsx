@@ -339,23 +339,25 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
                 <ChevronDown className={`h-4 w-4 transition-transform group-open:rotate-180 ${tema.muted}`} />
               </summary>
               <div className="px-3 pb-3">
-                <div className="mb-2 flex justify-end"><button type="button" onClick={exportarPredicacion} className={`flex min-h-9 items-center gap-2 rounded-full px-3 text-[11px] font-bold ${tema.glassStrong}`} aria-label="Exportar predicación PDF"><Download className="h-4 w-4" /><span>Exportar</span></button></div>
-                <div className={`rounded-[18px] p-3 ${tema.glassStrong}`}>
-                  <p className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Identidad</p>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <label><span className={`mb-1 block text-[11px] font-bold ${tema.muted}`}>N.º de prédica</span><input readOnly value={seleccionada.numeroPredicacion ? `#${seleccionada.numeroPredicacion}` : 'Pendiente'} className={`min-h-11 w-full rounded-xl border px-3 text-sm font-bold ${tema.field}`} /></label>
-                    <label><span className={`mb-1 block text-[11px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizar({ fechaPredicacion: event.target.value })} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-                    <label><span className={`mb-1 block text-[11px] font-bold ${tema.muted}`}>Estado</span><input value={seleccionada.estadoPredicacion} onChange={(event) => actualizar({ estadoPredicacion: event.target.value })} placeholder="Ej. Borrador" maxLength={100} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-                  </div>
+                <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                  <p className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Información de la prédica</p>
+                  <button type="button" onClick={exportarPredicacion} className={`flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold ${tema.glassStrong}`} aria-label="Exportar predicación PDF"><Download className="h-3.5 w-3.5" /><span>Exportar</span></button>
                 </div>
-                <div className={`mt-2 rounded-[18px] p-3 ${tema.glassStrong}`}>
-                  <p className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Contexto</p>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <label><span className={`mb-1 block text-[11px] font-bold ${tema.muted}`}>Serie</span><input value={seleccionada.serie} onChange={(event) => actualizar({ serie: event.target.value })} placeholder="Nombre de la serie" maxLength={300} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-                    <label><span className={`mb-1 block text-[11px] font-bold ${tema.muted}`}>Lugar</span><input value={seleccionada.lugar} onChange={(event) => actualizar({ lugar: event.target.value })} placeholder="Lugar" maxLength={300} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-                    <label><span className={`mb-1 block text-[11px] font-bold ${tema.muted}`}>Predicador</span><input value={seleccionada.predicador} onChange={(event) => actualizar({ predicador: event.target.value })} placeholder="Nombre" maxLength={300} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-                  </div>
+
+                <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-2">
+                  <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>N.º</span><input readOnly value={seleccionada.numeroPredicacion ? `#${seleccionada.numeroPredicacion}` : '—'} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm font-bold ${tema.field}`} /></label>
+                  <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizar({ fechaPredicacion: event.target.value })} className={`min-h-10 w-full min-w-0 rounded-xl border px-2.5 text-sm ${tema.field}`} /></label>
                 </div>
+
+                <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Estado</span><input value={seleccionada.estadoPredicacion} onChange={(event) => actualizar({ estadoPredicacion: event.target.value })} placeholder="Ej. Lista para predicar" maxLength={100} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+
+                <div className="my-3 h-px bg-current/10" />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Serie</span><input value={seleccionada.serie} onChange={(event) => actualizar({ serie: event.target.value })} placeholder="Serie" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+                  <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Lugar</span><input value={seleccionada.lugar} onChange={(event) => actualizar({ lugar: event.target.value })} placeholder="Lugar" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+                </div>
+                <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Predicador</span><input value={seleccionada.predicador} onChange={(event) => actualizar({ predicador: event.target.value })} placeholder="Nombre del predicador" maxLength={300} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
               </div>
             </details>}
 
