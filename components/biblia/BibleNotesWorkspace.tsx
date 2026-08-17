@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, BookOpen, ChevronDown, Download, FileText, Mic2, NotebookPen, Plus, Search, SlidersHorizontal, Trash2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookOpenText, ChevronDown, Download, FileText, Mic2, NotebookPen, Plus, Redo2, Search, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
 import { listarPaquetesPastoralesParaNotas } from '@/app/actions/pastoral-paquetes'
 import {
   crearNotaBiblicaLocal,
@@ -18,7 +18,7 @@ import {
   resolverUsuarioActualNotas,
   sincronizarNotasBiblicasPendientes,
 } from '@/lib/biblia/notes-sync'
-import NotesEditingToolbar from '@/components/biblia/NotesEditingToolbar'
+import NotesEditingToolbar, { RichNoteEditor, type RichNoteChangeOptions } from '@/components/biblia/NotesEditingToolbar'
 
 export type ModoLecturaBiblia = 'claro' | 'oscuro' | 'sepia'
 type TipoNota = TipoNotaBiblica
@@ -26,6 +26,13 @@ type NotaBiblica = NotaBiblicaLocal
 type Paquete = { id: string; titulo: string }
 type FiltroOrigen = 'todos' | 'estudio_profundo' | 'biblia_notas'
 type MenuCuaderno = 'detalles' | 'predicacion' | 'herramientas' | null
+
+type ContentHistory = {
+  past: string[]
+  future: string[]
+  current: string
+  lastCheckpointAt: number
+}
 
 type Props = {
   modo?: ModoLecturaBiblia
@@ -77,8 +84,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const [notasCargadas, setNotasCargadas] = useState(false)
   const [usuarioId, setUsuarioId] = useState<string | null>(userId ?? null)
   const [editorFontSize, setEditorFontSize] = useState(18)
+  const [editorReadOnly, setEditorReadOnly] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState<MenuCuaderno>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [, setHistoryVersion] = useState(0)
+  const editorRef = useRef<HTMLDivElement>(null)
+  const contentHistoryRef = useRef<Map<string, ContentHistory>>(new Map())
   const modo = modoExterno ?? modoInterno
   const seleccionada = notas.find((nota) => nota.id === seleccionadaId) ?? null
 
@@ -182,6 +192,19 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     }
   }, [notasCargadas, usuarioId])
 
+  useEffect(() => {
+    if (!seleccionada) return
+    const history = contentHistoryRef.current.get(seleccionada.id)
+    if (history?.current === seleccionada.contenido) return
+    contentHistoryRef.current.set(seleccionada.id, {
+      past: [],
+      future: [],
+      current: seleccionada.contenido,
+      lastCheckpointAt: 0,
+    })
+    setHistoryVersion((version) => version + 1)
+  }, [seleccionada?.id, seleccionada?.contenido])
+
   const tema = modo ? {
     claro: {
       page: 'bg-[#f7f7f4] text-slate-900',
@@ -224,8 +247,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const nuevaNota = () => {
     const nota = crearNotaBiblicaLocal()
     setNotas((actuales) => [nota, ...actuales])
+    contentHistoryRef.current.set(nota.id, { past: [], future: [], current: '', lastCheckpointAt: 0 })
     setSeleccionadaId(nota.id)
+    setEditorReadOnly(false)
     setMenuAbierto(null)
+    setHistoryVersion((version) => version + 1)
   }
 
   const actualizar = (cambios: Partial<NotaBiblica>) => {
@@ -233,6 +259,52 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     setNotas((actuales) => actuales.map((nota) => nota.id === seleccionadaId
       ? { ...nota, ...cambios, actualizadaEn: new Date().toISOString() }
       : nota))
+  }
+
+  const actualizarContenido = (contenido: string, options?: RichNoteChangeOptions) => {
+    if (!seleccionadaId || !seleccionada) return
+    let history = contentHistoryRef.current.get(seleccionadaId)
+    if (!history) {
+      history = { past: [], future: [], current: seleccionada.contenido, lastCheckpointAt: 0 }
+      contentHistoryRef.current.set(seleccionadaId, history)
+    }
+    if (contenido === history.current) return
+
+    const now = Date.now()
+    const checkpoint = Boolean(options?.checkpoint) || history.past.length === 0 || now - history.lastCheckpointAt >= 1200
+    if (checkpoint && history.past[history.past.length - 1] !== history.current) {
+      history.past.push(history.current)
+      if (history.past.length > 80) history.past.shift()
+      history.lastCheckpointAt = now
+    }
+    history.current = contenido
+    history.future = []
+    setHistoryVersion((version) => version + 1)
+    actualizar({ contenido })
+  }
+
+  const deshacerContenido = () => {
+    if (!seleccionadaId) return
+    const history = contentHistoryRef.current.get(seleccionadaId)
+    const previous = history?.past.pop()
+    if (!history || previous === undefined) return
+    history.future.push(history.current)
+    history.current = previous
+    history.lastCheckpointAt = Date.now()
+    setHistoryVersion((version) => version + 1)
+    actualizar({ contenido: previous })
+  }
+
+  const rehacerContenido = () => {
+    if (!seleccionadaId) return
+    const history = contentHistoryRef.current.get(seleccionadaId)
+    const next = history?.future.pop()
+    if (!history || next === undefined) return
+    history.past.push(history.current)
+    history.current = next
+    history.lastCheckpointAt = Date.now()
+    setHistoryVersion((version) => version + 1)
+    actualizar({ contenido: next })
   }
 
   const actualizarPredicacion = (cambios: Partial<NotaBiblica>) => {
@@ -260,9 +332,12 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const eliminar = () => {
     if (!seleccionadaId) return
     const restantes = notas.filter((nota) => nota.id !== seleccionadaId)
+    contentHistoryRef.current.delete(seleccionadaId)
     setNotas(restantes)
     setSeleccionadaId(restantes[0]?.id ?? null)
+    setEditorReadOnly(false)
     setMenuAbierto(null)
+    setHistoryVersion((version) => version + 1)
   }
 
   const exportarPredicacion = () => {
@@ -274,6 +349,10 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     setMenuAbierto((actual) => actual === menu ? null : menu)
   }
 
+  const currentHistory = seleccionada ? contentHistoryRef.current.get(seleccionada.id) : null
+  const puedeDeshacer = Boolean(currentHistory?.past.length)
+  const puedeRehacer = Boolean(currentHistory?.future.length)
+
   if (!modo || !tema || !notasCargadas) {
     return <div className="min-h-[55vh] bg-[var(--background)] text-[var(--foreground)]" aria-hidden="true" />
   }
@@ -281,12 +360,12 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const contenido = (
     <div className={embedded ? 'p-3 sm:p-5' : 'mx-auto max-w-4xl'}>
       <header className="mb-4 flex items-center gap-3">
-        {!embedded && <Link href="/estudios" aria-label="Volver a Estudios" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-sm" aria-hidden="true"><NotebookPen className="h-5 w-5" /></span>
+          {!embedded && <Link href="/estudios" aria-label="Volver a Estudios" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-sm"><NotebookPen className="h-5 w-5" aria-hidden="true" /></span>
           <div className="min-w-0">
-            <h1 className="truncate text-[24px] font-extrabold tracking-[-0.03em]">Cuaderno</h1>
-            <p className={`mt-0.5 truncate text-[11px] font-medium ${tema.muted}`}>Tu espacio personal · {notas.length} {notas.length === 1 ? 'nota' : 'notas'}</p>
+            <h1 className="truncate text-[23px] font-extrabold tracking-[-0.025em]">Cuaderno</h1>
+            <p className={`mt-0.5 truncate text-xs ${tema.muted}`}>Tu espacio personal · {notas.length} {notas.length === 1 ? 'nota' : 'notas'}</p>
           </div>
         </div>
       </header>
@@ -311,7 +390,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
 
       <nav aria-label="Notas del cuaderno" className="mt-3 flex min-h-[84px] gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button type="button" onClick={nuevaNota} aria-label="Nueva nota" className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-full bg-violet-600 text-white shadow-sm transition active:scale-[0.97]"><Plus className="h-5 w-5" /><span className="text-[10px] font-bold">Nueva</span></button>
-        {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => { setSeleccionadaId(nota.id); setMenuAbierto(null) }} aria-label={`Abrir ${nota.titulo || 'nota sin título'}`} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border bg-transparent px-2 text-center transition active:scale-[0.97] ${seleccionadaId === nota.id ? 'border-violet-400 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,92,246,0.08)]' : 'border-current/20'}`}><span className="line-clamp-3 w-full text-[10px] font-bold leading-[13px]">{nota.titulo || 'Sin título'}</span></button>)}
+        {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => { setSeleccionadaId(nota.id); setEditorReadOnly(false); setMenuAbierto(null) }} aria-label={`Abrir ${nota.titulo || 'nota sin título'}`} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border bg-transparent px-2 text-center transition active:scale-[0.97] ${seleccionadaId === nota.id ? 'border-violet-400 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,92,246,0.08)]' : 'border-current/20'}`}><span className="line-clamp-3 w-full text-[10px] font-bold leading-[13px]">{nota.titulo || 'Sin título'}</span></button>)}
       </nav>
 
       {seleccionada ? <section className="mt-3 min-h-[calc(100vh-300px)]">
@@ -325,43 +404,17 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             {seleccionada.origen === 'estudio_profundo' ? `Estudio Profundo${seleccionada.referencia ? ` · ${seleccionada.referencia}` : ''}` : seleccionada.referencia || tipos.find((tipo) => tipo.id === seleccionada.tipo)?.nombre || 'Nota personal'}
           </div>
 
+          <div className="mt-1 flex items-center justify-end gap-1.5 px-0.5" aria-label="Historial global del cuaderno">
+            <button type="button" onClick={deshacerContenido} disabled={!puedeDeshacer} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${tema.glassStrong}`} aria-label="Deshacer último cambio"><Undo2 className="h-4 w-4" aria-hidden="true" />Deshacer</button>
+            <button type="button" onClick={rehacerContenido} disabled={!puedeRehacer} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${tema.glassStrong}`} aria-label="Rehacer último cambio"><Redo2 className="h-4 w-4" aria-hidden="true" />Rehacer</button>
+          </div>
+
           <div className="mt-2 grid grid-cols-3 gap-2 px-0.5" aria-label="Opciones de la nota">
-            <button
-              type="button"
-              onClick={() => alternarMenu('detalles')}
-              aria-expanded={menuAbierto === 'detalles'}
-              aria-controls="cuaderno-panel-detalles"
-              className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition active:scale-[0.98] ${menuAbierto === 'detalles' ? 'bg-sky-500/20 text-sky-700 ring-1 ring-sky-400/35' : 'bg-sky-500/10 text-sky-700 ring-1 ring-sky-400/15 backdrop-blur-xl'}`}
-            >
-              <SlidersHorizontal className="h-4 w-4 shrink-0 text-sky-500" />
-              <span className="truncate">Detalles</span>
-              <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'detalles' ? 'rotate-180' : ''}`} />
-            </button>
+            <button type="button" onClick={() => alternarMenu('detalles')} aria-expanded={menuAbierto === 'detalles'} aria-controls="cuaderno-panel-detalles" className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition active:scale-[0.98] ${menuAbierto === 'detalles' ? 'bg-sky-500/20 text-sky-700 ring-1 ring-sky-400/35' : 'bg-sky-500/10 text-sky-700 ring-1 ring-sky-400/15 backdrop-blur-xl'}`}><SlidersHorizontal className="h-4 w-4 shrink-0 text-sky-500" /><span className="truncate">Detalles</span><ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'detalles' ? 'rotate-180' : ''}`} /></button>
 
-            <button
-              type="button"
-              onClick={() => alternarMenu('predicacion')}
-              aria-expanded={menuAbierto === 'predicacion'}
-              aria-controls="cuaderno-panel-predicacion"
-              aria-label="Datos de predicación"
-              className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-bold transition active:scale-[0.98] ${menuAbierto === 'predicacion' ? 'bg-amber-500/20 text-amber-800 ring-1 ring-amber-400/35' : 'bg-amber-500/10 text-amber-800 ring-1 ring-amber-400/15 backdrop-blur-xl'}`}
-            >
-              <Mic2 className="h-4 w-4 shrink-0 text-amber-500" />
-              <span className="min-w-0 text-center leading-[11px]">Datos de<br />predicación</span>
-              <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'predicacion' ? 'rotate-180' : ''}`} />
-            </button>
+            <button type="button" onClick={() => alternarMenu('predicacion')} aria-expanded={menuAbierto === 'predicacion'} aria-controls="cuaderno-panel-predicacion" aria-label="Datos de predicación" className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-bold transition active:scale-[0.98] ${menuAbierto === 'predicacion' ? 'bg-amber-500/20 text-amber-800 ring-1 ring-amber-400/35' : 'bg-amber-500/10 text-amber-800 ring-1 ring-amber-400/15 backdrop-blur-xl'}`}><BookOpenText className="h-4 w-4 shrink-0 text-amber-600" /><span className="min-w-0 text-center leading-[11px]">Datos de<br />predicación</span><ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'predicacion' ? 'rotate-180' : ''}`} /></button>
 
-            <button
-              type="button"
-              onClick={() => alternarMenu('herramientas')}
-              aria-expanded={menuAbierto === 'herramientas'}
-              aria-controls="cuaderno-panel-herramientas"
-              className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition active:scale-[0.98] ${menuAbierto === 'herramientas' ? 'bg-violet-500/20 text-violet-800 ring-1 ring-violet-400/35' : 'bg-violet-500/10 text-violet-800 ring-1 ring-violet-400/15 backdrop-blur-xl'}`}
-            >
-              <NotebookPen className="h-4 w-4 shrink-0 text-violet-500" />
-              <span className="truncate">Edición</span>
-              <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'herramientas' ? 'rotate-180' : ''}`} />
-            </button>
+            <button type="button" onClick={() => alternarMenu('herramientas')} aria-expanded={menuAbierto === 'herramientas'} aria-controls="cuaderno-panel-herramientas" className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition active:scale-[0.98] ${menuAbierto === 'herramientas' ? 'bg-violet-500/20 text-violet-800 ring-1 ring-violet-400/35' : 'bg-violet-500/10 text-violet-800 ring-1 ring-violet-400/15 backdrop-blur-xl'}`}><NotebookPen className="h-4 w-4 shrink-0 text-violet-500" /><span className="truncate">Edición</span><ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'herramientas' ? 'rotate-180' : ''}`} /></button>
           </div>
 
           {menuAbierto === 'detalles' && <section id="cuaderno-panel-detalles" className={`mt-2 rounded-[22px] p-3 ${tema.glass}`} aria-label="Detalles de la nota">
@@ -384,7 +437,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             </div>
 
             <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2">
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>N.º de prédica</span><input readOnly value={seleccionada.numeroPredicacion ? `#${seleccionada.numeroPredicacion}` : '—'} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm font-bold ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>N.º de prédica</span><input readOnly tabIndex={-1} value={seleccionada.numeroPredicacion ? `#${seleccionada.numeroPredicacion}` : '—'} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm font-bold ${tema.field}`} /></label>
               <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizarPredicacion({ fechaPredicacion: event.target.value })} className={`min-h-10 w-full min-w-0 rounded-xl border px-2.5 text-sm ${tema.field}`} /></label>
             </div>
 
@@ -401,28 +454,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
           </section>}
 
           {menuAbierto === 'herramientas' && <section id="cuaderno-panel-herramientas" className={`mt-2 rounded-[22px] px-3 pb-3 pt-1 ${tema.glass}`} aria-label="Herramientas de edición">
-            <NotesEditingToolbar
-              key={seleccionada.id}
-              textareaRef={textareaRef}
-              value={seleccionada.contenido}
-              onChange={(contenido) => actualizar({ contenido })}
-              reference={seleccionada.referencia}
-              fontSize={editorFontSize}
-              onFontSizeChange={setEditorFontSize}
-              buttonClass={tema.glassStrong}
-              mutedClass={tema.muted}
-            />
+            <NotesEditingToolbar editorRef={editorRef} value={seleccionada.contenido} onChange={actualizarContenido} reference={seleccionada.referencia} fontSize={editorFontSize} onFontSizeChange={setEditorFontSize} buttonClass={tema.glassStrong} mutedClass={tema.muted} readOnly={editorReadOnly} onReadOnlyChange={setEditorReadOnly} />
           </section>}
 
-          <textarea
-            ref={textareaRef}
-            value={seleccionada.contenido}
-            onChange={(event) => actualizar({ contenido: event.target.value })}
-            placeholder="Empieza a escribir tus apuntes, ideas, bosquejo o conclusiones…"
-            className="mt-3 min-h-[58vh] flex-1 resize-none border-0 bg-transparent px-1 py-2 outline-none"
-            style={{ fontSize: `${editorFontSize}px`, lineHeight: 1.85 }}
-          />
-          <p className={`pb-3 pr-1 text-right text-[10px] ${tema.muted}`}>Guardado automático</p>
+          <RichNoteEditor editorRef={editorRef} value={seleccionada.contenido} onChange={actualizarContenido} fontSize={editorFontSize} readOnly={editorReadOnly} mutedClass={tema.muted} />
+          <p className={`pb-3 pr-1 text-right text-[10px] ${tema.muted}`}>{editorReadOnly ? 'Solo lectura' : 'Guardado automático'}</p>
         </div>
       </section> : <div className="grid min-h-[55vh] place-items-center px-6 text-center"><div><NotebookPen className="mx-auto h-11 w-11 text-violet-500" /><h2 className="mt-3 text-lg font-bold">Tu cuaderno está listo</h2><p className={`mx-auto mt-2 max-w-sm text-sm leading-6 ${tema.muted}`}>Tus notas, estudios y predicaciones estarán aquí en un solo lugar.</p><button type="button" onClick={nuevaNota} className="mt-4 rounded-full bg-violet-600 px-5 py-3 text-sm font-bold text-white">Crear primera nota</button></div></div>}
     </div>
