@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Video, FileText, Clock3 } from 'lucide-react'
+import { BookOpen, ChevronRight, Video, FileText, Clock3, NotebookPen } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -18,16 +18,6 @@ export default async function EstudiosPage() {
 
   const recursos = [
     {
-      href: '/estudios/profundo',
-      title: 'Estudio Profundo',
-      description: 'Busca versículos, palabras o preguntas y consulta estudios, contexto y concordancias desde una sola herramienta.',
-      action: 'Comenzar estudio',
-      icon: BookOpen,
-      iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
-      hoverClass: 'hover:border-[#C0392B]/30',
-      arrowClass: 'group-hover:text-[#C0392B]',
-    },
-    {
       href: '/biblia',
       title: 'Biblia',
       description: 'Lee cualquier libro y capítulo, escúchalo en voz alta y envíalo al Estudio Profundo con un toque.',
@@ -36,6 +26,29 @@ export default async function EstudiosPage() {
       iconClass: 'bg-indigo-600 text-white',
       hoverClass: 'hover:border-indigo-300',
       arrowClass: 'group-hover:text-indigo-600',
+      actionClass: 'text-indigo-600',
+    },
+    {
+      href: '/estudios/profundo',
+      title: 'Estudio Profundo',
+      description: 'Busca versículos, palabras o preguntas y consulta estudios, contexto y concordancias desde una sola herramienta.',
+      action: 'Comenzar estudio',
+      icon: BookOpen,
+      iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
+      hoverClass: 'hover:border-[#C0392B]/30',
+      arrowClass: 'group-hover:text-[#C0392B]',
+      actionClass: 'text-[#C0392B]',
+    },
+    {
+      href: '/biblia/notas',
+      title: 'Cuaderno',
+      description: 'Reúne en un solo lugar tus notas personales, estudios guardados, versículos y predicaciones para seguir trabajando en ellas.',
+      action: 'Abrir cuaderno',
+      icon: NotebookPen,
+      iconClass: 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
+      hoverClass: 'hover:border-violet-300',
+      arrowClass: 'group-hover:text-violet-600',
+      actionClass: 'text-violet-600',
     },
   ]
 
@@ -58,19 +71,19 @@ export default async function EstudiosPage() {
         <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Formación</p>
         <h1 className="text-2xl font-bold leading-tight text-[#171923] sm:text-3xl">Estudios Bíblicos</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-          Elige una herramienta para leer, escuchar o profundizar en la Palabra.
+          Lee la Biblia, profundiza en el texto y organiza todo lo aprendido en tu cuaderno personal.
         </p>
       </header>
 
       <section className="space-y-3 sm:space-y-4" aria-labelledby="recursos-disponibles-title">
         <div className="flex items-center justify-between gap-3">
-          <h2 id="recursos-disponibles-title" className="text-sm font-bold text-[#171923]">Disponibles ahora</h2>
+          <h2 id="recursos-disponibles-title" className="text-sm font-bold text-[#171923]">Herramientas</h2>
           <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-            Listos para usar
+            Listas para usar
           </span>
         </div>
 
-        {recursos.map(({ href, title, description, action, icon: Icon, iconClass, hoverClass, arrowClass }) => (
+        {recursos.map(({ href, title, description, action, icon: Icon, iconClass, hoverClass, arrowClass, actionClass }) => (
           <Link
             key={href}
             href={href}
@@ -83,7 +96,7 @@ export default async function EstudiosPage() {
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-bold leading-tight text-slate-900 sm:text-lg">{title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{description}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600">
+              <span className={`mt-3 inline-flex items-center gap-1 text-xs font-bold ${actionClass}`}>
                 {action}
                 <ChevronRight className={`h-4 w-4 transition-transform group-hover:translate-x-1 ${arrowClass}`} aria-hidden="true" />
               </span>
