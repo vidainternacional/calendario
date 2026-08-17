@@ -35,6 +35,63 @@ function providerDefinition(name: VidaAiProviderName) {
   return PROVIDERS.find((provider) => provider.name === name)
 }
 
+function safeProviderMessage(value: unknown) {
+  if (typeof value !== 'string') return null
+  const clean = value.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim()
+  if (!clean || clean.length > 220) return null
+  if (/api[_ -]?key|authorization|bearer|sk-[a-z0-9_-]+/i.test(clean)) return null
+  return clean
+}
+
+async function diagnoseClaude(startedAt: number) {
+  const apiKey = process.env.ANTHROPIC_API_KEY || ''
+  const model = process.env.VIDA_CLAUDE_ECONOMY_MODEL || 'claude-haiku-4-5'
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      system: 'Responde únicamente con VIDA_OK. No agregues ninguna otra palabra.',
+      messages: [{ role: 'user', content: 'Prueba técnica mínima del router VIDA.' }],
+      max_tokens: 240,
+    }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(12_000),
+  })
+
+  const payload = await response.json().catch(() => ({})) as {
+    content?: Array<{ type?: string; text?: string }>
+    usage?: { input_tokens?: number; output_tokens?: number }
+    error?: { type?: unknown; message?: unknown }
+  }
+
+  if (!response.ok) {
+    const type = safeProviderMessage(payload.error?.type)
+    const message = safeProviderMessage(payload.error?.message)
+    const diagnostic = [type, message].filter(Boolean).join(': ') || `Claude HTTP ${response.status}`
+    return NextResponse.json({
+      ok: false,
+      requestedProvider: 'claude',
+      provider: 'claude',
+      error: diagnostic,
+      attempts: [{ provider: 'claude', model, status: response.status }],
+      latencyMs: Date.now() - startedAt,
+    }, { status: 503 })
+  }
+
+  const text = payload.content?.filter((part) => part.type === 'text').map((part) => part.text || '').join('\n').trim() || ''
+  return NextResponse.json({
+    ok: true,
+    requestedProvider: 'claude',
+    provider: 'claude',
+    model,
+    inputTokens: payload.usage?.input_tokens ?? null,
+    outputTokens: payload.usage?.output_tokens ?? null,
+    latencyMs: Date.now() - startedAt,
+    responseValid: text === 'VIDA_OK',
+  })
+}
+
 export async function GET() {
   const auth = await requireAdministrator()
   if ('error' in auth) return auth.error
@@ -64,6 +121,20 @@ export async function POST(request: Request) {
   }
 
   const startedAt = Date.now()
+  if (requestedProvider === 'claude') {
+    try {
+      return await diagnoseClaude(startedAt)
+    } catch {
+      return NextResponse.json({
+        ok: false,
+        requestedProvider: 'claude',
+        provider: 'claude',
+        error: 'No se pudo completar el diagnóstico seguro de Claude',
+        latencyMs: Date.now() - startedAt,
+      }, { status: 503 })
+    }
+  }
+
   try {
     const result = await vidaAI({
       task: 'interpretar_busqueda_biblica',
