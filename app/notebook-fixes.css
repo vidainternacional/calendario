@@ -1,0 +1,52 @@
+/* Ajustes aislados del Cuaderno de FASE F.
+   Mantienen el scroll dentro de la superficie de notas para que la navegación
+   global permanezca anclada al viewport en iOS. */
+
+html:has(.note-rich-editor),
+body:has(.note-rich-editor) {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+main:has(.note-rich-editor) {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+body:has(.note-rich-editor) .app-bottom-nav {
+  position: fixed !important;
+  inset-inline: 0 !important;
+  top: auto !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Deshacer y Rehacer son acciones globales de la nota: una a cada extremo. */
+[aria-label="Historial global del cuaderno"] {
+  width: 100%;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+}
+
+/* El estado de guardado se muestra al inicio de la nota, no flotando al final
+   del área de escritura. */
+main:has(.note-rich-editor) section > .mx-auto.flex.max-w-3xl.flex-col > p:last-child {
+  order: -1;
+  align-self: flex-end;
+  margin: 0 0 0.2rem;
+  padding: 0.1rem 0.35rem;
+  text-align: right;
+  font-weight: 600;
+  opacity: 0.78;
+}
