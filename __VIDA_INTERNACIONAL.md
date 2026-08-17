@@ -2,7 +2,7 @@
 
 Última actualización: 2026-08-17
 
-Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**
+Fase / prioridad activa: **FASE G — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -41,6 +41,9 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |
 | FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |
+| FASE G | Validación integral y cierre de deudas transversales | **ACTIVA — 2026-08-17** |
+| FASE H | Centro de Hebreo Bíblico | **PLANIFICADA — posterior a FASE G** |
+| FASE I | Guía interactiva y ayuda contextual por rol | **PLANIFICADA — posterior a FASE H** |
 
 # PRIORIDADES RECIENTES CERRADAS
 
@@ -56,7 +59,7 @@ Cerrada el 2026-08-09. Administrador conserva eliminación permanente protegida 
 
 Cerrada el 2026-08-11 tras validación funcional en iPhone. Pushes, destinos directos, solicitudes de ingreso, bienvenida ministerial, identidades de Avisos y badges derivados de estado real quedaron operativos. Producción validada en `48efda443e719279fac267e64931b1c5f36e8a07`.
 
-Pendiente transversal diferido: optimizar al final la latencia ocasional de badges/push entre Supabase, cliente, service worker, segundo plano, red e iOS, sin parches aislados por pantalla.
+Pendiente transversal diferido: optimizar al final la latencia ocasional de badges/push entre Supabase, cliente, service worker, segundo plano, red e iOS, sin parches aislados por pantalla. Este pendiente pasa formalmente a FASE G.
 
 ## Identidad Comunitaria y Perfil
 
@@ -70,7 +73,7 @@ Cerrado y estabilizado. Calendario conserva su base móvil aprobada y no debe de
 
 Estado desde 2026-08-07: **PAUSADO POR DECISIÓN DEL USUARIO**.
 
-Se conservan tablas, RLS, Centro de Análisis, datos, reportes, onboarding y Ayuda Solidaria, pero no debe ejecutarse telemetría exclusiva del piloto ni reactivarse P1/P2/P3 mientras esta prioridad siga en pausa.
+Se conservan tablas, RLS, Centro de Análisis, datos, reportes, onboarding y Ayuda Solidaria, pero no debe ejecutarse telemetría exclusiva del piloto ni reactivarse P1/P2/P3 mientras esta prioridad siga en pausa. La futura guía interactiva por rol de FASE I sustituye la necesidad práctica de usar el piloto como mecanismo principal de orientación dentro de la app, sin borrar la evidencia histórica del piloto.
 
 # FASE D — COMPLETADA Y APROBADA — 2026-08-12
 
@@ -160,21 +163,21 @@ Queda aprobado y preservado:
 12. Navegación directa Biblia → Estudio Profundo conservando la referencia actual.
 13. Compartir, exportación PDF/impresión, historial y notas existentes preservados.
 14. Las capas inexistentes se omiten completamente; no se utilizan placeholders como sustituto de datos.
-15. Las notas personales de Estudio permanecen asociadas al usuario autenticado y a su referencia; su evolución profunda queda reservada a FASE F.
+15. Las notas personales de Estudio permanecen asociadas al usuario autenticado y a su referencia; su evolución profunda quedó desarrollada en FASE F.
 
 ## Decisiones diferidas al cerrar FASE D
 
 ### Pronunciación y voz
 
-La ayuda de pronunciación/voz para hebreo, arameo y griego **no bloquea el cierre de FASE D**. Queda diferida hasta decidir metodología, calidad y presentación. Si se implementa, deberá presentarse como ayuda de pronunciación y no como reconstrucción histórica infalible.
+La ayuda de pronunciación/voz para hebreo, arameo y griego no se integrará como una función aislada dentro de la Biblia principal. El aprendizaje de lectura y pronunciación del hebreo pasa a formar parte del Centro de Hebreo Bíblico planificado para FASE H.
 
 ### Centro de Estudio y analíticas
 
 La evolución del historial hacia analíticas de pasajes, libros, temas, preguntas, recurrencia, búsquedas sin resultado, secciones utilizadas y tiempo aproximado de permanencia queda diferida. Las notas personales no formarán parte de la telemetría y las superficies pastorales priorizarán tendencias agregadas, no vigilancia individual.
 
-### Cuaderno personal / futura FASE F
+### Cuaderno personal / FASE F
 
-Debe existir un único cuaderno personal por usuario, no sistemas paralelos. Biblia, Estudio Profundo y las superficies pastorales autorizadas podrán alimentar ese mismo espacio conservando origen y contexto de cada nota. Las notas serán privadas por defecto y deberán poder organizarse/filtrarse sin duplicarlas. `Biblia → Notas` permanece como base funcional a evolucionar en FASE F con sincronización entre dispositivos, respaldo en Supabase, número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación.
+El cuaderno personal único por usuario, origen/contexto, privacidad por defecto, sincronización entre dispositivos, respaldo en Supabase, predicación correlativa, metadatos y exportación fueron desarrollados y cerrados en FASE F.
 
 # FASE E — COMPLETADA — RENDIMIENTO, SEGURIDAD, ESCALABILIDAD, PRUEBAS Y DOCUMENTACIÓN — 2026-08-13
 
@@ -194,7 +197,7 @@ La evidencia consolidada se conserva en:
 5. Runtime y recuperación de red revisados; la PWA recupera Avisos al reconectar, enfocar o volver visible sin exigir recarga manual.
 6. Latencia transversal de badges/push corregida para que badge y contenido visible compartan señales de refresco y no dependan de la llegada final del push en iOS.
 7. Validación funcional real en iPhone completada: tras reconexión/reanudación, badge de Avisos y `Avisos para ti` actualizaron rápido y prácticamente al mismo tiempo.
-8. Producción, CI y documentación técnica quedaron alineados. El warning Node `DEP0169` asociado a la dependencia de Web Push queda documentado como deuda no bloqueante, sin error funcional comprobado.
+8. Producción, CI y documentación técnica quedaron alineados. El warning Node `DEP0169` asociado a la dependencia de Web Push queda documentado como deuda no bloqueante, sin error funcional comprobado; su eliminación pasa a FASE G.
 9. El Piloto Operativo permanece pausado.
 
 Hitos finales de cierre:
@@ -308,6 +311,73 @@ El **punto 6 queda VALIDADO e integrado a `main`** mediante PR #284. La producci
 
 FASE F queda **COMPLETADA — 2026-08-17** y no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
 
+# FASE G — ACTIVA — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES
+
+FASE G se activa formalmente el 2026-08-17 después del cierre de FASE F.
+
+## Objetivo de FASE G
+
+Validar la aplicación completa en producción como un solo sistema, por rol y por flujo real, y cerrar las deudas transversales conocidas antes de agregar nuevas áreas funcionales grandes.
+
+## Alcance de FASE G
+
+1. Construir una matriz integral de funciones y permisos para Administrador, Pastor, Líder y Servidor, cubriendo autenticación, Inicio, Perfil, Contactos, Ministerios, Programación, Solicitudes, Avisos, Calendario, Estudios, Biblia, Estudio Profundo, Cuaderno, Panel Pastoral, Administración, Ayuda Solidaria y superficies relacionadas.
+2. Validar recorridos críticos de principio a fin en producción y PWA/iPhone, incluyendo navegación, estados vacíos/error, permisos, persistencia, sincronización, cambio de cuenta, reconexión y comportamientos online/offline donde correspondan.
+3. Corregir únicamente bugs comprobables encontrados durante la matriz. Una fase cerrada solo se reabre para la corrección puntual necesaria y vuelve a preservarse después.
+4. Analizar la latencia ocasional de Avisos/badges/push separando claramente lo controlable por VIDA de la entrega propia de iOS/Web Push/red; optimizar únicamente las capas bajo control de la aplicación y evitar polling agresivo.
+5. Eliminar la deuda técnica Node `DEP0169` asociada al flujo Web Push mediante actualización o sustitución segura de la dependencia responsable, manteniendo envío push, TTL, urgencia, recuperación y badges sin regresión.
+6. Revisar runtime y errores de producción durante las pruebas, ampliar regresiones únicamente cuando protejan un bug real encontrado y mantener CI/build verde.
+7. Documentar evidencia de cada recorrido validado, hallazgos, correcciones y estado final de producción antes de cerrar la fase.
+8. No reactivar el Piloto Operativo durante FASE G.
+9. No modificar esquema, RLS, grants o funciones sensibles de Supabase sin presentar antes el cambio exacto, impacto y reversión y obtener aprobación explícita.
+
+## Bloque activo de FASE G
+
+### Bloque 1 — Inventario y matriz de validación integral
+
+Primero se auditará el estado real de producción y el código actual para construir una matriz de recorridos por rol. No se harán cambios funcionales mientras no exista un bug comprobable. La matriz debe permitir marcar cada flujo como `VALIDADO`, `BUG`, `NO APLICA` o `PENDIENTE DE CUENTA/DATO`, con evidencia suficiente para no repetir pruebas ya aprobadas.
+
+# FASE H — PLANIFICADA — CENTRO DE HEBREO BÍBLICO
+
+FASE H comenzará únicamente después del cierre formal de FASE G.
+
+## Objetivo previsto
+
+Crear dentro de Estudios una herramienta didáctica, minimalista y progresiva para aprender a **leer y comprender hebreo bíblico**, reutilizando primero las fuentes textuales ya aprobadas y buscando nuevas fuentes/APIs solo cuando aporten datos verificables y licencias compatibles.
+
+Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo: **Aprende y lee los textos originales**.
+
+## Alcance previsto
+
+1. **Alef-bet interactivo:** las 22 letras básicas y sus 5 formas finales cuando corresponda, presentadas en una cuadrícula didáctica inspirada visualmente en una tabla periódica. Cada ficha podrá mostrar orden/número, letra, nombre, forma final, transliteración, sonido orientativo, ejemplos y variantes gráficas.
+2. **Historia y formas antiguas:** cuando exista evidencia académica verificable, se podrán mostrar formas históricas o referencias pictográficas como contexto de escritura. No se presentará un pictograma como si determinara automáticamente el significado léxico o teológico de una palabra bíblica.
+3. **Ruta de aprendizaje:** dirección derecha→izquierda, consonantes, formas finales, niqqud/vocales, shevá, dagesh, lectura silábica, raíces, prefijos/sufijos y gramática progresiva, divididos en lecciones cortas y prácticas.
+4. **Pronunciación para aprendizaje:** incorporar ayuda auditiva o ejemplos de pronunciación cuando exista una metodología/fuente suficientemente confiable, etiquetándola como ayuda pedagógica y no como reconstrucción histórica infalible.
+5. **Lector bíblico hebreo:** ofrecer el Tanaj/Antiguo Testamento en sus lenguas originales, hebreo y los segmentos arameos donde corresponda, con lectura RTL clara y herramientas para palabra, lema, transliteración, morfología y glosa disponible.
+6. **Traducción accesible:** permitir alternar o comparar fácilmente el texto original con traducción española aprobada y ayudas de estudio. No fabricar traducciones literales inexistentes ni confundir glosa léxica con traducción del versículo.
+7. **Precisión del canon original:** el Nuevo Testamento original es griego, no hebreo. Si en el futuro se incorpora una traducción hebrea del Nuevo Testamento, deberá identificarse explícitamente como traducción y nunca como texto original.
+8. **Práctica y progreso:** ejercicios breves, lectura guiada, reconocimiento de letras/palabras, repasos, marcadores y progreso personal sin convertir la experiencia en algo pesado o escolarizado.
+9. **Materiales administrables:** permitir que Administrador pueda agregar posteriormente enlaces, documentación, recursos, tareas o materiales de aprendizaje. Cualquier almacenamiento nuevo en Supabase deberá diseñarse y aprobarse cuando FASE H esté activa.
+10. **Diseño:** mantener la línea visual actual de VIDA: minimalista, clara, coherente, táctil, mobile-first, didáctica y sin tarjetas anidadas innecesarias.
+
+# FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
+
+FASE I comenzará únicamente después del cierre formal de FASE H, salvo que el documento maestro cambie explícitamente el orden.
+
+## Objetivo previsto
+
+Dar a cada persona una guía dentro de VIDA sin depender de capacitación presencial ni reactivar el Piloto Operativo.
+
+## Alcance previsto
+
+1. Recorrido inicial opcional por primera vez mediante globos/contextos breves anclados a herramientas reales.
+2. Contenido dinámico por rol y permisos: Administrador, Pastor, Líder y Servidor solo verán explicaciones de funciones que realmente pueden utilizar.
+3. Posibilidad de omitir el recorrido y volver a iniciarlo manualmente desde Ayuda/Perfil.
+4. Centro de guía interactiva con explicaciones cortas por módulo, acciones frecuentes y recorridos específicos cuando una superficie sea compleja.
+5. El recorrido debe usar la interfaz real, no una réplica separada que pueda quedar desactualizada.
+6. Sin telemetría del Piloto por defecto; cualquier medición futura deberá ser explícita, agregada y respetuosa con la privacidad.
+7. Accesibilidad, áreas táctiles cómodas, lenguaje breve y coherencia con la experiencia mobile-first de VIDA.
+
 # Siguiente punto autorizado
 
-**No iniciar una fase posterior hasta que se agregue explícitamente al documento maestro. No existe actualmente una FASE G ni otra prioridad activa documentada. Mientras tanto, las fases cerradas solo pueden reabrirse por un bug comprobable y el Piloto Operativo permanece en pausa.**
+**Iniciar exclusivamente FASE G con el Bloque 1 — inventario y matriz de validación integral. Revisar producción y el estado real del repositorio para construir la matriz por rol y por módulo; no corregir nada hasta identificar un bug comprobable. Después validar los recorridos en orden, documentando evidencia para evitar repetir pruebas. No iniciar FASE H ni FASE I mientras FASE G no esté formalmente completada en este documento.**
