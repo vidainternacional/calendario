@@ -46,6 +46,9 @@ test('FASE F: numeración visible y referencia se insertan como bloques determin
   assert.match(toolbar, /handleStandardListEnter/)
   assert.match(toolbar, /insertStandaloneBlock\(editor, block, text\)/)
   assert.match(toolbar, /\[data-note-reference\]::before/)
+  assert.match(toolbar, /text\.textContent = reference\.trim\(\)/)
+  assert.match(toolbar, /\[data-note-reference-text\]:empty::before/)
+  assert.match(toolbar, /Escribe una referencia bíblica/)
 })
 
 test('FASE F: los estilos tipo Notas muestran nombres visuales sin iconos H1 H2 H3', () => {
@@ -55,6 +58,14 @@ test('FASE F: los estilos tipo Notas muestran nombres visuales sin iconos H1 H2 
   assert.doesNotMatch(toolbar, /Heading1/)
   assert.doesNotMatch(toolbar, /Heading2/)
   assert.doesNotMatch(toolbar, /Heading3/)
+})
+
+test('FASE F: estilos de párrafo se aplican una sola vez y el segundo toque los devuelve a cuerpo', () => {
+  assert.match(toolbar, /function blockStyleAtSelection/)
+  assert.match(toolbar, /const currentBlock = blockStyleAtSelection\(editor, selection\)/)
+  assert.match(toolbar, /const nextBlock: BlockStyle = block !== 'p' && currentBlock === block \? 'p' : block/)
+  assert.match(toolbar, /formatBlock', false, nextBlock/)
+  assert.match(toolbar, /block: nextBlock/)
 })
 
 test('FASE F: negrita cursiva subrayado y tachado son estados independientes y combinables', () => {

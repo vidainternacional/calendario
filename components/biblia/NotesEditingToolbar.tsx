@@ -420,6 +420,16 @@ function inlineStateAtSelection(editor: HTMLElement, selection: Selection): Inli
   return state
 }
 
+function blockStyleAtSelection(editor: HTMLElement, selection: Selection): BlockStyle {
+  const selected = closestEditorElement(editor, selection.anchorNode)
+  const block = selected?.closest('h1,h2,h3,pre,p,div,li,blockquote')
+  if (block?.tagName === 'H1') return 'h1'
+  if (block?.tagName === 'H2') return 'h2'
+  if (block?.tagName === 'H3') return 'h3'
+  if (block?.tagName === 'PRE') return 'pre'
+  return 'p'
+}
+
 function insertStandaloneBlock(editor: HTMLElement, block: HTMLElement, focusTarget: HTMLElement) {
   const selection = window.getSelection()
   const topLevel = topLevelEditorBlock(editor, selection?.anchorNode ?? null)
@@ -639,7 +649,8 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
         .note-rich-editor li[data-task-item]:has(input:checked) [data-task-text] { text-decoration: line-through; opacity: .5; }
         .note-rich-editor [data-note-reference] { display: flex; align-items: baseline; gap: .52em; clear: both; margin: .6em 0; padding: .08em 0; }
         .note-rich-editor [data-note-reference]::before { content: '◆'; color: rgb(124 58 237); flex: 0 0 auto; font-size: .82em; line-height: 1; transform: translateY(-.03em); }
-        .note-rich-editor [data-note-reference-text] { min-width: 1ch; }
+        .note-rich-editor [data-note-reference-text] { display: inline-block; min-width: 8ch; }
+        .note-rich-editor [data-note-reference-text]:empty::before { content: 'Escribe una referencia bíblica'; opacity: .45; pointer-events: none; }
       `}</style>
     </>
   )
@@ -687,12 +698,11 @@ export default function NotesEditingToolbar({
     const selected = closestEditorElement(editor, selection.anchorNode)
     if (!selected) return
 
-    const block = selected.closest('h1,h2,h3,pre,p,div,li,blockquote')
     const list = selected.closest('ul,ol') as HTMLElement | null
     const kind = listKindOf(list)
     const inline = inlineStateAtSelection(editor, selection)
     setFormatState({
-      block: block?.tagName === 'H1' ? 'h1' : block?.tagName === 'H2' ? 'h2' : block?.tagName === 'H3' ? 'h3' : block?.tagName === 'PRE' ? 'pre' : 'p',
+      block: blockStyleAtSelection(editor, selection),
       ...inline,
       bullet: kind === 'bullet',
       dash: kind === 'dash',
@@ -788,12 +798,18 @@ export default function NotesEditingToolbar({
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (!editor || !selection || selection.rangeCount === 0) return
+
+      const currentBlock = blockStyleAtSelection(editor, selection)
+      const nextBlock: BlockStyle = block !== 'p' && currentBlock === block ? 'p' : block
       selectionSyncLockRef.current = Date.now() + 320
-      const ok = document.execCommand('formatBlock', false, block)
-      if (!ok) document.execCommand('formatBlock', false, `<${block}>`)
+      const ok = document.execCommand('formatBlock', false, nextBlock)
+      if (!ok) document.execCommand('formatBlock', false, `<${nextBlock}>`)
       rememberSelection()
       emitEditor(true)
-      setFormatState((current) => ({ ...current, block }))
+      setFormatState((current) => ({ ...current, block: nextBlock }))
     })
   }
 
@@ -887,7 +903,7 @@ export default function NotesEditingToolbar({
       block.dataset.noteReference = 'true'
       const text = document.createElement('span')
       text.dataset.noteReferenceText = 'true'
-      text.textContent = reference.trim() || 'Referencia bíblica'
+      text.textContent = reference.trim()
       block.appendChild(text)
 
       insertStandaloneBlock(editor, block, text)
