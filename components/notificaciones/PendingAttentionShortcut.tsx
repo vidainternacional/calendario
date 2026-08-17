@@ -4,17 +4,24 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronRight, ClipboardCheck, UserRoundPlus } from 'lucide-react'
+import { CalendarCheck2, ChevronRight, ClipboardCheck, UserRoundPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { usePendingIndicators } from '@/components/notificaciones/usePendingIndicators'
 
 type Rol = 'administrador' | 'pastor' | 'lider' | 'servidor' | null
 
+type AttentionTarget = HTMLElement | null
+
 export default function PendingAttentionShortcut() {
   const pathname = usePathname()
   const surface = pathname === '/inicio' ? 'inicio' : pathname === '/avisos' ? 'avisos' : null
-  const { pendingMinisterioIngresos, pendingSolicitudesGestionables } = usePendingIndicators()
-  const [target, setTarget] = useState<HTMLElement | null>(null)
+  const {
+    pendingMinisterioIngresos,
+    pendingServicios,
+    pendingSolicitudesGestionables,
+  } = usePendingIndicators()
+  const [pageTarget, setPageTarget] = useState<AttentionTarget>(null)
+  const [previewTarget, setPreviewTarget] = useState<AttentionTarget>(null)
   const [rol, setRol] = useState<Rol>(null)
 
   useEffect(() => {
@@ -37,14 +44,16 @@ export default function PendingAttentionShortcut() {
   }, [surface])
 
   useEffect(() => {
-    setTarget(null)
+    setPageTarget(null)
+    setPreviewTarget(null)
     if (!surface) return
 
     let disposed = false
-    let mount: HTMLElement | null = null
+    let pageMount: HTMLElement | null = null
+    let previewMount: HTMLElement | null = null
 
-    const ensureMount = () => {
-      if (disposed || mount?.isConnected) return
+    const ensurePageMount = () => {
+      if (disposed || pageMount?.isConnected) return
       const main = document.querySelector<HTMLElement>('main')
       if (!main) return
 
@@ -62,21 +71,46 @@ export default function PendingAttentionShortcut() {
         header.insertAdjacentElement('afterend', nextMount)
       }
 
-      mount = nextMount
-      setTarget(nextMount)
+      pageMount = nextMount
+      setPageTarget(nextMount)
     }
 
-    ensureMount()
-    const observer = new MutationObserver(ensureMount)
+    const ensurePreviewMount = () => {
+      if (disposed || surface !== 'inicio' || previewMount?.isConnected) return
+      const title = document.getElementById('avisos-preview-title')
+      const dialog = title?.closest<HTMLElement>('section[role="dialog"]')
+      const body = dialog?.children.item(1) as HTMLElement | null
+      if (!body) return
+
+      const nextMount = document.createElement('div')
+      nextMount.dataset.pendingAttentionPreview = 'true'
+      body.prepend(nextMount)
+      previewMount = nextMount
+      setPreviewTarget(nextMount)
+    }
+
+    const syncMounts = () => {
+      ensurePageMount()
+      ensurePreviewMount()
+      if (previewMount && !previewMount.isConnected) {
+        previewMount = null
+        setPreviewTarget(null)
+      }
+    }
+
+    syncMounts()
+    const observer = new MutationObserver(syncMounts)
     observer.observe(document.body, { childList: true, subtree: true })
-    const retry = window.setInterval(ensureMount, 500)
+    const retry = window.setInterval(syncMounts, 400)
 
     return () => {
       disposed = true
       observer.disconnect()
       window.clearInterval(retry)
-      setTarget(null)
-      mount?.remove()
+      pageMount?.remove()
+      previewMount?.remove()
+      setPageTarget(null)
+      setPreviewTarget(null)
     }
   }, [surface])
 
@@ -89,6 +123,17 @@ export default function PendingAttentionShortcut() {
       count: number
       icon: typeof ClipboardCheck
     }> = []
+
+    if (pendingServicios > 0) {
+      items.push({
+        key: 'servicios',
+        href: '/calendario',
+        label: 'Servicios por confirmar',
+        detail: 'Asignaciones que requieren tu respuesta',
+        count: pendingServicios,
+        icon: CalendarCheck2,
+      })
+    }
 
     if (pendingMinisterioIngresos > 0) {
       const accesoGlobal = rol === 'administrador' || rol === 'pastor'
@@ -114,16 +159,16 @@ export default function PendingAttentionShortcut() {
     }
 
     return items
-  }, [pendingMinisterioIngresos, pendingSolicitudesGestionables, rol])
+  }, [pendingMinisterioIngresos, pendingServicios, pendingSolicitudesGestionables, rol])
 
-  if (!surface || !target || acciones.length === 0) return null
+  if (!surface || acciones.length === 0) return null
 
-  return createPortal(
-    <section className={surface === 'avisos' ? 'mb-6' : 'mb-3'} aria-label="Requiere tu atención">
+  const renderFeed = (compact = false) => (
+    <section className={compact ? 'mb-3' : surface === 'avisos' ? 'mb-6' : 'mb-3'} aria-label="Avisos para ti">
       <div className="overflow-hidden rounded-[22px] bg-white ring-1 ring-slate-200/80">
         <div className="border-b border-slate-100 px-4 py-3">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-rose-500">Requiere tu atención</p>
-          <p className="mt-0.5 text-[11px] text-slate-400">Tareas reales pendientes para tu responsabilidad actual.</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-indigo-500">Para ti</p>
+          <p className="mt-0.5 text-[11px] text-slate-400">Mensajes y acciones directas según tu rol y responsabilidades.</p>
         </div>
         <div className="divide-y divide-slate-100">
           {acciones.map((item) => {
@@ -134,7 +179,7 @@ export default function PendingAttentionShortcut() {
                 href={item.href}
                 className="flex min-h-[66px] items-center gap-3 px-4 py-3 transition active:bg-slate-50"
               >
-                <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-50 text-rose-600">
+                <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-600">
                   <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
                   <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[8px] font-black leading-none text-white ring-2 ring-white">
                     {item.count > 99 ? '99+' : item.count}
@@ -150,7 +195,13 @@ export default function PendingAttentionShortcut() {
           })}
         </div>
       </div>
-    </section>,
-    target,
+    </section>
+  )
+
+  return (
+    <>
+      {pageTarget && createPortal(renderFeed(false), pageTarget)}
+      {previewTarget && createPortal(renderFeed(true), previewTarget)}
+    </>
   )
 }
