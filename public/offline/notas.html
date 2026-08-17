@@ -62,6 +62,10 @@
     .top { padding: 12px; border-bottom: 1px solid var(--border); }
     .search { min-height: 44px; display: flex; align-items: center; gap: 8px; border-radius: 16px; padding: 0 12px; background: var(--soft); }
     .search input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 14px; }
+    .filters { display: flex; gap: 8px; overflow-x: auto; padding-top: 9px; scrollbar-width: none; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter { min-height: 32px; flex: 0 0 auto; border: 1px solid var(--border); border-radius: 999px; padding: 0 11px; background: var(--field); color: var(--muted); font-size: 11px; font-weight: 800; }
+    .filter.active { border-color: rgba(124,58,237,.45); background: #f5f3ff; color: #6d28d9; }
     .cards { display: flex; gap: 12px; overflow-x: auto; min-height: 104px; padding: 14px 0 6px; scrollbar-width: none; }
     .cards::-webkit-scrollbar { display: none; }
     .card { width: 80px; height: 80px; flex: 0 0 80px; border: 0; border-radius: 999px; padding: 8px; background: var(--soft); color: var(--text); box-shadow: inset 0 0 0 1px transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
@@ -72,6 +76,8 @@
     .title-row { display: flex; gap: 12px; align-items: flex-start; }
     .title { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; font-size: 25px; font-weight: 800; }
     .delete { border: 0; background: rgba(225,29,72,.1); color: var(--danger); font-size: 17px; }
+    .origin-banner { margin-top: 12px; display: flex; align-items: center; gap: 8px; min-height: 38px; border: 1px solid var(--border); border-radius: 14px; padding: 7px 11px; background: var(--field); color: var(--text); font-size: 11px; font-weight: 800; }
+    .origin-banner span:last-child { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-weight: 700; }
     .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
     label span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
     .field { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 11px; outline: 0; background: var(--field); }
@@ -127,6 +133,11 @@
         <div id="notebook" hidden>
           <div class="top">
             <label class="search" aria-label="Buscar notas"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Buscar notas" autocomplete="off" /></label>
+            <div id="origin-filters" class="filters" aria-label="Filtrar notas por origen">
+              <button class="filter active" type="button" data-origin="todos">Todos los orígenes</button>
+              <button class="filter" type="button" data-origin="estudio_profundo">Estudio Profundo</button>
+              <button class="filter" type="button" data-origin="biblia_notas">Cuaderno</button>
+            </div>
             <div id="cards" class="cards"></div>
           </div>
 
@@ -135,6 +146,7 @@
               <input id="title" class="title" type="text" placeholder="Título" maxlength="300" />
               <button id="delete" class="circle delete" type="button" aria-label="Eliminar nota">⌫</button>
             </div>
+            <div id="origin-banner" class="origin-banner" hidden><span>Origen: Estudio Profundo</span><span id="origin-reference"></span></div>
             <div class="fields">
               <label><span>Tipo</span><select id="type" class="field"><option value="versiculo">Versículo</option><option value="estudio">Estudio</option><option value="predicacion">Predicación</option><option value="personal">Personal</option></select></label>
               <label><span>Referencia</span><input id="reference" class="field" type="text" placeholder="Ej. Juan 3:16" maxlength="300" /></label>
@@ -191,6 +203,9 @@
       const editor = el('editor')
       const empty = el('empty')
       const search = el('search')
+      const originFilters = Array.from(document.querySelectorAll('[data-origin]'))
+      const originBanner = el('origin-banner')
+      const originReference = el('origin-reference')
       const title = el('title')
       const type = el('type')
       const reference = el('reference')
@@ -246,6 +261,7 @@
       const storageKey = `${USER_STORAGE_PREFIX}:${ownerId}`
       let selectedId = null
       let notes = []
+      let activeOrigin = 'todos'
 
       const now = () => new Date().toISOString()
       const normalize = (value) => {
@@ -309,14 +325,16 @@
 
       const cardMeta = (note) => {
         if (note.tipo === 'predicacion' && note.numeroPredicacion) return `Prédica #${note.numeroPredicacion}`
-        return note.referencia || ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
+        const base = note.referencia || ({ versiculo: 'Versículo', estudio: 'Estudio', predicacion: 'Predicación', personal: 'Personal' }[note.tipo] || 'Nota')
+        return note.origen === 'estudio_profundo' ? `Estudio · ${base}` : base
       }
 
       const renderCards = () => {
         cards.replaceChildren()
         const term = (search.value || '').trim().toLowerCase()
         const filtered = [...notes]
-          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete} ${note.numeroPredicacion || ''} ${note.fechaPredicacion} ${note.serie} ${note.lugar} ${note.predicador} ${note.estadoPredicacion}`.toLowerCase().includes(term))
+          .filter((note) => activeOrigin === 'todos' || note.origen === activeOrigin)
+          .filter((note) => !term || `${note.titulo} ${note.contenido} ${note.referencia} ${note.paquete} ${note.origen} ${note.numeroPredicacion || ''} ${note.fechaPredicacion} ${note.serie} ${note.lugar} ${note.predicador} ${note.estadoPredicacion}`.toLowerCase().includes(term))
           .sort((a, b) => String(b.actualizadaEn).localeCompare(String(a.actualizadaEn)))
 
         filtered.forEach((note) => {
@@ -347,6 +365,8 @@
         content.value = note.contenido
         packageEl.hidden = !note.paquete
         packageEl.textContent = note.paquete ? `Paquete pastoral: ${note.paquete}` : ''
+        originBanner.hidden = note.origen !== 'estudio_profundo'
+        originReference.textContent = note.origen === 'estudio_profundo' ? note.referencia : ''
 
         const isSermon = note.tipo === 'predicacion'
         sermon.hidden = !isSermon
@@ -378,6 +398,10 @@
           referencia: '',
           paqueteId: '',
           paquete: '',
+          origen: 'biblia_notas',
+          origenKey: '',
+          pasajeNormalizado: '',
+          contexto: {},
           numeroPredicacion: null,
           fechaPredicacion: '',
           serie: '',
@@ -425,6 +449,11 @@
       el('back').addEventListener('click', () => { if (history.length > 1) history.back() })
       el('sermon-export').addEventListener('click', () => window.print())
       search.addEventListener('input', renderCards)
+      originFilters.forEach((button) => button.addEventListener('click', () => {
+        activeOrigin = button.dataset.origin || 'todos'
+        originFilters.forEach((item) => item.classList.toggle('active', item === button))
+        renderCards()
+      }))
       title.addEventListener('input', () => { const note = selected(); if (!note) return; note.titulo = title.value; persistSelected(); renderCards() })
       type.addEventListener('change', () => {
         const note = selected()
