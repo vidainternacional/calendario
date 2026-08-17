@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, type SVGProps } from 'react'
+import { useEffect, useState, type CSSProperties, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Megaphone, User, BookOpen } from 'lucide-react'
@@ -43,16 +43,56 @@ function cargarTema(): ModoBiblia {
   }
 }
 
+function calcularSeparacionInferiorVisible() {
+  const viewport = window.visualViewport
+  if (!viewport || viewport.scale !== 1) return 0
+
+  const layoutHeight = document.documentElement.clientHeight || window.innerHeight
+  const visibleBottom = viewport.offsetTop + viewport.height
+  const gap = layoutHeight - visibleBottom
+  return Number.isFinite(gap) ? Math.max(0, Math.round(gap)) : 0
+}
+
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
+  const [visualBottomGap, setVisualBottomGap] = useState(0)
   const { unreadAvisos } = usePendingIndicators()
   const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
   useEffect(() => setPortalReady(true), [])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    let frame = 0
+
+    const sync = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        setVisualBottomGap((current) => {
+          const next = calcularSeparacionInferiorVisible()
+          return current === next ? current : next
+        })
+      })
+    }
+
+    sync()
+    window.addEventListener('resize', sync, { passive: true })
+    window.addEventListener('orientationchange', sync, { passive: true })
+    viewport?.addEventListener('resize', sync, { passive: true })
+    viewport?.addEventListener('scroll', sync, { passive: true })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', sync)
+      window.removeEventListener('orientationchange', sync)
+      viewport?.removeEventListener('resize', sync)
+      viewport?.removeEventListener('scroll', sync)
+    }
+  }, [])
 
   useEffect(() => {
     if (!dentroBiblia) return
@@ -78,22 +118,31 @@ export default function BottomNav() {
     oscuro: { nav: 'border-slate-800 bg-slate-950', inactive: 'text-slate-400', active: 'text-violet-300', activeBg: 'bg-violet-950/70', shadow: 'shadow-[0_-4px_18px_rgba(0,0,0,0.35)]' },
   }[modo]
 
+  const fixedStyle: CSSProperties = {
+    position: 'fixed',
+    insetInline: 0,
+    top: 'auto',
+    bottom: `${visualBottomGap}px`,
+    width: '100%',
+    margin: 0,
+    paddingRight: 'env(safe-area-inset-right, 0px)',
+    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+    paddingLeft: 'env(safe-area-inset-left, 0px)',
+    isolation: 'isolate',
+    touchAction: 'manipulation',
+    transform: 'translate3d(0,0,0)',
+    WebkitTransform: 'translate3d(0,0,0)',
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    willChange: 'bottom',
+    contain: 'layout paint style',
+  }
+
   const navigation = (
     <div
-      className={`app-bottom-nav !fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
-      style={{
-        position: 'fixed',
-        insetInline: 0,
-        top: 'auto',
-        bottom: 0,
-        width: '100%',
-        margin: 0,
-        paddingRight: 'env(safe-area-inset-right, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        isolation: 'isolate',
-        touchAction: 'manipulation',
-      }}
+      data-bottom-nav-fixed="true"
+      className={`app-bottom-nav !fixed inset-x-0 z-[100] m-0 w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
+      style={fixedStyle}
     >
       <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
         {navItems.map((item) => {
