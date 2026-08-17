@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
   Bold,
   BookMarked,
   CalendarDays,
@@ -10,8 +12,11 @@ import {
   Eye,
   Heading2,
   Italic,
+  LayoutList,
+  Lightbulb,
   List,
   ListOrdered,
+  ListTree,
   Minus,
   Printer,
   Quote,
@@ -30,7 +35,7 @@ type Props = {
   mutedClass: string
 }
 
-type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
+type ToolGroup = 'texto' | 'listas' | 'organizar' | 'insertar' | 'vista'
 
 function clampFontSize(value: number) {
   return Math.min(22, Math.max(16, value))
@@ -87,6 +92,47 @@ export default function NotesEditingToolbar({
       .split('\n')
       .map((line, index) => `${prefix(index)}${line}`)
       .join('\n'), '')
+  }
+
+  const insertarPlantilla = (plantilla: string) => {
+    const base = value.trimEnd()
+    const siguiente = base ? `${base}\n\n${plantilla}` : plantilla
+    onChange(siguiente)
+    setPreviewMode(false)
+    requestAnimationFrame(() => {
+      const area = textareaRef.current
+      if (!area) return
+      area.focus()
+      area.setSelectionRange(siguiente.length, siguiente.length)
+    })
+  }
+
+  const convertirEnLluvia = () => {
+    const siguiente = value
+      .split('\n')
+      .map((line) => {
+        const trimmed = line.trim()
+        if (!trimmed) return ''
+        if (/^(## |• |\d+\. |☐ |☑ |> |─{4,})/.test(trimmed)) return line
+        return `• ${trimmed}`
+      })
+      .join('\n')
+    onChange(siguiente)
+  }
+
+  const bloquesOrganizables = useMemo(() => value
+    .trim()
+    .split(/\n\s*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean), [value])
+
+  const moverBloque = (index: number, direction: -1 | 1) => {
+    const destino = index + direction
+    if (destino < 0 || destino >= bloquesOrganizables.length) return
+    const siguiente = [...bloquesOrganizables]
+    const [bloque] = siguiente.splice(index, 1)
+    siguiente.splice(destino, 0, bloque)
+    onChange(siguiente.join('\n\n'))
   }
 
   const toggleTask = (lineIndex: number) => {
@@ -152,6 +198,7 @@ export default function NotesEditingToolbar({
   const groups: Array<{ id: ToolGroup; label: string }> = [
     { id: 'texto', label: 'Texto' },
     { id: 'listas', label: 'Listas' },
+    { id: 'organizar', label: 'Organizar' },
     { id: 'insertar', label: 'Insertar' },
     { id: 'vista', label: 'Vista' },
   ]
@@ -159,7 +206,7 @@ export default function NotesEditingToolbar({
   return (
     <section aria-label="Herramientas de edición" className="mt-2">
       <div className="rounded-[22px] border border-current/10 bg-current/[0.025] p-1.5 backdrop-blur-xl">
-        <div role="tablist" aria-label="Categorías de herramientas" className="grid grid-cols-4 gap-1">
+        <div role="tablist" aria-label="Categorías de herramientas" className="grid grid-cols-5 gap-1">
           {groups.map((group) => (
             <button
               key={group.id}
@@ -167,9 +214,9 @@ export default function NotesEditingToolbar({
               role="tab"
               aria-selected={activeGroup === group.id}
               onClick={() => selectGroup(group.id)}
-              className={`min-h-9 rounded-[15px] px-2 text-[11px] font-extrabold transition ${activeGroup === group.id ? 'bg-violet-600 text-white shadow-sm' : mutedClass}`}
+              className={`min-h-9 min-w-0 rounded-[15px] px-1 text-[10px] font-extrabold transition ${activeGroup === group.id ? 'bg-violet-600 text-white shadow-sm' : mutedClass}`}
             >
-              {group.label}
+              <span className="block truncate">{group.label}</span>
             </button>
           ))}
         </div>
@@ -196,6 +243,45 @@ export default function NotesEditingToolbar({
             </div>
           )}
 
+          {activeGroup === 'organizar' && (
+            <div>
+              <div className="flex items-start gap-2 rounded-2xl bg-violet-500/[0.08] px-3 py-2.5">
+                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" aria-hidden="true" />
+                <p className="text-[10px] leading-4"><span className="font-extrabold">Sin IA y sin internet.</span> Ordena lo que ya escribiste o agrega una estructura para seguir desarrollando tus ideas.</p>
+              </div>
+
+              <p className={`mb-1.5 mt-3 px-1 text-[9px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Dar estructura</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {toolButton('Convertir líneas en lluvia de ideas', Lightbulb, convertirEnLluvia, 'Lluvia de ideas')}
+                {toolButton('Agregar estructura de bosquejo', ListTree, () => insertarPlantilla('## Tema\n\n## Introducción\n\n## Punto 1\n\n## Punto 2\n\n## Punto 3\n\n## Aplicación\n\n## Conclusión'), 'Bosquejo')}
+                {toolButton('Agregar estructura de estudio bíblico', BookMarked, () => insertarPlantilla('## Texto base\n\n## Observaciones\n\n## Contexto\n\n## Interpretación\n\n## Aplicación\n\n## Preguntas'), 'Estudio bíblico')}
+                {toolButton('Agregar estructura de predicación', LayoutList, () => insertarPlantilla('## Título\n\n## Texto base\n\n## Idea central\n\n## Introducción\n\n## Desarrollo\n\n## Aplicación\n\n## Cierre'), 'Predicación')}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-3 px-1">
+                <p className={`text-[9px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Orden manual</p>
+                <span className={`text-[9px] ${mutedClass}`}>{bloquesOrganizables.length} {bloquesOrganizables.length === 1 ? 'bloque' : 'bloques'}</span>
+              </div>
+
+              {bloquesOrganizables.length > 1 ? (
+                <div className="mt-1.5 max-h-56 space-y-1.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {bloquesOrganizables.map((block, index) => (
+                    <div key={`${index}-${block.slice(0, 18)}`} className="flex items-center gap-2 rounded-2xl border border-current/10 bg-current/[0.025] px-2.5 py-2">
+                      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[9px] font-extrabold ${buttonClass}`}>{index + 1}</span>
+                      <p className="min-w-0 flex-1 truncate text-[10px] font-semibold">{block.replace(/^##\s*/, '').replace(/^[•☐☑>]\s*/, '')}</p>
+                      <div className="flex shrink-0 gap-1">
+                        <button type="button" onClick={() => moverBloque(index, -1)} disabled={index === 0} className={`grid h-8 w-8 place-items-center rounded-full transition active:scale-95 disabled:opacity-25 ${buttonClass}`} aria-label={`Mover bloque ${index + 1} arriba`}><ArrowUp className="h-3.5 w-3.5" /></button>
+                        <button type="button" onClick={() => moverBloque(index, 1)} disabled={index === bloquesOrganizables.length - 1} className={`grid h-8 w-8 place-items-center rounded-full transition active:scale-95 disabled:opacity-25 ${buttonClass}`} aria-label={`Mover bloque ${index + 1} abajo`}><ArrowDown className="h-3.5 w-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className={`mt-1.5 rounded-2xl border border-dashed border-current/15 px-3 py-2.5 text-[10px] leading-4 ${mutedClass}`}>Separa tus ideas con una línea en blanco y aquí podrás mover cada bloque arriba o abajo.</p>
+              )}
+            </div>
+          )}
+
           {activeGroup === 'insertar' && (
             <div className="grid grid-cols-4 gap-1.5">
               {toolButton('Cita', Quote, () => prefixLines(() => '> '))}
@@ -215,7 +301,7 @@ export default function NotesEditingToolbar({
       </div>
 
       <div className={`mt-1.5 flex items-center justify-between px-2 text-[10px] ${mutedClass}`}>
-        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
+        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'organizar' ? 'Ideas y bosquejos' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
         <span className="font-bold">{fontSize}px</span>
       </div>
 
