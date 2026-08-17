@@ -19,17 +19,19 @@ function leerTemaGuardado(): ModoBiblia {
 function aplicarTema(modo: ModoBiblia) {
   document.documentElement.dataset.bibliaTema = modo
   document.body.dataset.bibliaTema = modo
+  document.documentElement.style.colorScheme = modo === 'oscuro' ? 'dark' : 'light'
 }
 
 function retirarTema() {
   delete document.documentElement.dataset.bibliaTema
   delete document.body.dataset.bibliaTema
+  document.documentElement.style.removeProperty('color-scheme')
 }
 
 /**
  * Mantiene la paleta bíblica únicamente dentro de las rutas /biblia.
- * Se ejecuta en layout effect para que la navegación cliente no pinte primero
- * el fondo claro general de la aplicación.
+ * Es también la única autoridad que la retira al abandonar esa superficie,
+ * evitando un frame claro durante transiciones internas Biblia → Cuaderno.
  */
 export default function BibleThemeRouteSync() {
   const pathname = usePathname()
