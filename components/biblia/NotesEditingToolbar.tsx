@@ -15,7 +15,6 @@ import {
   Minus,
   Printer,
   Quote,
-  Type,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
@@ -30,6 +29,8 @@ type Props = {
   buttonClass: string
   mutedClass: string
 }
+
+type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
 
 function clampFontSize(value: number) {
   return Math.min(22, Math.max(16, value))
@@ -58,6 +59,7 @@ export default function NotesEditingToolbar({
   mutedClass,
 }: Props) {
   const [previewMode, setPreviewMode] = useState(false)
+  const [activeGroup, setActiveGroup] = useState<ToolGroup>('texto')
 
   useEffect(() => {
     const area = textareaRef.current
@@ -118,10 +120,16 @@ export default function NotesEditingToolbar({
     return <p key={key}>{inlineNodes(line, key)}</p>
   }), [value])
 
-  const toolButton = (label: string, Icon: typeof Bold, action: () => void) => (
-    <button type="button" onClick={action} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label={label} title={label}>
-      <Icon className="h-4 w-4" aria-hidden="true" />
-      <span>{label}</span>
+  const toolButton = (label: string, Icon: typeof Bold, action: () => void, compactLabel?: string) => (
+    <button
+      type="button"
+      onClick={action}
+      className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 text-[10px] font-bold transition active:scale-[0.97] ${buttonClass}`}
+      aria-label={label}
+      title={label}
+    >
+      <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      <span className="max-w-full truncate">{compactLabel ?? label}</span>
     </button>
   )
 
@@ -133,54 +141,86 @@ export default function NotesEditingToolbar({
     })
   }
 
+  const selectGroup = (group: ToolGroup) => {
+    if (group !== 'vista' && previewMode) {
+      setPreviewMode(false)
+      requestAnimationFrame(() => textareaRef.current?.focus())
+    }
+    setActiveGroup(group)
+  }
+
+  const groups: Array<{ id: ToolGroup; label: string }> = [
+    { id: 'texto', label: 'Texto' },
+    { id: 'listas', label: 'Listas' },
+    { id: 'insertar', label: 'Insertar' },
+    { id: 'vista', label: 'Vista' },
+  ]
+
   return (
-    <section aria-label="Herramientas de edición" className="mt-2 space-y-4">
-      {!previewMode && <>
-        <div>
-          <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Texto</p>
-          <div className="grid grid-cols-3 gap-2">
-            {toolButton('Título', Heading2, () => prefixLines(() => '## '))}
-            {toolButton('Negrita', Bold, () => applySelection((text) => `**${text}**`, 'texto'))}
-            {toolButton('Cursiva', Italic, () => applySelection((text) => `*${text}*`, 'texto'))}
-          </div>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {toolButton('Texto −', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)))}
-            {toolButton('Texto +', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)))}
-          </div>
-          <p className={`mt-1 px-1 text-right text-[10px] ${mutedClass}`}>{fontSize}px</p>
+    <section aria-label="Herramientas de edición" className="mt-2">
+      <div className="rounded-[22px] border border-current/10 bg-current/[0.025] p-1.5 backdrop-blur-xl">
+        <div role="tablist" aria-label="Categorías de herramientas" className="grid grid-cols-4 gap-1">
+          {groups.map((group) => (
+            <button
+              key={group.id}
+              type="button"
+              role="tab"
+              aria-selected={activeGroup === group.id}
+              onClick={() => selectGroup(group.id)}
+              className={`min-h-9 rounded-[15px] px-2 text-[11px] font-extrabold transition ${activeGroup === group.id ? 'bg-violet-600 text-white shadow-sm' : mutedClass}`}
+            >
+              {group.label}
+            </button>
+          ))}
         </div>
 
-        <div>
-          <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Listas</p>
-          <div className="grid grid-cols-3 gap-2">
-            {toolButton('Viñetas', List, () => prefixLines(() => '• '))}
-            {toolButton('Numerada', ListOrdered, () => prefixLines((index) => `${index + 1}. `))}
-            {toolButton('Tareas', CheckSquare, () => prefixLines(() => '☐ '))}
-          </div>
-          <p className={`mt-2 px-1 text-[11px] leading-4 ${mutedClass}`}>Las tareas se convierten en checklist interactivo en Vista de lectura.</p>
-        </div>
+        <div className="mt-1.5 rounded-[18px] p-1.5">
+          {activeGroup === 'texto' && (
+            <div className="grid grid-cols-5 gap-1.5">
+              {toolButton('Título', Heading2, () => prefixLines(() => '## '), 'Título')}
+              {toolButton('Negrita', Bold, () => applySelection((text) => `**${text}**`, 'texto'), 'Negrita')}
+              {toolButton('Cursiva', Italic, () => applySelection((text) => `*${text}*`, 'texto'), 'Cursiva')}
+              {toolButton('Reducir tamaño del texto', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)), 'A−')}
+              {toolButton('Aumentar tamaño del texto', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)), 'A+')}
+            </div>
+          )}
 
-        <div>
-          <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Insertar</p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {toolButton('Cita', Quote, () => prefixLines(() => '> '))}
-            {toolButton('Separador', Minus, () => applySelection(() => '\n\n──────────\n\n'))}
-            {toolButton('Fecha', CalendarDays, () => applySelection(() => `${new Date().toLocaleString('es-SV')} — `))}
-            {toolButton('Referencia', BookMarked, () => applySelection(() => reference ? `${reference} — ` : 'Referencia — '))}
-          </div>
-        </div>
-      </>}
+          {activeGroup === 'listas' && (
+            <div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {toolButton('Viñetas', List, () => prefixLines(() => '• '))}
+                {toolButton('Numerada', ListOrdered, () => prefixLines((index) => `${index + 1}. `))}
+                {toolButton('Tareas', CheckSquare, () => prefixLines(() => '☐ '))}
+              </div>
+              <p className={`mt-2 px-1 text-[10px] leading-4 ${mutedClass}`}>Las tareas se pueden marcar y desmarcar en Vista de lectura.</p>
+            </div>
+          )}
 
-      <div>
-        <p className={`mb-2 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Vista y salida</p>
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={togglePreview} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-pressed={previewMode} aria-label={previewMode ? 'Seguir editando' : 'Vista de lectura'}>{previewMode ? <Edit3 className="h-4 w-4" /> : <Eye className="h-4 w-4" />}{previewMode ? 'Editar' : 'Vista de lectura'}</button>
-          <button type="button" onClick={() => window.print()} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-bold ${buttonClass}`} aria-label="Imprimir o guardar PDF"><Printer className="h-4 w-4" /> Imprimir / PDF</button>
+          {activeGroup === 'insertar' && (
+            <div className="grid grid-cols-4 gap-1.5">
+              {toolButton('Cita', Quote, () => prefixLines(() => '> '))}
+              {toolButton('Separador', Minus, () => applySelection(() => '\n\n──────────\n\n'))}
+              {toolButton('Fecha', CalendarDays, () => applySelection(() => `${new Date().toLocaleString('es-SV')} — `))}
+              {toolButton('Referencia', BookMarked, () => applySelection(() => reference ? `${reference} — ` : 'Referencia — '))}
+            </div>
+          )}
+
+          {activeGroup === 'vista' && (
+            <div className="grid grid-cols-2 gap-1.5">
+              <button type="button" onClick={togglePreview} className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-3 text-xs font-bold transition active:scale-[0.98] ${buttonClass}`} aria-pressed={previewMode} aria-label={previewMode ? 'Seguir editando' : 'Vista de lectura'}>{previewMode ? <Edit3 className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}{previewMode ? 'Editar' : 'Vista de lectura'}</button>
+              <button type="button" onClick={() => window.print()} className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-3 text-xs font-bold transition active:scale-[0.98] ${buttonClass}`} aria-label="Imprimir o guardar PDF"><Printer className="h-[18px] w-[18px]" /> Imprimir / PDF</button>
+            </div>
+          )}
         </div>
       </div>
 
+      <div className={`mt-1.5 flex items-center justify-between px-2 text-[10px] ${mutedClass}`}>
+        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
+        <span className="font-bold">{fontSize}px</span>
+      </div>
+
       {previewMode && (
-        <article className="min-h-52 rounded-2xl bg-current/[0.025] px-1 py-3 sm:px-2" aria-label="Vista de lectura de la nota" style={{ fontSize, lineHeight: 1.8 }}>
+        <article className="mt-3 min-h-52 rounded-[22px] border border-current/10 bg-current/[0.025] px-4 py-4 backdrop-blur-xl sm:px-5" aria-label="Vista de lectura de la nota" style={{ fontSize, lineHeight: 1.8 }}>
           {value.trim() ? <div className="space-y-1">{preview}</div> : <p className={mutedClass}>La nota está vacía. Toca Editar para comenzar a escribir.</p>}
         </article>
       )}
