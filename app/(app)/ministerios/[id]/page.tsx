@@ -51,20 +51,28 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   if (!min) notFound()
 
   const { data: perfil } = await db.from('profiles').select('rol').eq('id', user.id).single()
-  const esLider = mem?.es_lider === true || ['pastor', 'administrador'].includes(perfil?.rol)
-  const esMiembro = !!mem || esLider
+  const esLiderMinisterio = mem?.es_lider === true
+  const esMiembro = Boolean(mem)
+  const accesoGlobal = ['pastor', 'administrador'].includes(perfil?.rol)
   const esAlabanza = String(min.nombre || '').trim().toLowerCase() === 'alabanza'
   const fuenteTitulo = TITULO_FONT[min.fuente_titulo] || TITULO_FONT.moderna
   const fuenteCuerpo = CUERPO_FONT[min.fuente_cuerpo] || CUERPO_FONT.clasica
   const color = min.color_primario || '#5b3df5'
   const colorSecundario = min.color_secundario || '#7c3aed'
   const ingresosPendientes = ingresosPendientesRows?.length || 0
+  const relacionVisible = esLiderMinisterio
+    ? 'Eres líder aquí'
+    : esMiembro
+      ? 'Eres parte del equipo'
+      : accesoGlobal
+        ? 'Acceso de gestión'
+        : ''
 
   const accesos = [
     { href: `/ministerios/${id}/avisos`, label: 'Avisos', detail: 'Noticias y recordatorios', icon: Megaphone, visible: true, badge: 0 },
     { href: `/ministerios/${id}/miembros`, label: 'Miembros', detail: `${miembros ?? 0} ${miembros === 1 ? 'servidor' : 'servidores'}`, icon: Users, visible: true, badge: 0 },
     { href: `/ministerios/${id}/solicitudes`, label: 'Solicitudes', detail: 'Peticiones del equipo', icon: ClipboardList, visible: esMiembro, badge: 0 },
-    { href: `/ministerios/${id}/solicitudes-ingreso`, label: 'Ingresos', detail: ingresosPendientes ? `${ingresosPendientes} ${ingresosPendientes === 1 ? 'pendiente' : 'pendientes'}` : 'Sin pendientes', icon: UserPlus, visible: esLider, badge: ingresosPendientes },
+    { href: `/ministerios/${id}/solicitudes-ingreso`, label: 'Ingresos', detail: ingresosPendientes ? `${ingresosPendientes} ${ingresosPendientes === 1 ? 'pendiente' : 'pendientes'}` : 'Sin pendientes', icon: UserPlus, visible: esLiderMinisterio, badge: ingresosPendientes },
   ].filter((item) => item.visible)
 
   return (
@@ -76,7 +84,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
         <div className="relative mx-auto flex min-h-[320px] max-w-2xl flex-col justify-end px-4 pb-8 pt-[calc(7rem+env(safe-area-inset-top))] sm:min-h-[360px] sm:pb-9">
           <div className="flex min-w-0 items-end gap-3.5">
             <div className="grid h-[76px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-white/90 bg-white/18 text-3xl shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md sm:h-24 sm:w-24 sm:text-4xl" aria-hidden="true">{min.avatar_url ? <img src={min.avatar_url} alt="" className="h-full w-full object-cover" /> : min.emoji}</div>
-            <div className="min-w-0 flex-1 pb-0.5"><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.19em] text-white/70">Ministerio</p><h1 className="break-words text-[27px] font-bold leading-[1.05] tracking-[-0.035em] drop-shadow-sm sm:text-4xl" style={{ fontFamily: fuenteTitulo }}>{min.nombre}</h1><p className="mt-1.5 break-words text-[13px] leading-relaxed text-white/88">{miembros ?? 0} {miembros === 1 ? 'servidor' : 'servidores'}{esLider ? ' · Eres líder aquí' : esMiembro ? ' · Eres parte del equipo' : ''}</p></div>
+            <div className="min-w-0 flex-1 pb-0.5"><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.19em] text-white/70">Ministerio</p><h1 className="break-words text-[27px] font-bold leading-[1.05] tracking-[-0.035em] drop-shadow-sm sm:text-4xl" style={{ fontFamily: fuenteTitulo }}>{min.nombre}</h1><p className="mt-1.5 break-words text-[13px] leading-relaxed text-white/88">{miembros ?? 0} {miembros === 1 ? 'servidor' : 'servidores'}{relacionVisible ? ` · ${relacionVisible}` : ''}</p></div>
           </div>
           {min.descripcion && <p className="mt-4 max-w-xl break-words text-[13px] leading-5 text-white/88 drop-shadow-sm">{min.descripcion}</p>}
         </div>
@@ -85,10 +93,10 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
       <div className="relative z-10 mx-auto -mt-3 max-w-2xl space-y-7 px-4">
         <section>
           <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Herramientas</h2>
-          {esLider ? <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">{accesos.map((item, index) => { const Icon = item.icon; const isLeft = index % 2 === 0; const hasRowBelow = index < accesos.length - 2; return <Link key={item.href} href={item.href} className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}><span className="relative grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: `${color}13`, color }}><Icon className="h-[18px] w-[18px]" />{item.badge > 0 && <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">{item.badge > 99 ? '99+' : item.badge}</span>}</span><span className="min-w-0"><span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span><span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span></span></Link> })}</div> : <div className="grid grid-cols-3 gap-2 rounded-[25px] bg-white px-3 py-4 ring-1 ring-black/[0.045]">{accesos.map((item) => { const Icon = item.icon; return <Link key={item.href} href={item.href} className="group flex min-w-0 flex-col items-center justify-start rounded-2xl px-1 py-1.5 text-center transition active:scale-[0.97] active:bg-slate-50"><span className="grid h-12 w-12 place-items-center rounded-full shadow-[0_5px_14px_rgba(15,23,42,0.05)]" style={{ backgroundColor: `${color}13`, color }}><Icon className="h-5 w-5" /></span><span className="mt-2 block max-w-full truncate text-[12px] font-bold text-[#171923]">{item.label}</span></Link> })}</div>}
+          {esLiderMinisterio ? <div className="grid grid-cols-2 overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">{accesos.map((item, index) => { const Icon = item.icon; const isLeft = index % 2 === 0; const hasRowBelow = index < accesos.length - 2; return <Link key={item.href} href={item.href} className={`group relative flex min-h-[94px] min-w-0 flex-col justify-between gap-3 p-4 transition-colors hover:bg-slate-50 active:bg-slate-100 ${isLeft ? 'border-r border-slate-100' : ''} ${hasRowBelow ? 'border-b border-slate-100' : ''}`}><span className="relative grid h-9 w-9 place-items-center rounded-full" style={{ backgroundColor: `${color}13`, color }}><Icon className="h-[18px] w-[18px]" />{item.badge > 0 && <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white ring-2 ring-white">{item.badge > 99 ? '99+' : item.badge}</span>}</span><span className="min-w-0"><span className="block truncate text-[14px] font-bold text-[#171923]">{item.label}</span><span className={`mt-0.5 block truncate text-[11px] ${item.badge > 0 ? 'font-semibold text-rose-500' : 'text-slate-400'}`}>{item.detail}</span></span></Link> })}</div> : <div className="grid grid-cols-3 gap-2 rounded-[25px] bg-white px-3 py-4 ring-1 ring-black/[0.045]">{accesos.map((item) => { const Icon = item.icon; return <Link key={item.href} href={item.href} className="group flex min-w-0 flex-col items-center justify-start rounded-2xl px-1 py-1.5 text-center transition active:scale-[0.97] active:bg-slate-50"><span className="grid h-12 w-12 place-items-center rounded-full shadow-[0_5px_14px_rgba(15,23,42,0.05)]" style={{ backgroundColor: `${color}13`, color }}><Icon className="h-5 w-5" /></span><span className="mt-2 block max-w-full truncate text-[12px] font-bold text-[#171923]">{item.label}</span></Link> })}</div>}
         </section>
 
-        {esLider && <section>
+        {esLiderMinisterio && <section>
           <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Panel del líder</h2>
           <div className="overflow-hidden rounded-[25px] bg-white ring-1 ring-black/[0.045]">
             {esAlabanza && <Link href={`/ministerios/${id}/programacion`} className="flex min-h-[66px] items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 active:bg-slate-50"><span className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white" style={{ backgroundColor: color }}><Music2 className="h-[18px] w-[18px]" /></span><span className="min-w-0"><span className="block truncate text-sm font-bold text-[#171923]">Programación de Alabanza</span><span className="block truncate text-xs text-slate-400">Equipo, repertorio y paleta por servicio</span></span></span><ChevronRight className="h-5 w-5 shrink-0 text-slate-300" /></Link>}
