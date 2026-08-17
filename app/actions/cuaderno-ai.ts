@@ -24,6 +24,7 @@ function mensajeError(error: unknown) {
   if (!(error instanceof VidaAiError)) return 'No se pudo organizar la nota en este momento.'
   if (error.code === 'not_configured') return 'La asistencia con IA todavía no tiene un proveedor configurado.'
   if (error.code === 'input_too_large') return 'Esta nota es demasiado larga para organizarla de una sola vez. Divide el contenido y vuelve a intentarlo.'
+  if (error.code === 'rate_limited') return 'Has usado varias solicitudes seguidas. Espera un momento antes de volver a generar para cuidar el consumo de IA.'
   if (error.code === 'provider_unavailable') return 'La IA está temporalmente ocupada. Puedes seguir editando y volver a intentarlo después.'
   return 'No se pudo generar una propuesta para esta nota.'
 }
@@ -33,7 +34,9 @@ export async function organizarApuntesConIA(input: OrganizarInput) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false as const, error: 'Tu sesión expiró.' }
 
-  const contenido = textoSeguro(input?.contenido, 20_000)
+  // Deja margen para instrucciones y referencia dentro del presupuesto total
+  // del router. Nunca envía el cuaderno completo ni notas vecinas.
+  const contenido = textoSeguro(input?.contenido, 14_000)
   if (!contenido) return { success: false as const, error: 'Escribe algunas ideas antes de usar la organización con IA.' }
 
   const referencia = textoSeguro(input?.referencia, 300)
