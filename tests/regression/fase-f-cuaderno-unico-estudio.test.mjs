@@ -26,7 +26,7 @@ test('FASE F: el shell offline conserva identidad y contexto de Estudio Profundo
 })
 
 test('FASE F: renovar el shell no amplía la caché a datos privados', () => {
-  assert.match(sw, /vida-shell-v2\.0-notas-contexto/)
+  assert.match(sw, /vida-shell-v2\.1-notas-origen/)
   assert.match(sw, /OFFLINE_NOTES_SHELL/)
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/'\)/)
