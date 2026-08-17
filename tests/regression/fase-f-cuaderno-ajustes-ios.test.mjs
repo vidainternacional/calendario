@@ -64,6 +64,7 @@ test('FASE F: negrita cursiva subrayado y tachado son estados independientes y c
   assert.match(toolbar, /const nextActive = !inlineBefore\[key\]/)
   assert.match(toolbar, /setFormatState\(\(current\) => \(\{ \.\.\.current, \[key\]: nextActive \}\)\)/)
   assert.match(toolbar, /onPointerDown=\{\(event\) => event\.preventDefault\(\)\}/)
-  assert.match(toolbar, /\*\*\*\(\[\^\*\\n\]\+\)\*\*\*/)
+  assert.match(toolbar, /Triple asterisco se procesa primero/)
+  assert.match(toolbar, /<strong><em>\$1<\/em><\/strong>/)
   assert.doesNotMatch(toolbar, /queryCommandState/)
 })
