@@ -23,6 +23,7 @@ export type ModoLecturaBiblia = 'claro' | 'oscuro' | 'sepia'
 type TipoNota = TipoNotaBiblica
 type NotaBiblica = NotaBiblicaLocal
 type Paquete = { id: string; titulo: string }
+type FiltroOrigen = 'todos' | 'estudio_profundo' | 'biblia_notas'
 
 type Props = {
   modo?: ModoLecturaBiblia
@@ -37,6 +38,12 @@ const tipos: Array<{ id: TipoNota; nombre: string; icono: typeof BookOpen }> = [
   { id: 'estudio', nombre: 'Estudio', icono: FileText },
   { id: 'predicacion', nombre: 'Predicación', icono: Mic2 },
   { id: 'personal', nombre: 'Personal', icono: NotebookPen },
+]
+
+const origenes: Array<{ id: FiltroOrigen; nombre: string }> = [
+  { id: 'todos', nombre: 'Todos los orígenes' },
+  { id: 'estudio_profundo', nombre: 'Estudio Profundo' },
+  { id: 'biblia_notas', nombre: 'Cuaderno' },
 ]
 
 function esModoLectura(value: string | undefined): value is ModoLecturaBiblia {
@@ -61,6 +68,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState<TipoNota | 'todas'>('todas')
+  const [filtroOrigen, setFiltroOrigen] = useState<FiltroOrigen>('todos')
   const [modoInterno, setModoInterno] = useState<ModoLecturaBiblia | null>(modoExterno ?? null)
   const [paquetes, setPaquetes] = useState<Paquete[]>([])
   const [notasCargadas, setNotasCargadas] = useState(false)
@@ -170,9 +178,10 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     const termino = busqueda.trim().toLowerCase()
     return notas
       .filter((nota) => filtro === 'todas' || nota.tipo === filtro)
-      .filter((nota) => !termino || `${nota.titulo} ${nota.contenido} ${nota.referencia} ${nota.paquete} ${nota.numeroPredicacion ?? ''} ${nota.fechaPredicacion} ${nota.serie} ${nota.lugar} ${nota.predicador} ${nota.estadoPredicacion}`.toLowerCase().includes(termino))
+      .filter((nota) => filtroOrigen === 'todos' || nota.origen === filtroOrigen)
+      .filter((nota) => !termino || `${nota.titulo} ${nota.contenido} ${nota.referencia} ${nota.paquete} ${nota.origen} ${nota.numeroPredicacion ?? ''} ${nota.fechaPredicacion} ${nota.serie} ${nota.lugar} ${nota.predicador} ${nota.estadoPredicacion}`.toLowerCase().includes(termino))
       .sort((a, b) => b.actualizadaEn.localeCompare(a.actualizadaEn))
-  }, [notas, busqueda, filtro])
+  }, [notas, busqueda, filtro, filtroOrigen])
 
   const nuevaNota = () => {
     const nota = crearNotaBiblicaLocal()
@@ -247,16 +256,19 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
         <div className={`border-b p-3 ${modo === 'oscuro' ? 'border-slate-800' : modo === 'sepia' ? 'border-[#d4c09b]' : 'border-slate-200'}`}>
           <label className={`flex min-h-11 items-center gap-2 rounded-2xl px-3 ${tema.soft}`}><Search className="h-4 w-4 opacity-60" /><input value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar notas" className="w-full bg-transparent text-sm outline-none placeholder:opacity-60" /></label>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">{(['todas', ...tipos.map((tipo) => tipo.id)] as const).map((id) => <button key={id} type="button" onClick={() => setFiltro(id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${filtro === id ? 'bg-violet-600 text-white' : tema.soft}`}>{id === 'todas' ? 'Todas' : tipos.find((tipo) => tipo.id === id)?.nombre}</button>)}</div>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">{origenes.map((origen) => <button key={origen.id} type="button" onClick={() => setFiltroOrigen(origen.id)} className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-bold ${filtroOrigen === origen.id ? 'border-violet-500 bg-violet-50 text-violet-700' : `${tema.field} ${tema.muted}`}`}>{origen.nombre}</button>)}</div>
 
           <div className="mt-4 flex min-h-[104px] gap-3 overflow-x-auto overscroll-x-contain pb-2">
             <button type="button" onClick={nuevaNota} className={`grid h-20 w-20 shrink-0 place-items-center rounded-full border border-dashed ${tema.field}`}><Plus className="h-5 w-5" /></button>
-            {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => setSeleccionadaId(nota.id)} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full px-2 text-center ring-1 ${seleccionadaId === nota.id ? tema.selected : `${tema.soft} ring-transparent`}`}><span className="line-clamp-2 text-[11px] font-bold leading-4">{nota.titulo || 'Sin título'}</span><span className="mt-1 max-w-full truncate text-[9px] opacity-65">{nota.tipo === 'predicacion' && nota.numeroPredicacion ? `Prédica #${nota.numeroPredicacion}` : nota.referencia || tipos.find((tipo) => tipo.id === nota.tipo)?.nombre}</span></button>)}
+            {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => setSeleccionadaId(nota.id)} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full px-2 text-center ring-1 ${seleccionadaId === nota.id ? tema.selected : `${tema.soft} ring-transparent`}`}><span className="line-clamp-2 text-[11px] font-bold leading-4">{nota.titulo || 'Sin título'}</span><span className="mt-1 max-w-full truncate text-[9px] opacity-65">{nota.tipo === 'predicacion' && nota.numeroPredicacion ? `Prédica #${nota.numeroPredicacion}` : `${nota.origen === 'estudio_profundo' ? 'Estudio · ' : ''}${nota.referencia || tipos.find((tipo) => tipo.id === nota.tipo)?.nombre || 'Nota'}`}</span></button>)}
           </div>
         </div>
 
         {seleccionada ? <section className={`min-h-[calc(100vh-330px)] p-4 sm:p-6 ${tema.editor}`}>
           <div className="mx-auto flex min-h-[calc(100vh-380px)] max-w-3xl flex-col">
             <div className="flex items-start justify-between gap-3"><input value={seleccionada.titulo} onChange={(event) => actualizar({ titulo: event.target.value })} className="min-w-0 flex-1 bg-transparent text-2xl font-bold outline-none" placeholder="Título" /><button type="button" onClick={eliminar} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-500/10 text-rose-500"><Trash2 className="h-4 w-4" /></button></div>
+
+            {seleccionada.origen === 'estudio_profundo' && <div className={`mt-3 flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-bold ${tema.field}`}><FileText className="h-4 w-4 text-violet-500" /><span>Origen: Estudio Profundo</span>{seleccionada.referencia && <span className={`ml-auto truncate font-semibold ${tema.muted}`}>{seleccionada.referencia}</span>}</div>}
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <label><span className={`mb-1 block text-[11px] font-bold uppercase ${tema.muted}`}>Tipo</span><select value={seleccionada.tipo} onChange={(event) => cambiarTipo(event.target.value as TipoNota)} className={`min-h-11 w-full rounded-xl border px-3 text-sm ${tema.field}`}>{tipos.map((tipo) => <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>)}</select></label>
