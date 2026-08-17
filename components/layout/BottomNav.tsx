@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, useState, type SVGProps } from 'react'
+import { useEffect, useState, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Megaphone, User, BookOpen } from 'lucide-react'
@@ -61,52 +61,37 @@ export default function BottomNav() {
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
-  const baselineViewportRef = useRef(0)
   const { unreadAvisos } = usePendingIndicators()
   const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
   useEffect(() => setPortalReady(true), [])
 
   useEffect(() => {
-    const viewport = window.visualViewport
     let frame = 0
 
-    const syncKeyboard = () => {
+    const syncKeyboardImmediately = () => {
       window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(() => {
-        const mobile = window.matchMedia('(pointer: coarse)').matches
-        const editable = elementoEditableActivo()
-        const currentHeight = viewport?.height ?? window.innerHeight
-
-        if (!editable) {
-          baselineViewportRef.current = Math.max(baselineViewportRef.current, currentHeight)
-          setKeyboardOpen(false)
-          return
-        }
-
-        if (!baselineViewportRef.current) baselineViewportRef.current = Math.max(window.innerHeight, currentHeight)
-        const reduction = baselineViewportRef.current - currentHeight
-        setKeyboardOpen(mobile && reduction >= 100)
-      })
+      const mobile = window.matchMedia('(pointer: coarse)').matches
+      setKeyboardOpen(mobile && elementoEditableActivo())
     }
 
-    baselineViewportRef.current = viewport?.height ?? window.innerHeight
-    syncKeyboard()
-    document.addEventListener('focusin', syncKeyboard)
-    document.addEventListener('focusout', syncKeyboard)
-    window.addEventListener('resize', syncKeyboard, { passive: true })
-    window.addEventListener('orientationchange', syncKeyboard, { passive: true })
-    viewport?.addEventListener('resize', syncKeyboard, { passive: true })
-    viewport?.addEventListener('scroll', syncKeyboard, { passive: true })
+    const syncAfterFocusOut = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(syncKeyboardImmediately)
+    }
+
+    // En iOS el focusin sucede antes de que el teclado termine de animarse.
+    // Ocultar la barra desde ese instante evita incluso el pequeño salto visual
+    // que produce Safari cuando recoloca elementos fixed al viewport visible.
+    document.addEventListener('focusin', syncKeyboardImmediately)
+    document.addEventListener('focusout', syncAfterFocusOut)
+    window.addEventListener('orientationchange', syncAfterFocusOut, { passive: true })
 
     return () => {
       window.cancelAnimationFrame(frame)
-      document.removeEventListener('focusin', syncKeyboard)
-      document.removeEventListener('focusout', syncKeyboard)
-      window.removeEventListener('resize', syncKeyboard)
-      window.removeEventListener('orientationchange', syncKeyboard)
-      viewport?.removeEventListener('resize', syncKeyboard)
-      viewport?.removeEventListener('scroll', syncKeyboard)
+      document.removeEventListener('focusin', syncKeyboardImmediately)
+      document.removeEventListener('focusout', syncAfterFocusOut)
+      window.removeEventListener('orientationchange', syncAfterFocusOut)
     }
   }, [])
 
@@ -134,17 +119,13 @@ export default function BottomNav() {
     oscuro: { nav: 'border-slate-800 bg-slate-950', inactive: 'text-slate-400', active: 'text-violet-300', activeBg: 'bg-violet-950/70', shadow: 'shadow-[0_-4px_18px_rgba(0,0,0,0.35)]' },
   }[modo]
 
-  // En iOS un elemento fixed se recoloca sobre el teclado porque Safari fija
-  // contra el viewport visual. La navegación global no debe competir con el
-  // editor: mientras el teclado ocupa el borde inferior se oculta exactamente
-  // en ese borde y reaparece al cerrarlo, sin desplazarse hacia arriba.
   const navigation = (
     <div
       data-bottom-nav-fixed="true"
       data-keyboard-policy="layout-bottom-covered"
       data-keyboard-open={keyboardOpen ? 'true' : 'false'}
       aria-hidden={keyboardOpen ? 'true' : undefined}
-      className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-[opacity,visibility,background-color,border-color] duration-150 ${keyboardOpen ? 'pointer-events-none invisible opacity-0' : 'visible opacity-100'} ${tema.nav} ${tema.shadow}`}
+      className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${keyboardOpen ? 'hidden' : 'block'} ${tema.nav} ${tema.shadow}`}
       style={{
         paddingRight: 'env(safe-area-inset-right, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',

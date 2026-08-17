@@ -65,24 +65,25 @@ type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
 type BlockStyle = 'h1' | 'h2' | 'h3' | 'p' | 'pre'
 type StandardListKind = 'bullet' | 'dash' | 'numbered'
 type InlineFormatKey = 'bold' | 'italic' | 'underline' | 'strike'
+type InlineState = Record<InlineFormatKey, boolean>
 
-type FormatState = {
+type FormatState = InlineState & {
   block: BlockStyle
-  bold: boolean
-  italic: boolean
-  underline: boolean
-  strike: boolean
   bullet: boolean
   dash: boolean
   numbered: boolean
 }
 
-const defaultFormatState: FormatState = {
-  block: 'p',
+const emptyInlineState: InlineState = {
   bold: false,
   italic: false,
   underline: false,
   strike: false,
+}
+
+const defaultFormatState: FormatState = {
+  block: 'p',
+  ...emptyInlineState,
   bullet: false,
   dash: false,
   numbered: false,
@@ -103,6 +104,9 @@ function escapeHtml(value: string) {
 
 function inlineToHtml(value: string) {
   let html = escapeHtml(value)
+  // Triple asterisco se procesa primero para conservar combinaciones
+  // negrita + cursiva sin que un formato active o destruya al otro.
+  html = html.replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>')
   html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
   html = html.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>')
   html = html.replace(/~~([^~\n]+)~~/g, '<s>$1</s>')
@@ -221,27 +225,55 @@ export function canonicalToRichHtml(value: string) {
   return blocks.join('')
 }
 
-function serializeInlineNode(node: Node): string {
-  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
+function mergeInlineState(base: InlineState, extra: Partial<InlineState>): InlineState {
+  return {
+    bold: base.bold || Boolean(extra.bold),
+    italic: base.italic || Boolean(extra.italic),
+    underline: base.underline || Boolean(extra.underline),
+    strike: base.strike || Boolean(extra.strike),
+  }
+}
+
+function inlineStateFromElement(element: HTMLElement): Partial<InlineState> {
+  const tag = element.tagName
+  const weight = element.style.fontWeight.trim().toLowerCase()
+  const numericWeight = Number.parseInt(weight, 10)
+  const decoration = `${element.style.textDecoration} ${element.style.textDecorationLine}`.toLowerCase()
+
+  return {
+    bold: tag === 'STRONG' || tag === 'B' || weight === 'bold' || (!Number.isNaN(numericWeight) && numericWeight >= 600),
+    italic: tag === 'EM' || tag === 'I' || element.style.fontStyle.toLowerCase() === 'italic',
+    underline: tag === 'U' || decoration.includes('underline'),
+    strike: tag === 'S' || tag === 'STRIKE' || tag === 'DEL' || decoration.includes('line-through'),
+  }
+}
+
+function wrapCanonicalInline(text: string, state: InlineState) {
+  if (!text) return text
+  let output = text
+  if (state.strike) output = `~~${output}~~`
+  if (state.underline) output = `++${output}++`
+  if (state.italic) output = `*${output}*`
+  if (state.bold) output = `**${output}**`
+  return output
+}
+
+function serializeInlineNode(node: Node, inherited: InlineState = emptyInlineState): string {
+  if (node.nodeType === Node.TEXT_NODE) return wrapCanonicalInline(node.textContent ?? '', inherited)
   if (node.nodeType !== Node.ELEMENT_NODE) return ''
 
   const element = node as HTMLElement
   const tag = element.tagName
-
   if (tag === 'BR') return '\n'
   if (tag === 'INPUT') return ''
   if (element.dataset.noteReferenceIcon === 'true') return ''
 
-  const content = Array.from(element.childNodes).map(serializeInlineNode).join('')
-  if (tag === 'STRONG' || tag === 'B') return `**${content}**`
-  if (tag === 'EM' || tag === 'I') return `*${content}*`
-  if (tag === 'U') return `++${content}++`
-  if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') return `~~${content}~~`
-  return content
+  const nextState = mergeInlineState(inherited, inlineStateFromElement(element))
+  return Array.from(element.childNodes).map((child) => serializeInlineNode(child, nextState)).join('')
 }
 
 function serializeInlineChildren(element: Element) {
-  return Array.from(element.childNodes).map(serializeInlineNode).join('').replace(/\n+$/g, '')
+  return Array.from(element.childNodes).map((node) => serializeInlineNode(node)).join('').replace(/\n+$/g, '')
 }
 
 function serializeList(element: HTMLElement) {
@@ -305,7 +337,7 @@ function normalizeAiProposal(value: string) {
   return value
     .replace(/\r\n?/g, '\n')
     .replace(/^\s*[-*]\s+\[x\]\s+/gim, '☑ ')
-    .replace(/^\s*[-*]\s+\[\s\]\s+/gim, '☐ ')
+    .replace(/^\s*[-*]\s+\[\s\]\s+/gm, '☐ ')
     .replace(/^\s*[-*]\s+/gm, '• ')
     .trim()
 }
@@ -319,6 +351,7 @@ export function plainTextFromCanonical(value: string) {
     .replace(/^[•–-]\s+/gm, '')
     .replace(/^\d+\.\s+/gm, '')
     .replace(/^[☐☑]\s+/gm, '')
+    .replace(/\*\*\*([^*\n]+)\*\*\*/g, '$1')
     .replace(/\*\*([^*\n]+)\*\*/g, '$1')
     .replace(/\+\+([^+\n]+)\+\+/g, '$1')
     .replace(/~~([^~\n]+)~~/g, '$1')
@@ -372,6 +405,19 @@ function topLevelEditorBlock(editor: HTMLElement, node: Node | null) {
   if (!element) return null
   while (element.parentElement && element.parentElement !== editor) element = element.parentElement
   return element.parentElement === editor ? element as HTMLElement : null
+}
+
+function inlineStateAtSelection(editor: HTMLElement, selection: Selection): InlineState {
+  const selected = closestEditorElement(editor, selection.anchorNode)
+  if (!selected) return emptyInlineState
+
+  let current: Element | null = selected
+  let state = { ...emptyInlineState }
+  while (current && current !== editor) {
+    if (current instanceof HTMLElement) state = mergeInlineState(state, inlineStateFromElement(current))
+    current = current.parentElement
+  }
+  return state
 }
 
 function insertStandaloneBlock(editor: HTMLElement, block: HTMLElement, focusTarget: HTMLElement) {
@@ -541,6 +587,7 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
     const command = key === 'b' ? 'bold' : key === 'i' ? 'italic' : key === 'u' ? 'underline' : null
     if (!command) return
     event.preventDefault()
+    document.execCommand('styleWithCSS', false, 'false')
     document.execCommand(command, false)
     emit(true)
   }
@@ -625,6 +672,7 @@ export default function NotesEditingToolbar({
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiReused, setAiReused] = useState(false)
   const savedRangeRef = useRef<Range | null>(null)
+  const selectionSyncLockRef = useRef(0)
 
   const emitEditor = (checkpoint = true) => {
     const editor = editorRef.current
@@ -635,22 +683,20 @@ export default function NotesEditingToolbar({
   const readSelectionState = () => {
     const editor = editorRef.current
     const selection = window.getSelection()
-    if (!editor || !selection?.anchorNode) return
+    if (!editor || !selection?.anchorNode || selection.rangeCount === 0) return
     const selected = closestEditorElement(editor, selection.anchorNode)
     if (!selected) return
 
     const block = selected.closest('h1,h2,h3,pre,p,div,li,blockquote')
     const list = selected.closest('ul,ol') as HTMLElement | null
-    const listKind = listKindOf(list)
+    const kind = listKindOf(list)
+    const inline = inlineStateAtSelection(editor, selection)
     setFormatState({
       block: block?.tagName === 'H1' ? 'h1' : block?.tagName === 'H2' ? 'h2' : block?.tagName === 'H3' ? 'h3' : block?.tagName === 'PRE' ? 'pre' : 'p',
-      bold: Boolean(selected.closest('strong,b')),
-      italic: Boolean(selected.closest('em,i')),
-      underline: Boolean(selected.closest('u')),
-      strike: Boolean(selected.closest('s,strike,del')),
-      bullet: listKind === 'bullet',
-      dash: listKind === 'dash',
-      numbered: listKind === 'numbered',
+      ...inline,
+      bullet: kind === 'bullet',
+      dash: kind === 'dash',
+      numbered: kind === 'numbered',
     })
   }
 
@@ -662,6 +708,7 @@ export default function NotesEditingToolbar({
       const range = selection.getRangeAt(0)
       if (!editor.contains(range.commonAncestorContainer)) return
       savedRangeRef.current = range.cloneRange()
+      if (Date.now() < selectionSyncLockRef.current) return
       readSelectionState()
     }
     document.addEventListener('selectionchange', capture)
@@ -679,17 +726,34 @@ export default function NotesEditingToolbar({
     try {
       selection.removeAllRanges()
       selection.addRange(range)
-    } catch {}
-    return true
+      return true
+    } catch {
+      savedRangeRef.current = null
+      return false
+    }
+  }
+
+  const rememberSelection = () => {
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    if (!editor || !selection || selection.rangeCount === 0) return
+    const range = selection.getRangeAt(0)
+    if (editor.contains(range.commonAncestorContainer)) savedRangeRef.current = range.cloneRange()
   }
 
   const runCommand = (command: string, argument?: string) => {
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
+      selectionSyncLockRef.current = Date.now() + 240
       document.execCommand(command, false, argument)
+      rememberSelection()
       emitEditor(true)
-      readSelectionState()
+      if (command === 'removeFormat') {
+        setFormatState((current) => ({ ...current, ...emptyInlineState }))
+      } else {
+        requestAnimationFrame(readSelectionState)
+      }
     })
   }
 
@@ -697,16 +761,26 @@ export default function NotesEditingToolbar({
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
+      const editor = editorRef.current
       const selection = window.getSelection()
-      const collapsed = Boolean(selection?.isCollapsed)
+      if (!editor || !selection || selection.rangeCount === 0) return
+      const range = selection.getRangeAt(0)
+      if (!editor.contains(range.commonAncestorContainer)) return
+
+      const inlineBefore = inlineStateAtSelection(editor, selection)
+      const nextActive = !inlineBefore[key]
+      selectionSyncLockRef.current = Date.now() + 320
+
+      // Fuerza marcas semánticas cuando el navegador lo permite. La serialización
+      // también soporta estilos inline de Safari para no perder combinaciones.
+      document.execCommand('styleWithCSS', false, 'false')
       document.execCommand(command, false)
+      rememberSelection()
       emitEditor(true)
 
-      if (collapsed) {
-        setFormatState((current) => ({ ...current, [key]: !current[key] }))
-      } else {
-        readSelectionState()
-      }
+      // Solo cambia el botón pulsado. Título/Encabezado y los otros énfasis
+      // permanecen completamente independientes y se pueden combinar.
+      setFormatState((current) => ({ ...current, [key]: nextActive }))
     })
   }
 
@@ -714,10 +788,12 @@ export default function NotesEditingToolbar({
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
+      selectionSyncLockRef.current = Date.now() + 320
       const ok = document.execCommand('formatBlock', false, block)
       if (!ok) document.execCommand('formatBlock', false, `<${block}>`)
+      rememberSelection()
       emitEditor(true)
-      readSelectionState()
+      setFormatState((current) => ({ ...current, block }))
     })
   }
 
@@ -768,6 +844,7 @@ export default function NotesEditingToolbar({
       }
 
       placeCaret(item, item.textContent?.length ?? 0)
+      rememberSelection()
       emitEditor(true)
       readSelectionState()
     })
@@ -794,6 +871,7 @@ export default function NotesEditingToolbar({
       item.append(checkbox, text)
       list.appendChild(item)
       insertStandaloneBlock(editor, list, text)
+      rememberSelection()
       emitEditor(true)
     })
   }
@@ -813,6 +891,7 @@ export default function NotesEditingToolbar({
       block.appendChild(text)
 
       insertStandaloneBlock(editor, block, text)
+      rememberSelection()
       emitEditor(true)
     })
   }
@@ -878,6 +957,7 @@ export default function NotesEditingToolbar({
   const commandButton = (label: string, Icon: typeof Bold, action: () => void, active = false, compactLabel?: string) => (
     <button
       type="button"
+      onPointerDown={(event) => event.preventDefault()}
       onMouseDown={preventBlur}
       onClick={action}
       className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 text-[10px] font-bold transition active:scale-[0.97] ${active ? 'bg-violet-600 text-white shadow-sm' : buttonClass}`}
@@ -893,6 +973,7 @@ export default function NotesEditingToolbar({
   const styleButton = (block: BlockStyle, label: string, className: string) => (
     <button
       type="button"
+      onPointerDown={(event) => event.preventDefault()}
       onMouseDown={preventBlur}
       onClick={() => setBlock(block)}
       aria-pressed={formatState.block === block}
