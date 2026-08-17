@@ -40,8 +40,13 @@ jobs:
           if missing:
               raise SystemExit(f'Estado maestro vigente inválido o duplicado: {missing}')
 
-          if 'Continuar exclusivamente FASE F con el punto 6 del alcance' not in text:
-              raise SystemExit('El documento maestro perdió el siguiente punto autorizado de FASE F')
+          allowed_next_gates = [
+              'Continuar exclusivamente FASE F con el punto 6 del alcance',
+              'Realizar exclusivamente el cierre técnico/documental de FASE F',
+          ]
+          present_gates = [value for value in allowed_next_gates if value in text]
+          if len(present_gates) != 1:
+              raise SystemExit(f'El documento maestro no tiene un único siguiente punto autorizado de FASE F: {present_gates}')
 
           active_lines = [line for line in text.splitlines() if line.startswith('Fase / prioridad activa:')]
           if active_lines != ['Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**']:
@@ -57,6 +62,6 @@ jobs:
           if present:
               raise SystemExit(f'El documento maestro reactivó una prioridad cerrada o pausada: {present}')
 
-          print('Documento maestro: FASE F activa, piloto pausado y reglas globales vigentes: OK')
+          print('Documento maestro: FASE F activa, piloto pausado y siguiente gate único: OK')
           PY
           git diff --check
