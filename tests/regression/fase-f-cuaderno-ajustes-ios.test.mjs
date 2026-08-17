@@ -14,10 +14,12 @@ test('FASE F: el cuaderno mantiene el menú global fuera del scroll y el teclado
   assert.match(fixes, /main:has\(\.note-rich-editor\)/)
   assert.match(fixes, /overflow-y: auto/)
   assert.match(bottomNav, /window\.visualViewport/)
-  assert.match(bottomNav, /calcularDesplazamientoTeclado/)
-  assert.match(bottomNav, /translate3d\(0, \$\{keyboardOffset\}px, 0\)/)
+  assert.match(bottomNav, /elementoEditableActivo/)
+  assert.match(bottomNav, /baselineViewportRef/)
+  assert.match(bottomNav, /setKeyboardOpen\(mobile && reduction >= 100\)/)
   assert.match(bottomNav, /data-keyboard-policy="layout-bottom-covered"/)
-  assert.doesNotMatch(bottomNav, /bottom: `\$\{visualBottomGap\}px`/)
+  assert.match(bottomNav, /keyboardOpen \? 'pointer-events-none invisible opacity-0'/)
+  assert.doesNotMatch(bottomNav, /translate3d\(0, \$\{keyboardOffset\}px, 0\)/)
 })
 
 test('FASE F: edición usa una sola superficie visual y conserva áreas táctiles suficientes', () => {
@@ -54,4 +56,17 @@ test('FASE F: los estilos tipo Notas muestran nombres visuales sin iconos H1 H2 
   assert.doesNotMatch(toolbar, /Heading1/)
   assert.doesNotMatch(toolbar, /Heading2/)
   assert.doesNotMatch(toolbar, /Heading3/)
+})
+
+test('FASE F: negrita cursiva subrayado y tachado mantienen estados independientes y combinables', () => {
+  assert.match(toolbar, /type InlineFormatKey = 'bold' \| 'italic' \| 'underline' \| 'strike'/)
+  assert.match(toolbar, /bold: Boolean\(selected\.closest\('strong,b'\)\)/)
+  assert.match(toolbar, /italic: Boolean\(selected\.closest\('em,i'\)\)/)
+  assert.match(toolbar, /underline: Boolean\(selected\.closest\('u'\)\)/)
+  assert.match(toolbar, /strike: Boolean\(selected\.closest\('s,strike,del'\)\)/)
+  assert.match(toolbar, /runInlineCommand\('bold', 'bold'\)/)
+  assert.match(toolbar, /runInlineCommand\('italic', 'italic'\)/)
+  assert.match(toolbar, /runInlineCommand\('underline', 'underline'\)/)
+  assert.match(toolbar, /runInlineCommand\('strikeThrough', 'strike'\)/)
+  assert.doesNotMatch(toolbar, /queryCommandState\('bold'\)/)
 })

@@ -64,6 +64,7 @@ type EditorProps = {
 type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
 type BlockStyle = 'h1' | 'h2' | 'h3' | 'p' | 'pre'
 type StandardListKind = 'bullet' | 'dash' | 'numbered'
+type InlineFormatKey = 'bold' | 'italic' | 'underline' | 'strike'
 
 type FormatState = {
   block: BlockStyle
@@ -643,10 +644,10 @@ export default function NotesEditingToolbar({
     const listKind = listKindOf(list)
     setFormatState({
       block: block?.tagName === 'H1' ? 'h1' : block?.tagName === 'H2' ? 'h2' : block?.tagName === 'H3' ? 'h3' : block?.tagName === 'PRE' ? 'pre' : 'p',
-      bold: document.queryCommandState('bold'),
-      italic: document.queryCommandState('italic'),
-      underline: document.queryCommandState('underline'),
-      strike: document.queryCommandState('strikeThrough'),
+      bold: Boolean(selected.closest('strong,b')),
+      italic: Boolean(selected.closest('em,i')),
+      underline: Boolean(selected.closest('u')),
+      strike: Boolean(selected.closest('s,strike,del')),
       bullet: listKind === 'bullet',
       dash: listKind === 'dash',
       numbered: listKind === 'numbered',
@@ -689,6 +690,23 @@ export default function NotesEditingToolbar({
       document.execCommand(command, false, argument)
       emitEditor(true)
       readSelectionState()
+    })
+  }
+
+  const runInlineCommand = (command: string, key: InlineFormatKey) => {
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) return
+      const selection = window.getSelection()
+      const collapsed = Boolean(selection?.isCollapsed)
+      document.execCommand(command, false)
+      emitEditor(true)
+
+      if (collapsed) {
+        setFormatState((current) => ({ ...current, [key]: !current[key] }))
+      } else {
+        readSelectionState()
+      }
     })
   }
 
@@ -938,10 +956,10 @@ export default function NotesEditingToolbar({
                 {styleButton('pre', 'Monoespaciado', 'text-[10px] font-mono')}
               </div>
               <div className="mt-1.5 grid grid-cols-7 gap-1.5">
-                {commandButton('Negrita', Bold, () => runCommand('bold'), formatState.bold, 'B')}
-                {commandButton('Cursiva', Italic, () => runCommand('italic'), formatState.italic, 'I')}
-                {commandButton('Subrayado', Underline, () => runCommand('underline'), formatState.underline, 'U')}
-                {commandButton('Tachado', Strikethrough, () => runCommand('strikeThrough'), formatState.strike, 'S')}
+                {commandButton('Negrita', Bold, () => runInlineCommand('bold', 'bold'), formatState.bold, 'B')}
+                {commandButton('Cursiva', Italic, () => runInlineCommand('italic', 'italic'), formatState.italic, 'I')}
+                {commandButton('Subrayado', Underline, () => runInlineCommand('underline', 'underline'), formatState.underline, 'U')}
+                {commandButton('Tachado', Strikethrough, () => runInlineCommand('strikeThrough', 'strike'), formatState.strike, 'S')}
                 {commandButton('Limpiar formato', Eraser, () => runCommand('removeFormat'), false, 'Limpiar')}
                 {commandButton('Reducir tamaño del texto', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)), false, 'A−')}
                 {commandButton('Aumentar tamaño del texto', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)), false, 'A+')}

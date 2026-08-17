@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, type CSSProperties, type SVGProps } from 'react'
+import { useEffect, useRef, useState, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Megaphone, User, BookOpen } from 'lucide-react'
@@ -43,18 +43,15 @@ function cargarTema(): ModoBiblia {
   }
 }
 
-function calcularDesplazamientoTeclado() {
-  const viewport = window.visualViewport
-  if (!viewport || viewport.scale !== 1) return 0
-
-  const layoutHeight = document.documentElement.clientHeight || window.innerHeight
-  const visibleBottom = viewport.offsetTop + viewport.height
-  const overlap = Math.max(0, Math.round(layoutHeight - visibleBottom))
-
-  // Las barras del navegador pueden producir diferencias pequeñas. Solo una
-  // reducción grande se considera teclado para no mover la navegación por el
-  // chrome normal de Safari.
-  return overlap >= 120 ? overlap : 0
+function elementoEditableActivo() {
+  const active = document.activeElement
+  if (!(active instanceof HTMLElement)) return false
+  if (active.isContentEditable) return true
+  if (active instanceof HTMLTextAreaElement) return true
+  if (active instanceof HTMLInputElement) {
+    return !['button', 'checkbox', 'radio', 'range', 'submit', 'reset'].includes(active.type)
+  }
+  return false
 }
 
 export default function BottomNav() {
@@ -63,7 +60,8 @@ export default function BottomNav() {
   const dentroBiblia = pathname.startsWith('/biblia')
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
-  const [keyboardOffset, setKeyboardOffset] = useState(0)
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
+  const baselineViewportRef = useRef(0)
   const { unreadAvisos } = usePendingIndicators()
   const avisosRequierenAtencion = Math.max(0, unreadAvisos)
 
@@ -76,12 +74,26 @@ export default function BottomNav() {
     const syncKeyboard = () => {
       window.cancelAnimationFrame(frame)
       frame = window.requestAnimationFrame(() => {
-        const next = calcularDesplazamientoTeclado()
-        setKeyboardOffset((current) => current === next ? current : next)
+        const mobile = window.matchMedia('(pointer: coarse)').matches
+        const editable = elementoEditableActivo()
+        const currentHeight = viewport?.height ?? window.innerHeight
+
+        if (!editable) {
+          baselineViewportRef.current = Math.max(baselineViewportRef.current, currentHeight)
+          setKeyboardOpen(false)
+          return
+        }
+
+        if (!baselineViewportRef.current) baselineViewportRef.current = Math.max(window.innerHeight, currentHeight)
+        const reduction = baselineViewportRef.current - currentHeight
+        setKeyboardOpen(mobile && reduction >= 100)
       })
     }
 
+    baselineViewportRef.current = viewport?.height ?? window.innerHeight
     syncKeyboard()
+    document.addEventListener('focusin', syncKeyboard)
+    document.addEventListener('focusout', syncKeyboard)
     window.addEventListener('resize', syncKeyboard, { passive: true })
     window.addEventListener('orientationchange', syncKeyboard, { passive: true })
     viewport?.addEventListener('resize', syncKeyboard, { passive: true })
@@ -89,6 +101,8 @@ export default function BottomNav() {
 
     return () => {
       window.cancelAnimationFrame(frame)
+      document.removeEventListener('focusin', syncKeyboard)
+      document.removeEventListener('focusout', syncKeyboard)
       window.removeEventListener('resize', syncKeyboard)
       window.removeEventListener('orientationchange', syncKeyboard)
       viewport?.removeEventListener('resize', syncKeyboard)
@@ -120,38 +134,22 @@ export default function BottomNav() {
     oscuro: { nav: 'border-slate-800 bg-slate-950', inactive: 'text-slate-400', active: 'text-violet-300', activeBg: 'bg-violet-950/70', shadow: 'shadow-[0_-4px_18px_rgba(0,0,0,0.35)]' },
   }[modo]
 
-  // iOS fija elementos al viewport visual cuando aparece el teclado. Para que
-  // la navegación siga perteneciendo al borde inferior de la aplicación y no
-  // flote encima del editor, compensamos esa reducción desplazándola hacia
-  // abajo. El teclado la cubre en vez de levantarla sobre el contenido.
-  const fixedStyle: CSSProperties = {
-    position: 'fixed',
-    insetInline: 0,
-    top: 'auto',
-    bottom: 0,
-    width: '100%',
-    margin: 0,
-    paddingRight: 'env(safe-area-inset-right, 0px)',
-    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    paddingLeft: 'env(safe-area-inset-left, 0px)',
-    isolation: 'isolate',
-    touchAction: 'manipulation',
-    transform: `translate3d(0, ${keyboardOffset}px, 0)`,
-    WebkitTransform: `translate3d(0, ${keyboardOffset}px, 0)`,
-    backfaceVisibility: 'hidden',
-    WebkitBackfaceVisibility: 'hidden',
-    willChange: 'transform',
-    contain: 'layout paint style',
-    pointerEvents: keyboardOffset > 0 ? 'none' : 'auto',
-  }
-
+  // En iOS un elemento fixed se recoloca sobre el teclado porque Safari fija
+  // contra el viewport visual. La navegación global no debe competir con el
+  // editor: mientras el teclado ocupa el borde inferior se oculta exactamente
+  // en ese borde y reaparece al cerrarlo, sin desplazarse hacia arriba.
   const navigation = (
     <div
       data-bottom-nav-fixed="true"
       data-keyboard-policy="layout-bottom-covered"
-      data-keyboard-open={keyboardOffset > 0 ? 'true' : 'false'}
-      className={`app-bottom-nav !fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
-      style={fixedStyle}
+      data-keyboard-open={keyboardOpen ? 'true' : 'false'}
+      aria-hidden={keyboardOpen ? 'true' : undefined}
+      className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-[opacity,visibility,background-color,border-color] duration-150 ${keyboardOpen ? 'pointer-events-none invisible opacity-0' : 'visible opacity-100'} ${tema.nav} ${tema.shadow}`}
+      style={{
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+      }}
     >
       <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
         {navItems.map((item) => {
