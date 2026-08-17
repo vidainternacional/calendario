@@ -16,10 +16,12 @@ test('FASE F: deshacer y rehacer operan sobre acciones de la nota completa y no 
 })
 
 test('FASE F: convertir a predicación y sus metadatos pasan por el historial reversible', () => {
-  assert.match(workspace, /const cambiarTipo = \(tipo: TipoNota\) =>/)
-  assert.match(workspace, /actualizar\(\{ tipo \}, \{ checkpoint: true \}\)/)
+  assert.match(workspace, /const activarPredicacion =/)
+  assert.match(workspace, /actualizar\(\{ tipo: 'predicacion', contexto, \.\.\.cambios \}, options \?\? \{ checkpoint: true \}\)/)
   assert.match(workspace, /const actualizarPredicacion =/)
-  assert.match(workspace, /actualizar\(\{ tipo: 'predicacion', \.\.\.cambios \}, options\)/)
+  assert.match(workspace, /activarPredicacion\(cambios, options\)/)
+  assert.match(workspace, /const dejarPredicacion =/)
+  assert.match(workspace, /actualizar\(\{[\s\S]*tipo,[\s\S]*numeroPredicacion: null,[\s\S]*\}, \{ checkpoint: true \}\)/)
   assert.match(workspace, /deshacerNota/)
   assert.match(workspace, /rehacerNota/)
   assert.match(workspace, /aplicarEntradaHistorial/)
