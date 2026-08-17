@@ -338,10 +338,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
               onClick={() => alternarMenu('predicacion')}
               aria-expanded={menuAbierto === 'predicacion'}
               aria-controls="cuaderno-panel-predicacion"
-              className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition active:scale-[0.98] ${menuAbierto === 'predicacion' ? 'bg-amber-500/20 text-amber-800 ring-1 ring-amber-400/35' : 'bg-amber-500/10 text-amber-800 ring-1 ring-amber-400/15 backdrop-blur-xl'}`}
+              aria-label="Datos de predicación"
+              className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-bold transition active:scale-[0.98] ${menuAbierto === 'predicacion' ? 'bg-amber-500/20 text-amber-800 ring-1 ring-amber-400/35' : 'bg-amber-500/10 text-amber-800 ring-1 ring-amber-400/15 backdrop-blur-xl'}`}
             >
               <Mic2 className="h-4 w-4 shrink-0 text-amber-500" />
-              <span className="truncate">Predicación</span>
+              <span className="min-w-0 text-center leading-[11px]">Datos de<br />predicación</span>
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'predicacion' ? 'rotate-180' : ''}`} />
             </button>}
 
