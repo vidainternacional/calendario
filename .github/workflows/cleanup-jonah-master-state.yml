@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validar cierre de FASE F y reglas globales
+      - name: Validar FASE G activa y roadmap documentado
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -25,13 +25,18 @@ jobs:
           text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
 
           required_once = [
-              'Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**',
+              'Fase / prioridad activa: **FASE G — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES**',
               '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |',
               '| FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |',
               '| FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |',
+              '| FASE G | Validación integral y cierre de deudas transversales | **ACTIVA — 2026-08-17** |',
+              '| FASE H | Centro de Hebreo Bíblico | **PLANIFICADA — posterior a FASE G** |',
+              '| FASE I | Guía interactiva y ayuda contextual por rol | **PLANIFICADA — posterior a FASE H** |',
               '# PILOTO OPERATIVO — EN PAUSA',
               '# FASE F — COMPLETADA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS — 2026-08-17',
-              'FASE F queda **COMPLETADA — 2026-08-17**',
+              '# FASE G — ACTIVA — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES',
+              '# FASE H — PLANIFICADA — CENTRO DE HEBREO BÍBLICO',
+              '# FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL',
               '# Siguiente punto autorizado',
               '**Principio visual global:**',
               '**Navegación móvil global:**',
@@ -39,18 +44,19 @@ jobs:
           ]
           missing = [value for value in required_once if text.count(value) != 1]
           if missing:
-              raise SystemExit(f'Estado maestro de cierre inválido o duplicado: {missing}')
+              raise SystemExit(f'Estado maestro de FASE G inválido o duplicado: {missing}')
 
-          next_gate = 'No iniciar una fase posterior hasta que se agregue explícitamente al documento maestro'
+          next_gate = 'Iniciar exclusivamente FASE G con el Bloque 1 — inventario y matriz de validación integral'
           if text.count(next_gate) != 1:
-              raise SystemExit('El documento maestro perdió el gate de espera posterior a FASE F')
+              raise SystemExit('El documento maestro perdió el siguiente punto autorizado de FASE G')
 
           active_lines = [line for line in text.splitlines() if line.startswith('Fase / prioridad activa:')]
-          expected_active = ['Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**']
+          expected_active = ['Fase / prioridad activa: **FASE G — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES**']
           if active_lines != expected_active:
-              raise SystemExit(f'La prioridad activa no coincide con el cierre de FASE F: {active_lines}')
+              raise SystemExit(f'La prioridad activa no coincide con FASE G: {active_lines}')
 
           forbidden = [
+              'Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**',
               'Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**',
               '| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |',
               '# FASE F — ACTIVA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS',
@@ -63,6 +69,6 @@ jobs:
           if present:
               raise SystemExit(f'El documento maestro reactivó una fase cerrada o una prioridad pausada: {present}')
 
-          print('Documento maestro: FASE F completada, sin fase posterior activa y piloto pausado: OK')
+          print('Documento maestro: FASE G activa; FASE H e I planificadas; piloto pausado: OK')
           PY
           git diff --check
