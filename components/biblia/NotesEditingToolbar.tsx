@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import {
+  ArrowUp,
   Bold,
   BookMarked,
   CalendarDays,
@@ -16,6 +17,7 @@ import {
   Minus,
   Printer,
   Quote,
+  Redo2,
   Sparkles,
   Undo2,
   ZoomIn,
@@ -34,12 +36,12 @@ type Props = {
   mutedClass: string
 }
 
-type ToolGroup = 'texto' | 'listas' | 'organizar' | 'insertar' | 'vista'
-type AiMode = 'ideas' | 'estudio' | 'predicacion'
+type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
 
 type HistoryState = {
   past: string[]
   current: string
+  future: string[]
   lastAt: number
 }
 
@@ -72,13 +74,14 @@ export default function NotesEditingToolbar({
   const [previewMode, setPreviewMode] = useState(false)
   const [activeGroup, setActiveGroup] = useState<ToolGroup>('texto')
   const [canUndo, setCanUndo] = useState(false)
-  const [aiMode, setAiMode] = useState<AiMode>('ideas')
+  const [canRedo, setCanRedo] = useState(false)
+  const [aiInstruction, setAiInstruction] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiProposal, setAiProposal] = useState<string | null>(null)
   const [aiSource, setAiSource] = useState('')
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiReused, setAiReused] = useState(false)
-  const historyRef = useRef<HistoryState>({ past: [], current: value, lastAt: 0 })
+  const historyRef = useRef<HistoryState>({ past: [], current: value, future: [], lastAt: 0 })
 
   useEffect(() => {
     const area = textareaRef.current
@@ -101,8 +104,10 @@ export default function NotesEditingToolbar({
     }
 
     history.current = value
+    history.future = []
     history.lastAt = now
     setCanUndo(history.past.length > 0)
+    setCanRedo(false)
   }, [value])
 
   const commitChange = (next: string) => {
@@ -113,8 +118,10 @@ export default function NotesEditingToolbar({
       if (history.past.length > 50) history.past.shift()
     }
     history.current = next
+    history.future = []
     history.lastAt = Date.now()
     setCanUndo(true)
+    setCanRedo(false)
     onChange(next)
   }
 
@@ -123,13 +130,35 @@ export default function NotesEditingToolbar({
     const previous = history.past.pop()
     if (previous === undefined) return
 
+    history.future.push(history.current)
     history.current = previous
     history.lastAt = Date.now()
     setCanUndo(history.past.length > 0)
+    setCanRedo(history.future.length > 0)
     setPreviewMode(false)
     setAiProposal(null)
     setAiError(null)
     onChange(previous)
+    requestAnimationFrame(() => textareaRef.current?.focus())
+  }
+
+  const redo = () => {
+    const history = historyRef.current
+    const next = history.future.pop()
+    if (next === undefined) return
+
+    if (history.past[history.past.length - 1] !== history.current) {
+      history.past.push(history.current)
+      if (history.past.length > 50) history.past.shift()
+    }
+    history.current = next
+    history.lastAt = Date.now()
+    setCanUndo(history.past.length > 0)
+    setCanRedo(history.future.length > 0)
+    setPreviewMode(false)
+    setAiProposal(null)
+    setAiError(null)
+    onChange(next)
     requestAnimationFrame(() => textareaRef.current?.focus())
   }
 
@@ -164,7 +193,8 @@ export default function NotesEditingToolbar({
   }
 
   const requestAiOrganization = async (regenerar = false) => {
-    if (aiLoading || !value.trim()) return
+    const instruction = aiInstruction.trim()
+    if (aiLoading || !value.trim() || !instruction) return
     const source = value
     setAiLoading(true)
     setAiError(null)
@@ -174,7 +204,7 @@ export default function NotesEditingToolbar({
       const result = await organizarApuntesConIA({
         contenido: source,
         referencia: reference,
-        modo: aiMode,
+        indicacion: instruction,
         regenerar,
       })
 
@@ -205,6 +235,7 @@ export default function NotesEditingToolbar({
     commitChange(aiProposal)
     setAiProposal(null)
     setAiSource('')
+    setAiInstruction('')
     setAiError(null)
     setActiveGroup('texto')
     setPreviewMode(false)
@@ -265,35 +296,87 @@ export default function NotesEditingToolbar({
   const groups: Array<{ id: ToolGroup; label: string }> = [
     { id: 'texto', label: 'Texto' },
     { id: 'listas', label: 'Listas' },
-    { id: 'organizar', label: 'IA' },
     { id: 'insertar', label: 'Insertar' },
     { id: 'vista', label: 'Vista' },
-  ]
-
-  const aiModes: Array<{ id: AiMode; label: string }> = [
-    { id: 'ideas', label: 'Ideas sueltas' },
-    { id: 'estudio', label: 'Estudio' },
-    { id: 'predicacion', label: 'Predicación' },
   ]
 
   return (
     <section aria-label="Herramientas de edición" className="mt-2">
       <div className="rounded-[22px] border border-current/10 bg-current/[0.025] p-1.5 backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-3 px-1 pb-1.5">
-          <span className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Edición</span>
+        <form
+          onSubmit={(event) => { event.preventDefault(); void requestAiOrganization(false) }}
+          className="flex min-h-12 items-center gap-2 rounded-[19px] border border-violet-400/25 bg-violet-500/[0.07] px-2.5 py-1.5"
+          aria-label="Barra de asistencia con IA"
+        >
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-sm" aria-hidden="true">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <input
+            value={aiInstruction}
+            onChange={(event) => { setAiInstruction(event.target.value); setAiError(null) }}
+            maxLength={500}
+            placeholder="¿Qué quieres hacer con esta nota?"
+            className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:opacity-55"
+            aria-label="Indicación para la IA"
+          />
           <button
-            type="button"
-            onClick={undo}
-            disabled={!canUndo}
-            className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${buttonClass}`}
-            aria-label="Deshacer último cambio"
+            type="submit"
+            disabled={aiLoading || !value.trim() || !aiInstruction.trim()}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-600 text-white transition active:scale-[0.96] disabled:cursor-default disabled:opacity-35"
+            aria-label="Enviar indicación a la IA"
           >
-            <Undo2 className="h-4 w-4" aria-hidden="true" />
-            Deshacer
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
           </button>
+        </form>
+
+        {aiError && <p className="mx-1 mt-2 rounded-2xl bg-rose-500/10 px-3 py-2 text-[10px] leading-4 text-rose-700" role="status">{aiError}</p>}
+
+        {aiProposal && (
+          <div className="mx-1 mt-2 rounded-[18px] border border-violet-400/20 bg-violet-500/[0.055] p-2.5" aria-live="polite">
+            <div className="flex items-center justify-between gap-2 px-1">
+              <p className="text-[10px] font-extrabold">Propuesta de IA</p>
+              {aiReused && <span className={`text-[9px] ${mutedClass}`}>Reutilizada</span>}
+            </div>
+            <div className="mt-1.5 max-h-56 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-current/10 bg-current/[0.025] px-3 py-3 text-[11px] leading-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {aiProposal}
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <button type="button" onClick={applyAiProposal} className="min-h-10 rounded-2xl bg-violet-600 px-3 text-[11px] font-extrabold text-white">Aplicar</button>
+              <button type="button" onClick={() => { setAiProposal(null); setAiSource(''); setAiError(null) }} className={`min-h-10 rounded-2xl px-3 text-[11px] font-bold ${buttonClass}`}>Descartar</button>
+            </div>
+            <button type="button" onClick={() => void requestAiOrganization(true)} disabled={aiLoading || !aiInstruction.trim()} className={`mt-1.5 min-h-9 w-full rounded-2xl px-3 text-[10px] font-bold disabled:opacity-45 ${buttonClass}`}>
+              {aiLoading ? 'Generando…' : 'Volver a generar'}
+            </button>
+          </div>
+        )}
+
+        <div className="mt-2 flex items-center justify-between gap-2 px-1 pb-1.5">
+          <span className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Edición</span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${buttonClass}`}
+              aria-label="Deshacer último cambio"
+            >
+              <Undo2 className="h-4 w-4" aria-hidden="true" />
+              Deshacer
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${buttonClass}`}
+              aria-label="Rehacer último cambio"
+            >
+              <Redo2 className="h-4 w-4" aria-hidden="true" />
+              Rehacer
+            </button>
+          </div>
         </div>
 
-        <div role="tablist" aria-label="Categorías de herramientas" className="grid grid-cols-5 gap-1">
+        <div role="tablist" aria-label="Categorías de herramientas" className="grid grid-cols-4 gap-1">
           {groups.map((group) => (
             <button
               key={group.id}
@@ -330,70 +413,6 @@ export default function NotesEditingToolbar({
             </div>
           )}
 
-          {activeGroup === 'organizar' && (
-            <div className="rounded-[20px] border border-violet-400/20 bg-violet-500/[0.07] p-3">
-              <div className="flex items-start gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-sm">
-                  <Sparkles className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-extrabold">Organizar con IA</p>
-                  <p className={`mt-1 text-[10px] leading-4 ${mutedClass}`}>Usa IA solo cuando la necesites. Trabaja únicamente con esta nota y primero te muestra una propuesta.</p>
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-3 gap-1.5" aria-label="Tipo de organización con IA">
-                {aiModes.map((mode) => (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => { setAiMode(mode.id); setAiError(null) }}
-                    aria-pressed={aiMode === mode.id}
-                    className={`rounded-full border px-2 py-2 text-center text-[9px] font-bold transition ${aiMode === mode.id ? 'border-violet-500/35 bg-violet-600 text-white' : `border-current/10 ${buttonClass}`}`}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-
-              {!aiProposal && (
-                <button
-                  type="button"
-                  onClick={() => void requestAiOrganization(false)}
-                  disabled={aiLoading || !value.trim()}
-                  className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-xs font-extrabold text-white transition active:scale-[0.99] disabled:cursor-default disabled:opacity-45"
-                  aria-label="Organizar mis apuntes con IA"
-                >
-                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
-                  {aiLoading ? 'Preparando propuesta…' : 'Organizar mis apuntes'}
-                </button>
-              )}
-
-              {aiError && <p className="mt-2 rounded-2xl bg-rose-500/10 px-3 py-2 text-[10px] leading-4 text-rose-700" role="status">{aiError}</p>}
-
-              {aiProposal && (
-                <div className="mt-3" aria-live="polite">
-                  <div className="flex items-center justify-between gap-2 px-1">
-                    <p className="text-[10px] font-extrabold">Propuesta</p>
-                    {aiReused && <span className={`text-[9px] ${mutedClass}`}>Reutilizada para ahorrar tokens</span>}
-                  </div>
-                  <div className="mt-1.5 max-h-64 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-current/10 bg-current/[0.025] px-3 py-3 text-[11px] leading-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {aiProposal}
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    <button type="button" onClick={applyAiProposal} className="min-h-11 rounded-2xl bg-violet-600 px-3 text-[11px] font-extrabold text-white">Aplicar propuesta</button>
-                    <button type="button" onClick={() => { setAiProposal(null); setAiSource(''); setAiError(null) }} className={`min-h-11 rounded-2xl px-3 text-[11px] font-bold ${buttonClass}`}>Descartar</button>
-                  </div>
-                  <button type="button" onClick={() => void requestAiOrganization(true)} disabled={aiLoading} className={`mt-1.5 min-h-10 w-full rounded-2xl px-3 text-[10px] font-bold disabled:opacity-45 ${buttonClass}`}>
-                    {aiLoading ? 'Generando…' : 'Volver a generar'}
-                  </button>
-                </div>
-              )}
-
-              <p className={`mt-2 px-1 text-center text-[9px] leading-4 ${mutedClass}`}>Nada reemplaza tus apuntes hasta que toques Aplicar. Después puedes usar Deshacer.</p>
-            </div>
-          )}
-
           {activeGroup === 'insertar' && (
             <div className="grid grid-cols-4 gap-1.5">
               {toolButton('Cita', Quote, () => prefixLines(() => '> '))}
@@ -413,7 +432,7 @@ export default function NotesEditingToolbar({
       </div>
 
       <div className={`mt-1.5 flex items-center justify-between px-2 text-[10px] ${mutedClass}`}>
-        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'organizar' ? 'Asistencia inteligente' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
+        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
         <span className="font-bold">{fontSize}px</span>
       </div>
 
