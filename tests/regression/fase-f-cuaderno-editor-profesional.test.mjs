@@ -16,18 +16,19 @@ test('FASE F: Cuaderno aparece como herramienta principal de Estudios', () => {
 
 test('FASE F: el cuaderno conserva un editor accesible con controles visibles', () => {
   assert.match(workspace, /NotesEditingToolbar/)
+  assert.match(workspace, /RichNoteEditor/)
   assert.match(workspace, /FONT_SIZE_KEY/)
   assert.match(workspace, /Buscar en todo el cuaderno/)
   assert.match(workspace, /Guardado automático/)
   assert.match(workspace, /Volver a Estudios/)
 })
 
-test('FASE F: la barra cubre estructura, énfasis, listas, cita, referencia y salida', () => {
-  for (const label of ['Título', 'Negrita', 'Cursiva', 'Lista', 'Numerada', 'Tareas', 'Cita', 'Separador', 'Fecha', 'Referencia']) {
+test('FASE F: la barra cubre estilos, énfasis, listas, cita, referencia y salida', () => {
+  for (const label of ['Título', 'Encabezado', 'Subtítulo', 'Cuerpo', 'Negrita', 'Cursiva', 'Subrayado', 'Tachado', 'Viñetas', 'Numerada', 'Tareas', 'Cita', 'Separador', 'Fecha y hora', 'Referencia']) {
     assert.match(toolbar, new RegExp(label))
   }
-  assert.match(toolbar, /Aumentar tamaño del texto/)
-  assert.match(toolbar, /Reducir tamaño del texto/)
+  assert.match(toolbar, /Aumentar tamaño/)
+  assert.match(toolbar, /Reducir tamaño/)
   assert.match(toolbar, /Imprimir \/ PDF/)
   assert.match(toolbar, /min-h-12/)
 })
