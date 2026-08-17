@@ -30,5 +30,5 @@ test('FASE F: la barra cubre estilos, énfasis, listas, cita, referencia y salid
   assert.match(toolbar, /Aumentar tamaño/)
   assert.match(toolbar, /Reducir tamaño/)
   assert.match(toolbar, /Imprimir \/ PDF/)
-  assert.match(toolbar, /min-h-12/)
+  assert.match(toolbar, /min-h-14/)
 })
