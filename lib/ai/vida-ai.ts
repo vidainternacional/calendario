@@ -256,7 +256,7 @@ async function callGemini(model: string, apiKey: string, request: VidaAiRequest,
 
   if (!response.ok) throw new ProviderError(`Gemini HTTP ${response.status}`, response.status)
   const payload = await response.json() as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }>
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number }
   }
   const text = payload.candidates?.[0]?.content?.parts
