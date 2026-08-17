@@ -5,14 +5,16 @@ import test from 'node:test'
 const layout = fs.readFileSync('app/layout.tsx', 'utf8')
 const behavior = fs.readFileSync('components/biblia/NotebookEditorBehavior.tsx', 'utf8')
 
-test('FASE F: negrita explícita no se confunde con el peso visual de títulos', () => {
+test('FASE F: el botón negrita refleja el peso visual real de títulos', () => {
   assert.match(layout, /NotebookEditorBehavior/)
   assert.match(layout, /<NotebookEditorBehavior \/>/)
+  assert.match(behavior, /function headingBoldState/)
+  assert.match(behavior, /getComputedStyle\(anchor\)\.fontWeight/)
+  assert.match(behavior, /numericWeight >= 600/)
   assert.match(behavior, /button\[aria-label="Negrita"\]/)
-  assert.match(behavior, /closest<HTMLElement>\('h1,h2,h3'\)/)
-  assert.match(behavior, /heading\.style\.setProperty\('font-weight', '400', 'important'\)/)
-  assert.match(behavior, /requestAnimationFrame\(\(\) => \{\s*requestAnimationFrame/)
-  assert.match(behavior, /heading\.style\.removeProperty\('font-weight'\)/)
-  assert.match(behavior, /\.note-rich-editor h1 strong/)
-  assert.match(behavior, /font-weight: 900 !important/)
+  assert.match(behavior, /button\.dataset\.headingBoldVisual = active \? 'true' : 'false'/)
+  assert.match(behavior, /button\.setAttribute\('aria-pressed', active \? 'true' : 'false'\)/)
+  assert.match(behavior, /data-heading-bold-visual="true"/)
+  assert.match(behavior, /data-heading-bold-visual="false"/)
+  assert.doesNotMatch(behavior, /heading\.style\.setProperty\('font-weight', '400'/)
 })
