@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import {
-  ArrowDown,
-  ArrowUp,
   Bold,
   BookMarked,
   CalendarDays,
@@ -12,14 +10,13 @@ import {
   Eye,
   Heading2,
   Italic,
-  LayoutList,
-  Lightbulb,
   List,
   ListOrdered,
-  ListTree,
   Minus,
   Printer,
   Quote,
+  Sparkles,
+  Undo2,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
@@ -36,6 +33,13 @@ type Props = {
 }
 
 type ToolGroup = 'texto' | 'listas' | 'organizar' | 'insertar' | 'vista'
+
+type HistoryState = {
+  past: string[]
+  current: string
+  lastAt: number
+  suppressNext: boolean
+}
 
 function clampFontSize(value: number) {
   return Math.min(22, Math.max(16, value))
@@ -65,6 +69,8 @@ export default function NotesEditingToolbar({
 }: Props) {
   const [previewMode, setPreviewMode] = useState(false)
   const [activeGroup, setActiveGroup] = useState<ToolGroup>('texto')
+  const [canUndo, setCanUndo] = useState(false)
+  const historyRef = useRef<HistoryState>({ past: [], current: value, lastAt: 0, suppressNext: false })
 
   useEffect(() => {
     const area = textareaRef.current
@@ -73,6 +79,61 @@ export default function NotesEditingToolbar({
     return () => { area.style.display = '' }
   }, [previewMode, textareaRef])
 
+  useEffect(() => {
+    const history = historyRef.current
+    if (value === history.current) return
+
+    if (history.suppressNext) {
+      history.suppressNext = false
+      history.current = value
+      history.lastAt = Date.now()
+      setCanUndo(history.past.length > 0)
+      return
+    }
+
+    const previous = history.current
+    const now = Date.now()
+    const newBurst = history.past.length === 0 || now - history.lastAt > 800 || Math.abs(value.length - previous.length) > 2
+
+    if (newBurst && history.past[history.past.length - 1] !== previous) {
+      history.past.push(previous)
+      if (history.past.length > 50) history.past.shift()
+    }
+
+    history.current = value
+    history.lastAt = now
+    setCanUndo(history.past.length > 0)
+  }, [value])
+
+  const commitChange = (next: string) => {
+    if (next === value) return
+    const history = historyRef.current
+    history.current = value
+    if (history.past[history.past.length - 1] !== value) {
+      history.past.push(value)
+      if (history.past.length > 50) history.past.shift()
+    }
+    history.current = next
+    history.lastAt = Date.now()
+    history.suppressNext = true
+    setCanUndo(true)
+    onChange(next)
+  }
+
+  const undo = () => {
+    const history = historyRef.current
+    const previous = history.past.pop()
+    if (previous === undefined) return
+
+    history.current = previous
+    history.lastAt = Date.now()
+    history.suppressNext = true
+    setCanUndo(history.past.length > 0)
+    setPreviewMode(false)
+    onChange(previous)
+    requestAnimationFrame(() => textareaRef.current?.focus())
+  }
+
   const applySelection = (transform: (selected: string) => string, fallback = '') => {
     const area = textareaRef.current
     if (!area || previewMode) return
@@ -80,7 +141,7 @@ export default function NotesEditingToolbar({
     const end = area.selectionEnd
     const selected = value.slice(start, end)
     const replacement = transform(selected || fallback)
-    onChange(`${value.slice(0, start)}${replacement}${value.slice(end)}`)
+    commitChange(`${value.slice(0, start)}${replacement}${value.slice(end)}`)
     requestAnimationFrame(() => {
       area.focus()
       area.setSelectionRange(start + replacement.length, start + replacement.length)
@@ -94,54 +155,13 @@ export default function NotesEditingToolbar({
       .join('\n'), '')
   }
 
-  const insertarPlantilla = (plantilla: string) => {
-    const base = value.trimEnd()
-    const siguiente = base ? `${base}\n\n${plantilla}` : plantilla
-    onChange(siguiente)
-    setPreviewMode(false)
-    requestAnimationFrame(() => {
-      const area = textareaRef.current
-      if (!area) return
-      area.focus()
-      area.setSelectionRange(siguiente.length, siguiente.length)
-    })
-  }
-
-  const convertirEnLluvia = () => {
-    const siguiente = value
-      .split('\n')
-      .map((line) => {
-        const trimmed = line.trim()
-        if (!trimmed) return ''
-        if (/^(## |• |\d+\. |☐ |☑ |> |─{4,})/.test(trimmed)) return line
-        return `• ${trimmed}`
-      })
-      .join('\n')
-    onChange(siguiente)
-  }
-
-  const bloquesOrganizables = useMemo(() => value
-    .trim()
-    .split(/\n\s*\n+/)
-    .map((block) => block.trim())
-    .filter(Boolean), [value])
-
-  const moverBloque = (index: number, direction: -1 | 1) => {
-    const destino = index + direction
-    if (destino < 0 || destino >= bloquesOrganizables.length) return
-    const siguiente = [...bloquesOrganizables]
-    const [bloque] = siguiente.splice(index, 1)
-    siguiente.splice(destino, 0, bloque)
-    onChange(siguiente.join('\n\n'))
-  }
-
   const toggleTask = (lineIndex: number) => {
     const lines = value.split('\n')
     const line = lines[lineIndex] ?? ''
     if (line.trimStart().startsWith('☐ ')) lines[lineIndex] = line.replace('☐ ', '☑ ')
     else if (line.trimStart().startsWith('☑ ')) lines[lineIndex] = line.replace('☑ ', '☐ ')
     else return
-    onChange(lines.join('\n'))
+    commitChange(lines.join('\n'))
   }
 
   const preview = useMemo(() => value.split('\n').map((line, index) => {
@@ -198,7 +218,7 @@ export default function NotesEditingToolbar({
   const groups: Array<{ id: ToolGroup; label: string }> = [
     { id: 'texto', label: 'Texto' },
     { id: 'listas', label: 'Listas' },
-    { id: 'organizar', label: 'Organizar' },
+    { id: 'organizar', label: 'IA' },
     { id: 'insertar', label: 'Insertar' },
     { id: 'vista', label: 'Vista' },
   ]
@@ -206,6 +226,20 @@ export default function NotesEditingToolbar({
   return (
     <section aria-label="Herramientas de edición" className="mt-2">
       <div className="rounded-[22px] border border-current/10 bg-current/[0.025] p-1.5 backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-3 px-1 pb-1.5">
+          <span className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Edición</span>
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndo}
+            className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition active:scale-[0.97] disabled:cursor-default disabled:opacity-35 ${buttonClass}`}
+            aria-label="Deshacer último cambio"
+          >
+            <Undo2 className="h-4 w-4" aria-hidden="true" />
+            Deshacer
+          </button>
+        </div>
+
         <div role="tablist" aria-label="Categorías de herramientas" className="grid grid-cols-5 gap-1">
           {groups.map((group) => (
             <button
@@ -244,41 +278,26 @@ export default function NotesEditingToolbar({
           )}
 
           {activeGroup === 'organizar' && (
-            <div>
-              <div className="flex items-start gap-2 rounded-2xl bg-violet-500/[0.08] px-3 py-2.5">
-                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" aria-hidden="true" />
-                <p className="text-[10px] leading-4"><span className="font-extrabold">Sin IA y sin internet.</span> Ordena lo que ya escribiste o agrega una estructura para seguir desarrollando tus ideas.</p>
-              </div>
-
-              <p className={`mb-1.5 mt-3 px-1 text-[9px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Dar estructura</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {toolButton('Convertir líneas en lluvia de ideas', Lightbulb, convertirEnLluvia, 'Lluvia de ideas')}
-                {toolButton('Agregar estructura de bosquejo', ListTree, () => insertarPlantilla('## Tema\n\n## Introducción\n\n## Punto 1\n\n## Punto 2\n\n## Punto 3\n\n## Aplicación\n\n## Conclusión'), 'Bosquejo')}
-                {toolButton('Agregar estructura de estudio bíblico', BookMarked, () => insertarPlantilla('## Texto base\n\n## Observaciones\n\n## Contexto\n\n## Interpretación\n\n## Aplicación\n\n## Preguntas'), 'Estudio bíblico')}
-                {toolButton('Agregar estructura de predicación', LayoutList, () => insertarPlantilla('## Título\n\n## Texto base\n\n## Idea central\n\n## Introducción\n\n## Desarrollo\n\n## Aplicación\n\n## Cierre'), 'Predicación')}
-              </div>
-
-              <div className="mt-3 flex items-center justify-between gap-3 px-1">
-                <p className={`text-[9px] font-extrabold uppercase tracking-[0.12em] ${mutedClass}`}>Orden manual</p>
-                <span className={`text-[9px] ${mutedClass}`}>{bloquesOrganizables.length} {bloquesOrganizables.length === 1 ? 'bloque' : 'bloques'}</span>
-              </div>
-
-              {bloquesOrganizables.length > 1 ? (
-                <div className="mt-1.5 max-h-56 space-y-1.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {bloquesOrganizables.map((block, index) => (
-                    <div key={`${index}-${block.slice(0, 18)}`} className="flex items-center gap-2 rounded-2xl border border-current/10 bg-current/[0.025] px-2.5 py-2">
-                      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[9px] font-extrabold ${buttonClass}`}>{index + 1}</span>
-                      <p className="min-w-0 flex-1 truncate text-[10px] font-semibold">{block.replace(/^##\s*/, '').replace(/^[•☐☑>]\s*/, '')}</p>
-                      <div className="flex shrink-0 gap-1">
-                        <button type="button" onClick={() => moverBloque(index, -1)} disabled={index === 0} className={`grid h-8 w-8 place-items-center rounded-full transition active:scale-95 disabled:opacity-25 ${buttonClass}`} aria-label={`Mover bloque ${index + 1} arriba`}><ArrowUp className="h-3.5 w-3.5" /></button>
-                        <button type="button" onClick={() => moverBloque(index, 1)} disabled={index === bloquesOrganizables.length - 1} className={`grid h-8 w-8 place-items-center rounded-full transition active:scale-95 disabled:opacity-25 ${buttonClass}`} aria-label={`Mover bloque ${index + 1} abajo`}><ArrowDown className="h-3.5 w-3.5" /></button>
-                      </div>
-                    </div>
-                  ))}
+            <div className="rounded-[20px] border border-violet-400/20 bg-violet-500/[0.07] p-3">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-sm">
+                  <Sparkles className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-extrabold">Organizar con IA</p>
+                  <p className={`mt-1 text-[10px] leading-4 ${mutedClass}`}>La IA tomará tus propios apuntes y propondrá una estructura más clara sin imponerte un bosquejo fijo.</p>
                 </div>
-              ) : (
-                <p className={`mt-1.5 rounded-2xl border border-dashed border-current/15 px-3 py-2.5 text-[10px] leading-4 ${mutedClass}`}>Separa tus ideas con una línea en blanco y aquí podrás mover cada bloque arriba o abajo.</p>
-              )}
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-1.5" aria-label="Usos previstos de organización con IA">
+                {['Ideas sueltas', 'Estudio', 'Predicación'].map((label) => <span key={label} className={`rounded-full border border-current/10 px-2 py-2 text-center text-[9px] font-bold ${buttonClass}`}>{label}</span>)}
+              </div>
+
+              <button type="button" disabled className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-xs font-extrabold text-white opacity-65" aria-label="Organizar con IA, pendiente de conexión">
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                Organizar mis apuntes
+              </button>
+              <p className={`mt-2 px-1 text-center text-[9px] leading-4 ${mutedClass}`}>Primero te mostrará una propuesta. Nada reemplazará tu nota sin tu aprobación.</p>
             </div>
           )}
 
@@ -301,7 +320,7 @@ export default function NotesEditingToolbar({
       </div>
 
       <div className={`mt-1.5 flex items-center justify-between px-2 text-[10px] ${mutedClass}`}>
-        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'organizar' ? 'Ideas y bosquejos' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
+        <span>{activeGroup === 'texto' ? 'Formato y tamaño' : activeGroup === 'listas' ? 'Estructura' : activeGroup === 'organizar' ? 'Asistencia inteligente' : activeGroup === 'insertar' ? 'Elementos' : 'Lectura y salida'}</span>
         <span className="font-bold">{fontSize}px</span>
       </div>
 
