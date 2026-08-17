@@ -66,7 +66,7 @@ export default async function SolicitudesPage({
   return (
     <div
       data-solicitudes-scroll="ministerio"
-      className="mx-auto h-[100dvh] w-full max-w-2xl touch-pan-y overflow-y-auto overscroll-contain px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+5.75rem)] [-webkit-overflow-scrolling:touch] sm:px-0 sm:pt-28"
+      className="mx-auto min-h-[100dvh] w-full max-w-2xl touch-pan-y overflow-x-hidden px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+5.75rem)] sm:px-0 sm:pt-28"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-[#171923]">Solicitudes</h2>
