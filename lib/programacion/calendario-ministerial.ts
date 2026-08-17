@@ -52,6 +52,7 @@ export async function cargarCalendarioMinisterial(
       : []),
   ]
   const sourceIds = sourceCalendars.map((item) => String(item.id))
+  const sourceIdSet = new Set(sourceIds)
   const calendarMap = new Map(sourceCalendars.map((item) => [String(item.id), item] as const))
 
   if (sourceIds.length === 0) {
@@ -62,11 +63,15 @@ export async function cargarCalendarioMinisterial(
     }
   }
 
-  const [linksReq, remindersReq] = await Promise.all([
+  // FASE G: primero limita por el mes visible. Antes se leían todos los vínculos
+  // históricos de evento_calendarios y solo después se filtraban los eventos por fecha.
+  const [eventsReq, remindersReq] = await Promise.all([
     admin
-      .from('evento_calendarios')
-      .select('evento_id,calendar_id')
-      .in('calendar_id', sourceIds),
+      .from('eventos')
+      .select('id,titulo,descripcion,ubicacion,fecha_inicio,fecha_fin,calendar_id,ministerio_id')
+      .gte('fecha_inicio', start)
+      .lt('fecha_inicio', end)
+      .order('fecha_inicio'),
     admin
       .from('calendar_reminders')
       .select('id,title,notes,remind_at,calendar_id')
@@ -76,11 +81,25 @@ export async function cargarCalendarioMinisterial(
       .order('remind_at'),
   ])
 
-  if (linksReq.error) throw linksReq.error
+  if (eventsReq.error) throw eventsReq.error
   if (remindersReq.error) throw remindersReq.error
 
+  const candidateEvents = (eventsReq.data || []) as any[]
+  const candidateIds = candidateEvents.map((row) => String(row.id)).filter(Boolean)
+  let linkRows: any[] = []
+
+  if (candidateIds.length > 0) {
+    const { data = [], error } = await admin
+      .from('evento_calendarios')
+      .select('evento_id,calendar_id')
+      .in('evento_id', candidateIds)
+      .in('calendar_id', sourceIds)
+    if (error) throw error
+    linkRows = data || []
+  }
+
   const eventCalendarMap = new Map<string, string[]>()
-  for (const row of linksReq.data || []) {
+  for (const row of linkRows) {
     const eventId = String(row.evento_id)
     const calendarId = String(row.calendar_id)
     eventCalendarMap.set(eventId, [
@@ -89,51 +108,49 @@ export async function cargarCalendarioMinisterial(
     ])
   }
 
-  const eventIds = Array.from(eventCalendarMap.keys())
-  let eventRows: any[] = []
-  if (eventIds.length > 0) {
-    const { data, error } = await admin
-      .from('eventos')
-      .select('id,titulo,descripcion,ubicacion,fecha_inicio,fecha_fin,calendar_id,ministerio_id')
-      .in('id', eventIds)
-      .gte('fecha_inicio', start)
-      .lt('fecha_inicio', end)
-      .order('fecha_inicio')
-    if (error) throw error
-    eventRows = data || []
-  }
-
   const publicIds = new Set(publicRows.map((item) => String(item.id)))
   const ministerioCalendarId = ministerioCalendar ? String(ministerioCalendar.id) : null
 
-  const eventItems: ProgramacionCalendarItem[] = eventRows.map((row: any) => {
-    const linkedIds = eventCalendarMap.get(String(row.id)) || [String(row.calendar_id)]
-    const displayCalendarId = linkedIds.find((id) => publicIds.has(id))
-      || (ministerioCalendarId && linkedIds.includes(ministerioCalendarId) ? ministerioCalendarId : null)
-      || String(row.calendar_id)
-    const displayCalendar = calendarMap.get(displayCalendarId) || null
-    const preparado = Boolean(
-      (ministerioCalendarId && linkedIds.includes(ministerioCalendarId))
-      || String(row.ministerio_id || '') === ministerioId,
-    )
+  const eventItems: ProgramacionCalendarItem[] = candidateEvents
+    .map((row: any) => {
+      const directCalendarId = row.calendar_id ? String(row.calendar_id) : ''
+      const linkedIds = eventCalendarMap.get(String(row.id)) || []
+      const visibleIds = Array.from(new Set([
+        ...(sourceIdSet.has(directCalendarId) ? [directCalendarId] : []),
+        ...linkedIds,
+      ]))
+      const preparadoPorMinisterio = String(row.ministerio_id || '') === ministerioId
 
-    return {
-      kind: 'event',
-      id: String(row.id),
-      titulo: String(row.titulo || 'Evento'),
-      descripcion: row.descripcion || null,
-      ubicacion: row.ubicacion || null,
-      fecha_inicio: String(row.fecha_inicio),
-      fecha_fin: row.fecha_fin ? String(row.fecha_fin) : null,
-      calendar_id: displayCalendarId,
-      calendar_ids: linkedIds,
-      calendar_nombre: displayCalendar?.nombre || 'Calendario',
-      calendar_color: displayCalendar?.color || '#5B3DF5',
-      publico: linkedIds.some((id) => publicIds.has(id)),
-      preparado,
-      ministerio_id: row.ministerio_id || null,
-    }
-  })
+      if (visibleIds.length === 0 && !preparadoPorMinisterio) return null
+
+      const displayCalendarId = visibleIds.find((id) => publicIds.has(id))
+        || (ministerioCalendarId && visibleIds.includes(ministerioCalendarId) ? ministerioCalendarId : null)
+        || visibleIds[0]
+        || directCalendarId
+      const displayCalendar = calendarMap.get(displayCalendarId) || null
+      const preparado = Boolean(
+        (ministerioCalendarId && visibleIds.includes(ministerioCalendarId))
+        || preparadoPorMinisterio,
+      )
+
+      return {
+        kind: 'event' as const,
+        id: String(row.id),
+        titulo: String(row.titulo || 'Evento'),
+        descripcion: row.descripcion || null,
+        ubicacion: row.ubicacion || null,
+        fecha_inicio: String(row.fecha_inicio),
+        fecha_fin: row.fecha_fin ? String(row.fecha_fin) : null,
+        calendar_id: displayCalendarId,
+        calendar_ids: visibleIds.length ? visibleIds : [directCalendarId].filter(Boolean),
+        calendar_nombre: displayCalendar?.nombre || 'Calendario',
+        calendar_color: displayCalendar?.color || '#5B3DF5',
+        publico: visibleIds.some((id) => publicIds.has(id)),
+        preparado,
+        ministerio_id: row.ministerio_id || null,
+      }
+    })
+    .filter((item): item is ProgramacionCalendarItem => Boolean(item))
 
   const reminderItems: ProgramacionCalendarItem[] = (remindersReq.data || []).map((row: any) => {
     const calendarId = String(row.calendar_id)
