@@ -685,6 +685,8 @@ export default function NotesEditingToolbar({
   const savedRangeRef = useRef<Range | null>(null)
   const selectionSyncLockRef = useRef(0)
   const inlineSelectionStateRef = useRef<InlineState>({ ...emptyInlineState })
+  const blockSelectionStateRef = useRef<BlockStyle>('p')
+  const inlineCaretOverrideRef = useRef<{ block: HTMLElement; offset: number; state: InlineState } | null>(null)
 
   const emitEditor = (checkpoint = true) => {
     const editor = editorRef.current
@@ -701,10 +703,24 @@ export default function NotesEditingToolbar({
 
     const list = selected.closest('ul,ol') as HTMLElement | null
     const kind = listKindOf(list)
-    const inline = inlineStateAtSelection(editor, selection)
+    const range = selection.getRangeAt(0)
+    const override = inlineCaretOverrideRef.current
+    let inline = inlineStateAtSelection(editor, selection)
+
+    if (range.collapsed && override) {
+      const block = topLevelEditorBlock(editor, selection.anchorNode)
+      const offset = block ? caretOffsetWithin(block) : -1
+      if (block === override.block && offset === override.offset) inline = override.state
+      else inlineCaretOverrideRef.current = null
+    } else if (!range.collapsed) {
+      inlineCaretOverrideRef.current = null
+    }
+
+    const block = blockStyleAtSelection(editor, selection)
     inlineSelectionStateRef.current = inline
+    blockSelectionStateRef.current = block
     setFormatState({
-      block: blockStyleAtSelection(editor, selection),
+      block,
       ...inline,
       bullet: kind === 'bullet',
       dash: kind === 'dash',
@@ -757,7 +773,8 @@ export default function NotesEditingToolbar({
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
-      selectionSyncLockRef.current = Date.now() + 240
+      selectionSyncLockRef.current = Date.now() + 700
+      inlineCaretOverrideRef.current = null
       document.execCommand(command, false, argument)
       rememberSelection()
       emitEditor(true)
@@ -771,48 +788,73 @@ export default function NotesEditingToolbar({
   }
 
   const runInlineCommand = (command: string, key: InlineFormatKey) => {
+    const previousInline = inlineSelectionStateRef.current
+    const nextInline: InlineState = { ...previousInline, [key]: !previousInline[key] }
+
+    // El botón responde inmediatamente al toque. La operación del DOM ocurre en
+    // el siguiente frame para conservar la selección de Safari sin hacer parpadear
+    // el estado visual entre activo e inactivo.
+    inlineSelectionStateRef.current = nextInline
+    setFormatState((current) => ({ ...current, ...nextInline }))
+
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
-      if (!restoreSelection()) return
+      if (!restoreSelection()) {
+        inlineSelectionStateRef.current = previousInline
+        setFormatState((current) => ({ ...current, ...previousInline }))
+        return
+      }
       const editor = editorRef.current
       const selection = window.getSelection()
       if (!editor || !selection || selection.rangeCount === 0) return
       const range = selection.getRangeAt(0)
       if (!editor.contains(range.commonAncestorContainer)) return
 
-      const inlineBefore = inlineSelectionStateRef.current
-      const nextInline: InlineState = { ...inlineBefore, [key]: !inlineBefore[key] }
-      selectionSyncLockRef.current = Date.now() + 320
-
-      // Safari puede reconstruir la selección al tocar una herramienta. El estado
-      // explícito conserva todas las marcas activadas para que B, I, U y S se
-      // combinen de forma independiente en lugar de reemplazarse entre sí.
+      selectionSyncLockRef.current = Date.now() + 1400
       document.execCommand('styleWithCSS', false, 'false')
       document.execCommand(command, false)
       rememberSelection()
-      inlineSelectionStateRef.current = nextInline
-      emitEditor(true)
 
-      setFormatState((current) => ({ ...current, ...nextInline }))
+      const appliedSelection = window.getSelection()
+      if (appliedSelection?.anchorNode && appliedSelection.rangeCount > 0 && appliedSelection.getRangeAt(0).collapsed) {
+        const block = topLevelEditorBlock(editor, appliedSelection.anchorNode)
+        if (block) {
+          inlineCaretOverrideRef.current = {
+            block,
+            offset: caretOffsetWithin(block),
+            state: nextInline,
+          }
+        }
+      } else {
+        inlineCaretOverrideRef.current = null
+      }
+
+      emitEditor(true)
     })
   }
 
   const setBlock = (block: BlockStyle) => {
+    const previousBlock = blockSelectionStateRef.current
+    const nextBlock: BlockStyle = block !== 'p' && previousBlock === block ? 'p' : block
+    blockSelectionStateRef.current = nextBlock
+    setFormatState((current) => ({ ...current, block: nextBlock }))
+
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
-      if (!restoreSelection()) return
+      if (!restoreSelection()) {
+        blockSelectionStateRef.current = previousBlock
+        setFormatState((current) => ({ ...current, block: previousBlock }))
+        return
+      }
       const editor = editorRef.current
       const selection = window.getSelection()
       if (!editor || !selection || selection.rangeCount === 0) return
 
-      const currentBlock = blockStyleAtSelection(editor, selection)
-      const nextBlock: BlockStyle = block !== 'p' && currentBlock === block ? 'p' : block
-      selectionSyncLockRef.current = Date.now() + 320
+      selectionSyncLockRef.current = Date.now() + 1000
       const ok = document.execCommand('formatBlock', false, nextBlock)
       if (!ok) document.execCommand('formatBlock', false, `<${nextBlock}>`)
       rememberSelection()
       emitEditor(true)
-      setFormatState((current) => ({ ...current, block: nextBlock }))
     })
   }
 
@@ -979,7 +1021,8 @@ export default function NotesEditingToolbar({
       onPointerDown={(event) => event.preventDefault()}
       onMouseDown={preventBlur}
       onClick={action}
-      className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 text-[10px] font-bold transition active:scale-[0.97] ${active ? 'bg-violet-600 text-white shadow-sm' : buttonClass}`}
+      data-format-active={active ? 'true' : 'false'}
+      className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 text-[10px] font-bold transition-colors duration-150 active:scale-[0.97] ${active ? 'bg-violet-600 text-white shadow-sm ring-1 ring-violet-300/60' : buttonClass}`}
       aria-pressed={active}
       aria-label={label}
       title={label}
@@ -995,9 +1038,10 @@ export default function NotesEditingToolbar({
       onPointerDown={(event) => event.preventDefault()}
       onMouseDown={preventBlur}
       onClick={() => setBlock(block)}
+      data-format-active={formatState.block === block ? 'true' : 'false'}
       aria-pressed={formatState.block === block}
       aria-label={`Aplicar estilo ${label}`}
-      className={`flex min-h-14 min-w-0 items-center justify-center rounded-2xl px-2 text-center transition active:scale-[0.98] ${formatState.block === block ? 'bg-violet-600 text-white shadow-sm' : buttonClass}`}
+      className={`flex min-h-14 min-w-0 items-center justify-center rounded-2xl px-2 text-center transition-colors duration-150 active:scale-[0.98] ${formatState.block === block ? 'bg-violet-600 text-white shadow-sm ring-1 ring-violet-300/60' : buttonClass}`}
       title={label}
     >
       <span className={`block max-w-full truncate leading-tight ${className}`}>{label}</span>
