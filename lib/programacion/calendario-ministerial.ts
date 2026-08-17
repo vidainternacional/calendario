@@ -111,8 +111,8 @@ export async function cargarCalendarioMinisterial(
   const publicIds = new Set(publicRows.map((item) => String(item.id)))
   const ministerioCalendarId = ministerioCalendar ? String(ministerioCalendar.id) : null
 
-  const eventItems: ProgramacionCalendarItem[] = candidateEvents
-    .map((row: any) => {
+  const eventItems = candidateEvents
+    .map((row: any): ProgramacionCalendarItem | null => {
       const directCalendarId = row.calendar_id ? String(row.calendar_id) : ''
       const linkedIds = eventCalendarMap.get(String(row.id)) || []
       const visibleIds = Array.from(new Set([
@@ -124,9 +124,13 @@ export async function cargarCalendarioMinisterial(
       if (visibleIds.length === 0 && !preparadoPorMinisterio) return null
 
       const displayCalendarId = visibleIds.find((id) => publicIds.has(id))
-        || (ministerioCalendarId && visibleIds.includes(ministerioCalendarId) ? ministerioCalendarId : null)
+        || (ministerioCalendarId && visibleIds.includes(ministerioCalendarId) ? ministerioCalendarId : '')
         || visibleIds[0]
         || directCalendarId
+        || ministerioCalendarId
+
+      if (!displayCalendarId) return null
+
       const displayCalendar = calendarMap.get(displayCalendarId) || null
       const preparado = Boolean(
         (ministerioCalendarId && visibleIds.includes(ministerioCalendarId))
@@ -134,7 +138,7 @@ export async function cargarCalendarioMinisterial(
       )
 
       return {
-        kind: 'event' as const,
+        kind: 'event',
         id: String(row.id),
         titulo: String(row.titulo || 'Evento'),
         descripcion: row.descripcion || null,
@@ -142,7 +146,7 @@ export async function cargarCalendarioMinisterial(
         fecha_inicio: String(row.fecha_inicio),
         fecha_fin: row.fecha_fin ? String(row.fecha_fin) : null,
         calendar_id: displayCalendarId,
-        calendar_ids: visibleIds.length ? visibleIds : [directCalendarId].filter(Boolean),
+        calendar_ids: visibleIds.length ? visibleIds : [displayCalendarId],
         calendar_nombre: displayCalendar?.nombre || 'Calendario',
         calendar_color: displayCalendar?.color || '#5B3DF5',
         publico: visibleIds.some((id) => publicIds.has(id)),
@@ -150,7 +154,7 @@ export async function cargarCalendarioMinisterial(
         ministerio_id: row.ministerio_id || null,
       }
     })
-    .filter((item): item is ProgramacionCalendarItem => Boolean(item))
+    .filter((item): item is ProgramacionCalendarItem => item !== null)
 
   const reminderItems: ProgramacionCalendarItem[] = (remindersReq.data || []).map((row: any) => {
     const calendarId = String(row.calendar_id)
