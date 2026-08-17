@@ -63,6 +63,7 @@ type EditorProps = {
 
 type ToolGroup = 'texto' | 'listas' | 'insertar' | 'vista'
 type BlockStyle = 'h1' | 'h2' | 'h3' | 'p' | 'pre'
+type StandardListKind = 'bullet' | 'dash' | 'numbered'
 
 type FormatState = {
   block: BlockStyle
@@ -109,7 +110,7 @@ function inlineToHtml(value: string) {
 }
 
 function referenceHtml(text: string) {
-  return `<p data-note-reference="true"><span data-note-reference-icon="true" contenteditable="false" aria-hidden="true">◆</span><span data-note-reference-text="true">${inlineToHtml(text)}</span></p>`
+  return `<p data-note-reference="true"><span data-note-reference-text="true">${inlineToHtml(text)}</span></p>`
 }
 
 export function canonicalToRichHtml(value: string) {
@@ -180,7 +181,7 @@ export function canonicalToRichHtml(value: string) {
     if (line.startsWith('• ')) {
       const items: string[] = []
       while (index < lines.length && (lines[index] ?? '').startsWith('• ')) {
-        items.push(`<li>${inlineToHtml((lines[index] ?? '').slice(2))}</li>`)
+        items.push(`<li>${inlineToHtml((lines[index] ?? '').slice(2)) || '<br>'}</li>`)
         index += 1
       }
       blocks.push(`<ul data-note-list-style="bullet">${items.join('')}</ul>`)
@@ -190,7 +191,7 @@ export function canonicalToRichHtml(value: string) {
     if (/^[-–]\s/.test(line)) {
       const items: string[] = []
       while (index < lines.length && /^[-–]\s/.test(lines[index] ?? '')) {
-        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^[-–]\s/, ''))}</li>`)
+        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^[-–]\s/, '')) || '<br>'}</li>`)
         index += 1
       }
       blocks.push(`<ul data-note-list-style="dash">${items.join('')}</ul>`)
@@ -204,7 +205,7 @@ export function canonicalToRichHtml(value: string) {
       while (index < lines.length) {
         const match = (lines[index] ?? '').match(/^\d+\.\s+(.*)$/)
         if (!match) break
-        items.push(`<li>${inlineToHtml(match[1] ?? '')}</li>`)
+        items.push(`<li>${inlineToHtml(match[1] ?? '') || '<br>'}</li>`)
         index += 1
       }
       blocks.push(`<ol${start !== 1 ? ` start="${start}"` : ''}>${items.join('')}</ol>`)
@@ -383,6 +384,36 @@ function insertStandaloneBlock(editor: HTMLElement, block: HTMLElement, focusTar
   placeCaret(focusTarget, focusTarget.textContent?.length ?? 0)
 }
 
+function createParagraphFromListItem(item: HTMLElement) {
+  const paragraph = document.createElement('p')
+  while (item.firstChild) paragraph.appendChild(item.firstChild)
+  if (!paragraph.childNodes.length) paragraph.appendChild(document.createElement('br'))
+  return paragraph
+}
+
+function unwrapList(list: HTMLElement, selectedItem: HTMLElement | null) {
+  const fragment = document.createDocumentFragment()
+  let focusParagraph: HTMLElement | null = null
+
+  Array.from(list.children).forEach((child) => {
+    if (!(child instanceof HTMLElement) || child.tagName !== 'LI') return
+    const paragraph = createParagraphFromListItem(child)
+    if (child === selectedItem) focusParagraph = paragraph
+    fragment.appendChild(paragraph)
+  })
+
+  list.replaceWith(fragment)
+  if (focusParagraph) placeCaret(focusParagraph, focusParagraph.textContent?.length ?? 0)
+}
+
+function convertList(list: HTMLElement, kind: StandardListKind) {
+  const target = document.createElement(kind === 'numbered' ? 'ol' : 'ul')
+  if (kind !== 'numbered') target.dataset.noteListStyle = kind
+  while (list.firstChild) target.appendChild(list.firstChild)
+  list.replaceWith(target)
+  return target
+}
+
 export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly = false, mutedClass }: EditorProps) {
   useLayoutEffect(() => {
     const editor = editorRef.current
@@ -460,8 +491,48 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
     return true
   }
 
+  const handleStandardListEnter = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey || readOnly) return false
+    const selection = window.getSelection()
+    if (!selection?.anchorNode) return false
+    const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE
+      ? selection.anchorNode as Element
+      : selection.anchorNode.parentElement
+    const item = anchorElement?.closest<HTMLElement>('li')
+    const list = item?.closest<HTMLElement>('ol,ul')
+    if (!item || !list || list.dataset.taskList === 'true') return false
+
+    event.preventDefault()
+    const current = item.textContent ?? ''
+    const offset = Math.min(caretOffsetWithin(item), current.length)
+    const before = current.slice(0, offset)
+    const after = current.slice(offset)
+
+    if (!current.trim()) {
+      const paragraph = document.createElement('p')
+      paragraph.appendChild(document.createElement('br'))
+      list.insertAdjacentElement('afterend', paragraph)
+      item.remove()
+      if (!list.querySelector('li')) list.remove()
+      placeCaret(paragraph)
+      emit(true)
+      return true
+    }
+
+    item.textContent = before
+    if (!before) item.appendChild(document.createElement('br'))
+    const next = document.createElement('li')
+    next.textContent = after
+    if (!after) next.appendChild(document.createElement('br'))
+    item.insertAdjacentElement('afterend', next)
+    placeCaret(next, 0)
+    emit(true)
+    return true
+  }
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (handleTaskEnter(event)) return
+    if (handleStandardListEnter(event)) return
     if (readOnly || !(event.metaKey || event.ctrlKey)) return
     const key = event.key.toLowerCase()
     const command = key === 'b' ? 'bold' : key === 'i' ? 'italic' : key === 'u' ? 'underline' : null
@@ -473,7 +544,10 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
 
   return (
     <>
-      <div className="relative mt-3 min-h-[58vh]">
+      <div className="note-rich-editor-shell relative mt-3 min-h-[58vh]">
+        <div className={`mb-1 flex min-h-6 items-center justify-start px-1 text-[10px] ${mutedClass}`} aria-live="polite">
+          <span className="rounded-full bg-current/[0.045] px-2.5 py-1">{readOnly ? 'Solo lectura' : 'Guardado automático'}</span>
+        </div>
         <div
           ref={editorRef}
           contentEditable={!readOnly}
@@ -489,9 +563,10 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
           className={`note-rich-editor min-h-[58vh] px-1 py-2 outline-none ${readOnly ? 'cursor-default select-text' : ''}`}
           style={{ fontSize: `${fontSize}px`, lineHeight: 1.78 }}
         />
-        {!value.trim() && <p className={`pointer-events-none absolute inset-x-1 top-2 opacity-55 ${mutedClass}`} style={{ fontSize: `${fontSize}px`, lineHeight: 1.78 }} aria-hidden="true">Empieza a escribir tus apuntes, ideas, estudio o predicación…</p>}
+        {!value.trim() && <p className={`pointer-events-none absolute inset-x-1 top-9 opacity-55 ${mutedClass}`} style={{ fontSize: `${fontSize}px`, lineHeight: 1.78 }} aria-hidden="true">Empieza a escribir tus apuntes, ideas, estudio o predicación…</p>}
       </div>
       <style>{`
+        .note-rich-editor-shell ~ p:last-child { display: none !important; }
         .note-rich-editor h1 { font-size: 1.62em; line-height: 1.2; font-weight: 800; letter-spacing: -0.025em; margin: .55em 0 .28em; }
         .note-rich-editor h2 { font-size: 1.28em; line-height: 1.28; font-weight: 800; letter-spacing: -0.018em; margin: .55em 0 .25em; }
         .note-rich-editor h3 { font-size: 1.08em; line-height: 1.35; font-weight: 700; opacity: .82; margin: .5em 0 .2em; }
@@ -499,25 +574,31 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
         .note-rich-editor pre { margin: .35em 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .92em; }
         .note-rich-editor blockquote { margin: .5em 0; border-left: 3px solid rgb(167 139 250 / .8); padding-left: .8em; font-style: italic; opacity: .84; }
         .note-rich-editor hr { margin: 1em 0; border: 0; border-top: 1px solid currentColor; opacity: .14; }
-        .note-rich-editor ol { list-style: decimal outside !important; margin: .28em 0; padding-left: 1.75em; }
-        .note-rich-editor ol > li { display: list-item !important; padding-left: .16em; margin: .13em 0; }
-        .note-rich-editor ol > li::marker { font-size: .96em; font-weight: 650; font-variant-numeric: tabular-nums; }
-        .note-rich-editor ul:not([data-task-list]) { list-style: none !important; margin: .28em 0; padding-left: 1.55em; }
-        .note-rich-editor ul:not([data-task-list]) > li { position: relative; padding-left: .18em; margin: .13em 0; }
-        .note-rich-editor ul:not([data-task-list]):not([data-note-list-style="dash"]) > li::before { content: '•'; position: absolute; left: -1em; top: .06em; font-size: 1.34em; line-height: 1.2; font-weight: 800; }
-        .note-rich-editor ul[data-note-list-style="dash"] > li::before { content: '–'; position: absolute; left: -.95em; top: .04em; font-size: 1.08em; line-height: 1.35; font-weight: 700; }
+        .note-rich-editor ol { display: block !important; list-style-type: decimal !important; list-style-position: outside !important; margin: .3em 0 !important; padding-inline-start: 2.15em !important; }
+        .note-rich-editor ol > li { display: list-item !important; list-style-type: decimal !important; padding-inline-start: .2em; margin: .16em 0; }
+        .note-rich-editor ol > li::marker { color: currentColor; font-size: 1em; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .note-rich-editor ul:not([data-task-list]) { display: block !important; list-style: none !important; margin: .3em 0 !important; padding-inline-start: 1.75em !important; }
+        .note-rich-editor ul:not([data-task-list]) > li { display: list-item !important; position: relative; padding-inline-start: .18em; margin: .16em 0; }
+        .note-rich-editor ul:not([data-task-list]):not([data-note-list-style="dash"]) > li::before { content: '•'; position: absolute; left: -1.05em; top: 50%; transform: translateY(-52%); font-size: 1.46em; line-height: 1; font-weight: 900; }
+        .note-rich-editor ul[data-note-list-style="dash"] > li::before { content: '–'; position: absolute; left: -1em; top: 50%; transform: translateY(-50%); font-size: 1.12em; line-height: 1; font-weight: 800; }
         .note-rich-editor ul[data-task-list] { list-style: none; margin: .3em 0; padding: 0; }
         .note-rich-editor li[data-task-item] { display: flex; align-items: flex-start; gap: .58em; margin: .3em 0; }
         .note-rich-editor input[data-task-checkbox] { appearance: none; -webkit-appearance: none; width: 1.12em; height: 1.12em; flex: 0 0 auto; margin-top: .24em; border: 1.5px solid currentColor; border-radius: .34em; opacity: .58; display: grid; place-items: center; }
         .note-rich-editor input[data-task-checkbox]:checked { background: rgb(124 58 237); border-color: rgb(124 58 237); opacity: 1; }
         .note-rich-editor input[data-task-checkbox]:checked::after { content: '✓'; color: white; font-size: .72em; line-height: 1; font-weight: 900; }
         .note-rich-editor li[data-task-item]:has(input:checked) [data-task-text] { text-decoration: line-through; opacity: .5; }
-        .note-rich-editor [data-note-reference] { display: flex; align-items: baseline; gap: .5em; margin: .45em 0; }
-        .note-rich-editor [data-note-reference-icon] { color: rgb(124 58 237); font-size: .82em; transform: translateY(-.04em); }
+        .note-rich-editor [data-note-reference] { display: flex; align-items: baseline; gap: .52em; clear: both; margin: .6em 0; padding: .08em 0; }
+        .note-rich-editor [data-note-reference]::before { content: '◆'; color: rgb(124 58 237); flex: 0 0 auto; font-size: .82em; line-height: 1; transform: translateY(-.03em); }
         .note-rich-editor [data-note-reference-text] { min-width: 1ch; }
       `}</style>
     </>
   )
+}
+
+function listKindOf(list: HTMLElement | null): StandardListKind | null {
+  if (!list || list.dataset.taskList === 'true') return null
+  if (list.tagName === 'OL') return 'numbered'
+  return list.dataset.noteListStyle === 'dash' ? 'dash' : 'bullet'
 }
 
 export default function NotesEditingToolbar({
@@ -557,15 +638,16 @@ export default function NotesEditingToolbar({
 
     const block = selected.closest('h1,h2,h3,pre,p,div,li,blockquote')
     const list = selected.closest('ul,ol') as HTMLElement | null
+    const listKind = listKindOf(list)
     setFormatState({
       block: block?.tagName === 'H1' ? 'h1' : block?.tagName === 'H2' ? 'h2' : block?.tagName === 'H3' ? 'h3' : block?.tagName === 'PRE' ? 'pre' : 'p',
       bold: document.queryCommandState('bold'),
       italic: document.queryCommandState('italic'),
       underline: document.queryCommandState('underline'),
       strike: document.queryCommandState('strikeThrough'),
-      bullet: list?.tagName === 'UL' && list.dataset.taskList !== 'true' && list.dataset.noteListStyle !== 'dash',
-      dash: list?.tagName === 'UL' && list.dataset.noteListStyle === 'dash',
-      numbered: list?.tagName === 'OL',
+      bullet: listKind === 'bullet',
+      dash: listKind === 'dash',
+      numbered: listKind === 'numbered',
     })
   }
 
@@ -619,29 +701,53 @@ export default function NotesEditingToolbar({
     })
   }
 
-  const toggleDashList = () => {
+  const toggleStandardList = (kind: StandardListKind) => {
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
-      const selection = window.getSelection()
       const editor = editorRef.current
-      if (!selection?.anchorNode || !editor) return
-      let selected = closestEditorElement(editor, selection.anchorNode)
-      let list = selected?.closest('ul') as HTMLElement | null
+      const selection = window.getSelection()
+      if (!editor || !selection?.anchorNode) return
 
-      if (list?.dataset.noteListStyle === 'dash') {
-        delete list.dataset.noteListStyle
-      } else {
-        if (!list) {
-          document.execCommand('insertUnorderedList', false)
-          selected = closestEditorElement(editor, window.getSelection()?.anchorNode ?? null)
-          list = selected?.closest('ul') as HTMLElement | null
-        }
-        if (list) {
-          delete list.dataset.taskList
-          list.dataset.noteListStyle = 'dash'
-        }
+      const selected = closestEditorElement(editor, selection.anchorNode)
+      const currentItem = selected?.closest<HTMLElement>('li') ?? null
+      const currentList = currentItem?.closest<HTMLElement>('ol,ul') ?? null
+      const currentKind = listKindOf(currentList)
+
+      if (currentList && currentKind === kind) {
+        unwrapList(currentList, currentItem)
+        emitEditor(true)
+        readSelectionState()
+        return
       }
+
+      if (currentList && currentKind) {
+        const converted = convertList(currentList, kind)
+        const itemIndex = currentItem ? Math.max(0, Array.from(converted.children).indexOf(currentItem)) : 0
+        const targetItem = converted.children.item(itemIndex) as HTMLElement | null
+        if (targetItem) placeCaret(targetItem, targetItem.textContent?.length ?? 0)
+        emitEditor(true)
+        readSelectionState()
+        return
+      }
+
+      const topLevel = topLevelEditorBlock(editor, selection.anchorNode)
+      const list = document.createElement(kind === 'numbered' ? 'ol' : 'ul')
+      if (kind !== 'numbered') list.dataset.noteListStyle = kind
+      const item = document.createElement('li')
+
+      if (topLevel && !['UL', 'OL'].includes(topLevel.tagName)) {
+        while (topLevel.firstChild) item.appendChild(topLevel.firstChild)
+        if (!item.childNodes.length) item.appendChild(document.createElement('br'))
+        list.appendChild(item)
+        topLevel.replaceWith(list)
+      } else {
+        item.appendChild(document.createElement('br'))
+        list.appendChild(item)
+        editor.appendChild(list)
+      }
+
+      placeCaret(item, item.textContent?.length ?? 0)
       emitEditor(true)
       readSelectionState()
     })
@@ -681,15 +787,10 @@ export default function NotesEditingToolbar({
 
       const block = document.createElement('p')
       block.dataset.noteReference = 'true'
-      const icon = document.createElement('span')
-      icon.dataset.noteReferenceIcon = 'true'
-      icon.contentEditable = 'false'
-      icon.setAttribute('aria-hidden', 'true')
-      icon.textContent = '◆'
       const text = document.createElement('span')
       text.dataset.noteReferenceText = 'true'
       text.textContent = reference.trim() || 'Referencia bíblica'
-      block.append(icon, text)
+      block.appendChild(text)
 
       insertStandaloneBlock(editor, block, text)
       emitEditor(true)
@@ -849,9 +950,9 @@ export default function NotesEditingToolbar({
           {activeGroup === 'listas' && (
             <div>
               <div className="grid grid-cols-4 gap-1.5">
-                {commandButton('Viñetas', List, () => runCommand('insertUnorderedList'), formatState.bullet, 'Viñetas')}
-                {commandButton('Guiones', Minus, toggleDashList, formatState.dash, 'Guiones')}
-                {commandButton('Numerada', ListOrdered, () => runCommand('insertOrderedList'), formatState.numbered, 'Numerada')}
+                {commandButton('Viñetas', List, () => toggleStandardList('bullet'), formatState.bullet, 'Viñetas')}
+                {commandButton('Guiones', Minus, () => toggleStandardList('dash'), formatState.dash, 'Guiones')}
+                {commandButton('Numerada', ListOrdered, () => toggleStandardList('numbered'), formatState.numbered, 'Numerada')}
                 {commandButton('Tareas', CheckSquare, insertChecklist, false, 'Tareas')}
               </div>
               <div className="mt-1.5 grid grid-cols-2 gap-1.5">
