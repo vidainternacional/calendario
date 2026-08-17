@@ -11,9 +11,9 @@ test('FASE F: el cuaderno filtra por tipo y origen sin duplicar notas', () => {
   assert.doesNotMatch(workspace, /notas\.flatMap/)
 })
 
-test('FASE F: el origen de Estudio Profundo queda visible en tarjetas y editor', () => {
+test('FASE F: el origen de Estudio Profundo queda visible en el editor sin crear una copia', () => {
   assert.match(workspace, /Estudio Profundo/)
-  assert.match(workspace, /Origen: Estudio Profundo/)
-  assert.match(workspace, /nota\.origen === 'estudio_profundo'/)
   assert.match(workspace, /seleccionada\.origen === 'estudio_profundo'/)
+  assert.match(workspace, /`Estudio Profundo\$\{seleccionada\.referencia \? ` · \$\{seleccionada\.referencia\}` : ''\}`/)
+  assert.doesNotMatch(workspace, /notas\.flatMap/)
 })
