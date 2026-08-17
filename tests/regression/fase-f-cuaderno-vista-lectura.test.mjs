@@ -6,10 +6,10 @@ const toolbar = fs.readFileSync('components/biblia/NotesEditingToolbar.tsx', 'ut
 const workspace = fs.readFileSync('components/biblia/BibleNotesWorkspace.tsx', 'utf8')
 
 test('FASE F: el editor muestra formato WYSIWYG sin exponer marcadores al usuario', () => {
-  assert.match(toolbar, /contentEditable=!\{readOnly\}/)
+  assert.match(toolbar, /contentEditable=\{!readOnly\}/)
   assert.match(toolbar, /canonicalToRichHtml/)
   assert.match(toolbar, /richElementToCanonical/)
-  assert.match(toolbar, /document\.execCommand\('formatBlock'/)
+  assert.match(toolbar, /runCommand\('formatBlock'/)
   assert.match(toolbar, /document\.execCommand\(command/)
   assert.match(toolbar, /Negrita/)
   assert.match(toolbar, /Cursiva/)
