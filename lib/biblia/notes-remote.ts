@@ -60,13 +60,23 @@ function numeroPredicacionValido(value: number | null) {
   return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
 }
 
+function tituloDesdeFila(row: NotaBiblicaRemota) {
+  const explicito = row.titulo?.trim()
+  if (explicito) return explicito
+
+  const referencia = row.referencia?.trim()
+  if (row.origen === 'estudio_profundo' && referencia) return `Estudio: ${referencia}`
+
+  return 'Sin título'
+}
+
 function mapearNotaRemota(row: NotaBiblicaRemota): NotaBiblicaLocal {
   const creadaEn = row.created_at ?? row.updated_at ?? new Date(0).toISOString()
   const actualizadaEn = row.updated_at ?? creadaEn
 
   return {
     id: row.id,
-    titulo: row.titulo ?? 'Sin título',
+    titulo: tituloDesdeFila(row),
     contenido: row.nota ?? '',
     tipo: esTipoNota(row.tipo) ? row.tipo : 'personal',
     referencia: row.referencia ?? '',
