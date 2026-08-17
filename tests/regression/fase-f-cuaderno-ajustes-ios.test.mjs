@@ -60,23 +60,29 @@ test('FASE F: los estilos tipo Notas muestran nombres visuales sin iconos H1 H2 
   assert.doesNotMatch(toolbar, /Heading3/)
 })
 
-test('FASE F: estilos de párrafo se aplican una sola vez y el segundo toque los devuelve a cuerpo', () => {
+test('FASE F: estilos de párrafo responden al primer toque y el segundo toque los devuelve a cuerpo', () => {
   assert.match(toolbar, /function blockStyleAtSelection/)
-  assert.match(toolbar, /const currentBlock = blockStyleAtSelection\(editor, selection\)/)
-  assert.match(toolbar, /const nextBlock: BlockStyle = block !== 'p' && currentBlock === block \? 'p' : block/)
+  assert.match(toolbar, /blockSelectionStateRef = useRef<BlockStyle>\('p'\)/)
+  assert.match(toolbar, /const previousBlock = blockSelectionStateRef\.current/)
+  assert.match(toolbar, /const nextBlock: BlockStyle = block !== 'p' && previousBlock === block \? 'p' : block/)
+  assert.match(toolbar, /blockSelectionStateRef\.current = nextBlock/)
+  assert.match(toolbar, /setFormatState\(\(current\) => \(\{ \.\.\.current, block: nextBlock \}\)\)/)
   assert.match(toolbar, /formatBlock', false, nextBlock/)
-  assert.match(toolbar, /block: nextBlock/)
 })
 
-test('FASE F: negrita cursiva subrayado y tachado son estados independientes y combinables', () => {
+test('FASE F: negrita cursiva subrayado y tachado son estados independientes, combinables y visualmente estables', () => {
   assert.match(toolbar, /type InlineFormatKey = 'bold' \| 'italic' \| 'underline' \| 'strike'/)
   assert.match(toolbar, /inlineStateAtSelection/)
   assert.match(toolbar, /selectionSyncLockRef/)
   assert.match(toolbar, /inlineSelectionStateRef = useRef<InlineState>/)
-  assert.match(toolbar, /const inlineBefore = inlineSelectionStateRef\.current/)
-  assert.match(toolbar, /const nextInline: InlineState = \{ \.\.\.inlineBefore, \[key\]: !inlineBefore\[key\] \}/)
+  assert.match(toolbar, /inlineCaretOverrideRef = useRef</)
+  assert.match(toolbar, /const previousInline = inlineSelectionStateRef\.current/)
+  assert.match(toolbar, /const nextInline: InlineState = \{ \.\.\.previousInline, \[key\]: !previousInline\[key\] \}/)
   assert.match(toolbar, /inlineSelectionStateRef\.current = nextInline/)
   assert.match(toolbar, /setFormatState\(\(current\) => \(\{ \.\.\.current, \.\.\.nextInline \}\)\)/)
+  assert.match(toolbar, /state: nextInline/)
+  assert.match(toolbar, /data-format-active=\{active \? 'true' : 'false'\}/)
+  assert.match(toolbar, /ring-violet-300\/60/)
   assert.match(toolbar, /onPointerDown=\{\(event\) => event\.preventDefault\(\)\}/)
   assert.match(toolbar, /Triple asterisco se procesa primero/)
   assert.match(toolbar, /<strong><em>\$1<\/em><\/strong>/)
