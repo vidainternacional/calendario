@@ -32,16 +32,7 @@ test('FASE F: exportación reutiliza el patrón de impresión aprobado', () => {
 })
 
 test('FASE F: el shell offline conserva y encola metadatos de predicación', () => {
-  for (const id of [
-    'sermon-number',
-    'sermon-date',
-    'sermon-series',
-    'sermon-place',
-    'sermon-preacher',
-    'sermon-state',
-  ]) {
-    assert.match(shell, new RegExp(`id="${id}"`))
-  }
+  for (const id of ['sermon-number','sermon-date','sermon-series','sermon-place','sermon-preacher','sermon-state']) assert.match(shell, new RegExp(`id="${id}"`))
   assert.match(shell, /numeroPredicacion:/)
   assert.match(shell, /fechaPredicacion:/)
   assert.match(shell, /estadoPredicacion:/)
@@ -50,7 +41,7 @@ test('FASE F: el shell offline conserva y encola metadatos de predicación', () 
 })
 
 test('FASE F: el service worker renueva únicamente el shell offline', () => {
-  assert.match(sw, /vida-shell-v2\.1-notas-origen/)
+  assert.match(sw, /vida-shell-v2\.2-cuaderno-profesional/)
   assert.match(sw, /OFFLINE_NOTES_SHELL/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
