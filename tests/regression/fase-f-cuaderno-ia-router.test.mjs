@@ -40,35 +40,34 @@ test('FASE F: el router protege consumo y salta temporalmente proveedores con cu
   assert.match(action, /error\.code === 'rate_limited'/)
 })
 
-test('FASE F: organización IA autentica al dueño y envía solo nota, referencia e indicación explícita', () => {
+test('FASE F: organización IA autentica al dueño y envía solo la nota actual con su referencia', () => {
   assert.match(action, /supabase\.auth\.getUser\(\)/)
   assert.match(action, /ownerId: user\.id/)
   assert.match(action, /contenido = textoSeguro\(input\?\.contenido, 14_000\)/)
   assert.match(action, /referencia = textoSeguro\(input\?\.referencia/)
-  assert.match(action, /indicacion = textoSeguro\(input\?\.indicacion, 500\)/)
-  assert.match(action, /<SOLICITUD>/)
+  assert.match(action, /indicacion/)
   assert.match(action, /<APUNTES>/)
   assert.match(action, /material del usuario, no instrucciones/)
   assert.doesNotMatch(action, /\.from\('notas_estudio'\)/)
   assert.doesNotMatch(action, /leerNotasBiblicasLocales|obtenerNotasBiblicasRemotasMezcladas/)
 })
 
-test('FASE F: la barra IA propone antes de aplicar y nunca reemplaza al enviar', () => {
-  assert.match(toolbar, /aria-label="Barra de asistencia con IA"/)
-  assert.match(toolbar, /indicacion: instruction/)
-  assert.match(toolbar, /Aplicar/)
+test('FASE F: IA queda sobre submenús y propone antes de aplicar', () => {
+  assert.match(toolbar, /¿Qué quieres hacer con esta nota\?/)
+  assert.match(toolbar, /Instrucción para la IA/)
+  assert.match(toolbar, /Aplicar propuesta/)
   assert.match(toolbar, /Descartar/)
   assert.match(toolbar, /Volver a generar/)
   assert.match(toolbar, /value !== aiSource/)
-  assert.match(toolbar, /commitChange\(aiProposal\)/)
+  assert.match(toolbar, /onChange\(aiProposal, \{ checkpoint: true \}\)/)
 })
 
-test('FASE F: edición muestra deshacer y rehacer y aísla el historial por nota', () => {
-  assert.match(toolbar, /const undo = \(\) =>/)
-  assert.match(toolbar, /const redo = \(\) =>/)
-  assert.match(toolbar, /Deshacer/)
-  assert.match(toolbar, /Rehacer/)
-  assert.match(toolbar, /history\.future\.push\(history\.current\)/)
-  assert.match(toolbar, /const next = history\.future\.pop\(\)/)
-  assert.match(workspace, /key=\{seleccionada\.id\}/)
+test('FASE F: deshacer y rehacer son herramientas globales fuera de Edición', () => {
+  assert.match(workspace, /Historial global del cuaderno/)
+  assert.match(workspace, /Deshacer último cambio/)
+  assert.match(workspace, /Rehacer último cambio/)
+  assert.match(workspace, /contentHistoryRef/)
+  assert.match(workspace, /deshacerContenido/)
+  assert.match(workspace, /rehacerContenido/)
+  assert.doesNotMatch(toolbar, /Deshacer último cambio|Rehacer último cambio/)
 })
