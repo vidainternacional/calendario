@@ -39,7 +39,12 @@ type CachedResult = {
   result: VidaAiResult
 }
 
-export type VidaAiErrorCode = 'not_configured' | 'input_too_large' | 'provider_unavailable' | 'empty_response'
+type BurstWindow = {
+  startedAt: number
+  count: number
+}
+
+export type VidaAiErrorCode = 'not_configured' | 'input_too_large' | 'provider_unavailable' | 'empty_response' | 'rate_limited'
 
 export class VidaAiError extends Error {
   code: VidaAiErrorCode
@@ -52,9 +57,12 @@ export class VidaAiError extends Error {
 }
 
 class ProviderError extends Error {
-  constructor(message: string) {
+  status?: number
+
+  constructor(message: string, status?: number) {
     super(message)
     this.name = 'ProviderError'
+    this.status = status
   }
 }
 
@@ -69,7 +77,12 @@ const POLICIES: Record<VidaAiTask, VidaAiPolicy> = {
 }
 
 const privateCache = new Map<string, CachedResult>()
+const burstWindows = new Map<string, BurstWindow>()
+const providerCooldowns = new Map<string, number>()
 const MAX_CACHE_ENTRIES = 100
+const BURST_WINDOW_MS = 60_000
+const BURST_MAX_REQUESTS = 8
+const PROVIDER_COOLDOWN_MS = 2 * 60 * 1000
 
 function configuredProviderOrder(level: VidaAiLevel): VidaAiProviderName[] {
   const raw = level === 1
@@ -101,6 +114,10 @@ function providerKey(provider: VidaAiProviderName) {
   return process.env.OPENAI_API_KEY || ''
 }
 
+function ownerTaskKey(ownerId: string, task: VidaAiTask) {
+  return createHash('sha256').update(`${ownerId}\u0000${task}`).digest('hex')
+}
+
 function cacheKey(request: VidaAiRequest) {
   return createHash('sha256')
     .update(`${request.ownerId}\u0000${request.task}\u0000${request.instructions}\u0000${request.input}`)
@@ -123,6 +140,43 @@ function writeCache(key: string, result: VidaAiResult, ttlMs: number) {
     if (oldestKey) privateCache.delete(oldestKey)
   }
   privateCache.set(key, { expiresAt: Date.now() + ttlMs, result: { ...result, cached: false } })
+}
+
+function enforceBurstLimit(ownerId: string, task: VidaAiTask) {
+  const key = ownerTaskKey(ownerId, task)
+  const now = Date.now()
+  const window = burstWindows.get(key)
+
+  if (!window || now - window.startedAt >= BURST_WINDOW_MS) {
+    burstWindows.set(key, { startedAt: now, count: 1 })
+    return
+  }
+
+  if (window.count >= BURST_MAX_REQUESTS) {
+    throw new VidaAiError('rate_limited', 'Se alcanzó el límite temporal de solicitudes para esta tarea.')
+  }
+
+  window.count += 1
+}
+
+function cooldownKey(provider: VidaAiProviderName, model: string) {
+  return `${provider}:${model}`
+}
+
+function providerAvailable(provider: VidaAiProviderName, model: string) {
+  const key = cooldownKey(provider, model)
+  const until = providerCooldowns.get(key) ?? 0
+  if (until <= Date.now()) {
+    providerCooldowns.delete(key)
+    return true
+  }
+  return false
+}
+
+function coolDownProvider(provider: VidaAiProviderName, model: string, error: unknown) {
+  if (!(error instanceof ProviderError)) return
+  if (error.status !== 429 && error.status !== 403 && !(typeof error.status === 'number' && error.status >= 500)) return
+  providerCooldowns.set(cooldownKey(provider, model), Date.now() + PROVIDER_COOLDOWN_MS)
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
@@ -168,7 +222,7 @@ async function callOpenAi(model: string, apiKey: string, request: VidaAiRequest,
     }),
   }, policy.timeoutMs)
 
-  if (!response.ok) throw new ProviderError(`OpenAI HTTP ${response.status}`)
+  if (!response.ok) throw new ProviderError(`OpenAI HTTP ${response.status}`, response.status)
   const payload = await response.json() as {
     output?: unknown
     usage?: { input_tokens?: number; output_tokens?: number }
@@ -193,7 +247,7 @@ async function callGemini(model: string, apiKey: string, request: VidaAiRequest,
     }),
   }, policy.timeoutMs)
 
-  if (!response.ok) throw new ProviderError(`Gemini HTTP ${response.status}`)
+  if (!response.ok) throw new ProviderError(`Gemini HTTP ${response.status}`, response.status)
   const payload = await response.json() as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
     usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number }
@@ -234,11 +288,16 @@ export async function vidaAI(request: VidaAiRequest): Promise<VidaAiResult> {
     if (cached) return cached
   }
 
+  enforceBurstLimit(request.ownerId, request.task)
+
   const providers = configuredProviderOrder(policy.level)
     .map((provider) => ({ provider, apiKey: providerKey(provider), model: providerModel(provider, policy.level) }))
     .filter((entry) => Boolean(entry.apiKey))
+    .filter((entry) => providerAvailable(entry.provider, entry.model))
 
   if (providers.length === 0) {
+    const configured = configuredProviderOrder(policy.level).some((provider) => Boolean(providerKey(provider)))
+    if (configured) throw new VidaAiError('provider_unavailable', 'Los proveedores configurados están temporalmente en espera.')
     throw new VidaAiError('not_configured', 'No hay un proveedor de IA configurado en el servidor.')
   }
 
@@ -253,9 +312,10 @@ export async function vidaAI(request: VidaAiRequest): Promise<VidaAiResult> {
       }
       writeCache(key, result, policy.cacheTtlMs)
       return result
-    } catch {
-      // Fallback deliberado: una falla, cuota o indisponibilidad de un proveedor
-      // nunca debe obligar a la interfaz a conocer qué proveedor se está usando.
+    } catch (error) {
+      coolDownProvider(entry.provider, entry.model, error)
+      // Fallback deliberado: cuota, indisponibilidad o error de un proveedor
+      // no expone ni obliga a la interfaz a conocer qué proveedor se está usando.
     }
   }
 
