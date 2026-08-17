@@ -281,11 +281,12 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
   const contenido = (
     <div className={embedded ? 'p-3 sm:p-5' : 'mx-auto max-w-4xl'}>
       <header className="mb-4 flex items-center gap-3">
+        {!embedded && <Link href="/estudios" aria-label="Volver a Estudios" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
         <div className="flex min-w-0 items-center gap-3">
-          {!embedded && <Link href="/estudios" aria-label="Volver a Estudios" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-sm" aria-hidden="true"><NotebookPen className="h-5 w-5" /></span>
           <div className="min-w-0">
-            <h1 className="truncate text-[22px] font-bold tracking-tight">Cuaderno</h1>
-            <p className={`mt-0.5 truncate text-xs ${tema.muted}`}>{notas.length} {notas.length === 1 ? 'nota' : 'notas'}</p>
+            <h1 className="truncate text-[24px] font-extrabold tracking-[-0.03em]">Cuaderno</h1>
+            <p className={`mt-0.5 truncate text-[11px] font-medium ${tema.muted}`}>Tu espacio personal · {notas.length} {notas.length === 1 ? 'nota' : 'notas'}</p>
           </div>
         </div>
       </header>
@@ -401,6 +402,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
 
           {menuAbierto === 'herramientas' && <section id="cuaderno-panel-herramientas" className={`mt-2 rounded-[22px] px-3 pb-3 pt-1 ${tema.glass}`} aria-label="Herramientas de edición">
             <NotesEditingToolbar
+              key={seleccionada.id}
               textareaRef={textareaRef}
               value={seleccionada.contenido}
               onChange={(contenido) => actualizar({ contenido })}
