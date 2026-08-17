@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 
 const route = fs.readFileSync('app/api/admin/ai-diagnostics/route.ts', 'utf8')
+const card = fs.readFileSync('components/admin/AiDiagnosticsCard.tsx', 'utf8')
+const analytics = fs.readFileSync('app/(app)/admin/analisis/page.tsx', 'utf8')
 
 test('diagnóstico IA exige usuario administrador', () => {
   assert.match(route, /auth\.getUser\(\)/)
@@ -30,4 +32,14 @@ test('prueba real usa prompt mínimo, evita caché y devuelve telemetría técni
 test('Perplexity puede permanecer sin configurar sin bloquear los demás proveedores', () => {
   assert.match(route, /PERPLEXITY_API_KEY/)
   assert.match(route, /Boolean\(process\.env\.PERPLEXITY_API_KEY\)/)
+})
+
+test('Centro de Análisis muestra el diagnóstico únicamente al administrador', () => {
+  assert.match(analytics, /AiDiagnosticsCard/)
+  assert.match(analytics, /currentProfile\?\.rol === 'administrador'/)
+  assert.match(card, /\/api\/admin\/ai-diagnostics/)
+  assert.match(card, /Probar router/)
+  assert.match(card, /Tokens entrada/)
+  assert.match(card, /Tokens salida/)
+  assert.match(card, /Latencia/)
 })
