@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { FileText, Music2, Plus, Search } from 'lucide-react'
 import {
   agregarCancionExistenteCompleta,
   crearCancionCompletaYAgregar,
+  obtenerBibliotecaRepertorioMinisterio,
 } from '@/app/actions/repertorio-programacion'
 
 export type CancionBiblioteca = {
@@ -16,6 +17,7 @@ export type CancionBiblioteca = {
   youtube_url?: string | null
   tonalidades: string[]
   ultimaTonalidad?: string | null
+  recuperada?: boolean
 }
 
 type ServerAction = (formData: FormData) => void | Promise<void>
@@ -35,17 +37,36 @@ export default function RepertorioBibliotecaPicker({ canciones }: Props) {
   const ministerioId = useMemo(() => pathname.match(/\/ministerios\/([^/]+)\/programacion/)?.[1] || '', [pathname])
   const eventoId = searchParams.get('evento') || ''
 
+  const [biblioteca, setBiblioteca] = useState<CancionBiblioteca[]>(canciones)
   const [busqueda, setBusqueda] = useState('')
   const [seleccionada, setSeleccionada] = useState<CancionBiblioteca | null>(null)
   const [tono, setTono] = useState('')
 
+  useEffect(() => {
+    setBiblioteca(canciones)
+    if (!ministerioId) return
+
+    let cancelled = false
+    void obtenerBibliotecaRepertorioMinisterio(ministerioId)
+      .then((items) => {
+        if (!cancelled) setBiblioteca(items as CancionBiblioteca[])
+      })
+      .catch((error) => {
+        console.error('No se pudo recuperar la biblioteca histórica de repertorio', error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [canciones, ministerioId])
+
   const resultados = useMemo(() => {
     const q = busqueda.trim().toLocaleLowerCase('es')
-    if (!q) return canciones.slice(0, 10)
-    return canciones
+    if (!q) return biblioteca.slice(0, 12)
+    return biblioteca
       .filter((song) => `${song.titulo} ${song.artista || ''}`.toLocaleLowerCase('es').includes(q))
-      .slice(0, 16)
-  }, [busqueda, canciones])
+      .slice(0, 20)
+  }, [busqueda, biblioteca])
 
   function elegir(song: CancionBiblioteca) {
     setSeleccionada(song)
@@ -65,6 +86,7 @@ export default function RepertorioBibliotecaPicker({ canciones }: Props) {
       <div className="border-t border-violet-200 bg-[#fbfaff] p-3">
         <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-violet-500">1 · Buscar canción</p>
+          <p className="mt-1 text-[10px] leading-4 text-slate-400">Incluye la biblioteca actual y canciones recuperadas de servicios anteriores.</p>
           <label className="relative mt-2 block">
             <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
             <input
@@ -76,7 +98,7 @@ export default function RepertorioBibliotecaPicker({ canciones }: Props) {
             />
           </label>
 
-          {canciones.length > 0 ? (
+          {biblioteca.length > 0 ? (
             <div className="mt-2 max-h-60 space-y-1 overflow-y-auto rounded-xl bg-slate-50 p-1.5 ring-1 ring-slate-100">
               {resultados.length ? resultados.map((song) => (
                 <button
@@ -89,7 +111,10 @@ export default function RepertorioBibliotecaPicker({ canciones }: Props) {
                     <Music2 className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-extrabold text-slate-800">{song.titulo}</span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="block min-w-0 flex-1 truncate text-xs font-extrabold text-slate-800">{song.titulo}</span>
+                      {song.recuperada && <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-wide text-amber-700 ring-1 ring-amber-100">Historial</span>}
+                    </span>
                     <span className="mt-0.5 block truncate text-[10px] text-slate-500">
                       {song.artista || 'Sin versión / artista'}
                     </span>
@@ -161,6 +186,10 @@ export default function RepertorioBibliotecaPicker({ canciones }: Props) {
                 Notas de la canción
                 <textarea name="notas" placeholder="Intro, cortes, puente, indicaciones para el equipo…" className={`${inputClass} min-h-20 py-3`} style={inputStyle} />
               </label>
+
+              {seleccionada.recuperada && (
+                <p className="rounded-xl bg-amber-50 px-3 py-2 text-[9px] leading-4 text-amber-800 ring-1 ring-amber-100">Al agregarla, esta canción histórica quedará guardada también en la biblioteca permanente.</p>
+              )}
 
               <button className="h-11 rounded-xl bg-violet-600 text-xs font-bold text-white">Agregar al repertorio</button>
             </div>
