@@ -235,6 +235,10 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
       : nota))
   }
 
+  const actualizarPredicacion = (cambios: Partial<NotaBiblica>) => {
+    actualizar({ tipo: 'predicacion', ...cambios })
+  }
+
   const cambiarTipo = (tipo: TipoNota) => {
     if (tipo === 'predicacion') {
       actualizar({ tipo })
@@ -276,7 +280,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
 
   const contenido = (
     <div className={embedded ? 'p-3 sm:p-5' : 'mx-auto max-w-4xl'}>
-      <header className="mb-4 flex items-center justify-between gap-3">
+      <header className="mb-4 flex items-center gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {!embedded && <Link href="/estudios" aria-label="Volver a Estudios" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
           <div className="min-w-0">
@@ -284,7 +288,6 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             <p className={`mt-0.5 truncate text-xs ${tema.muted}`}>{notas.length} {notas.length === 1 ? 'nota' : 'notas'}</p>
           </div>
         </div>
-        <button type="button" onClick={nuevaNota} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-sm transition active:scale-95" aria-label="Nueva nota"><Plus className="h-5 w-5" /></button>
       </header>
 
       <label className={`flex min-h-12 items-center gap-2 rounded-[20px] px-4 ${tema.glass}`}>
@@ -299,14 +302,15 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
         </summary>
         <div className="px-3 pb-3">
           <p className={`mb-1 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Tipo</p>
-          <div className="flex gap-2 overflow-x-auto pb-2">{(['todas', ...tipos.map((tipo) => tipo.id)] as const).map((id) => <button key={id} type="button" onClick={() => setFiltro(id)} className={`min-h-9 shrink-0 rounded-full px-3 text-xs font-bold ${filtro === id ? 'bg-violet-600 text-white' : tema.glassStrong}`}>{id === 'todas' ? 'Todas' : tipos.find((tipo) => tipo.id === id)?.nombre}</button>)}</div>
+          <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{(['todas', ...tipos.map((tipo) => tipo.id)] as const).map((id) => <button key={id} type="button" onClick={() => setFiltro(id)} className={`min-h-9 shrink-0 rounded-full px-3 text-xs font-bold ${filtro === id ? 'bg-violet-600 text-white' : tema.glassStrong}`}>{id === 'todas' ? 'Todas' : tipos.find((tipo) => tipo.id === id)?.nombre}</button>)}</div>
           <p className={`mb-1 mt-1 px-1 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Origen</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">{origenes.map((origen) => <button key={origen.id} type="button" onClick={() => setFiltroOrigen(origen.id)} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-bold ${filtroOrigen === origen.id ? 'bg-violet-600 text-white' : tema.glassStrong}`}>{origen.nombre}</button>)}</div>
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{origenes.map((origen) => <button key={origen.id} type="button" onClick={() => setFiltroOrigen(origen.id)} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-bold ${filtroOrigen === origen.id ? 'bg-violet-600 text-white' : tema.glassStrong}`}>{origen.nombre}</button>)}</div>
         </div>
       </details>
 
-      <nav aria-label="Notas del cuaderno" className="mt-3 flex min-h-[84px] gap-3 overflow-x-auto overscroll-x-contain pb-1">
-        {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => { setSeleccionadaId(nota.id); setMenuAbierto(null) }} aria-label={`Abrir ${nota.titulo || 'nota sin título'}`} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full px-2 text-center ring-1 transition active:scale-[0.97] ${seleccionadaId === nota.id ? tema.selected : `${tema.soft} ring-transparent`}`}><span className="line-clamp-3 w-full text-[10px] font-bold leading-[13px]">{nota.titulo || 'Sin título'}</span></button>)}
+      <nav aria-label="Notas del cuaderno" className="mt-3 flex min-h-[84px] gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button type="button" onClick={nuevaNota} aria-label="Nueva nota" className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-full bg-violet-600 text-white shadow-sm transition active:scale-[0.97]"><Plus className="h-5 w-5" /><span className="text-[10px] font-bold">Nueva</span></button>
+        {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => { setSeleccionadaId(nota.id); setMenuAbierto(null) }} aria-label={`Abrir ${nota.titulo || 'nota sin título'}`} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border bg-transparent px-2 text-center transition active:scale-[0.97] ${seleccionadaId === nota.id ? 'border-violet-400 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,92,246,0.08)]' : 'border-current/20'}`}><span className="line-clamp-3 w-full text-[10px] font-bold leading-[13px]">{nota.titulo || 'Sin título'}</span></button>)}
       </nav>
 
       {seleccionada ? <section className="mt-3 min-h-[calc(100vh-300px)]">
@@ -320,7 +324,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             {seleccionada.origen === 'estudio_profundo' ? `Estudio Profundo${seleccionada.referencia ? ` · ${seleccionada.referencia}` : ''}` : seleccionada.referencia || tipos.find((tipo) => tipo.id === seleccionada.tipo)?.nombre || 'Nota personal'}
           </div>
 
-          <div className={`mt-2 grid gap-2 px-0.5 ${seleccionada.tipo === 'predicacion' ? 'grid-cols-3' : 'grid-cols-2'}`} aria-label="Opciones de la nota">
+          <div className="mt-2 grid grid-cols-3 gap-2 px-0.5" aria-label="Opciones de la nota">
             <button
               type="button"
               onClick={() => alternarMenu('detalles')}
@@ -333,7 +337,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'detalles' ? 'rotate-180' : ''}`} />
             </button>
 
-            {seleccionada.tipo === 'predicacion' && <button
+            <button
               type="button"
               onClick={() => alternarMenu('predicacion')}
               aria-expanded={menuAbierto === 'predicacion'}
@@ -344,7 +348,7 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
               <Mic2 className="h-4 w-4 shrink-0 text-amber-500" />
               <span className="min-w-0 text-center leading-[11px]">Datos de<br />predicación</span>
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${menuAbierto === 'predicacion' ? 'rotate-180' : ''}`} />
-            </button>}
+            </button>
 
             <button
               type="button"
@@ -370,27 +374,29 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
             <label><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Referencia bíblica</span><input value={seleccionada.referencia} onChange={(event) => actualizar({ referencia: event.target.value })} placeholder="Ej. Juan 3:16" className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
           </section>}
 
-          {seleccionada.tipo === 'predicacion' && menuAbierto === 'predicacion' && <section id="cuaderno-panel-predicacion" className={`mt-2 rounded-[22px] p-3 ${tema.glass}`} aria-label="Datos de predicación">
+          {menuAbierto === 'predicacion' && <section id="cuaderno-panel-predicacion" className={`mt-2 rounded-[22px] p-3 ${tema.glass}`} aria-label="Datos de predicación">
             <div className="mb-2 flex items-center justify-between gap-3 px-0.5">
               <p className={`text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Identidad</p>
-              <button type="button" onClick={exportarPredicacion} className={`flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold ${tema.glassStrong}`} aria-label="Exportar predicación PDF"><Download className="h-3.5 w-3.5" /><span>Exportar</span></button>
+              {seleccionada.tipo === 'predicacion'
+                ? <button type="button" onClick={exportarPredicacion} className={`flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-bold ${tema.glassStrong}`} aria-label="Exportar predicación PDF"><Download className="h-3.5 w-3.5" /><span>Exportar</span></button>
+                : <button type="button" onClick={() => cambiarTipo('predicacion')} className="min-h-8 rounded-full bg-amber-500/15 px-3 text-[10px] font-bold text-amber-800 ring-1 ring-amber-400/25">Usar como predicación</button>}
             </div>
 
             <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2">
               <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>N.º de prédica</span><input readOnly value={seleccionada.numeroPredicacion ? `#${seleccionada.numeroPredicacion}` : '—'} className={`min-h-10 w-full rounded-xl border px-2.5 text-sm font-bold ${tema.field}`} /></label>
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizar({ fechaPredicacion: event.target.value })} className={`min-h-10 w-full min-w-0 rounded-xl border px-2.5 text-sm ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Fecha</span><input type="date" value={seleccionada.fechaPredicacion} onChange={(event) => actualizarPredicacion({ fechaPredicacion: event.target.value })} className={`min-h-10 w-full min-w-0 rounded-xl border px-2.5 text-sm ${tema.field}`} /></label>
             </div>
 
-            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Estado</span><input value={seleccionada.estadoPredicacion} onChange={(event) => actualizar({ estadoPredicacion: event.target.value })} placeholder="Ej. Lista para predicar" maxLength={100} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Estado</span><input value={seleccionada.estadoPredicacion} onChange={(event) => actualizarPredicacion({ estadoPredicacion: event.target.value })} placeholder="Ej. Lista para predicar" maxLength={100} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
 
             <div className="my-3 h-px bg-current/10" />
             <p className={`mb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] ${tema.muted}`}>Contexto</p>
 
             <div className="grid grid-cols-2 gap-2">
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Serie</span><input value={seleccionada.serie} onChange={(event) => actualizar({ serie: event.target.value })} placeholder="Serie" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
-              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Lugar</span><input value={seleccionada.lugar} onChange={(event) => actualizar({ lugar: event.target.value })} placeholder="Lugar" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Serie</span><input value={seleccionada.serie} onChange={(event) => actualizarPredicacion({ serie: event.target.value })} placeholder="Serie" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+              <label className="min-w-0"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Lugar</span><input value={seleccionada.lugar} onChange={(event) => actualizarPredicacion({ lugar: event.target.value })} placeholder="Lugar" maxLength={300} className={`min-h-10 w-full min-w-0 rounded-xl border px-3 text-sm ${tema.field}`} /></label>
             </div>
-            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Predicador</span><input value={seleccionada.predicador} onChange={(event) => actualizar({ predicador: event.target.value })} placeholder="Nombre del predicador" maxLength={300} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
+            <label className="mt-2 block"><span className={`mb-1 block text-[10px] font-bold ${tema.muted}`}>Predicador</span><input value={seleccionada.predicador} onChange={(event) => actualizarPredicacion({ predicador: event.target.value })} placeholder="Nombre del predicador" maxLength={300} className={`min-h-10 w-full rounded-xl border px-3 text-sm ${tema.field}`} /></label>
           </section>}
 
           {menuAbierto === 'herramientas' && <section id="cuaderno-panel-herramientas" className={`mt-2 rounded-[22px] px-3 pb-3 pt-1 ${tema.glass}`} aria-label="Herramientas de edición">
