@@ -79,7 +79,22 @@ export default function BottomNav() {
   }[modo]
 
   const navigation = (
-    <div className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] w-full border-t transition-colors ${tema.nav} ${tema.shadow}`} style={{ position: 'fixed', insetInline: 0, bottom: 0, width: '100%', paddingRight: 'env(safe-area-inset-right, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)', paddingLeft: 'env(safe-area-inset-left, 0px)', transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', isolation: 'isolate' }}>
+    <div
+      className={`app-bottom-nav !fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${tema.nav} ${tema.shadow}`}
+      style={{
+        position: 'fixed',
+        insetInline: 0,
+        top: 'auto',
+        bottom: 0,
+        width: '100%',
+        margin: 0,
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        isolation: 'isolate',
+        touchAction: 'manipulation',
+      }}
+    >
       <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon
