@@ -1,6 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import EquipoServicioManager from '@/components/ministerios/EquipoServicioManager'
 import ReemplazosServicioInline from '@/components/ministerios/ReemplazosServicioInline'
 
@@ -17,7 +20,42 @@ function hoySV() {
   return `${year}-${month}-${day}`
 }
 
+function mesActualSV() {
+  return hoySV().slice(0, 7)
+}
+
+function moverMes(mes: string, delta: number) {
+  const [year, month] = mes.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1 + delta, 1))
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+function nombreMes(mes: string) {
+  const [year, month] = mes.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, 1))
+  const monthName = new Intl.DateTimeFormat('es-SV', { month: 'short', timeZone: 'UTC' })
+    .format(date)
+    .replace('.', '')
+  return {
+    month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+    year: String(year),
+  }
+}
+
 export default function ProgramacionUXEnhancer() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const queryMes = searchParams.get('mes')
+  const mesSeleccionado = /^\d{4}-\d{2}$/.test(queryMes || '') ? String(queryMes) : mesActualSV()
+  const [monthTarget, setMonthTarget] = useState<HTMLElement | null>(null)
+
+  const meses = useMemo(() => {
+    const base = mesActualSV()
+    const values = [-1, 0, 1, 2, 3].map((offset) => moverMes(base, offset))
+    if (!values.includes(mesSeleccionado)) values.push(mesSeleccionado)
+    return Array.from(new Set(values)).sort()
+  }, [mesSeleccionado])
+
   useEffect(() => {
     const hoy = hoySV()
     const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href*="/programacion?mes="][href*="&dia="]'))
@@ -33,12 +71,88 @@ export default function ProgramacionUXEnhancer() {
       badge.setAttribute('aria-hidden', 'true')
       actual.appendChild(badge)
     }
-  }, [])
+  }, [searchParams])
+
+  useEffect(() => {
+    setMonthTarget(null)
+    let disposed = false
+    let mount: HTMLElement | null = null
+
+    const montar = () => {
+      if (disposed || mount?.isConnected) return
+      const root = document.querySelector<HTMLElement>('#programacion-ministerial-root')
+      const main = root?.querySelector<HTMLElement>('main')
+      const header = main?.querySelector<HTMLElement>(':scope > header')
+      const calendarSection = main?.querySelector<HTMLElement>(':scope > section')
+      const details = calendarSection?.querySelector<HTMLDetailsElement>(':scope > details')
+      const detailsBody = details?.querySelector<HTMLElement>(':scope > div')
+      const legacyNav = detailsBody?.querySelector<HTMLElement>(':scope > div')
+      if (!main || !header || !calendarSection) return
+
+      if (legacyNav) legacyNav.dataset.monthNavLegacy = 'true'
+
+      const nextMount = document.createElement('div')
+      nextMount.dataset.programacionMonthCards = 'true'
+      header.insertAdjacentElement('afterend', nextMount)
+      mount = nextMount
+      setMonthTarget(nextMount)
+    }
+
+    montar()
+    const observer = new MutationObserver(montar)
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    return () => {
+      disposed = true
+      observer.disconnect()
+      document.querySelector<HTMLElement>('[data-month-nav-legacy="true"]')?.removeAttribute('data-month-nav-legacy')
+      mount?.remove()
+      setMonthTarget(null)
+    }
+  }, [mesSeleccionado])
+
+  const monthCards = monthTarget
+    ? createPortal(
+        <section className="mb-5" aria-label="Meses de programación">
+          <div className="mb-2 flex items-end justify-between gap-3 px-1">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-400">Programar por mes</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Trabaja un solo mes a la vez. Cambiar de tarjeta no duplica eventos.</p>
+            </div>
+          </div>
+          <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {meses.map((mes) => {
+              const label = nombreMes(mes)
+              const activo = mes === mesSeleccionado
+              return (
+                <Link
+                  key={mes}
+                  href={`${pathname}?mes=${mes}`}
+                  aria-current={activo ? 'date' : undefined}
+                  className={`min-w-[96px] shrink-0 snap-start rounded-[18px] px-3 py-3 text-left transition active:scale-[0.98] ${
+                    activo
+                      ? 'bg-indigo-600 text-white shadow-[0_8px_20px_rgba(79,70,229,0.2)]'
+                      : 'bg-white text-slate-700 ring-1 ring-slate-200'
+                  }`}
+                >
+                  <span className={`block text-[10px] font-extrabold uppercase tracking-[0.08em] ${activo ? 'text-white/75' : 'text-slate-400'}`}>
+                    {label.year}
+                  </span>
+                  <span className="mt-1 block text-sm font-extrabold">{label.month}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>,
+        monthTarget,
+      )
+    : null
 
   return (
     <>
       <EquipoServicioManager />
       <ReemplazosServicioInline />
+      {monthCards}
       <style jsx global>{`
         .programacion-ministerial input:not([type='color']):not([type='hidden']),
         .programacion-ministerial textarea,
@@ -53,6 +167,43 @@ export default function ProgramacionUXEnhancer() {
           color: #94a3b8 !important;
           -webkit-text-fill-color: #94a3b8 !important;
           opacity: 1 !important;
+        }
+
+        .programacion-ministerial [data-month-nav-legacy='true'] {
+          display: none !important;
+        }
+
+        .programacion-ministerial main > section:first-of-type {
+          padding: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        .programacion-ministerial main > section:first-of-type > details > summary {
+          padding: 0 0 12px !important;
+        }
+
+        .programacion-ministerial main > section:first-of-type > details > div {
+          margin-top: 0 !important;
+          padding-top: 0 !important;
+          border-top-width: 0 !important;
+        }
+
+        .programacion-ministerial #dia-seleccionado {
+          margin-top: 16px !important;
+          padding: 16px 0 0 !important;
+          border-top: 1px solid #e2e8f0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        .programacion-ministerial #dia-seleccionado > div > div {
+          padding: 12px 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border-top: 1px solid #f1f5f9 !important;
         }
 
         .programacion-ministerial a[data-es-hoy='true'] {
@@ -74,26 +225,36 @@ export default function ProgramacionUXEnhancer() {
           z-index: 2;
         }
 
-        .programacion-ministerial #servicio-activo > details:nth-of-type(1) > summary { background: #f5f7ff; }
-        .programacion-ministerial #servicio-activo > details:nth-of-type(2) > summary { background: #faf7ff; }
-        .programacion-ministerial #servicio-activo > details:nth-of-type(3) > summary { background: #fff7fb; }
-        .programacion-ministerial #servicio-activo > details + details { border-top-width: 6px !important; border-top-color: #f1f5f9 !important; }
-        .programacion-ministerial #servicio-activo > details > div { border-top-color: #e2e8f0 !important; }
-        .programacion-ministerial [data-equipo-legacy='true'] { display: none !important; }
+        .programacion-ministerial #servicio-activo > details > summary {
+          background: #ffffff !important;
+        }
+
+        .programacion-ministerial #servicio-activo > details + details {
+          border-top-width: 1px !important;
+          border-top-color: #e2e8f0 !important;
+        }
+
+        .programacion-ministerial #servicio-activo > details > div {
+          border-top-color: #e2e8f0 !important;
+          background: #ffffff !important;
+        }
+
+        .programacion-ministerial [data-equipo-legacy='true'] {
+          display: none !important;
+        }
 
         .programacion-ministerial a[href*='#servicio-activo'] {
           min-height: 48px !important;
-          border-radius: 16px !important;
-          background: linear-gradient(135deg, #312e81 0%, #5b3df5 55%, #7c3aed 100%) !important;
+          border-radius: 14px !important;
+          background: #312e81 !important;
           color: #ffffff !important;
-          box-shadow: 0 10px 24px rgba(79, 70, 229, .22), inset 0 1px 0 rgba(255,255,255,.18) !important;
-          border: 1px solid rgba(255,255,255,.14) !important;
-          transition: transform .16s ease, box-shadow .16s ease !important;
+          box-shadow: none !important;
+          border: 0 !important;
+          transition: transform .16s ease !important;
         }
 
         .programacion-ministerial a[href*='#servicio-activo']:active {
           transform: scale(.985);
-          box-shadow: 0 5px 14px rgba(79, 70, 229, .18) !important;
         }
 
         .programacion-ministerial a[href*='#servicio-activo'] svg {
