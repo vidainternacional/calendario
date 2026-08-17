@@ -17,18 +17,13 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
-  Code2,
   Eraser,
   Eye,
-  Heading1,
-  Heading2,
-  Heading3,
   Italic,
   List,
   ListOrdered,
   Loader2,
   Minus,
-  Pilcrow,
   Printer,
   Quote,
   Send,
@@ -132,11 +127,13 @@ export function canonicalToRichHtml(value: string) {
       index += 1
       continue
     }
+
     if (/^─{4,}$/.test(line.trim())) {
       blocks.push('<hr>')
       index += 1
       continue
     }
+
     if (line.startsWith('# ')) {
       blocks.push(`<h1>${inlineToHtml(line.slice(2))}</h1>`)
       index += 1
@@ -227,6 +224,7 @@ function serializeInlineNode(node: Node): string {
 
   const element = node as HTMLElement
   const tag = element.tagName
+
   if (tag === 'BR') return '\n'
   if (tag === 'INPUT') return ''
   if (element.dataset.noteReferenceIcon === 'true') return ''
@@ -270,6 +268,7 @@ function serializeBlockNode(node: Node): string {
 
   const element = node as HTMLElement
   const tag = element.tagName
+
   if (tag === 'UL' || tag === 'OL') return serializeList(element)
   if (tag === 'HR') return '──────────'
   if (tag === 'H1') return `# ${serializeInlineChildren(element)}`.trimEnd()
@@ -281,6 +280,11 @@ function serializeBlockNode(node: Node): string {
     const text = element.querySelector<HTMLElement>('[data-note-reference-text="true"]')
     return `◈ ${text ? serializeInlineChildren(text) : serializeInlineChildren(element)}`.trimEnd()
   }
+
+  if (tag === 'DIV' && Array.from(element.children).some((child) => ['P', 'DIV', 'H1', 'H2', 'H3', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'HR'].includes(child.tagName))) {
+    return Array.from(element.childNodes).map(serializeBlockNode).join('\n')
+  }
+
   return serializeInlineChildren(element)
 }
 
@@ -353,6 +357,30 @@ function placeCaret(element: HTMLElement, offset = 0) {
   range.collapse(false)
   selection.removeAllRanges()
   selection.addRange(range)
+}
+
+function closestEditorElement(editor: HTMLElement, node: Node | null) {
+  const element = node?.nodeType === Node.ELEMENT_NODE ? node as Element : node?.parentElement
+  return element && editor.contains(element) ? element : null
+}
+
+function topLevelEditorBlock(editor: HTMLElement, node: Node | null) {
+  let element = closestEditorElement(editor, node)
+  if (!element) return null
+  while (element.parentElement && element.parentElement !== editor) element = element.parentElement
+  return element.parentElement === editor ? element as HTMLElement : null
+}
+
+function insertStandaloneBlock(editor: HTMLElement, block: HTMLElement, focusTarget: HTMLElement) {
+  const selection = window.getSelection()
+  const topLevel = topLevelEditorBlock(editor, selection?.anchorNode ?? null)
+  const isEmptyParagraph = topLevel?.tagName === 'P' && !(topLevel.textContent ?? '').trim() && !topLevel.querySelector('img,input,hr')
+
+  if (topLevel && isEmptyParagraph) topLevel.replaceWith(block)
+  else if (topLevel) topLevel.insertAdjacentElement('afterend', block)
+  else editor.appendChild(block)
+
+  placeCaret(focusTarget, focusTarget.textContent?.length ?? 0)
 }
 
 export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly = false, mutedClass }: EditorProps) {
@@ -471,29 +499,25 @@ export function RichNoteEditor({ editorRef, value, onChange, fontSize, readOnly 
         .note-rich-editor pre { margin: .35em 0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .92em; }
         .note-rich-editor blockquote { margin: .5em 0; border-left: 3px solid rgb(167 139 250 / .8); padding-left: .8em; font-style: italic; opacity: .84; }
         .note-rich-editor hr { margin: 1em 0; border: 0; border-top: 1px solid currentColor; opacity: .14; }
-        .note-rich-editor ul:not([data-task-list]), .note-rich-editor ol { margin: .28em 0; padding-left: 1.55em; }
-        .note-rich-editor ul:not([data-task-list]) { list-style: disc; }
-        .note-rich-editor ul:not([data-task-list]) > li::marker { font-size: 1.28em; line-height: 1; }
-        .note-rich-editor ul:not([data-task-list]) > li, .note-rich-editor ol > li { padding-left: .18em; margin: .13em 0; }
-        .note-rich-editor ul[data-note-list-style="dash"] { list-style: none; padding-left: 1.35em; }
-        .note-rich-editor ul[data-note-list-style="dash"] > li { position: relative; padding-left: .65em; }
-        .note-rich-editor ul[data-note-list-style="dash"] > li::before { content: '–'; position: absolute; left: -.8em; top: 0; font-size: 1.08em; font-weight: 700; }
+        .note-rich-editor ol { list-style: decimal outside !important; margin: .28em 0; padding-left: 1.75em; }
+        .note-rich-editor ol > li { display: list-item !important; padding-left: .16em; margin: .13em 0; }
+        .note-rich-editor ol > li::marker { font-size: .96em; font-weight: 650; font-variant-numeric: tabular-nums; }
+        .note-rich-editor ul:not([data-task-list]) { list-style: none !important; margin: .28em 0; padding-left: 1.55em; }
+        .note-rich-editor ul:not([data-task-list]) > li { position: relative; padding-left: .18em; margin: .13em 0; }
+        .note-rich-editor ul:not([data-task-list]):not([data-note-list-style="dash"]) > li::before { content: '•'; position: absolute; left: -1em; top: .06em; font-size: 1.34em; line-height: 1.2; font-weight: 800; }
+        .note-rich-editor ul[data-note-list-style="dash"] > li::before { content: '–'; position: absolute; left: -.95em; top: .04em; font-size: 1.08em; line-height: 1.35; font-weight: 700; }
         .note-rich-editor ul[data-task-list] { list-style: none; margin: .3em 0; padding: 0; }
         .note-rich-editor li[data-task-item] { display: flex; align-items: flex-start; gap: .58em; margin: .3em 0; }
         .note-rich-editor input[data-task-checkbox] { appearance: none; -webkit-appearance: none; width: 1.12em; height: 1.12em; flex: 0 0 auto; margin-top: .24em; border: 1.5px solid currentColor; border-radius: .34em; opacity: .58; display: grid; place-items: center; }
         .note-rich-editor input[data-task-checkbox]:checked { background: rgb(124 58 237); border-color: rgb(124 58 237); opacity: 1; }
         .note-rich-editor input[data-task-checkbox]:checked::after { content: '✓'; color: white; font-size: .72em; line-height: 1; font-weight: 900; }
         .note-rich-editor li[data-task-item]:has(input:checked) [data-task-text] { text-decoration: line-through; opacity: .5; }
-        .note-rich-editor [data-note-reference] { display: flex; align-items: baseline; gap: .48em; margin: .4em 0; }
-        .note-rich-editor [data-note-reference-icon] { color: rgb(124 58 237); font-size: .78em; transform: translateY(-.05em); }
+        .note-rich-editor [data-note-reference] { display: flex; align-items: baseline; gap: .5em; margin: .45em 0; }
+        .note-rich-editor [data-note-reference-icon] { color: rgb(124 58 237); font-size: .82em; transform: translateY(-.04em); }
+        .note-rich-editor [data-note-reference-text] { min-width: 1ch; }
       `}</style>
     </>
   )
-}
-
-function closestEditorElement(editor: HTMLElement, node: Node | null) {
-  const element = node?.nodeType === Node.ELEMENT_NODE ? node as Element : node?.parentElement
-  return element && editor.contains(element) ? element : null
 }
 
 export default function NotesEditingToolbar({
@@ -584,7 +608,16 @@ export default function NotesEditingToolbar({
     })
   }
 
-  const setBlock = (block: BlockStyle) => runCommand('formatBlock', block)
+  const setBlock = (block: BlockStyle) => {
+    if (readOnly) onReadOnlyChange(false)
+    requestAnimationFrame(() => {
+      if (!restoreSelection()) return
+      const ok = document.execCommand('formatBlock', false, block)
+      if (!ok) document.execCommand('formatBlock', false, `<${block}>`)
+      emitEditor(true)
+      readSelectionState()
+    })
+  }
 
   const toggleDashList = () => {
     if (readOnly) onReadOnlyChange(false)
@@ -597,7 +630,7 @@ export default function NotesEditingToolbar({
       let list = selected?.closest('ul') as HTMLElement | null
 
       if (list?.dataset.noteListStyle === 'dash') {
-        document.execCommand('insertUnorderedList', false)
+        delete list.dataset.noteListStyle
       } else {
         if (!list) {
           document.execCommand('insertUnorderedList', false)
@@ -618,17 +651,47 @@ export default function NotesEditingToolbar({
     if (readOnly) onReadOnlyChange(false)
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
-      document.execCommand('insertHTML', false, '<ul data-task-list="true"><li data-task-item="true"><input type="checkbox" data-task-checkbox="true" contenteditable="false"><span data-task-text="true"><br></span></li></ul>')
+      const editor = editorRef.current
+      if (!editor) return
+
+      const list = document.createElement('ul')
+      list.dataset.taskList = 'true'
+      const item = document.createElement('li')
+      item.dataset.taskItem = 'true'
+      const checkbox = document.createElement('input')
+      checkbox.type = 'checkbox'
+      checkbox.dataset.taskCheckbox = 'true'
+      checkbox.contentEditable = 'false'
+      const text = document.createElement('span')
+      text.dataset.taskText = 'true'
+      text.appendChild(document.createElement('br'))
+      item.append(checkbox, text)
+      list.appendChild(item)
+      insertStandaloneBlock(editor, list, text)
       emitEditor(true)
     })
   }
 
   const insertReference = () => {
     if (readOnly) onReadOnlyChange(false)
-    const label = escapeHtml(reference.trim() || 'Referencia bíblica')
     requestAnimationFrame(() => {
       if (!restoreSelection()) return
-      document.execCommand('insertHTML', false, `<p data-note-reference="true"><span data-note-reference-icon="true" contenteditable="false" aria-hidden="true">◆</span><span data-note-reference-text="true">${label}</span></p>`)
+      const editor = editorRef.current
+      if (!editor) return
+
+      const block = document.createElement('p')
+      block.dataset.noteReference = 'true'
+      const icon = document.createElement('span')
+      icon.dataset.noteReferenceIcon = 'true'
+      icon.contentEditable = 'false'
+      icon.setAttribute('aria-hidden', 'true')
+      icon.textContent = '◆'
+      const text = document.createElement('span')
+      text.dataset.noteReferenceText = 'true'
+      text.textContent = reference.trim() || 'Referencia bíblica'
+      block.append(icon, text)
+
+      insertStandaloneBlock(editor, block, text)
       emitEditor(true)
     })
   }
@@ -706,17 +769,17 @@ export default function NotesEditingToolbar({
     </button>
   )
 
-  const styleButton = (block: BlockStyle, label: string, className: string, Icon: typeof Heading1) => (
+  const styleButton = (block: BlockStyle, label: string, className: string) => (
     <button
       type="button"
       onMouseDown={preventBlur}
       onClick={() => setBlock(block)}
       aria-pressed={formatState.block === block}
-      className={`flex min-h-12 min-w-0 items-center justify-center gap-1 rounded-2xl px-1.5 transition active:scale-[0.98] ${formatState.block === block ? 'bg-violet-600 text-white shadow-sm' : buttonClass}`}
+      aria-label={`Aplicar estilo ${label}`}
+      className={`flex min-h-14 min-w-0 items-center justify-center rounded-2xl px-2 text-center transition active:scale-[0.98] ${formatState.block === block ? 'bg-violet-600 text-white shadow-sm' : buttonClass}`}
       title={label}
     >
-      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-      <span className={`truncate ${className}`}>{label}</span>
+      <span className={`block max-w-full truncate leading-tight ${className}`}>{label}</span>
     </button>
   )
 
@@ -764,12 +827,12 @@ export default function NotesEditingToolbar({
         <div className="mt-1.5 rounded-[18px] p-1.5">
           {activeGroup === 'texto' && (
             <div>
-              <div className="grid grid-cols-5 gap-1.5">
-                {styleButton('h1', 'Título', 'text-[11px] font-black', Heading1)}
-                {styleButton('h2', 'Encabezado', 'text-[10px] font-extrabold', Heading2)}
-                {styleButton('h3', 'Subtítulo', 'text-[10px] font-bold', Heading3)}
-                {styleButton('p', 'Cuerpo', 'text-[10px] font-medium', Pilcrow)}
-                {styleButton('pre', 'Mono', 'text-[9px] font-mono', Code2)}
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+                {styleButton('h1', 'Título', 'text-[16px] font-black tracking-[-0.025em]')}
+                {styleButton('h2', 'Encabezado', 'text-[13px] font-extrabold tracking-[-0.015em]')}
+                {styleButton('h3', 'Subtítulo', 'text-[12px] font-bold opacity-85')}
+                {styleButton('p', 'Cuerpo', 'text-[11px] font-medium')}
+                {styleButton('pre', 'Monoespaciado', 'text-[10px] font-mono')}
               </div>
               <div className="mt-1.5 grid grid-cols-7 gap-1.5">
                 {commandButton('Negrita', Bold, () => runCommand('bold'), formatState.bold, 'B')}
@@ -777,8 +840,8 @@ export default function NotesEditingToolbar({
                 {commandButton('Subrayado', Underline, () => runCommand('underline'), formatState.underline, 'U')}
                 {commandButton('Tachado', Strikethrough, () => runCommand('strikeThrough'), formatState.strike, 'S')}
                 {commandButton('Limpiar formato', Eraser, () => runCommand('removeFormat'), false, 'Limpiar')}
-                {commandButton('Reducir tamaño', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)), false, 'A−')}
-                {commandButton('Aumentar tamaño', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)), false, 'A+')}
+                {commandButton('Reducir tamaño del texto', ZoomOut, () => onFontSizeChange(clampFontSize(fontSize - 1)), false, 'A−')}
+                {commandButton('Aumentar tamaño del texto', ZoomIn, () => onFontSizeChange(clampFontSize(fontSize + 1)), false, 'A+')}
               </div>
             </div>
           )}
