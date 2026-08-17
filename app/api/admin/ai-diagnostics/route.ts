@@ -9,7 +9,7 @@ const PROVIDERS = [
   { name: 'openai', configured: () => Boolean(process.env.OPENAI_API_KEY) },
   { name: 'claude', configured: () => Boolean(process.env.ANTHROPIC_API_KEY) },
   { name: 'grok', configured: () => Boolean(process.env.XAI_API_KEY) },
-  { name: 'kimi', configured: () => Boolean(process.env.MOONSHOT_API_KEY) },
+  { name: 'kimi', configured: () => Boolean(process.env.MOONSHOT_API_KEY || process.env.MOONSHOOT_API_KEY) },
   { name: 'perplexity', configured: () => Boolean(process.env.PERPLEXITY_API_KEY) },
 ] as const
 

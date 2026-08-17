@@ -103,7 +103,7 @@ function providerKey(provider: VidaAiProviderName) {
   if (provider === 'grok') return process.env.XAI_API_KEY || ''
   if (provider === 'perplexity') return process.env.PERPLEXITY_API_KEY || ''
   if (provider === 'claude') return process.env.ANTHROPIC_API_KEY || ''
-  return process.env.MOONSHOT_API_KEY || ''
+  return process.env.MOONSHOT_API_KEY || process.env.MOONSHOOT_API_KEY || ''
 }
 
 function ownerTaskKey(ownerId: string, task: VidaAiTask) { return createHash('sha256').update(`${ownerId}\u0000${task}`).digest('hex') }
