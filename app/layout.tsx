@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import NotebookEditorBehavior from '@/components/biblia/NotebookEditorBehavior'
 import './globals.css'
 import './mobile-fixes.css'
 import './dialog-transitions.css'
@@ -68,6 +69,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-[#f4f5f9] text-[#171923] font-sans antialiased">
         {children}
+        <NotebookEditorBehavior />
         <script
           dangerouslySetInnerHTML={{
             __html: `
