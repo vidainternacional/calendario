@@ -24,7 +24,7 @@ export type ModoLecturaBiblia = 'claro' | 'oscuro' | 'sepia'
 type TipoNota = TipoNotaBiblica
 type NotaBiblica = NotaBiblicaLocal
 type Paquete = { id: string; titulo: string }
-type FiltroOrigen = 'todos' | 'estudio_profundo' | 'biblia_notas'
+type FiltroOrigen = 'todos' | 'biblia' | 'estudio_profundo' | 'cuaderno'
 type MenuCuaderno = 'detalles' | 'predicacion' | 'herramientas' | null
 
 type NoteHistoryEntry = {
@@ -61,8 +61,9 @@ const tipos: Array<{ id: TipoNota; nombre: string; icono: typeof BookOpen }> = [
 
 const origenes: Array<{ id: FiltroOrigen; nombre: string }> = [
   { id: 'todos', nombre: 'Todos los orígenes' },
+  { id: 'biblia', nombre: 'Biblia' },
   { id: 'estudio_profundo', nombre: 'Estudio Profundo' },
-  { id: 'biblia_notas', nombre: 'Cuaderno' },
+  { id: 'cuaderno', nombre: 'Cuaderno' },
 ]
 
 function esModoLectura(value: string | undefined): value is ModoLecturaBiblia {
@@ -109,6 +110,16 @@ function tipoRegresoPredicacion(nota: NotaBiblica): Exclude<TipoNota, 'predicaci
   return guardado === 'versiculo' || guardado === 'estudio' || guardado === 'personal'
     ? guardado
     : 'personal'
+}
+
+function origenOrganizacion(nota: NotaBiblica): Exclude<FiltroOrigen, 'todos'> {
+  if (nota.origen === 'estudio_profundo') return 'estudio_profundo'
+  const superficie = typeof nota.contexto.superficieOrigen === 'string'
+    ? nota.contexto.superficieOrigen
+    : ''
+  if (superficie === 'biblia') return 'biblia'
+  if (nota.origen === 'biblia_notas' && nota.tipo === 'versiculo' && nota.referencia.trim()) return 'biblia'
+  return 'cuaderno'
 }
 
 export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false, userId }: Props) {
@@ -273,8 +284,8 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
     const termino = busqueda.trim().toLowerCase()
     return notas
       .filter((nota) => filtro === 'todas' || nota.tipo === filtro)
-      .filter((nota) => filtroOrigen === 'todos' || nota.origen === filtroOrigen)
-      .filter((nota) => !termino || `${nota.titulo} ${nota.contenido} ${nota.referencia} ${nota.paquete} ${nota.origen} ${nota.numeroPredicacion ?? ''} ${nota.fechaPredicacion} ${nota.serie} ${nota.lugar} ${nota.predicador} ${nota.estadoPredicacion}`.toLowerCase().includes(termino))
+      .filter((nota) => filtroOrigen === 'todos' || origenOrganizacion(nota) === filtroOrigen)
+      .filter((nota) => !termino || `${nota.titulo} ${nota.contenido} ${nota.referencia} ${nota.paquete} ${nota.origen} ${origenOrganizacion(nota)} ${nota.numeroPredicacion ?? ''} ${nota.fechaPredicacion} ${nota.serie} ${nota.lugar} ${nota.predicador} ${nota.estadoPredicacion}`.toLowerCase().includes(termino))
       .sort((a, b) => b.actualizadaEn.localeCompare(a.actualizadaEn))
   }, [notas, busqueda, filtro, filtroOrigen])
 
@@ -534,7 +545,11 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
           </div>
 
           <div className={`mt-1 min-h-6 px-1 text-xs ${tema.muted}`}>
-            {seleccionada.origen === 'estudio_profundo' ? `Estudio Profundo${seleccionada.referencia ? ` · ${seleccionada.referencia}` : ''}` : seleccionada.referencia || tipos.find((tipo) => tipo.id === seleccionada.tipo)?.nombre || 'Nota personal'}
+            {origenOrganizacion(seleccionada) === 'estudio_profundo'
+              ? `Estudio Profundo${seleccionada.referencia ? ` · ${seleccionada.referencia}` : ''}`
+              : origenOrganizacion(seleccionada) === 'biblia'
+                ? `Biblia${seleccionada.referencia ? ` · ${seleccionada.referencia}` : ''}`
+                : seleccionada.referencia || tipos.find((tipo) => tipo.id === seleccionada.tipo)?.nombre || 'Nota personal'}
           </div>
 
           <div className="mt-1 flex items-center justify-end gap-1.5 px-0.5" aria-label="Historial global del cuaderno">

@@ -1,23 +1,36 @@
 /* Ajustes aislados del Cuaderno de FASE F.
-   El scroll de la nota vive dentro de su superficie; la navegación global
-   conserva su propia política en BottomNav y no se reposiciona desde aquí. */
+   La nota usa el flujo natural del documento para poder crecer sin límite.
+   La navegación global conserva su política propia en BottomNav. */
 
 html:has(.note-rich-editor),
 body:has(.note-rich-editor) {
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden !important;
-  overscroll-behavior: none;
+  min-height: 100%;
+  height: auto;
+  max-height: none;
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto;
 }
 
 main:has(.note-rich-editor) {
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
+  min-height: 100dvh;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px)) !important;
+  scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
+}
+
+.note-rich-editor-shell,
+.note-rich-editor {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.note-rich-editor {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* Deshacer y Rehacer son acciones globales de la nota: una a cada extremo. */

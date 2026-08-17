@@ -7,12 +7,15 @@ const fixes = fs.readFileSync('app/notebook-fixes.css', 'utf8')
 const toolbar = fs.readFileSync('components/biblia/NotesEditingToolbar.tsx', 'utf8')
 const bottomNav = fs.readFileSync('components/layout/BottomNav.tsx', 'utf8')
 
-test('FASE F: el cuaderno mantiene el menú global fuera del scroll y el teclado no lo levanta sobre la nota', () => {
+test('FASE F: el cuaderno crece con el documento y el teclado no levanta el menú global sobre la nota', () => {
   assert.match(layout, /import '\.\/notebook-fixes\.css'/)
   assert.match(fixes, /body:has\(\.note-rich-editor\)/)
-  assert.match(fixes, /overflow: hidden !important/)
+  assert.match(fixes, /height: auto/)
+  assert.match(fixes, /max-height: none/)
+  assert.match(fixes, /overflow-y: auto !important/)
   assert.match(fixes, /main:has\(\.note-rich-editor\)/)
-  assert.match(fixes, /overflow-y: auto/)
+  assert.match(fixes, /padding-bottom: calc\(8rem \+ env\(safe-area-inset-bottom, 0px\)\) !important/)
+  assert.doesNotMatch(fixes, /overflow: hidden !important/)
   assert.match(bottomNav, /elementoEditableActivo/)
   assert.match(bottomNav, /document\.addEventListener\('focusin', syncKeyboardImmediately\)/)
   assert.match(bottomNav, /setKeyboardOpen\(mobile && elementoEditableActivo\(\)\)/)
