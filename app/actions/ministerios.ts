@@ -5,20 +5,39 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
 import { composePushBody, notifyUsersOnceByReference } from '@/lib/webpush'
 
-async function notificarLideresSolicitudIngreso(ministerioId: string, solicitudId: string, requesterId: string) {
+async function notificarGestoresSolicitudIngreso(ministerioId: string, solicitudId: string, requesterId: string) {
   const service = createServiceClient() as any
-  const [{ data: lideres, error: lideresError }, { data: ministerio }, { data: preferencias }] = await Promise.all([
+  const [
+    { data: lideres, error: lideresError },
+    { data: gestoresGlobales, error: gestoresError },
+    { data: ministerio },
+    { data: preferencias },
+  ] = await Promise.all([
     service.from('ministerio_miembros').select('profile_id').eq('ministerio_id', ministerioId).eq('es_lider', true),
+    service
+      .from('profiles')
+      .select('id,rol,es_pastor_general,activo,estado_cuenta')
+      .eq('activo', true)
+      .eq('estado_cuenta', 'activo'),
     service.from('ministerios').select('nombre').eq('id', ministerioId).single(),
     service.from('notificaciones_preferencias').select('profile_id').eq('ministerio_id', ministerioId).eq('activo', false),
   ])
 
   if (lideresError) throw lideresError
+  if (gestoresError) throw gestoresError
 
   const disabledIds = new Set<string>((preferencias || []).map((item: any) => String(item.profile_id)))
-  const destinatarios: string[] = Array.from(new Set<string>((lideres || [])
-    .map((item: any) => String(item.profile_id || ''))
-    .filter((profileId: string) => profileId && profileId !== requesterId && !disabledIds.has(profileId))))
+  const liderIds = (lideres || []).map((item: any) => String(item.profile_id || ''))
+  const gestorIds = (gestoresGlobales || [])
+    .filter((item: any) =>
+      item.rol === 'administrador'
+      || item.rol === 'pastor'
+      || item.es_pastor_general === true,
+    )
+    .map((item: any) => String(item.id || ''))
+
+  const destinatarios: string[] = Array.from(new Set<string>([...liderIds, ...gestorIds]))
+    .filter((profileId: string) => profileId && profileId !== requesterId && !disabledIds.has(profileId))
 
   if (!destinatarios.length) return
 
@@ -73,13 +92,15 @@ export async function solicitarIngreso(ministerioId: string) {
   }
 
   try {
-    await notificarLideresSolicitudIngreso(ministerioId, String(solicitud.id), user.id)
+    await notificarGestoresSolicitudIngreso(ministerioId, String(solicitud.id), user.id)
   } catch (pushError) {
-    console.error('[ministerios] Solicitud creada, pero falló la notificación a líderes:', pushError)
+    console.error('[ministerios] Solicitud creada, pero falló la notificación a gestores:', pushError)
   }
 
   revalidatePath('/ministerios')
   revalidatePath('/inicio')
+  revalidatePath('/avisos')
+  revalidatePath('/admin/solicitudes-ministerios')
   revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
   return { success: true }
@@ -106,6 +127,8 @@ export async function aprobarSolicitudIngreso(solicitudId: string, profileId: st
 
   revalidatePath('/ministerios')
   revalidatePath('/inicio')
+  revalidatePath('/avisos')
+  revalidatePath('/admin/solicitudes-ministerios')
   revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
   return { success: true }
@@ -130,6 +153,8 @@ export async function rechazarSolicitudIngreso(solicitudId: string, ministerioId
   }
 
   revalidatePath('/inicio')
+  revalidatePath('/avisos')
+  revalidatePath('/admin/solicitudes-ministerios')
   revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
   return { success: true }
