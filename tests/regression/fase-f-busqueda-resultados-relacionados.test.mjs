@@ -6,7 +6,7 @@ const action = fs.readFileSync('app/actions/estudio-interno.ts', 'utf8')
 
 test('Centro de Estudio convierte temas relacionados aprobados en concordancias reales antes de sugerir', () => {
   assert.match(action, /resolverConcordanciasSugeridas/)
-  assert.match(action, /Promise\.all\(suggestions\.slice\(0, 4\)\.map\(suggestion => buscarConcordanciasBiblicas\(suggestion\.query, 80\)\)\)/)
+  assert.match(action, /suggestions\.slice\(0, 4\)\.map\(suggestion => buscarConcordanciasBiblicas\(suggestion\.query, 80\)\)/)
   assert.match(action, /if \(related\.results\.length > 0\)/)
   assert.match(action, /interpretedAs: related\.labels\.join\(', '\)/)
 })
