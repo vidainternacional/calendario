@@ -394,17 +394,17 @@ function createParagraphFromListItem(item: HTMLElement) {
 
 function unwrapList(list: HTMLElement, selectedItem: HTMLElement | null) {
   const fragment = document.createDocumentFragment()
-  let focusParagraph: HTMLElement | null = null
+  const paragraphs: Array<{ element: HTMLElement; selected: boolean }> = []
 
-  Array.from(list.children).forEach((child) => {
-    if (!(child instanceof HTMLElement) || child.tagName !== 'LI') return
-    const isSelected = child === selectedItem
+  for (const child of Array.from(list.children)) {
+    if (!(child instanceof HTMLElement) || child.tagName !== 'LI') continue
     const paragraph = createParagraphFromListItem(child)
-    if (isSelected) focusParagraph = paragraph
+    paragraphs.push({ element: paragraph, selected: child === selectedItem })
     fragment.appendChild(paragraph)
-  })
+  }
 
   list.replaceWith(fragment)
+  const focusParagraph = paragraphs.find((item) => item.selected)?.element
   if (focusParagraph) placeCaret(focusParagraph, focusParagraph.textContent?.length ?? 0)
 }
 
