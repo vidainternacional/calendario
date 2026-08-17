@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 
 export type VidaAiLevel = 1 | 2
 export type VidaAiTask = 'organizar_notas' | 'interpretar_busqueda_biblica'
-export type VidaAiProviderName = 'gemini' | 'openai'
+export type VidaAiProviderName = 'gemini' | 'openai' | 'grok' | 'perplexity' | 'kimi'
 
 type VidaAiPolicy = {
   level: VidaAiLevel
@@ -91,15 +91,17 @@ const BURST_WINDOW_MS = 60_000
 const BURST_MAX_REQUESTS = 8
 const PROVIDER_COOLDOWN_MS = 2 * 60 * 1000
 
+const PROVIDER_NAMES = new Set<VidaAiProviderName>(['gemini', 'openai', 'grok', 'perplexity', 'kimi'])
+
 function configuredProviderOrder(level: VidaAiLevel): VidaAiProviderName[] {
   const raw = level === 1
-    ? process.env.VIDA_AI_ECONOMY_ORDER || 'gemini,openai'
-    : process.env.VIDA_AI_ADVANCED_ORDER || 'openai,gemini'
+    ? process.env.VIDA_AI_ECONOMY_ORDER || 'gemini,openai,grok,kimi,perplexity'
+    : process.env.VIDA_AI_ADVANCED_ORDER || 'openai,grok,gemini,kimi,perplexity'
 
   const requested = raw
     .split(',')
     .map((item) => item.trim().toLowerCase())
-    .filter((item): item is VidaAiProviderName => item === 'gemini' || item === 'openai')
+    .filter((item): item is VidaAiProviderName => PROVIDER_NAMES.has(item as VidaAiProviderName))
 
   return Array.from(new Set(requested))
 }
@@ -110,15 +112,32 @@ function providerModel(provider: VidaAiProviderName, level: VidaAiLevel) {
       ? process.env.VIDA_GEMINI_ECONOMY_MODEL || 'gemini-3.5-flash-lite'
       : process.env.VIDA_GEMINI_ADVANCED_MODEL || 'gemini-3.6-flash'
   }
-
+  if (provider === 'openai') {
+    return level === 1
+      ? process.env.VIDA_OPENAI_ECONOMY_MODEL || 'gpt-5-mini'
+      : process.env.VIDA_OPENAI_ADVANCED_MODEL || 'gpt-5.6'
+  }
+  if (provider === 'grok') {
+    return level === 1
+      ? process.env.VIDA_GROK_ECONOMY_MODEL || 'grok-4.5'
+      : process.env.VIDA_GROK_ADVANCED_MODEL || 'grok-4.5'
+  }
+  if (provider === 'perplexity') {
+    return level === 1
+      ? process.env.VIDA_PERPLEXITY_ECONOMY_MODEL || 'sonar'
+      : process.env.VIDA_PERPLEXITY_ADVANCED_MODEL || 'sonar-pro'
+  }
   return level === 1
-    ? process.env.VIDA_OPENAI_ECONOMY_MODEL || 'gpt-5-mini'
-    : process.env.VIDA_OPENAI_ADVANCED_MODEL || 'gpt-5.6'
+    ? process.env.VIDA_KIMI_ECONOMY_MODEL || 'kimi-k2.6'
+    : process.env.VIDA_KIMI_ADVANCED_MODEL || 'kimi-k2.6'
 }
 
 function providerKey(provider: VidaAiProviderName) {
   if (provider === 'gemini') return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || ''
-  return process.env.OPENAI_API_KEY || ''
+  if (provider === 'openai') return process.env.OPENAI_API_KEY || ''
+  if (provider === 'grok') return process.env.XAI_API_KEY || ''
+  if (provider === 'perplexity') return process.env.PERPLEXITY_API_KEY || ''
+  return process.env.MOONSHOT_API_KEY || ''
 }
 
 function ownerTaskKey(ownerId: string, task: VidaAiTask) {
@@ -272,9 +291,57 @@ async function callGemini(model: string, apiKey: string, request: VidaAiRequest,
   }
 }
 
+function openAiCompatibleEndpoint(provider: Exclude<VidaAiProviderName, 'gemini' | 'openai'>) {
+  if (provider === 'grok') return 'https://api.x.ai/v1/chat/completions'
+  if (provider === 'perplexity') return 'https://api.perplexity.ai/v1/sonar'
+  return 'https://api.moonshot.ai/v1/chat/completions'
+}
+
+async function callOpenAiCompatible(
+  provider: Exclude<VidaAiProviderName, 'gemini' | 'openai'>,
+  model: string,
+  apiKey: string,
+  request: VidaAiRequest,
+  policy: VidaAiPolicy
+): Promise<ProviderResult> {
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: 'system', content: request.instructions },
+      { role: 'user', content: request.input },
+    ],
+    max_tokens: policy.maxOutputTokens,
+    stream: false,
+  }
+  if (provider === 'kimi') body.thinking = { type: 'disabled' }
+
+  const response = await fetchWithTimeout(openAiCompatibleEndpoint(provider), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  }, policy.timeoutMs)
+
+  if (!response.ok) throw new ProviderError(`${provider} HTTP ${response.status}`, response.status)
+  const payload = await response.json() as {
+    choices?: Array<{ message?: { content?: string | null } }>
+    usage?: { prompt_tokens?: number; completion_tokens?: number }
+  }
+  const text = payload.choices?.[0]?.message?.content?.trim() || ''
+  if (!text) throw new ProviderError(`${provider} returned no text`)
+  return {
+    text,
+    inputTokens: payload.usage?.prompt_tokens,
+    outputTokens: payload.usage?.completion_tokens,
+  }
+}
+
 async function callProvider(provider: VidaAiProviderName, model: string, apiKey: string, request: VidaAiRequest, policy: VidaAiPolicy) {
   if (provider === 'gemini') return callGemini(model, apiKey, request, policy)
-  return callOpenAi(model, apiKey, request, policy)
+  if (provider === 'openai') return callOpenAi(model, apiKey, request, policy)
+  return callOpenAiCompatible(provider, model, apiKey, request, policy)
 }
 
 export function getVidaAiPolicy(task: VidaAiTask) {
