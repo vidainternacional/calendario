@@ -1,6 +1,6 @@
 /* Ajustes aislados del Cuaderno de FASE F.
-   El scroll vive dentro de la superficie principal para que la navegación
-   global permanezca fuera del flujo y anclada al viewport visible en iOS. */
+   El scroll de la nota vive dentro de su superficie; la navegación global
+   conserva su propia política en BottomNav y no se reposiciona desde aquí. */
 
 html:has(.note-rich-editor),
 body:has(.note-rich-editor) {
@@ -20,18 +20,6 @@ main:has(.note-rich-editor) {
   scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
 
-body:has(.note-rich-editor) .app-bottom-nav {
-  position: fixed !important;
-  inset-inline: 0 !important;
-  top: auto !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  contain: layout paint style;
-}
-
 /* Deshacer y Rehacer son acciones globales de la nota: una a cada extremo. */
 [aria-label="Historial global del cuaderno"] {
   width: 100%;
@@ -45,4 +33,175 @@ body:has(.note-rich-editor) .app-bottom-nav {
 
 [aria-label="Historial global del cuaderno"] > button:last-child {
   margin-left: auto;
+}
+
+/* Barra de edición compacta: prioriza superficie de escritura en móvil. */
+[aria-label="Herramientas de edición"] > div:first-child {
+  padding: 0.35rem !important;
+  border-radius: 1rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:first-child {
+  padding: 0.28rem 0.35rem !important;
+  border-radius: 0.9rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:first-child > div:first-child {
+  gap: 0.35rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:first-child > div:first-child > span:first-child {
+  width: 1.9rem !important;
+  height: 1.9rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:first-child input {
+  min-height: 1.9rem !important;
+  padding-inline: 0.15rem !important;
+  font-size: 0.78rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:first-child button[aria-label="Enviar instrucción a IA"] {
+  width: 1.9rem !important;
+  height: 1.9rem !important;
+}
+
+[aria-label="Herramientas de edición"] [role="tablist"] {
+  margin-top: 0.28rem !important;
+  gap: 0.2rem !important;
+}
+
+[aria-label="Herramientas de edición"] [role="tablist"] button {
+  min-height: 1.85rem !important;
+  border-radius: 0.7rem !important;
+  font-size: 0.58rem !important;
+  padding-inline: 0.2rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:nth-child(3) {
+  margin-top: 0.22rem !important;
+  padding: 0.2rem !important;
+  border-radius: 0.8rem !important;
+}
+
+/* Todos los botones con icono muestran una sola representación visual. */
+[aria-label="Herramientas de edición"] > div:first-child > div:nth-child(3) button:has(svg) {
+  min-height: 2.2rem !important;
+  border-radius: 0.72rem !important;
+  gap: 0 !important;
+  padding: 0.25rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:nth-child(3) button:has(svg) > span {
+  display: none !important;
+}
+
+[aria-label="Herramientas de edición"] > div:first-child > div:nth-child(3) button:has(svg) svg {
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+}
+
+/* Texto: cinco jerarquías en una sola fila, representadas por su aspecto. */
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 0.22rem !important;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button {
+  min-height: 2.15rem !important;
+  border-radius: 0.72rem !important;
+  padding: 0.15rem !important;
+  font-size: 0 !important;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button > span {
+  display: none !important;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button::before {
+  display: block;
+  line-height: 1;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button:nth-child(1)::before {
+  content: 'T';
+  font-size: 1.12rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button:nth-child(2)::before {
+  content: 'T';
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button:nth-child(3)::before {
+  content: 'T';
+  font-size: 0.86rem;
+  font-weight: 700;
+  opacity: 0.86;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button:nth-child(4)::before {
+  content: 'Aa';
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:first-child button:nth-child(5)::before {
+  content: 'M';
+  font-size: 0.72rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:first-child[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:nth-child(2) {
+  margin-top: 0.22rem !important;
+  gap: 0.22rem !important;
+}
+
+/* Listas e insertar conservan una fila de acciones compactas y sin texto duplicado. */
+[aria-label="Herramientas de edición"]:has([role="tab"]:nth-child(2)[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div,
+[aria-label="Herramientas de edición"]:has([role="tab"]:nth-child(3)[aria-selected="true"]) > div:first-child > div:nth-child(3) > div {
+  gap: 0.22rem !important;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:nth-child(2)[aria-selected="true"]) > div:first-child > div:nth-child(3) p {
+  display: none !important;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:nth-child(2)[aria-selected="true"]) > div:first-child > div:nth-child(3) > div > div:nth-child(2) {
+  margin-top: 0.22rem !important;
+}
+
+[aria-label="Herramientas de edición"]:has([role="tab"]:nth-child(4)[aria-selected="true"]) > div:first-child > div:nth-child(3) button {
+  min-height: 2.25rem !important;
+  border-radius: 0.72rem !important;
+  font-size: 0.66rem !important;
+}
+
+/* El pie informativo deja solo el tamaño y consume una línea mínima. */
+[aria-label="Herramientas de edición"] > div:last-child {
+  min-height: 1rem !important;
+  margin-top: 0.15rem !important;
+  padding-inline: 0.35rem !important;
+  font-size: 0.55rem !important;
+}
+
+[aria-label="Herramientas de edición"] > div:last-child > span:first-child {
+  display: none !important;
+}
+
+/* Estado de guardado discreto para no competir con el área de trabajo. */
+.note-rich-editor-shell > div:first-child {
+  margin-bottom: 0.1rem !important;
+  min-height: 1rem !important;
+  padding-inline: 0.1rem !important;
+}
+
+.note-rich-editor-shell > div:first-child > span {
+  padding: 0.15rem 0.45rem !important;
+  font-size: 0.55rem !important;
 }
