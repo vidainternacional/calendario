@@ -160,50 +160,51 @@ export function canonicalToRichHtml(value: string) {
       index += 1
       continue
     }
-    if (line.startsWith('◈ ')) {
-      blocks.push(referenceHtml(line.slice(2)))
+    if (line === '◈' || line.startsWith('◈ ')) {
+      blocks.push(referenceHtml(line.replace(/^◈\s?/, '')))
       index += 1
       continue
     }
 
-    if (/^[☐☑]\s/.test(line)) {
+    if (/^[☐☑](?:\s|$)/.test(line)) {
       const items: string[] = []
-      while (index < lines.length && /^[☐☑]\s/.test(lines[index] ?? '')) {
+      while (index < lines.length && /^[☐☑](?:\s|$)/.test(lines[index] ?? '')) {
         const task = lines[index] ?? ''
-        const checked = task.startsWith('☑ ')
-        items.push(`<li data-task-item="true"><input type="checkbox" data-task-checkbox="true" contenteditable="false"${checked ? ' checked' : ''}><span data-task-text="true">${inlineToHtml(task.slice(2)) || '<br>'}</span></li>`)
+        const checked = task.startsWith('☑')
+        const body = task.replace(/^[☐☑]\s?/, '')
+        items.push(`<li data-task-item="true"><input type="checkbox" data-task-checkbox="true" contenteditable="false"${checked ? ' checked' : ''}><span data-task-text="true">${inlineToHtml(body) || '<br>'}</span></li>`)
         index += 1
       }
       blocks.push(`<ul data-task-list="true">${items.join('')}</ul>`)
       continue
     }
 
-    if (line.startsWith('• ')) {
+    if (line === '•' || line.startsWith('• ')) {
       const items: string[] = []
-      while (index < lines.length && (lines[index] ?? '').startsWith('• ')) {
-        items.push(`<li>${inlineToHtml((lines[index] ?? '').slice(2)) || '<br>'}</li>`)
+      while (index < lines.length && ((lines[index] ?? '') === '•' || (lines[index] ?? '').startsWith('• '))) {
+        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^•\s?/, '')) || '<br>'}</li>`)
         index += 1
       }
       blocks.push(`<ul data-note-list-style="bullet">${items.join('')}</ul>`)
       continue
     }
 
-    if (/^[-–]\s/.test(line)) {
+    if (/^[-–](?:\s|$)/.test(line)) {
       const items: string[] = []
-      while (index < lines.length && /^[-–]\s/.test(lines[index] ?? '')) {
-        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^[-–]\s/, '')) || '<br>'}</li>`)
+      while (index < lines.length && /^[-–](?:\s|$)/.test(lines[index] ?? '')) {
+        items.push(`<li>${inlineToHtml((lines[index] ?? '').replace(/^[-–]\s?/, '')) || '<br>'}</li>`)
         index += 1
       }
       blocks.push(`<ul data-note-list-style="dash">${items.join('')}</ul>`)
       continue
     }
 
-    const numbered = line.match(/^(\d+)\.\s+(.*)$/)
+    const numbered = line.match(/^(\d+)\.(?:\s(.*))?$/)
     if (numbered) {
       const start = Number(numbered[1]) || 1
       const items: string[] = []
       while (index < lines.length) {
-        const match = (lines[index] ?? '').match(/^\d+\.\s+(.*)$/)
+        const match = (lines[index] ?? '').match(/^\d+\.(?:\s(.*))?$/)
         if (!match) break
         items.push(`<li>${inlineToHtml(match[1] ?? '') || '<br>'}</li>`)
         index += 1
@@ -250,17 +251,17 @@ function serializeList(element: HTMLElement) {
       const checkbox = li.querySelector<HTMLInputElement>('input[data-task-checkbox="true"]')
       const text = li.querySelector<HTMLElement>('[data-task-text="true"]')
       const body = text ? serializeInlineChildren(text) : serializeInlineChildren(li)
-      return `${checkbox?.checked ? '☑' : '☐'} ${body}`.trimEnd()
+      return `${checkbox?.checked ? '☑' : '☐'} ${body}`
     }).join('\n')
   }
 
   if (element.tagName === 'OL') {
     const start = Number(element.getAttribute('start') || 1) || 1
-    return children.map((li, offset) => `${start + offset}. ${serializeInlineChildren(li)}`.trimEnd()).join('\n')
+    return children.map((li, offset) => `${start + offset}. ${serializeInlineChildren(li)}`).join('\n')
   }
 
   const prefix = element.dataset.noteListStyle === 'dash' ? '– ' : '• '
-  return children.map((li) => `${prefix}${serializeInlineChildren(li)}`.trimEnd()).join('\n')
+  return children.map((li) => `${prefix}${serializeInlineChildren(li)}`).join('\n')
 }
 
 function serializeBlockNode(node: Node): string {
@@ -279,7 +280,7 @@ function serializeBlockNode(node: Node): string {
   if (tag === 'BLOCKQUOTE') return `> ${serializeInlineChildren(element)}`.trimEnd()
   if (element.dataset.noteReference === 'true') {
     const text = element.querySelector<HTMLElement>('[data-note-reference-text="true"]')
-    return `◈ ${text ? serializeInlineChildren(text) : serializeInlineChildren(element)}`.trimEnd()
+    return `◈ ${text ? serializeInlineChildren(text) : serializeInlineChildren(element)}`
   }
 
   if (tag === 'DIV' && Array.from(element.children).some((child) => ['P', 'DIV', 'H1', 'H2', 'H3', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'HR'].includes(child.tagName))) {
@@ -397,8 +398,9 @@ function unwrapList(list: HTMLElement, selectedItem: HTMLElement | null) {
 
   Array.from(list.children).forEach((child) => {
     if (!(child instanceof HTMLElement) || child.tagName !== 'LI') return
+    const isSelected = child === selectedItem
     const paragraph = createParagraphFromListItem(child)
-    if (child === selectedItem) focusParagraph = paragraph
+    if (isSelected) focusParagraph = paragraph
     fragment.appendChild(paragraph)
   })
 
@@ -722,8 +724,8 @@ export default function NotesEditingToolbar({
       }
 
       if (currentList && currentKind) {
+        const itemIndex = currentItem ? Math.max(0, Array.from(currentList.children).indexOf(currentItem)) : 0
         const converted = convertList(currentList, kind)
-        const itemIndex = currentItem ? Math.max(0, Array.from(converted.children).indexOf(currentItem)) : 0
         const targetItem = converted.children.item(itemIndex) as HTMLElement | null
         if (targetItem) placeCaret(targetItem, targetItem.textContent?.length ?? 0)
         emitEditor(true)
