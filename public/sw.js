@@ -1,61 +1,77 @@
-const CACHE_NAME = 'vida-shell-v2.2-cuaderno-profesional'
-const OFFLINE_NOTES_SHELL = '/offline/notas.html'
+const CACHE_NAME = 'vida-shell-v2.3-cuaderno-react-real'
+const OFFLINE_NOTES_APP = '/biblia/notas-offline'
 const OFFLINE_NOTES_OWNER_MARKER = '/offline/notas-owner'
 const OWNER_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const SHELL_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  OFFLINE_NOTES_SHELL,
 ]
 
-const OFFLINE_NOTES_PARITY_STYLE = `<style id="vida-offline-notebook-parity">
-  .panel{overflow:visible!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
-  .top{padding:0!important;border-bottom:0!important;background:transparent!important}
-  .search{min-height:48px!important;border:1px solid color-mix(in srgb,var(--border) 70%,transparent)!important;border-radius:20px!important;background:color-mix(in srgb,var(--field) 72%,transparent)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
-  .cards{min-height:84px!important;gap:12px!important;padding:12px 0 4px!important}
-  .card{width:80px!important;height:80px!important;flex:0 0 80px!important;border-radius:999px!important;padding:8px!important;align-items:center!important;justify-content:center!important;text-align:center!important;background:transparent!important;box-shadow:none!important}
-  .card.selected{border-color:rgb(139 92 246 / .7)!important;background:rgb(139 92 246 / .10)!important;box-shadow:0 0 0 1px rgb(139 92 246 / .08)!important}
-  .card-title{-webkit-line-clamp:3!important;font-size:10px!important;line-height:13px!important;text-align:center!important}
-  .card-meta{display:none!important}
-  .editor{min-height:calc(100vh - 280px)!important;margin-top:10px!important;padding:0 0 calc(7rem + env(safe-area-inset-bottom,0px))!important;background:transparent!important}
-  .title{font-size:28px!important;letter-spacing:-.025em!important}
-  .origin-banner{border:0!important;background:transparent!important;padding-inline:2px!important}
-  .save-state{border:0!important;background:transparent!important;padding-inline:2px!important}
-  textarea{min-height:58vh!important;overflow:hidden!important;padding-bottom:6rem!important}
-  .new{width:48px!important;height:48px!important;min-height:48px!important;padding:0!important;border-radius:999px!important;font-size:0!important;display:grid!important;place-items:center!important}
-  .new::before{content:'+';font-size:26px!important;line-height:1!important}
-</style>`
+function staticAssetUrlsFromHtml(html) {
+  const urls = new Set()
+  for (const match of html.matchAll(/(?:src|href)=["']([^"']*\/_next\/static\/[^"']+)["']/g)) {
+    try {
+      const url = new URL(match[1], self.location.origin)
+      if (url.origin === self.location.origin && url.pathname.startsWith('/_next/static/')) urls.add(url.toString())
+    } catch {}
+  }
+  return Array.from(urls)
+}
 
-const OFFLINE_NOTES_PARITY_SCRIPT = `<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  const legacyOrigin=document.querySelector('[data-origin="biblia_notas"]');
-  if(legacyOrigin) legacyOrigin.textContent='Biblia / Cuaderno';
-  const content=document.getElementById('content');
-  const type=document.getElementById('type');
-  const reference=document.getElementById('reference');
-  const banner=document.getElementById('origin-banner');
-  const bannerLabel=banner?.querySelector('span:first-child');
-  const bannerRef=document.getElementById('origin-reference');
-  const autoGrow=()=>{if(!content)return;content.style.height='auto';content.style.height=Math.max(content.scrollHeight,window.innerHeight*.58)+'px'};
-  const syncBibleOrigin=()=>{
-    if(!banner||!bannerLabel||!type||!reference)return;
-    const bible=type.value==='versiculo'&&Boolean(reference.value.trim());
-    if(bible&&banner.hidden){banner.dataset.vidaOfflineBible='true';banner.hidden=false;bannerLabel.textContent='Origen: Biblia';if(bannerRef)bannerRef.textContent=reference.value.trim()}
-    else if(banner.dataset.vidaOfflineBible==='true'&&!bible){banner.hidden=true;delete banner.dataset.vidaOfflineBible;bannerLabel.textContent='Origen: Estudio Profundo';if(bannerRef)bannerRef.textContent=''}
-    else if(banner.dataset.vidaOfflineBible==='true'&&bible&&bannerRef){bannerRef.textContent=reference.value.trim()}
-  };
-  content?.addEventListener('input',autoGrow);
-  reference?.addEventListener('input',syncBibleOrigin);
-  type?.addEventListener('change',syncBibleOrigin);
-  document.addEventListener('click',()=>setTimeout(()=>{autoGrow();syncBibleOrigin()},0));
-  window.addEventListener('resize',autoGrow,{passive:true});
-  setTimeout(()=>{autoGrow();syncBibleOrigin()},0);
-});
-</script>`
+function nestedStaticUrlsFromCss(css, cssUrl) {
+  const urls = new Set()
+  for (const match of css.matchAll(/url\((['"]?)([^)'"\s]+)\1\)/g)) {
+    try {
+      const url = new URL(match[2], cssUrl)
+      if (url.origin === self.location.origin && url.pathname.startsWith('/_next/static/')) urls.add(url.toString())
+    } catch {}
+  }
+  return Array.from(urls)
+}
+
+async function cacheStaticAsset(cache, assetUrl) {
+  const request = new Request(assetUrl, { credentials: 'same-origin' })
+  const response = await fetch(request, { cache: 'reload' })
+  if (!response.ok) return
+
+  await cache.put(request, response.clone())
+
+  const url = new URL(assetUrl)
+  if (!url.pathname.endsWith('.css')) return
+
+  const css = await response.text()
+  const nested = nestedStaticUrlsFromCss(css, url)
+  await Promise.allSettled(nested.map(async (nestedUrl) => {
+    const nestedRequest = new Request(nestedUrl, { credentials: 'same-origin' })
+    const nestedResponse = await fetch(nestedRequest, { cache: 'reload' })
+    if (nestedResponse.ok) await cache.put(nestedRequest, nestedResponse.clone())
+  }))
+}
+
+async function cacheStaticAssetsFromHtml(cache, html) {
+  const assets = staticAssetUrlsFromHtml(html)
+  await Promise.allSettled(assets.map((assetUrl) => cacheStaticAsset(cache, assetUrl)))
+}
+
+async function precacheOfflineNotesApp(cache) {
+  try {
+    const request = new Request(OFFLINE_NOTES_APP, { credentials: 'same-origin' })
+    const response = await fetch(request, { cache: 'reload' })
+    if (!response.ok) return
+
+    const html = await response.clone().text()
+    await cache.put(OFFLINE_NOTES_APP, response.clone())
+    await cacheStaticAssetsFromHtml(cache, html)
+  } catch {}
+}
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS)))
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME)
+    await cache.addAll(SHELL_ASSETS)
+    await precacheOfflineNotesApp(cache)
+  })())
   self.skipWaiting()
 })
 
@@ -76,39 +92,78 @@ self.addEventListener('message', (event) => {
   if (data.type === 'VIDA_NOTES_OWNER_CLEAR') event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.delete(OFFLINE_NOTES_OWNER_MARKER)))
 })
 
-async function respuestaNotasOffline() {
+async function respuestaStaticNext(request) {
   const cache = await caches.open(CACHE_NAME)
-  const shell = await cache.match(OFFLINE_NOTES_SHELL)
-  if (!shell) return Response.error()
+  const cached = await cache.match(request)
+  if (cached) return cached
 
-  const html = await shell.text()
-  const ownerResponse = await cache.match(OFFLINE_NOTES_OWNER_MARKER)
-  const ownerId = ownerResponse ? (await ownerResponse.text()).trim() : ''
-  const ownerBootstrap = OWNER_UUID_RE.test(ownerId)
-    ? `<script>try{localStorage.setItem('vida-biblia-notas-active-owner-v1',${JSON.stringify(ownerId)})}catch{}</script>`
-    : ''
-  const enhancedHtml = html
-    .replace('<head>', `<head>${ownerBootstrap}`)
-    .replace('</head>', `${OFFLINE_NOTES_PARITY_STYLE}${OFFLINE_NOTES_PARITY_SCRIPT}</head>`)
+  try {
+    const response = await fetch(request)
+    if (response.ok) await cache.put(request, response.clone())
+    return response
+  } catch {
+    return Response.error()
+  }
+}
 
-  const headers = new Headers(shell.headers)
-  headers.delete('content-encoding')
-  headers.delete('content-length')
-  headers.set('content-type', 'text/html; charset=utf-8')
-  return new Response(enhancedHtml, { status: shell.status, statusText: shell.statusText, headers })
+async function respuestaOfflineNotesApp(request) {
+  const cache = await caches.open(CACHE_NAME)
+
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      const html = await response.clone().text()
+      await cache.put(OFFLINE_NOTES_APP, response.clone())
+      await cacheStaticAssetsFromHtml(cache, html)
+    }
+    return response
+  } catch {
+    const cached = await cache.match(OFFLINE_NOTES_APP)
+    if (cached) return cached
+    return new Response('Abre el Cuaderno una vez con conexión para habilitar el modo offline.', {
+      status: 503,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    })
+  }
+}
+
+async function respuestaNotasPrincipal(request) {
+  try {
+    return await fetch(request)
+  } catch {
+    const actual = new URL(request.url)
+    const fallbackUrl = new URL(OFFLINE_NOTES_APP, self.location.origin)
+    fallbackUrl.search = actual.search
+    return Response.redirect(fallbackUrl.toString(), 302)
+  }
 }
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
   const url = new URL(event.request.url)
+
   if (event.request.mode === 'navigate') {
     const pathname = url.pathname.replace(/\/+$/, '') || '/'
     if (url.origin === self.location.origin && pathname === '/biblia/notas') {
-      event.respondWith(fetch(event.request).catch(() => respuestaNotasOffline()))
+      event.respondWith(respuestaNotasPrincipal(event.request))
+      return
+    }
+    if (url.origin === self.location.origin && pathname === OFFLINE_NOTES_APP) {
+      event.respondWith(respuestaOfflineNotesApp(event.request))
+      return
     }
     return
   }
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/') || url.hostname.includes('supabase.co')) return
+
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase.co')) return
+
+  if (url.origin === self.location.origin && url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(respuestaStaticNext(event.request))
+    return
+  }
+
+  if (url.pathname.startsWith('/_next/')) return
+
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)))
 })
 

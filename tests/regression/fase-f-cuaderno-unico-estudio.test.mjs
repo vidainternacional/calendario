@@ -5,7 +5,8 @@ import test from 'node:test'
 
 const estudio = fs.readFileSync('app/actions/estudio.ts', 'utf8')
 const remote = fs.readFileSync('lib/biblia/notes-remote.ts', 'utf8')
-const shell = fs.readFileSync('public/offline/notas.html', 'utf8')
+const notesLocal = fs.readFileSync('lib/biblia/notes-local.ts', 'utf8')
+const offlineWorkspace = fs.readFileSync('components/biblia/OfflineBibleNotesWorkspace.tsx', 'utf8')
 const sw = fs.readFileSync('public/sw.js', 'utf8')
 
 test('FASE F: Estudio Profundo y Biblia Notas comparten el mismo cuaderno sin copiar filas', () => {
@@ -15,21 +16,20 @@ test('FASE F: Estudio Profundo y Biblia Notas comparten el mismo cuaderno sin co
   assert.match(remote, /\.in\('origen', \['biblia_notas', 'estudio_profundo'\]\)/)
 })
 
-test('FASE F: el shell offline conserva identidad y contexto de Estudio Profundo', () => {
-  assert.match(shell, /origen: typeof value\?\.origen === 'string'/)
-  assert.match(shell, /origenKey: typeof value\?\.origenKey === 'string'/)
-  assert.match(shell, /pasajeNormalizado: typeof value\?\.pasajeNormalizado === 'string'/)
-  assert.match(shell, /contexto: value\?\.contexto && typeof value\.contexto === 'object'/)
-  assert.match(shell, /origen: note\?\.origen\?\.trim\(\) \|\| 'biblia_notas'/)
-  assert.match(shell, /enqueue\('delete', note\)/)
-  assert.doesNotMatch(shell, /enqueue\('delete', note\.id\)/)
+test('FASE F: el cold-start offline conserva identidad y contexto usando el mismo modelo local', () => {
+  assert.match(offlineWorkspace, /BibleNotesWorkspace userId=\{ownerId\}/)
+  assert.match(notesLocal, /origen: nota\.origen \?\? 'biblia_notas'/)
+  assert.match(notesLocal, /origenKey: nota\.origenKey \?\? ''/)
+  assert.match(notesLocal, /pasajeNormalizado: nota\.pasajeNormalizado \?\? ''/)
+  assert.match(notesLocal, /contexto: normalizarContexto\(nota\.contexto\)/)
 })
 
-test('FASE F: renovar el shell no amplía la caché a datos privados', () => {
-  assert.match(sw, /vida-shell-v2\.2-cuaderno-profesional/)
-  assert.match(sw, /OFFLINE_NOTES_SHELL/)
+test('FASE F: la nueva paridad offline solo amplía caché a código público estático', () => {
+  assert.match(sw, /vida-shell-v2\.3-cuaderno-react-real/)
+  assert.match(sw, /OFFLINE_NOTES_APP/)
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
-  assert.match(sw, /url\.pathname\.startsWith\('\/_next\/'\)/)
+  assert.match(sw, /url\.pathname\.startsWith\('\/_next\/static\/'\)/)
+  assert.match(sw, /if \(url\.pathname\.startsWith\('\/_next\/'\)\) return/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
   assert.doesNotMatch(sw, /notas_estudio/)
 })

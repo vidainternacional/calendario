@@ -4,6 +4,8 @@ import test from 'node:test'
 
 const verseActions = fs.readFileSync('components/biblia/BibleVerseActionsPersistent.tsx', 'utf8')
 const fixes = fs.readFileSync('app/notebook-fixes.css', 'utf8')
+const offlinePage = fs.readFileSync('app/(app)/biblia/notas-offline/page.tsx', 'utf8')
+const offlineWorkspace = fs.readFileSync('components/biblia/OfflineBibleNotesWorkspace.tsx', 'utf8')
 const sw = fs.readFileSync('public/sw.js', 'utf8')
 
 test('FASE F: crear nota desde Biblia escribe primero en el cuaderno canónico con versículo y contexto', () => {
@@ -26,14 +28,20 @@ test('FASE F: el editor no queda atrapado en un viewport fijo y reserva espacio 
   assert.doesNotMatch(fixes, /overflow: hidden !important/)
 })
 
-test('FASE F: cold-start offline aplica paridad visual y crecimiento automático sin cachear datos privados', () => {
-  assert.match(sw, /OFFLINE_NOTES_PARITY_STYLE/)
-  assert.match(sw, /border-radius:999px!important/)
-  assert.match(sw, /width:80px!important/)
-  assert.match(sw, /OFFLINE_NOTES_PARITY_SCRIPT/)
-  assert.match(sw, /Biblia \/ Cuaderno/)
-  assert.match(sw, /autoGrow/)
-  assert.match(sw, /Origen: Biblia/)
+test('FASE F: cold-start offline monta exactamente el mismo Cuaderno React y no una réplica visual', () => {
+  assert.match(offlinePage, /dynamic = 'force-static'/)
+  assert.match(offlineWorkspace, /BibleNotesWorkspace userId=\{ownerId\}/)
+  assert.match(sw, /OFFLINE_NOTES_APP = '\/biblia\/notas-offline'/)
+  assert.match(sw, /precacheOfflineNotesApp/)
+  assert.match(sw, /cacheStaticAssetsFromHtml/)
+  assert.match(sw, /Response\.redirect\(fallbackUrl\.toString\(\), 302\)/)
+  assert.doesNotMatch(sw, /OFFLINE_NOTES_PARITY_STYLE|OFFLINE_NOTES_PARITY_SCRIPT|OFFLINE_NOTES_SHELL/)
+})
+
+test('FASE F: la paridad visual completa sigue sin cachear datos privados', () => {
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
+  assert.match(sw, /url\.pathname\.startsWith\('\/_next\/static\/'\)/)
+  assert.match(sw, /if \(url\.pathname\.startsWith\('\/_next\/'\)\) return/)
+  assert.doesNotMatch(sw, /notas_estudio/)
 })
