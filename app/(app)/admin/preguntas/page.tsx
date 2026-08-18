@@ -5,15 +5,27 @@ import ResponderPreguntaForm from './ResponderPreguntaForm'
 import ArchivarPreguntaBoton from './ArchivarPreguntaBoton'
 import BackButton from '@/components/navigation/BackButton'
 
+type AdminProfile = {
+  rol: string | null
+  activo: boolean | null
+  estado_cuenta: string | null
+}
+
 export default async function AdminPreguntasPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
-  const p = profile as any
-  const isAdminOrPastor = p?.rol === 'administrador' || p?.rol === 'pastor' || p?.es_pastor_general
-  if (!isAdminOrPastor) redirect('/inicio')
+  const { data: profileRaw } = await supabase
+    .from('profiles')
+    .select('rol, activo, estado_cuenta')
+    .eq('id', user.id)
+    .single()
+  const profile = profileRaw as AdminProfile | null
+  const allowed = profile?.activo === true
+    && profile?.estado_cuenta === 'activo'
+    && profile?.rol === 'administrador'
+  if (!allowed) redirect('/inicio')
 
   const { data: preguntas } = await supabase.from('preguntas_congregacion').select(`id,texto,es_anonima,estado,created_at,profiles:profile_id (nombre_completo,telefono)`).eq('estado', 'pendiente').order('created_at', { ascending: true })
   const preguntasList = (preguntas as any[]) || []

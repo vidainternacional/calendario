@@ -41,9 +41,17 @@ export async function responderPregunta(preguntaId: string, respuesta: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'No autorizado' }
 
-  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rol, es_pastor_general, activo, estado_cuenta')
+    .eq('id', user.id)
+    .single()
   const p = profile as any
-  if (p?.rol !== 'administrador' && p?.rol !== 'pastor' && !p?.es_pastor_general) {
+  if (
+    !p?.activo ||
+    p?.estado_cuenta !== 'activo' ||
+    (p?.rol !== 'administrador' && p?.rol !== 'pastor' && !p?.es_pastor_general)
+  ) {
     return { success: false, error: 'No tienes permisos.' }
   }
 
@@ -67,9 +75,17 @@ export async function archivarPregunta(preguntaId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'No autorizado' }
 
-  const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('rol, es_pastor_general, activo, estado_cuenta')
+    .eq('id', user.id)
+    .single()
   const p = profile as any
-  if (p?.rol !== 'administrador' && p?.rol !== 'pastor' && !p?.es_pastor_general) {
+  if (
+    !p?.activo ||
+    p?.estado_cuenta !== 'activo' ||
+    (p?.rol !== 'administrador' && p?.rol !== 'pastor' && !p?.es_pastor_general)
+  ) {
     return { success: false, error: 'No tienes permisos.' }
   }
 
