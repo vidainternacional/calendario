@@ -24,7 +24,8 @@ test('Centro Pastoral recupera Buzón y Ayuda Solidaria sin devolver acceso a Ad
   assert.match(ayuda, /profile\?\.rol === 'pastor'/)
   assert.match(ayuda, /profile\?\.rol === 'administrador'/)
   assert.match(ayuda, /profile\?\.es_pastor_general === true/)
-  assert.match(ayuda, /item\.anonimo \? null : item\.aportante/)
+  assert.match(ayuda, /profiles: item\.aportante \|\| null/)
+  assert.match(ayuda, /su identidad no se muestra al beneficiario/)
 
   assert.match(adminLayout, /rol !== 'administrador'/)
   assert.doesNotMatch(adminLayout, /rol === 'pastor'/)

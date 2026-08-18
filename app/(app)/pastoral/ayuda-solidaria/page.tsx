@@ -48,7 +48,7 @@ export default async function PastoralAyudaSolidariaPage() {
   }))
   const contributions = (contributionRows || []).map((item: any) => ({
     ...item,
-    profiles: item.anonimo ? null : item.aportante || null,
+    profiles: item.aportante || null,
   }))
 
   const openRequests = requests.filter((item: any) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length
@@ -77,7 +77,7 @@ export default async function PastoralAyudaSolidariaPage() {
       <div className="mx-auto max-w-3xl px-4 pt-5 sm:px-6">
         <div className="mb-5 flex items-start gap-3 rounded-[22px] bg-white p-4 ring-1 ring-black/[0.05]">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-          <p className="text-xs leading-5 text-slate-600">Los motivos, teléfonos y nombres solo están disponibles para pastores, Pastor General y administradores autorizados. Los aportes marcados como anónimos no muestran la identidad del aportante en esta superficie.</p>
+          <p className="text-xs leading-5 text-slate-600">Los motivos, teléfonos y datos de coordinación solo están disponibles para pastores, Pastor General y administradores autorizados. Cuando un aporte se marca como reservado, su identidad no se muestra al beneficiario.</p>
         </div>
         <SolidarityAdminBoard requests={requests} contributions={contributions} />
       </div>
