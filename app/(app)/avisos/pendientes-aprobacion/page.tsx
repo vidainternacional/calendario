@@ -11,8 +11,8 @@ export default async function AvisosPendientesPage() {
 
   const { data: profile } = await supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single()
   const p = profile as any
-  const isAdminOrPastor = p?.rol === 'administrador' || p?.rol === 'pastor' || p?.es_pastor_general
-  if (!isAdminOrPastor) redirect('/avisos')
+  const puedeRevisar = p?.rol === 'administrador' || p?.es_pastor_general === true
+  if (!puedeRevisar) redirect('/avisos')
 
   const { data: avisos } = await (supabase as any)
     .from('publicaciones')
