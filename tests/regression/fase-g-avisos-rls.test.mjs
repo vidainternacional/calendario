@@ -7,7 +7,7 @@ function source(path) {
 }
 
 test('RLS de Avisos impide autoaprobación y reserva revisión a Admin o Pastor General', () => {
-  const migration = source('supabase/migrations/20260818215200_fase_g_endurecer_rls_avisos.sql')
+  const migration = source('supabase/migrations/20260818215421_fase_g_endurecer_rls_avisos.sql')
   const actions = source('app/actions/avisos.ts')
 
   assert.match(migration, /DROP POLICY IF EXISTS pastor_actualiza_publicaciones/)
