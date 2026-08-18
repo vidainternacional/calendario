@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarCheck2, ChevronRight, ClipboardCheck, UserRoundPlus } from 'lucide-react'
+import {
+  CalendarCheck2,
+  ChevronRight,
+  ClipboardCheck,
+  HeartHandshake,
+  MessageCircleQuestion,
+  UserRoundPlus,
+  UsersRound,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { usePendingIndicators } from '@/components/notificaciones/usePendingIndicators'
 
@@ -19,6 +27,9 @@ export default function PendingAttentionShortcut() {
     pendingMinisterioIngresos,
     pendingServicios,
     pendingSolicitudesGestionables,
+    pendingContactos,
+    pendingPreguntasPastorales,
+    pendingAyudaSolidaria,
   } = usePendingIndicators()
   const [pageTarget, setPageTarget] = useState<AttentionTarget>(null)
   const [previewTarget, setPreviewTarget] = useState<AttentionTarget>(null)
@@ -135,6 +146,17 @@ export default function PendingAttentionShortcut() {
       })
     }
 
+    if (pendingContactos > 0) {
+      items.push({
+        key: 'contactos',
+        href: '/contactos',
+        label: 'Solicitudes de contacto',
+        detail: 'Personas esperando que aceptes o rechaces su solicitud',
+        count: pendingContactos,
+        icon: UsersRound,
+      })
+    }
+
     if (pendingMinisterioIngresos > 0) {
       const accesoGlobal = rol === 'administrador'
       items.push({
@@ -158,8 +180,38 @@ export default function PendingAttentionShortcut() {
       })
     }
 
+    if (pendingPreguntasPastorales > 0) {
+      items.push({
+        key: 'preguntas-pastorales',
+        href: '/pastoral/preguntas',
+        label: 'Buzón pastoral',
+        detail: 'Preguntas o motivos de oración pendientes de respuesta',
+        count: pendingPreguntasPastorales,
+        icon: MessageCircleQuestion,
+      })
+    }
+
+    if (pendingAyudaSolidaria > 0) {
+      items.push({
+        key: 'ayuda-solidaria',
+        href: '/pastoral/ayuda-solidaria',
+        label: 'Ayuda Solidaria',
+        detail: 'Solicitudes o aportes nuevos que requieren atención pastoral',
+        count: pendingAyudaSolidaria,
+        icon: HeartHandshake,
+      })
+    }
+
     return items
-  }, [pendingMinisterioIngresos, pendingServicios, pendingSolicitudesGestionables, rol])
+  }, [
+    pendingAyudaSolidaria,
+    pendingContactos,
+    pendingMinisterioIngresos,
+    pendingPreguntasPastorales,
+    pendingServicios,
+    pendingSolicitudesGestionables,
+    rol,
+  ])
 
   if (!surface || acciones.length === 0) return null
 
