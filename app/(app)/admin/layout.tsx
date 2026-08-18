@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Administración',
-  description: 'Panel de control para pastores y administradores',
+  description: 'Panel de control exclusivo para administradores',
 }
 
 export default async function AdminLayout({
@@ -19,12 +19,11 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('rol, es_pastor_general')
+    .select('rol')
     .eq('id', user.id)
     .single()
 
-  const prof = profile as any
-  if (prof?.rol !== 'pastor' && prof?.rol !== 'administrador' && !prof?.es_pastor_general) {
+  if ((profile as any)?.rol !== 'administrador') {
     redirect('/inicio')
   }
 
