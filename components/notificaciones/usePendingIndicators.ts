@@ -75,11 +75,35 @@ async function refreshSharedPending(force = false) {
       resetPendingSnapshot()
     }
 
-    const [leadershipReq, serviciosReq, solicitudesGestionables] = await Promise.all([
+    const [profileReq, liderazgosReq] = await Promise.all([
+      supabase.from('profiles').select('rol').eq('id', user.id).maybeSingle(),
       (supabase as any)
-        .from('ministerio_solicitudes_ingreso')
-        .select('id, profile_id')
-        .eq('estado', 'pendiente'),
+        .from('ministerio_miembros')
+        .select('ministerio_id')
+        .eq('profile_id', user.id)
+        .eq('es_lider', true),
+    ])
+
+    const esAdministrador = (profileReq.data as any)?.rol === 'administrador'
+    const ministeriosLiderados = Array.from(new Set(
+      (liderazgosReq.data || []).map((row: any) => String(row.ministerio_id || '')).filter(Boolean),
+    ))
+
+    const leadershipQuery = esAdministrador
+      ? (supabase as any)
+          .from('ministerio_solicitudes_ingreso')
+          .select('id, profile_id')
+          .eq('estado', 'pendiente')
+      : ministeriosLiderados.length > 0
+        ? (supabase as any)
+            .from('ministerio_solicitudes_ingreso')
+            .select('id, profile_id')
+            .eq('estado', 'pendiente')
+            .in('ministerio_id', ministeriosLiderados)
+        : Promise.resolve({ data: [], error: null })
+
+    const [leadershipReq, serviciosReq, solicitudesGestionables] = await Promise.all([
+      leadershipQuery,
       (supabase as any)
         .from('evento_asignaciones')
         .select('evento_id, estado, eventos!inner(fecha_inicio)')
