@@ -36,7 +36,7 @@ export default async function MinisterioLayout({
       .maybeSingle(),
     supabase
       .from('profiles')
-      .select('rol, es_pastor_general')
+      .select('rol')
       .eq('id', user.id)
       .single(),
   ])
@@ -56,13 +56,12 @@ export default async function MinisterioLayout({
   if (!ministerio) notFound()
 
   const profile = profileReq.data as any
-  const isAdminOrPastor =
-    profile?.rol === 'pastor' ||
-    profile?.rol === 'administrador' ||
-    profile?.es_pastor_general
+  const esAdministrador = profile?.rol === 'administrador'
   const esLider = Boolean((membresiaReq.data as any)?.es_lider)
 
-  if (!membresiaReq.data && !isAdminOrPastor) {
+  // Pastor no implica membresía ni liderazgo global. Un pastor entra al dashboard
+  // únicamente si pertenece al ministerio; Administrador conserva acceso transversal.
+  if (!membresiaReq.data && !esAdministrador) {
     redirect('/ministerios')
   }
 
