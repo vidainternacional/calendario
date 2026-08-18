@@ -136,7 +136,7 @@ export default function PendingAttentionShortcut() {
     }
 
     if (pendingMinisterioIngresos > 0) {
-      const accesoGlobal = rol === 'administrador' || rol === 'pastor'
+      const accesoGlobal = rol === 'administrador'
       items.push({
         key: 'ingresos',
         href: accesoGlobal ? '/admin/solicitudes-ministerios' : '/ministerios',
