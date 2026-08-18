@@ -19,7 +19,7 @@ async function obtenerAcceso(ministerioId: string) {
   ])
 
   if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') return null
-  const puedeProgramar = ['administrador', 'pastor'].includes(profile.rol) || membresia?.es_lider === true
+  const puedeProgramar = profile.rol === 'administrador' || membresia?.es_lider === true
   return puedeProgramar ? { userId: user.id } : null
 }
 
