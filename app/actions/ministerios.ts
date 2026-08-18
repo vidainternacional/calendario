@@ -16,7 +16,7 @@ async function notificarGestoresSolicitudIngreso(ministerioId: string, solicitud
     service.from('ministerio_miembros').select('profile_id').eq('ministerio_id', ministerioId).eq('es_lider', true),
     service
       .from('profiles')
-      .select('id,rol,es_pastor_general,activo,estado_cuenta')
+      .select('id,rol,activo,estado_cuenta')
       .eq('activo', true)
       .eq('estado_cuenta', 'activo'),
     service.from('ministerios').select('nombre').eq('id', ministerioId).single(),
@@ -29,11 +29,7 @@ async function notificarGestoresSolicitudIngreso(ministerioId: string, solicitud
   const disabledIds = new Set<string>((preferencias || []).map((item: any) => String(item.profile_id)))
   const liderIds = (lideres || []).map((item: any) => String(item.profile_id || ''))
   const gestorIds = (gestoresGlobales || [])
-    .filter((item: any) =>
-      item.rol === 'administrador'
-      || item.rol === 'pastor'
-      || item.es_pastor_general === true,
-    )
+    .filter((item: any) => item.rol === 'administrador')
     .map((item: any) => String(item.id || ''))
 
   const destinatarios: string[] = Array.from(new Set<string>([...liderIds, ...gestorIds]))
@@ -74,6 +70,30 @@ async function notificarResultadoSolicitudIngreso(
   }, { tipo: 'solicitud_ingreso_resultado', referenciaId: solicitudId })
 }
 
+async function obtenerContextoGestionIngreso(ministerioId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { user: null, service: null, error: 'No autorizado' }
+
+  const [{ data: profile }, { data: membresia }] = await Promise.all([
+    supabase.from('profiles').select('rol').eq('id', user.id).single(),
+    supabase
+      .from('ministerio_miembros')
+      .select('es_lider')
+      .eq('profile_id', user.id)
+      .eq('ministerio_id', ministerioId)
+      .maybeSingle(),
+  ])
+
+  const esAdministrador = (profile as any)?.rol === 'administrador'
+  const esLiderMinisterio = (membresia as any)?.es_lider === true
+  if (!esAdministrador && !esLiderMinisterio) {
+    return { user, service: null, error: 'Solo un administrador o líder de este ministerio puede resolver solicitudes.' }
+  }
+
+  return { user, service: createServiceClient() as any, error: null }
+}
+
 export async function solicitarIngreso(ministerioId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -107,17 +127,36 @@ export async function solicitarIngreso(ministerioId: string) {
 }
 
 export async function aprobarSolicitudIngreso(solicitudId: string, profileId: string, ministerioId: string) {
-  const supabase = await createClient()
-  const { error: e1 } = await (supabase as any).from('ministerio_solicitudes_ingreso')
-    .update({ estado: 'aprobada', resuelto_at: new Date().toISOString() }).eq('id', solicitudId)
+  const contexto = await obtenerContextoGestionIngreso(ministerioId)
+  if (contexto.error || !contexto.user || !contexto.service) {
+    return { success: false, error: contexto.error || 'No autorizado' }
+  }
+
+  const service = contexto.service
+  const { data: solicitud, error: lookupError } = await service
+    .from('ministerio_solicitudes_ingreso')
+    .select('profile_id,estado')
+    .eq('id', solicitudId)
+    .eq('ministerio_id', ministerioId)
+    .maybeSingle()
+
+  if (lookupError || !solicitud) return { success: false, error: lookupError?.message || 'Solicitud no encontrada.' }
+  if (String(solicitud.profile_id) !== profileId) return { success: false, error: 'La solicitud no corresponde a ese usuario.' }
+  if (solicitud.estado !== 'pendiente') return { success: false, error: 'La solicitud ya fue resuelta.' }
+
+  const { error: e1 } = await service
+    .from('ministerio_solicitudes_ingreso')
+    .update({ estado: 'aprobada', resuelto_at: new Date().toISOString() })
+    .eq('id', solicitudId)
+    .eq('estado', 'pendiente')
   if (e1) return { success: false, error: e1.message }
 
-  const { error: e2 } = await (supabase as any).from('ministerio_miembros').insert({
+  const { error: e2 } = await service.from('ministerio_miembros').upsert({
     profile_id: profileId,
     ministerio_id: ministerioId,
-    es_lider: false
-  })
-  if (e2 && e2.code !== '23505') return { success: false, error: e2.message }
+    es_lider: false,
+  }, { onConflict: 'profile_id,ministerio_id', ignoreDuplicates: true })
+  if (e2) return { success: false, error: e2.message }
 
   try {
     await notificarResultadoSolicitudIngreso(ministerioId, solicitudId, profileId, 'aprobada')
@@ -135,15 +174,28 @@ export async function aprobarSolicitudIngreso(solicitudId: string, profileId: st
 }
 
 export async function rechazarSolicitudIngreso(solicitudId: string, ministerioId: string) {
-  const supabase = await createClient()
-  const { data: solicitud, error: solicitudError } = await (supabase as any).from('ministerio_solicitudes_ingreso')
-    .select('profile_id').eq('id', solicitudId).single()
+  const contexto = await obtenerContextoGestionIngreso(ministerioId)
+  if (contexto.error || !contexto.user || !contexto.service) {
+    return { success: false, error: contexto.error || 'No autorizado' }
+  }
+
+  const service = contexto.service
+  const { data: solicitud, error: solicitudError } = await service
+    .from('ministerio_solicitudes_ingreso')
+    .select('profile_id,estado')
+    .eq('id', solicitudId)
+    .eq('ministerio_id', ministerioId)
+    .maybeSingle()
   if (solicitudError || !solicitud?.profile_id) {
     return { success: false, error: solicitudError?.message || 'Solicitud no encontrada.' }
   }
+  if (solicitud.estado !== 'pendiente') return { success: false, error: 'La solicitud ya fue resuelta.' }
 
-  const { error } = await (supabase as any).from('ministerio_solicitudes_ingreso')
-    .update({ estado: 'rechazada', resuelto_at: new Date().toISOString() }).eq('id', solicitudId)
+  const { error } = await service
+    .from('ministerio_solicitudes_ingreso')
+    .update({ estado: 'rechazada', resuelto_at: new Date().toISOString() })
+    .eq('id', solicitudId)
+    .eq('estado', 'pendiente')
   if (error) return { success: false, error: error.message }
 
   try {
