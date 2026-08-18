@@ -53,7 +53,7 @@ export default async function MinisterioHub({ params }: { params: Promise<{ id: 
   const { data: perfil } = await db.from('profiles').select('rol').eq('id', user.id).single()
   const esLiderMinisterio = mem?.es_lider === true
   const esMiembro = Boolean(mem)
-  const accesoGlobal = ['pastor', 'administrador'].includes(perfil?.rol)
+  const accesoGlobal = perfil?.rol === 'administrador'
   const esAlabanza = String(min.nombre || '').trim().toLowerCase() === 'alabanza'
   const fuenteTitulo = TITULO_FONT[min.fuente_titulo] || TITULO_FONT.moderna
   const fuenteCuerpo = CUERPO_FONT[min.fuente_cuerpo] || CUERPO_FONT.clasica

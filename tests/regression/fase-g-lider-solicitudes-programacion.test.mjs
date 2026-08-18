@@ -22,10 +22,12 @@ test('el dashboard reserva liderazgo a es_lider y Pastor no recibe gestión glob
   const layout = source('app/(app)/ministerios/[id]/layout.tsx')
 
   assert.match(hub, /const esLiderMinisterio = mem\?\.es_lider === true/)
+  assert.match(hub, /const accesoGlobal = perfil\?\.rol === 'administrador'/)
   assert.match(hub, /visible: esLiderMinisterio/)
   assert.match(hub, /\{esLiderMinisterio && <section>/)
   assert.match(hub, /Eres parte del equipo/)
   assert.doesNotMatch(hub, /mem\?\.es_lider === true \|\|/)
+  assert.doesNotMatch(hub, /\['pastor', 'administrador'\]\.includes\(perfil\?\.rol\)/)
 
   assert.match(layout, /const esAdministrador = profile\?\.rol === 'administrador'/)
   assert.match(layout, /if \(!membresiaReq\.data && !esAdministrador\)/)
