@@ -39,7 +39,7 @@ async function contextoGestionMinisterio(ministerioId: string) {
 
   const admin = createAdminClient() as any
   const [{ data: profile }, { data: membresia }] = await Promise.all([
-    admin.from('profiles').select('rol,activo,estado_cuenta,es_pastor_general').eq('id', user.id).maybeSingle(),
+    admin.from('profiles').select('rol,activo,estado_cuenta').eq('id', user.id).maybeSingle(),
     admin.from('ministerio_miembros').select('es_lider').eq('ministerio_id', ministerioId).eq('profile_id', user.id).maybeSingle(),
   ])
 
@@ -47,8 +47,6 @@ async function contextoGestionMinisterio(ministerioId: string) {
 
   const puedeGestionar =
     profile.rol === 'administrador' ||
-    profile.rol === 'pastor' ||
-    profile.es_pastor_general === true ||
     membresia?.es_lider === true
 
   return { userId: user.id, puedeGestionar, admin }
@@ -180,14 +178,14 @@ export async function obtenerConteoSolicitudesGestionables() {
   const admin = createAdminClient() as any
   const { data: profile } = await admin
     .from('profiles')
-    .select('rol,activo,estado_cuenta,es_pastor_general')
+    .select('rol,activo,estado_cuenta')
     .eq('id', user.id)
     .maybeSingle()
 
   if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') return 0
 
   let ministerioIds: string[] = []
-  if (profile.rol === 'administrador' || profile.rol === 'pastor' || profile.es_pastor_general === true) {
+  if (profile.rol === 'administrador') {
     const { data: ministerios = [] } = await admin.from('ministerios').select('id').eq('activo', true)
     ministerioIds = (ministerios as any[]).map((row) => String(row.id))
   } else {
