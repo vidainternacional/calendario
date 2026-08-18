@@ -5,6 +5,8 @@ import { guardarSuscripcionPush } from '@/app/actions/push'
 import { requestUnreadPublicationsRefresh } from '@/components/avisos/usePublicationReads'
 import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
+const PUSH_REFRESH_COALESCE_MS = 180
+
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -18,17 +20,32 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   return output.buffer
 }
 
+type VidaPushMessage = {
+  type?: string
+  tag?: string
+  url?: string
+}
+
 export default function PushSubscriptionSync() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
-    const handleServiceWorkerMessage = (event: MessageEvent<{ type?: string; url?: string }>) => {
-      if (event.data?.type === 'VIDA_PUSH_RECEIVED') {
+    let pushRefreshTimer: number | null = null
+
+    const schedulePushRefresh = () => {
+      if (pushRefreshTimer !== null) window.clearTimeout(pushRefreshTimer)
+      pushRefreshTimer = window.setTimeout(() => {
+        pushRefreshTimer = null
+        // Un push puede representar un aviso o cualquier acción dirigida al usuario.
+        // Refrescamos ambos almacenes compartidos para que badges, "Para ti" y Avisos
+        // no tengan que esperar al polling, a un cambio de pestaña o a volver del fondo.
         requestPendingIndicatorsRefresh()
-        if (event.data.url?.startsWith('/avisos')) {
-          requestUnreadPublicationsRefresh()
-        }
-      }
+        requestUnreadPublicationsRefresh()
+      }, PUSH_REFRESH_COALESCE_MS)
+    }
+
+    const handleServiceWorkerMessage = (event: MessageEvent<VidaPushMessage>) => {
+      if (event.data?.type === 'VIDA_PUSH_RECEIVED') schedulePushRefresh()
     }
 
     navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
@@ -38,7 +55,10 @@ export default function PushSubscriptionSync() {
       !('PushManager' in window) ||
       Notification.permission !== 'granted'
     ) {
-      return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
+      return () => {
+        if (pushRefreshTimer !== null) window.clearTimeout(pushRefreshTimer)
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
+      }
     }
 
     let cancelled = false
@@ -74,6 +94,7 @@ export default function PushSubscriptionSync() {
     void sincronizar()
     return () => {
       cancelled = true
+      if (pushRefreshTimer !== null) window.clearTimeout(pushRefreshTimer)
       window.removeEventListener('online', handleOnline)
       navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
     }
