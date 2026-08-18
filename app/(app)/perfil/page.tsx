@@ -35,7 +35,7 @@ export default async function PerfilPage() {
   const rolActual = (profile as any)?.rol as keyof typeof roles
   const rolGlobal = roles[rolActual] || roles.servidor
   const tieneCentroPastoral = tieneAccesoPastoral(profile as any)
-  const tienePanelAdministrativo = ['pastor', 'administrador'].includes(rolActual)
+  const tienePanelAdministrativo = rolActual === 'administrador'
   const nombre = (profile as any)?.nombre_completo || 'Usuario'
 
   return (
