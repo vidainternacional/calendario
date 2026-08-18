@@ -10,7 +10,7 @@ export default async function AdminUsuariosPage() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase.from('profiles').select('rol').eq('id', user.id).single()
-  if (!['pastor', 'administrador'].includes((profile as any)?.rol)) redirect('/inicio')
+  if ((profile as any)?.rol !== 'administrador') redirect('/inicio')
 
   const service = createServiceClient()
   const [
