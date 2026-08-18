@@ -6,20 +6,34 @@ function source(path) {
   return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
 }
 
-test('Centro Pastoral recupera Buzón y Ayuda Solidaria sin devolver acceso a Admin', () => {
+test('Perfil ubica Buzón y Ayuda Solidaria debajo de Centro Pastoral sin devolver acceso a Admin', () => {
+  const perfil = source('app/(app)/perfil/page.tsx')
   const pastoral = source('app/(app)/pastoral/page.tsx')
   const preguntas = source('app/(app)/pastoral/preguntas/page.tsx')
   const ayuda = source('app/(app)/pastoral/ayuda-solidaria/page.tsx')
   const adminLayout = source('app/(app)/admin/layout.tsx')
 
-  assert.match(pastoral, /const puedeGestionarAtencion = .*rol === 'pastor'/s)
-  assert.match(pastoral, /href="\/pastoral\/preguntas"/)
-  assert.match(pastoral, /href="\/pastoral\/ayuda-solidaria"/)
+  assert.match(perfil, /const puedeGestionarAtencion = rolActual === 'pastor'/)
+  assert.match(perfil, /href="\/pastoral"/)
+  assert.match(perfil, /href="\/pastoral\/preguntas"/)
+  assert.match(perfil, /href="\/pastoral\/ayuda-solidaria"/)
+  assert.match(perfil, /Buzón de preguntas/)
+  assert.match(perfil, /Ayuda Solidaria/)
+
+  const centroIndex = perfil.indexOf('href="/pastoral"')
+  const buzonIndex = perfil.indexOf('href="/pastoral/preguntas"')
+  const ayudaIndex = perfil.indexOf('href="/pastoral/ayuda-solidaria"')
+  assert.ok(centroIndex >= 0 && buzonIndex > centroIndex && ayudaIndex > buzonIndex)
+
+  assert.doesNotMatch(pastoral, /href="\/pastoral\/preguntas"/)
+  assert.doesNotMatch(pastoral, /href="\/pastoral\/ayuda-solidaria"/)
+  assert.doesNotMatch(pastoral, /puedeGestionarAtencion/)
 
   assert.match(preguntas, /profile\?\.rol === 'pastor'/)
   assert.match(preguntas, /profile\?\.rol === 'administrador'/)
   assert.match(preguntas, /profile\?\.es_pastor_general === true/)
   assert.match(preguntas, /pregunta\.es_anonima \? \{ \.\.\.pregunta, profiles: null \} : pregunta/)
+  assert.match(preguntas, /desde el acceso de tu Perfil/)
 
   assert.match(ayuda, /profile\?\.rol === 'pastor'/)
   assert.match(ayuda, /profile\?\.rol === 'administrador'/)

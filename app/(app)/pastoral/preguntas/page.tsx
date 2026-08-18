@@ -40,7 +40,7 @@ export default async function PastoralPreguntasPage() {
         <header className="mb-6 sm:mb-8">
           <p className="text-[11px] font-bold uppercase tracking-[0.17em] text-indigo-500">Atención pastoral</p>
           <h1 className="mt-1 text-2xl font-bold leading-tight text-[#171923] sm:text-3xl">Buzón de Congregación</h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-500 sm:text-base">Responde preguntas, dudas y motivos de oración desde el Centro Pastoral, sin abrir el Administrador general.</p>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-500 sm:text-base">Responde preguntas, dudas y motivos de oración desde el acceso de tu Perfil, sin abrir el Administrador general.</p>
         </header>
 
         {preguntasList.length === 0 ? (

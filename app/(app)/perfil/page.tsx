@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
-import { User, Mail, Shield, Bell, Settings2, Users, BookHeart } from 'lucide-react'
+import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
@@ -20,7 +20,7 @@ export default async function PerfilPage() {
   if (!user) redirect('/login')
 
   const [{ data: profile }, { data: membresias }, { data: details }] = await Promise.all([
-    (supabase as any).from('profiles').select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral').eq('id', user.id).single(),
+    (supabase as any).from('profiles').select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral, es_pastor_general').eq('id', user.id).single(),
     supabase.from('ministerio_miembros').select(`id,es_lider,ministerios (id,nombre,color_primario)`).eq('profile_id', user.id),
     (supabase as any).from('member_profile_details').select('*').eq('profile_id', user.id).maybeSingle(),
   ])
@@ -36,6 +36,9 @@ export default async function PerfilPage() {
   const rolGlobal = roles[rolActual] || roles.servidor
   const tieneCentroPastoral = tieneAccesoPastoral(profile as any)
   const tienePanelAdministrativo = rolActual === 'administrador'
+  const puedeGestionarAtencion = rolActual === 'pastor'
+    || rolActual === 'administrador'
+    || (profile as any)?.es_pastor_general === true
   const nombre = (profile as any)?.nombre_completo || 'Usuario'
 
   return (
@@ -77,8 +80,10 @@ export default async function PerfilPage() {
 
         <section className="rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center gap-2"><Bell className="h-5 w-5 shrink-0 text-indigo-400" /><h3 className="text-lg font-semibold text-[#171923]">Notificaciones</h3></div><p className="mb-5 text-sm leading-relaxed text-gray-500">Activa las alertas push para recibir avisos, solicitudes e intercambios en tiempo real.</p><PushToggle /></section>
 
-        {(tieneCentroPastoral || tienePanelAdministrativo) && <section className="space-y-3">
+        {(tieneCentroPastoral || puedeGestionarAtencion || tienePanelAdministrativo) && <section className="space-y-3">
           {tieneCentroPastoral && <Link href="/pastoral" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-indigo-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-indigo-300 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50"><BookHeart className="h-5 w-5 text-indigo-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Centro Pastoral</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Versículos, bosquejos, biblioteca y materiales</p></div></div><span className="shrink-0 text-indigo-300">›</span></Link>}
+          {puedeGestionarAtencion && <Link href="/pastoral/preguntas" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-indigo-200 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50"><MessageCircleQuestion className="h-5 w-5 text-indigo-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Buzón de preguntas</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Preguntas y motivos de oración pendientes</p></div></div><span className="shrink-0 text-slate-300">›</span></Link>}
+          {puedeGestionarAtencion && <Link href="/pastoral/ayuda-solidaria" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-rose-200 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50"><HeartHandshake className="h-5 w-5 text-rose-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Ayuda Solidaria</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Solicitudes y aportes que requieren seguimiento</p></div></div><span className="shrink-0 text-slate-300">›</span></Link>}
           {tienePanelAdministrativo && <PushTestButton />}
           {tienePanelAdministrativo && <Link href="/admin" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] bg-indigo-600 px-4 py-4 text-white shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all hover:bg-indigo-500 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15"><Settings2 className="h-5 w-5 text-white" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Panel de Administración</p><p className="mt-0.5 text-[11px] leading-relaxed text-indigo-200">Ministerios, usuarios y membresías</p></div></div><span className="shrink-0 text-indigo-200">›</span></Link>}
         </section>}

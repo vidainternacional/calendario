@@ -8,9 +8,7 @@ import {
   ChevronRight,
   FileText,
   FolderOpen,
-  HeartHandshake,
   Library,
-  MessageCircleQuestion,
   PackageOpen,
   Plus,
   ShieldCheck,
@@ -54,9 +52,6 @@ export default async function PastoralPage() {
 
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)
-  const puedeGestionarAtencion = (profile as any)?.rol === 'pastor'
-    || (profile as any)?.rol === 'administrador'
-    || esPastorGeneral
   const recientes = (paquetes ?? []) as Array<{ id: string; titulo: string; descripcion_publica: string; estado: string; updated_at: string }>
 
   const herramientas = [
@@ -142,27 +137,6 @@ export default async function PastoralPage() {
               </Link>
             ))}
           </div>
-
-          {puedeGestionarAtencion && (
-            <div className="mt-5">
-              <div className="mb-2 px-1">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">Atención congregacional</h3>
-                <p className="mt-1 text-xs text-slate-500">Superficies privadas para acompañamiento y seguimiento pastoral.</p>
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                <Link href="/pastoral/preguntas" className="flex min-h-20 items-center gap-3 bg-white p-4 transition active:bg-slate-50">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><MessageCircleQuestion className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><strong className="block text-sm text-slate-900">Buzón</strong><span className="mt-0.5 block text-xs leading-5 text-slate-500">Responde preguntas y motivos de oración.</span></span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                </Link>
-                <Link href="/pastoral/ayuda-solidaria" className="flex min-h-20 items-center gap-3 border-t border-slate-100 bg-white p-4 transition active:bg-slate-50">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><HeartHandshake className="h-5 w-5" /></span>
-                  <span className="min-w-0 flex-1"><strong className="block text-sm text-slate-900">Ayuda Solidaria</strong><span className="mt-0.5 block text-xs leading-5 text-slate-500">Da seguimiento privado a solicitudes y aportes.</span></span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                </Link>
-              </div>
-            </div>
-          )}
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Link href="/biblia?from=pastoral" className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left">
