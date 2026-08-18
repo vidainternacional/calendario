@@ -53,6 +53,21 @@ test('Administrador general es exclusivo del rol administrador', () => {
   assert.doesNotMatch(liderazgo, /más de 2 ministerios/)
 })
 
+test('Solicitudes globales resuelve solo por Administrador o liderazgo contextual', () => {
+  const page = source('app/(app)/solicitudes/page.tsx')
+  const actions = source('app/actions/solicitudes.ts')
+
+  assert.match(page, /const esAdministrador = rol === 'administrador'/)
+  assert.match(page, /return esAdministrador \|\| ministeriosLider\.includes\(sol\.ministerio_id\)/)
+  assert.doesNotMatch(page, /esPastorAdmin/)
+
+  assert.match(actions, /obtenerContextoResolucionSolicitud/)
+  assert.match(actions, /\.select\('es_lider'\)/)
+  assert.match(actions, /Solo un administrador o líder de este ministerio puede resolver solicitudes/)
+  assert.match(actions, /\.eq\('estado', 'pendiente'\)/)
+  assert.doesNotMatch(actions, /rol === 'pastor'/)
+})
+
 test('la migración elimina el límite de dos liderazgos y privilegios administrativos antiguos de Pastor', () => {
   const migration = source('supabase/migrations/20260818020500_fase_g_separar_admin_liderazgo_ministerial.sql')
 

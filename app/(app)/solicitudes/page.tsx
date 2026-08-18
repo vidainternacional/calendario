@@ -57,7 +57,7 @@ export default async function SolicitudesPage() {
     .single()
 
   const rol = (profile as any)?.rol as string | undefined
-  const esPastorAdmin = rol === 'pastor' || rol === 'administrador'
+  const esAdministrador = rol === 'administrador'
 
   const { data: membresias } = await supabase
     .from('ministerio_miembros')
@@ -90,7 +90,7 @@ export default async function SolicitudesPage() {
     `)
     .order('created_at', { ascending: false })
 
-  if (!esPastorAdmin) {
+  if (!esAdministrador) {
     if (ministeriosLider.length > 0) {
       query = query.or(
         `solicitado_por.eq.${user.id},ministerio_id.in.(${ministeriosLider.join(',')})`,
@@ -111,8 +111,7 @@ export default async function SolicitudesPage() {
   const resueltas = items.filter((s) => s.estado !== 'pendiente')
 
   function puedeAprobar(sol: any) {
-    if (esPastorAdmin) return true
-    return ministeriosLider.includes(sol.ministerio_id)
+    return esAdministrador || ministeriosLider.includes(sol.ministerio_id)
   }
 
   function SolicitudCard({ sol }: { sol: any }) {
