@@ -22,24 +22,24 @@ export default async function SolicitudesPage({
 
   if (!user) return null
 
-  const { data: membresia } = await supabase
-    .from('ministerio_miembros')
-    .select('es_lider')
-    .eq('ministerio_id', id)
-    .eq('profile_id', user.id)
-    .maybeSingle()
-
-  let esPastor = false
-  if (!(membresia as any)?.es_lider) {
-    const { data: profile } = await supabase
+  const [{ data: membresia }, { data: profile }] = await Promise.all([
+    supabase
+      .from('ministerio_miembros')
+      .select('es_lider')
+      .eq('ministerio_id', id)
+      .eq('profile_id', user.id)
+      .maybeSingle(),
+    supabase
       .from('profiles')
       .select('rol')
       .eq('id', user.id)
-      .single()
-    esPastor = (profile as any)?.rol === 'pastor' || (profile as any)?.rol === 'administrador'
-  }
+      .single(),
+  ])
 
-  const puedeAprobar = Boolean((membresia as any)?.es_lider || esPastor)
+  const puedeAprobar = Boolean(
+    (membresia as any)?.es_lider === true ||
+    (profile as any)?.rol === 'administrador',
+  )
 
   const { data: solicitudes } = await supabase
     .from('solicitudes')
