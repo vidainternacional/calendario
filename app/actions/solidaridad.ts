@@ -42,6 +42,7 @@ function cleanText(value: unknown, max: number) {
 
 function revalidateSolidarity() {
   revalidatePath('/ayuda-solidaria')
+  revalidatePath('/pastoral/ayuda-solidaria')
   revalidatePath('/admin/ayuda-solidaria')
   revalidatePath('/admin/analisis')
   revalidatePath('/admin')
@@ -73,19 +74,6 @@ async function requireManager() {
     || context.profile?.es_pastor_general === true
   if (!allowed) throw new Error('No tienes permiso para administrar Ayuda Solidaria.')
   return context
-}
-
-async function trackEvent(supabase: any, profileId: string, eventName: string) {
-  try {
-    await supabase.from('pilot_usage_events').insert({
-      profile_id: profileId,
-      event_name: eventName,
-      route: '/ayuda-solidaria',
-      metadata: {},
-    })
-  } catch {
-    // La telemetría es complementaria y nunca debe bloquear la solicitud.
-  }
 }
 
 export async function crearSolicitudAyudaSolidaria(input: {
@@ -120,7 +108,6 @@ export async function crearSolicitudAyudaSolidaria(input: {
       })
 
     if (error) throw error
-    await trackEvent(supabase, user.id, 'solidarity_request_created')
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
@@ -161,7 +148,6 @@ export async function registrarAporteSolidario(input: {
       })
 
     if (error) throw error
-    await trackEvent(supabase, user.id, 'solidarity_contribution_created')
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
