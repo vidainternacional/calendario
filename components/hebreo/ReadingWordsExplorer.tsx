@@ -120,7 +120,8 @@ function pronunciationFromHebrew(value: string) {
 }
 
 function pronunciationFor(word: CatalogWord) {
-  return word.pronunciation ?? pronunciationFromHebrew(word.lemma) || '—'
+  const generated = pronunciationFromHebrew(word.lemma)
+  return word.pronunciation ?? (generated || '—')
 }
 
 function spanishFor(word: CatalogWord) {
