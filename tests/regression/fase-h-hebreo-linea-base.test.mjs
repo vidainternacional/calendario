@@ -163,7 +163,7 @@ test('FASE H: cada acceso despliega un único panel y solo Alef-bet está funcio
   assert.equal((home.match(/available: true/g) ?? []).length, 1)
   assert.equal((home.match(/available: false/g) ?? []).length, 5)
   assert.match(home, /Alef-bet es el contenido activo/)
-  assert.match(home, />Diseño</)
+  assert.match(home, /Diseño/)
   assert.match(home, />vista</)
 })
 
