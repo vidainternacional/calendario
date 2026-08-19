@@ -22,7 +22,7 @@ El audio no se sustituye con `speechSynthesis`. Escuchar/repetir solo se habilit
 - **Vocales / niqqud:** base visual validada.
 - **Palabras:** diccionario/vocabulario separado de Lectura; validado como dirección pedagógica.
 - **Lectura:** frases, oraciones y versículos reales separados de Palabras; validado como dirección pedagógica.
-- **Gate actual:** **Reglas esenciales**.
+- **Gate actual:** **Reglas esenciales**, implementación técnica verde en CI y Vercel; pendiente validación visual móvil.
 - **Repaso:** permanece como siguiente área después de validar Reglas.
 - No activar todavía audio, progreso persistente, desbloqueos ni evaluación almacenada.
 
