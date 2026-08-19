@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, BookOpenText, ChevronDown, ExternalLink, History, PlayCircle } from 'lucide-react'
 import AlefBetExplorer from '@/components/hebreo/AlefBetExplorer'
+import NiqqudExplorer from '@/components/hebreo/NiqqudExplorer'
 import { HEBREW_SUPPORT_COURSE } from '@/lib/hebreo/material-apoyo'
 
 type TopMenuId = 'learn' | 'materials' | 'test' | 'bible'
@@ -22,7 +23,7 @@ type LearningSection = {
 
 const SECTIONS: readonly LearningSection[] = [
   { id: 'alef-bet', he: 'אָלֶף־בֵּית', short: 'Alef-Bet', description: 'Reconoce las 22 letras, sus nombres, sonidos, formas finales y diferencias visuales.', available: true },
-  { id: 'vowels', he: 'תְּנוּעוֹת', short: 'Vocales', description: 'Comprende los signos vocálicos y cómo cambian la lectura de una consonante.', example: 'ב + ַ = בַ', focus: 'Identificar el signo, asociarlo con su sonido y combinarlo con una consonante.', practice: 'Una vocal por vez, luego pequeñas combinaciones antes de pasar a palabras.', available: false },
+  { id: 'vowels', he: 'תְּנוּעוֹת', short: 'Vocales', description: 'Comprende los signos vocálicos y cómo cambian la lectura de una consonante.', example: 'ב + ַ = בַ', focus: 'Identificar el signo, asociarlo con su sonido y combinarlo con una consonante.', practice: 'Una vocal por vez, luego pequeñas combinaciones antes de pasar a palabras.', available: true },
   { id: 'reading', he: 'קְרִיאָה', short: 'Lectura', description: 'Combina letras y vocales hasta poder leer sílabas, palabras y frases breves.', example: 'מֶלֶךְ', focus: 'Leer primero con ayudas y reducirlas gradualmente hasta reconocer la palabra por sí sola.', practice: 'Sílabas cortas → palabras frecuentes → fragmentos bíblicos breves.', available: false },
   { id: 'vocabulary', he: 'מִלִּים', short: 'Palabras', description: 'Construye vocabulario bíblico de forma progresiva y dentro de contexto.', example: 'מֶלֶךְ · rey', focus: 'Reconocer forma, lectura y significado sin convertir la transliteración en una muleta permanente.', practice: 'Palabras frecuentes, repaso contextual y reconocimiento dentro de versículos reales.', available: false },
   { id: 'grammar', he: 'דִּקְדּוּק', short: 'Reglas', description: 'Comprende patrones esenciales por capas, sin comenzar con tablas extensas.', example: 'הַ  ·  מ־ל־ך', focus: 'Ver una regla, observarla en un ejemplo y solo después ampliar los detalles técnicos.', practice: 'Una regla breve por sesión, seguida de reconocimiento dentro de palabras reales.', available: false },
@@ -107,7 +108,7 @@ function ArchitecturePreview({ section }: { section: LearningSection }) {
       <ScrollableDisclosure he="אֵיךְ לְתַרְגֵּל" es="Cómo practicar">
         <p className="mx-auto max-w-xl text-[13px] leading-relaxed text-slate-600">{section.practice}</p>
       </ScrollableDisclosure>
-      <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Vista de arquitectura del Bloque 1. Todavía no guarda actividad ni desbloquea contenido.</p>
+      <p className="mt-3 text-[11px] leading-relaxed text-slate-400">Vista previa de una etapa posterior. Aún no guarda actividad ni desbloquea contenido.</p>
     </div>
   )
 }
@@ -126,7 +127,11 @@ function LearnPanel() {
       </div>
       {activeSection && (
         <div id={`hebrew-panel-${activeSection.id}`} className="mt-4 border-t border-slate-200 pt-4">
-          {activeSection.id === 'alef-bet' ? <AlefBetExplorer simpleMode={false} /> : <ArchitecturePreview section={activeSection} />}
+          {activeSection.id === 'alef-bet'
+            ? <AlefBetExplorer simpleMode={false} />
+            : activeSection.id === 'vowels'
+              ? <NiqqudExplorer />
+              : <ArchitecturePreview section={activeSection} />}
         </div>
       )}
     </section>
@@ -214,7 +219,7 @@ function BibleHebrewPreview() {
           <ScrollableDisclosure he="מִלָּה בְּמִלָּה" es="Palabra por palabra"><p className="text-[12px] leading-relaxed text-slate-600">Reutilizará las ocurrencias, lemas, morfología y glosas ya versionadas en el motor bíblico existente.</p></ScrollableDisclosure>
           <ScrollableDisclosure he="הַשְׁוָאָה בִּסְפָרַדִּית" es="Comparar en español"><p className="text-[12px] leading-relaxed text-slate-600">La comparación española utilizará RV1909 cuando corresponda; no se fabricará una traducción literal del Antiguo Testamento.</p></ScrollableDisclosure>
         </div>
-        <div className="mt-4 flex items-start justify-center gap-3 rounded-[18px] bg-white p-4 text-[11px] leading-relaxed text-slate-500"><BookOpenText className="mt-0.5 h-4 w-4 shrink-0 text-indigo-700" aria-hidden="true" /><p>Esta vista define la experiencia. Durante Bloque 1 no crea otro motor bíblico ni nuevas tablas.</p></div>
+        <div className="mt-4 flex items-start justify-center gap-3 rounded-[18px] bg-white p-4 text-[11px] leading-relaxed text-slate-500"><BookOpenText className="mt-0.5 h-4 w-4 shrink-0 text-indigo-700" aria-hidden="true" /><p>Esta vista define la experiencia. Durante FASE H no crea otro motor bíblico ni nuevas tablas.</p></div>
       </div>
     </section>
   )
@@ -244,14 +249,14 @@ export default function HebrewLearningHome() {
                 <h2 className="text-lg font-black">Comprueba lo aprendido</h2>
                 <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">15 preguntas variadas ofrecen una base más amplia para evaluar tu proceso.</p>
                 <ProcessTestPreview />
-                <details className="mt-4 border-y border-slate-200 py-1"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 text-sm font-black text-slate-700">Historial de progreso <History className="h-4 w-4 text-slate-400" aria-hidden="true" /></summary><p className="pb-4 text-[12px] leading-relaxed text-slate-500">Aquí se consultarán tus fichas anteriores para comparar resultados y recomendaciones. No existe persistencia durante Bloque 1.</p></details>
+                <details className="mt-4 border-y border-slate-200 py-1"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 text-sm font-black text-slate-700">Historial de progreso <History className="h-4 w-4 text-slate-400" aria-hidden="true" /></summary><p className="pb-4 text-[12px] leading-relaxed text-slate-500">Aquí se consultarán tus fichas anteriores para comparar resultados y recomendaciones. Aún no existe persistencia de progreso en FASE H.</p></details>
               </div>
             )}
             {openMenu === 'bible' && <BibleHebrewPreview />}
           </section>
         )}
 
-        <footer className="mt-8 border-t border-slate-200 pt-4"><p className="text-center text-[10px] leading-relaxed text-slate-400">FASE H · Bloque 1 · Arquitectura visual. Sin audio, progreso persistente ni desbloqueos automáticos.</p></footer>
+        <footer className="mt-8 border-t border-slate-200 pt-4"><p className="text-center text-[10px] leading-relaxed text-slate-400">FASE H · Vocales y sílabas en desarrollo. Sin audio, progreso persistente ni desbloqueos automáticos.</p></footer>
       </div>
     </main>
   )
