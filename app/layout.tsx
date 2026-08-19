@@ -5,6 +5,7 @@ import './globals.css'
 import './mobile-fixes.css'
 import './dialog-transitions.css'
 import './notebook-fixes.css'
+import './cuaderno-fase-g.css'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -42,7 +43,18 @@ export const viewport: Viewport = {
 const bibleThemeBootstrap = `
   (() => {
     try {
-      if (!window.location.pathname.startsWith('/biblia')) return
+      const pathname = window.location.pathname
+      const esRutaCuaderno = pathname === '/biblia/notas'
+        || pathname.startsWith('/biblia/notas/')
+        || pathname === '/biblia/notas-offline'
+        || pathname.startsWith('/biblia/notas-offline/')
+
+      if (!pathname.startsWith('/biblia') || esRutaCuaderno) {
+        delete document.documentElement.dataset.bibliaTema
+        document.documentElement.style.colorScheme = 'light'
+        return
+      }
+
       const raw = window.localStorage.getItem('vida-biblia-preferencias')
       const storedMode = raw ? JSON.parse(raw)?.modo : 'claro'
       const mode = storedMode === 'oscuro' || storedMode === 'sepia' ? storedMode : 'claro'
