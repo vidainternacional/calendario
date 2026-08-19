@@ -33,6 +33,14 @@ test('FASE H: catálogo se pagina y busca sin cargar toda la base en cliente', (
   assert.match(reading, /result\.total\.toLocaleString/)
 })
 
+test('FASE H: búsqueda hebrea funciona aunque el usuario omita niqqud', () => {
+  assert.match(catalog, /const HEBREW_MARKS/)
+  assert.match(catalog, /function hebrewSearchPattern/)
+  assert.match(catalog, /replace\(HEBREW_MARKS, ''\)/)
+  assert.match(catalog, /Array\.from\(consonants\)\.join\('%'\)/)
+  assert.match(catalog, /query = query\.ilike\('lemma', hebrewSearchPattern\(search\)\)/)
+})
+
 test('FASE H: adaptador reutiliza biblical_lexical_entries aprobado y solo lectura', () => {
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
   assert.match(catalog, /\.eq\('language', 'hebrew'\)/)
