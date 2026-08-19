@@ -7,9 +7,12 @@ import {
   ArrowLeft,
   BookOpenText,
   ChevronDown,
+  ExternalLink,
   LockKeyhole,
+  PlayCircle,
 } from 'lucide-react'
 import AlefBetExplorer from '@/components/hebreo/AlefBetExplorer'
+import { HEBREW_SUPPORT_COURSE } from '@/lib/hebreo/material-apoyo'
 
 type SectionId = 'alef-bet' | 'vowels' | 'reading' | 'vocabulary' | 'grammar' | 'review'
 
@@ -179,6 +182,68 @@ function LearningScrollButton({
   )
 }
 
+function SupportMaterialSection() {
+  return (
+    <section className="mb-8 border-y border-slate-200 bg-white/70 py-4" aria-labelledby="material-apoyo-hebreo-title">
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-3 marker:content-none">
+          <PlayCircle className="h-5 w-5 shrink-0 text-slate-500" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p id="material-apoyo-hebreo-title" className="text-sm font-black text-slate-900">
+              <span lang="he" dir="rtl" className="mr-2 text-indigo-700">
+                חומר עזר
+              </span>
+              Material de apoyo
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              Curso externo de 11 clases para acompañar tu aprendizaje.
+            </p>
+          </div>
+          <ChevronDown
+            className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+
+        <div className="pt-4">
+          <div className="mb-3">
+            <p className="text-sm font-black text-slate-900">Hebreo para principiantes</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              11 clases en YouTube · David Acevedo. Úsalas como complemento; la ruta y las fuentes de VIDA siguen siendo independientes.
+            </p>
+          </div>
+
+          <div className="divide-y divide-slate-200 border-y border-slate-200">
+            {HEBREW_SUPPORT_COURSE.map(item => (
+              <a
+                key={item.orden}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[68px] items-center gap-3 py-3.5 text-left transition-colors active:bg-slate-100/70"
+                aria-label={`Abrir clase ${item.orden}: ${item.titulo} en YouTube`}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-black tabular-nums text-indigo-700">
+                  {item.orden}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-black leading-tight text-slate-900">{item.titulo}</span>
+                  <span className="mt-1 block text-[12px] leading-relaxed text-slate-500">{item.tema}</span>
+                </span>
+                <ExternalLink className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+              </a>
+            ))}
+          </div>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
+            Los videos se abren en YouTube. VIDA no modifica ni reproduce su contenido dentro de la aplicación.
+          </p>
+        </div>
+      </details>
+    </section>
+  )
+}
+
 export default function HebrewLearningHome() {
   const [openSection, setOpenSection] = useState<SectionId | null>(null)
   const [accessibilityOpen, setAccessibilityOpen] = useState(false)
@@ -314,6 +379,8 @@ export default function HebrewLearningHome() {
           </div>
         </details>
       </section>
+
+      <SupportMaterialSection />
 
       <footer className="border-t border-slate-200 pt-5 text-[10px] leading-relaxed text-slate-400">
         Fuente textual para los próximos pasos: STEP Bible / STEPBible-Data, CC BY 4.0.

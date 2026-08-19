@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const dataset = fs.readFileSync('lib/hebreo/alef-bet.ts', 'utf8')
+const supportCourse = fs.readFileSync('lib/hebreo/material-apoyo.ts', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
@@ -169,6 +170,27 @@ test('FASE H: todos los filtros se muestran en una pista horizontal y el activo 
   assert.match(explorer, /<GroupExplanation item=\{activeGroup\} \/>/)
   assert.doesNotMatch(explorer, /moreFiltersOpen/)
   assert.doesNotMatch(explorer, /Más filtros/)
+})
+
+test('FASE H: material de apoyo versiona exactamente 11 clases externas con enlaces proporcionados', () => {
+  assert.equal((supportCourse.match(/orden:\s*\d+/g) ?? []).length, 11)
+  assert.equal((supportCourse.match(/https:\/\/www\.youtube\.com\/watch\?v=/g) ?? []).length, 11)
+  assert.match(supportCourse, /fvBD-rFlTfg/)
+  assert.match(supportCourse, /gxRYxrGZd7s/)
+  assert.match(supportCourse, /UIdIzEtweOc/)
+  assert.match(supportCourse, /Alef-bet · Parte 1/)
+  assert.match(supportCourse, /Shemá Yisrael/)
+  assert.match(supportCourse, /Reglas básicas · Parte 2/)
+})
+
+test('FASE H: el material de apoyo se mantiene secundario y abre YouTube fuera de VIDA', () => {
+  assert.match(home, /function SupportMaterialSection/)
+  assert.match(home, /Material de apoyo/)
+  assert.match(home, /11 clases en YouTube · David Acevedo/)
+  assert.match(home, /HEBREW_SUPPORT_COURSE\.map\(item =>/)
+  assert.match(home, /target="_blank"/)
+  assert.match(home, /rel="noopener noreferrer"/)
+  assert.match(home, /VIDA no modifica ni reproduce su contenido dentro de la aplicación/)
 })
 
 test('FASE H: la implementación sigue sin introducir audio ni persistencia', () => {
