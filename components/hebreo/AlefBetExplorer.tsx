@@ -41,11 +41,11 @@ const LEARNING_GROUPS: readonly {
   description: string
 }[] = [
   { id: 'all', label: 'Todas', description: 'Las 22 letras en su orden.' },
-  { id: 'begadkefat', label: 'Dagesh', description: 'Un punto que modifica el sonido de algunas letras.' },
-  { id: 'sofit', label: 'Sofit', description: 'Cinco letras cambian de forma al final de palabra.' },
-  { id: 'gutturals', label: 'Guturales', description: 'Letras con comportamiento especial de pronunciación y vocalización.' },
-  { id: 'matres', label: 'Matres', description: 'Letras que también pueden ayudar a representar vocales.' },
-  { id: 'shin-sin', label: 'Shin / Sin', description: 'La misma ש cambia de lectura según la posición del punto.' },
+  { id: 'begadkefat', label: 'Dagesh', description: 'Un punto dentro de algunas letras que puede cambiar su sonido.' },
+  { id: 'sofit', label: 'Sofit', description: 'Cinco letras cambian de forma cuando aparecen al final de una palabra.' },
+  { id: 'gutturals', label: 'Guturales', description: 'Letras articuladas en la garganta que siguen algunas reglas especiales de pronunciación y vocalización.' },
+  { id: 'matres', label: 'Matres', description: 'Letras que, además de ser consonantes, pueden ayudar a representar una vocal.' },
+  { id: 'shin-sin', label: 'Shin / Sin', description: 'La misma ש se lee Shin o Sin según la posición del punto.' },
 ]
 
 const SQUARE_FONT = "'Arial Hebrew Scholar', 'Arial Hebrew', sans-serif"
@@ -283,26 +283,27 @@ function ExpandedLetterCard({
         </span>
 
         <span
-          className={`absolute inset-0 flex flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white px-5 py-5 shadow-[0_20px_52px_rgba(15,23,42,0.14)] ring-1 ring-white [backface-visibility:hidden] [transform:rotateY(180deg)] ${
+          className={`absolute inset-0 flex flex-col overflow-y-auto overscroll-contain rounded-[30px] border border-slate-200 bg-white px-5 pb-8 pt-5 shadow-[0_20px_52px_rgba(15,23,42,0.14)] ring-1 ring-white [backface-visibility:hidden] [transform:rotateY(180deg)] [-webkit-overflow-scrolling:touch] touch-pan-y ${
             flipped ? '' : 'pointer-events-none'
           }`}
         >
-          <span className="mb-3 block h-1 w-14 rounded-full bg-indigo-500/85" aria-hidden="true" />
-
-          <span className="flex items-start justify-between gap-4">
-            <span>
-              <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <span className="text-[2rem] font-black leading-none text-slate-950">{name}</span>
-                <span lang="he" dir="rtl" className="text-[1.55rem] font-bold leading-none text-indigo-700">
-                  {hebrewName}
+          <span className="sticky top-0 z-10 -mx-1 -mt-1 block bg-white/95 px-1 pb-3 pt-1 backdrop-blur-sm">
+            <span className="mb-3 block h-1 w-14 rounded-full bg-indigo-500/85" aria-hidden="true" />
+            <span className="flex items-start justify-between gap-4">
+              <span>
+                <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                  <span className="text-[2rem] font-black leading-none text-slate-950">{name}</span>
+                  <span lang="he" dir="rtl" className="text-[1.55rem] font-bold leading-none text-indigo-700">
+                    {hebrewName}
+                  </span>
                 </span>
+                <span className="mt-2 block text-sm font-bold text-slate-500">Valor {letter.valor}</span>
               </span>
-              <span className="mt-2 block text-sm font-bold text-slate-500">Valor {letter.valor}</span>
+              <RotateCcw className="pointer-events-none mt-1 h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
             </span>
-            <RotateCcw className="pointer-events-none mt-1 h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
           </span>
 
-          <span className="mt-5 block border-t border-slate-100 pt-4">
+          <span className="mt-2 block border-t border-slate-100 pt-4">
             <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
               Significado del nombre
             </span>
@@ -324,6 +325,10 @@ function ExpandedLetterCard({
               <span className="text-right text-[15px] font-bold text-slate-700">
                 {letter.ejemplo.significado}
               </span>
+            </span>
+            <span className="mt-3 block text-[13px] leading-relaxed text-slate-500">
+              <span className="font-black text-slate-700">Pronunciación aproximada:</span>{' '}
+              {letter.ejemplo.transliteracion}
             </span>
           </span>
 
@@ -351,11 +356,34 @@ function ExpandedLetterCard({
   )
 }
 
+function GroupExplanation({ item }: { item: (typeof LEARNING_GROUPS)[number] }) {
+  const isLong = item.description.length > 88
+
+  if (!isLong) {
+    return (
+      <p className="mb-5 border-l-2 border-indigo-200 pl-3 text-[13px] leading-relaxed text-slate-600">
+        <span className="font-black text-slate-900">{item.label}</span>
+        <span aria-hidden="true"> · </span>
+        {item.description}
+      </p>
+    )
+  }
+
+  return (
+    <details className="group mb-5 border-l-2 border-indigo-200 pl-3">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 text-[13px] font-black text-slate-900 marker:content-none">
+        ¿Qué es {item.label}?
+        <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <p className="pb-1 text-[13px] leading-relaxed text-slate-600">{item.description}</p>
+    </details>
+  )
+}
+
 export default function AlefBetExplorer({ simpleMode = true }: { simpleMode?: boolean }) {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [group, setGroup] = useState<LearningGroup>('all')
   const [selectedOrder, setSelectedOrder] = useState(1)
-  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
 
   const filteredLetters = useMemo(
     () => ALEF_BET.filter(letter => matchesGroup(letter, group)),
@@ -378,13 +406,12 @@ export default function AlefBetExplorer({ simpleMode = true }: { simpleMode?: bo
 
   return (
     <section id="alef-bet" aria-labelledby="alef-bet-title" className="pt-1">
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <p lang="he" dir="rtl" className="text-[14px] font-bold text-indigo-700">אותיות</p>
+          <p lang="he" dir="rtl" className="text-[15px] font-bold text-indigo-700">אותיות</p>
           <h3 id="alef-bet-title" className="mt-0.5 text-[1.55rem] font-black tracking-[-0.025em] text-slate-950">
             Las letras
           </h3>
-          <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{activeGroup.description}</p>
         </div>
 
         {!simpleMode && (
@@ -415,50 +442,23 @@ export default function AlefBetExplorer({ simpleMode = true }: { simpleMode?: bo
         )}
       </div>
 
-      <div className="mb-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <button
-          type="button"
-          onClick={() => selectGroup('all')}
-          aria-pressed={group === 'all'}
-          className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold transition-colors ${
-            group === 'all' ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
-          }`}
-        >
-          Todas
-        </button>
-
-        {(!simpleMode || moreFiltersOpen) &&
-          LEARNING_GROUPS.slice(1).map(item => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => selectGroup(item.id)}
-              aria-pressed={group === item.id}
-              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold transition-colors ${
-                group === item.id ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-
-        {simpleMode && (
+      <div className="mb-3 flex snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {LEARNING_GROUPS.map(item => (
           <button
+            key={item.id}
             type="button"
-            aria-expanded={moreFiltersOpen}
-            onClick={() => setMoreFiltersOpen(value => !value)}
-            className="min-h-11 shrink-0 rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700"
+            onClick={() => selectGroup(item.id)}
+            aria-pressed={group === item.id}
+            className={`min-h-11 shrink-0 snap-start rounded-full px-4 text-sm font-bold transition-colors ${
+              group === item.id ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
+            }`}
           >
-            <span className="inline-flex items-center gap-1.5">
-              Más filtros
-              <ChevronDown
-                className={`h-4 w-4 transition-transform ${moreFiltersOpen ? 'rotate-180' : ''}`}
-                aria-hidden="true"
-              />
-            </span>
+            {item.label}
           </button>
-        )}
+        ))}
       </div>
+
+      <GroupExplanation item={activeGroup} />
 
       {(simpleMode || viewMode === 'grid') ? (
         <div>

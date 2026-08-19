@@ -39,15 +39,16 @@ test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () =
 test('FASE H: el explorador mantiene grupos pedagógicos y explica términos técnicos', () => {
   assert.match(explorer, /type LearningGroup = 'all' \| 'begadkefat' \| 'sofit' \| 'gutturals' \| 'matres' \| 'shin-sin'/)
   assert.match(explorer, /label: 'Dagesh'/)
-  assert.match(explorer, /Un punto que modifica el sonido/)
+  assert.match(explorer, /Un punto dentro de algunas letras/)
   assert.match(explorer, /label: 'Sofit'/)
-  assert.match(explorer, /Cinco letras cambian de forma al final/)
+  assert.match(explorer, /Cinco letras cambian de forma cuando aparecen al final/)
   assert.match(explorer, /label: 'Guturales'/)
   assert.match(explorer, /label: 'Matres'/)
   assert.match(explorer, /label: 'Shin \/ Sin'/)
+  assert.match(explorer, /function GroupExplanation/)
 })
 
-test('FASE H: cada letra muestra nombre español y hebreo sin transliteración en la ficha', () => {
+test('FASE H: cada letra muestra nombre español y hebreo sin transliteración técnica en la cara principal', () => {
   assert.match(explorer, /const HEBREW_NAMES/)
   assert.match(explorer, /1: 'אָלֶף'/)
   assert.match(explorer, /22: 'תָּו'/)
@@ -92,6 +93,19 @@ test('FASE H: la ficha ampliada prioriza signo, nombre, valor, sonido y signific
   assert.match(explorer, />Ejemplo/)
 })
 
+test('FASE H: el reverso de la ficha puede desplazarse internamente y conserva contenido largo', () => {
+  assert.match(explorer, /overflow-y-auto overscroll-contain/)
+  assert.match(explorer, /\[-webkit-overflow-scrolling:touch\]/)
+  assert.match(explorer, /touch-pan-y/)
+  assert.match(explorer, /sticky top-0/)
+})
+
+test('FASE H: el ejemplo incluye una guía de pronunciación sin inventar audio', () => {
+  assert.match(explorer, /Pronunciación aproximada:/)
+  assert.match(explorer, /letter\.ejemplo\.transliteracion/)
+  assert.doesNotMatch(explorer, /speechSynthesis|new Audio|Audio\(/)
+})
+
 test('FASE H: la ficha se voltea tocando cualquier parte y no repite 1 de 22', () => {
   assert.match(explorer, /aria-label=\{`Voltear ficha de \$\{name\}`\}/)
   assert.match(explorer, /onClick=\{\(\) => setFlipped\(value => !value\)\}/)
@@ -108,9 +122,13 @@ test('FASE H: la ficha sobresale del fondo con borde y sombra, sin cajas interna
   assert.doesNotMatch(explorer, /divide-x divide-slate-100 border-y/)
 })
 
-test('FASE H: la entrada elimina la tarjeta Continuar y usa seis accesos circulares 3x2', () => {
-  assert.match(home, /grid grid-cols-3 gap-3/)
-  assert.match(home, /rounded-full border px-2 py-3 text-center/)
+test('FASE H: la entrada elimina Continuar y usa seis accesos tipo papiro en 3x2', () => {
+  assert.match(home, /grid grid-cols-3 gap-x-2 gap-y-3/)
+  assert.match(home, /function LearningScrollButton/)
+  assert.match(home, /absolute inset-x-2 inset-y-1 rounded-\[18px\] border/)
+  assert.match(home, /absolute -left-1\.5 bottom-2 top-2 w-3 rounded-full border/)
+  assert.match(home, /absolute -right-1\.5 bottom-2 top-2 w-3 rounded-full border/)
+  assert.match(home, /text-\[1\.35rem\] font-black/)
   assert.equal((home.match(/id: '(?:alef-bet|vowels|reading|vocabulary|grammar|review)'/g) ?? []).length, 6)
   assert.doesNotMatch(home, /Continúa tu camino/)
   assert.doesNotMatch(home, /Reconoce las primeras letras/)
@@ -119,7 +137,7 @@ test('FASE H: la entrada elimina la tarjeta Continuar y usa seis accesos circula
 
 test('FASE H: el panel desplegado se integra al fondo y no encierra Alef-bet en otra tarjeta', () => {
   const panelStart = home.indexOf('function StagePanel')
-  const panelEnd = home.indexOf('export default function HebrewLearningHome')
+  const panelEnd = home.indexOf('function LearningScrollButton')
   const panel = home.slice(panelStart, panelEnd)
 
   assert.match(panel, /className="mt-6"/)
@@ -144,11 +162,13 @@ test('FASE H: el encabezado mantiene hebreo y español con una sola idea princip
   assert.doesNotMatch(home, /Sesión breve/)
 })
 
-test('FASE H: filtros especializados siguen detrás de Más filtros en modo sencillo', () => {
-  assert.match(explorer, /moreFiltersOpen/)
-  assert.match(explorer, /Más filtros/)
-  assert.match(explorer, /simpleMode/)
-  assert.match(explorer, /min-h-11 shrink-0 rounded-full px-4/)
+test('FASE H: todos los filtros se muestran en una pista horizontal y el activo se explica debajo', () => {
+  assert.match(explorer, /LEARNING_GROUPS\.map\(item =>/)
+  assert.match(explorer, /overflow-x-auto/)
+  assert.match(explorer, /snap-start rounded-full px-4/)
+  assert.match(explorer, /<GroupExplanation item=\{activeGroup\} \/>/)
+  assert.doesNotMatch(explorer, /moreFiltersOpen/)
+  assert.doesNotMatch(explorer, /Más filtros/)
 })
 
 test('FASE H: la implementación sigue sin introducir audio ni persistencia', () => {

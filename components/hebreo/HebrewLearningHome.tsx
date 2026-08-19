@@ -115,6 +115,70 @@ function StagePanel({
   )
 }
 
+function LearningScrollButton({
+  section,
+  active,
+  onClick,
+}: {
+  section: LearningSection
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      aria-controls={`hebrew-panel-${section.id}`}
+      onClick={onClick}
+      className="relative min-h-[108px] px-2 py-2 text-center transition-transform duration-200 active:scale-[0.97] motion-reduce:transition-none"
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute inset-x-2 inset-y-1 rounded-[18px] border shadow-[0_7px_20px_rgba(15,23,42,0.06)] transition-colors ${
+          active
+            ? 'border-indigo-600 bg-indigo-600'
+            : 'border-[#ded8c9] bg-[#fffdfa]'
+        }`}
+      >
+        <span
+          className={`absolute -left-1.5 bottom-2 top-2 w-3 rounded-full border ${
+            active
+              ? 'border-indigo-500 bg-indigo-500'
+              : 'border-[#ded8c9] bg-[#f4efe3]'
+          }`}
+        />
+        <span
+          className={`absolute -right-1.5 bottom-2 top-2 w-3 rounded-full border ${
+            active
+              ? 'border-indigo-500 bg-indigo-500'
+              : 'border-[#ded8c9] bg-[#f4efe3]'
+          }`}
+        />
+      </span>
+
+      <span className="relative z-10 flex min-h-[92px] flex-col items-center justify-center px-1">
+        <span
+          lang="he"
+          dir="rtl"
+          className={`block text-[1.35rem] font-black leading-tight ${
+            active ? 'text-white' : 'text-indigo-700'
+          }`}
+        >
+          {section.he}
+        </span>
+        <span className={`mt-1.5 block text-[12px] font-black leading-tight ${active ? 'text-white' : 'text-slate-800'}`}>
+          {section.short}
+        </span>
+        {!section.available && (
+          <span className={`mt-1 block text-[9px] font-bold ${active ? 'text-white/70' : 'text-slate-400'}`}>
+            después
+          </span>
+        )}
+      </span>
+    </button>
+  )
+}
+
 export default function HebrewLearningHome() {
   const [openSection, setOpenSection] = useState<SectionId | null>(null)
   const [accessibilityOpen, setAccessibilityOpen] = useState(false)
@@ -206,38 +270,16 @@ export default function HebrewLearningHome() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-x-2 gap-y-3">
           {SECTIONS.map(section => {
             const active = openSection === section.id
             return (
-              <button
+              <LearningScrollButton
                 key={section.id}
-                type="button"
-                aria-pressed={active}
-                aria-controls={`hebrew-panel-${section.id}`}
+                section={section}
+                active={active}
                 onClick={() => setOpenSection(current => (current === section.id ? null : section.id))}
-                className={`aspect-square min-h-[92px] rounded-full border px-2 py-3 text-center transition-all duration-200 active:scale-[0.97] motion-reduce:transition-none ${
-                  active
-                    ? 'border-indigo-600 bg-indigo-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.22)]'
-                    : 'border-slate-200 bg-white text-slate-800 shadow-[0_6px_20px_rgba(15,23,42,0.05)]'
-                }`}
-              >
-                <span
-                  lang="he"
-                  dir="rtl"
-                  className={`block text-[14px] font-bold ${active ? 'text-white/80' : 'text-indigo-700'}`}
-                >
-                  {section.he}
-                </span>
-                <span className="mt-1 block text-[12px] font-black leading-tight">
-                  {section.short}
-                </span>
-                {!section.available && (
-                  <span className={`mt-1 block text-[9px] font-bold ${active ? 'text-white/65' : 'text-slate-400'}`}>
-                    después
-                  </span>
-                )}
-              </button>
+              />
             )
           })}
         </div>
