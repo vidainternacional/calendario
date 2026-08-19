@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, BookOpenText, ChevronDown, ExternalLink, History, PlayCircle } from 'lucide-react'
 import AlefBetExplorer from '@/components/hebreo/AlefBetExplorer'
 import NiqqudExplorer from '@/components/hebreo/NiqqudExplorer'
+import ReadingWordsExplorer from '@/components/hebreo/ReadingWordsExplorer'
 import { HEBREW_SUPPORT_COURSE } from '@/lib/hebreo/material-apoyo'
 
 type TopMenuId = 'learn' | 'materials' | 'test' | 'bible'
@@ -24,7 +25,7 @@ type LearningSection = {
 const SECTIONS: readonly LearningSection[] = [
   { id: 'alef-bet', he: 'אָלֶף־בֵּית', short: 'Alef-Bet', description: 'Reconoce las 22 letras, sus nombres, sonidos, formas finales y diferencias visuales.', available: true },
   { id: 'vowels', he: 'תְּנוּעוֹת', short: 'Vocales', description: 'Comprende los signos vocálicos y cómo cambian la lectura de una consonante.', example: 'ב + ַ = בַ', focus: 'Identificar el signo, asociarlo con su sonido y combinarlo con una consonante.', practice: 'Una vocal por vez, luego pequeñas combinaciones antes de pasar a palabras.', available: true },
-  { id: 'reading', he: 'קְרִיאָה', short: 'Lectura', description: 'Combina letras y vocales hasta poder leer sílabas, palabras y frases breves.', example: 'מֶלֶךְ', focus: 'Leer primero con ayudas y reducirlas gradualmente hasta reconocer la palabra por sí sola.', practice: 'Sílabas cortas → palabras frecuentes → fragmentos bíblicos breves.', available: false },
+  { id: 'reading', he: 'קְרִיאָה', short: 'Lectura', description: 'Combina letras y vocales hasta poder leer sílabas, palabras y frases breves.', example: 'מֶלֶךְ', focus: 'Leer primero con ayudas y reducirlas gradualmente hasta reconocer la palabra por sí sola.', practice: 'Sílabas cortas → palabras frecuentes → fragmentos bíblicos breves.', available: true },
   { id: 'vocabulary', he: 'מִלִּים', short: 'Palabras', description: 'Construye vocabulario bíblico de forma progresiva y dentro de contexto.', example: 'מֶלֶךְ · rey', focus: 'Reconocer forma, lectura y significado sin convertir la transliteración en una muleta permanente.', practice: 'Palabras frecuentes, repaso contextual y reconocimiento dentro de versículos reales.', available: false },
   { id: 'grammar', he: 'דִּקְדּוּק', short: 'Reglas', description: 'Comprende patrones esenciales por capas, sin comenzar con tablas extensas.', example: 'הַ  ·  מ־ל־ך', focus: 'Ver una regla, observarla en un ejemplo y solo después ampliar los detalles técnicos.', practice: 'Una regla breve por sesión, seguida de reconocimiento dentro de palabras reales.', available: false },
   { id: 'review', he: 'חֲזָרָה', short: 'Repaso', description: 'Vuelve a lo que necesita refuerzo mediante sesiones breves y enfocadas.', example: 'ב  ·  כ  ·  פ', focus: 'Priorizar lo que el estudiante confunde, olvida o tarda demasiado en reconocer.', practice: 'Sesiones cortas de 5–10 elementos combinando reconocimiento, lectura y significado.', available: false },
@@ -131,7 +132,9 @@ function LearnPanel() {
             ? <AlefBetExplorer simpleMode={false} />
             : activeSection.id === 'vowels'
               ? <NiqqudExplorer />
-              : <ArchitecturePreview section={activeSection} />}
+              : activeSection.id === 'reading'
+                ? <ReadingWordsExplorer />
+                : <ArchitecturePreview section={activeSection} />}
         </div>
       )}
     </section>
@@ -256,7 +259,7 @@ export default function HebrewLearningHome() {
           </section>
         )}
 
-        <footer className="mt-8 border-t border-slate-200 pt-4"><p className="text-center text-[10px] leading-relaxed text-slate-400">FASE H · Vocales y sílabas en desarrollo. Sin audio, progreso persistente ni desbloqueos automáticos.</p></footer>
+        <footer className="mt-8 border-t border-slate-200 pt-4"><p className="text-center text-[10px] leading-relaxed text-slate-400">FASE H · Aprendizaje en desarrollo. Sin audio, progreso persistente ni desbloqueos automáticos.</p></footer>
       </div>
     </main>
   )
