@@ -3,29 +3,30 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const css = fs.readFileSync('app/cuaderno-fase-g.css', 'utf8')
+const workspace = fs.readFileSync('components/biblia/BibleNotesWorkspace.tsx', 'utf8')
 const loading = fs.readFileSync('app/(app)/biblia/notas/loading.tsx', 'utf8')
 const bibleLoading = fs.readFileSync('app/(app)/biblia/loading.tsx', 'utf8')
 const layout = fs.readFileSync('app/layout.tsx', 'utf8')
 const themeSync = fs.readFileSync('components/biblia/BibleThemeRouteSync.tsx', 'utf8')
 
-test('FASE G: el carrusel de notas queda limitado al eje horizontal en iPhone', () => {
-  assert.match(css, /\[aria-label="Notas del cuaderno"\]/)
-  assert.match(css, /overflow-y:\s*hidden\s*!important/)
-  assert.match(css, /touch-action:\s*pan-x/)
-  assert.match(css, /overscroll-behavior-x:\s*contain/)
-  assert.match(css, /overscroll-behavior-y:\s*none/)
+test('FASE G: Nueva nota queda fuera de la pista elástica y solo las fichas hacen scroll', () => {
+  assert.match(workspace, /<nav aria-label="Notas del cuaderno" className="vida-cuaderno-notas-rail[^>]*>/)
+  assert.match(workspace, /aria-label="Nueva nota" className="vida-cuaderno-nueva-nota/)
+  assert.match(workspace, /<div className="vida-cuaderno-notas-scroll[^>]*overflow-x-auto/)
+  assert.doesNotMatch(workspace, /<nav aria-label="Notas del cuaderno"[^>]*overflow-x-auto/)
+  assert.match(css, /\.vida-cuaderno-nueva-nota\s*\{[\s\S]*?position:\s*absolute\s*!important/)
+  assert.match(css, /\.vida-cuaderno-notas-scroll\s*\{[\s\S]*?touch-action:\s*pan-x/)
+  assert.match(css, /\.vida-cuaderno-notas-scroll\s*\{[\s\S]*?overflow-y:\s*hidden\s*!important/)
+  assert.doesNotMatch(css, /overscroll-behavior-x:\s*contain/)
 })
 
-test('FASE G: Nueva nota permanece anclada y oculta por completo las fichas que pasan detrás', () => {
-  assert.match(css, /\[aria-label="Notas del cuaderno"\] > button\[aria-label="Nueva nota"\]/)
-  assert.match(css, /position:\s*sticky/)
-  assert.match(css, /left:\s*0/)
-  assert.match(css, /z-index:\s*6/)
-  assert.match(css, /button\[aria-label="Nueva nota"\]::after/)
-  assert.match(css, /width:\s*7rem/)
-  assert.match(css, /#f7f7f4\s+0%/)
-  assert.match(css, /#f7f7f4\s+38%/)
-  assert.match(css, /0\s+0\s+0\s+0\.45rem\s+#f7f7f4/)
+test('FASE G: la zona izquierda es una placa blanca completa con desvanecido solo en el borde', () => {
+  assert.match(workspace, /vida-cuaderno-notas-cover/)
+  assert.match(css, /\.vida-cuaderno-notas-cover\s*\{[\s\S]*?background:\s*#f7f7f4/)
+  assert.match(css, /\.vida-cuaderno-notas-cover::after/)
+  assert.match(css, /width:\s*2\.75rem/)
+  assert.match(css, /linear-gradient/)
+  assert.doesNotMatch(css, /0\s+0\s+0\s+0\.45rem\s+#f7f7f4/)
   assert.doesNotMatch(css, /backdrop-filter/)
 })
 

@@ -1,59 +1,76 @@
 /*
  * FASE G — Ajustes transversales del Cuaderno detectados en validación PWA/iPhone.
- * El carrusel puede desplazarse horizontalmente, pero la acción primaria "Nueva"
- * debe permanecer anclada. El loader del Cuaderno siempre usa su superficie clara
- * y nunca hereda el tema oscuro/sepia temporal de Biblia.
+ * El carrusel conserva el rebote horizontal nativo solo en la pista de notas:
+ * la acción primaria "Nueva" vive fuera del scroll y permanece inmóvil.
+ * El loader del Cuaderno siempre usa su superficie clara y nunca hereda el tema
+ * oscuro/sepia temporal de Biblia.
  */
 
 [aria-label="Notas del cuaderno"] {
   position: relative;
   isolation: isolate;
-  overflow-y: hidden !important;
-  touch-action: pan-x;
-  overscroll-behavior-x: contain;
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-[aria-label="Notas del cuaderno"] > button[aria-label="Nueva nota"] {
-  position: sticky !important;
-  left: 0;
-  z-index: 6;
-  flex: 0 0 auto;
-  overflow: visible;
-  /* Escudo opaco del mismo tono que la superficie: ninguna ficha puede asomarse
-     alrededor del botón fijo mientras termina de desaparecer. */
-  box-shadow:
-    0 0 0 0.45rem #f7f7f4,
-    12px 0 24px rgba(247, 247, 244, 0.34);
 }
 
 /*
- * Desaparición tipo iOS. La transición es deliberadamente más ancha que antes
- * para que una ficha circular completa pierda presencia de forma progresiva.
- * Junto al botón existe una meseta opaca: una vez que la ficha desaparece ya no
- * vuelve a verse detrás de "Nueva". No usamos blur porque producía una franja
- * rectangular visible sobre el carrusel.
+ * El botón morado ya no forma parte del scroll horizontal. Por eso Safari puede
+ * aplicar su elasticidad a las notas sin desplazar visualmente la acción fija.
  */
-[aria-label="Notas del cuaderno"] > button[aria-label="Nueva nota"]::after {
+.vida-cuaderno-nueva-nota {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  flex: 0 0 auto;
+}
+
+/*
+ * Placa blanca completa a la izquierda. Cubre todo el rectángulo situado detrás
+ * de "Nueva"; el degradado existe únicamente en su borde derecho. Las fichas
+ * pasan por debajo, se desvanecen y después quedan totalmente ocultas, sin halos
+ * circulares ni reapariciones alrededor del botón.
+ */
+.vida-cuaderno-notas-cover {
+  position: absolute;
+  top: -0.4rem;
+  bottom: -0.4rem;
+  left: -0.25rem;
+  width: 5.25rem;
+  z-index: 5;
+  pointer-events: none;
+  background: #f7f7f4;
+}
+
+.vida-cuaderno-notas-cover::after {
   content: '';
   position: absolute;
-  top: -0.55rem;
-  bottom: -0.55rem;
-  left: calc(100% + 0.35rem);
-  width: 7rem;
-  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 2.75rem;
   pointer-events: none;
   background: linear-gradient(
     90deg,
     #f7f7f4 0%,
-    #f7f7f4 38%,
-    rgba(247, 247, 244, 0.98) 50%,
-    rgba(247, 247, 244, 0.88) 63%,
-    rgba(247, 247, 244, 0.66) 75%,
-    rgba(247, 247, 244, 0.34) 88%,
+    rgba(247, 247, 244, 0.98) 24%,
+    rgba(247, 247, 244, 0.9) 42%,
+    rgba(247, 247, 244, 0.68) 62%,
+    rgba(247, 247, 244, 0.34) 82%,
     rgba(247, 247, 244, 0) 100%
   );
+}
+
+/*
+ * Solo esta pista desplaza las notas. Se mantiene el gesto exclusivamente
+ * horizontal y se deja libre el overscroll-x para conservar el rebote nativo de
+ * iOS solicitado durante la validación.
+ */
+.vida-cuaderno-notas-scroll {
+  margin-left: 6.5rem;
+  width: calc(100% - 6.5rem);
+  overflow-y: hidden !important;
+  touch-action: pan-x;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /*
