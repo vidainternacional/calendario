@@ -1,0 +1,81 @@
+name: Validar paquete textual TAHOT de Abdías
+
+on:
+  push:
+    branches:
+      - fase-d/paquete-tahot-abdias
+    paths:
+      - "scripts/stepbible/build_ot_book_package.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - ".github/workflows/build-tahot-obadiah-package.yml"
+      - "docs/FASE_D_PAQUETE_TAHOT_ABDIAS.md"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "scripts/stepbible/build_ot_book_package.py"
+      - "scripts/stepbible/tahot_schema.py"
+      - "scripts/stepbible/inspect_ot_sources.py"
+      - ".github/workflows/build-tahot-obadiah-package.yml"
+      - "docs/FASE_D_PAQUETE_TAHOT_ABDIAS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar auto-tests
+        run: |
+          python scripts/stepbible/tahot_schema.py --self-test
+          python scripts/stepbible/build_ot_book_package.py --self-test
+
+      - name: Generar paquete de Abdías
+        run: |
+          python scripts/stepbible/build_ot_book_package.py \
+            --book Oba \
+            --output artifacts/tahot-oba
+
+      - name: Validar archivos generados
+        run: |
+          test -s artifacts/tahot-oba/manifest.json
+          test -s artifacts/tahot-oba/records.jsonl
+          test -s artifacts/tahot-oba/verses.json
+          test -s artifacts/tahot-oba/audit.md
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('artifacts/tahot-oba')
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          assert manifest['book']['code'] == 'Oba'
+          assert manifest['counts']['chapters'] == 1
+          assert manifest['counts']['references'] == 21
+          assert manifest['first_reference'] == 'Oba.1.1'
+          assert manifest['last_reference'] == 'Oba.1.21'
+          assert manifest['integrity']['record_hashes_valid'] is True
+          assert manifest['integrity']['verse_hashes_valid'] is True
+          assert len(manifest['integrity']['package_sha256']) == 64
+          assert manifest['notes']['database_imported'] is False
+          print(json.dumps(manifest['counts'], ensure_ascii=False, indent=2))
+          PY
+
+      - name: Mostrar auditoría
+        run: cat artifacts/tahot-oba/audit.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tahot-obadiah-book-package
+          path: artifacts/tahot-oba
+          if-no-files-found: error
+          retention-days: 14
