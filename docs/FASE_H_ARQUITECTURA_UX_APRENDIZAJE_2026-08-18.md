@@ -8,7 +8,7 @@ Estado: contrato de diseño para FASE H
 - **Alef-Bet:** base visual validada por el usuario después de corregir nomenclatura, desplegables, scroll, retracción de fichas y desbordes móviles.
 - **Vocales y sílabas / niqqud:** base visual validada por el usuario; continúa como módulo real dentro de Aprender.
 - **Gate actual:** Lectura de palabras.
-- Implementación técnica del gate actual: CI #2124 SUCCESS + Vercel SUCCESS en `d551586240aa6a9f9f4d0c971a984f6a9308255f`.
+- Implementación técnica del gate actual: CI y Vercel verdes en el head de la rama.
 - No avanzar a Vocabulario, Gramática, audio ni progreso persistente hasta validar visualmente la base de Lectura.
 
 ## 1. Arquitectura de información
