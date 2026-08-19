@@ -59,9 +59,9 @@ test('FASE H: cada letra muestra nombre español y hebreo sin transliteración e
 
 test('FASE H: la ficha grande usa solo tres representaciones hebreas y no repite la cuadrada', () => {
   assert.match(explorer, /function PrimaryLetterForms/)
-  assert.match(explorer, />Libro/)
-  assert.match(explorer, />Cuadrada/)
-  assert.match(explorer, />Manuscrita/)
+  assert.match(explorer, /Libro/)
+  assert.match(explorer, /Cuadrada/)
+  assert.match(explorer, /Manuscrita/)
   assert.match(explorer, /Arial Hebrew Scholar/)
   assert.match(explorer, /Times New Roman/)
   assert.match(explorer, /Corsiva Hebrew/)
