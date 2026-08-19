@@ -1,19 +1,26 @@
 # FASE H — Arquitectura UX de aprendizaje de Hebreo Bíblico
 
 Fecha: 2026-08-18
-Estado: contrato de diseño para FASE H · Bloque 1
+Estado: contrato de diseño para FASE H
+
+## Estado de validación móvil — 2026-08-19
+
+- **Alef-Bet:** base visual validada por el usuario después de corregir nomenclatura, desplegables, scroll, retracción de fichas y desbordes móviles.
+- **Vocales y sílabas / niqqud:** base visual validada por el usuario; continúa como módulo real dentro de Aprender.
+- **Gate actual:** Lectura de palabras.
+- No avanzar a Vocabulario, Gramática, audio ni progreso persistente hasta validar la base de Lectura.
 
 ## 1. Arquitectura de información
 
-Hebreo Bíblico debe sentirse como una biblioteca de estudio y una app moderna de aprendizaje: calmada, editorial, accesible y progresiva. La entrada del módulo muestra solo encabezado, siguiente paso y áreas de aprendizaje. El contenido avanzado permanece plegado.
+Hebreo Bíblico debe sentirse como una biblioteca de estudio y una app moderna de aprendizaje: calmada, editorial, accesible y progresiva. La entrada del módulo muestra solo encabezado y accesos principales. El contenido avanzado permanece plegado.
 
-Jerarquía:
+Jerarquía actual:
 1. Inicio de Hebreo Bíblico.
-2. Lecciones.
-3. Repaso.
-4. Diccionario.
-5. Lectura guiada.
-6. Conoce el hebreo, como contexto opcional.
+2. Aprender.
+3. Materiales y curso.
+4. Prueba tu progreso.
+5. Biblia en hebreo / lectura guiada.
+6. Conoce el hebreo, como contexto opcional futuro.
 
 La barra global de VIDA no cambia: Inicio · Calendario · Avisos · Estudios · Perfil.
 
@@ -23,7 +30,7 @@ La barra global de VIDA no cambia: Inicio · Calendario · Avisos · Estudios ·
 2. Vocales y sílabas.
 3. Lectura de palabras.
 4. Vocabulario básico.
-5. Letras finales.
+5. Letras finales dentro de repaso contextual.
 6. Dagesh y shewa.
 7. Raíces hebreas.
 8. Gramática esencial.
@@ -35,11 +42,13 @@ La ruta completa debe aparecer de forma compacta o plegable; no como diez tarjet
 ## 3. Pantallas
 
 ### Inicio
-Acción principal: `Continuar`.
-Visible: Hebreo Bíblico / עברית מקראית, subtítulo `Aprende a leer paso a paso`, siguiente lección real y acceso a áreas. No mostrar porcentajes ni minutos ficticios.
+Visible: Hebreo Bíblico / עברית מקראית, subtítulo `Aprende a leer paso a paso` y cuatro accesos compactos bilingües: Aprender · Materiales y curso · Prueba tu progreso · Biblia en hebreo. No mostrar porcentajes ni minutos ficticios.
+
+### Aprender
+Seis áreas compactas y desplegables: Alef-Bet · Vocales · Lectura · Palabras · Reglas · Repaso. Solo una se abre a la vez. La información secundaria usa desplegables integrados con scroll limitado, siguiendo el patrón aprobado de Biblia → Favoritos.
 
 ### Lección
-Una instrucción principal por pantalla. El contenido hebreo domina visualmente. Acciones posibles según la actividad: `Escuchar`, `Repetir`, `Comprobar`, `Continuar`. Audio solo cuando exista una fuente aprobada.
+Una instrucción principal por pantalla. El contenido hebreo domina visualmente. Acciones posibles según la actividad: `Comprobar`, `Continuar` y ayudas graduadas. Audio solo cuando exista una fuente aprobada.
 
 ### Repaso
 Sesiones futuras de 5–10 elementos. Estados: `Lo sé`, `Necesito practicar`, `Repasar después`.
@@ -52,21 +61,19 @@ Texto original RTL protagonista. Ayudas graduadas: nikud → palabra → transli
 
 ## 4. Componentes reutilizables
 
-- `HebrewModuleHeader`: título, subtítulo, progreso real cuando exista y acceso de lectura/accesibilidad.
-- `ContinueCard`: siguiente paso y CTA principal.
-- `LearningRouteAccordion`: ruta curricular compacta.
+- `HebrewModuleHeader`: título, subtítulo y progreso real cuando exista.
 - `LearningSectionAccordion`: área de aprendizaje; una sola abierta a la vez.
 - `PillGroup`: filtros horizontales.
-- `MoreFiltersDisclosure`: filtros especializados fuera de la primera vista.
 - `HebrewLetterTile`: selector de letra.
 - `HebrewLetterCard`: ficha principal del Alef-bet.
-- `HebrewVowelCard`: Ficha de vocal.
-- `HebrewSyllableCard`: Ficha de sílaba.
-- `VocabularyCard`: Ficha de vocabulario.
-- `GrammarRuleCard`: Ficha gramatical.
-- `AudioControl`: escuchar/pausar/repetir cuando exista audio aprobado.
-- `SimpleModeToggle`: reduce detalle visible.
-- estados reutilizables: carga, vacío, Sin conexión, Error de audio y contenido bloqueado.
+- `NiqqudExplorer`: explorador aprobado de vocales y sílabas.
+- `ReadingWordsExplorer`: lectura progresiva por palabra con ayudas graduadas.
+- `HebrewVowelCard`: ficha de vocal.
+- `HebrewSyllableCard`: ficha de sílaba.
+- `VocabularyCard`: ficha de vocabulario.
+- `GrammarRuleCard`: ficha gramatical.
+- `AudioControl`: escuchar/pausar/repetir solo cuando exista audio aprobado.
+- estados reutilizables: carga, vacío, sin conexión y contenido no disponible.
 
 ## 5. Sistema de botones píldora
 
@@ -74,7 +81,7 @@ Altura táctil mínima: 44 px. Objetivo general de control: al menos 44×44 px.
 
 Reglas:
 - selección clara por fondo, peso tipográfico y `aria-pressed`, no solo color;
-- padding horizontal generoso;
+- padding horizontal suficiente;
 - scroll horizontal si no caben;
 - no reducir tipografía para forzar todos los filtros en una línea.
 
@@ -92,53 +99,63 @@ Explicaciones sencillas:
 
 ## 6. Sistema de acordeones
 
-Solo un acordeón principal de aprendizaje abierto a la vez. El encabezado completo es táctil y mantiene una altura cómoda. El estado bloqueado utiliza texto + icono, nunca color aislado. Las animaciones son breves y respetan `prefers-reduced-motion`.
+Solo un acordeón principal de aprendizaje abierto a la vez. El encabezado completo es táctil y mantiene una altura cómoda. Las animaciones son breves y respetan `prefers-reduced-motion`.
 
-Áreas: Alef-bet · Vocales y sílabas · Vocabulario · Gramática · Lecturas · Repaso.
+Áreas: Alef-Bet · Vocales · Lectura · Palabras · Reglas · Repaso.
 
-## 7. Diseño de la ficha del Alef-bet
+Las explicaciones largas deben permanecer cerradas por defecto y abrir dentro de una superficie integrada con altura limitada y scroll interno cuando sea necesario.
 
-Primera cara:
-- posición `1 de 22`;
-- nombre de la letra;
-- valor numérico cuando sea útil;
-- letra hebrea muy grande, idealmente 128–176 px según dispositivo;
-- sonido básico;
-- explicación sencilla de una frase cuando haga falta;
-- ejemplo breve en hebreo con nikud y traducción española;
-- acción clara para ver la segunda cara.
+## 7. Diseño de la ficha del Alef-bet — validado
 
-Segunda cara:
-- forma cuadrada;
-- forma manuscrita cuando la plataforma disponga de una fuente adecuada;
-- forma histórica comparativa cuando exista evidencia;
-- significado/origen histórico del nombre o signo con cautela editorial.
+Mini-ficha:
+- número;
+- letra cuadrada protagonista;
+- nombre completo sin truncamiento.
 
-La transliteración, Unicode y referencias académicas no dominan la primera ficha. La pictografía nunca se presenta como significado automático de una palabra bíblica.
+Ficha ampliada:
+- nombre español + hebreo;
+- valor;
+- Libro · Cuadrada · Manuscrita;
+- sonido y significado histórico breve;
+- reverso con contenido editorial detallado.
 
-## 8. Ficha de vocal
+Comportamiento aprobado:
+- no hay ficha abierta al entrar;
+- tocar una letra abre la ficha debajo de su fila con zoom suave;
+- tocar la misma letra la retrae con el efecto inverso;
+- todo el reverso se desplaza como una sola pieza, sin encabezado `sticky`;
+- pictografía/historia nunca se presenta como significado automático de una palabra bíblica.
 
-Ficha de vocal:
-- nombre, por ejemplo `Pataj`;
-- símbolo grande;
-- sonido aproximado;
-- combinación con consonante, por ejemplo `בַּ = ba`;
-- audio cuando exista;
-- explicación de una frase.
+## 8. Vocales y sílabas / niqqud — validado
 
-Cautela: `El sonido puede variar ligeramente según la tradición de pronunciación.`
+Base inicial: Pataj · Qamats · Segol · Tsere · Hiriq · Holam · Qubuts · Shuruq · Sheva · Hataf Pataj · Hataf Segol · Hataf Qamats.
 
-## 9. Ficha de sílaba
+Agrupación: Básicas · Reducidas · Sheva · Todas.
 
-Ficha de sílaba:
-- consonante + vocal = sílaba;
-- ejemplo visual `ב + ַ = בַּ`;
-- lectura `ba`;
-- secuencia progresiva futura: escuchar → identificar → elegir → leer sin límite de tiempo → combinar dos sílabas.
+Cada ficha muestra:
+- signo y nombre;
+- sonido orientativo para hispanohablantes;
+- combinación consonante + vocal;
+- lectura resultante;
+- explicación breve;
+- cautela contextual cuando corresponde.
 
-Microcopy: `Una sílaba hebrea contiene una consonante y una vocal.`
+Cautelas preservadas: qamats qatan, sheva vocal/silencioso y uso del punto de shuruq. No se presenta pronunciación pedagógica como reconstrucción histórica infalible.
 
-## 10. Ficha de vocabulario
+## 9. Lectura de palabras — gate actual
+
+La primera práctica usa palabras breves para pasar de signos aislados a lectura completa.
+
+Ayudas graduadas:
+1. `Con niqqud`: palabra vocalizada + transliteración temporal.
+2. `Con ayuda`: palabra vocalizada + división pedagógica en pequeñas unidades.
+3. `Sin ayuda`: grafía consonántica sin transliteración.
+
+Agrupación inicial: Cortas · Frecuentes · Distinguir · Todas.
+
+La transliteración es una ayuda temporal; el objetivo es retirarla. La ficha incluye significado sencillo y un punto concreto en el que fijarse. Esta práctica no registra dominio ni califica resultados todavía.
+
+## 10. Ficha de vocabulario — futuro
 
 Ficha de vocabulario:
 - palabra hebrea grande;
@@ -150,9 +167,9 @@ Ficha de vocabulario:
 
 Filtros futuros: Personas · Familia · Naturaleza · Casa · Verbos · Números · Tiempo · Frecuentes.
 
-## 11. Ficha gramatical
+## 11. Ficha gramatical — futuro
 
-Ficha gramatical, nivel esencial:
+Nivel esencial:
 - masculino/femenino;
 - singular/plural;
 - pronombres básicos;
@@ -173,99 +190,45 @@ Cada regla: título corto, explicación de 1–2 frases, ejemplo hebreo, traducc
 
 ## 12. Accesibilidad y personas mayores
 
-- cuerpo español objetivo: 16–17 px;
+- cuerpo español objetivo: 16–17 px cuando sea instrucción principal;
 - indicadores importantes: evitar menos de 12 px;
 - letra hebrea significativamente mayor que el español;
 - controles: al menos 44×44 px;
 - contraste alto;
 - no comunicar estados solo por color;
-- iconos acompañados por texto cuando la acción no sea universalmente inequívoca;
 - lenguaje directo;
 - una instrucción principal por pantalla;
 - no usar límites de tiempo;
-- permitir repetir y pausar audio;
 - respetar `prefers-reduced-motion`;
-- `Modo sencillo` oculta detalle avanzado y conserva lo esencial;
-- futuro control de tamaño de texto debe ser una preferencia real por usuario, no una simulación;
-- `Necesito ayuda` debe estar disponible dentro de lecciones cuando se implemente la ayuda contextual;
-- volver atrás no debe borrar progreso real.
+- volver atrás no debe borrar progreso real cuando se implemente.
 
-## 13. Estados de interfaz
-
-Primera visita: `Empieza por reconocer las letras. No necesitas saber nada de hebreo todavía.`
-
-En progreso: `Continúa desde donde quedaste.`
-
-Completado: `Buen trabajo. Ya puedes seguir con el siguiente paso.`
-
-Sin conexión: `Estás sin conexión. Puedes continuar con el contenido disponible en este dispositivo.`
-
-Audio cargando: `Preparando audio…`
-
-Error de audio: `El audio no está disponible. Puedes continuar leyendo.`
-
-Bloqueado: `Completa el paso anterior para abrir esta lección.`
-
-Repaso pendiente: `Tienes un repaso corto listo.`
-
-Búsqueda vacía: `No encontramos esa palabra. Revisa la escritura o prueba en español.`
-
-## 14. Tipografía, color y espaciado
+## 13. Tipografía, color y espaciado
 
 Tipografía española: stack del sistema Apple/SF Pro ya usado por VIDA. Hebreo: fuentes hebreas del sistema verificadas por plataforma; no distribuir archivos de fuentes.
 
-Escala recomendada:
-- título de pantalla: 26–30 px;
-- subtítulo/cuerpo destacado: 15–17 px;
-- cuerpo: 16–17 px cuando contiene instrucciones importantes;
-- ficha: nombre 22–28 px;
-- hebreo protagonista: 128–176 px;
-- etiquetas auxiliares: 12–13 px.
-
 Paleta:
-- fondo cálido muy claro aproximado `#F8F7F3`;
+- fondo cálido/muy claro;
 - superficie blanca;
 - texto slate/negro suave;
 - índigo VIDA como acción/progreso;
-- hebreo usa el mismo índigo como acento secundario, no otro arcoíris.
+- hebreo usa el mismo índigo como acento secundario.
 
 Espaciado:
 - margen móvil 16 px;
-- secciones 24–32 px;
-- superficies principales 20–24 px;
-- filas compactas 12–16 px verticales;
+- secciones 24–32 px cuando el contenido lo necesite;
+- filas compactas 12–16 px;
 - sombras mínimas o inexistentes cuando borde/espaciado basten.
 
-## 15. Textos exactos recomendados
+## 14. Progresión y repetición espaciada — contrato futuro
 
-Encabezado:
-- `עברית מקראית`
-- `Hebreo Bíblico`
-- `Aprende a leer paso a paso`
-
-Tarjeta principal:
-- `Continúa tu camino`
-- `Reconoce las primeras letras`
-- `Empieza por su forma, nombre y sonido. Lo demás aparecerá cuando lo necesites.`
-- `Continuar`
-
-Alef-bet:
-- `Toca una letra para estudiarla.`
-- `Sonido`
-- `Ejemplo`
-- `Ver formas`
-- `Volver`
-
-## 16. Progresión y repetición espaciada — contrato futuro
-
-El progreso no se simula con porcentajes estáticos. Cuando se implemente debe registrar dominio por unidad didáctica y priorizar errores, confusiones y antigüedad del último repaso. Repaso y repetición espaciada utilizarán sesiones de 5–10 elementos y estados simples: `Lo sé`, `Necesito practicar`, `Repasar después`. La cuenta y el dispositivo no deben mezclar progreso entre usuarios.
+El progreso no se simula con porcentajes estáticos. Cuando se implemente debe registrar dominio por unidad didáctica y priorizar errores, confusiones y antigüedad del último repaso. La cuenta y el dispositivo no deben mezclar progreso entre usuarios.
 
 Si la persistencia futura exige estructuras nuevas de Supabase, antes se presentarán alcance, impacto, RLS y reversión para aprobación explícita.
 
-## 17. Audio — contrato futuro
+## 15. Audio — contrato futuro
 
 No usar `speechSynthesis` como sustituto automático de pronunciación aprobada. El audio debe distinguir nombre de letra, sonido pedagógico y ejemplo; documentar tradición/metodología y marcar aproximaciones. Hasta que exista una fuente aprobada, la UI no muestra controles de audio falsos.
 
-## 18. Criterio de modernidad
+## 16. Criterio de modernidad
 
 No usar mascotas, confeti, rachas obligatorias, gradientes intensos ni saturación de badges. Mantener superficies amplias, animaciones discretas, una acción dominante, hebreo grande y detalle avanzado opcional. El resultado debe ser serio, amable y comprensible para principiantes, lectores intermedios y estudiantes bíblicos.
