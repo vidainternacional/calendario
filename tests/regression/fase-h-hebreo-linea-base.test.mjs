@@ -5,6 +5,7 @@ import test from 'node:test'
 const dataset = fs.readFileSync('lib/hebreo/alef-bet.ts', 'utf8')
 const supportCourse = fs.readFileSync('lib/hebreo/material-apoyo.ts', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
+const niqqud = fs.readFileSync('components/hebreo/NiqqudExplorer.tsx', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
@@ -131,6 +132,32 @@ test('FASE H: aprender agrupa seis áreas y abre una sola', () => {
   assert.match(home, /<AlefBetExplorer simpleMode=\{false\} \/>/)
 })
 
+test('FASE H: Vocales abre el explorador real de niqqud', () => {
+  assert.match(home, /import NiqqudExplorer/)
+  assert.match(home, /id: 'vowels',[\s\S]*?available: true/)
+  assert.match(home, /activeSection\.id === 'vowels'[\s\S]*?<NiqqudExplorer \/>/)
+  assert.match(niqqud, /Vocales y sílabas/)
+  assert.match(niqqud, /¿Qué es el niqqud\?/)
+  assert.match(niqqud, /se lee de derecha a izquierda/)
+})
+
+test('FASE H: niqqud conserva doce signos pedagógicos con Unicode trazable', () => {
+  assert.equal((niqqud.match(/order:\s*\d+/g) ?? []).length, 12)
+  for (const name of ['Pataj', 'Qamats', 'Segol', 'Tsere', 'Hiriq', 'Holam', 'Qubuts', 'Shuruq', 'Sheva', 'Hataf Pataj', 'Hataf Segol', 'Hataf Qamats']) {
+    assert.match(niqqud, new RegExp(`name: '${name}'`))
+  }
+  for (const code of ['U+05B0', 'U+05B1', 'U+05B2', 'U+05B3', 'U+05B4', 'U+05B5', 'U+05B6', 'U+05B7', 'U+05B8', 'U+05B9', 'U+05BB']) assert.match(niqqud, new RegExp(code.replace('+', '\\+')))
+  assert.match(niqqud, /U\+05D5 \+ U\+05BC/)
+})
+
+test('FASE H: niqqud separa básicas, reducidas y sheva sin audio falso', () => {
+  for (const label of ['Básicas', 'Reducidas', 'Sheva', 'Todas']) assert.match(niqqud, new RegExp(label))
+  assert.match(niqqud, /qamats qatan y suena o/)
+  assert.match(niqqud, /sheva vocal y sheva silencioso/)
+  assert.match(niqqud, /pronunciación pedagógica inicial para hispanohablantes/)
+  assert.doesNotMatch(niqqud, /speechSynthesis|new Audio|Audio\(|supabase|localStorage|sessionStorage/)
+})
+
 test('FASE H: Prueba tu progreso contiene quince preguntas secuenciales', () => {
   assert.equal((home.match(/type: '(?:Reconocer|Distinguir|Sofit|Dagesh|Lectura|Comprensión|Integración)'/g) ?? []).length, 15)
   assert.match(home, /Pregunta \{step \+ 1\} de \{TEST_QUESTIONS\.length\}/)
@@ -146,7 +173,7 @@ test('FASE H: resultado conserva ficha de maestro e historial futuro', () => {
   assert.match(home, /Conviene reforzar/)
   assert.match(home, /Consejo de estudio/)
   assert.match(home, /Historial de progreso/)
-  assert.match(home, /No existe persistencia durante Bloque 1/)
+  assert.match(home, /Aún no existe persistencia de progreso en FASE H/)
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
 })
 
@@ -178,6 +205,7 @@ test('FASE H: no introduce persistencia, audio ni desbloqueos falsos', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
   assert.doesNotMatch(home, /speechSynthesis|new Audio|Audio\(/)
   assert.doesNotMatch(explorer, /speechSynthesis|new Audio|Audio\(/)
+  assert.doesNotMatch(niqqud, /speechSynthesis|new Audio|Audio\(/)
   assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
 })
 
