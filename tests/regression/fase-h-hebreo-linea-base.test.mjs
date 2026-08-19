@@ -58,27 +58,31 @@ test('FASE H: reverso conserva scroll interno, pronunciación y giro completo', 
   assert.doesNotMatch(explorer, /\/ 22/)
 })
 
-test('FASE H: portada usa cuatro menús principales desplegables', () => {
-  for (const label of ['Aprender', 'Materiales y curso recomendado', 'Prueba tu progreso', 'Biblia en hebreo']) assert.match(home, new RegExp(`label="${label}"`))
-  assert.match(home, /type TopMenuId = 'learn' \| 'materials' \| 'test' \| 'bible'/)
-  assert.match(home, /const \[openMenu, setOpenMenu\]/)
-  assert.match(home, /function MenuButton/)
+test('FASE H: portada usa cuatro accesos principales compactos en 2x2', () => {
+  for (const label of ['Aprender', 'Materiales y curso', 'Prueba tu progreso', 'Biblia en hebreo']) assert.match(home, new RegExp(`label="${label}"`))
+  assert.match(home, /grid grid-cols-2 gap-2\.5/)
+  assert.match(home, /min-h-\[72px\]/)
+  assert.match(home, /rounded-\[22px\]/)
+  assert.match(home, /const \[openMenu, setOpenMenu\] = useState<TopMenuId \| null>\(null\)/)
 })
 
-test('FASE H: título hebreo vuelve a ser protagonista', () => {
+test('FASE H: título hebreo sigue siendo protagonista en un encabezado compacto', () => {
   assert.match(home, /עברית מקראית/)
-  assert.match(home, /text-\[2\.35rem\] font-black/)
+  assert.match(home, /text-\[2\.6rem\] font-black/)
+  assert.match(home, /text-\[1\.75rem\] font-black/)
   assert.match(home, />Hebreo Bíblico</)
+  assert.match(home, /mt-4 text-center/)
 })
 
-test('FASE H: aprender agrupa seis áreas como botones redondeados desplegables', () => {
+test('FASE H: aprender agrupa seis áreas compactas en 2x3 y abre una sola', () => {
   assert.equal((home.match(/id: '(?:alef-bet|vowels|reading|vocabulary|grammar|review)'/g) ?? []).length, 6)
   assert.match(home, /function LearningAreaButton/)
-  assert.match(home, /rounded-\[22px\] border/)
+  assert.match(home, /grid grid-cols-2 gap-2/)
+  assert.match(home, /min-h-\[64px\]/)
   assert.match(home, /Aprender paso a paso/)
-  assert.match(home, /explicaciones y ejemplos permanecen agrupados/)
-  assert.match(home, /Ver explicación y ejemplo/)
-  assert.doesNotMatch(home, /absolute -left-1\.5|absolute -right-1\.5/)
+  assert.match(home, /Solo se abre lo que vas a estudiar/)
+  assert.match(home, /activeSection &&/)
+  assert.match(home, /Explicación y ejemplo/)
 })
 
 test('FASE H: Prueba tu progreso contiene quince preguntas secuenciales', () => {
