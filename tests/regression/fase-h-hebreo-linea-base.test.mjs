@@ -58,36 +58,34 @@ test('FASE H: reverso conserva scroll interno, pronunciación y giro completo', 
   assert.doesNotMatch(explorer, /\/ 22/)
 })
 
-test('FASE H: portada usa cuatro accesos principales compactos, bilingües y centrados', () => {
-  for (const es of ['Aprender', 'Materiales y curso', 'Prueba tu progreso', 'Biblia en hebreo']) assert.match(home, new RegExp(`es="${es}"`))
-  for (const he of ['לימוד', 'חומרי לימוד וקורס', 'בחן את התקדמותך', 'המקרא בעברית']) assert.match(home, new RegExp(`he="${he}"`))
+test('FASE H: portada conserva cuatro accesos bilingües, centrados y compactos', () => {
+  for (const id of ['learn', 'materials', 'test', 'bible']) assert.match(home, new RegExp(`${id}: \\{ he:`))
+  for (const es of ['Aprender', 'Materiales y curso', 'Prueba tu progreso', 'Biblia en hebreo']) assert.match(home, new RegExp(`es: '${es}'`))
   assert.match(home, /grid grid-cols-2 gap-2\.5/)
-  assert.match(home, /min-h-\[70px\]/)
-  assert.match(home, /items-center justify-center/)
+  assert.match(home, /min-h-\[74px\]/)
+  assert.match(home, /flex-col items-center justify-center/)
   assert.match(home, /text-center/)
-  assert.match(home, /const \[openMenu, setOpenMenu\] = useState<TopMenuId \| null>\(null\)/)
+  assert.match(home, /useState<TopMenuId \| null>\(null\)/)
 })
 
-test('FASE H: encabezado elimina el botón Lectura y conserva título hebreo protagonista', () => {
+test('FASE H: encabezado no muestra Lectura y conserva título hebreo protagonista', () => {
   assert.match(home, /עברית מקראית/)
   assert.match(home, /text-\[2\.6rem\] font-black/)
   assert.match(home, /text-\[1\.75rem\] font-black/)
   assert.match(home, />Hebreo Bíblico</)
   assert.doesNotMatch(home, /Accessibility/)
   assert.doesNotMatch(home, /> Lectura<\/button>/)
-  assert.doesNotMatch(home, /simpleMode, setSimpleMode/)
 })
 
-test('FASE H: aprender agrupa seis áreas bilingües, compactas y centradas', () => {
+test('FASE H: aprender agrupa seis áreas y despliega contenido por capas', () => {
   assert.equal((home.match(/id: '(?:alef-bet|vowels|reading|vocabulary|grammar|review)'/g) ?? []).length, 6)
   assert.match(home, /function LearningAreaButton/)
   assert.match(home, /grid grid-cols-2 gap-2/)
-  assert.match(home, /min-h-\[64px\]/)
-  assert.match(home, /flex-col items-center justify-center/)
+  assert.match(home, /min-h-\[66px\]/)
   assert.match(home, /Aprender paso a paso/)
-  assert.match(home, /Solo se abre lo que vas a estudiar/)
-  assert.match(home, /activeSection &&/)
-  assert.match(home, /Explicación y ejemplo/)
+  assert.match(home, /Qué aprenderás/)
+  assert.match(home, /En qué enfocarte/)
+  assert.match(home, /Cómo practicar/)
   assert.match(home, /<AlefBetExplorer simpleMode=\{false\} \/>/)
 })
 
@@ -106,28 +104,31 @@ test('FASE H: resultado conserva ficha de maestro e historial futuro', () => {
   assert.match(home, /Conviene reforzar/)
   assert.match(home, /Consejo de estudio/)
   assert.match(home, /Historial de progreso/)
-  assert.match(home, /היסטוריית התקדמות/)
   assert.match(home, /No existe persistencia durante Bloque 1/)
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
 })
 
-test('FASE H: Biblia en hebreo queda como entrada bilingüe al lector futuro sin duplicar motor', () => {
-  assert.match(home, /function BibleHebrewPreview/)
-  assert.match(home, /המקרא בעברית/)
-  assert.match(home, /texto bíblico hebreo/)
-  assert.match(home, /no crea un segundo motor bíblico/)
-})
-
-test('FASE H: material de apoyo conserva exactamente los 11 enlaces pendientes', () => {
+test('FASE H: materiales agrupa 11 clases en un recorrido por etapas', () => {
   assert.equal((supportCourse.match(/orden:\s*\d+/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/https:\/\/www\.youtube\.com\/watch\?v=/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/verificacion:\s*'pendiente'/g) ?? []).length, 11)
-  assert.match(supportCourse, /fvBD-rFlTfg/)
-  assert.match(supportCourse, /gxRYxrGZd7s/)
-  assert.match(supportCourse, /UIdIzEtweOc/)
-  assert.match(home, /Curso recomendado · 11 clases/)
-  assert.match(home, /קורס מומלץ/)
+  assert.match(home, /Fundamentos/)
+  assert.match(home, /Vocales y lectura/)
+  assert.match(home, /Lectura bíblica y reglas/)
+  assert.match(home, /HEBREW_SUPPORT_COURSE\.filter/)
   assert.match(home, /item\.miniatura/)
+})
+
+test('FASE H: Biblia en hebreo expone el modelo del lector guiado sin duplicar motor', () => {
+  assert.match(home, /function BibleHebrewPreview/)
+  assert.match(home, /Modelo del lector guiado/)
+  assert.match(home, /Génesis 1:1/)
+  assert.match(home, /בְּרֵאשִׁית בָּרָא אֱלֹהִים/)
+  assert.match(home, /Ayudas de lectura/)
+  assert.match(home, /Palabra por palabra/)
+  assert.match(home, /Comparar en español/)
+  assert.match(home, /RV1909/)
+  assert.match(home, /no crea otro motor bíblico ni nuevas tablas/)
 })
 
 test('FASE H: no introduce persistencia, audio ni desbloqueos falsos', () => {
