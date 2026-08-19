@@ -6,6 +6,7 @@ const dataset = fs.readFileSync('lib/hebreo/alef-bet.ts', 'utf8')
 const supportCourse = fs.readFileSync('lib/hebreo/material-apoyo.ts', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
 const niqqud = fs.readFileSync('components/hebreo/NiqqudExplorer.tsx', 'utf8')
+const reading = fs.readFileSync('components/hebreo/ReadingWordsExplorer.tsx', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
@@ -158,6 +159,15 @@ test('FASE H: niqqud separa básicas, reducidas y sheva sin audio falso', () => 
   assert.doesNotMatch(niqqud, /speechSynthesis|new Audio|Audio\(|supabase|localStorage|sessionStorage/)
 })
 
+test('FASE H: Lectura abre el explorador progresivo real', () => {
+  assert.match(home, /import ReadingWordsExplorer/)
+  assert.match(home, /id: 'reading',[\s\S]*?available: true/)
+  assert.match(home, /activeSection\.id === 'reading'[\s\S]*?<ReadingWordsExplorer \/>/)
+  assert.match(reading, /Lectura de palabras/)
+  assert.match(reading, /Con niqqud/)
+  assert.match(reading, /Sin ayuda/)
+})
+
 test('FASE H: Prueba tu progreso contiene quince preguntas secuenciales', () => {
   assert.equal((home.match(/type: '(?:Reconocer|Distinguir|Sofit|Dagesh|Lectura|Comprensión|Integración)'/g) ?? []).length, 15)
   assert.match(home, /Pregunta \{step \+ 1\} de \{TEST_QUESTIONS\.length\}/)
@@ -206,6 +216,7 @@ test('FASE H: no introduce persistencia, audio ni desbloqueos falsos', () => {
   assert.doesNotMatch(home, /speechSynthesis|new Audio|Audio\(/)
   assert.doesNotMatch(explorer, /speechSynthesis|new Audio|Audio\(/)
   assert.doesNotMatch(niqqud, /speechSynthesis|new Audio|Audio\(/)
+  assert.doesNotMatch(reading, /speechSynthesis|new Audio|Audio\(|supabase|localStorage|sessionStorage/)
   assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
 })
 
