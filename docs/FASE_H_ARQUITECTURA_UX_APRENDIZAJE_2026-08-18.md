@@ -1,172 +1,204 @@
 # FASE H — Arquitectura UX de aprendizaje de Hebreo Bíblico
 
-Fecha: 2026-08-18
-Estado: contrato de diseño para FASE H
+Fecha inicial: 2026-08-18
+Última alineación: 2026-08-19
+Estado: contrato vivo de diseño para FASE H
 
-## Estado de validación móvil — 2026-08-19
+## 1. Propósito del Centro de Hebreo Bíblico
 
-- **Alef-Bet:** base visual validada por el usuario después de corregir nomenclatura, desplegables, scroll, retracción de fichas y desbordes móviles.
-- **Vocales y sílabas / niqqud:** base visual validada por el usuario; continúa como módulo real dentro de Aprender.
-- **Gate actual:** Lectura de palabras.
-- Implementación técnica del gate actual verificada en CI y Vercel.
-- No avanzar a Vocabulario, Gramática, audio ni progreso persistente hasta validar visualmente la base de Lectura.
+El objetivo es que el usuario pueda **leer, pronunciar y comprender progresivamente el hebreo bíblico** hasta utilizar el texto original con mayor autonomía.
 
-## 1. Arquitectura de información
+La progresión global es:
 
-Hebreo Bíblico debe sentirse como una biblioteca de estudio y una app moderna de aprendizaje: calmada, editorial, accesible y progresiva. La entrada del módulo muestra solo encabezado y accesos principales. El contenido avanzado permanece plegado.
+`RECONOZCO → DISTINGO → COMBINO → LEO → COMPRENDO → PRONUNCIO CON MAYOR AUTONOMÍA`
 
-Jerarquía actual:
-1. Inicio de Hebreo Bíblico.
-2. Aprender.
-3. Materiales y curso.
-4. Prueba tu progreso.
-5. Biblia en hebreo / lectura guiada.
-6. Conoce el hebreo, como contexto opcional futuro.
+Este centro no mezcla hebreo moderno conversacional con hebreo bíblico. Una futura pista de conversación moderna, si alguna vez se aprueba, debe ser independiente.
 
-La barra global de VIDA no cambia: Inicio · Calendario · Avisos · Estudios · Perfil.
+El audio no se sustituye con `speechSynthesis`. Escuchar/repetir solo se habilitará cuando exista una fuente de pronunciación confiable y aprobada.
 
-## 2. Orden didáctico recomendado
+## 2. Estado de validación móvil — 2026-08-19
 
-1. Alef-bet.
-2. Vocales y sílabas.
-3. Lectura de palabras.
-4. Vocabulario básico.
-5. Letras finales dentro de repaso contextual.
-6. Dagesh y shewa.
-7. Raíces hebreas.
-8. Gramática esencial.
-9. Frases cortas.
-10. Lectura guiada.
+- **Alef-Bet:** base visual validada.
+- **Vocales / niqqud:** base visual validada.
+- **Palabras:** diccionario/vocabulario separado de Lectura; validado como dirección pedagógica.
+- **Lectura:** frases, oraciones y versículos reales separados de Palabras; validado como dirección pedagógica.
+- **Gate actual:** **Reglas esenciales**.
+- **Repaso:** permanece como siguiente área después de validar Reglas.
+- No activar todavía audio, progreso persistente, desbloqueos ni evaluación almacenada.
 
-La ruta completa debe aparecer de forma compacta o plegable; no como diez tarjetas abiertas simultáneamente.
+## 3. Arquitectura de información
 
-## 3. Pantallas
+Hebreo Bíblico debe sentirse como una app moderna de aprendizaje: calmada, editorial, accesible, móvil y progresiva.
 
-### Inicio
-Visible: Hebreo Bíblico / עברית מקראית, subtítulo `Aprende a leer paso a paso` y cuatro accesos compactos bilingües: Aprender · Materiales y curso · Prueba tu progreso · Biblia en hebreo. No mostrar porcentajes ni minutos ficticios.
+Inicio:
+1. Aprender.
+2. Materiales y curso.
+3. Prueba tu progreso.
+4. Biblia en hebreo.
 
-### Aprender
-Seis áreas compactas y desplegables: Alef-Bet · Vocales · Lectura · Palabras · Reglas · Repaso. Solo una se abre a la vez. La información secundaria usa desplegables integrados con scroll limitado, siguiendo el patrón aprobado de Biblia → Favoritos.
+La portada conserva alta densidad útil: encabezado compacto + cuatro accesos 2×2. Ningún bloque se abre por defecto.
 
-### Lección
-Una instrucción principal por pantalla. El contenido hebreo domina visualmente. Acciones posibles según la actividad: `Comprobar`, `Continuar` y ayudas graduadas. Audio solo cuando exista una fuente aprobada.
+## 4. Orden didáctico actual de Aprender
 
-### Repaso
-Sesiones futuras de 5–10 elementos. Estados: `Lo sé`, `Necesito practicar`, `Repasar después`.
+1. **Alef-Bet** — letras y diferencias visuales.
+2. **Vocales** — niqqud y combinación consonante + signo.
+3. **Palabras** — vocabulario/diccionario para memorizar términos.
+4. **Lectura** — frases y oraciones reales para ganar continuidad.
+5. **Reglas** — piezas y relaciones gramaticales que explican lo que se está leyendo.
+6. **Repaso** — recuperación de errores y confusiones.
 
-### Diccionario
-Búsqueda futura por hebreo, español o transliteración. Resultado inicial: palabra, pronunciación disponible, significado y ejemplo. Datos avanzados en acordeón.
+Después podrán crecer por capas: raíces, sistema verbal, construcciones avanzadas y lectura guiada más profunda.
 
-### Lectura guiada
-Texto original RTL protagonista. Ayudas graduadas: nikud → palabra → transliteración opcional → glosa/morfología → traducción aprobada. Reutiliza el motor textual existente; no duplica Estudio Profundo.
+## 5. Patrón visual compartido
 
-## 4. Componentes reutilizables
+Cuando una colección lo permita, usar:
 
-- `HebrewModuleHeader`: título, subtítulo y progreso real cuando exista.
-- `LearningSectionAccordion`: área de aprendizaje; una sola abierta a la vez.
-- `PillGroup`: filtros horizontales.
-- `HebrewLetterTile`: selector de letra.
-- `HebrewLetterCard`: ficha principal del Alef-bet.
-- `NiqqudExplorer`: explorador aprobado de vocales y sílabas.
-- `ReadingWordsExplorer`: lectura progresiva por palabra con ayudas graduadas.
-- `VocabularyCard`: ficha de vocabulario.
-- `GrammarRuleCard`: ficha gramatical.
-- `AudioControl`: escuchar/pausar/repetir solo cuando exista audio aprobado.
+- **Tarjetas:** selección visual; tocar abre/retrae bajo la misma fila.
+- **Lista:** consulta rápida y compacta.
+- **Detalle:** un elemento por vez con Anterior/Siguiente.
 
-## 5. Sistema de botones píldora
+Reglas comunes:
+- contenido hebreo protagonista;
+- botones táctiles cómodos;
+- nada abierto automáticamente si ocupa espacio considerable;
+- explicaciones largas cerradas por defecto;
+- superficies integradas y pocos contenedores anidados;
+- animaciones breves y compatibles con `prefers-reduced-motion`.
 
-Altura táctil mínima: 44 px. Objetivo general de control: al menos 44×44 px.
+## 6. Alef-Bet — validado
 
-Reglas:
-- selección clara por fondo, peso tipográfico y `aria-pressed`, no solo color;
-- padding horizontal suficiente;
-- scroll horizontal si no caben;
-- no reducir tipografía para forzar todos los filtros en una línea.
+Conserva:
+- 22 letras y cinco formas finales;
+- filtros Alef–Yod, Kaf–Tav, Dagesh, Sofit, Guturales, Matres y Shin/Sin;
+- Tarjetas · Lista · Detalle;
+- Lista: Signo · Nombre · Valor · Sonido · Significado;
+- ficha ampliada con Libro · Cuadrada · Manuscrita;
+- reverso desplazable como una sola pieza, sin encabezado `sticky`;
+- explicación `¿Qué es el Alef-Bet?` con scroll limitado;
+- historia/pictografía nunca presentada como significado léxico o teológico automático.
 
-Alef-bet, cuando exista progreso real: `Todas` · `En progreso` · `Repaso` · `Más filtros`.
-Dentro de `Más filtros`: `Dagesh` · `Sofit` · `Guturales` · `Matres` · `Shin / Sin`.
-Mientras no exista progreso persistente, no se muestran filtros ficticios `En progreso` o `Repaso`.
+## 7. Vocales / niqqud — validado
 
-## 6. Sistema de acordeones
+Base actual:
+Pataj · Qamats · Segol · Tsere · Hiriq · Holam · Qubuts · Shuruq · Sheva · Hataf Pataj · Hataf Segol · Hataf Qamats.
 
-Solo un acordeón principal de aprendizaje abierto a la vez. El encabezado completo es táctil y mantiene una altura cómoda. Las animaciones son breves y respetan `prefers-reduced-motion`.
+Conserva:
+- Tarjetas · Lista · Detalle;
+- Tarjetas cerradas al entrar y expansión bajo su fila;
+- Lista: Signo · Nombre · Valor · Sonido · Función;
+- `Valor = —` porque el niqqud no tiene gematría propia;
+- cautelas para qamats qatan, sheva y shuruq.
 
-Áreas: Alef-Bet · Vocales · Lectura · Palabras · Reglas · Repaso.
+## 8. Palabras — diccionario de aprendizaje
 
-Las explicaciones largas deben permanecer cerradas por defecto y abrir dentro de una superficie integrada con altura limitada y scroll interno cuando sea necesario.
+`ReadingWordsExplorer` es vocabulario, no Lectura.
 
-## 7. Diseño de la ficha del Alef-bet — validado
+Conserva:
+- Con niqqud · Sin niqqud;
+- Tarjetas · Lista · Detalle;
+- tarjeta: hebreo · pronunciación · español;
+- Lista: hebreo/pronunciación a la izquierda y español a la derecha;
+- Detalle: escritura · pronunciación · formación visible · significado;
+- sin Strong, fuente ni metadatos técnicos visibles;
+- grupos semánticos y gramaticales;
+- catálogo hebreo real paginado, 24 entradas por página;
+- navegación de páginas arriba y abajo;
+- búsqueda hebrea con o sin niqqud;
+- búsqueda española primero editorial y, cuando falta equivalencia, recuperación contextual con RV1909 claramente marcada como relación y no como traducción uno-a-uno.
 
-Mini-ficha:
-- número;
-- letra cuadrada protagonista;
-- nombre completo sin truncamiento.
+## 9. Lectura — frases y oraciones reales
 
-Ficha ampliada:
-- nombre español + hebreo;
-- valor;
-- Libro · Cuadrada · Manuscrita;
-- sonido y significado histórico breve;
-- reverso con contenido editorial detallado.
+`ReadingSentencesExplorer` trabaja continuidad textual y no memoriza términos aislados.
 
-Comportamiento aprobado:
-- no hay ficha abierta al entrar;
-- tocar una letra abre la ficha debajo de su fila con zoom suave;
-- tocar la misma letra la retrae con el efecto inverso;
-- todo el reverso se desplaza como una sola pieza, sin encabezado `sticky`;
-- pictografía/historia nunca se presenta como significado automático de una palabra bíblica.
+Conserva:
+- Con niqqud · Sin niqqud;
+- Tarjetas · Lista · Detalle;
+- Iniciales · Cortas · Medias · Largas · Todas;
+- búsqueda por español o hebreo;
+- RV1909 como comparación española aprobada;
+- acceso paginado al corpus hebreo aprobado del AT;
+- reutilización de `biblical_verse_texts`, sin crear un segundo motor bíblico.
 
-## 8. Vocales y sílabas / niqqud — validado
+## 10. Reglas — gate actual
 
-Base inicial: Pataj · Qamats · Segol · Tsere · Hiriq · Holam · Qubuts · Shuruq · Sheva · Hataf Pataj · Hataf Segol · Hataf Qamats.
+Reglas debe explicar **por qué una forma se ve como se ve**, sin convertirse en una tabla académica extensa.
 
-Agrupación: Básicas · Reducidas · Sheva · Todas.
+Primera capa:
+- artículo definido `הַ`;
+- conjunción `וְ`;
+- preposiciones prefijadas `בְּ · לְ · כְּ` y `מִן`;
+- combinación preposición + artículo;
+- pistas de género y número con excepciones explícitas;
+- concordancia sustantivo + adjetivo;
+- cadena constructa.
 
-Cada ficha muestra signo, nombre, sonido orientativo, combinación consonante + vocal, lectura resultante, explicación y cautela contextual cuando corresponde.
+UX:
+- Tarjetas · Lista · Detalle;
+- filtros Básicas · Prefijos · Nombres · Frase · Todas;
+- una regla → ejemplo → pronunciación → significado → explicación → cautela;
+- no deducir raíces automáticamente cuando la base no contiene una raíz verificada.
 
-Cautelas preservadas: qamats qatan, sheva vocal/silencioso y uso del punto de shuruq. No se presenta pronunciación pedagógica como reconstrucción histórica infalible.
+El sistema verbal y raíces completas se incorporarán en capas posteriores de Reglas.
 
-## 9. Lectura de palabras — gate actual
+## 11. Repaso — siguiente después de Reglas
 
-La primera práctica usa diez palabras breves para pasar de signos aislados a lectura completa.
+Sesiones breves de 5–10 elementos que combinen lo ya estudiado.
 
-Ayudas graduadas:
-1. `Con niqqud`: palabra vocalizada + transliteración temporal.
-2. `Con ayuda`: palabra vocalizada + división pedagógica en pequeñas unidades.
-3. `Sin ayuda`: grafía consonántica sin transliteración.
+Estados futuros:
+- Lo sé.
+- Necesito practicar.
+- Repasar después.
 
-Agrupación inicial: Cortas · Frecuentes · Distinguir · Todas.
+Cuando exista persistencia real, Repaso priorizará errores, confusiones y antigüedad del último estudio; no porcentajes ficticios.
 
-La transliteración es una ayuda temporal; el objetivo es retirarla. La ficha incluye significado sencillo y un punto concreto en el que fijarse. Esta práctica no registra dominio ni califica resultados todavía.
+## 12. Prueba tu progreso
 
-## 10. Vocabulario — futuro
+Contrato aprobado:
+- mínimo 10–15 preguntas por evaluación;
+- una pregunta por pantalla;
+- tipos variados según contenido ya estudiado;
+- feedback y puntuación deben basarse en respuestas reales;
+- resultado final como ficha de maestro: fortalezas, refuerzo y consejo;
+- historial futuro de fichas para comparar evolución.
 
-La ficha futura tendrá palabra hebrea grande, nikud cuando corresponda, transliteración opcional, significado español, categoría y ejemplo corto. No se abre hasta aprobar Lectura.
+La UI actual sigue siendo prototipo hasta implementar cálculo real e historial.
 
-## 11. Gramática — futuro
+## 13. Progreso persistente
 
-La gramática se introducirá por capas: género/número, artículo definido, preposiciones, raíces y después estructuras de lectura bíblica. Las tablas extensas aparecen solo bajo demanda.
+No simular progreso.
 
-## 12. Accesibilidad
+Cuando se implemente deberá ser privado por usuario y almacenar únicamente información necesaria para aprendizaje. Si requiere Supabase nuevo o cambios de RLS, antes se presentarán alcance, impacto, políticas y reversión para aprobación explícita.
 
-- hebreo significativamente mayor que el español;
-- controles al menos 44×44 px;
-- contraste alto;
-- lenguaje directo;
-- una instrucción principal por pantalla;
-- no usar límites de tiempo;
-- respetar `prefers-reduced-motion`.
+## 14. Pronunciación y audio
 
-## 13. Progresión y repetición espaciada — contrato futuro
+Objetivo oral de FASE H: **pronunciar y leer en voz alta hebreo bíblico**, no conversación moderna.
 
-El progreso no se simula con porcentajes estáticos. Cuando se implemente debe registrar dominio por unidad didáctica y priorizar errores, confusiones y antigüedad del último repaso.
+Futuro:
+- escuchar letra/signo/palabra/frase;
+- repetir;
+- práctica de lectura en voz alta;
+- posteriormente evaluación de pronunciación solo si existe una metodología fiable.
 
-Si la persistencia futura exige estructuras nuevas de Supabase, antes se presentarán alcance, impacto, RLS y reversión para aprobación explícita.
+No mostrar botones falsos de audio mientras la fuente no esté aprobada.
 
-## 14. Audio — contrato futuro
+## 15. Material de apoyo
 
-No usar `speechSynthesis` como sustituto automático de pronunciación aprobada. Hasta que exista una fuente aprobada, la UI no muestra controles de audio falsos.
+Los 11 enlaces externos proporcionados por el usuario permanecen exactamente conservados y con estado `pendiente` hasta corroboración visual individual. No sustituyen el motor lingüístico ni las fuentes editoriales de VIDA.
 
-## 15. Criterio de modernidad
+## 16. Biblia en hebreo
 
-No usar mascotas, confeti, rachas obligatorias, gradientes intensos ni saturación de badges. Mantener superficies amplias, animaciones discretas, hebreo grande y detalle avanzado opcional.
+Debe convertirse progresivamente en el destino final del aprendizaje: leer cualquier pasaje con ayudas graduables usando el motor bíblico existente.
+
+Ayudas futuras:
+`niqqud → pronunciación → palabra → glosa/morfología → comparación española aprobada`.
+
+Nunca duplicar Estudio Profundo ni fabricar una traducción literal española del AT.
+
+## 17. Criterio visual
+
+- estilo iOS, editorial y calmado;
+- hebreo claramente mayor que el español;
+- jerarquía por espaciado, tipografía y separadores;
+- minimizar scroll cuando la información puede agruparse;
+- no mascotas, confeti, rachas obligatorias ni saturación de badges;
+- no generar imágenes para este proyecto salvo petición explícita del usuario.
