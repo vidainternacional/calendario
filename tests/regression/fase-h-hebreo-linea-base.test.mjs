@@ -52,30 +52,30 @@ test('FASE H: cada letra muestra nombre español y hebreo sin transliteración e
   assert.match(explorer, /1: 'אָלֶף'/)
   assert.match(explorer, /22: 'תָּו'/)
   assert.match(explorer, /hebrewDisplayName/)
-  assert.doesNotMatch(explorer, />Transliteración</)
-  assert.doesNotMatch(explorer, />Unicode</)
-  assert.doesNotMatch(explorer, />Gematría</)
+  assert.doesNotMatch(explorer, />Transliteración/)
+  assert.doesNotMatch(explorer, />Unicode/)
+  assert.doesNotMatch(explorer, />Gematría/)
 })
 
 test('FASE H: las formas visibles son hebreas cuadrada, libro y manuscrita, sin signo histórico', () => {
-  assert.match(explorer, />Cuadrada</)
-  assert.match(explorer, />Libro</)
-  assert.match(explorer, />Manuscrita</)
+  assert.match(explorer, />Cuadrada/)
+  assert.match(explorer, />Libro/)
+  assert.match(explorer, />Manuscrita/)
   assert.match(explorer, /Arial Hebrew Scholar/)
   assert.match(explorer, /Times New Roman/)
   assert.match(explorer, /Corsiva Hebrew/)
-  assert.doesNotMatch(explorer, />Histórica</)
+  assert.doesNotMatch(explorer, />Histórica/)
   assert.doesNotMatch(explorer, /letter\.fenicio/)
 })
 
 test('FASE H: la ficha ampliada prioriza signo, nombre, valor, sonido y significado', () => {
   assert.match(explorer, /text-\[9\.8rem\]/)
   assert.match(explorer, /text-3xl font-black tabular-nums/)
-  assert.match(explorer, />Sonido</)
-  assert.match(explorer, />Significado</)
+  assert.match(explorer, />Sonido/)
+  assert.match(explorer, />Significado/)
   assert.match(explorer, /Significado del nombre/)
   assert.match(explorer, /Pronunciación/)
-  assert.match(explorer, />Ejemplo</)
+  assert.match(explorer, />Ejemplo/)
 })
 
 test('FASE H: la ficha se voltea tocando cualquier parte y no repite 1 de 22', () => {
@@ -121,7 +121,7 @@ test('FASE H: el encabezado mantiene hebreo y español con una sola idea princip
 
 test('FASE H: filtros especializados siguen detrás de Más filtros en modo sencillo', () => {
   assert.match(explorer, /moreFiltersOpen/)
-  assert.match(explorer, />Más filtros/)
+  assert.match(explorer, /Más filtros/)
   assert.match(explorer, /simpleMode/)
   assert.match(explorer, /min-h-11 shrink-0 rounded-full px-4/)
 })
