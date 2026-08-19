@@ -239,3 +239,57 @@ main:has(.note-rich-editor) {
   padding: 0.15rem 0.45rem !important;
   font-size: 0.55rem !important;
 }
+
+/*
+ * FASE G — El Cuaderno es una superficie clara independiente de la preferencia
+ * visual de Biblia. En iOS/PWA una preferencia bíblica oscura podía sobrevivir
+ * al cambio de ruta y dejar texto blanco sobre superficies claras. Estos
+ * overrides están deliberadamente limitados a la página que contiene el editor.
+ */
+html:has(.note-rich-editor),
+body:has(.note-rich-editor) {
+  --background: #f7f7f4;
+  --foreground: #0f172a;
+  background-color: #f7f7f4 !important;
+  color: #0f172a !important;
+  color-scheme: light !important;
+}
+
+main:has(.note-rich-editor) {
+  background-color: #f7f7f4 !important;
+  color: #0f172a !important;
+}
+
+main:has(.note-rich-editor)[class~="bg-slate-950"] {
+  background-color: #f7f7f4 !important;
+  color: #0f172a !important;
+}
+
+main:has(.note-rich-editor) [class*="bg-slate-900/38"],
+main:has(.note-rich-editor) [class*="bg-slate-800/58"] {
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.055) !important;
+}
+
+main:has(.note-rich-editor) [class*="bg-slate-900/48"] {
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  color: #0f172a !important;
+}
+
+main:has(.note-rich-editor) [class*="bg-slate-800/70"][class*="text-slate-200"] {
+  background-color: rgba(241, 245, 249, 0.78) !important;
+  color: #334155 !important;
+}
+
+main:has(.note-rich-editor) [class*="bg-violet-950/80"] {
+  background-color: rgba(237, 233, 254, 0.9) !important;
+  color: #4c1d95 !important;
+  --tw-ring-color: rgba(196, 181, 253, 0.9) !important;
+}
+
+main:has(.note-rich-editor) [class~="text-slate-400"] {
+  color: #64748b !important;
+}
