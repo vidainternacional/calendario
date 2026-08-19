@@ -213,9 +213,9 @@ test('FASE H: la implementación sigue sin introducir audio ni persistencia', ()
   assert.doesNotMatch(home, /speechSynthesis|Audio\(|supabase|localStorage|sessionStorage/)
 })
 
-test('FASE H: la ruta dedicada vive dentro de Estudios y exige sesión', () => {
+test('FASE H: la ruta dedicada vive dentro de Estudios, exige sesión y conserva el destino tras login', () => {
   assert.match(page, /createClient\(\)/)
-  assert.match(page, /if \(!user\) redirect\('\/login'\)/)
+  assert.match(page, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo'\)/)
   assert.match(page, /<HebrewLearningHome \/>/)
 })
 
