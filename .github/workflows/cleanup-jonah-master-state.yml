@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validar FASE G activa y roadmap documentado
+      - name: Validar FASE H activa y cierre documentado de FASE G
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -25,37 +25,43 @@ jobs:
           text = Path('__VIDA_INTERNACIONAL.md').read_text(encoding='utf-8')
 
           required_once = [
-              'Fase / prioridad activa: **FASE G — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES**',
+              'Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**',
               '| FASE D | IA Bíblica Avanzada, fuentes, contexto, comparaciones, cronologías y mapas | **COMPLETADA — 2026-08-12** |',
               '| FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |',
               '| FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |',
-              '| FASE G | Validación integral y cierre de deudas transversales | **ACTIVA — 2026-08-17** |',
-              '| FASE H | Centro de Hebreo Bíblico | **PLANIFICADA — posterior a FASE G** |',
+              '| FASE G | Validación integral y cierre de deudas transversales | **COMPLETADA — 2026-08-18** |',
+              '| FASE H | Centro de Hebreo Bíblico | **ACTIVA — 2026-08-18** |',
               '| FASE I | Guía interactiva y ayuda contextual por rol | **PLANIFICADA — posterior a FASE H** |',
               '# PILOTO OPERATIVO — EN PAUSA',
               '# FASE F — COMPLETADA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS — 2026-08-17',
-              '# FASE G — ACTIVA — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES',
-              '# FASE H — PLANIFICADA — CENTRO DE HEBREO BÍBLICO',
+              '# FASE G — COMPLETADA — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES — 2026-08-18',
+              '# FASE H — ACTIVA — CENTRO DE HEBREO BÍBLICO',
               '# FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL',
               '# Siguiente punto autorizado',
               '**Principio visual global:**',
               '**Navegación móvil global:**',
               '**Historial reversible:**',
+              'docs/FASE_G_CIERRE_2026-08-18.md',
           ]
           missing = [value for value in required_once if text.count(value) != 1]
           if missing:
-              raise SystemExit(f'Estado maestro de FASE G inválido o duplicado: {missing}')
+              raise SystemExit(f'Estado maestro de FASE H inválido o duplicado: {missing}')
 
-          next_gate = 'Iniciar exclusivamente FASE G con el Bloque 1 — inventario y matriz de validación integral'
+          next_gate = 'Iniciar exclusivamente FASE H con el Bloque 1 — línea base de fuentes y arquitectura didáctica'
           if text.count(next_gate) != 1:
-              raise SystemExit('El documento maestro perdió el siguiente punto autorizado de FASE G')
+              raise SystemExit('El documento maestro perdió el siguiente punto autorizado de FASE H')
 
           active_lines = [line for line in text.splitlines() if line.startswith('Fase / prioridad activa:')]
-          expected_active = ['Fase / prioridad activa: **FASE G — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES**']
+          expected_active = ['Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**']
           if active_lines != expected_active:
-              raise SystemExit(f'La prioridad activa no coincide con FASE G: {active_lines}')
+              raise SystemExit(f'La prioridad activa no coincide con FASE H: {active_lines}')
 
           forbidden = [
+              'Fase / prioridad activa: **FASE G — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES**',
+              '| FASE G | Validación integral y cierre de deudas transversales | **ACTIVA — 2026-08-17** |',
+              '# FASE G — ACTIVA — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES',
+              '| FASE H | Centro de Hebreo Bíblico | **PLANIFICADA — posterior a FASE G** |',
+              '# FASE H — PLANIFICADA — CENTRO DE HEBREO BÍBLICO',
               'Fase / prioridad activa: **NINGUNA — FASE F COMPLETADA; SIGUIENTE FASE AÚN NO DOCUMENTADA**',
               'Fase / prioridad activa: **FASE F — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS**',
               '| FASE F | Evolución correlativa de Biblia → Notas | **ACTIVA — 2026-08-13** |',
@@ -69,6 +75,6 @@ jobs:
           if present:
               raise SystemExit(f'El documento maestro reactivó una fase cerrada o una prioridad pausada: {present}')
 
-          print('Documento maestro: FASE G activa; FASE H e I planificadas; piloto pausado: OK')
+          print('Documento maestro: FASE G completada; FASE H activa; FASE I planificada; piloto pausado: OK')
           PY
           git diff --check
