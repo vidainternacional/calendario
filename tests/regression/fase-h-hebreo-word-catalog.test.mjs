@@ -4,6 +4,7 @@ import test from 'node:test'
 
 const reading = fs.readFileSync('components/hebreo/ReadingWordsExplorer.tsx', 'utf8')
 const catalog = fs.readFileSync('lib/hebreo/word-catalog.ts', 'utf8')
+const learning = fs.readFileSync('lib/hebreo/word-learning.ts', 'utf8')
 const route = fs.readFileSync('app/api/estudios/hebreo/palabras/route.ts', 'utf8')
 
 test('FASE H: lectura diferencia únicamente con niqqud y sin niqqud', () => {
@@ -15,22 +16,58 @@ test('FASE H: lectura diferencia únicamente con niqqud y sin niqqud', () => {
   assert.match(reading, /mode === 'nikud' \? word\.lemma : withoutNiqqud\(word\.lemma\)/)
 })
 
-test('FASE H: palabras ofrece tarjetas, lista y detalle como vistas distintas', () => {
-  assert.match(reading, /type WordView = 'cards' \| 'list' \| 'detail'/)
-  assert.match(reading, /Tarjetas/)
-  assert.match(reading, /Lista/)
-  assert.match(reading, /Detalle/)
-  assert.match(reading, /function CardsView/)
-  assert.match(reading, /function ListView/)
-  assert.match(reading, /function DetailView/)
+test('FASE H: tarjetas muestran hebreo pronunciación y español sin Strong visible', () => {
+  const cards = reading.slice(reading.indexOf('function CardsView'), reading.indexOf('function ListView'))
+  assert.match(cards, /<WordText/)
+  assert.match(cards, /pronunciationFor\(word\)/)
+  assert.match(cards, /spanishFor\(word\)/)
+  assert.doesNotMatch(cards, /strongNumber|Abrir detalle|Ver detalle|Glosa fuente/)
+  assert.match(cards, /chunkWords\(words, 2\)/)
+  assert.match(cards, /<LearningDetail word=\{selected\} mode=\{mode\} compact \/>/)
 })
 
-test('FASE H: catálogo se pagina y busca sin cargar toda la base en cliente', () => {
-  assert.match(reading, /pageSize: '24'/)
-  assert.match(reading, /\/api\/estudios\/hebreo\/palabras/)
-  assert.match(reading, /Página \{result\.page\} de \{result\.totalPages\}/)
-  assert.match(reading, /Buscar hebreo, Strong o glosa fuente/)
-  assert.match(reading, /result\.total\.toLocaleString/)
+test('FASE H: tocar tarjeta expande en su fila y no cambia a vista detalle', () => {
+  assert.match(reading, /function toggleCard\(word: CatalogWord\)/)
+  assert.match(reading, /setClosingId\(word\.lexicalId\)/)
+  assert.match(reading, /setSelectedId\(current => current === word\.lexicalId \? null : current\)/)
+  const toggle = reading.slice(reading.indexOf('function toggleCard'), reading.indexOf('function changeView'))
+  assert.doesNotMatch(toggle, /setView\('detail'\)/)
+})
+
+test('FASE H: lista queda simple con pronunciación debajo y español a la derecha', () => {
+  const list = reading.slice(reading.indexOf('function ListView'), reading.indexOf('function DetailView'))
+  assert.match(list, /<WordText/)
+  assert.match(list, /pronunciationFor\(word\)/)
+  assert.match(list, /spanishFor\(word\)/)
+  assert.match(list, /text-right/)
+  assert.doesNotMatch(list, /button|Ver detalle|Glosa fuente|strongNumber/)
+})
+
+test('FASE H: detalle prioriza escritura pronunciación formación y significado', () => {
+  const detail = reading.slice(reading.indexOf('function LearningDetail'), reading.indexOf('function CardsView'))
+  for (const label of ['Cómo se pronuncia', 'Cómo se forma', 'Qué significa']) assert.match(detail, new RegExp(label))
+  assert.match(detail, /formationParts\(word\.lemma\)/)
+  assert.match(detail, /word\.meaningNoteEs/)
+  assert.doesNotMatch(detail, /Fuente|Glosa de la fuente|sourceLocator|providerVersion|contentHash|strongNumber/)
+})
+
+test('FASE H: vocabulario se organiza por temas y categorías gramaticales', () => {
+  for (const label of ['Esenciales', 'Familia', 'Vida diaria', 'Naturaleza', 'Cuerpo y vida', 'Fe y conceptos', 'Acciones', 'Sustantivos', 'Verbos', 'Adjetivos', 'Todas']) assert.match(learning, new RegExp(label))
+  assert.match(reading, /HEBREW_LEARNING_GROUPS\.map/)
+  assert.match(catalog, /lexicalIdsForLearningGroup/)
+  assert.match(catalog, /group === 'nouns'/)
+  assert.match(catalog, /group === 'verbs'/)
+  assert.match(catalog, /group === 'adjectives'/)
+})
+
+test('FASE H: búsqueda acepta español y hebreo y restaurar vacío devuelve listado anterior', () => {
+  assert.match(reading, /placeholder="Buscar en español o hebreo"/)
+  assert.match(catalog, /lexicalIdsForSpanishSearch\(search\)/)
+  assert.match(catalog, /query = query\.ilike\('lemma', hebrewSearchPattern\(search\)\)/)
+  assert.match(reading, /const pageBeforeSearch = useRef\(1\)/)
+  assert.match(reading, /if \(value === '' && search\) clearSearch\(\)/)
+  assert.match(reading, /setPage\(pageBeforeSearch\.current\)/)
+  assert.match(reading, /Borra la búsqueda para volver al listado anterior/)
 })
 
 test('FASE H: búsqueda hebrea funciona aunque el usuario omita niqqud', () => {
@@ -38,10 +75,12 @@ test('FASE H: búsqueda hebrea funciona aunque el usuario omita niqqud', () => {
   assert.match(catalog, /function hebrewSearchPattern/)
   assert.match(catalog, /replace\(HEBREW_MARKS, ''\)/)
   assert.match(catalog, /Array\.from\(consonants\)\.join\('%'\)/)
-  assert.match(catalog, /query = query\.ilike\('lemma', hebrewSearchPattern\(search\)\)/)
 })
 
-test('FASE H: adaptador reutiliza biblical_lexical_entries aprobado y solo lectura', () => {
+test('FASE H: catálogo sigue paginado y reutiliza biblical_lexical_entries solo lectura', () => {
+  assert.match(reading, /pageSize: '24'/)
+  assert.match(reading, /\/api\/estudios\/hebreo\/palabras/)
+  assert.match(reading, /Página \{result\.page\} de \{result\.totalPages\}/)
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
   assert.match(catalog, /\.eq\('language', 'hebrew'\)/)
   assert.match(catalog, /\.eq\('enabled', true\)/)
@@ -51,21 +90,25 @@ test('FASE H: adaptador reutiliza biblical_lexical_entries aprobado y solo lectu
   assert.doesNotMatch(catalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
 })
 
-test('FASE H: glosa española solo aparece si ya está aprobada', () => {
-  assert.match(reading, /word\.displayGlossEs \?\? 'Aún no hay una glosa española editorial aprobada\.'/)
-  assert.match(reading, /Glosa de la fuente/)
-  assert.match(reading, /\(EN\)/)
-  assert.match(reading, /No registra dominio ni inventa traducciones españolas/)
+test('FASE H: grupos didácticos aportan español sin reemplazar el catálogo completo', () => {
+  assert.match(learning, /spanish: 'padre'/)
+  assert.match(learning, /spanish: 'casa'/)
+  assert.match(learning, /spanish: 'rey'/)
+  assert.match(learning, /spanish: 'paz'/)
+  assert.match(learning, /spanish: 'hacer'/)
+  assert.match(catalog, /row\.display_gloss_es \?\? pedagogical\?\.spanish \?\? null/)
+  assert.match(reading, /“Todas” conserva acceso al catálogo hebreo aprobado completo/)
 })
 
-test('FASE H: endpoint de catálogo exige sesión a través del servicio y no cachea datos privados', () => {
-  assert.match(route, /listarCatalogoHebreoParaAprendizaje/)
+test('FASE H: endpoint mantiene sesión privada y acepta group', () => {
+  assert.match(route, /url\.searchParams\.get\('group'\)/)
+  assert.match(route, /listarCatalogoHebreoParaAprendizaje\(\{ page, pageSize, search, group \}\)/)
   assert.match(route, /result\.status === 'sin-sesion'/)
   assert.match(route, /status: 401/)
   assert.match(route, /'Cache-Control': 'private, no-store'/)
 })
 
-test('FASE H: lectura no introduce audio ni persistencia local', () => {
+test('FASE H: no introduce audio ni persistencia local ni escritura de base', () => {
   assert.doesNotMatch(reading, /speechSynthesis|new Audio|Audio\(|localStorage|sessionStorage/)
   assert.doesNotMatch(catalog, /insert\(|update\(|delete\(|upsert\(/)
 })
