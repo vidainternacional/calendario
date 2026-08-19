@@ -25,7 +25,7 @@ function aplicarTema(modo: ModoBiblia) {
 function retirarTema() {
   delete document.documentElement.dataset.bibliaTema
   delete document.body.dataset.bibliaTema
-  document.documentElement.style.removeProperty('color-scheme')
+  document.documentElement.style.colorScheme = 'light'
 }
 
 function esRutaCuaderno(pathname: string) {
@@ -33,6 +33,15 @@ function esRutaCuaderno(pathname: string) {
     || pathname.startsWith('/biblia/notas/')
     || pathname === '/biblia/notas-offline'
     || pathname.startsWith('/biblia/notas-offline/')
+}
+
+function marcarObjetivoCuaderno(activo: boolean) {
+  if (activo) {
+    document.documentElement.dataset.vidaCuadernoTarget = 'true'
+    document.documentElement.style.colorScheme = 'light'
+    return
+  }
+  delete document.documentElement.dataset.vidaCuadernoTarget
 }
 
 /**
@@ -45,7 +54,10 @@ export default function BibleThemeRouteSync() {
   const pathname = usePathname()
 
   useLayoutEffect(() => {
-    if (!pathname.startsWith('/biblia') || esRutaCuaderno(pathname)) {
+    const cuaderno = esRutaCuaderno(pathname)
+    marcarObjetivoCuaderno(cuaderno)
+
+    if (!pathname.startsWith('/biblia') || cuaderno) {
       retirarTema()
       return
     }
@@ -65,6 +77,25 @@ export default function BibleThemeRouteSync() {
       window.removeEventListener('storage', sincronizar)
     }
   }, [pathname])
+
+  useLayoutEffect(() => {
+    const prepararNavegacion = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      const link = target.closest('a[href]')
+      if (!link) return
+
+      try {
+        const url = new URL(link.getAttribute('href') || '', window.location.href)
+        if (url.origin !== window.location.origin || !esRutaCuaderno(url.pathname)) return
+        marcarObjetivoCuaderno(true)
+        retirarTema()
+      } catch {}
+    }
+
+    document.addEventListener('click', prepararNavegacion, true)
+    return () => document.removeEventListener('click', prepararNavegacion, true)
+  }, [])
 
   return null
 }

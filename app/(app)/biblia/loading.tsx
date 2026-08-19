@@ -3,7 +3,7 @@ export default function LoadingBiblia() {
     <main className="vida-biblia-loading min-h-screen px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6">
       <div className="mx-auto max-w-4xl" role="status" aria-label="Cargando Biblia">
         <header className="mb-4 flex items-center gap-3">
-          <span className="h-11 w-11 shrink-0 rounded-2xl bg-[#C0392B]" />
+          <span className="vida-biblia-loading__icon h-11 w-11 shrink-0 rounded-2xl bg-[#C0392B]" />
           <div className="space-y-2">
             <span className="vida-biblia-loading__line block h-5 w-24 rounded-full" />
             <span className="vida-biblia-loading__line block h-3 w-36 rounded-full" />
@@ -70,6 +70,21 @@ export default function LoadingBiblia() {
           --loader-soft: #1e293b;
           --loader-line: #273449;
           --loader-border: #1e293b;
+        }
+
+        html[data-vida-cuaderno-target='true'] .vida-biblia-loading {
+          --loader-panel: #ffffff;
+          --loader-control: #ffffff;
+          --loader-soft: #e2e8f0;
+          --loader-line: #d7dce3;
+          --loader-border: #e2e8f0;
+          background: #f7f7f4 !important;
+          color: #0f172a !important;
+          color-scheme: light !important;
+        }
+
+        html[data-vida-cuaderno-target='true'] .vida-biblia-loading__icon {
+          background: #7c3aed !important;
         }
 
         .vida-biblia-loading__panel { background: var(--loader-panel); border-color: var(--loader-border); }

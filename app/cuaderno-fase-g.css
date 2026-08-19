@@ -15,8 +15,42 @@
   left: 0;
   z-index: 4;
   flex: 0 0 auto;
+  overflow: visible;
+  box-shadow: 8px 0 20px rgba(247, 247, 244, 0.2);
 }
 
+/*
+ * Borde de desaparición inspirado en los carruseles de iOS: las fichas que
+ * avanzan hacia la acción fija pierden contraste progresivamente antes de
+ * alcanzarla, evitando que texto/bordes se mezclen debajo del botón morado.
+ */
+[aria-label="Notas del cuaderno"] > button[aria-label="Nueva nota"]::after {
+  content: '';
+  position: absolute;
+  top: -0.35rem;
+  bottom: -0.35rem;
+  left: calc(100% - 0.1rem);
+  width: 2.35rem;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(247, 247, 244, 0.99) 0%,
+    rgba(247, 247, 244, 0.94) 30%,
+    rgba(247, 247, 244, 0.72) 58%,
+    rgba(247, 247, 244, 0.28) 80%,
+    rgba(247, 247, 244, 0) 100%
+  );
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+}
+
+/*
+ * Esta marca se activa antes de iniciar la navegación hacia Cuaderno. Así el
+ * primer frame y cualquier loading boundary padre quedan claros incluso si el
+ * dispositivo usa apariencia oscura o Biblia venía en modo oscuro/sepia.
+ */
+html[data-vida-cuaderno-target='true'],
+html[data-vida-cuaderno-target='true'] body,
 html:has(.vida-cuaderno-loading),
 body:has(.vida-cuaderno-loading) {
   --background: #f7f7f4;

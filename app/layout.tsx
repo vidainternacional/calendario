@@ -49,7 +49,16 @@ const bibleThemeBootstrap = `
         || pathname === '/biblia/notas-offline'
         || pathname.startsWith('/biblia/notas-offline/')
 
-      if (!pathname.startsWith('/biblia') || esRutaCuaderno) {
+      if (esRutaCuaderno) {
+        delete document.documentElement.dataset.bibliaTema
+        document.documentElement.dataset.vidaCuadernoTarget = 'true'
+        document.documentElement.style.colorScheme = 'light'
+        return
+      }
+
+      delete document.documentElement.dataset.vidaCuadernoTarget
+
+      if (!pathname.startsWith('/biblia')) {
         delete document.documentElement.dataset.bibliaTema
         document.documentElement.style.colorScheme = 'light'
         return
@@ -59,6 +68,7 @@ const bibleThemeBootstrap = `
       const storedMode = raw ? JSON.parse(raw)?.modo : 'claro'
       const mode = storedMode === 'oscuro' || storedMode === 'sepia' ? storedMode : 'claro'
       document.documentElement.dataset.bibliaTema = mode
+      document.documentElement.style.colorScheme = mode === 'oscuro' ? 'dark' : 'light'
     } catch {}
   })()
 `
