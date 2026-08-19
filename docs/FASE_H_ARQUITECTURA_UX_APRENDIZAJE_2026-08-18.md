@@ -4,6 +4,10 @@ Fecha inicial: 2026-08-18
 Última alineación: 2026-08-19
 Estado: contrato vivo de diseño para FASE H
 
+Referencia pedagógica complementaria aprobada:
+
+- `docs/FASE_H_REFERENCIA_PEDAGOGICA_HOSHIAH_NA_2026-08-19.md`.
+
 ## 1. Propósito del Centro de Hebreo Bíblico
 
 El objetivo es que el usuario pueda **leer, pronunciar y comprender progresivamente el hebreo bíblico** hasta utilizar el texto original con mayor autonomía.
@@ -18,11 +22,11 @@ El audio no se sustituye con `speechSynthesis`. Escuchar/repetir solo se habilit
 
 ## 2. Estado de validación móvil — 2026-08-19
 
-- **Alef-Bet:** base visual validada.
-- **Vocales / niqqud:** base visual validada.
+- **Alef-Bet:** base visual validada; sus fichas se conservan como herramienta principal de memoria.
+- **Vocales / niqqud:** base visual validada; conserva fichas y comparación tabular.
 - **Palabras:** diccionario/vocabulario separado de Lectura; validado como dirección pedagógica.
 - **Lectura:** frases, oraciones y versículos reales separados de Palabras; validado como dirección pedagógica.
-- **Gate actual:** **Reglas esenciales**, implementación técnica verde en CI y Vercel; pendiente validación visual móvil.
+- **Gate actual:** **Reglas — pedagogía mixta**, técnicamente verde; pendiente validación visual móvil.
 - **Repaso:** permanece como siguiente área después de validar Reglas.
 - No activar todavía audio, progreso persistente, desbloqueos ni evaluación almacenada.
 
@@ -44,50 +48,66 @@ La portada conserva alta densidad útil: encabezado compacto + cuatro accesos 2�
 2. **Vocales** — niqqud y combinación consonante + signo.
 3. **Palabras** — vocabulario/diccionario para memorizar términos.
 4. **Lectura** — frases y oraciones reales para ganar continuidad.
-5. **Reglas** — piezas y relaciones gramaticales que explican lo que se está leyendo.
+5. **Reglas** — piezas, transformaciones y relaciones gramaticales que explican lo que se está leyendo.
 6. **Repaso** — recuperación de errores y confusiones.
 
-Después podrán crecer por capas: raíces, sistema verbal, construcciones avanzadas y lectura guiada más profunda.
+Dentro de estas áreas se incorporan progresivamente Sofit, Dagesh, matres lectionis, sheva, qamats qatan, pataj furtivo, inseparables, género/número, posesivos, estado constructo, raíces verificadas, sistema verbal por capas y Qere/Ketiv.
 
-## 5. Patrón visual compartido
+## 5. Patrón pedagógico mixto
 
-Cuando una colección lo permita, usar:
+No todo contenido debe usar la misma vista. La interfaz se escoge según la tarea cognitiva:
 
-- **Tarjetas:** selección visual; tocar abre/retrae bajo la misma fila.
-- **Lista:** consulta rápida y compacta.
-- **Detalle:** un elemento por vez con Anterior/Siguiente.
+- **Fichas:** memoria, reconocimiento y estudio de un elemento individual.
+- **Tablas:** comparación de formas, prefijos, sufijos, terminaciones y transformaciones.
+- **Detalle:** recorrido de un elemento por vez cuando hace falta profundizar.
+- **Transformación visible:** `forma base → cambio → resultado` cuando una regla modifica una palabra.
+- **Ejemplo real:** palabra, frase o versículo del corpus aprobado.
+- **Práctica:** comprobar reconocimiento después de la explicación.
+- **Lectura aplicada:** localizar después el mismo fenómeno dentro del texto bíblico.
 
 Reglas comunes:
 - contenido hebreo protagonista;
 - botones táctiles cómodos;
-- nada abierto automáticamente si ocupa espacio considerable;
-- explicaciones largas cerradas por defecto;
+- nada abierto automáticamente si ocupa espacio considerable, salvo la primera tabla introductoria cuando ayuda a entender el bloque;
+- explicaciones largas plegadas;
 - superficies integradas y pocos contenedores anidados;
+- tablas anchas con scroll horizontal natural en móvil;
 - animaciones breves y compatibles con `prefers-reduced-motion`.
 
-## 6. Alef-Bet — validado
+## 6. Alef-Bet — validado y preservado
 
 Conserva:
 - 22 letras y cinco formas finales;
 - filtros Alef–Yod, Kaf–Tav, Dagesh, Sofit, Guturales, Matres y Shin/Sin;
-- Tarjetas · Lista · Detalle;
-- Lista: Signo · Nombre · Valor · Sonido · Significado;
+- fichas expandibles y reversibles como superficie principal de aprendizaje;
+- comparación tabular/lista: `Signo · Nombre · Valor · Sonido · Significado`;
+- Detalle: una letra por vez;
 - ficha ampliada con Libro · Cuadrada · Manuscrita;
 - reverso desplazable como una sola pieza, sin encabezado `sticky`;
 - explicación `¿Qué es el Alef-Bet?` con scroll limitado;
 - historia/pictografía nunca presentada como significado léxico o teológico automático.
 
-## 7. Vocales / niqqud — validado
+Tabla específica futura de Sofit:
+`Forma normal · Forma final · Nombre · Sonido · Valor ordinario · Nota`.
+
+Si se muestra una convención ampliada de gematría para finales, se etiqueta expresamente como convención y no reemplaza el valor ordinario de la letra.
+
+## 7. Vocales / niqqud — validado y preservado
 
 Base actual:
 Pataj · Qamats · Segol · Tsere · Hiriq · Holam · Qubuts · Shuruq · Sheva · Hataf Pataj · Hataf Segol · Hataf Qamats.
 
 Conserva:
-- Tarjetas · Lista · Detalle;
-- Tarjetas cerradas al entrar y expansión bajo su fila;
-- Lista: Signo · Nombre · Valor · Sonido · Función;
+- fichas para reconocimiento individual;
+- comparación tabular/lista: `Signo · Nombre · Valor · Sonido · Función`;
+- Detalle: un signo por vez;
 - `Valor = —` porque el niqqud no tiene gematría propia;
 - cautelas para qamats qatan, sheva y shuruq.
+
+La tabla pedagógica deberá crecer por capas hacia:
+`Signo · Nombre · Familia · Sonido · Combinación · Ejemplo · Regla/cautela`.
+
+Incorporaciones progresivas: sheva vocal/silencioso, pataj furtivo, qamats qatan, shuruq y holam con mater cuando corresponda.
 
 ## 8. Palabras — diccionario de aprendizaje
 
@@ -119,11 +139,26 @@ Conserva:
 - acceso paginado al corpus hebreo aprobado del AT;
 - reutilización de `biblical_verse_texts`, sin crear un segundo motor bíblico.
 
+La lectura debe convertirse progresivamente en el lugar donde se aplican las letras, vocales, palabras y reglas aprendidas.
+
 ## 10. Reglas — gate actual
 
-Reglas debe explicar **por qué una forma se ve como se ve**, sin convertirse en una tabla académica extensa.
+Reglas debe explicar **por qué una forma se ve como se ve** mediante comparación, transformación y ejemplos; no mediante una sola colección de fichas.
 
-Primera capa:
+### Vista principal — Tablas
+
+Actualmente incluye:
+- **Inseparables y prefijos frecuentes**;
+- **Género y número**;
+- **Sufijos posesivos**;
+- **Estado constructo**;
+- **Qere / Ketiv**.
+
+Cada tabla se abre de manera independiente y puede desplazarse horizontalmente en móvil sin comprimir columnas hasta volverlas ilegibles.
+
+### Vista secundaria — Fichas
+
+Se conserva para memorizar una regla individual:
 - artículo definido `הַ`;
 - conjunción `וְ`;
 - preposiciones prefijadas `בְּ · לְ · כְּ` y `מִן`;
@@ -132,13 +167,23 @@ Primera capa:
 - concordancia sustantivo + adjetivo;
 - cadena constructa.
 
-UX:
-- Tarjetas · Lista · Detalle;
-- filtros Básicas · Prefijos · Nombres · Frase · Todas;
-- una regla → ejemplo → pronunciación → significado → explicación → cautela;
+La ficha sigue el patrón:
+`forma → función → ejemplo → pronunciación → significado → explicación → cautela`.
+
+### Detalle
+
+Permite recorrer una regla por vez con Anterior/Siguiente.
+
+### Guardias lingüísticas
+
+- las terminaciones de género/número se presentan como pistas frecuentes, no universales;
+- las preposiciones se traducen según contexto;
+- el sustantivo puede cambiar al recibir sufijos;
+- el estado constructo puede cambiar la forma del primer elemento;
+- Qere/Ketiv se enseña como fenómeno textual/masorético, sin convertir una postura religiosa en regla lingüística;
 - no deducir raíces automáticamente cuando la base no contiene una raíz verificada.
 
-El sistema verbal y raíces completas se incorporarán en capas posteriores de Reglas.
+El sistema verbal y las raíces completas se incorporarán por capas posteriores dentro del mismo recorrido.
 
 ## 11. Repaso — siguiente después de Reglas
 
@@ -183,7 +228,9 @@ No mostrar botones falsos de audio mientras la fuente no esté aprobada.
 
 ## 15. Material de apoyo
 
-Los 11 enlaces externos proporcionados por el usuario permanecen exactamente conservados y con estado `pendiente` hasta corroboración visual individual. No sustituyen el motor lingüístico ni las fuentes editoriales de VIDA.
+Los 11 enlaces externos proporcionados por el usuario permanecen exactamente conservados y con estado `pendiente` hasta corroboración visual individual. El usuario confirmó que su línea de enseñanza coincide con la referencia pedagógica Hoshiah Na; aun así, cada recurso debe verificarse individualmente antes de declararlo validado.
+
+No sustituyen el motor lingüístico ni las fuentes editoriales de VIDA.
 
 ## 16. Biblia en hebreo
 
@@ -194,11 +241,18 @@ Ayudas futuras:
 
 Nunca duplicar Estudio Profundo ni fabricar una traducción literal española del AT.
 
-## 17. Criterio visual
+## 17. Uso de Hoshiah Na como referencia
+
+El material indicado por el usuario se usa como **referencia pedagógica y de organización visual**, especialmente para identificar cuándo una tabla comparativa ayuda más que una ficha aislada.
+
+No se copian páginas, tablas ni textos extensos. La redacción de VIDA es propia y los datos lingüísticos se contrastan con las fuentes bíblicas/académicas aprobadas.
+
+## 18. Criterio visual
 
 - estilo iOS, editorial y calmado;
 - hebreo claramente mayor que el español;
 - jerarquía por espaciado, tipografía y separadores;
-- minimizar scroll cuando la información puede agruparse;
+- minimizar scroll vertical cuando la información puede agruparse;
+- permitir scroll horizontal en tablas comparativas extensas;
 - no mascotas, confeti, rachas obligatorias ni saturación de badges;
 - no generar imágenes para este proyecto salvo petición explícita del usuario.
