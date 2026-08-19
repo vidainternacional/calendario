@@ -39,34 +39,59 @@ test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () =
   assert.match(dataset, /orden:\s*21,[\s\S]*?letra:\s*'ש'[\s\S]*?nombre:\s*'Shin \/ Sin'/)
   assert.match(dataset, /שׁ Shin: punto a la derecha/)
   assert.match(dataset, /שׂ Sin: punto a la izquierda/)
+  assert.match(explorer, /Derecha = Shin · izquierda = Sin/)
 })
 
 test('FASE H: el origen pictográfico se presenta con cautela editorial', () => {
   assert.match(dataset, /son significados léxicos, secretos ni teológicos/i)
   assert.match(dataset, /'bien atestiguado' \| 'probable' \| 'debatido'/)
-  assert.match(explorer, /No significa que la letra tenga por sí sola ese significado/)
-  assert.match(explorer, /referencia histórica comparativa/)
+  assert.match(explorer, /no el significado léxico de una palabra bíblica/i)
+  assert.match(explorer, /no son significados secretos de la letra/i)
 })
 
-test('FASE H: el explorador ofrece Cuadrícula con detalle por fila y Carrusel RTL', () => {
+test('FASE H: el aprendizaje se divide por grupos sin convertir variantes en letras nuevas', () => {
+  assert.match(explorer, /type LearningGroup = 'all' \| 'begadkefat' \| 'sofit' \| 'gutturals' \| 'matres' \| 'shin-sin'/)
+  assert.match(explorer, /label: 'Dagesh'/)
+  assert.match(explorer, /label: 'Sofit'/)
+  assert.match(explorer, /label: 'Guturales'/)
+  assert.match(explorer, /label: 'Matres'/)
+  assert.match(explorer, /label: 'Shin \/ Sin'/)
+  assert.match(explorer, /letter\.grupo === 'begadkefat'/)
+  assert.match(explorer, /Boolean\(letter\.formaFinal\)/)
+  assert.match(explorer, /GUTTURAL_ORDERS/)
+  assert.match(explorer, /MATRES_ORDERS/)
+})
+
+test('FASE H: la vista de fichas abre debajo de la fila y permite voltear datos avanzados', () => {
   assert.match(explorer, /type ViewMode = 'grid' \| 'carousel'/)
-  assert.match(explorer, /Cuadrícula/)
-  assert.match(explorer, /Carrusel/)
-  assert.match(explorer, /chunkLetters\(4\)/)
-  assert.match(explorer, /chunkLetters\(6\)/)
-  assert.match(explorer, /selectedInRow && <LetterDetail/)
-  assert.match(explorer, /dir="rtl" className="-mx-4 flex snap-x snap-mandatory/)
-  assert.match(explorer, /Alef-bet hebreo en carrusel/)
+  assert.match(explorer, />\s*Fichas\s*</)
+  assert.match(explorer, /selectedInRow && <CompactLetterCard/)
+  assert.match(explorer, /perspective:1200px/)
+  assert.match(explorer, /rotateY\(180deg\)/)
+  assert.match(explorer, /Más datos/)
+  assert.match(explorer, /Datos de referencia/)
+  assert.match(explorer, /Primero aprenderás a leer/)
 })
 
-test('FASE H: la ficha usa acordeones y muestra datos esenciales', () => {
-  assert.match(explorer, /<details open=\{open\}/)
-  assert.match(explorer, /Pronunciación y lectura/)
-  assert.match(explorer, /Escritura y variantes/)
-  assert.match(explorer, /Historia del nombre y del signo/)
+test('FASE H: la ficha principal prioriza lectura y separa transliteración, gematría e historia', () => {
+  assert.match(explorer, /Cómo suena/)
+  assert.match(explorer, /<RuleSummary letter=\{letter\} \/>/)
+  assert.match(explorer, /Ejemplo/)
+  assert.match(explorer, /StudyRow label="Transliteración"/)
+  assert.match(explorer, /StudyRow label="Gematría"/)
+  assert.match(explorer, /StudyRow label="Unicode"/)
+  assert.match(explorer, /Signo histórico/)
+})
+
+test('FASE H: el carrusel RTL conserva una ficha completa y datos técnicos aparte', () => {
+  assert.match(explorer, /Carrusel/)
+  assert.match(explorer, /dir="rtl"/)
+  assert.match(explorer, /snap-x snap-mandatory/)
+  assert.match(explorer, /CarouselLetterDetail/)
+  assert.match(explorer, /Aprender a leerla/)
+  assert.match(explorer, /Formas y reglas/)
   assert.match(explorer, /Ejemplo bíblico/)
-  assert.match(explorer, /valor \{letter\.valor\}/)
-  assert.match(explorer, /letter\.unicodeFenicio/)
+  assert.match(explorer, /Datos técnicos e historia/)
 })
 
 test('FASE H: el explorador sigue sin introducir audio ni persistencia', () => {
