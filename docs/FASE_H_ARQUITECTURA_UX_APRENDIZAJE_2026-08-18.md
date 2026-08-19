@@ -8,7 +8,8 @@ Estado: contrato de diseño para FASE H
 - **Alef-Bet:** base visual validada por el usuario después de corregir nomenclatura, desplegables, scroll, retracción de fichas y desbordes móviles.
 - **Vocales y sílabas / niqqud:** base visual validada por el usuario; continúa como módulo real dentro de Aprender.
 - **Gate actual:** Lectura de palabras.
-- No avanzar a Vocabulario, Gramática, audio ni progreso persistente hasta validar la base de Lectura.
+- Implementación técnica del gate actual: CI #2124 SUCCESS + Vercel SUCCESS en `d551586240aa6a9f9f4d0c971a984f6a9308255f`.
+- No avanzar a Vocabulario, Gramática, audio ni progreso persistente hasta validar visualmente la base de Lectura.
 
 ## 1. Arquitectura de información
 
@@ -144,7 +145,7 @@ Cautelas preservadas: qamats qatan, sheva vocal/silencioso y uso del punto de sh
 
 ## 9. Lectura de palabras — gate actual
 
-La primera práctica usa palabras breves para pasar de signos aislados a lectura completa.
+La primera práctica usa diez palabras breves para pasar de signos aislados a lectura completa.
 
 Ayudas graduadas:
 1. `Con niqqud`: palabra vocalizada + transliteración temporal.
