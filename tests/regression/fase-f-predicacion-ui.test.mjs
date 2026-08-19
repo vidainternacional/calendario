@@ -36,10 +36,13 @@ test('FASE F: el modo offline conserva los metadatos porque monta el mismo works
   for (const field of ['numeroPredicacion','fechaPredicacion','serie','lugar','predicador','estadoPredicacion']) assert.match(workspace, new RegExp(field))
 })
 
-test('FASE F: el service worker cachea código estático, no datos privados', () => {
-  assert.match(sw, /vida-shell-v2\.3-cuaderno-react-real/)
+test('FASE F/G: el shell cachea código estático y los datos autenticados quedan aislados por usuario', () => {
+  assert.match(sw, /CACHE_NAME = `vida-shell-\$\{CACHE_VERSION\}`/)
+  assert.match(sw, /USER_CACHE_PREFIX = `vida-user-\$\{CACHE_VERSION\}-`/)
   assert.match(sw, /OFFLINE_NOTES_APP/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/static\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
+  assert.match(sw, /clearActiveOwner/)
+  assert.match(sw, /caches\.delete\(userCacheName/)
   assert.doesNotMatch(sw, /notas_estudio/)
 })
