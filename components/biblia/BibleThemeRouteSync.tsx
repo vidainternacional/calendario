@@ -28,16 +28,24 @@ function retirarTema() {
   document.documentElement.style.removeProperty('color-scheme')
 }
 
+function esRutaCuaderno(pathname: string) {
+  return pathname === '/biblia/notas'
+    || pathname.startsWith('/biblia/notas/')
+    || pathname === '/biblia/notas-offline'
+    || pathname.startsWith('/biblia/notas-offline/')
+}
+
 /**
- * Mantiene la paleta bíblica únicamente dentro de las rutas /biblia.
- * Es también la única autoridad que la retira al abandonar esa superficie,
- * evitando un frame claro durante transiciones internas Biblia → Cuaderno.
+ * Mantiene la paleta bíblica únicamente dentro de las superficies de lectura
+ * de /biblia. El Cuaderno vive bajo esa URL por compatibilidad histórica, pero
+ * visualmente es una superficie independiente y siempre debe abandonar el tema
+ * oscuro/sepia de Biblia al abrirse.
  */
 export default function BibleThemeRouteSync() {
   const pathname = usePathname()
 
   useLayoutEffect(() => {
-    if (!pathname.startsWith('/biblia')) {
+    if (!pathname.startsWith('/biblia') || esRutaCuaderno(pathname)) {
       retirarTema()
       return
     }
