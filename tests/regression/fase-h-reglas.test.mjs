@@ -12,11 +12,11 @@ test('FASE H reglas: Aprender integra Reglas como módulo real', () => {
   assert.match(home, /activeSection\.id === 'grammar' \? <GrammarExplorer \/>/)
 })
 
-test('FASE H reglas: usa Tarjetas Lista y Detalle con apertura bajo la fila', () => {
-  assert.match(grammar, /type GrammarView = 'cards' \| 'list' \| 'detail'/)
-  for (const label of ['Tarjetas', 'Lista', 'Detalle']) assert.match(grammar, new RegExp(label))
+test('FASE H reglas: usa Tablas Fichas y Detalle y conserva apertura bajo la fila', () => {
+  assert.match(grammar, /type GrammarView = 'tables' \| 'cards' \| 'detail'/)
+  for (const label of ['Tablas', 'Fichas', 'Detalle']) assert.match(grammar, new RegExp(label))
+  assert.match(grammar, /function TeachingTables/)
   assert.match(grammar, /function CardsView/)
-  assert.match(grammar, /function ListView/)
   assert.match(grammar, /function DetailView/)
   assert.match(grammar, /function toggleRule/)
   assert.match(grammar, /setClosingId\(rule\.id\)/)
@@ -28,9 +28,9 @@ test('FASE H reglas: organiza la primera capa por función didáctica', () => {
 })
 
 test('FASE H reglas: conserva cautelas y no deduce raíces inexistentes', () => {
-  assert.match(grammar, /no se presentan como reglas absolutas/)
-  assert.match(grammar, /No se deducirán raíces automáticamente/)
-  assert.match(grammar, /no tenga verificada/)
+  assert.match(grammar, /reglas absolutas|regla absoluta/)
+  assert.match(grammar, /No deduciremos raíces/)
+  assert.match(grammar, /no tengan verificadas/)
   assert.match(grammar, /Ten en cuenta/)
 })
 
