@@ -57,6 +57,8 @@ const SELECT_CATALOG = `
   content_hash
 `
 
+const HEBREW_MARKS = /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g
+
 function normalizePage(value: number | undefined) {
   return Number.isInteger(value) && (value ?? 0) > 0 ? value as number : 1
 }
@@ -67,7 +69,12 @@ function normalizePageSize(value: number | undefined) {
 }
 
 function normalizeSearch(value: string | undefined) {
-  return (value ?? '').replace(/[,%()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)
+  return (value ?? '').replace(/[,%_()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)
+}
+
+function hebrewSearchPattern(value: string) {
+  const consonants = value.normalize('NFD').replace(HEBREW_MARKS, '').replace(/\s+/g, '')
+  return consonants ? `%${Array.from(consonants).join('%')}%` : '%'
 }
 
 function mapRow(row: HebrewLexicalRow): HebrewLearningWord {
@@ -108,7 +115,7 @@ export async function listarCatalogoHebreoParaAprendizaje(
 
   if (search) {
     if (/\p{Script=Hebrew}/u.test(search)) {
-      query = query.ilike('lemma', `%${search}%`)
+      query = query.ilike('lemma', hebrewSearchPattern(search))
     } else if (/^H?\d+[A-Z]?$/i.test(search)) {
       const normalizedStrong = search.toUpperCase().startsWith('H') ? search.toUpperCase() : `H${search.toUpperCase()}`
       query = query.or(`lexical_id.ilike.%${normalizedStrong}%,strong_number.ilike.%${normalizedStrong}%`)
