@@ -43,7 +43,7 @@ const LEARNING_GROUPS: readonly {
   { id: 'all', label: 'Todas', description: 'Las 22 letras en su orden.' },
   { id: 'begadkefat', label: 'Dagesh', description: 'Un punto que modifica el sonido de algunas letras.' },
   { id: 'sofit', label: 'Sofit', description: 'Cinco letras cambian de forma al final de palabra.' },
-  { id: 'gutturals', label: 'Guturales', description: 'Un grupo con comportamiento especial de pronunciación y vocalización.' },
+  { id: 'gutturals', label: 'Guturales', description: 'Letras con comportamiento especial de pronunciación y vocalización.' },
   { id: 'matres', label: 'Matres', description: 'Letras que también pueden ayudar a representar vocales.' },
   { id: 'shin-sin', label: 'Shin / Sin', description: 'La misma ש cambia de lectura según la posición del punto.' },
 ]
@@ -101,49 +101,48 @@ function hebrewDisplayName(letter: AlefBetLetter, group: LearningGroup) {
   return base
 }
 
-function LetterForms({
-  glyph,
-  compact = false,
-}: {
-  glyph: string
-  compact?: boolean
-}) {
-  const size = compact ? 'text-[2.05rem]' : 'text-[4.35rem] sm:text-[4.7rem]'
-  const label = compact ? 'sr-only' : 'text-[9px] font-black uppercase tracking-[0.1em] text-slate-400'
-
+function PrimaryLetterForms({ glyph }: { glyph: string }) {
   return (
-    <div className={`grid grid-cols-3 ${compact ? 'gap-1' : 'divide-x divide-slate-100 border-y border-slate-100 py-3.5'}`}>
-      <div className="text-center">
-        <p className={label}>Cuadrada</p>
+    <div className="grid w-full grid-cols-[1fr_1.45fr_1fr] items-end gap-3 py-2 text-center">
+      <div className="flex min-h-[128px] flex-col items-center justify-end">
         <span
           lang="he"
           dir="rtl"
-          className={`${compact ? '' : 'mt-2 block'} ${size} font-medium leading-none`}
-          style={{ fontFamily: SQUARE_FONT }}
-        >
-          {glyph}
-        </span>
-      </div>
-      <div className="text-center">
-        <p className={label}>Libro</p>
-        <span
-          lang="he"
-          dir="rtl"
-          className={`${compact ? '' : 'mt-2 block'} ${size} font-medium leading-none`}
+          className="block text-[4.8rem] font-semibold leading-none text-slate-700"
           style={{ fontFamily: BOOK_FONT }}
         >
           {glyph}
         </span>
+        <span className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+          Libro
+        </span>
       </div>
-      <div className="text-center">
-        <p className={label}>Manuscrita</p>
+
+      <div className="flex min-h-[174px] flex-col items-center justify-end">
         <span
           lang="he"
           dir="rtl"
-          className={`${compact ? '' : 'mt-2 block'} ${size} leading-none`}
+          className="block text-[9.6rem] font-medium leading-[0.78] text-slate-950 sm:text-[10.5rem]"
+          style={{ fontFamily: SQUARE_FONT }}
+        >
+          {glyph}
+        </span>
+        <span className="mt-4 text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">
+          Cuadrada
+        </span>
+      </div>
+
+      <div className="flex min-h-[128px] flex-col items-center justify-end">
+        <span
+          lang="he"
+          dir="rtl"
+          className="block text-[4.8rem] leading-none text-slate-700"
           style={{ fontFamily: HANDWRITTEN_FONT }}
         >
           {glyph}
+        </span>
+        <span className="mt-3 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+          Manuscrita
         </span>
       </div>
     </div>
@@ -171,38 +170,35 @@ function LetterTile({
       type="button"
       dir="ltr"
       aria-pressed={selected}
-      aria-label={`${name}, valor ${letter.valor}`}
+      aria-label={`${name}, letra ${letter.orden}, valor ${letter.valor}`}
       onClick={onSelect}
-      className={`relative shrink-0 rounded-[24px] border px-2.5 pb-3 pt-4 text-center transition-all duration-200 active:scale-[0.97] motion-reduce:transition-none ${
-        carousel ? 'w-[118px] snap-center' : 'min-h-[138px] w-full'
+      className={`relative shrink-0 rounded-[24px] border px-2.5 pb-3 pt-5 text-center transition-all duration-200 active:scale-[0.97] motion-reduce:transition-none ${
+        carousel ? 'w-[120px] snap-center' : 'min-h-[142px] w-full'
       } ${
         selected
           ? 'border-indigo-500 bg-indigo-600 text-white shadow-[0_12px_30px_rgba(79,70,229,0.22)]'
           : 'border-slate-200 bg-white text-slate-950 shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
       }`}
     >
-      <span className={`absolute left-3 top-2.5 text-[11px] font-black tabular-nums ${selected ? 'text-white/60' : 'text-slate-400'}`}>
+      <span
+        className={`absolute left-3 top-2.5 text-[11px] font-black tabular-nums ${
+          selected ? 'text-white/70' : 'text-slate-400'
+        }`}
+      >
         {letter.orden}
-      </span>
-      <span className={`absolute right-3 top-2.5 text-sm font-black tabular-nums ${selected ? 'text-white' : 'text-indigo-600'}`}>
-        {letter.valor}
       </span>
 
       <span
         lang="he"
         dir="rtl"
-        className="block text-[3.8rem] font-medium leading-[0.92]"
+        className="block text-[4.55rem] font-medium leading-[0.95]"
         style={{ fontFamily: SQUARE_FONT }}
         aria-hidden="true"
       >
         {glyph}
       </span>
 
-      <div className={`mx-auto mt-1 max-w-[88px] ${selected ? 'text-white/80' : 'text-slate-500'}`} aria-hidden="true">
-        <LetterForms glyph={glyph} compact />
-      </div>
-
-      <span className={`mt-1.5 block truncate text-[11px] font-black ${selected ? 'text-white' : 'text-slate-800'}`}>
+      <span className={`mt-3 block truncate text-[13px] font-black ${selected ? 'text-white' : 'text-slate-800'}`}>
         {name}
       </span>
     </button>
@@ -228,128 +224,123 @@ function ExpandedLetterCard({
       aria-pressed={flipped}
       aria-label={`Voltear ficha de ${name}`}
       onClick={() => setFlipped(value => !value)}
-      className="my-4 block w-full rounded-[30px] text-left [perspective:1400px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+      className="my-5 block w-full rounded-[30px] text-left [perspective:1400px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
     >
       <span className="sr-only">Toca cualquier parte de la ficha para voltearla.</span>
 
       <span
-        className={`relative block min-h-[440px] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${
+        className={`relative block min-h-[455px] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none ${
           flipped ? '[transform:rotateY(180deg)]' : ''
         }`}
       >
         <span
-          className={`absolute inset-0 flex flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_rgba(15,23,42,0.13)] ring-1 ring-white [backface-visibility:hidden] ${
+          className={`absolute inset-0 flex flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white px-5 py-5 shadow-[0_20px_52px_rgba(15,23,42,0.14)] ring-1 ring-white [backface-visibility:hidden] ${
             flipped ? 'pointer-events-none' : ''
           }`}
         >
-          <span className="mb-3 block h-1 w-12 rounded-full bg-indigo-500/80" aria-hidden="true" />
+          <span className="mb-3 block h-1 w-14 rounded-full bg-indigo-500/85" aria-hidden="true" />
 
           <span className="flex items-start justify-between gap-4">
             <span className="min-w-0">
-              <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-2xl font-black tracking-[-0.02em] text-slate-950">{name}</span>
-                <span lang="he" dir="rtl" className="text-xl font-bold text-indigo-700">
+              <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                <span className="text-[2rem] font-black leading-none tracking-[-0.025em] text-slate-950">{name}</span>
+                <span lang="he" dir="rtl" className="text-[1.55rem] font-bold leading-none text-indigo-700">
                   {hebrewName}
                 </span>
               </span>
             </span>
 
             <span className="shrink-0 text-right">
-              <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Valor</span>
-              <span className="mt-0.5 block text-3xl font-black tabular-nums leading-none text-indigo-600">
+              <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Valor</span>
+              <span className="mt-1 block text-[2.8rem] font-black tabular-nums leading-none text-indigo-600">
                 {letter.valor}
               </span>
             </span>
           </span>
 
-          <span className="flex flex-1 flex-col items-center justify-center py-2 text-center">
-            <span
-              lang="he"
-              dir="rtl"
-              className="block text-[9.8rem] font-medium leading-[0.78] text-slate-950 sm:text-[10.8rem]"
-              style={{ fontFamily: SQUARE_FONT }}
-            >
-              {glyph}
-            </span>
-
-            <span className="mt-4 block w-full">
-              <LetterForms glyph={glyph} />
-            </span>
+          <span className="flex flex-1 items-center justify-center py-2">
+            <PrimaryLetterForms glyph={glyph} />
           </span>
 
-          <span className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 pt-4">
-            <span className="pr-4">
-              <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Sonido</span>
-              <span className="mt-1 block text-[15px] font-bold leading-snug text-slate-800">
+          <span className="grid grid-cols-2 gap-5 border-t border-slate-200 pt-5">
+            <span>
+              <span className="mb-2 block h-1 w-7 rounded-full bg-indigo-500" aria-hidden="true" />
+              <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Sonido</span>
+              <span className="mt-1.5 block text-[17px] font-bold leading-snug text-slate-900">
                 {shortSound(letter)}
               </span>
             </span>
-            <span className="pl-4">
-              <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Significado</span>
-              <span className="mt-1 block text-[15px] font-black leading-snug text-slate-950">
+            <span>
+              <span className="mb-2 block h-1 w-7 rounded-full bg-amber-500" aria-hidden="true" />
+              <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Significado</span>
+              <span className="mt-1.5 block text-[18px] font-black leading-snug text-slate-950">
                 {meaning}
               </span>
             </span>
           </span>
 
-          <RotateCcw className="pointer-events-none absolute bottom-4 right-4 h-5 w-5 text-slate-300" aria-hidden="true" />
+          <RotateCcw className="pointer-events-none absolute bottom-4 right-4 h-5 w-5 text-slate-400" aria-hidden="true" />
         </span>
 
         <span
-          className={`absolute inset-0 flex flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_48px_rgba(15,23,42,0.13)] ring-1 ring-white [backface-visibility:hidden] [transform:rotateY(180deg)] ${
+          className={`absolute inset-0 flex flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-white px-5 py-5 shadow-[0_20px_52px_rgba(15,23,42,0.14)] ring-1 ring-white [backface-visibility:hidden] [transform:rotateY(180deg)] ${
             flipped ? '' : 'pointer-events-none'
           }`}
         >
-          <span className="mb-3 block h-1 w-12 rounded-full bg-indigo-500/80" aria-hidden="true" />
+          <span className="mb-3 block h-1 w-14 rounded-full bg-indigo-500/85" aria-hidden="true" />
 
           <span className="flex items-start justify-between gap-4">
             <span>
-              <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-2xl font-black text-slate-950">{name}</span>
-                <span lang="he" dir="rtl" className="text-xl font-bold text-indigo-700">
+              <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                <span className="text-[2rem] font-black leading-none text-slate-950">{name}</span>
+                <span lang="he" dir="rtl" className="text-[1.55rem] font-bold leading-none text-indigo-700">
                   {hebrewName}
                 </span>
               </span>
-              <span className="mt-1 block text-sm font-bold text-slate-500">Valor {letter.valor}</span>
+              <span className="mt-2 block text-sm font-bold text-slate-500">Valor {letter.valor}</span>
             </span>
-            <RotateCcw className="pointer-events-none mt-1 h-5 w-5 shrink-0 text-slate-300" aria-hidden="true" />
+            <RotateCcw className="pointer-events-none mt-1 h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
           </span>
 
           <span className="mt-5 block border-t border-slate-100 pt-4">
-            <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Significado del nombre</span>
-            <span className="mt-1 block text-2xl font-black leading-tight text-slate-950">{meaning}</span>
-            <span className="mt-2 block text-sm leading-relaxed text-slate-600">{letter.origenNombre}</span>
+            <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+              Significado del nombre
+            </span>
+            <span className="mt-1 block text-[1.65rem] font-black leading-tight text-slate-950">{meaning}</span>
+            <span className="mt-2 block text-[15px] leading-relaxed text-slate-600">{letter.origenNombre}</span>
           </span>
 
           <span className="mt-4 block border-t border-slate-100 pt-4">
-            <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Pronunciación</span>
-            <span className="mt-1 block text-[15px] font-bold leading-relaxed text-slate-800">{letter.pronunciacion}</span>
+            <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Pronunciación</span>
+            <span className="mt-1 block text-[16px] font-bold leading-relaxed text-slate-800">{letter.pronunciacion}</span>
           </span>
 
           <span className="mt-4 block border-t border-slate-100 pt-4">
-            <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Ejemplo</span>
+            <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Ejemplo</span>
             <span className="mt-2 flex items-baseline justify-between gap-4">
-              <span lang="he" dir="rtl" className="text-[2.6rem] font-medium leading-none text-slate-950" style={{ fontFamily: SQUARE_FONT }}>
+              <span lang="he" dir="rtl" className="text-[2.3rem] font-bold leading-none text-slate-950">
                 {letter.ejemplo.palabra}
               </span>
-              <span className="text-right text-sm font-bold text-slate-600">{letter.ejemplo.significado}</span>
+              <span className="text-right text-[15px] font-bold text-slate-700">
+                {letter.ejemplo.significado}
+              </span>
             </span>
           </span>
 
           {(letter.formaFinal || letter.variantes?.length) && (
             <span className="mt-4 block border-t border-slate-100 pt-4">
-              <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Formas relacionadas</span>
-              <span className="mt-2 flex flex-wrap items-center gap-2 text-sm font-bold text-slate-700">
+              <span className="block text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Formas relacionadas</span>
+              <span className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[15px] font-bold text-slate-700">
                 {letter.formaFinal && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-                    Final
-                    <span lang="he" dir="rtl" className="text-xl text-slate-950">{letter.formaFinal}</span>
+                  <span>
+                    Sofit:
+                    <span lang="he" dir="rtl" className="ml-2 text-[1.8rem] text-slate-950">
+                      {letter.formaFinal}
+                    </span>
                   </span>
                 )}
-                {letter.variantes?.slice(0, 2).map(variant => (
-                  <span key={variant} className="rounded-full bg-slate-100 px-3 py-1.5">
-                    {variant}
-                  </span>
+                {letter.variantes?.map(variant => (
+                  <span key={variant}>{variant}</span>
                 ))}
               </span>
             </span>
@@ -360,198 +351,157 @@ function ExpandedLetterCard({
   )
 }
 
-function GridRows({
-  rows,
-  selected,
-  onSelect,
-  columnsClass,
-  group,
-}: {
-  rows: AlefBetLetter[][]
-  selected: AlefBetLetter
-  onSelect: (order: number) => void
-  columnsClass: string
-  group: LearningGroup
-}) {
-  return (
-    <div className="space-y-3">
-      {rows.map(row => {
-        const selectedInRow = row.some(letter => letter.orden === selected.orden)
-        return (
-          <div key={row[0]?.orden}>
-            <div dir="rtl" className={`grid gap-3 ${columnsClass}`}>
-              {row.map(letter => (
-                <LetterTile
-                  key={letter.orden}
-                  letter={letter}
-                  selected={selected.orden === letter.orden}
-                  onSelect={() => onSelect(letter.orden)}
-                  group={group}
-                />
-              ))}
-            </div>
-            {selectedInRow && (
-              <ExpandedLetterCard key={`${selected.orden}-${group}`} letter={selected} group={group} />
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 export default function AlefBetExplorer({ simpleMode = true }: { simpleMode?: boolean }) {
-  const [selectedOrder, setSelectedOrder] = useState(1)
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  const [learningGroup, setLearningGroup] = useState<LearningGroup>('all')
+  const [group, setGroup] = useState<LearningGroup>('all')
+  const [selectedOrder, setSelectedOrder] = useState(1)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
 
   const filteredLetters = useMemo(
-    () => ALEF_BET.filter(letter => matchesGroup(letter, learningGroup)),
-    [learningGroup],
+    () => ALEF_BET.filter(letter => matchesGroup(letter, group)),
+    [group],
   )
-  const selected =
+
+  const selectedLetter =
     filteredLetters.find(letter => letter.orden === selectedOrder) ??
     filteredLetters[0] ??
     ALEF_BET[0]
-  const mobileRows = useMemo(() => chunkLetters(filteredLetters, 3), [filteredLetters])
-  const desktopRows = useMemo(() => chunkLetters(filteredLetters, 5), [filteredLetters])
-  const activeGroup =
-    LEARNING_GROUPS.find(group => group.id === learningGroup) ?? LEARNING_GROUPS[0]
-  const selectedIndex = Math.max(
-    0,
-    filteredLetters.findIndex(letter => letter.orden === selected.orden),
-  )
 
-  const visibleGroups =
-    !simpleMode || moreFiltersOpen ? LEARNING_GROUPS : LEARNING_GROUPS.filter(group => group.id === 'all')
+  const rows = useMemo(() => chunkLetters(filteredLetters, 3), [filteredLetters])
+  const activeGroup = LEARNING_GROUPS.find(item => item.id === group) ?? LEARNING_GROUPS[0]
 
-  function changeGroup(group: LearningGroup) {
-    setLearningGroup(group)
-    const first = ALEF_BET.find(letter => matchesGroup(letter, group))
+  function selectGroup(nextGroup: LearningGroup) {
+    setGroup(nextGroup)
+    const first = ALEF_BET.find(letter => matchesGroup(letter, nextGroup))
     if (first) setSelectedOrder(first.orden)
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-[13px] font-semibold text-slate-500">
-          Toca una letra para abrir su ficha.
-        </p>
-        <span className="shrink-0 text-[11px] font-black text-slate-400">22 · 5 Sofit</span>
-      </div>
-
-      {!simpleMode && (
-        <div className="mb-4 grid grid-cols-2 rounded-[18px] bg-slate-200/80 p-1" aria-label="Vista del Alef-bet">
-          <button
-            type="button"
-            aria-pressed={viewMode === 'grid'}
-            onClick={() => setViewMode('grid')}
-            className={`flex min-h-11 items-center justify-center gap-2 rounded-[14px] text-xs font-bold transition-all ${
-              viewMode === 'grid' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'
-            }`}
-          >
-            <Grid2X2 className="h-4 w-4" aria-hidden="true" />
-            Fichas
-          </button>
-          <button
-            type="button"
-            aria-pressed={viewMode === 'carousel'}
-            onClick={() => setViewMode('carousel')}
-            className={`flex min-h-11 items-center justify-center gap-2 rounded-[14px] text-xs font-bold transition-all ${
-              viewMode === 'carousel' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'
-            }`}
-          >
-            <GalleryHorizontal className="h-4 w-4" aria-hidden="true" />
-            Carrusel
-          </button>
+    <section id="alef-bet" aria-labelledby="alef-bet-title" className="pt-1">
+      <div className="mb-5 flex items-end justify-between gap-4">
+        <div>
+          <p lang="he" dir="rtl" className="text-[14px] font-bold text-indigo-700">אותיות</p>
+          <h3 id="alef-bet-title" className="mt-0.5 text-[1.55rem] font-black tracking-[-0.025em] text-slate-950">
+            Las letras
+          </h3>
+          <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{activeGroup.description}</p>
         </div>
-      )}
 
-      <div className="mb-4">
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-          {visibleGroups.map(group => {
-            const active = learningGroup === group.id
-            return (
-              <button
-                key={group.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => changeGroup(group.id)}
-                className={`min-h-11 shrink-0 rounded-full px-4 text-xs font-bold transition-colors ${
-                  active ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600'
-                }`}
-              >
-                {group.label}
-              </button>
-            )
-          })}
-
-          {simpleMode && (
+        {!simpleMode && (
+          <div className="inline-flex shrink-0 rounded-full bg-slate-200/70 p-1" aria-label="Vista del Alef-bet">
             <button
               type="button"
-              aria-expanded={moreFiltersOpen}
-              onClick={() => setMoreFiltersOpen(value => !value)}
-              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-4 text-xs font-bold text-slate-600"
+              aria-pressed={viewMode === 'grid'}
+              onClick={() => setViewMode('grid')}
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                viewMode === 'grid' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'
+              }`}
             >
-              Más filtros
-              <ChevronDown className={`h-4 w-4 transition-transform ${moreFiltersOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+              <Grid2X2 className="h-4.5 w-4.5" aria-hidden="true" />
+              <span className="sr-only">Vista de fichas</span>
             </button>
-          )}
-        </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-slate-500">{activeGroup.description}</p>
+            <button
+              type="button"
+              aria-pressed={viewMode === 'carousel'}
+              onClick={() => setViewMode('carousel')}
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                viewMode === 'carousel' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'
+              }`}
+            >
+              <GalleryHorizontal className="h-4.5 w-4.5" aria-hidden="true" />
+              <span className="sr-only">Vista carrusel</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      {viewMode === 'grid' || simpleMode ? (
-        <>
-          <div className="sm:hidden" aria-label="Alef-bet hebreo en fichas">
-            <GridRows
-              rows={mobileRows}
-              selected={selected}
-              onSelect={setSelectedOrder}
-              columnsClass="grid-cols-3"
-              group={learningGroup}
-            />
-          </div>
-          <div className="hidden sm:block" aria-label="Alef-bet hebreo en fichas">
-            <GridRows
-              rows={desktopRows}
-              selected={selected}
-              onSelect={setSelectedOrder}
-              columnsClass="grid-cols-5"
-              group={learningGroup}
-            />
-          </div>
-        </>
+      <div className="mb-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          type="button"
+          onClick={() => selectGroup('all')}
+          aria-pressed={group === 'all'}
+          className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold transition-colors ${
+            group === 'all' ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
+          }`}
+        >
+          Todas
+        </button>
+
+        {(!simpleMode || moreFiltersOpen) &&
+          LEARNING_GROUPS.slice(1).map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => selectGroup(item.id)}
+              aria-pressed={group === item.id}
+              className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-bold transition-colors ${
+                group === item.id ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+
+        {simpleMode && (
+          <button
+            type="button"
+            aria-expanded={moreFiltersOpen}
+            onClick={() => setMoreFiltersOpen(value => !value)}
+            className="min-h-11 shrink-0 rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              Más filtros
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${moreFiltersOpen ? 'rotate-180' : ''}`}
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+        )}
+      </div>
+
+      {(simpleMode || viewMode === 'grid') ? (
+        <div>
+          {rows.map((row, rowIndex) => {
+            const selectedInRow = row.some(letter => letter.orden === selectedLetter.orden)
+            return (
+              <div key={`${group}-${rowIndex}`}>
+                <div className="grid grid-cols-3 gap-3">
+                  {row.map(letter => (
+                    <LetterTile
+                      key={`${group}-${letter.orden}`}
+                      letter={letter}
+                      selected={letter.orden === selectedLetter.orden}
+                      onSelect={() => setSelectedOrder(letter.orden)}
+                      group={group}
+                    />
+                  ))}
+                </div>
+                {selectedInRow && <ExpandedLetterCard letter={selectedLetter} group={group} />}
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <div>
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-[12px] font-semibold text-slate-500">Desliza y toca una letra.</p>
-            <span className="shrink-0 text-[11px] font-bold text-indigo-600">
-              {selectedIndex + 1} / {filteredLetters.length}
-            </span>
-          </div>
-
           <div
             dir="rtl"
-            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-1 sm:px-1"
-            aria-label="Alef-bet hebreo en carrusel"
+            className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {filteredLetters.map(letter => (
               <LetterTile
-                key={letter.orden}
+                key={`${group}-${letter.orden}`}
                 letter={letter}
-                selected={selected.orden === letter.orden}
+                selected={letter.orden === selectedLetter.orden}
                 onSelect={() => setSelectedOrder(letter.orden)}
-                group={learningGroup}
+                group={group}
                 carousel
               />
             ))}
           </div>
-
-          <ExpandedLetterCard key={`${selected.orden}-${learningGroup}`} letter={selected} group={learningGroup} />
+          <ExpandedLetterCard letter={selectedLetter} group={group} />
         </div>
       )}
-    </div>
+    </section>
   )
 }

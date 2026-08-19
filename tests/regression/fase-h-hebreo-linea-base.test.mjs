@@ -57,9 +57,10 @@ test('FASE H: cada letra muestra nombre español y hebreo sin transliteración e
   assert.doesNotMatch(explorer, />Gematría/)
 })
 
-test('FASE H: las formas visibles son hebreas cuadrada, libro y manuscrita, sin signo histórico', () => {
-  assert.match(explorer, />Cuadrada/)
+test('FASE H: la ficha grande usa solo tres representaciones hebreas y no repite la cuadrada', () => {
+  assert.match(explorer, /function PrimaryLetterForms/)
   assert.match(explorer, />Libro/)
+  assert.match(explorer, />Cuadrada/)
   assert.match(explorer, />Manuscrita/)
   assert.match(explorer, /Arial Hebrew Scholar/)
   assert.match(explorer, /Times New Roman/)
@@ -68,9 +69,22 @@ test('FASE H: las formas visibles son hebreas cuadrada, libro y manuscrita, sin 
   assert.doesNotMatch(explorer, /letter\.fenicio/)
 })
 
+test('FASE H: las mini-fichas quedan reducidas a número, signo cuadrado y nombre', () => {
+  const tileStart = explorer.indexOf('function LetterTile')
+  const tileEnd = explorer.indexOf('function ExpandedLetterCard')
+  const tile = explorer.slice(tileStart, tileEnd)
+
+  assert.match(tile, /letter\.orden/)
+  assert.match(tile, /text-\[4\.55rem\]/)
+  assert.match(tile, /style=\{\{ fontFamily: SQUARE_FONT \}\}/)
+  assert.match(tile, /\{name\}/)
+  assert.doesNotMatch(tile, /PrimaryLetterForms/)
+  assert.doesNotMatch(tile, /letter\.valor\}<\/span>/)
+})
+
 test('FASE H: la ficha ampliada prioriza signo, nombre, valor, sonido y significado', () => {
-  assert.match(explorer, /text-\[9\.8rem\]/)
-  assert.match(explorer, /text-3xl font-black tabular-nums/)
+  assert.match(explorer, /text-\[9\.6rem\]/)
+  assert.match(explorer, /text-\[2\.8rem\] font-black tabular-nums/)
   assert.match(explorer, />Sonido/)
   assert.match(explorer, />Significado/)
   assert.match(explorer, /Significado del nombre/)
@@ -87,10 +101,11 @@ test('FASE H: la ficha se voltea tocando cualquier parte y no repite 1 de 22', (
   assert.doesNotMatch(explorer, /\/ 22/)
 })
 
-test('FASE H: la ficha sobresale del fondo con borde y sombra, sin cajas anidadas innecesarias', () => {
-  assert.match(explorer, /shadow-\[0_18px_48px_rgba\(15,23,42,0\.13\)\]/)
+test('FASE H: la ficha sobresale del fondo con borde y sombra, sin cajas internas para variantes', () => {
+  assert.match(explorer, /shadow-\[0_20px_52px_rgba\(15,23,42,0\.14\)\]/)
   assert.match(explorer, /rounded-\[30px\] border border-slate-200 bg-white/)
-  assert.match(explorer, /h-1 w-12 rounded-full bg-indigo-500\/80/)
+  assert.match(explorer, /h-1 w-14 rounded-full bg-indigo-500\/85/)
+  assert.doesNotMatch(explorer, /divide-x divide-slate-100 border-y/)
 })
 
 test('FASE H: la entrada elimina la tarjeta Continuar y usa seis accesos circulares 3x2', () => {
@@ -100,6 +115,16 @@ test('FASE H: la entrada elimina la tarjeta Continuar y usa seis accesos circula
   assert.doesNotMatch(home, /Continúa tu camino/)
   assert.doesNotMatch(home, /Reconoce las primeras letras/)
   assert.doesNotMatch(home, /ScrollToAlefBet/)
+})
+
+test('FASE H: el panel desplegado se integra al fondo y no encierra Alef-bet en otra tarjeta', () => {
+  const panelStart = home.indexOf('function StagePanel')
+  const panelEnd = home.indexOf('export default function HebrewLearningHome')
+  const panel = home.slice(panelStart, panelEnd)
+
+  assert.match(panel, /className="mt-6"/)
+  assert.doesNotMatch(panel, /rounded-\[28px\] border border-slate-200 bg-white/)
+  assert.doesNotMatch(panel, /shadow-\[0_16px_42px/)
 })
 
 test('FASE H: cada acceso despliega un único panel debajo y solo Alef-bet está disponible', () => {

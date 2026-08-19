@@ -81,25 +81,21 @@ function StagePanel({
   simpleMode: boolean
 }) {
   return (
-    <section
-      id={`hebrew-panel-${section.id}`}
-      aria-live="polite"
-      className="mt-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_16px_42px_rgba(15,23,42,0.08)]"
-    >
-      <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+    <section id={`hebrew-panel-${section.id}`} aria-live="polite" className="mt-6">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p lang="he" dir="rtl" className="text-[15px] font-bold text-indigo-700">
             {section.he}
           </p>
-          <h2 className="mt-0.5 text-xl font-black tracking-[-0.02em] text-slate-950">
+          <h2 className="mt-0.5 text-[1.55rem] font-black tracking-[-0.025em] text-slate-950">
             {section.es}
           </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-slate-500">
+          <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-slate-500">
             {section.description}
           </p>
         </div>
         {!section.available && (
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-500">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-200/70 px-2.5 py-1.5 text-[11px] font-bold text-slate-500">
             <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
             Después
           </span>
@@ -107,11 +103,9 @@ function StagePanel({
       </div>
 
       {section.available ? (
-        <div className="px-4 pb-5 pt-4 sm:px-5">
-          {section.id === 'alef-bet' && <AlefBetExplorer simpleMode={simpleMode} />}
-        </div>
+        section.id === 'alef-bet' ? <AlefBetExplorer simpleMode={simpleMode} /> : null
       ) : (
-        <div className="px-5 py-5">
+        <div className="border-t border-slate-200 pt-4">
           <p className="text-sm leading-relaxed text-slate-600">
             Esta etapa se activará cuando corresponda en la ruta. No necesitas aprenderla todavía.
           </p>
@@ -169,7 +163,10 @@ export default function HebrewLearningHome() {
       </header>
 
       {accessibilityOpen && (
-        <section className="mb-6 rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]" aria-label="Ajustes de lectura">
+        <section
+          className="mb-6 rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
+          aria-label="Ajustes de lectura"
+        >
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-black text-slate-900">Modo sencillo</p>
@@ -263,7 +260,10 @@ export default function HebrewLearningHome() {
                 Historia, escritura y términos que puedes consultar cuando quieras.
               </p>
             </div>
-            <ChevronDown className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+            <ChevronDown
+              className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
           </summary>
           <div className="pt-4 text-sm leading-relaxed text-slate-600">
             <p>
