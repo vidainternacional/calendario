@@ -5,33 +5,11 @@ import BibleNotesWorkspace from '@/components/biblia/BibleNotesWorkspace'
 import OfflineNotesOwnerMarker, {
   VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY,
 } from '@/components/biblia/OfflineNotesOwnerMarker'
-import { VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX } from '@/lib/biblia/notes-local'
 import { resolverUsuarioActualNotas } from '@/lib/biblia/notes-sync'
 
 const OWNER_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 type OwnerState = string | null | undefined
-
-function resolverUnicoOwnerLocal() {
-  try {
-    const owners = new Set<string>()
-    const prefix = `${VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX}:`
-
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index) || ''
-      if (!key.startsWith(prefix)) continue
-      const candidate = key.slice(prefix.length)
-      if (OWNER_UUID_RE.test(candidate)) owners.add(candidate)
-    }
-
-    if (owners.size !== 1) return null
-    const owner = Array.from(owners)[0]
-    localStorage.setItem(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY, owner)
-    return owner
-  } catch {
-    return null
-  }
-}
 
 export default function OfflineBibleNotesWorkspace() {
   const [ownerId, setOwnerId] = useState<OwnerState>(undefined)
@@ -57,7 +35,10 @@ export default function OfflineBibleNotesWorkspace() {
         return
       }
 
-      setOwnerId(resolverUnicoOwnerLocal())
+      // No inferimos identidad a partir de notas residuales del dispositivo.
+      // Si el usuario cerró sesión, los datos privados locales no deben volver a
+      // aparecer simplemente porque solo exista un propietario en localStorage.
+      setOwnerId(null)
     }
 
     void resolver()
