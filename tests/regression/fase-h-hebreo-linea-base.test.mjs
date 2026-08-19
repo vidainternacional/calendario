@@ -156,13 +156,32 @@ test('FASE H: el panel desplegado se integra al fondo y no encierra Alef-bet en 
   assert.doesNotMatch(panel, /shadow-\[0_16px_42px/)
 })
 
-test('FASE H: cada acceso despliega un único panel debajo y solo Alef-bet está disponible', () => {
+test('FASE H: cada acceso despliega un único panel y solo Alef-bet está funcionalmente habilitado', () => {
   assert.match(home, /const \[openSection, setOpenSection\]/)
   assert.match(home, /activeSection && <StagePanel/)
   assert.match(home, /setOpenSection\(current => \(current === section\.id \? null : section\.id\)\)/)
   assert.equal((home.match(/available: true/g) ?? []).length, 1)
   assert.equal((home.match(/available: false/g) ?? []).length, 5)
-  assert.match(home, /Esta etapa se activará cuando corresponda en la ruta/)
+  assert.match(home, /Alef-bet es el contenido activo/)
+  assert.match(home, />Diseño</)
+  assert.match(home, />vista</)
+})
+
+test('FASE H: Bloque 1 expone el flujo completo como arquitectura sin simular dominio', () => {
+  assert.match(home, /function FlowPreview/)
+  assert.match(home, /Reconozco/)
+  assert.match(home, /Distingo/)
+  assert.match(home, /Combino/)
+  assert.match(home, /Comprendo/)
+  assert.match(home, /function VowelsArchitecturePreview/)
+  assert.match(home, /function ReadingArchitecturePreview/)
+  assert.match(home, /function VocabularyArchitecturePreview/)
+  assert.match(home, /function GrammarArchitecturePreview/)
+  assert.match(home, /function ReviewArchitecturePreview/)
+  assert.match(home, /Pataj/)
+  assert.match(home, /ב \+ ַ = בַ/)
+  assert.match(home, /Esta vista no guarda resultados ni calcula dominio durante Bloque 1/)
+  assert.doesNotMatch(home, /\b80\s*%|porcentaje|racha|streak/i)
 })
 
 test('FASE H: el encabezado mantiene hebreo y español con una sola idea principal', () => {
