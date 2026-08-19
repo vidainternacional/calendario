@@ -70,6 +70,12 @@ test('FASE H: búsqueda acepta español y hebreo y restaurar vacío devuelve lis
   assert.match(reading, /Borra la búsqueda para volver al listado anterior/)
 })
 
+test('FASE H: búsqueda es global y no queda restringida al grupo activo', () => {
+  assert.match(catalog, /if \(!search\) \{/)
+  assert.match(catalog, /Una búsqueda es global/)
+  assert.match(catalog, /if \(search\) \{/)
+})
+
 test('FASE H: búsqueda hebrea funciona aunque el usuario omita niqqud', () => {
   assert.match(catalog, /const HEBREW_MARKS/)
   assert.match(catalog, /function hebrewSearchPattern/)
