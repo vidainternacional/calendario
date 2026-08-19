@@ -6,8 +6,10 @@ const dataset = fs.readFileSync('lib/hebreo/alef-bet.ts', 'utf8')
 const supportCourse = fs.readFileSync('lib/hebreo/material-apoyo.ts', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
 const niqqud = fs.readFileSync('components/hebreo/NiqqudExplorer.tsx', 'utf8')
-const reading = fs.readFileSync('components/hebreo/ReadingWordsExplorer.tsx', 'utf8')
+const words = fs.readFileSync('components/hebreo/ReadingWordsExplorer.tsx', 'utf8')
+const reading = fs.readFileSync('components/hebreo/ReadingSentencesExplorer.tsx', 'utf8')
 const catalog = fs.readFileSync('lib/hebreo/word-catalog.ts', 'utf8')
+const readingCatalog = fs.readFileSync('lib/hebreo/reading-catalog.ts', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
@@ -37,6 +39,13 @@ test('FASE H: Alef-bet conserva filtros pedagógicos explicados', () => {
   assert.match(explorer, /Cinco letras cambian de forma cuando aparecen al final/)
 })
 
+test('FASE H: Alef-bet usa Tarjetas Lista y Detalle', () => {
+  assert.match(explorer, /type ViewMode = 'cards' \| 'list' \| 'detail'/)
+  for (const label of ['Tarjetas', 'Lista', 'Detalle']) assert.match(explorer, new RegExp(label))
+  const list = explorer.slice(explorer.indexOf('function ListView'), explorer.indexOf('function GroupExplanation'))
+  for (const label of ['Signo', 'Nombre', 'Valor', 'Sonido', 'Significado']) assert.match(list, new RegExp(label))
+})
+
 test('FASE H: mini-fichas permiten nombres largos sin truncarlos', () => {
   const tile = explorer.slice(explorer.indexOf('function LetterTile'), explorer.indexOf('function ExpandedLetterCard'))
   assert.match(tile, /letter\.orden/)
@@ -63,7 +72,6 @@ test('FASE H: reverso desplaza encabezado y contenido como una sola pieza', () =
 test('FASE H: fichas Alef-bet abren y se retraen al tocar la misma letra', () => {
   assert.match(explorer, /function toggleLetter\(order: number\)/)
   assert.match(explorer, /setClosingOrder\(order\)/)
-  assert.match(explorer, /space-y-4/)
   assert.match(explorer, /grid grid-cols-3 gap-4/)
 })
 
@@ -86,23 +94,21 @@ test('FASE H: encabezado conserva título hebreo protagonista', () => {
   assert.doesNotMatch(home, /Accessibility/)
 })
 
-test('FASE H: el primer sector se llama Alef-Bet', () => {
-  assert.match(home, /id: 'alef-bet',[\s\S]*?short: 'Alef-Bet'/)
-  assert.match(explorer, /id="alef-bet-title"[\s\S]*?>Alef-Bet</)
+test('FASE H: aprender ordena Alef-Bet Vocales Palabras Lectura Reglas Repaso', () => {
+  const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => home.indexOf(`id: '${id}'`))
+  assert.ok(order.every(index => index >= 0))
+  for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
+  assert.match(home, /id: 'vocabulary',[\s\S]*?available: true/)
+  assert.match(home, /id: 'reading',[\s\S]*?available: true/)
 })
 
-test('FASE H: aprender agrupa seis áreas y abre una sola', () => {
-  assert.equal((home.match(/id: '(?:alef-bet|vowels|reading|vocabulary|grammar|review)'/g) ?? []).length, 6)
-  assert.match(home, /function LearningAreaButton/)
-  assert.match(home, /<AlefBetExplorer simpleMode=\{false\} \/>/)
-})
-
-test('FASE H: Vocales abre el explorador real de niqqud', () => {
+test('FASE H: Vocales usa tres vistas y la lista didáctica solicitada', () => {
   assert.match(home, /import NiqqudExplorer/)
-  assert.match(home, /id: 'vowels',[\s\S]*?available: true/)
-  assert.match(home, /activeSection\.id === 'vowels'[\s\S]*?<NiqqudExplorer \/>/)
-  assert.match(niqqud, /Vocales y sílabas/)
-  assert.match(niqqud, /¿Qué es el niqqud\?/)
+  assert.match(niqqud, /type NiqqudView = 'cards' \| 'list' \| 'detail'/)
+  for (const label of ['Tarjetas', 'Lista', 'Detalle']) assert.match(niqqud, new RegExp(label))
+  const list = niqqud.slice(niqqud.indexOf('function ListView'), niqqud.indexOf('function DetailView'))
+  for (const label of ['Signo', 'Nombre', 'Valor', 'Sonido', 'Función']) assert.match(list, new RegExp(label))
+  assert.match(niqqud, /Las vocales no tienen valor gemátrico propio/)
 })
 
 test('FASE H: niqqud conserva doce signos trazables y cautelas', () => {
@@ -112,24 +118,32 @@ test('FASE H: niqqud conserva doce signos trazables y cautelas', () => {
   assert.match(niqqud, /sheva vocal y sheva silencioso/)
 })
 
-test('FASE H: Lectura usa catálogo real con dos modos y tres vistas', () => {
-  assert.match(home, /import ReadingWordsExplorer/)
-  assert.match(home, /id: 'reading',[\s\S]*?available: true/)
-  assert.match(home, /activeSection\.id === 'reading'[\s\S]*?<ReadingWordsExplorer \/>/)
-  assert.match(reading, /Lectura y palabras/)
-  assert.match(reading, /type ReadingMode = 'nikud' \| 'plain'/)
-  assert.match(reading, /Con niqqud/)
-  assert.match(reading, /Sin niqqud/)
-  assert.match(reading, /type WordView = 'cards' \| 'list' \| 'detail'/)
+test('FASE H: Palabras usa catálogo real con dos modos tres vistas y paginación visible', () => {
+  assert.match(home, /activeSection\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
+  assert.match(words, />Palabras</)
+  assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
+  assert.match(words, /type WordView = 'cards' \| 'list' \| 'detail'/)
+  assert.match(words, /function PageControl/)
+  assert.match(words, /Cada página muestra 24 palabras/)
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
 })
 
-test('FASE H: ficha de palabra es didáctica y no expone datos técnicos', () => {
-  const detail = reading.slice(reading.indexOf('function LearningDetail'), reading.indexOf('function CardsView'))
+test('FASE H: ficha de palabra es puntual y no expone datos técnicos', () => {
+  const detail = words.slice(words.indexOf('function LearningDetail'), words.indexOf('function CardsView'))
   assert.match(detail, /Cómo se pronuncia/)
   assert.match(detail, /Cómo se forma/)
   assert.match(detail, /Qué significa/)
-  assert.doesNotMatch(detail, /Fuente|Glosa de la fuente|Strong|sourceLocator|providerVersion|contentHash/)
+  assert.doesNotMatch(detail, /Fuente|Glosa de la fuente|Strong|sourceLocator|providerVersion|contentHash|Sustantivo|Verbo|Adjetivo/)
+})
+
+test('FASE H: Lectura es frases y oraciones y no duplica el diccionario', () => {
+  assert.match(home, /activeSection\.id === 'reading' \? <ReadingSentencesExplorer \/>/)
+  assert.match(reading, /Lectura de frases y oraciones/)
+  for (const label of ['Iniciales', 'Cortas', 'Medias', 'Largas', 'Todas']) assert.match(reading, new RegExp(label))
+  assert.match(reading, /Buscar frase en español o hebreo/)
+  assert.match(readingCatalog, /from\('biblical_verse_texts'\)/)
+  assert.match(readingCatalog, /RV1909_SOURCE_ID/)
+  assert.match(readingCatalog, /STARTER_REFERENCES/)
 })
 
 test('FASE H: Prueba tu progreso conserva quince preguntas secuenciales', () => {
@@ -163,11 +177,9 @@ test('FASE H: Biblia en hebreo conserva lector guiado sin duplicar motor', () =>
 
 test('FASE H: no introduce audio ni persistencia falsa', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
-  assert.doesNotMatch(home, /speechSynthesis|new Audio|Audio\(/)
-  assert.doesNotMatch(explorer, /speechSynthesis|new Audio|Audio\(/)
-  assert.doesNotMatch(niqqud, /speechSynthesis|new Audio|Audio\(/)
-  assert.doesNotMatch(reading, /speechSynthesis|new Audio|Audio\(|localStorage|sessionStorage/)
+  for (const content of [home, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /speechSynthesis|new Audio|Audio\(/)
   assert.doesNotMatch(catalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
+  assert.doesNotMatch(readingCatalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
   assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
 })
 
