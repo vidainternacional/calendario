@@ -28,7 +28,7 @@ test('FASE H: las 22 fichas conservan valor, signo fenicio, sonido, historia y e
   assert.equal((dataset.match(/sonidoPedagogico:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/origenNombre:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/certezaHistorica:\s*'(?:bien atestiguado|probable|debatido)',/g) ?? []).length, 22)
-  assert.equal((dataset.match(/ejemplo:\s*\{/g) ?? []).length, 22)
+  assert.equal((dataset.match(/ejemplo:\s*\{\s*palabra:\s*'/g) ?? []).length, 22)
   assert.match(dataset, /valor:\s*1/)
   assert.match(dataset, /valor:\s*400/)
   assert.match(dataset, /unicodeFenicio:\s*'U\+10900'/)
