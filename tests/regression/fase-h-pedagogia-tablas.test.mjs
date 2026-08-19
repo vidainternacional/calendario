@@ -27,7 +27,7 @@ test('FASE H pedagogía: no convierte patrones frecuentes en absolutos', () => {
   assert.match(grammar, /reglas absolutas|regla absoluta/)
   assert.match(grammar, /La vocalización exacta puede cambiar/)
   assert.match(grammar, /La base puede cambiar al recibir el sufijo/)
-  assert.match(grammar, /no convertir una interpretación religiosa particular en regla gramatical/)
+  assert.match(grammar, /sin convertir una interpretación religiosa particular en regla gramatical/)
 })
 
 test('FASE H pedagogía: contrato conserva fichas de Alef-Bet y tablas donde comparan mejor', () => {
