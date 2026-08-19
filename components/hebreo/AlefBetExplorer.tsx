@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState, type ReactNode } from 'react'
-import { ChevronDown, GalleryHorizontal, Grid2X2, RotateCcw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { GalleryHorizontal, Grid2X2, RotateCcw } from 'lucide-react'
 import { ALEF_BET, type AlefBetLetter } from '@/lib/hebreo/alef-bet'
 
 type ViewMode = 'grid' | 'carousel'
@@ -15,12 +15,12 @@ const LEARNING_GROUPS: readonly {
   label: string
   description: string
 }[] = [
-  { id: 'all', label: 'Todas', description: 'Las 22 letras del Alef-bet en su orden de lectura.' },
-  { id: 'begadkefat', label: 'Dagesh', description: 'La familia בגדכפת: aprende la forma con punto y su contraste de lectura.' },
-  { id: 'sofit', label: 'Sofit', description: 'Las cinco formas que cambian gráficamente al final de palabra.' },
-  { id: 'gutturals', label: 'Guturales', description: 'א ה ח ע comparten reglas fonológicas que aprenderemos como grupo.' },
-  { id: 'matres', label: 'Matres', description: 'א ה ו י pueden ayudar a representar vocales según el contexto.' },
-  { id: 'shin-sin', label: 'Shin / Sin', description: 'Una misma letra base, ש, con dos lecturas distinguidas por el punto.' },
+  { id: 'all', label: 'Todas', description: 'Las 22 letras en su orden.' },
+  { id: 'begadkefat', label: 'Dagesh', description: 'Letras que cambian de sonido con el punto.' },
+  { id: 'sofit', label: 'Sofit', description: 'Cinco formas usadas al final de palabra.' },
+  { id: 'gutturals', label: 'Guturales', description: 'א ה ח ע como grupo de lectura.' },
+  { id: 'matres', label: 'Matres', description: 'א ה ו י y su relación con vocales.' },
+  { id: 'shin-sin', label: 'Shin / Sin', description: 'ש con dos lecturas según el punto.' },
 ]
 
 function matchesGroup(letter: AlefBetLetter, group: LearningGroup) {
@@ -44,18 +44,13 @@ function shortSound(letter: AlefBetLetter) {
   return letter.sonidoPedagogico.split(/[.;]/)[0]?.trim() || letter.sonidoPedagogico
 }
 
-function dageshGlyph(letter: AlefBetLetter) {
-  return `${letter.letra}ּ`
+function historicalMeaning(letter: AlefBetLetter) {
+  const quoted = letter.origenNombre.match(/[“"]([^”"]+)[”"]/)
+  return quoted?.[1]?.trim() || letter.ideaHistorica.split(/[.;]/)[0]?.trim() || letter.ideaHistorica
 }
 
-function learningLabels(letter: AlefBetLetter) {
-  const labels: string[] = []
-  if (letter.grupo === 'begadkefat') labels.push('Dagesh')
-  if (letter.formaFinal) labels.push('Sofit')
-  if (GUTTURAL_ORDERS.has(letter.orden)) labels.push('Gutural')
-  if (MATRES_ORDERS.has(letter.orden)) labels.push('Mater')
-  if (letter.orden === 21) labels.push('Shin / Sin')
-  return labels
+function dageshGlyph(letter: AlefBetLetter) {
+  return `${letter.letra}ּ`
 }
 
 function tileGlyph(letter: AlefBetLetter, group: LearningGroup) {
@@ -89,10 +84,10 @@ function LetterTile({
       type="button"
       dir="ltr"
       aria-pressed={selected}
-      aria-label={`${tileLabel(letter, group)}, letra ${letter.orden}`}
+      aria-label={`${tileLabel(letter, group)}, valor ${letter.valor}`}
       onClick={onSelect}
       className={`relative shrink-0 rounded-[22px] border px-2 py-3 text-center transition-all duration-200 active:scale-[0.97] ${
-        carousel ? 'w-[92px] snap-center' : 'min-h-[100px] w-full'
+        carousel ? 'w-[108px] snap-center' : 'min-h-[118px] w-full'
       } ${
         selected
           ? 'border-indigo-500 bg-indigo-600 text-white shadow-[0_10px_28px_rgba(79,70,229,0.22)]'
@@ -102,97 +97,82 @@ function LetterTile({
       <span className={`absolute left-2.5 top-2 text-[10px] font-bold tabular-nums ${selected ? 'text-white/60' : 'text-slate-400'}`}>
         {letter.orden}
       </span>
-      <span lang="he" dir="rtl" className="block text-[2.6rem] font-medium leading-none" aria-hidden="true">
+      <span className={`absolute right-2.5 top-2 text-[10px] font-black tabular-nums ${selected ? 'text-white/70' : 'text-indigo-500'}`}>
+        {letter.valor}
+      </span>
+      <span
+        lang="he"
+        dir="rtl"
+        className="block text-[3.85rem] font-medium leading-[0.95]"
+        style={{ fontFamily: "'Arial Hebrew Scholar', 'Arial Hebrew', sans-serif" }}
+        aria-hidden="true"
+      >
         {tileGlyph(letter, group)}
       </span>
-      <span className={`mt-2 block truncate text-[10px] font-bold ${selected ? 'text-white' : 'text-slate-700'}`}>
+      <span className={`mt-2 block truncate text-[11px] font-black ${selected ? 'text-white' : 'text-slate-800'}`}>
         {tileLabel(letter, group)}
       </span>
-      {group === 'sofit' && letter.formaFinal && (
-        <span className={`mt-1 block text-[9px] font-semibold ${selected ? 'text-white/65' : 'text-slate-400'}`}>
-          base {letter.letra}
-        </span>
-      )}
     </button>
   )
 }
 
-function StudyRow({ label, value }: { label: string; value: ReactNode }) {
+function LetterForms({ letter }: { letter: AlefBetLetter }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-slate-100 py-2.5 last:border-b-0">
-      <dt className="text-[11px] font-semibold text-slate-500">{label}</dt>
-      <dd className="max-w-[64%] text-right text-sm font-bold text-slate-950">{value}</dd>
+    <div className="grid grid-cols-3 divide-x divide-slate-100 border-y border-slate-100 py-4">
+      <div className="px-2 text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Cuadrada</p>
+        <p
+          lang="he"
+          dir="rtl"
+          className="mt-2 text-[4.2rem] font-medium leading-none text-slate-950"
+          style={{ fontFamily: "'Arial Hebrew Scholar', 'Arial Hebrew', sans-serif" }}
+        >
+          {letter.letra}
+        </p>
+      </div>
+      <div className="px-2 text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Manuscrita</p>
+        <p
+          lang="he"
+          dir="rtl"
+          className="mt-2 text-[4.2rem] leading-none text-slate-950"
+          style={{ fontFamily: "'Corsiva Hebrew', 'Arial Hebrew', sans-serif" }}
+        >
+          {letter.letra}
+        </p>
+      </div>
+      <div className="px-2 text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Histórica</p>
+        <p dir="rtl" className="mt-2 text-[4rem] font-medium leading-none text-slate-950">
+          {letter.fenicio}
+        </p>
+      </div>
     </div>
   )
 }
 
-function LearningTags({ letter }: { letter: AlefBetLetter }) {
-  const labels = learningLabels(letter)
-  if (labels.length === 0) return null
+function FlipButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
-    <div className="flex flex-wrap gap-x-3 gap-y-1">
-      {labels.map(label => (
-        <span key={label} className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-600">
-          {label}
-        </span>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-transform active:scale-90"
+    >
+      <RotateCcw className="h-5 w-5" aria-hidden="true" />
+    </button>
   )
 }
 
-function RuleSummary({ letter }: { letter: AlefBetLetter }) {
-  return (
-    <div className="space-y-3">
-      {letter.grupo === 'begadkefat' && (
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Dagesh</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">Aprende primero a reconocer el contraste con y sin punto.</p>
-          </div>
-          <div className="shrink-0 text-right">
-            <span lang="he" dir="rtl" className="text-3xl font-medium text-slate-950">{dageshGlyph(letter)}</span>
-            <span className="mx-2 text-slate-300">/</span>
-            <span lang="he" dir="rtl" className="text-3xl font-medium text-slate-950">{letter.letra}</span>
-          </div>
-        </div>
-      )}
-      {letter.formaFinal && (
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Sofit</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">Al final de palabra usa su forma final.</p>
-          </div>
-          <div className="shrink-0 text-right">
-            <span lang="he" dir="rtl" className="text-3xl font-medium text-slate-950">{letter.letra}</span>
-            <span className="mx-2 text-slate-300">→</span>
-            <span lang="he" dir="rtl" className="text-3xl font-medium text-indigo-600">{letter.formaFinal}</span>
-          </div>
-        </div>
-      )}
-      {letter.orden === 21 && (
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Punto distintivo</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">Derecha = Shin · izquierda = Sin.</p>
-          </div>
-          <div className="shrink-0 text-right">
-            <span lang="he" dir="rtl" className="text-3xl font-medium text-slate-950">שׁ</span>
-            <span className="mx-2 text-slate-300">/</span>
-            <span lang="he" dir="rtl" className="text-3xl font-medium text-slate-950">שׂ</span>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function CompactLetterCard({ letter }: { letter: AlefBetLetter }) {
+function CompactLetterCard({ letter, group }: { letter: AlefBetLetter; group: LearningGroup }) {
   const [flipped, setFlipped] = useState(false)
+  const glyph = tileGlyph(letter, group)
+  const name = tileLabel(letter, group)
 
   return (
-    <section className="my-3 [perspective:1200px]" aria-live="polite" aria-label={`Ficha de aprendizaje de ${letter.nombre}`}>
+    <section className="my-3 [perspective:1200px]" aria-live="polite" aria-label={`Ficha de ${name}`}>
       <div
-        className={`relative min-h-[340px] transition-transform duration-500 [transform-style:preserve-3d] ${
+        className={`relative min-h-[310px] transition-transform duration-500 [transform-style:preserve-3d] ${
           flipped ? '[transform:rotateY(180deg)]' : ''
         }`}
       >
@@ -201,41 +181,30 @@ function CompactLetterCard({ letter }: { letter: AlefBetLetter }) {
             flipped ? 'pointer-events-none' : ''
           }`}
         >
-          <div className="flex h-full flex-col px-5 py-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Letra {letter.orden} de 22</p>
-                <p className="mt-1 text-xl font-black text-slate-950">{letter.nombre}</p>
-              </div>
-              <LearningTags letter={letter} />
+          <div className="flex h-full flex-col px-5 py-4">
+            <div className="flex items-center justify-between text-[11px] font-black tabular-nums">
+              <span className="text-slate-400">{String(letter.orden).padStart(2, '0')} / 22</span>
+              <span className="text-indigo-600">Valor {letter.valor}</span>
             </div>
 
-            <div className="mt-4 flex items-end justify-between gap-5 border-b border-slate-100 pb-4">
-              <span lang="he" dir="rtl" className="text-[5.6rem] font-medium leading-none text-slate-950">{letter.letra}</span>
-              <div className="min-w-0 pb-1 text-right">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Cómo suena</p>
-                <p className="mt-1 text-sm font-bold leading-snug text-slate-800">{shortSound(letter)}</p>
-              </div>
+            <div className="flex flex-1 flex-col items-center justify-center py-2 text-center">
+              <span
+                lang="he"
+                dir="rtl"
+                className="text-[8.8rem] font-medium leading-[0.82] text-slate-950 sm:text-[10rem]"
+                style={{ fontFamily: "'Arial Hebrew Scholar', 'Arial Hebrew', sans-serif" }}
+              >
+                {glyph}
+              </span>
+              <h3 className="mt-3 text-2xl font-black text-slate-950">{name}</h3>
             </div>
 
-            <div className="flex-1 pt-4">
-              <RuleSummary letter={letter} />
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Ejemplo</p>
-                  <p lang="he" dir="rtl" className="mt-1 text-2xl font-medium text-slate-950">{letter.ejemplo.palabra}</p>
-                  <p className="mt-0.5 text-xs font-semibold text-slate-500">{letter.ejemplo.significado}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setFlipped(true)}
-                  className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-50"
-                  aria-label={`Voltear ficha de ${letter.nombre}`}
-                >
-                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                  Más datos
-                </button>
+            <div className="flex items-end justify-between gap-4 border-t border-slate-100 pt-3">
+              <div className="min-w-0">
+                <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Sonido</p>
+                <p className="mt-1 text-[15px] font-bold leading-snug text-slate-800">{shortSound(letter)}</p>
               </div>
+              <FlipButton onClick={() => setFlipped(true)} label={`Voltear ficha de ${letter.nombre}`} />
             </div>
           </div>
         </article>
@@ -245,34 +214,23 @@ function CompactLetterCard({ letter }: { letter: AlefBetLetter }) {
             flipped ? '' : 'pointer-events-none'
           }`}
         >
-          <div className="flex h-full flex-col px-5 py-5">
-            <div className="flex items-start justify-between gap-4">
+          <div className="flex h-full flex-col px-5 py-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-600">Datos de referencia</p>
-                <p className="mt-1 text-xl font-black text-slate-950">{letter.nombre}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-600">{letter.nombre}</p>
+                <p className="mt-0.5 text-sm font-bold text-slate-500">Valor {letter.valor}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setFlipped(false)}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-100"
-                aria-label={`Volver al aprendizaje de ${letter.nombre}`}
-              >
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Volver
-              </button>
+              <FlipButton onClick={() => setFlipped(false)} label={`Volver a la cara principal de ${letter.nombre}`} />
             </div>
 
-            <dl className="mt-3">
-              <StudyRow label="Transliteración" value={<span className="text-indigo-600">{letter.transliteracion}</span>} />
-              <StudyRow label="Gematría" value={letter.valor} />
-              <StudyRow label="Unicode" value={letter.unicode} />
-              <StudyRow label="Signo histórico" value={<span dir="rtl" className="text-2xl font-medium">{letter.fenicio}</span>} />
-              <StudyRow label="Certeza histórica" value={letter.certezaHistorica} />
-            </dl>
+            <div className="mt-3">
+              <LetterForms letter={letter} />
+            </div>
 
-            <div className="mt-auto border-t border-slate-100 pt-3">
-              <p className="text-xs leading-relaxed text-slate-600">{letter.origenNombre}</p>
-              <p className="mt-2 text-[10px] leading-relaxed text-slate-400">Historia, gematría y transliteración son datos de referencia. No son significados secretos de la letra dentro de una palabra bíblica.</p>
+            <div className="mt-auto pt-4">
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Significado histórico</p>
+              <p className="mt-1 text-xl font-black leading-tight text-slate-950">{historicalMeaning(letter)}</p>
+              <p className="mt-1 text-[10px] leading-relaxed text-slate-400">Origen del nombre o del signo; no es el significado automático de una palabra.</p>
             </div>
           </div>
         </article>
@@ -281,73 +239,41 @@ function CompactLetterCard({ letter }: { letter: AlefBetLetter }) {
   )
 }
 
-function AdvancedStudyDetails({ letter }: { letter: AlefBetLetter }) {
-  const certaintyClass = letter.certezaHistorica === 'bien atestiguado'
-    ? 'text-emerald-700'
-    : letter.certezaHistorica === 'probable'
-      ? 'text-amber-700'
-      : 'text-slate-600'
+function CarouselLetterDetail({ letter, group }: { letter: AlefBetLetter; group: LearningGroup }) {
+  const glyph = tileGlyph(letter, group)
+  const name = tileLabel(letter, group)
 
   return (
-    <details className="group border-t border-slate-100">
-      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-3 text-sm font-bold text-slate-900 marker:content-none">
-        Datos técnicos e historia
-        <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
-      </summary>
-      <div className="pb-1">
-        <dl>
-          <StudyRow label="Transliteración" value={<span className="text-indigo-600">{letter.transliteracion}</span>} />
-          <StudyRow label="Gematría" value={letter.valor} />
-          <StudyRow label="Unicode" value={letter.unicode} />
-          <StudyRow label="Fenicio comparativo" value={<span dir="rtl" className="text-2xl font-medium">{letter.fenicio}</span>} />
-          <StudyRow label="Certeza histórica" value={<span className={certaintyClass}>{letter.certezaHistorica}</span>} />
-        </dl>
-        <p className="mt-3 text-xs leading-relaxed text-slate-600">{letter.origenNombre}</p>
-        <p className="mt-2 text-xs leading-relaxed text-slate-500">{letter.evolucion}</p>
-        <p className="mt-2 text-[10px] leading-relaxed text-slate-400">El signo histórico es una referencia comparativa. Estas asociaciones describen historia del nombre o del signo y no el significado léxico de una palabra bíblica.</p>
-      </div>
-    </details>
-  )
-}
-
-function CarouselLetterDetail({ letter }: { letter: AlefBetLetter }) {
-  return (
-    <section aria-live="polite" aria-label={`Estudio completo de ${letter.nombre}`} className="my-3 rounded-[28px] border border-slate-200 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(15,23,42,0.07)]">
+    <section aria-live="polite" aria-label={`Ficha completa de ${name}`} className="my-3 rounded-[28px] border border-slate-200 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(15,23,42,0.07)]">
       <div className="flex items-start justify-between gap-5">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Letra {letter.orden} de 22</p>
-          <p className="mt-1 text-2xl font-black text-slate-950">{letter.nombre}</p>
-          <div className="mt-2"><LearningTags letter={letter} /></div>
+        <div className="min-w-0 pt-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Letra {letter.orden} · Valor {letter.valor}</p>
+          <h3 className="mt-1 text-2xl font-black text-slate-950">{name}</h3>
         </div>
-        <span lang="he" dir="rtl" className="shrink-0 text-[6.2rem] font-medium leading-none text-slate-950">{letter.letra}</span>
+        <span
+          lang="he"
+          dir="rtl"
+          className="shrink-0 text-[8rem] font-medium leading-[0.8] text-slate-950"
+          style={{ fontFamily: "'Arial Hebrew Scholar', 'Arial Hebrew', sans-serif" }}
+        >
+          {glyph}
+        </span>
       </div>
 
-      <div className="mt-5 border-t border-slate-100 pt-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-600">Aprender a leerla</p>
-        <p className="mt-2 text-base font-bold leading-snug text-slate-900">{letter.sonidoPedagogico}</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">{letter.pronunciacion}</p>
-        {letter.nota && <p className="mt-2 text-xs leading-relaxed text-slate-500">{letter.nota}</p>}
+      <div className="mt-4">
+        <LetterForms letter={letter} />
       </div>
 
-      {(letter.grupo === 'begadkefat' || letter.formaFinal || letter.orden === 21) && (
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Formas y reglas</p>
-          <RuleSummary letter={letter} />
+      <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <div className="py-4 sm:pr-4">
+          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Sonido</p>
+          <p className="mt-1 text-lg font-bold leading-snug text-slate-900">{shortSound(letter)}</p>
         </div>
-      )}
-
-      <div className="mt-4 flex items-end justify-between gap-4 border-t border-slate-100 pt-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Ejemplo bíblico</p>
-          <p lang="he" dir="rtl" className="mt-1 text-4xl font-medium text-slate-950">{letter.ejemplo.palabra}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-black text-slate-900">{letter.ejemplo.significado}</p>
-          <p className="mt-1 text-[11px] font-semibold text-slate-400">{letter.ejemplo.transliteracion}</p>
+        <div className="py-4 sm:pl-4">
+          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Significado histórico</p>
+          <p className="mt-1 text-lg font-black leading-snug text-slate-950">{historicalMeaning(letter)}</p>
         </div>
       </div>
-
-      <AdvancedStudyDetails letter={letter} />
     </section>
   )
 }
@@ -376,7 +302,7 @@ function GridRows({
                 <LetterTile key={letter.orden} letter={letter} selected={selected.orden === letter.orden} onSelect={() => onSelect(letter.orden)} group={group} />
               ))}
             </div>
-            {selectedInRow && <CompactLetterCard key={`${selected.orden}-${group}`} letter={selected} />}
+            {selectedInRow && <CompactLetterCard key={`${selected.orden}-${group}`} letter={selected} group={group} />}
           </div>
         )
       })}
@@ -391,8 +317,8 @@ export default function AlefBetExplorer() {
 
   const filteredLetters = useMemo(() => ALEF_BET.filter(letter => matchesGroup(letter, learningGroup)), [learningGroup])
   const selected = filteredLetters.find(letter => letter.orden === selectedOrder) ?? filteredLetters[0] ?? ALEF_BET[0]
-  const mobileRows = useMemo(() => chunkLetters(filteredLetters, 4), [filteredLetters])
-  const desktopRows = useMemo(() => chunkLetters(filteredLetters, 6), [filteredLetters])
+  const mobileRows = useMemo(() => chunkLetters(filteredLetters, 3), [filteredLetters])
+  const desktopRows = useMemo(() => chunkLetters(filteredLetters, 5), [filteredLetters])
   const activeGroup = LEARNING_GROUPS.find(group => group.id === learningGroup) ?? LEARNING_GROUPS[0]
   const selectedIndex = Math.max(0, filteredLetters.findIndex(letter => letter.orden === selected.orden))
 
@@ -404,9 +330,9 @@ export default function AlefBetExplorer() {
 
   return (
     <div>
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <p className="max-w-[15rem] text-xs leading-relaxed text-slate-500">Aprende primero a reconocer la forma, el nombre y el sonido.</p>
-        <span className="shrink-0 text-[10px] font-bold text-slate-400">22 letras · 5 Sofit</span>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold text-slate-500">Forma · nombre · valor · sonido · significado</p>
+        <span className="shrink-0 text-[10px] font-bold text-slate-400">22 · 5 Sofit</span>
       </div>
 
       <div className="mb-4 grid grid-cols-2 rounded-[18px] bg-slate-200/80 p-1" aria-label="Vista del Alef-bet">
@@ -419,15 +345,12 @@ export default function AlefBetExplorer() {
       </div>
 
       <div className="mb-4">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Aprender por grupo</p>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
           {LEARNING_GROUPS.map(group => {
             const active = learningGroup === group.id
-            const count = ALEF_BET.filter(letter => matchesGroup(letter, group.id)).length
             return (
               <button key={group.id} type="button" aria-pressed={active} onClick={() => changeGroup(group.id)} className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition-colors ${active ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600'}`}>
                 {group.label}
-                {group.id !== 'all' && <span className={active ? 'text-white/55' : 'text-slate-400'}> · {count}</span>}
               </button>
             )
           })}
@@ -438,16 +361,16 @@ export default function AlefBetExplorer() {
       {viewMode === 'grid' ? (
         <>
           <div className="sm:hidden" aria-label="Alef-bet hebreo en fichas">
-            <GridRows rows={mobileRows} selected={selected} onSelect={setSelectedOrder} columnsClass="grid-cols-4" group={learningGroup} />
+            <GridRows rows={mobileRows} selected={selected} onSelect={setSelectedOrder} columnsClass="grid-cols-3" group={learningGroup} />
           </div>
           <div className="hidden sm:block" aria-label="Alef-bet hebreo en fichas">
-            <GridRows rows={desktopRows} selected={selected} onSelect={setSelectedOrder} columnsClass="grid-cols-6" group={learningGroup} />
+            <GridRows rows={desktopRows} selected={selected} onSelect={setSelectedOrder} columnsClass="grid-cols-5" group={learningGroup} />
           </div>
         </>
       ) : (
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold text-slate-500">Desliza siguiendo el orden hebreo y toca la letra que quieras estudiar.</p>
+            <p className="text-[11px] font-semibold text-slate-500">Desliza y toca una letra.</p>
             <span className="shrink-0 text-[10px] font-bold text-indigo-600">{selectedIndex + 1} / {filteredLetters.length}</span>
           </div>
           <div dir="rtl" className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-1 sm:px-1" aria-label="Alef-bet hebreo en carrusel">
@@ -455,11 +378,9 @@ export default function AlefBetExplorer() {
               <LetterTile key={letter.orden} letter={letter} selected={selected.orden === letter.orden} onSelect={() => setSelectedOrder(letter.orden)} group={learningGroup} carousel />
             ))}
           </div>
-          <CarouselLetterDetail key={`${selected.orden}-${learningGroup}`} letter={selected} />
+          <CarouselLetterDetail key={`${selected.orden}-${learningGroup}`} letter={selected} group={learningGroup} />
         </div>
       )}
-
-      <p className="mt-4 text-[10px] leading-relaxed text-slate-400">Primero aprenderás a leer. La transliteración académica, gematría, Unicode e historia quedan separadas como datos de referencia para no sobrecargar la memorización.</p>
     </div>
   )
 }

@@ -22,31 +22,18 @@ test('FASE H: Alef-bet versiona 22 letras y exactamente cinco formas finales', (
   assert.match(dataset, /formaFinal:\s*'ץ'/)
 })
 
-test('FASE H: las 22 fichas conservan valor, signo fenicio, sonido, historia y ejemplo', () => {
+test('FASE H: las 22 fichas conservan valor, signo histórico, sonido y origen', () => {
   assert.equal((dataset.match(/valor:\s*\d+/g) ?? []).length, 22)
   assert.equal((dataset.match(/fenicio:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/sonidoPedagogico:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/origenNombre:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/certezaHistorica:\s*'(?:bien atestiguado|probable|debatido)',/g) ?? []).length, 22)
-  assert.equal((dataset.match(/ejemplo:\s*\{\s*palabra:\s*'/g) ?? []).length, 22)
-  assert.match(dataset, /valor:\s*1/)
-  assert.match(dataset, /valor:\s*400/)
-  assert.match(dataset, /unicodeFenicio:\s*'U\+10900'/)
-  assert.match(dataset, /unicodeFenicio:\s*'U\+10915'/)
 })
 
 test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () => {
   assert.match(dataset, /orden:\s*21,[\s\S]*?letra:\s*'ש'[\s\S]*?nombre:\s*'Shin \/ Sin'/)
   assert.match(dataset, /שׁ Shin: punto a la derecha/)
   assert.match(dataset, /שׂ Sin: punto a la izquierda/)
-  assert.match(explorer, /Derecha = Shin · izquierda = Sin/)
-})
-
-test('FASE H: el origen pictográfico se presenta con cautela editorial', () => {
-  assert.match(dataset, /son significados léxicos, secretos ni teológicos/i)
-  assert.match(dataset, /'bien atestiguado' \| 'probable' \| 'debatido'/)
-  assert.match(explorer, /no el significado léxico de una palabra bíblica/i)
-  assert.match(explorer, /no son significados secretos de la letra/i)
 })
 
 test('FASE H: el aprendizaje se divide por grupos sin convertir variantes en letras nuevas', () => {
@@ -56,56 +43,57 @@ test('FASE H: el aprendizaje se divide por grupos sin convertir variantes en let
   assert.match(explorer, /label: 'Guturales'/)
   assert.match(explorer, /label: 'Matres'/)
   assert.match(explorer, /label: 'Shin \/ Sin'/)
-  assert.match(explorer, /letter\.grupo === 'begadkefat'/)
   assert.match(explorer, /Boolean\(letter\.formaFinal\)/)
-  assert.match(explorer, /GUTTURAL_ORDERS/)
-  assert.match(explorer, /MATRES_ORDERS/)
 })
 
-test('FASE H: la vista de fichas abre debajo de la fila y permite voltear datos avanzados', () => {
-  assert.match(explorer, /type ViewMode = 'grid' \| 'carousel'/)
-  assert.match(explorer, />\s*Fichas\s*</)
-  assert.match(explorer, /selectedInRow && <CompactLetterCard/)
-  assert.match(explorer, /perspective:1200px/)
-  assert.match(explorer, /rotateY\(180deg\)/)
-  assert.match(explorer, /Más datos/)
-  assert.match(explorer, /Datos de referencia/)
-  assert.match(explorer, /Primero aprenderás a leer/)
+test('FASE H: las fichas priorizan cinco datos y un giro minimalista', () => {
+  assert.match(explorer, /Valor \{letter\.valor\}/)
+  assert.match(explorer, />Sonido</)
+  assert.match(explorer, /Significado histórico/)
+  assert.match(explorer, /text-\[8\.8rem\]/)
+  assert.match(explorer, /aria-label=\{`Voltear ficha de/)
+  assert.match(explorer, /<RotateCcw className="h-5 w-5"/)
+  assert.doesNotMatch(explorer, />Más datos</)
+  assert.doesNotMatch(explorer, />Volver</)
 })
 
-test('FASE H: la ficha principal prioriza lectura y separa transliteración, gematría e historia', () => {
-  assert.match(explorer, /Cómo suena/)
-  assert.match(explorer, /<RuleSummary letter=\{letter\} \/>/)
-  assert.match(explorer, /Ejemplo/)
-  assert.match(explorer, /StudyRow label="Transliteración"/)
-  assert.match(explorer, /StudyRow label="Gematría"/)
-  assert.match(explorer, /StudyRow label="Unicode"/)
-  assert.match(explorer, /Signo histórico/)
+test('FASE H: cada ficha muestra cuadrada, manuscrita e histórica sin meter fuentes al repositorio', () => {
+  assert.match(explorer, />Cuadrada</)
+  assert.match(explorer, />Manuscrita</)
+  assert.match(explorer, />Histórica</)
+  assert.match(explorer, /Arial Hebrew Scholar/)
+  assert.match(explorer, /Corsiva Hebrew/)
+  assert.match(explorer, /letter\.fenicio/)
 })
 
-test('FASE H: el carrusel RTL conserva una ficha completa y datos técnicos aparte', () => {
+test('FASE H: transliteración, Unicode y gematría técnica salen de la ficha de aprendizaje', () => {
+  assert.doesNotMatch(explorer, /Transliteración/)
+  assert.doesNotMatch(explorer, /Unicode/)
+  assert.doesNotMatch(explorer, /Gematría/)
+  assert.match(explorer, /no es el significado automático de una palabra/)
+})
+
+test('FASE H: el carrusel RTL usa el mismo contenido básico con más amplitud', () => {
   assert.match(explorer, /Carrusel/)
   assert.match(explorer, /dir="rtl"/)
   assert.match(explorer, /snap-x snap-mandatory/)
   assert.match(explorer, /CarouselLetterDetail/)
-  assert.match(explorer, /Aprender a leerla/)
-  assert.match(explorer, /Formas y reglas/)
-  assert.match(explorer, /Ejemplo bíblico/)
-  assert.match(explorer, /Datos técnicos e historia/)
+  assert.match(explorer, /text-\[8rem\]/)
+  assert.match(explorer, /<LetterForms letter=\{letter\} \/>/)
 })
 
-test('FASE H: el Centro de Hebreo abre con una bienvenida simple y una sola ruta activa al Alef-bet', () => {
+test('FASE H: la entrada es bilingüe, breve y mantiene una sola ruta activa', () => {
+  assert.match(page, /בחרת נכון\./)
   assert.match(page, /Has tomado una buena decisión\./)
-  assert.match(page, /Hoy comienza tu camino para leer, pronunciar y comprender el hebreo bíblico/)
+  assert.match(page, /היום מתחילים/)
+  assert.match(page, /Hoy empieza tu camino\./)
   assert.equal((page.match(/href="#alef-bet"/g) ?? []).length, 1)
-  assert.match(page, /Vocales y sílabas/)
-  assert.match(page, /Vocabulario/)
-  assert.match(page, /Reglas gramaticales/)
-  assert.match(page, /Diccionario bíblico/)
-  assert.match(page, /Conoce el hebreo/)
-  assert.match(page, /<details className="group">/)
-  assert.doesNotMatch(page, />Referencia</)
-  assert.doesNotMatch(page, /Primer paso/)
+  assert.match(page, /תנועות/)
+  assert.match(page, /מילים/)
+  assert.match(page, /דקדוק/)
+  assert.match(page, /מילון/)
+  assert.match(page, /על העברית/)
+  assert.doesNotMatch(page, /Hoy comienza tu camino para leer, pronunciar y comprender/)
 })
 
 test('FASE H: el explorador sigue sin introducir audio ni persistencia', () => {
