@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-19
+Última actualización: 2026-08-18
 
 Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**
 
@@ -30,7 +30,6 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 10. **Principio visual global:** priorizar superficies integradas, jerarquía por espaciado, tipografía, color y separadores; evitar contenedores o tarjetas anidadas tipo “cuadro dentro de cuadro” cuando no exista una necesidad funcional clara. En móvil, conservar la mayor superficie útil posible sin reducir las áreas táctiles a tamaños incómodos.
 11. **Navegación móvil global:** la barra principal pertenece al layout de la aplicación y no a cada módulo. La aparición del teclado no debe levantarla ni hacerla flotar sobre el contenido de trabajo; en iOS debe permanecer en el borde inferior del layout y quedar cubierta por el teclado cuando corresponda.
 12. **Historial reversible:** cuando una superficie exponga Deshacer/Rehacer, toda acción que modifique contenido o metadatos creados por el usuario debe entrar en el mismo historial reversible; no limitar el historial únicamente al texto visible.
-13. **Imágenes:** no generar imágenes para el proyecto salvo petición explícita del usuario; las capturas aportadas se usan únicamente como referencia visual para modificar la app.
 
 ## Estado de fases
 
@@ -199,81 +198,209 @@ La evidencia consolidada se conserva en:
 6. Latencia transversal de badges/push corregida para que badge y contenido visible compartan señales de refresco y no dependan de la llegada final del push en iOS.
 7. Validación funcional real en iPhone completada: tras reconexión/reanudación, badge de Avisos y `Avisos para ti` actualizaron rápido y prácticamente al mismo tiempo.
 8. Producción, CI y documentación técnica quedaron alineados. El warning Node `DEP0169` asociado a la dependencia de Web Push queda documentado como deuda no bloqueante, sin error funcional comprobado; su eliminación pasa a FASE G.
-9. El Piloto Operativo continúa pausado y no ejecuta telemetría exclusiva mientras el documento maestro no lo reactive.
+9. El Piloto Operativo permanece pausado.
 
-# FASE F — COMPLETADA — EVOLUCIÓN CORRELATIVA BIBLIA → NOTAS — 2026-08-17
+Hitos finales de cierre:
 
-FASE F queda formalmente cerrada y no debe reabrirse salvo bug comprobable.
+- recuperación/reanudación PWA validada: `2927f18ecb2a69ea44e720a2895a4b52cc046796`;
+- seguridad final versionada: `5718db3dd4da671ea36ecbad15f486f7e79f479f`.
 
-Resultado consolidado:
-- Cuaderno único, privado por usuario y reutilizado desde Biblia, Estudio Profundo y Estudios.
-- Editor WYSIWYG móvil con estilos, énfasis, listas, tareas, citas, referencias y salida segura.
-- Deshacer/Rehacer global, historial reversible de contenido y metadatos, conversión a predicación y retorno reversible.
-- Sincronización offline/online por usuario, tombstones, cola local, recuperación al reanudar y shell React compartido sin cachear datos privados.
-- Identidad/origen canónico de notas y filtros Biblia · Estudio Profundo · Cuaderno.
-- Predicación con metadatos, correlativo seguro y exportación.
-- IA de organización con propuesta antes de aplicar y fallback entre proveedores.
-- Validación integral y producción cerradas el 2026-08-17.
+FASE E queda **COMPLETADA** y no debe reabrirse salvo bug comprobable.
 
-# FASE G — COMPLETADA — 2026-08-18
+# FASE F — COMPLETADA — EVOLUCIÓN CORRELATIVA DE BIBLIA → NOTAS — 2026-08-17
 
-FASE G queda cerrada y no debe reabrirse salvo bug reproducible. Incluyó deudas transversales de seguridad/estabilidad, endurecimiento localizado de cuenta activa en 11 políticas RLS aprobadas, limpieza del warning DEP0169, validación final de Cuaderno/PWA y cierre de los bloques pendientes heredados.
+FASE F se activó formalmente el 2026-08-13 después del cierre documentado de FASE E y queda formalmente cerrada el 2026-08-17 tras completar validación funcional en iPhone, integración a `main`, verificación de producción y documentación final.
 
-# FASE H — CENTRO DE HEBREO BÍBLICO — ACTIVA
+## Objetivo de FASE F
 
-## Objetivo
+Evolucionar `Biblia → Notas` hacia un único cuaderno personal por usuario, evitando sistemas paralelos y preservando la privacidad por defecto.
 
-Construir un sector moderno y progresivo para **leer, pronunciar y comprender hebreo bíblico**, reutilizando el motor bíblico existente y sin mezclarlo con un curso de hebreo moderno conversacional.
+La fase partió del estado funcional existente y conserva el origen/contexto de cada nota. Biblia, Estudio Profundo y las superficies pastorales autorizadas pueden alimentar el mismo cuaderno cuando corresponde.
 
-## Orden didáctico vigente
+## Alcance inicial documentado
 
-1. Alef-Bet.
-2. Vocales / niqqud.
-3. Palabras — vocabulario/diccionario.
-4. Lectura — frases, oraciones y versículos.
-5. Reglas — gramática esencial aplicada.
-6. Repaso.
+1. Auditar el estado real actual de `Biblia → Notas`, tablas, RLS, acciones y UI antes de modificar.
+2. Definir y consolidar un único modelo de nota personal por usuario, sin duplicar notas entre superficies.
+3. Mantener las notas privadas por defecto y revisar acceso/RLS antes de ampliar campos o sincronización.
+4. Garantizar sincronización entre dispositivos y respaldo en Supabase.
+5. Evolucionar el cuaderno para soportar número correlativo de prédica, fecha, serie, lugar, predicador, estado y exportación.
+6. Conservar origen y contexto bíblico de cada nota para permitir organización y filtrado sin duplicación.
+7. Preservar las interfaces aprobadas y avanzar por bloques verificables, con Preview antes de cualquier cambio visual relevante.
 
-## Estado confirmado — 2026-08-19
+## Avance validado de FASE F — 2026-08-14
 
-- **Alef-Bet:** validado visualmente.
-- **Vocales / niqqud:** validado visualmente.
-- **Palabras:** dirección visual/pedagógica aprobada; catálogo paginado y búsqueda implementados.
-- **Lectura:** dirección visual/pedagógica aprobada; frases/oraciones reales y corpus paginado implementados.
-- **Reglas:** implementación técnica completada y CI verde; pendiente revisión visual móvil.
-- **Repaso:** siguiente gate después de aprobar Reglas.
-- **Prueba tu progreso:** arquitectura de 15 preguntas y ficha final definida, pero todavía sin calificación/persistencia real.
-- **Audio/pronunciación:** pendiente de fuente confiable aprobada; no usar `speechSynthesis` como sustituto.
-- **Materiales:** 11 enlaces externos conservados en estado pendiente de corroboración individual.
-- **Biblia en hebreo:** reutiliza el motor existente; debe evolucionar hacia lector completo con ayudas graduables.
+La evidencia inicial se conserva en:
 
-## Gate actual
+- `docs/FASE_F_LINEA_BASE_NOTAS_2026-08-13.md`;
+- `docs/FASE_F_NOTAS_OFFLINE_FIRST_2026-08-13.md`.
 
-**Validación visual móvil de Aprender → Reglas.**
+### Cuaderno canónico y offline-first
 
-No avanzar todavía a Repaso, audio, progreso persistente ni evaluación almacenada hasta validar este gate.
+1. La línea base confirmó dos sistemas paralelos: `Biblia → Notas` guardaba en `localStorage` y Estudio Profundo utilizaba `public.notas_estudio` en Supabase.
+2. `notas_estudio` fue ampliada de forma aditiva para convertirse progresivamente en el cuaderno canónico, sin borrar datos ni modificar las políticas RLS existentes.
+3. `pasaje_normalizado` ahora puede ser `NULL`, permitiendo notas personales sin inventar una referencia bíblica; la unicidad existente por `(profile_id, pasaje_normalizado)` se conserva para Estudio Profundo.
+4. El almacenamiento local de Biblia → Notas quedó centralizado sobre la clave histórica `vida-biblia-notas-v2`, preservando notas existentes del dispositivo.
+5. Se implementó una cola offline por usuario con UUID estable, última operación por nota y reintento al recuperar conexión, foco o visibilidad.
+6. Los cambios se guardan primero localmente. Cuando vuelve Internet, la cola sincroniza con `notas_estudio` usando la sesión autenticada y RLS existente.
+7. La sincronización drena la cola hasta alcanzar la última versión de cada nota, evitando que una edición intermedia quede como estado final cuando hay cambios rápidos.
+8. La cola está aislada por `ownerId`; una operación de una cuenta no puede ser atribuida automáticamente a otra sesión del mismo dispositivo.
+9. Validación funcional real en iPhone completada: se creó y editó una nota sin Internet, se recuperó la conexión sin recargar y Supabase recibió una sola fila con el título final, contenido completo, UUID estable y usuario autenticado correcto, sin duplicados.
+10. El bloque fue fusionado en `main` mediante PR #268 (`97f96996ddb62d8434cf30bd5b6c58a8c6825c90`) y el despliegue de producción correspondiente quedó READY.
+11. Las migraciones de estructura de este bloque quedaron versionadas, incluida `20260813233955_fase_f_permitir_notas_sin_pasaje.sql` mediante PR #269 (`ca5893861c0f92b8c4d4d127060d11a8a3aa581a`).
+12. No se modificaron grants ni políticas RLS durante este bloque.
 
-## Evidencia técnica del último bloque
+### Sincronización bidireccional y apertura en frío offline
 
-- `components/hebreo/GrammarExplorer.tsx`.
-- Tarjetas · Lista · Detalle.
-- filtros Básicas · Prefijos · Nombres · Frase · Todas.
-- primera capa: artículo, conjunción, preposiciones, preposición + artículo, género/número, concordancia sustantivo-adjetivo y cadena constructa.
-- no deduce raíces no verificadas.
-- CI temporal #2216: **SUCCESS** (regresiones, lint y build).
-- El check de Vercel del último head quedó bloqueado por **build rate limit** de la plataforma; no se considera fallo de código.
+13. El camino `Crear nota de este versículo` fue unificado con el mismo motor local/canónico mediante PR #271, eliminando la escritura paralela directa de esa nota sobre la clave histórica.
+14. La caché local canónica quedó separada por usuario y la sincronización `Supabase → dispositivo` fue incorporada con mezcla determinista: los cambios locales pendientes tienen prioridad y, cuando no hay pendientes, se conserva la versión más reciente.
+15. Los borrados de `biblia_notas` utilizan tombstones sincronizables sin conservar el contenido eliminado, permitiendo que otro dispositivo conozca el borrado sin exponer texto privado.
+16. La sincronización bidireccional fue validada funcionalmente en iPhone con un origen de Preview nuevo: la nota existente en Supabase apareció automáticamente en una caché local nueva, demostrando `Supabase → dispositivo`. El bloque fue fusionado mediante PR #272 (`000de127cccab1be45f4f69026a2b6e9b780d10a`) y producción quedó READY.
+17. Se implementó un fallback de apertura en frío exclusivo para `/biblia/notas`. El service worker no cachea `/_next/`, API, Supabase ni HTML autenticado privado; utiliza un shell estático sin datos personales y lee el cuaderno únicamente desde la caché local del usuario.
+18. La identificación del cuaderno offline conserva privacidad: utiliza el marcador del usuario activo, un respaldo mínimo del UUID dentro del service worker y, si ambos faltan, solo infiere el dueño cuando existe exactamente un único cuaderno local con UUID válido. Con múltiples cuadernos no adivina y mantiene el bloqueo protector.
+19. El cierre de sesión elimina el marcador local y el respaldo del service worker. El contenido de las notas nunca se guarda dentro del service worker.
+20. Validación funcional real en iPhone completada con Wi-Fi apagado/modo avión: Safari abrió `/biblia/notas` desde cero, mostró `Sin conexión · guardado local` y presentó correctamente las notas y contenido existentes del usuario.
+21. El cold-start offline fue fusionado mediante PR #273 (`7d6cf9e995dca7e1de2f4d5488c98cdb110c3ccc`) y el despliegue de producción exacto quedó READY.
+22. No se modificaron grants, políticas RLS ni esquema de Supabase durante los bloques #271–#273.
 
-## Guardias de FASE H
+### Predicación correlativa y exportación
 
-- no crear un segundo motor bíblico;
-- no fabricar traducción literal española del AT;
-- no presentar historia/pictografía como significado teológico automático;
-- no usar audio sintético no aprobado;
-- no simular progreso;
-- no implementar persistencia nueva/RLS sin alcance, impacto y reversión previamente aprobados;
-- no generar imágenes salvo petición explícita del usuario;
-- PR #286 permanece DRAFT y sin merge hasta aprobación explícita.
+23. Se auditó el contrato existente y se confirmó que `notas_estudio` ya contenía `numero_predicacion`, `fecha_predicacion`, `serie`, `lugar`, `predicador` y `estado`; se detectó que `estado` ya se utilizaba para el ciclo técnico `activo/eliminado`, por lo que no se reutilizó para el estado pastoral de la prédica.
+24. Con autorización explícita del usuario se aplicó la migración `20260814192000_fase_f_correlativo_predicacion_seguro`, que añadió `estado_predicacion`, un índice único parcial por `(profile_id, numero_predicacion)` para notas activas de tipo `predicacion` y la función `SECURITY INVOKER` `asignar_numero_predicacion_nota(uuid)` para asignación correlativa serializada por usuario.
+25. La migración no modificó RLS, grants de tablas ni datos existentes. Se verificaron 2 filas previas intactas, RLS activo y 4 políticas sin cambios. La función solo es ejecutable por `authenticated` dentro del alcance autorizado. El SQL quedó versionado mediante PR #275 (`bcf779eaea7c0d99298b4fbd835c46b1892bdde8`).
+26. El modelo local/offline fue ampliado de forma aditiva para transportar `numeroPredicacion`, `fechaPredicacion`, `serie`, `lugar`, `predicador` y `estadoPredicacion`; notas antiguas continúan normalizando esos campos como vacíos o `NULL` sin pérdida de contenido.
+27. La sincronización dispositivo → Supabase envía esos metadatos y solicita el correlativo solo cuando la nota es de tipo `predicacion` y aún no tiene número. La descarga Supabase → dispositivo devuelve también el número asignado y todos los metadatos. Este contrato quedó fusionado mediante PR #276 (`bd8ded089a1c272a1796e002d3c9e2004e19cf13`).
+28. La interfaz de `Biblia → Notas` muestra una tarjeta contextual de datos únicamente cuando la nota es de tipo Predicación: número correlativo de solo lectura, fecha, serie, lugar, predicador y estado de predicación. Cuando todavía no hay conexión/número, muestra el estado pendiente y el correlativo aparece después de sincronizar.
+29. La exportación reutiliza el patrón aprobado del proyecto mediante `window.print()`, permitiendo impresión o guardado como PDF sin introducir una dependencia adicional.
+30. El shell offline de Notas fue actualizado con los mismos campos de Predicación. Fecha, serie, lugar, predicador y estado se pueden editar sin Internet y quedan en la misma cola canónica; el número permanece pendiente hasta volver a conectar. El service worker solo renovó la versión del caché del shell y no amplió el caché a API, Supabase o bundles de Next.js.
+31. Validación funcional real completada en iPhone: se creó `Prédica prueba FASE F`, Supabase asignó **Prédica #1** una sola vez y recibió fecha `2026-08-02`, serie `Serie prueba`, lugar `Vida Internacional`, predicador `tu nombre`, origen `biblia_notas` y estado técnico `activo`, sin duplicados de título, `origen_key` o correlativo.
+32. Con el teléfono sin conexión se cambió `estado_predicacion` de `Borrador` a `Lista para predicar`; al recuperar Internet sin recargar, Supabase recibió `Lista para predicar` conservando el mismo UUID y **Prédica #1**, confirmando que el estado pastoral permanece separado del estado técnico.
+33. La experiencia visual/offline quedó fusionada mediante PR #277 (`35da346a5fbb0919cca49d2c27e022844df7b3f4`) y el despliegue de producción exacto quedó READY.
 
-# FASE I — PLANIFICADA
+Los bloques de **sincronización bidireccional, respaldo entre dispositivos, apertura en frío offline y predicación correlativa con metadatos/exportación quedan VALIDADOS**.
 
-Guía interactiva y ayuda contextual por rol. No iniciar mientras FASE H permanezca activa.
+## Punto 6 — origen, contexto, organización y filtrado — VALIDADO EN PREVIEW E INTEGRADO EN PRODUCCIÓN — 2026-08-17
+
+La evidencia detallada se conserva en:
+
+- `docs/FASE_F_PUNTO_6_VALIDACION_2026-08-17.md`.
+
+34. `Biblia → Notas` y Estudio Profundo alimentan un único cuaderno canónico y no crean copias para representar filtros, categorías u origen.
+35. Las notas conservan `origen`, referencia, pasaje normalizado, contexto disponible y metadatos de predicación; la organización visual se deriva de esos mismos datos reales.
+36. Los filtros por tipo y origen operan sobre la misma implementación del Cuaderno y mantienen la misma taxonomía online y offline.
+37. Estudio Profundo puede guardar y abrir el mismo cuaderno; repetir el guardado del mismo estudio reutiliza la nota canónica correspondiente en vez de crear un sistema paralelo.
+38. La navegación de concordancias/búsqueda asistida conserva libro, capítulo y versículo exactos y no inventa referencias cuando no existe respaldo determinístico.
+39. El editor aprobado conserva formato WYSIWYG, historial global Deshacer/Rehacer, datos de predicación reversibles, exportación y áreas táctiles móviles.
+40. El modo offline dejó de utilizar `public/offline/notas.html` como experiencia activa. El service worker usa `/biblia/notas-offline`, que monta literalmente el mismo `BibleNotesWorkspace` React del Cuaderno online.
+41. El service worker `vida-shell-v2.3-cuaderno-react-real` precachea el shell público y únicamente los recursos `/_next/static/` necesarios para hidratarlo; no cachea notas, API, Supabase ni HTML autenticado privado.
+42. La identidad offline continúa ligada al UUID validado del usuario; si falta el marcador activo, solo se infiere un dueño cuando existe exactamente un único cuaderno local válido.
+43. La sincronización evita consultas remotas cuando `navigator.onLine === false` y conserva la misma caché/cola canónicas ya validadas.
+44. Validación funcional real completada en iPhone: el usuario confirmó que, tras actualizar el service worker y activar modo avión, el Cuaderno offline conserva la apariencia y experiencia actual online en lugar de mostrar la versión histórica.
+45. La validación técnica del head `2060977789b73949b4db049726143b40d227f52e` completó regresiones, lint, build y validaciones del documento maestro/TAHOT en verde antes de la integración.
+46. Este bloque no requirió cambios adicionales de esquema, RLS, grants ni datos de producción.
+
+El **punto 6 queda VALIDADO e integrado a `main`** mediante PR #284. La producción correspondiente al merge `d67e7db7916f4dd32f2c1cf40ef266229d92f931` quedó READY.
+
+## Cierre formal de FASE F — 2026-08-17
+
+47. PR #284 fue fusionado a `main` en `d67e7db7916f4dd32f2c1cf40ef266229d92f931` después de autorización explícita del usuario.
+48. Vercel creó el deployment de producción `dpl_7HTxXy2f1hTycqtdT3BVy5btdfPq`, que quedó **READY** y asignó correctamente los aliases de producción.
+49. La ruta pública `/biblia/notas-offline` respondió HTTP 200 en producción como contenido prerenderizado y el service worker correspondiente quedó disponible para el cold-start offline.
+50. La revisión de runtime del deployment productivo no mostró errores ni eventos fatales en la ventana de verificación posterior al despliegue.
+51. El cierre no añadió cambios de esquema, RLS, grants ni datos de Supabase; las garantías de privacidad por usuario y sincronización ya validadas se preservan.
+52. El usuario había validado previamente en iPhone el flujo de origen/contexto, guardado desde Estudio Profundo, editor sin límite artificial y paridad visual/funcional online-offline.
+
+FASE F queda **COMPLETADA — 2026-08-17** y no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
+
+# FASE G — COMPLETADA — VALIDACIÓN INTEGRAL Y CIERRE DE DEUDAS TRANSVERSALES — 2026-08-18
+
+FASE G se activó formalmente el 2026-08-17 después del cierre de FASE F y queda cerrada el 2026-08-18 tras completar validación funcional real, correcciones reproducibles, evidencia técnica y aprobación explícita del usuario.
+
+La evidencia consolidada del cierre se conserva en:
+
+- `docs/FASE_G_MATRIZ_VALIDACION_INTEGRAL_2026-08-17.md`;
+- `docs/FASE_G_CIERRE_2026-08-18.md`.
+
+## Objetivo de FASE G
+
+Validar la aplicación completa en producción como un solo sistema, por rol y por flujo real, y cerrar las deudas transversales conocidas antes de agregar nuevas áreas funcionales grandes.
+
+## Alcance de FASE G
+
+1. Construir una matriz integral de funciones y permisos para Administrador, Pastor, Líder y Servidor, cubriendo autenticación, Inicio, Perfil, Contactos, Ministerios, Programación, Solicitudes, Avisos, Calendario, Estudios, Biblia, Estudio Profundo, Cuaderno, Panel Pastoral, Administración, Ayuda Solidaria y superficies relacionadas.
+2. Validar recorridos críticos de principio a fin en producción y PWA/iPhone, incluyendo navegación, estados vacíos/error, permisos, persistencia, sincronización, cambio de cuenta, reconexión y comportamientos online/offline donde correspondan.
+3. Corregir únicamente bugs comprobables encontrados durante la matriz. Una fase cerrada solo se reabre para la corrección puntual necesaria y vuelve a preservarse después.
+4. Analizar la latencia ocasional de Avisos/badges/push separando claramente lo controlable por VIDA de la entrega propia de iOS/Web Push/red; optimizar únicamente las capas bajo control de la aplicación y evitar polling agresivo.
+5. Eliminar la deuda técnica Node `DEP0169` asociada al flujo Web Push mediante actualización o sustitución segura de la dependencia responsable, manteniendo envío push, TTL, urgencia, recuperación y badges sin regresión.
+6. Revisar runtime y errores de producción durante las pruebas, ampliar regresiones únicamente cuando protejan un bug real encontrado y mantener CI/build verde.
+7. Documentar evidencia de cada recorrido validado, hallazgos, correcciones y estado final de producción antes de cerrar la fase.
+8. No reactivar el Piloto Operativo durante FASE G.
+9. No modificar esquema, RLS, grants o funciones sensibles de Supabase sin presentar antes el cambio exacto, impacto y reversión y obtener aprobación explícita.
+
+## Cierre formal de FASE G — 2026-08-18
+
+1. La matriz por rol quedó recorrida con evidencia suficiente para no repetir superficies ya aprobadas; Administrador, Pastor, Líder y Servidor conservan fronteras globales/contextuales correctas.
+2. Programación ministerial, repertorio, paleta, solicitudes, reemplazos e historial fueron validados sin fabricar eventos futuros en producción.
+3. Centro Pastoral y Administración fueron aprobados en recorridos reales, sin ejecutar acciones destructivas.
+4. La PWA quedó ampliada con navegación offline controlada y caché privada por usuario; el cambio de cuenta/cierre de sesión no reutiliza HTML privado de otra identidad.
+5. Cuaderno quedó revalidado y aprobado en iPhone después de corregir contraste, skeleton, carrusel horizontal, botón `Nueva` fijo y transición visual de las notas.
+6. El usuario validó recepción push real desde la PWA del Preview final. El circuito de Avisos/badges mantiene refresco inmediato sin polling agresivo adicional.
+7. La deuda Node `DEP0169` quedó eliminada de CI/build sin degradar Web Push.
+8. Las migraciones sensibles de Supabase aplicadas durante la fase tuvieron aprobación explícita, alcance y reversión documentados.
+9. El Piloto Operativo permaneció pausado durante toda FASE G.
+
+FASE G queda **COMPLETADA Y APROBADA — 2026-08-18** y no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
+
+# FASE H — ACTIVA — CENTRO DE HEBREO BÍBLICO
+
+FASE H se activa formalmente el 2026-08-18 después del cierre documentado de FASE G.
+
+## Objetivo de FASE H
+
+Crear dentro de Estudios una herramienta didáctica, minimalista y progresiva para aprender a **leer y comprender hebreo bíblico**, reutilizando primero las fuentes textuales ya aprobadas y buscando nuevas fuentes/APIs solo cuando aporten datos verificables y licencias compatibles.
+
+Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo: **Aprende y lee los textos originales**.
+
+## Alcance de FASE H
+
+1. **Alef-bet interactivo:** las 22 letras básicas y sus 5 formas finales cuando corresponda, presentadas en una cuadrícula didáctica inspirada visualmente en una tabla periódica. Cada ficha podrá mostrar orden/número, letra, nombre, forma final, transliteración, sonido orientativo, ejemplos y variantes gráficas.
+2. **Historia y formas antiguas:** cuando exista evidencia académica verificable, se podrán mostrar formas históricas o referencias pictográficas como contexto de escritura. No se presentará un pictograma como si determinara automáticamente el significado léxico o teológico de una palabra bíblica.
+3. **Ruta de aprendizaje:** dirección derecha→izquierda, consonantes, formas finales, niqqud/vocales, shevá, dagesh, lectura silábica, raíces, prefijos/sufijos y gramática progresiva, divididos en lecciones cortas y prácticas.
+4. **Pronunciación para aprendizaje:** incorporar ayuda auditiva o ejemplos de pronunciación cuando exista una metodología/fuente suficientemente confiable, etiquetándola como ayuda pedagógica y no como reconstrucción histórica infalible.
+5. **Lector bíblico hebreo:** ofrecer el Tanaj/Antiguo Testamento en sus lenguas originales, hebreo y los segmentos arameos donde corresponda, con lectura RTL clara y herramientas para palabra, lema, transliteración, morfología y glosa disponible.
+6. **Traducción accesible:** permitir alternar o comparar fácilmente el texto original con traducción española aprobada y ayudas de estudio. No fabricar traducciones literales inexistentes ni confundir glosa léxica con traducción del versículo.
+7. **Precisión del canon original:** el Nuevo Testamento original es griego, no hebreo. Si en el futuro se incorpora una traducción hebrea del Nuevo Testamento, deberá identificarse explícitamente como traducción y nunca como texto original.
+8. **Práctica y progreso:** ejercicios breves, lectura guiada, reconocimiento de letras/palabras, repasos, marcadores y progreso personal sin convertir la experiencia en algo pesado o escolarizado.
+9. **Materiales administrables:** permitir que Administrador pueda agregar posteriormente enlaces, documentación, recursos, tareas o materiales de aprendizaje. Cualquier almacenamiento nuevo en Supabase deberá diseñarse y aprobarse cuando FASE H esté activa.
+10. **Diseño:** mantener la línea visual actual de VIDA: minimalista, clara, coherente, táctil, mobile-first, didáctica y sin tarjetas anidadas innecesarias.
+
+## Bloque activo de FASE H
+
+### Bloque 1 — Línea base de fuentes y arquitectura didáctica
+
+1. Auditar las fuentes hebreas/arameas ya aprobadas en FASE D y separar qué datos pueden reutilizarse directamente para enseñanza, lectura, morfología, transliteración y glosas.
+2. Revisar el estado real de `Estudios`, Biblia y Estudio Profundo para integrar Hebreo Bíblico sin duplicar lectores ni capas de datos existentes.
+3. Definir el contrato didáctico inicial: Alef-bet, dirección RTL, formas finales, niqqud, pronunciación pedagógica, lectura guiada y progresión de lecciones.
+4. Diseñar la arquitectura visual y de navegación mobile-first antes de implementar nuevas tablas o persistencia.
+5. No crear nuevas tablas, RLS, grants o funciones sensibles hasta demostrar que las estructuras actuales son insuficientes y presentar alcance, impacto y reversión para aprobación explícita.
+
+# FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
+
+FASE I comenzará únicamente después del cierre formal de FASE H, salvo que el documento maestro cambie explícitamente el orden.
+
+## Objetivo previsto
+
+Dar a cada persona una guía dentro de VIDA sin depender de capacitación presencial ni reactivar el Piloto Operativo.
+
+## Alcance previsto
+
+1. Recorrido inicial opcional por primera vez mediante globos/contextos breves anclados a herramientas reales.
+2. Contenido dinámico por rol y permisos: Administrador, Pastor, Líder y Servidor solo verán explicaciones de funciones que realmente pueden utilizar.
+3. Posibilidad de omitir el recorrido y volver a iniciarlo manualmente desde Ayuda/Perfil.
+4. Centro de guía interactiva con explicaciones cortas por módulo, acciones frecuentes y recorridos específicos cuando una superficie sea compleja.
+5. El recorrido debe usar la interfaz real, no una réplica separada que pueda quedar desactualizada.
+6. Sin telemetría del Piloto por defecto; cualquier medición futura deberá ser explícita, agregada y respetuosa con la privacidad.
+7. Accesibilidad, áreas táctiles cómodas, lenguaje breve y coherencia con la experiencia mobile-first de VIDA.
+
+# Siguiente punto autorizado
+
+**Iniciar exclusivamente FASE H con el Bloque 1 — línea base de fuentes y arquitectura didáctica. Auditar primero las fuentes hebreas/arameas ya aprobadas y la integración real con Estudios/Biblia/Estudio Profundo; definir contrato didáctico y arquitectura visual antes de implementar. No crear nuevas estructuras sensibles de Supabase sin propuesta exacta, impacto, reversión y aprobación explícita. No iniciar FASE I mientras FASE H no esté formalmente completada en este documento.**
