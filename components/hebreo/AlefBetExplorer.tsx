@@ -5,7 +5,7 @@ import { ChevronDown, GalleryHorizontal, Grid2X2, RotateCcw } from 'lucide-react
 import { ALEF_BET, type AlefBetLetter } from '@/lib/hebreo/alef-bet'
 
 type ViewMode = 'grid' | 'carousel'
-type LearningGroup = 'all' | 'begadkefat' | 'sofit' | 'gutturals' | 'matres' | 'shin-sin'
+type LearningGroup = 'all' | 'part-1' | 'part-2' | 'begadkefat' | 'sofit' | 'gutturals' | 'matres' | 'shin-sin'
 
 const GUTTURAL_ORDERS = new Set([1, 5, 8, 16])
 const MATRES_ORDERS = new Set([1, 5, 6, 10])
@@ -41,6 +41,8 @@ const LEARNING_GROUPS: readonly {
   description: string
 }[] = [
   { id: 'all', label: 'Todas', description: 'Las 22 letras en su orden.' },
+  { id: 'part-1', label: 'Alef–Yod', description: 'Primer tramo de aprendizaje: las letras 1 a 10, desde Alef hasta Yod.' },
+  { id: 'part-2', label: 'Kaf–Tav', description: 'Segundo tramo de aprendizaje: las letras 11 a 22, desde Kaf hasta Tav.' },
   { id: 'begadkefat', label: 'Dagesh', description: 'Un punto dentro de algunas letras que puede cambiar su sonido.' },
   { id: 'sofit', label: 'Sofit', description: 'Cinco letras cambian de forma cuando aparecen al final de una palabra.' },
   { id: 'gutturals', label: 'Guturales', description: 'Letras articuladas en la garganta que siguen algunas reglas especiales de pronunciación y vocalización.' },
@@ -54,6 +56,8 @@ const HANDWRITTEN_FONT = "'Corsiva Hebrew', 'Arial Hebrew', sans-serif"
 
 function matchesGroup(letter: AlefBetLetter, group: LearningGroup) {
   if (group === 'all') return true
+  if (group === 'part-1') return letter.orden <= 10
+  if (group === 'part-2') return letter.orden >= 11
   if (group === 'begadkefat') return letter.grupo === 'begadkefat'
   if (group === 'sofit') return Boolean(letter.formaFinal)
   if (group === 'gutturals') return GUTTURAL_ORDERS.has(letter.orden)
