@@ -1,18 +1,22 @@
 import 'server-only'
 
 import { createClient } from '@/lib/supabase/server'
+import {
+  lexicalIdsForLearningGroup,
+  lexicalIdsForSpanishSearch,
+  normalizeLearningGroup,
+  pedagogicalWordForId,
+  type HebrewLearningGroupId,
+} from '@/lib/hebreo/word-learning'
 
 export type HebrewLearningWord = {
   lexicalId: string
   strongNumber: string | null
   lemma: string
-  transliteration: string | null
   partOfSpeech: string | null
-  sourceGloss: string | null
-  displayGlossEs: string | null
-  sourceLocator: string
-  providerVersion: string | null
-  contentHash: string | null
+  spanish: string | null
+  pronunciation: string | null
+  meaningNoteEs: string | null
 }
 
 export type HebrewWordCatalogPage = {
@@ -22,6 +26,7 @@ export type HebrewWordCatalogPage = {
   total: number
   totalPages: number
   search: string
+  group: HebrewLearningGroupId
   items: HebrewLearningWord[]
 }
 
@@ -29,6 +34,7 @@ export type HebrewWordCatalogRequest = {
   page?: number
   pageSize?: number
   search?: string
+  group?: string
 }
 
 type HebrewLexicalRow = {
@@ -37,11 +43,7 @@ type HebrewLexicalRow = {
   lemma: string
   transliteration: string | null
   part_of_speech: string | null
-  source_gloss: string | null
   display_gloss_es: string | null
-  source_locator: string
-  provider_version: string | null
-  content_hash: string | null
 }
 
 const SELECT_CATALOG = `
@@ -50,11 +52,7 @@ const SELECT_CATALOG = `
   lemma,
   transliteration,
   part_of_speech,
-  source_gloss,
-  display_gloss_es,
-  source_locator,
-  provider_version,
-  content_hash
+  display_gloss_es
 `
 
 const HEBREW_MARKS = /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g
@@ -78,17 +76,15 @@ function hebrewSearchPattern(value: string) {
 }
 
 function mapRow(row: HebrewLexicalRow): HebrewLearningWord {
+  const pedagogical = pedagogicalWordForId(row.lexical_id)
   return {
     lexicalId: row.lexical_id,
     strongNumber: row.strong_number,
     lemma: row.lemma,
-    transliteration: row.transliteration,
     partOfSpeech: row.part_of_speech,
-    sourceGloss: row.source_gloss,
-    displayGlossEs: row.display_gloss_es,
-    sourceLocator: row.source_locator,
-    providerVersion: row.provider_version,
-    contentHash: row.content_hash,
+    spanish: row.display_gloss_es ?? pedagogical?.spanish ?? null,
+    pronunciation: row.transliteration ?? pedagogical?.pronunciation ?? null,
+    meaningNoteEs: pedagogical?.meaning ?? null,
   }
 }
 
@@ -98,20 +94,32 @@ export async function listarCatalogoHebreoParaAprendizaje(
   const page = normalizePage(request.page)
   const pageSize = normalizePageSize(request.pageSize)
   const search = normalizeSearch(request.search)
+  const group = normalizeLearningGroup(request.group)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return { status: 'sin-sesion', page, pageSize, total: 0, totalPages: 0, search, items: [] }
+    return { status: 'sin-sesion', page, pageSize, total: 0, totalPages: 0, search, group, items: [] }
   }
 
   const offset = (page - 1) * pageSize
+  const semanticIds = lexicalIdsForLearningGroup(group)
   let query = (supabase as any)
     .from('biblical_lexical_entries')
     .select(SELECT_CATALOG, { count: 'exact' })
     .eq('language', 'hebrew')
     .eq('enabled', true)
     .eq('review_status', 'approved')
+
+  if (semanticIds) {
+    query = query.in('lexical_id', semanticIds)
+  } else if (group === 'nouns') {
+    query = query.eq('part_of_speech', 'noun')
+  } else if (group === 'verbs') {
+    query = query.eq('part_of_speech', 'verb')
+  } else if (group === 'adjectives') {
+    query = query.eq('part_of_speech', 'adjective')
+  }
 
   if (search) {
     if (/\p{Script=Hebrew}/u.test(search)) {
@@ -120,7 +128,12 @@ export async function listarCatalogoHebreoParaAprendizaje(
       const normalizedStrong = search.toUpperCase().startsWith('H') ? search.toUpperCase() : `H${search.toUpperCase()}`
       query = query.or(`lexical_id.ilike.%${normalizedStrong}%,strong_number.ilike.%${normalizedStrong}%`)
     } else {
-      query = query.ilike('source_gloss', `%${search}%`)
+      const spanishMatches = lexicalIdsForSpanishSearch(search)
+      if (spanishMatches.length > 0) {
+        query = query.in('lexical_id', spanishMatches)
+      } else {
+        query = query.ilike('display_gloss_es', `%${search}%`)
+      }
     }
   }
 
@@ -130,10 +143,16 @@ export async function listarCatalogoHebreoParaAprendizaje(
 
   if (error) {
     console.error('[hebrew-word-catalog] No se pudo cargar el catálogo:', error)
-    return { status: 'no-disponible', page, pageSize, total: 0, totalPages: 0, search, items: [] }
+    return { status: 'no-disponible', page, pageSize, total: 0, totalPages: 0, search, group, items: [] }
   }
 
   const total = count ?? 0
+  const items = ((data ?? []) as HebrewLexicalRow[]).map(mapRow)
+  if (semanticIds) {
+    const position = new Map(semanticIds.map((id, index) => [id, index]))
+    items.sort((a, b) => (position.get(a.lexicalId) ?? 999) - (position.get(b.lexicalId) ?? 999))
+  }
+
   return {
     status: 'ok',
     page,
@@ -141,6 +160,7 @@ export async function listarCatalogoHebreoParaAprendizaje(
     total,
     totalPages: total > 0 ? Math.ceil(total / pageSize) : 0,
     search,
-    items: ((data ?? []) as HebrewLexicalRow[]).map(mapRow),
+    group,
+    items,
   }
 }
