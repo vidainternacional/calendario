@@ -55,6 +55,14 @@ test('FASE H lectura: aprendizaje se agrupa por temas y español preparado', () 
   assert.match(learning, /spanish: 'decir'/)
 })
 
+test('FASE H lectura: búsqueda global se restaura al borrar sin perder el grupo', () => {
+  assert.match(reading, /placeholder="Buscar en español o hebreo"/)
+  assert.match(reading, /if \(value === '' && search\) clearSearch\(\)/)
+  assert.match(reading, /setPage\(pageBeforeSearch\.current\)/)
+  assert.match(catalog, /if \(!search\) \{/)
+  assert.match(catalog, /Una búsqueda es global/)
+})
+
 test('FASE H lectura: no introduce audio ni persistencia ni cambios de base', () => {
   assert.doesNotMatch(reading, /speechSynthesis|new Audio|Audio\(|localStorage|sessionStorage/)
   assert.doesNotMatch(catalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
