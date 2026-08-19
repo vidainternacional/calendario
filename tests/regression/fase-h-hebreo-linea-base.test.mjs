@@ -35,7 +35,7 @@ test('FASE H: Alef-bet conserva filtros pedagógicos explicados', () => {
   assert.match(explorer, /<GroupExplanation item=\{activeGroup\} \/>/)
 })
 
-test('FASE H: mini-fichas y ficha ampliada conservan el contrato visual aprobado', () => {
+test('FASE H: mini-fichas y ficha ampliada conservan contrato aprobado', () => {
   const tile = explorer.slice(explorer.indexOf('function LetterTile'), explorer.indexOf('function ExpandedLetterCard'))
   assert.match(tile, /letter\.orden/)
   assert.match(tile, /text-\[4\.55rem\]/)
@@ -58,57 +58,52 @@ test('FASE H: reverso conserva scroll interno, pronunciación y giro completo', 
   assert.doesNotMatch(explorer, /\/ 22/)
 })
 
-test('FASE H: inicio agrupa seis áreas y despliega solo una a la vez', () => {
+test('FASE H: portada usa cuatro menús principales desplegables', () => {
+  for (const label of ['Aprender', 'Materiales y curso recomendado', 'Prueba tu progreso', 'Biblia en hebreo']) assert.match(home, new RegExp(`label="${label}"`))
+  assert.match(home, /type TopMenuId = 'learn' \| 'materials' \| 'test' \| 'bible'/)
+  assert.match(home, /const \[openMenu, setOpenMenu\]/)
+  assert.match(home, /function MenuButton/)
+})
+
+test('FASE H: título hebreo vuelve a ser protagonista', () => {
+  assert.match(home, /עברית מקראית/)
+  assert.match(home, /text-\[2\.35rem\] font-black/)
+  assert.match(home, />Hebreo Bíblico</)
+})
+
+test('FASE H: aprender agrupa seis áreas como botones redondeados desplegables', () => {
   assert.equal((home.match(/id: '(?:alef-bet|vowels|reading|vocabulary|grammar|review)'/g) ?? []).length, 6)
-  assert.match(home, /grid grid-cols-3 gap-x-2 gap-y-3/)
-  assert.match(home, /Elige un área/)
-  assert.match(home, /const \[openSection, setOpenSection\]/)
-  assert.match(home, /activeSection && <section/)
-  assert.match(home, /setOpenSection\(current => current === section\.id \? null : section\.id\)/)
-  assert.equal((home.match(/available: true/g) ?? []).length, 1)
-  assert.equal((home.match(/available: false/g) ?? []).length, 5)
+  assert.match(home, /function LearningAreaButton/)
+  assert.match(home, /rounded-\[22px\] border/)
+  assert.match(home, /Aprender paso a paso/)
+  assert.match(home, /explicaciones y ejemplos permanecen agrupados/)
+  assert.match(home, /Ver explicación y ejemplo/)
+  assert.doesNotMatch(home, /absolute -left-1\.5|absolute -right-1\.5/)
 })
 
-test('FASE H: portada elimina paneles largos de progreso y evaluación', () => {
-  assert.doesNotMatch(home, /function ProgressArchitecturePreview/)
-  assert.doesNotMatch(home, /function AssessmentArchitecturePreview/)
-  assert.doesNotMatch(home, /De reconocer a comprender/)
-  assert.doesNotMatch(home, /Practicar también mide/)
-})
-
-test('FASE H: Prueba tu proceso es una acción principal y secuencial', () => {
-  assert.match(home, /¡Prueba tu proceso!/)
-  assert.match(home, /Comenzar prueba/)
-  assert.match(home, /function ProcessTestPreview/)
-  assert.match(home, /Paso \{step \+ 1\} de \{questions\.length\}/)
-  assert.match(home, /¿Cuál de estas letras es Bet\?/)
-  assert.match(home, /Selecciona la letra diferente/)
-  assert.match(home, /¿Qué palabra estás viendo\?/)
+test('FASE H: Prueba tu progreso contiene quince preguntas secuenciales', () => {
+  assert.equal((home.match(/type: '(?:Reconocer|Distinguir|Sofit|Dagesh|Lectura|Comprensión|Integración)'/g) ?? []).length, 15)
+  assert.match(home, /Pregunta \{step \+ 1\} de \{TEST_QUESTIONS\.length\}/)
+  assert.match(home, /15 preguntas variadas/)
   assert.match(home, /setStep/)
   assert.match(home, /setFinished\(true\)/)
 })
 
-test('FASE H: resultado de prueba funciona como ficha con orientación de maestro', () => {
+test('FASE H: resultado conserva ficha de maestro e historial futuro', () => {
   assert.match(home, /Ficha de resultado · ejemplo/)
+  assert.match(home, /Tu maestro recomienda reforzar antes de avanzar/)
   assert.match(home, /Lo que ya reconoces/)
   assert.match(home, /Conviene reforzar/)
   assert.match(home, /Consejo de estudio/)
-  assert.match(home, /Vas bien\. Antes de añadir más contenido/)
-})
-
-test('FASE H: historial queda diseñado sin fingir persistencia', () => {
   assert.match(home, /Historial de progreso/)
-  assert.match(home, /evaluaciones anteriores/)
-  assert.match(home, /esta ficha se guardará en tu historial/)
   assert.match(home, /No existe persistencia durante Bloque 1/)
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
 })
 
-test('FASE H: no introduce métricas, audio ni desbloqueos falsos', () => {
-  assert.doesNotMatch(home, /\b80\s*%|racha|streak/i)
-  assert.doesNotMatch(home, /speechSynthesis|new Audio|Audio\(/)
-  assert.doesNotMatch(explorer, /speechSynthesis|new Audio|Audio\(/)
-  assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
+test('FASE H: Biblia en hebreo queda como entrada al lector futuro sin duplicar motor', () => {
+  assert.match(home, /function BibleHebrewPreview/)
+  assert.match(home, /texto bíblico hebreo/)
+  assert.match(home, /no crea un segundo motor bíblico/)
 })
 
 test('FASE H: material de apoyo conserva exactamente los 11 enlaces pendientes', () => {
@@ -118,9 +113,15 @@ test('FASE H: material de apoyo conserva exactamente los 11 enlaces pendientes',
   assert.match(supportCourse, /fvBD-rFlTfg/)
   assert.match(supportCourse, /gxRYxrGZd7s/)
   assert.match(supportCourse, /UIdIzEtweOc/)
-  assert.match(home, /Material de apoyo/)
+  assert.match(home, /Curso recomendado · 11 clases/)
   assert.match(home, /item\.miniatura/)
-  assert.match(home, /target="_blank"/)
+})
+
+test('FASE H: no introduce persistencia, audio ni desbloqueos falsos', () => {
+  assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
+  assert.doesNotMatch(home, /speechSynthesis|new Audio|Audio\(/)
+  assert.doesNotMatch(explorer, /speechSynthesis|new Audio|Audio\(/)
+  assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
 })
 
 test('FASE H: ruta exige sesión y conserva destino después del login', () => {
