@@ -22,15 +22,54 @@ test('FASE H: Alef-bet versiona 22 letras y exactamente cinco formas finales', (
   assert.match(dataset, /formaFinal:\s*'ץ'/)
 })
 
-test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () => {
-  assert.match(dataset, /orden:\s*21,\s*letra:\s*'ש',\s*nombre:\s*'Shin \/ Sin'/)
-  assert.match(dataset, /שׁ \(Shin\).*שׂ \(Sin\)/)
+test('FASE H: las 22 fichas conservan valor, signo fenicio, sonido, historia y ejemplo', () => {
+  assert.equal((dataset.match(/valor:\s*\d+/g) ?? []).length, 22)
+  assert.equal((dataset.match(/fenicio:\s*'/g) ?? []).length, 22)
+  assert.equal((dataset.match(/sonidoPedagogico:\s*'/g) ?? []).length, 22)
+  assert.equal((dataset.match(/origenNombre:\s*'/g) ?? []).length, 22)
+  assert.equal((dataset.match(/certezaHistorica:\s*'/g) ?? []).length, 22)
+  assert.equal((dataset.match(/ejemplo:\s*\{/g) ?? []).length, 22)
+  assert.match(dataset, /valor:\s*1/)
+  assert.match(dataset, /valor:\s*400/)
+  assert.match(dataset, /unicodeFenicio:\s*'U\+10900'/)
+  assert.match(dataset, /unicodeFenicio:\s*'U\+10915'/)
 })
 
-test('FASE H: el explorador enseña el orden RTL y no introduce audio ni persistencia', () => {
-  assert.match(explorer, /dir="rtl"[^>]*aria-label="Alef-bet hebreo"/)
-  assert.match(explorer, /22 letras · 5 finales/)
-  assert.match(explorer, /Transliteración/)
+test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () => {
+  assert.match(dataset, /orden:\s*21,[\s\S]*?letra:\s*'ש'[\s\S]*?nombre:\s*'Shin \/ Sin'/)
+  assert.match(dataset, /שׁ Shin: punto a la derecha/)
+  assert.match(dataset, /שׂ Sin: punto a la izquierda/)
+})
+
+test('FASE H: el origen pictográfico se presenta con cautela editorial', () => {
+  assert.match(dataset, /no\s+son significados léxicos, secretos ni teológicos/i)
+  assert.match(dataset, /'bien atestiguado' \| 'probable' \| 'debatido'/)
+  assert.match(explorer, /No significa que la letra tenga por sí sola ese significado/)
+  assert.match(explorer, /referencia histórica comparativa/)
+})
+
+test('FASE H: el explorador ofrece Cuadrícula con detalle por fila y Carrusel RTL', () => {
+  assert.match(explorer, /type ViewMode = 'grid' \| 'carousel'/)
+  assert.match(explorer, /Cuadrícula/)
+  assert.match(explorer, /Carrusel/)
+  assert.match(explorer, /chunkLetters\(4\)/)
+  assert.match(explorer, /chunkLetters\(6\)/)
+  assert.match(explorer, /selectedInRow && <LetterDetail/)
+  assert.match(explorer, /dir="rtl" className="-mx-4 flex snap-x snap-mandatory/)
+  assert.match(explorer, /Alef-bet hebreo en carrusel/)
+})
+
+test('FASE H: la ficha usa acordeones y muestra datos esenciales', () => {
+  assert.match(explorer, /<details open=\{open\}/)
+  assert.match(explorer, /Pronunciación y lectura/)
+  assert.match(explorer, /Escritura y variantes/)
+  assert.match(explorer, /Historia del nombre y del signo/)
+  assert.match(explorer, /Ejemplo bíblico/)
+  assert.match(explorer, /valor \{letter\.valor\}/)
+  assert.match(explorer, /letter\.unicodeFenicio/)
+})
+
+test('FASE H: el explorador sigue sin introducir audio ni persistencia', () => {
   assert.doesNotMatch(explorer, /speechSynthesis|Audio\(|supabase|localStorage|sessionStorage/)
 })
 
