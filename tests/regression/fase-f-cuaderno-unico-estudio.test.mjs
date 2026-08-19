@@ -24,12 +24,15 @@ test('FASE F: el cold-start offline conserva identidad y contexto usando el mism
   assert.match(notesLocal, /contexto: normalizarContexto\(nota\.contexto\)/)
 })
 
-test('FASE F: la nueva paridad offline solo amplía caché a código público estático', () => {
-  assert.match(sw, /vida-shell-v2\.3-cuaderno-react-real/)
+test('FASE F/G: el shell público sigue separado y la ampliación autenticada queda aislada por usuario', () => {
+  assert.match(sw, /CACHE_NAME = `vida-shell-\$\{CACHE_VERSION\}`/)
+  assert.match(sw, /USER_CACHE_PREFIX = `vida-user-\$\{CACHE_VERSION\}-`/)
   assert.match(sw, /OFFLINE_NOTES_APP/)
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/static\/'\)/)
   assert.match(sw, /if \(url\.pathname\.startsWith\('\/_next\/'\)\) return/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
+  assert.match(sw, /await userCache\.put\(pageCacheKey\(urlLike\), response\.clone\(\)\)/)
+  assert.match(sw, /caches\.delete\(userCacheName\(previous\)\)/)
   assert.doesNotMatch(sw, /notas_estudio/)
 })
