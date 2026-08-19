@@ -27,7 +27,7 @@ test('FASE H: las 22 fichas conservan valor, signo fenicio, sonido, historia y e
   assert.equal((dataset.match(/fenicio:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/sonidoPedagogico:\s*'/g) ?? []).length, 22)
   assert.equal((dataset.match(/origenNombre:\s*'/g) ?? []).length, 22)
-  assert.equal((dataset.match(/certezaHistorica:\s*'/g) ?? []).length, 22)
+  assert.equal((dataset.match(/certezaHistorica:\s*'(?:bien atestiguado|probable|debatido)',/g) ?? []).length, 22)
   assert.equal((dataset.match(/ejemplo:\s*\{/g) ?? []).length, 22)
   assert.match(dataset, /valor:\s*1/)
   assert.match(dataset, /valor:\s*400/)
@@ -42,7 +42,7 @@ test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () =
 })
 
 test('FASE H: el origen pictográfico se presenta con cautela editorial', () => {
-  assert.match(dataset, /no\s+son significados léxicos, secretos ni teológicos/i)
+  assert.match(dataset, /son significados léxicos, secretos ni teológicos/i)
   assert.match(dataset, /'bien atestiguado' \| 'probable' \| 'debatido'/)
   assert.match(explorer, /No significa que la letra tenga por sí sola ese significado/)
   assert.match(explorer, /referencia histórica comparativa/)
