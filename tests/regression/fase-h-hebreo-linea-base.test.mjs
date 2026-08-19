@@ -4,8 +4,10 @@ import test from 'node:test'
 
 const dataset = fs.readFileSync('lib/hebreo/alef-bet.ts', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
+const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
+const uxContract = fs.readFileSync('docs/FASE_H_ARQUITECTURA_UX_APRENDIZAJE_2026-08-18.md', 'utf8')
 
 test('FASE H: Alef-bet versiona 22 letras y exactamente cinco formas finales', () => {
   const ordenes = dataset.match(/orden:\s*\d+/g) ?? []
@@ -36,26 +38,35 @@ test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () =
   assert.match(dataset, /שׂ Sin: punto a la izquierda/)
 })
 
-test('FASE H: el aprendizaje se divide por grupos sin convertir variantes en letras nuevas', () => {
+test('FASE H: grupos especializados se explican en lenguaje sencillo y no saturan la primera vista', () => {
   assert.match(explorer, /type LearningGroup = 'all' \| 'begadkefat' \| 'sofit' \| 'gutturals' \| 'matres' \| 'shin-sin'/)
   assert.match(explorer, /label: 'Dagesh'/)
   assert.match(explorer, /label: 'Sofit'/)
   assert.match(explorer, /label: 'Guturales'/)
   assert.match(explorer, /label: 'Matres'/)
   assert.match(explorer, /label: 'Shin \/ Sin'/)
+  assert.match(explorer, /Más filtros/)
+  assert.match(explorer, /Un punto que puede cambiar el sonido/)
+  assert.match(explorer, /Cinco letras con una forma especial/)
   assert.match(explorer, /Boolean\(letter\.formaFinal\)/)
 })
 
-test('FASE H: las fichas priorizan cinco datos y un giro minimalista', () => {
+test('FASE H: la ficha principal prioriza lectura grande, sonido y un ejemplo breve', () => {
   assert.match(explorer, /Valor \{letter\.valor\}/)
   assert.match(explorer, />Sonido</)
-  assert.match(explorer, /Significado histórico/)
-  assert.match(explorer, /text-\[8\.8rem\]/)
-  assert.match(explorer, /label=\{`Voltear ficha de/)
-  assert.match(explorer, /aria-label=\{label\}/)
-  assert.match(explorer, /<RotateCcw className="h-5 w-5"/)
-  assert.doesNotMatch(explorer, />Más datos</)
-  assert.doesNotMatch(explorer, />Volver</)
+  assert.match(explorer, />Ejemplo</)
+  assert.match(explorer, /text-\[9\.5rem\]/)
+  assert.match(explorer, /letter\.ejemplo\.palabra/)
+  assert.match(explorer, /letter\.ejemplo\.significado/)
+  assert.match(explorer, /Generalmente no tiene un sonido propio fuerte/)
+})
+
+test('FASE H: controles de giro usan icono y verbo visible para accesibilidad', () => {
+  assert.match(explorer, /<RotateCcw className="h-4 w-4"/)
+  assert.match(explorer, /text=\"Ver formas\"/)
+  assert.match(explorer, /text=\"Volver\"/)
+  assert.match(explorer, /min-h-11/)
+  assert.match(explorer, /motion-reduce:transition-none/)
 })
 
 test('FASE H: cada ficha muestra cuadrada, manuscrita e histórica sin meter fuentes al repositorio', () => {
@@ -67,46 +78,77 @@ test('FASE H: cada ficha muestra cuadrada, manuscrita e histórica sin meter fue
   assert.match(explorer, /letter\.fenicio/)
 })
 
-test('FASE H: transliteración, Unicode y gematría técnica salen de la ficha de aprendizaje', () => {
+test('FASE H: transliteración, Unicode y gematría técnica no dominan la ficha de aprendizaje', () => {
   assert.doesNotMatch(explorer, /Transliteración/)
   assert.doesNotMatch(explorer, /Unicode/)
   assert.doesNotMatch(explorer, /Gematría/)
-  assert.match(explorer, /no es el significado automático de una palabra/)
+  assert.match(explorer, /No es el significado automático de una palabra bíblica/)
 })
 
-test('FASE H: el carrusel RTL usa el mismo contenido básico con más amplitud', () => {
+test('FASE H: carrusel sigue disponible fuera de modo sencillo y conserva ficha amplia', () => {
   assert.match(explorer, /Carrusel/)
+  assert.match(explorer, /simpleMode \|\| viewMode === 'grid'/)
   assert.match(explorer, /dir="rtl"/)
   assert.match(explorer, /snap-x snap-mandatory/)
   assert.match(explorer, /CarouselLetterDetail/)
-  assert.match(explorer, /text-\[8rem\]/)
-  assert.match(explorer, /<LetterForms letter=\{letter\} \/>/)
+  assert.match(explorer, /text-\[9rem\]/)
 })
 
-test('FASE H: la entrada es bilingüe, breve y mantiene una sola ruta activa', () => {
-  assert.match(page, /בחרת נכון\./)
-  assert.match(page, /Has tomado una buena decisión\./)
-  assert.match(page, /היום מתחילים/)
-  assert.match(page, /Hoy empieza tu camino\./)
-  assert.equal((page.match(/href="#alef-bet"/g) ?? []).length, 1)
-  assert.match(page, /תנועות/)
-  assert.match(page, /מילים/)
-  assert.match(page, /דקדוק/)
-  assert.match(page, /מילון/)
-  assert.match(page, /על העברית/)
-  assert.doesNotMatch(page, /Hoy comienza tu camino para leer, pronunciar y comprender/)
+test('FASE H: inicio tiene una sola acción principal y oculta la ruta pesada por defecto', () => {
+  assert.match(home, /Hebreo Bíblico/)
+  assert.match(home, /Aprende a leer paso a paso/)
+  assert.match(home, /Continúa tu camino/)
+  assert.match(home, /Reconoce las primeras letras/)
+  assert.match(home, />\s*Continuar\s*</)
+  assert.match(home, /const \[simpleMode, setSimpleMode\] = useState\(true\)/)
+  assert.match(home, /!simpleMode && \(/)
+  assert.doesNotMatch(home, /Progreso:\s*8%/)
+  assert.doesNotMatch(home, /5 minutos/)
 })
 
-test('FASE H: el explorador sigue sin introducir audio ni persistencia', () => {
+test('FASE H: ruta curricular contiene diez etapas y áreas usan un solo acordeón controlado', () => {
+  assert.equal((home.match(/status: '(?:current|locked)' },/g) ?? []).length, 10)
+  assert.match(home, /es: 'Alef-bet'/)
+  assert.match(home, /es: 'Vocales y sílabas'/)
+  assert.match(home, /es: 'Lectura de palabras'/)
+  assert.match(home, /es: 'Lectura guiada'/)
+  assert.match(home, /const \[openSection, setOpenSection\] = useState<SectionId \| null>\(null\)/)
+  assert.match(home, /current === section\.id \? null : section\.id/)
+  assert.match(home, /<AlefBetExplorer simpleMode=\{simpleMode\} \/>/)
+})
+
+test('FASE H: la arquitectura bilingüe mantiene hebreo y español sin convertirlo en decoración', () => {
+  assert.match(home, /עברית מקראית/)
+  assert.match(home, /אָלֶף־בֵּית/)
+  assert.match(home, /תְּנוּעוֹת/)
+  assert.match(home, /דִּקְדּוּק/)
+  assert.match(home, /על העברית/)
+  assert.match(home, /lang="he"/)
+  assert.match(home, /dir="rtl"/)
+})
+
+test('FASE H: no se simula audio, progreso persistente ni duración editorial inexistente', () => {
   assert.doesNotMatch(explorer, /speechSynthesis|Audio\(|supabase|localStorage|sessionStorage/)
+  assert.doesNotMatch(home, /speechSynthesis|Audio\(|supabase|localStorage|sessionStorage/)
+  assert.match(home, /El audio y el progreso persistente no se mostrarán hasta contar con su contrato y fuente aprobados/)
+})
+
+test('FASE H: contrato UX versiona fichas futuras, accesibilidad, estados y repaso sin implementarlos falsamente', () => {
+  assert.match(uxContract, /Ficha de vocal/)
+  assert.match(uxContract, /Ficha de sílaba/)
+  assert.match(uxContract, /Ficha de vocabulario/)
+  assert.match(uxContract, /Ficha gramatical/)
+  assert.match(uxContract, /Repaso y repetición espaciada|Progresión y repetición espaciada/)
+  assert.match(uxContract, /Sin conexión/)
+  assert.match(uxContract, /Error de audio/)
+  assert.match(uxContract, /Modo sencillo/)
+  assert.match(uxContract, /44×44 px/)
 })
 
 test('FASE H: la ruta dedicada vive dentro de Estudios y exige sesión', () => {
   assert.match(page, /createClient\(\)/)
   assert.match(page, /if \(!user\) redirect\('\/login'\)/)
-  assert.match(page, /Hebreo Bíblico/)
-  assert.match(page, /<AlefBetExplorer \/>/)
-  assert.match(page, /STEP Bible \/ STEPBible-Data, CC BY 4\.0/)
+  assert.match(page, /<HebrewLearningHome \/>/)
   assert.doesNotMatch(page, /insert\(|update\(|delete\(|upsert\(/)
 })
 
