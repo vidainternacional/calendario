@@ -38,7 +38,9 @@ test('FASE H: Shin y Sin permanecen dentro de una sola letra del Alef-bet', () =
 })
 
 test('FASE H: el explorador mantiene grupos pedagógicos y explica términos técnicos', () => {
-  assert.match(explorer, /type LearningGroup = 'all' \| 'begadkefat' \| 'sofit' \| 'gutturals' \| 'matres' \| 'shin-sin'/)
+  assert.match(explorer, /type LearningGroup = 'all' \| 'part-1' \| 'part-2' \| 'begadkefat' \| 'sofit' \| 'gutturals' \| 'matres' \| 'shin-sin'/)
+  assert.match(explorer, /label: 'Alef–Yod'/)
+  assert.match(explorer, /label: 'Kaf–Tav'/)
   assert.match(explorer, /label: 'Dagesh'/)
   assert.match(explorer, /Un punto dentro de algunas letras/)
   assert.match(explorer, /label: 'Sofit'/)
@@ -47,6 +49,14 @@ test('FASE H: el explorador mantiene grupos pedagógicos y explica términos té
   assert.match(explorer, /label: 'Matres'/)
   assert.match(explorer, /label: 'Shin \/ Sin'/)
   assert.match(explorer, /function GroupExplanation/)
+})
+
+test('FASE H: Alef-bet puede estudiarse por dos tramos sin bloquear la vista completa', () => {
+  assert.match(explorer, /if \(group === 'part-1'\) return letter\.orden <= 10/)
+  assert.match(explorer, /if \(group === 'part-2'\) return letter\.orden >= 11/)
+  assert.match(explorer, /Primer tramo de aprendizaje: las letras 1 a 10/)
+  assert.match(explorer, /Segundo tramo de aprendizaje: las letras 11 a 22/)
+  assert.match(explorer, /id: 'all'/)
 })
 
 test('FASE H: cada letra muestra nombre español y hebreo sin transliteración técnica en la cara principal', () => {
@@ -175,6 +185,9 @@ test('FASE H: todos los filtros se muestran en una pista horizontal y el activo 
 test('FASE H: material de apoyo versiona exactamente 11 clases externas con enlaces proporcionados', () => {
   assert.equal((supportCourse.match(/orden:\s*\d+/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/https:\/\/www\.youtube\.com\/watch\?v=/g) ?? []).length, 11)
+  assert.equal((supportCourse.match(/videoId:\s*'/g) ?? []).length, 11)
+  assert.equal((supportCourse.match(/https:\/\/i\.ytimg\.com\/vi\//g) ?? []).length, 11)
+  assert.equal((supportCourse.match(/verificacion:\s*'pendiente'/g) ?? []).length, 11)
   assert.match(supportCourse, /fvBD-rFlTfg/)
   assert.match(supportCourse, /gxRYxrGZd7s/)
   assert.match(supportCourse, /UIdIzEtweOc/)
@@ -183,14 +196,16 @@ test('FASE H: material de apoyo versiona exactamente 11 clases externas con enla
   assert.match(supportCourse, /Reglas básicas · Parte 2/)
 })
 
-test('FASE H: el material de apoyo se mantiene secundario y abre YouTube fuera de VIDA', () => {
+test('FASE H: el material de apoyo muestra miniaturas y conserva estado pendiente hasta corroboración', () => {
   assert.match(home, /function SupportMaterialSection/)
   assert.match(home, /Material de apoyo/)
-  assert.match(home, /11 clases en YouTube · David Acevedo/)
-  assert.match(home, /HEBREW_SUPPORT_COURSE\.map\(item =>/)
+  assert.match(home, /Miniatura del enlace de la clase/)
+  assert.match(home, /item\.miniatura/)
+  assert.match(home, /verificationLabel/)
+  assert.match(home, /Pendiente/)
   assert.match(home, /target="_blank"/)
   assert.match(home, /rel="noopener noreferrer"/)
-  assert.match(home, /VIDA no modifica ni reproduce su contenido dentro de la aplicación/)
+  assert.match(home, /Hasta corroborarlos visualmente/)
 })
 
 test('FASE H: la implementación sigue sin introducir audio ni persistencia', () => {
