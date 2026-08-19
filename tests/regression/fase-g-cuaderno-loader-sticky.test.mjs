@@ -20,13 +20,15 @@ test('FASE G: Nueva nota queda fuera de la pista elástica y solo las fichas hac
   assert.doesNotMatch(css, /overscroll-behavior-x:\s*contain/)
 })
 
-test('FASE G: la zona izquierda es una placa blanca completa con desvanecido solo en el borde', () => {
+test('FASE G: la primera nota queda limpia en reposo y el fade suave aparece solo al entrar a la cobertura', () => {
   assert.match(workspace, /vida-cuaderno-notas-cover/)
+  assert.match(css, /\.vida-cuaderno-notas-cover\s*\{[\s\S]*?width:\s*5\.15rem/)
   assert.match(css, /\.vida-cuaderno-notas-cover\s*\{[\s\S]*?background:\s*#f7f7f4/)
-  assert.match(css, /\.vida-cuaderno-notas-cover::after/)
-  assert.match(css, /width:\s*2\.75rem/)
-  assert.match(css, /linear-gradient/)
-  assert.doesNotMatch(css, /0\s+0\s+0\s+0\.45rem\s+#f7f7f4/)
+  assert.match(css, /1px\s+0\s+0\s+rgba\(255,\s*255,\s*255,\s*0\.78\)/)
+  assert.match(css, /\.vida-cuaderno-notas-cover::after\s*\{[\s\S]*?width:\s*1\.55rem/)
+  assert.match(css, /rgba\(247,\s*247,\s*244,\s*0\.995\)\s*10%/)
+  assert.match(css, /rgba\(247,\s*247,\s*244,\s*0\.10\)\s*92%/)
+  assert.match(css, /\.vida-cuaderno-notas-scroll\s*\{[\s\S]*?margin-left:\s*6\.9rem/)
   assert.doesNotMatch(css, /backdrop-filter/)
 })
 
