@@ -8,14 +8,25 @@ const bibleLoading = fs.readFileSync('app/(app)/biblia/loading.tsx', 'utf8')
 const layout = fs.readFileSync('app/layout.tsx', 'utf8')
 const themeSync = fs.readFileSync('components/biblia/BibleThemeRouteSync.tsx', 'utf8')
 
-test('FASE G: Nueva nota permanece anclada y las fichas se desvanecen antes de alcanzarla', () => {
+test('FASE G: el carrusel de notas queda limitado al eje horizontal en iPhone', () => {
+  assert.match(css, /\[aria-label="Notas del cuaderno"\]/)
+  assert.match(css, /overflow-y:\s*hidden\s*!important/)
+  assert.match(css, /touch-action:\s*pan-x/)
+  assert.match(css, /overscroll-behavior-x:\s*contain/)
+  assert.match(css, /overscroll-behavior-y:\s*none/)
+})
+
+test('FASE G: Nueva nota permanece anclada y oculta por completo las fichas que pasan detrás', () => {
   assert.match(css, /\[aria-label="Notas del cuaderno"\] > button\[aria-label="Nueva nota"\]/)
   assert.match(css, /position:\s*sticky/)
   assert.match(css, /left:\s*0/)
-  assert.match(css, /z-index:\s*4/)
+  assert.match(css, /z-index:\s*6/)
   assert.match(css, /button\[aria-label="Nueva nota"\]::after/)
-  assert.match(css, /linear-gradient/)
-  assert.match(css, /backdrop-filter:\s*blur\(1\.5px\)/)
+  assert.match(css, /width:\s*7rem/)
+  assert.match(css, /#f7f7f4\s+0%/)
+  assert.match(css, /#f7f7f4\s+38%/)
+  assert.match(css, /0\s+0\s+0\s+0\.45rem\s+#f7f7f4/)
+  assert.doesNotMatch(css, /backdrop-filter/)
 })
 
 test('FASE G: Cuaderno tiene loader claro propio y no reutiliza el loader temático de Biblia', () => {
