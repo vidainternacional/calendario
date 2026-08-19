@@ -29,33 +29,63 @@ test('FASE H: Shin y Sin permanecen en una sola letra base', () => {
 })
 
 test('FASE H: Alef-bet conserva filtros pedagógicos explicados', () => {
-  for (const label of ['Alef–Yod', 'Kaf–Tav', 'Dagesh', 'Sofit', 'Guturales', 'Matres', 'Shin / Sin']) assert.match(explorer, new RegExp(label.replace('/', '\\/')))
+  for (const label of ['Alef–Yod', 'Kaf–Tav', 'Dagesh', 'Sofit', 'Guturales', 'Matres', 'Shin / Sin']) {
+    assert.match(explorer, new RegExp(label.replace('/', '\\/')))
+  }
   assert.match(explorer, /Un punto dentro de algunas letras/)
   assert.match(explorer, /Cinco letras cambian de forma cuando aparecen al final/)
   assert.match(explorer, /<GroupExplanation item=\{activeGroup\} \/>/)
 })
 
-test('FASE H: mini-fichas y ficha ampliada conservan contrato aprobado', () => {
+test('FASE H: mini-fichas permiten nombres largos sin truncarlos', () => {
   const tile = explorer.slice(explorer.indexOf('function LetterTile'), explorer.indexOf('function ExpandedLetterCard'))
   assert.match(tile, /letter\.orden/)
-  assert.match(tile, /text-\[4\.55rem\]/)
+  assert.match(tile, /text-\[4\.35rem\]/)
+  assert.match(tile, /break-words/)
+  assert.match(tile, /min-h-\[34px\]/)
+  assert.doesNotMatch(tile, /\btruncate\b/)
   assert.doesNotMatch(tile, /PrimaryLetterForms/)
+})
+
+test('FASE H: ficha ampliada conserva tres representaciones con layout móvil seguro', () => {
   assert.match(explorer, /function PrimaryLetterForms/)
   assert.match(explorer, /Libro/)
   assert.match(explorer, /Cuadrada/)
   assert.match(explorer, /Manuscrita/)
-  assert.match(explorer, /text-\[9\.6rem\]/)
-  assert.match(explorer, />Sonido/)
-  assert.match(explorer, />Significado/)
+  assert.match(explorer, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.4fr\)_minmax\(0,1fr\)\]/)
+  assert.match(explorer, /break-words text-\[1\.55rem\]/)
+  assert.match(explorer, />Sonido</)
+  assert.match(explorer, />Significado</)
 })
 
-test('FASE H: reverso conserva scroll interno, pronunciación y giro completo', () => {
+test('FASE H: reverso desplaza encabezado y contenido como una sola pieza', () => {
   assert.match(explorer, /overflow-y-auto overscroll-contain/)
   assert.match(explorer, /\[-webkit-overflow-scrolling:touch\]/)
-  assert.match(explorer, /sticky top-0/)
+  assert.doesNotMatch(explorer, /sticky top-0/)
+  assert.doesNotMatch(explorer, /backdrop-blur-sm/)
   assert.match(explorer, /Pronunciación aproximada:/)
   assert.match(explorer, /onClick=\{\(\) => setFlipped\(value => !value\)\}/)
-  assert.doesNotMatch(explorer, /\/ 22/)
+})
+
+test('FASE H: fichas abren y se retraen al tocar la misma letra con zoom suave', () => {
+  assert.match(explorer, /useState<number \| null>\(null\)/)
+  assert.match(explorer, /function toggleLetter\(order: number\)/)
+  assert.match(explorer, /setClosingOrder\(order\)/)
+  assert.match(explorer, /scale\(\.94\)/)
+  assert.match(explorer, /duration: closing \? 180 : 240/)
+  assert.match(explorer, /prefers-reduced-motion: reduce/)
+  assert.match(explorer, /space-y-4/)
+  assert.match(explorer, /grid grid-cols-3 gap-4/)
+})
+
+test('FASE H: explicación del Alef-Bet replica el patrón integrado con scroll de Favoritos', () => {
+  assert.match(explorer, /function AlefBetIntroduction/)
+  assert.match(explorer, /¿Qué es el Alef-Bet\?/)
+  assert.match(explorer, /max-h-72/)
+  assert.match(explorer, /overflow-y-auto/)
+  assert.match(explorer, /border-t border-slate-200 p-4/)
+  assert.match(explorer, /se lee de derecha a izquierda/)
+  assert.match(explorer, /reconocer → distinguir → combinar → leer → comprender/)
 })
 
 test('FASE H: portada conserva cuatro accesos bilingües, centrados y compactos', () => {
@@ -77,15 +107,27 @@ test('FASE H: encabezado no muestra Lectura y conserva título hebreo protagonis
   assert.doesNotMatch(home, /> Lectura<\/button>/)
 })
 
-test('FASE H: aprender agrupa seis áreas y despliega contenido por capas', () => {
+test('FASE H: el primer sector se llama Alef-Bet y no Letras', () => {
+  assert.match(home, /id: 'alef-bet',[\s\S]*?short: 'Alef-Bet'/)
+  assert.doesNotMatch(home, /id: 'alef-bet',[^\n]*short: 'Letras'/)
+  assert.match(explorer, /id="alef-bet-title"[\s\S]*?>Alef-Bet</)
+})
+
+test('FASE H: explicaciones de aprendizaje usan desplegables integrados con scroll limitado', () => {
+  assert.match(home, /function ScrollableDisclosure/)
+  assert.match(home, /max-h-72 overflow-y-auto overscroll-contain/)
+  assert.match(home, /Qué aprenderás/)
+  assert.match(home, /En qué enfocarte/)
+  assert.match(home, /Cómo practicar/)
+  assert.match(home, /<ScrollableDisclosure he="מַה נִלְמַד" es="Qué aprenderás">/)
+})
+
+test('FASE H: aprender agrupa seis áreas y abre una sola', () => {
   assert.equal((home.match(/id: '(?:alef-bet|vowels|reading|vocabulary|grammar|review)'/g) ?? []).length, 6)
   assert.match(home, /function LearningAreaButton/)
   assert.match(home, /grid grid-cols-2 gap-2/)
   assert.match(home, /min-h-\[66px\]/)
   assert.match(home, /Aprender paso a paso/)
-  assert.match(home, /Qué aprenderás/)
-  assert.match(home, /En qué enfocarte/)
-  assert.match(home, /Cómo practicar/)
   assert.match(home, /<AlefBetExplorer simpleMode=\{false\} \/>/)
 })
 
@@ -108,7 +150,7 @@ test('FASE H: resultado conserva ficha de maestro e historial futuro', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
 })
 
-test('FASE H: materiales agrupa 11 clases en un recorrido por etapas', () => {
+test('FASE H: materiales agrupa 11 clases en un recorrido por etapas con scroll', () => {
   assert.equal((supportCourse.match(/orden:\s*\d+/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/https:\/\/www\.youtube\.com\/watch\?v=/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/verificacion:\s*'pendiente'/g) ?? []).length, 11)
@@ -116,6 +158,7 @@ test('FASE H: materiales agrupa 11 clases en un recorrido por etapas', () => {
   assert.match(home, /Vocales y lectura/)
   assert.match(home, /Lectura bíblica y reglas/)
   assert.match(home, /HEBREW_SUPPORT_COURSE\.filter/)
+  assert.match(home, /max-h-72 space-y-3 overflow-y-auto/)
   assert.match(home, /item\.miniatura/)
 })
 
