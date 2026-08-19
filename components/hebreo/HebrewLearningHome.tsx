@@ -182,6 +182,12 @@ function LearningScrollButton({
   )
 }
 
+function verificationLabel(status: 'pendiente' | 'verificado' | 'corregir') {
+  if (status === 'verificado') return 'Verificado'
+  if (status === 'corregir') return 'Revisar enlace'
+  return 'Pendiente'
+}
+
 function SupportMaterialSection() {
   return (
     <section className="mb-8 border-y border-slate-200 bg-white/70 py-4" aria-labelledby="material-apoyo-hebreo-title">
@@ -196,7 +202,7 @@ function SupportMaterialSection() {
               Material de apoyo
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-              Curso externo de 11 clases para acompañar tu aprendizaje.
+              11 clases externas en YouTube para acompañar tu aprendizaje.
             </p>
           </div>
           <ChevronDown
@@ -206,37 +212,60 @@ function SupportMaterialSection() {
         </summary>
 
         <div className="pt-4">
-          <div className="mb-3">
-            <p className="text-sm font-black text-slate-900">Hebreo para principiantes</p>
+          <div className="mb-4">
+            <p className="text-sm font-black text-slate-900">Curso de apoyo · 11 clases</p>
             <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-              11 clases en YouTube · David Acevedo. Úsalas como complemento; la ruta y las fuentes de VIDA siguen siendo independientes.
+              Las miniaturas quedan visibles para corroborar cada enlace antes de marcarlo como verificado.
             </p>
           </div>
 
-          <div className="divide-y divide-slate-200 border-y border-slate-200">
+          <div className="space-y-3">
             {HEBREW_SUPPORT_COURSE.map(item => (
               <a
                 key={item.orden}
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-[68px] items-center gap-3 py-3.5 text-left transition-colors active:bg-slate-100/70"
+                className="flex min-h-[92px] items-start gap-3 rounded-[18px] border border-slate-200 bg-white p-2.5 text-left shadow-[0_6px_18px_rgba(15,23,42,0.05)] transition-transform active:scale-[0.99]"
                 aria-label={`Abrir clase ${item.orden}: ${item.titulo} en YouTube`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm font-black tabular-nums text-indigo-700">
-                  {item.orden}
+                <span className="relative h-[72px] w-[116px] shrink-0 overflow-hidden rounded-[12px] bg-slate-100">
+                  <img
+                    src={item.miniatura}
+                    alt={`Miniatura del enlace de la clase ${item.orden}`}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute left-1.5 top-1.5 flex h-7 min-w-7 items-center justify-center rounded-full bg-black/70 px-1.5 text-[11px] font-black tabular-nums text-white">
+                    {item.orden}
+                  </span>
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-black leading-tight text-slate-900">{item.titulo}</span>
+
+                <span className="min-w-0 flex-1 py-0.5">
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="block text-[14px] font-black leading-tight text-slate-900">{item.titulo}</span>
+                    <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                  </span>
                   <span className="mt-1 block text-[12px] leading-relaxed text-slate-500">{item.tema}</span>
+                  <span
+                    className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-black ${
+                      item.verificacion === 'verificado'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : item.verificacion === 'corregir'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {verificationLabel(item.verificacion)}
+                  </span>
                 </span>
-                <ExternalLink className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
               </a>
             ))}
           </div>
 
           <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-            Los videos se abren en YouTube. VIDA no modifica ni reproduce su contenido dentro de la aplicación.
+            Hasta corroborarlos visualmente, los enlaces permanecen como material en revisión. VIDA no reproduce ni modifica su contenido.
           </p>
         </div>
       </details>
