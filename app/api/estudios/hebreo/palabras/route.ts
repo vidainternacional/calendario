@@ -13,8 +13,9 @@ export async function GET(request: Request) {
   const page = positiveInteger(url.searchParams.get('page'), 1)
   const pageSize = positiveInteger(url.searchParams.get('pageSize'), 24)
   const search = url.searchParams.get('q') ?? ''
+  const group = url.searchParams.get('group') ?? 'essentials'
 
-  const result = await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search })
+  const result = await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search, group })
 
   if (result.status === 'sin-sesion') {
     return NextResponse.json(result, { status: 401 })
