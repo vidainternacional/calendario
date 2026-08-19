@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/
 const FUENTES_TITULO = new Set(['moderna', 'elegante', 'fuerte'])
@@ -50,28 +50,22 @@ export async function personalizarMinisterio(formData: FormData) {
     return { success: false, error: 'Las imágenes seleccionadas no son válidas.' }
   }
 
-  const [{ data: profile }, { data: membresia }] = await Promise.all([
-    supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).single(),
-    supabase
-      .from('ministerio_miembros')
-      .select('es_lider')
-      .eq('ministerio_id', ministerioId)
-      .eq('profile_id', user.id)
-      .maybeSingle(),
-  ])
+  const { data: membresia } = await supabase
+    .from('ministerio_miembros')
+    .select('es_lider')
+    .eq('ministerio_id', ministerioId)
+    .eq('profile_id', user.id)
+    .maybeSingle()
 
-  const perfil = profile as any
-  const puedeEditar =
-    Boolean((membresia as any)?.es_lider) ||
-    perfil?.rol === 'administrador' ||
-    perfil?.rol === 'pastor' ||
-    perfil?.es_pastor_general === true
-
-  if (!puedeEditar) {
-    return { success: false, error: 'Solo el líder de este ministerio puede personalizarlo.' }
+  if ((membresia as any)?.es_lider !== true) {
+    return { success: false, error: 'Solo un líder asignado a este ministerio puede personalizarlo.' }
   }
 
-  const { error } = await (supabase as any)
+  // La escritura se realiza con el cliente de servidor después de verificar
+  // explícitamente el liderazgo contextual. Así un líder no recibe permisos
+  // globales de UPDATE sobre todos los ministerios.
+  const admin = createAdminClient() as any
+  const { error } = await admin
     .from('ministerios')
     .update({
       nombre,

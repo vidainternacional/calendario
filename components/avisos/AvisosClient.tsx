@@ -14,7 +14,8 @@ import { SkeletonPage } from '@/components/ui/Skeleton'
 import BackButton from '@/components/navigation/BackButton'
 
 type AvisosData = {
-  esPastorAdmin: boolean
+  puedePublicarGlobal: boolean
+  puedeRevisar: boolean
   ministeriosLider: Array<{ id: string; nombre: string }>
   publicaciones: any[]
 }
@@ -24,7 +25,7 @@ type AvisosClientProps = {
   adminMode?: boolean
 }
 
-const CACHE_SCOPE = 'avisos:v4'
+const CACHE_SCOPE = 'avisos:v5'
 const CACHE_TTL = 10 * 60 * 1000
 
 const tipoLabel: Record<string, string> = {
@@ -54,17 +55,19 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
 
       try {
         const [profileRes, membresiasRes] = await Promise.all([
-          supabase.from('profiles').select('rol').eq('id', userId).single(),
+          supabase.from('profiles').select('rol, es_pastor_general').eq('id', userId).single(),
           supabase.from('ministerio_miembros').select('ministerio_id, es_lider, ministerios (id, nombre)').eq('profile_id', userId),
         ])
 
         const rol = (profileRes.data as any)?.rol as string | undefined
-        const esPastorAdmin = rol === 'pastor' || rol === 'administrador'
+        const esPastorGeneral = (profileRes.data as any)?.es_pastor_general === true
+        const puedePublicarGlobal = rol === 'pastor' || rol === 'administrador' || esPastorGeneral
+        const puedeRevisar = rol === 'administrador' || esPastorGeneral
         const membresias = membresiasRes.data || []
         const ministerioIds = membresias.map((m: any) => m.ministerio_id)
 
         let ministeriosLider: Array<{ id: string; nombre: string }> = []
-        if (esPastorAdmin) {
+        if (puedePublicarGlobal) {
           const { data: allMin } = await supabase.from('ministerios').select('id, nombre').eq('activo', true)
           ministeriosLider = (allMin || []).map((m: any) => ({ id: m.id, nombre: m.nombre }))
         } else {
@@ -90,14 +93,19 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
           .eq('estado', 'aprobado')
           .order('created_at', { ascending: false })
 
-        if (!esPastorAdmin && ministerioIds.length > 0) {
+        if (!puedePublicarGlobal && ministerioIds.length > 0) {
           query = query.or(`ministerio_id.is.null,ministerio_id.in.(${ministerioIds.join(',')})`)
-        } else if (!esPastorAdmin && ministerioIds.length === 0) {
+        } else if (!puedePublicarGlobal && ministerioIds.length === 0) {
           query = query.is('ministerio_id', null)
         }
 
         const { data: publicaciones } = await query
-        const fresh: AvisosData = { esPastorAdmin, ministeriosLider, publicaciones: (publicaciones || []) as any[] }
+        const fresh: AvisosData = {
+          puedePublicarGlobal,
+          puedeRevisar,
+          ministeriosLider,
+          publicaciones: (publicaciones || []) as any[],
+        }
 
         if (!cancelled) {
           setData(fresh)
@@ -134,8 +142,8 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
     )
   }
 
-  const { esPastorAdmin, ministeriosLider, publicaciones: items } = data
-  const puedeCrear = esPastorAdmin || ministeriosLider.length > 0
+  const { puedePublicarGlobal, puedeRevisar, ministeriosLider, publicaciones: items } = data
+  const puedeCrear = puedePublicarGlobal || ministeriosLider.length > 0
 
   const abrirNuevoAviso = () => {
     const trigger = document.getElementById('btn-nuevo-aviso') as HTMLButtonElement | null
@@ -167,10 +175,10 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
 
         {puedeCrear && (
           <div className="flex w-full min-w-0 flex-wrap items-center gap-2 min-[430px]:w-auto min-[430px]:shrink-0 min-[430px]:justify-end">
-            {esPastorAdmin && (
+            {puedeRevisar && (
               <Link href="/avisos/pendientes-aprobacion" className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-600 transition-colors hover:bg-amber-100 min-[430px]:flex-none">Revisar</Link>
             )}
-            <NuevoAvisoModal ministeriosLider={ministeriosLider} esPastorAdmin={esPastorAdmin} />
+            <NuevoAvisoModal ministeriosLider={ministeriosLider} esPastorAdmin={puedePublicarGlobal} />
           </div>
         )}
       </header>
@@ -184,7 +192,7 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
             {puedeCrear && (
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                 <button type="button" onClick={abrirNuevoAviso} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition-all hover:bg-indigo-500 active:scale-[0.99]"><Megaphone className="h-4 w-4" aria-hidden="true" />Crear primer aviso</button>
-                {esPastorAdmin && <Link href="/avisos/pendientes-aprobacion" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"><ClipboardCheck className="h-4 w-4" aria-hidden="true" />Revisar pendientes</Link>}
+                {puedeRevisar && <Link href="/avisos/pendientes-aprobacion" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"><ClipboardCheck className="h-4 w-4" aria-hidden="true" />Revisar pendientes</Link>}
               </div>
             )}
           </div>

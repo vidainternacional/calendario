@@ -19,23 +19,45 @@ function leerTemaGuardado(): ModoBiblia {
 function aplicarTema(modo: ModoBiblia) {
   document.documentElement.dataset.bibliaTema = modo
   document.body.dataset.bibliaTema = modo
+  document.documentElement.style.colorScheme = modo === 'oscuro' ? 'dark' : 'light'
 }
 
 function retirarTema() {
   delete document.documentElement.dataset.bibliaTema
   delete document.body.dataset.bibliaTema
+  document.documentElement.style.removeProperty('color-scheme')
+}
+
+function esRutaCuaderno(pathname: string) {
+  return pathname === '/biblia/notas'
+    || pathname.startsWith('/biblia/notas/')
+    || pathname === '/biblia/notas-offline'
+    || pathname.startsWith('/biblia/notas-offline/')
+}
+
+function marcarObjetivoCuaderno(activo: boolean) {
+  if (activo) {
+    document.documentElement.dataset.vidaCuadernoTarget = 'true'
+    document.documentElement.style.colorScheme = 'light'
+    return
+  }
+  delete document.documentElement.dataset.vidaCuadernoTarget
 }
 
 /**
- * Mantiene la paleta bíblica únicamente dentro de las rutas /biblia.
- * Se ejecuta en layout effect para que la navegación cliente no pinte primero
- * el fondo claro general de la aplicación.
+ * Mantiene la paleta bíblica únicamente dentro de las superficies de lectura
+ * de /biblia. El Cuaderno vive bajo esa URL por compatibilidad histórica, pero
+ * visualmente es una superficie independiente y siempre debe abandonar el tema
+ * oscuro/sepia de Biblia al abrirse.
  */
 export default function BibleThemeRouteSync() {
   const pathname = usePathname()
 
   useLayoutEffect(() => {
-    if (!pathname.startsWith('/biblia')) {
+    const cuaderno = esRutaCuaderno(pathname)
+    marcarObjetivoCuaderno(cuaderno)
+
+    if (!pathname.startsWith('/biblia') || cuaderno) {
       retirarTema()
       return
     }
@@ -55,6 +77,25 @@ export default function BibleThemeRouteSync() {
       window.removeEventListener('storage', sincronizar)
     }
   }, [pathname])
+
+  useLayoutEffect(() => {
+    const prepararNavegacion = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      const link = target.closest('a[href]')
+      if (!link) return
+
+      try {
+        const url = new URL(link.getAttribute('href') || '', window.location.href)
+        if (url.origin !== window.location.origin || !esRutaCuaderno(url.pathname)) return
+        marcarObjetivoCuaderno(true)
+        retirarTema()
+      } catch {}
+    }
+
+    document.addEventListener('click', prepararNavegacion, true)
+    return () => document.removeEventListener('click', prepararNavegacion, true)
+  }, [])
 
   return null
 }

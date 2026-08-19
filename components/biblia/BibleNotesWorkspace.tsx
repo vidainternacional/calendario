@@ -532,9 +532,12 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
         </div>
       </details>
 
-      <nav aria-label="Notas del cuaderno" className="mt-3 flex min-h-[84px] gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <button type="button" onClick={nuevaNota} aria-label="Nueva nota" className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-full bg-violet-600 text-white shadow-sm transition active:scale-[0.97]"><Plus className="h-5 w-5" /><span className="text-[10px] font-bold">Nueva</span></button>
-        {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => { setSeleccionadaId(nota.id); setEditorReadOnly(false); setMenuAbierto(null) }} aria-label={`Abrir ${nota.titulo || 'nota sin título'}`} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border bg-transparent px-2 text-center transition active:scale-[0.97] ${seleccionadaId === nota.id ? 'border-violet-400 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,92,246,0.08)]' : 'border-current/20'}`}><span className="line-clamp-3 w-full text-[10px] font-bold leading-[13px]">{nota.titulo || 'Sin título'}</span></button>)}
+      <nav aria-label="Notas del cuaderno" className="vida-cuaderno-notas-rail mt-3 min-h-[84px]">
+        <span className="vida-cuaderno-notas-cover" aria-hidden="true" />
+        <button type="button" onClick={nuevaNota} aria-label="Nueva nota" className="vida-cuaderno-nueva-nota flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full bg-violet-600 text-white shadow-sm transition active:scale-[0.97]"><Plus className="h-5 w-5" /><span className="text-[10px] font-bold">Nueva</span></button>
+        <div className="vida-cuaderno-notas-scroll flex min-h-[84px] gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {notasFiltradas.map((nota) => <button key={nota.id} type="button" onClick={() => { setSeleccionadaId(nota.id); setEditorReadOnly(false); setMenuAbierto(null) }} aria-label={`Abrir ${nota.titulo || 'nota sin título'}`} className={`flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border bg-transparent px-2 text-center transition active:scale-[0.97] ${seleccionadaId === nota.id ? 'border-violet-400 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,92,246,0.08)]' : 'border-current/20'}`}><span className="line-clamp-3 w-full text-[10px] font-bold leading-[13px]">{nota.titulo || 'Sin título'}</span></button>)}
+        </div>
       </nav>
 
       {seleccionada ? <section className="mt-3 min-h-[calc(100vh-300px)]">

@@ -214,6 +214,12 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
   const nextEvent = proximoItem
   const nextEventStart = nextEvent ? new Date(nextEvent.fecha_inicio) : null
   const nextEventIsToday = Boolean(clock && nextEventStart && isSameDay(nextEventStart, clock))
+  const nextEventIsOngoing = Boolean(
+    clock &&
+      nextEvent?.item_type === 'event' &&
+      nextEventStart &&
+      nextEventStart.getTime() <= clock.getTime(),
+  )
   const nextEventState = nextEvent ? eventStatus(nextEvent.estado) : null
   const nextEventKind = nextEvent?.item_type === 'reminder' ? 'Recordatorio' : 'Evento'
   const todayLabel = clock
@@ -318,7 +324,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         </header>
 
         <div className="space-y-5 sm:space-y-6">
-          <section aria-label="Tu próximo evento">
+          <section aria-label={nextEventIsOngoing ? 'Evento en curso' : 'Tu próximo evento'}>
             {nextEvent && nextEventStart ? (
               <Link
                 href={`/calendario?fecha=${encodeURIComponent(String(nextEvent.fecha_inicio))}`}
@@ -332,11 +338,15 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                     <CalendarDays className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] font-extrabold uppercase tracking-[0.1em] text-violet-600">Tu próximo evento</span>
+                    <span className="block text-[11px] font-extrabold uppercase tracking-[0.1em] text-violet-600">
+                      {nextEventIsOngoing ? 'Evento en curso' : 'Tu próximo evento'}
+                    </span>
                     <span className="mt-0.5 block text-[11px] text-slate-400">
-                      {nextEventIsToday
-                        ? `Hoy · ${format(nextEventStart, 'h:mm a', { locale: es })}`
-                        : capitalize(format(nextEventStart, "EEEE d 'de' MMMM · h:mm a", { locale: es }))}
+                      {nextEventIsOngoing
+                        ? `Hoy · En curso · inició ${format(nextEventStart, 'h:mm a', { locale: es })}`
+                        : nextEventIsToday
+                          ? `Hoy · ${format(nextEventStart, 'h:mm a', { locale: es })}`
+                          : capitalize(format(nextEventStart, "EEEE d 'de' MMMM · h:mm a", { locale: es }))}
                     </span>
                   </span>
                 </div>
@@ -364,7 +374,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                   ) : (
                     <span className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[10px] font-bold text-violet-600 ring-1 ring-violet-100">
                       <Clock3 className="h-3 w-3" aria-hidden="true" />
-                      Próximo
+                      {nextEventIsOngoing ? 'En curso' : 'Próximo'}
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-violet-600">

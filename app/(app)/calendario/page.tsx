@@ -65,7 +65,7 @@ export default async function CalendarioPage({
   const [profileReq, leaderReq] = await Promise.all([
     supabase
       .from('profiles')
-      .select('rol, es_pastor_general, activo, estado_cuenta')
+      .select('rol, activo, estado_cuenta')
       .eq('id', user.id)
       .single(),
     supabase
@@ -77,29 +77,22 @@ export default async function CalendarioPage({
 
   const profile = profileReq.data as {
     rol?: string | null
-    es_pastor_general?: boolean | null
     activo?: boolean | null
     estado_cuenta?: string | null
   } | null
 
   const cuentaActiva = Boolean(profile?.activo) && profile?.estado_cuenta === 'activo'
-  const esPastorOAdmin =
-    profile?.rol === 'pastor' ||
-    profile?.rol === 'administrador' ||
-    Boolean(profile?.es_pastor_general)
-
+  const esAdministrador = profile?.rol === 'administrador'
   const ministeriosLiderados = Array.from(new Set(
     (leaderReq.data || [])
       .map((item: any) => item.ministerio_id)
       .filter(Boolean)
       .map(String),
   ))
-  const esLider = ministeriosLiderados.length > 0
-  const canCreateEvents = cuentaActiva && (esPastorOAdmin || esLider)
 
   let creationCalendars: CalendarioOrigen[] = []
 
-  if (canCreateEvents && esPastorOAdmin) {
+  if (cuentaActiva && esAdministrador) {
     const { data } = await supabase
       .from('calendars')
       .select('id, nombre, color, owner_id, tipo_cuenta, es_publico, ministerio_id')
@@ -109,7 +102,7 @@ export default async function CalendarioPage({
     creationCalendars = (data || [])
       .map(normalizarCalendario)
       .filter((calendar): calendar is CalendarioOrigen => Boolean(calendar))
-  } else if (canCreateEvents && ministeriosLiderados.length > 0) {
+  } else if (cuentaActiva) {
     const { data } = await supabase
       .from('calendar_subscriptions')
       .select(`
@@ -130,10 +123,17 @@ export default async function CalendarioPage({
     creationCalendars = (data || [])
       .map((item: any) => normalizarCalendario(item.calendars))
       .filter((calendar): calendar is CalendarioOrigen =>
-        Boolean(calendar?.ministerio_id && ministeriosLiderados.includes(String(calendar.ministerio_id))),
+        Boolean(
+          calendar && (
+            !calendar.ministerio_id ||
+            ministeriosLiderados.includes(String(calendar.ministerio_id))
+          ),
+        ),
       )
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
   }
+
+  const canCreateEvents = cuentaActiva && creationCalendars.length > 0
 
   return (
     <CalendarioClient

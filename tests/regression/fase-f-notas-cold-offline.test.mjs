@@ -33,13 +33,13 @@ test('la pantalla offline comparte el workspace canónico y el HTML legado deja 
   assert.doesNotMatch(legacyShell, /notas_estudio/i)
 })
 
-test('el bootstrap React puede inferir de forma segura un único cuaderno local', () => {
-  assert.match(offlineWorkspace, /VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX/)
-  assert.match(offlineWorkspace, /function resolverUnicoOwnerLocal/)
-  assert.match(offlineWorkspace, /key\.startsWith\(prefix\)/)
-  assert.match(offlineWorkspace, /if \(owners\.size !== 1\) return null/)
-  assert.match(offlineWorkspace, /localStorage\.setItem\(VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY, owner\)/)
+test('FASE G: el bootstrap React exige dueño activo o sesión y no infiere identidad desde notas residuales', () => {
+  assert.match(offlineWorkspace, /VIDA_BIBLE_NOTES_ACTIVE_OWNER_KEY/)
+  assert.match(offlineWorkspace, /OWNER_UUID_RE/)
   assert.match(offlineWorkspace, /resolverUsuarioActualNotas/)
+  assert.match(offlineWorkspace, /setOwnerId\(null\)/)
+  assert.doesNotMatch(offlineWorkspace, /VIDA_BIBLE_NOTES_USER_STORAGE_PREFIX/)
+  assert.doesNotMatch(offlineWorkspace, /function resolverUnicoOwnerLocal/)
 })
 
 test('el service worker respalda solo el UUID activo y nunca guarda el contenido de las notas', () => {

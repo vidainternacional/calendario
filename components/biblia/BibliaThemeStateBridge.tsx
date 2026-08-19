@@ -37,10 +37,11 @@ export default function BibliaThemeStateBridge() {
     })
 
     return () => {
+      // No retirar el tema aquí. Durante Biblia → Cuaderno este componente se
+      // desmonta antes de que la nueva superficie termine de pintar y borrar
+      // el dataset provocaba un frame blanco. BibleThemeRouteSync es la única
+      // autoridad que decide cuándo abandonar realmente el tema bíblico.
       observer.disconnect()
-      delete document.documentElement.dataset.bibliaTema
-      delete document.body.dataset.bibliaTema
-      document.documentElement.style.removeProperty('color-scheme')
     }
   }, [])
 

@@ -69,7 +69,7 @@ async function obtenerAccesoLider(ministerioId: string): Promise<AccesoLider | n
 
   return {
     userId: user.id,
-    puedeGestionar: profile.rol === 'administrador' || profile.rol === 'pastor' || membresia?.es_lider === true,
+    puedeGestionar: profile.rol === 'administrador' || membresia?.es_lider === true,
   }
 }
 

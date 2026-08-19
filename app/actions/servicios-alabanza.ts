@@ -53,7 +53,7 @@ async function obtenerContexto(ministerioId: string) {
 
   const puedeProgramar = profile?.activo === true
     && profile?.estado_cuenta === 'activo'
-    && (['administrador', 'pastor'].includes(profile.rol) || membership?.es_lider === true)
+    && (profile.rol === 'administrador' || membership?.es_lider === true)
 
   if (!puedeProgramar) fail('Solo el liderazgo del ministerio puede preparar servicios.')
 

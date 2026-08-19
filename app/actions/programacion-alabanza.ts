@@ -36,7 +36,7 @@ async function obtenerAcceso(ministerioId: string): Promise<AccesoProgramacion |
     tienePaleta = (paleta || []).length > 0
   }
 
-  const puedeProgramar = ['administrador', 'pastor'].includes(profile.rol) || membresia?.es_lider === true
+  const puedeProgramar = profile.rol === 'administrador' || membresia?.es_lider === true
   return { userId: user.id, puedeProgramar, puedePaleta: puedeProgramar || tienePaleta }
 }
 

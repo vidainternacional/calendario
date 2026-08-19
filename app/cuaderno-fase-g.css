@@ -1,0 +1,106 @@
+/*
+ * FASE G — Ajustes transversales del Cuaderno detectados en validación PWA/iPhone.
+ * El carrusel conserva el rebote horizontal nativo solo en la pista de notas:
+ * la acción primaria "Nueva" vive fuera del scroll y permanece inmóvil.
+ * El loader del Cuaderno siempre usa su superficie clara y nunca hereda el tema
+ * oscuro/sepia temporal de Biblia.
+ */
+
+[aria-label="Notas del cuaderno"] {
+  position: relative;
+  isolation: isolate;
+}
+
+/*
+ * El botón morado ya no forma parte del scroll horizontal. Por eso Safari puede
+ * aplicar su elasticidad a las notas sin desplazar visualmente la acción fija.
+ */
+.vida-cuaderno-nueva-nota {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  flex: 0 0 auto;
+}
+
+/*
+ * Placa blanca completa a la izquierda. Cubre todo el rectángulo situado detrás
+ * de "Nueva". Su borde derecho conserva un destello muy tenue para dar profundidad
+ * sin tocar la primera ficha cuando el carrusel está en reposo.
+ */
+.vida-cuaderno-notas-cover {
+  position: absolute;
+  top: -0.4rem;
+  bottom: -0.4rem;
+  left: -0.25rem;
+  width: 5.15rem;
+  z-index: 5;
+  pointer-events: none;
+  background: #f7f7f4;
+  box-shadow:
+    1px 0 0 rgba(255, 255, 255, 0.78),
+    8px 0 18px rgba(255, 255, 255, 0.16);
+}
+
+/*
+ * El fade es corto y progresivo: la primera nota queda completamente fuera de
+ * esta zona en reposo y solo pierde presencia al desplazarse realmente hacia
+ * la placa blanca. Los puntos intermedios suavizan la transición tipo iOS.
+ */
+.vida-cuaderno-notas-cover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 1.55rem;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    #f7f7f4 0%,
+    rgba(247, 247, 244, 0.995) 10%,
+    rgba(247, 247, 244, 0.97) 25%,
+    rgba(247, 247, 244, 0.86) 43%,
+    rgba(247, 247, 244, 0.62) 62%,
+    rgba(247, 247, 244, 0.32) 79%,
+    rgba(247, 247, 244, 0.10) 92%,
+    rgba(247, 247, 244, 0) 100%
+  );
+}
+
+/*
+ * Solo esta pista desplaza las notas. El inicio está unos píxeles después del
+ * final del fade para que la primera ficha se vea íntegra mientras no haya scroll.
+ * Se deja libre el overscroll-x para conservar el rebote nativo de iOS.
+ */
+.vida-cuaderno-notas-scroll {
+  margin-left: 6.9rem;
+  width: calc(100% - 6.9rem);
+  overflow-y: hidden !important;
+  touch-action: pan-x;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Esta marca se activa antes de iniciar la navegación hacia Cuaderno. Así el
+ * primer frame y cualquier loading boundary padre quedan claros incluso si el
+ * dispositivo usa apariencia oscura o Biblia venía en modo oscuro/sepia.
+ */
+html[data-vida-cuaderno-target='true'],
+html[data-vida-cuaderno-target='true'] body,
+html:has(.vida-cuaderno-loading),
+body:has(.vida-cuaderno-loading) {
+  --background: #f7f7f4;
+  --foreground: #0f172a;
+  background-color: #f7f7f4 !important;
+  color: #0f172a !important;
+  color-scheme: light !important;
+}
+
+.vida-cuaderno-loading {
+  min-height: 100dvh;
+  background: #f7f7f4 !important;
+  color: #0f172a !important;
+  animation: none !important;
+}

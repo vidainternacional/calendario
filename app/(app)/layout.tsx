@@ -4,6 +4,7 @@ import BibleVerseActionsPersistent from '@/components/biblia/BibleVerseActionsPe
 import BottomNav from '@/components/layout/BottomNav'
 import PushSubscriptionSync from '@/components/pwa/PushSubscriptionSync'
 import MisServiciosShortcut from '@/components/inicio/MisServiciosShortcut'
+import PendingAttentionShortcut from '@/components/notificaciones/PendingAttentionShortcut'
 
 export default function AppLayout({
   children,
@@ -20,6 +21,7 @@ export default function AppLayout({
         {children}
       </div>
       <MisServiciosShortcut />
+      <PendingAttentionShortcut />
       <BottomNav />
     </div>
   )

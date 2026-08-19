@@ -19,13 +19,13 @@ export default async function AdminAyudaSolidariaPage() {
 
   const { data: profile } = await (supabase as any)
     .from('profiles')
-    .select('rol, activo, estado_cuenta, es_pastor_general')
+    .select('rol, activo, estado_cuenta')
     .eq('id', user.id)
     .single()
 
   const allowed = profile?.activo === true
     && profile?.estado_cuenta === 'activo'
-    && (profile?.rol === 'pastor' || profile?.rol === 'administrador' || profile?.es_pastor_general === true)
+    && profile?.rol === 'administrador'
   if (!allowed) redirect('/inicio')
 
   const service = createServiceClient()

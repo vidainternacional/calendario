@@ -24,8 +24,9 @@ test('FASE F: la identidad offline sigue ligada al dueño local validado', () =>
   assert.match(proxy, /biblia\/notas-offline/)
 })
 
-test('FASE F: el service worker precarga el shell React público y sus bundles estáticos', () => {
-  assert.match(sw, /vida-shell-v2\.3-cuaderno-react-real/)
+test('FASE F/G: el service worker mantiene un shell React público versionado y sus bundles estáticos', () => {
+  assert.match(sw, /CACHE_VERSION = 'v2\.4-app-offline'/)
+  assert.match(sw, /CACHE_NAME = `vida-shell-\$\{CACHE_VERSION\}`/)
   assert.match(sw, /OFFLINE_NOTES_APP = '\/biblia\/notas-offline'/)
   assert.match(sw, /precacheOfflineNotesApp/)
   assert.match(sw, /cacheStaticAssetsFromHtml/)
@@ -33,10 +34,12 @@ test('FASE F: el service worker precarga el shell React público y sus bundles e
   assert.doesNotMatch(sw, /OFFLINE_NOTES_PARITY_STYLE|OFFLINE_NOTES_PARITY_SCRIPT|OFFLINE_NOTES_SHELL/)
 })
 
-test('FASE F: la paridad offline no cachea notas, API ni respuestas privadas de Supabase', () => {
+test('FASE F/G: el shell no cachea notas, API ni respuestas privadas de Supabase', () => {
   assert.match(sw, /url\.pathname\.startsWith\('\/api\/'\)/)
   assert.match(sw, /url\.hostname\.includes\('supabase\.co'\)/)
   assert.match(sw, /url\.pathname\.startsWith\('\/_next\/static\/'\)/)
   assert.match(sw, /if \(url\.pathname\.startsWith\('\/_next\/'\)\) return/)
+  assert.match(sw, /USER_CACHE_PREFIX/)
+  assert.match(sw, /userCacheName\(userId\)/)
   assert.doesNotMatch(sw, /notas_estudio/)
 })

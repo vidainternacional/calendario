@@ -19,7 +19,6 @@ type PerfilPermisosEvento = {
   rol: string
   activo: boolean
   estado_cuenta: string
-  es_pastor_general?: boolean | null
 }
 
 type FilaId = { id: string }
@@ -47,7 +46,7 @@ function uuidValido(value: string) {
 async function validarAccesoEscritura(db: any, userId: string, calendarId: string) {
   const { data: perfilRaw } = await db
     .from('profiles')
-    .select('rol, activo, estado_cuenta, es_pastor_general')
+    .select('rol, activo, estado_cuenta')
     .eq('id', userId)
     .single()
 
@@ -56,12 +55,8 @@ async function validarAccesoEscritura(db: any, userId: string, calendarId: strin
     return { error: 'Tu cuenta no tiene permiso para modificar elementos.' as const }
   }
 
-  const esPastorAdmin =
-    perfil.rol === 'pastor' ||
-    perfil.rol === 'administrador' ||
-    Boolean(perfil.es_pastor_general)
-
-  if (esPastorAdmin) {
+  const esAdministrador = perfil.rol === 'administrador'
+  if (esAdministrador) {
     const { data: calendarRaw, error: calendarError } = await db
       .from('calendars')
       .select('id, nombre, ministerio_id')
@@ -87,21 +82,23 @@ async function validarAccesoEscritura(db: any, userId: string, calendarId: strin
   if (
     subscriptionError ||
     !subscription?.can_edit ||
-    !subscription.calendars?.ministerio_id
+    !subscription.calendars
   ) {
     return { error: 'No tienes permiso para escribir en ese calendario.' as const }
   }
 
-  const { data: liderazgoRaw, error: liderazgoError } = await db
-    .from('ministerio_miembros')
-    .select('profile_id')
-    .eq('ministerio_id', subscription.calendars.ministerio_id)
-    .eq('profile_id', userId)
-    .eq('es_lider', true)
-    .maybeSingle()
+  if (subscription.calendars.ministerio_id) {
+    const { data: liderazgoRaw, error: liderazgoError } = await db
+      .from('ministerio_miembros')
+      .select('profile_id')
+      .eq('ministerio_id', subscription.calendars.ministerio_id)
+      .eq('profile_id', userId)
+      .eq('es_lider', true)
+      .maybeSingle()
 
-  if (liderazgoError || !liderazgoRaw) {
-    return { error: 'Solo administradores, pastores y líderes pueden modificar eventos.' as const }
+    if (liderazgoError || !liderazgoRaw) {
+      return { error: 'No tienes permiso para escribir en ese calendario.' as const }
+    }
   }
 
   return { perfil, calendar: subscription.calendars }

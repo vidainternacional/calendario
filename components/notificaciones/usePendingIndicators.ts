@@ -14,12 +14,18 @@ type PendingSnapshot = {
   pendingMinisterioIngresos: number
   pendingServicios: number
   pendingSolicitudesGestionables: number
+  pendingContactos: number
+  pendingPreguntasPastorales: number
+  pendingAyudaSolidaria: number
 }
 
 const EMPTY_PENDING_SNAPSHOT: PendingSnapshot = {
   pendingMinisterioIngresos: 0,
   pendingServicios: 0,
   pendingSolicitudesGestionables: 0,
+  pendingContactos: 0,
+  pendingPreguntasPastorales: 0,
+  pendingAyudaSolidaria: 0,
 }
 
 let pendingSnapshot: PendingSnapshot = EMPTY_PENDING_SNAPSHOT
@@ -36,6 +42,9 @@ function publishPendingSnapshot(next: PendingSnapshot) {
     next.pendingMinisterioIngresos === pendingSnapshot.pendingMinisterioIngresos
     && next.pendingServicios === pendingSnapshot.pendingServicios
     && next.pendingSolicitudesGestionables === pendingSnapshot.pendingSolicitudesGestionables
+    && next.pendingContactos === pendingSnapshot.pendingContactos
+    && next.pendingPreguntasPastorales === pendingSnapshot.pendingPreguntasPastorales
+    && next.pendingAyudaSolidaria === pendingSnapshot.pendingAyudaSolidaria
   ) {
     return
   }
@@ -75,11 +84,67 @@ async function refreshSharedPending(force = false) {
       resetPendingSnapshot()
     }
 
-    const [leadershipReq, serviciosReq, solicitudesGestionables] = await Promise.all([
+    const [profileReq, liderazgosReq] = await Promise.all([
+      supabase.from('profiles').select('rol, es_pastor_general').eq('id', user.id).maybeSingle(),
       (supabase as any)
-        .from('ministerio_solicitudes_ingreso')
-        .select('id, profile_id')
-        .eq('estado', 'pendiente'),
+        .from('ministerio_miembros')
+        .select('ministerio_id')
+        .eq('profile_id', user.id)
+        .eq('es_lider', true),
+    ])
+
+    const rol = (profileReq.data as any)?.rol as string | undefined
+    const esPastorGeneral = (profileReq.data as any)?.es_pastor_general === true
+    const esAdministrador = rol === 'administrador'
+    const esGestorPastoral = rol === 'pastor' || esAdministrador || esPastorGeneral
+    const ministeriosLiderados = Array.from(new Set(
+      (liderazgosReq.data || []).map((row: any) => String(row.ministerio_id || '')).filter(Boolean),
+    ))
+
+    const leadershipQuery = esAdministrador
+      ? (supabase as any)
+          .from('ministerio_solicitudes_ingreso')
+          .select('id, profile_id')
+          .eq('estado', 'pendiente')
+      : ministeriosLiderados.length > 0
+        ? (supabase as any)
+            .from('ministerio_solicitudes_ingreso')
+            .select('id, profile_id')
+            .eq('estado', 'pendiente')
+            .in('ministerio_id', ministeriosLiderados)
+        : Promise.resolve({ data: [], error: null })
+
+    const preguntasQuery = esGestorPastoral
+      ? (supabase as any)
+          .from('preguntas_congregacion')
+          .select('id', { count: 'exact', head: true })
+          .eq('estado', 'pendiente')
+      : Promise.resolve({ count: 0, error: null })
+
+    const ayudaSolicitudesQuery = esGestorPastoral
+      ? (supabase as any)
+          .from('solicitudes_ayuda_solidaria')
+          .select('id', { count: 'exact', head: true })
+          .eq('estado', 'enviada')
+      : Promise.resolve({ count: 0, error: null })
+
+    const ayudaAportesQuery = esGestorPastoral
+      ? (supabase as any)
+          .from('aportes_ayuda_solidaria')
+          .select('id', { count: 'exact', head: true })
+          .eq('estado', 'ofrecido')
+      : Promise.resolve({ count: 0, error: null })
+
+    const [
+      leadershipReq,
+      serviciosReq,
+      solicitudesGestionables,
+      contactosReq,
+      preguntasReq,
+      ayudaSolicitudesReq,
+      ayudaAportesReq,
+    ] = await Promise.all([
+      leadershipQuery,
       (supabase as any)
         .from('evento_asignaciones')
         .select('evento_id, estado, eventos!inner(fecha_inicio)')
@@ -90,10 +155,21 @@ async function refreshSharedPending(force = false) {
         console.error('No se pudieron cargar las solicitudes gestionables', error)
         return 0
       }),
+      (supabase as any)
+        .from('contactos')
+        .select('id', { count: 'exact', head: true })
+        .eq('destinatario_id', user.id)
+        .eq('estado', 'pendiente'),
+      preguntasQuery,
+      ayudaSolicitudesQuery,
+      ayudaAportesQuery,
     ])
 
     let nextMinisterioIngresos = pendingSnapshot.pendingMinisterioIngresos
     let nextServicios = pendingSnapshot.pendingServicios
+    let nextContactos = pendingSnapshot.pendingContactos
+    let nextPreguntasPastorales = pendingSnapshot.pendingPreguntasPastorales
+    let nextAyudaSolidaria = pendingSnapshot.pendingAyudaSolidaria
 
     if (leadershipReq.error) {
       console.error('No se pudieron cargar los pendientes de liderazgo', leadershipReq.error)
@@ -113,12 +189,34 @@ async function refreshSharedPending(force = false) {
       ).size
     }
 
+    if (contactosReq.error) {
+      console.error('No se pudieron cargar las solicitudes de contacto', contactosReq.error)
+    } else {
+      nextContactos = Math.max(0, Number(contactosReq.count || 0))
+    }
+
+    if (preguntasReq.error) {
+      console.error('No se pudieron cargar las preguntas pastorales pendientes', preguntasReq.error)
+    } else {
+      nextPreguntasPastorales = Math.max(0, Number(preguntasReq.count || 0))
+    }
+
+    if (ayudaSolicitudesReq.error || ayudaAportesReq.error) {
+      console.error('No se pudieron cargar los pendientes de Ayuda Solidaria', ayudaSolicitudesReq.error || ayudaAportesReq.error)
+    } else {
+      nextAyudaSolidaria = Math.max(0, Number(ayudaSolicitudesReq.count || 0))
+        + Math.max(0, Number(ayudaAportesReq.count || 0))
+    }
+
     if (pendingUserId !== user.id) return
 
     publishPendingSnapshot({
       pendingMinisterioIngresos: nextMinisterioIngresos,
       pendingServicios: nextServicios,
       pendingSolicitudesGestionables: Math.max(0, Number(solicitudesGestionables || 0)),
+      pendingContactos: nextContactos,
+      pendingPreguntasPastorales: nextPreguntasPastorales,
+      pendingAyudaSolidaria: nextAyudaSolidaria,
     })
   })()
 
@@ -216,6 +314,9 @@ export function usePendingIndicators() {
     pendingMinisterioIngresos,
     pendingServicios,
     pendingSolicitudesGestionables,
+    pendingContactos,
+    pendingPreguntasPastorales,
+    pendingAyudaSolidaria,
   } = useSyncExternalStore(subscribePending, getPendingSnapshot, getPendingServerSnapshot)
 
   const total =
@@ -223,6 +324,9 @@ export function usePendingIndicators() {
     + Math.max(0, pendingMinisterioIngresos)
     + Math.max(0, pendingServicios)
     + Math.max(0, pendingSolicitudesGestionables)
+    + Math.max(0, pendingContactos)
+    + Math.max(0, pendingPreguntasPastorales)
+    + Math.max(0, pendingAyudaSolidaria)
 
   useEffect(() => {
     applyAppBadge(total)
@@ -233,6 +337,9 @@ export function usePendingIndicators() {
     pendingMinisterioIngresos,
     pendingServicios,
     pendingSolicitudesGestionables,
+    pendingContactos,
+    pendingPreguntasPastorales,
+    pendingAyudaSolidaria,
     total,
   }
 }

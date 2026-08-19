@@ -3,10 +3,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-async function obtenerContextoGestion() {
+async function obtenerContextoAdministrador() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, callerRol: null, error: 'No autorizado' }
+  if (!user) return { supabase, user: null, error: 'No autorizado' }
 
   const { data: callerProfile } = await supabase
     .from('profiles')
@@ -14,12 +14,11 @@ async function obtenerContextoGestion() {
     .eq('id', user.id)
     .single()
 
-  const callerRol = (callerProfile as any)?.rol as string | undefined
-  if (callerRol !== 'pastor' && callerRol !== 'administrador') {
-    return { supabase, user, callerRol, error: 'Permisos insuficientes' }
+  if ((callerProfile as any)?.rol !== 'administrador') {
+    return { supabase, user, error: 'Solo un administrador puede cambiar el liderazgo ministerial.' }
   }
 
-  return { supabase, user, callerRol, error: null }
+  return { supabase, user, error: null }
 }
 
 export async function actualizarLiderazgoMinisterial(
@@ -27,19 +26,12 @@ export async function actualizarLiderazgoMinisterial(
   ministerioId: string,
   esLider: boolean,
 ) {
-  const { supabase, user, callerRol, error: permisoError } = await obtenerContextoGestion()
+  const { supabase, user, error: permisoError } = await obtenerContextoAdministrador()
   if (permisoError || !user) return { success: false, error: permisoError ?? 'No autorizado' }
-
-  // Un pastor no debe poder modificar su propio liderazgo desde este panel.
-  // El administrador sí puede administrarse a sí mismo porque su rol global
-  // le concede acceso transversal independientemente de sus membresías ministeriales.
-  if (profileId === user.id && callerRol !== 'administrador') {
-    return { success: false, error: 'No puedes modificar tu propio liderazgo desde este panel.' }
-  }
 
   const { data: targetProfile, error: targetError } = await supabase
     .from('profiles')
-    .select('rol')
+    .select('id')
     .eq('id', profileId)
     .single()
 
@@ -47,23 +39,17 @@ export async function actualizarLiderazgoMinisterial(
     return { success: false, error: 'No fue posible encontrar al usuario.' }
   }
 
-  const targetRol = (targetProfile as any).rol as string
-  if (targetRol === 'administrador' && callerRol !== 'administrador') {
-    return { success: false, error: 'Solo un administrador puede modificar a otro administrador.' }
-  }
-
   const db = supabase as any
+  const { data: membresia, error: membresiaError } = await db
+    .from('ministerio_miembros')
+    .select('ministerio_id, es_lider')
+    .eq('profile_id', profileId)
+    .eq('ministerio_id', ministerioId)
+    .maybeSingle()
+
+  if (membresiaError) return { success: false, error: membresiaError.message }
 
   if (esLider) {
-    const { data: membresia, error: membresiaError } = await db
-      .from('ministerio_miembros')
-      .select('ministerio_id, es_lider')
-      .eq('profile_id', profileId)
-      .eq('ministerio_id', ministerioId)
-      .maybeSingle()
-
-    if (membresiaError) return { success: false, error: membresiaError.message }
-
     const operacion = membresia
       ? db
           .from('ministerio_miembros')
@@ -75,22 +61,8 @@ export async function actualizarLiderazgoMinisterial(
           .insert({ profile_id: profileId, ministerio_id: ministerioId, es_lider: true })
 
     const { error: liderazgoError } = await operacion
-    if (liderazgoError) {
-      if (liderazgoError.message?.includes('No se puede ser líder de más de 2 ministerios')) {
-        return { success: false, error: 'Un usuario no puede ser líder de más de 2 ministerios.' }
-      }
-      return { success: false, error: liderazgoError.message }
-    }
-
-    if (targetRol === 'servidor' || targetRol === 'lider') {
-      const { error: rolError } = await db
-        .from('profiles')
-        .update({ rol: 'lider' })
-        .eq('id', profileId)
-
-      if (rolError) return { success: false, error: rolError.message }
-    }
-  } else {
+    if (liderazgoError) return { success: false, error: liderazgoError.message }
+  } else if (membresia) {
     const { error: liderazgoError } = await db
       .from('ministerio_miembros')
       .update({ es_lider: false })
@@ -98,30 +70,14 @@ export async function actualizarLiderazgoMinisterial(
       .eq('ministerio_id', ministerioId)
 
     if (liderazgoError) return { success: false, error: liderazgoError.message }
-
-    if (targetRol === 'lider') {
-      const { count, error: countError } = await db
-        .from('ministerio_miembros')
-        .select('ministerio_id', { count: 'exact', head: true })
-        .eq('profile_id', profileId)
-        .eq('es_lider', true)
-
-      if (countError) return { success: false, error: countError.message }
-
-      if ((count ?? 0) === 0) {
-        const { error: rolError } = await db
-          .from('profiles')
-          .update({ rol: 'servidor' })
-          .eq('id', profileId)
-
-        if (rolError) return { success: false, error: rolError.message }
-      }
-    }
   }
 
+  // El rol global se administra por separado. Ser líder de un ministerio no
+  // convierte automáticamente el rol global de la cuenta en "lider".
   revalidatePath('/admin')
   revalidatePath('/inicio')
   revalidatePath('/ministerios')
+  revalidatePath('/perfil')
   revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/solicitudes-ingreso`)
 

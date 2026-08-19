@@ -14,7 +14,7 @@ async function puedeAdministrar(ministerioId: string) {
     admin.from('profiles').select('rol,activo,estado_cuenta').eq('id', user.id).maybeSingle(),
     admin.from('ministerio_miembros').select('es_lider').eq('ministerio_id', ministerioId).eq('profile_id', user.id).maybeSingle(),
   ])
-  return Boolean(profile?.activo === true && profile?.estado_cuenta === 'activo' && (['administrador', 'pastor'].includes(profile.rol) || membresia?.es_lider === true))
+  return Boolean(profile?.activo === true && profile?.estado_cuenta === 'activo' && (profile.rol === 'administrador' || membresia?.es_lider === true))
 }
 
 export async function eliminarFuncionMinisterial(ministerioId: string, formData: FormData): Promise<void> {

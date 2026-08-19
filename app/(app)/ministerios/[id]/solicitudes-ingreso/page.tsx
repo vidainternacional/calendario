@@ -16,23 +16,23 @@ export default async function SolicitudesIngresoPage(
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('rol, es_pastor_general')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: membresiaLider }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('ministerio_miembros')
+      .select('es_lider')
+      .eq('profile_id', user.id)
+      .eq('ministerio_id', params.id)
+      .maybeSingle(),
+  ])
 
-  const p = profile as any
-  const isAdminOrPastor = p?.rol === 'administrador' || p?.rol === 'pastor' || p?.es_pastor_general
-
-  const { data: membresiaLider } = await supabase
-    .from('ministerio_miembros')
-    .select('es_lider')
-    .eq('profile_id', user.id)
-    .eq('ministerio_id', params.id)
-    .single()
-
-  if (!isAdminOrPastor && !(membresiaLider as any)?.es_lider) redirect('/ministerios')
+  const esAdministrador = (profile as any)?.rol === 'administrador'
+  const esLiderMinisterio = (membresiaLider as any)?.es_lider === true
+  if (!esAdministrador && !esLiderMinisterio) redirect('/ministerios')
 
   const { data: ministerio } = await supabase
     .from('ministerios')

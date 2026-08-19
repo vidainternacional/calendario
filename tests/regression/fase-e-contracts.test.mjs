@@ -26,12 +26,14 @@ test('la navegación inferior evita precarga masiva', () => {
   assert.doesNotMatch(bottomNav, /setTimeout\([^)]*router\.prefetch/s)
 })
 
-test('un push de Avisos solicita refresco inmediato del badge', () => {
+test('cualquier push dirigido refresca inmediatamente Avisos, Para ti y badges', () => {
   const pushSync = source('components/pwa/PushSubscriptionSync.tsx')
 
   assert.match(pushSync, /VIDA_PUSH_RECEIVED/)
-  assert.match(pushSync, /event\.data\.url\?\.startsWith\('\/avisos'\)/)
+  assert.match(pushSync, /schedulePushRefresh\(\)/)
+  assert.match(pushSync, /requestPendingIndicatorsRefresh\(\)/)
   assert.match(pushSync, /requestUnreadPublicationsRefresh\(\)/)
+  assert.doesNotMatch(pushSync, /event\.data\.url\?\.startsWith\('\/avisos'\)/)
 })
 
 test('el refresco del badge también avisa al contenido visible', () => {
@@ -117,4 +119,12 @@ test('Avisos remonta contenido al reconectar, enfocar o volver visible la PWA', 
   assert.match(avisosContentRefresh, /setRefreshKey\(\(current\) => current \+ 1\)/)
   assert.match(avisosContentRefresh, /<AvisosClient key=\{refreshKey\}/)
   assert.match(avisosPage, /<AvisosContentRefresh userId=\{user\.id\}/)
+})
+
+test('CI usa acciones con runtime Node 24 para no reintroducir DEP0169', () => {
+  const workflow = source('.github/workflows/ci-temporal.yml')
+
+  assert.match(workflow, /uses: actions\/checkout@v6/)
+  assert.match(workflow, /uses: actions\/setup-node@v6/)
+  assert.doesNotMatch(workflow, /actions\/(?:checkout|setup-node)@v4/)
 })
