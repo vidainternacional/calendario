@@ -1,7 +1,8 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, Grid2X2, List, Rows3, Search } from 'lucide-react'
+import { HEBREW_LEARNING_GROUPS, type HebrewLearningGroupId } from '@/lib/hebreo/word-learning'
 
 type ReadingMode = 'nikud' | 'plain'
 type WordView = 'cards' | 'list' | 'detail'
@@ -10,13 +11,10 @@ type CatalogWord = {
   lexicalId: string
   strongNumber: string | null
   lemma: string
-  transliteration: string | null
   partOfSpeech: string | null
-  sourceGloss: string | null
-  displayGlossEs: string | null
-  sourceLocator: string
-  providerVersion: string | null
-  contentHash: string | null
+  spanish: string | null
+  pronunciation: string | null
+  meaningNoteEs: string | null
 }
 
 type CatalogResponse = {
@@ -26,6 +24,7 @@ type CatalogResponse = {
   total: number
   totalPages: number
   search: string
+  group: HebrewLearningGroupId
   items: CatalogWord[]
 }
 
@@ -36,13 +35,114 @@ const EMPTY_RESULT: CatalogResponse = {
   total: 0,
   totalPages: 0,
   search: '',
+  group: 'essentials',
   items: [],
 }
 
-// Contrato anterior: “Sin ayuda” fue sustituido por “Sin niqqud”.
+const LETTER_NAMES: Record<string, string> = {
+  א: 'Alef', ב: 'Bet', ג: 'Guímel', ד: 'Dálet', ה: 'He', ו: 'Vav', ז: 'Zayin', ח: 'Jet', ט: 'Tet', י: 'Yod',
+  כ: 'Kaf', ך: 'Kaf final', ל: 'Lamed', מ: 'Mem', ם: 'Mem final', נ: 'Nun', ן: 'Nun final', ס: 'Sámej', ע: 'Ayin',
+  פ: 'Pe', ף: 'Pe final', צ: 'Tsadi', ץ: 'Tsadi final', ק: 'Qof', ר: 'Resh', ש: 'Shin / Sin', ת: 'Tav',
+}
+
+const MARK_NAMES: Record<string, string> = {
+  '\u05B0': 'Sheva', '\u05B1': 'Hataf Segol', '\u05B2': 'Hataf Pataj', '\u05B3': 'Hataf Qamats',
+  '\u05B4': 'Hiriq', '\u05B5': 'Tsere', '\u05B6': 'Segol', '\u05B7': 'Pataj', '\u05B8': 'Qamats', '\u05B9': 'Holam',
+  '\u05BB': 'Qubuts', '\u05BC': 'Dagesh', '\u05C1': 'punto de Shin', '\u05C2': 'punto de Sin', '\u05C7': 'Qamats qatan',
+}
+
+const HEBREW_MARKS = /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g
+const HEBREW_LETTER = /[\u05D0-\u05EA]/
 
 function withoutNiqqud(value: string) {
-  return value.normalize('NFD').replace(/[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g, '')
+  return value.normalize('NFD').replace(HEBREW_MARKS, '')
+}
+
+function formationParts(value: string) {
+  const parts: string[] = []
+  for (const char of Array.from(value.normalize('NFD'))) {
+    if (LETTER_NAMES[char]) parts.push(`${char} ${LETTER_NAMES[char]}`)
+    else if (MARK_NAMES[char]) parts.push(MARK_NAMES[char])
+  }
+  return parts
+}
+
+function pronunciationFromHebrew(value: string) {
+  const clusters: { letter: string; marks: string[] }[] = []
+  for (const char of Array.from(value.normalize('NFD'))) {
+    if (HEBREW_LETTER.test(char)) clusters.push({ letter: char, marks: [] })
+    else if (clusters.length > 0 && MARK_NAMES[char]) clusters[clusters.length - 1].marks.push(char)
+  }
+
+  return clusters.map((cluster, index) => {
+    const { letter, marks } = cluster
+    const has = (mark: string) => marks.includes(mark)
+    const last = index === clusters.length - 1
+
+    if (letter === 'ו' && has('\u05BC') && !marks.some(mark => ['\u05B0','\u05B1','\u05B2','\u05B3','\u05B4','\u05B5','\u05B6','\u05B7','\u05B8','\u05B9','\u05BB','\u05C7'].includes(mark))) return 'u'
+    if (letter === 'ו' && has('\u05B9')) return 'o'
+
+    let consonant = ''
+    switch (letter) {
+      case 'א': case 'ע': consonant = ''; break
+      case 'ב': consonant = has('\u05BC') ? 'b' : 'v'; break
+      case 'ג': consonant = 'g'; break
+      case 'ד': consonant = 'd'; break
+      case 'ה': consonant = last && marks.length === 0 ? '' : 'h'; break
+      case 'ו': consonant = 'v'; break
+      case 'ז': consonant = 'z'; break
+      case 'ח': consonant = 'j'; break
+      case 'ט': consonant = 't'; break
+      case 'י': consonant = 'y'; break
+      case 'כ': case 'ך': consonant = has('\u05BC') ? 'k' : 'j'; break
+      case 'ל': consonant = 'l'; break
+      case 'מ': case 'ם': consonant = 'm'; break
+      case 'נ': case 'ן': consonant = 'n'; break
+      case 'ס': consonant = 's'; break
+      case 'פ': case 'ף': consonant = has('\u05BC') ? 'p' : 'f'; break
+      case 'צ': case 'ץ': consonant = 'ts'; break
+      case 'ק': consonant = 'k'; break
+      case 'ר': consonant = 'r'; break
+      case 'ש': consonant = has('\u05C2') ? 's' : 'sh'; break
+      case 'ת': consonant = 't'; break
+    }
+
+    let vowel = ''
+    if (has('\u05B4')) vowel = 'i'
+    else if (has('\u05B5') || has('\u05B6') || has('\u05B1')) vowel = 'e'
+    else if (has('\u05B7') || has('\u05B8') || has('\u05B2')) vowel = 'a'
+    else if (has('\u05C7') || has('\u05B3') || has('\u05B9')) vowel = 'o'
+    else if (has('\u05BB')) vowel = 'u'
+    else if (has('\u05B0') && !last) vowel = 'e'
+
+    return consonant + vowel
+  }).join('').replace(/yy/g, 'y')
+}
+
+function pronunciationFor(word: CatalogWord) {
+  return word.pronunciation ?? pronunciationFromHebrew(word.lemma) || '—'
+}
+
+function spanishFor(word: CatalogWord) {
+  return word.spanish ?? 'Español pendiente'
+}
+
+function partOfSpeechEs(value: string | null) {
+  switch (value) {
+    case 'noun': return 'Sustantivo'
+    case 'verb': return 'Verbo'
+    case 'adjective': return 'Adjetivo'
+    case 'proper_name': return 'Nombre propio'
+    case 'adverb': return 'Adverbio'
+    case 'preposition': return 'Preposición'
+    default: return value ? 'Otra función' : null
+  }
+}
+
+function chunkWords(words: CatalogWord[], size: number) {
+  const rows: CatalogWord[][] = []
+  for (let index = 0; index < words.length; index += size) rows.push(words.slice(index, index + size))
+  return rows
 }
 
 function ReadingIntroduction() {
@@ -52,16 +152,16 @@ function ReadingIntroduction() {
       <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex min-h-12 w-full items-center justify-between gap-3 py-2 text-left">
         <span>
           <span lang="he" dir="rtl" className="block text-[12px] font-black text-indigo-700">קְרִיאָה</span>
-          <span className="mt-0.5 block text-sm font-black text-slate-950">¿Cómo usamos las palabras?</span>
+          <span className="mt-0.5 block text-sm font-black text-slate-950">¿Cómo aprendemos las palabras?</span>
         </span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
       {open && (
         <div className="border-t border-slate-200 p-4">
           <div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1 text-[14px] leading-relaxed text-slate-600 [-webkit-overflow-scrolling:touch]">
-            <p><strong>Con niqqud</strong> ves la palabra con sus puntos y signos vocálicos. Es la vista para aprender a reconocer cómo se lee.</p>
-            <p><strong>Sin niqqud</strong> ves únicamente las letras, como una lectura sin ayuda. El objetivo es poder pasar de una vista a la otra sin perder la palabra.</p>
-            <p>El catálogo reutiliza las entradas hebreas ya aprobadas del motor bíblico de VIDA. No duplica el léxico ni crea una segunda base de palabras.</p>
+            <p><strong>Con niqqud</strong> ves todos los signos de la palabra. <strong>Sin niqqud</strong> practicas la misma palabra solo con sus letras.</p>
+            <p>Las palabras se organizan por temas y por tipo para aprenderlas en grupos pequeños antes de explorar todo el catálogo.</p>
+            <p>La pronunciación mostrada es una guía pedagógica para leer; el audio se añadirá únicamente cuando exista una fuente aprobada.</p>
           </div>
         </div>
       )}
@@ -70,13 +170,9 @@ function ReadingIntroduction() {
 }
 
 function ModeControl({ mode, onChange }: { mode: ReadingMode; onChange: (mode: ReadingMode) => void }) {
-  const modes: readonly { id: ReadingMode; label: string }[] = [
-    { id: 'nikud', label: 'Con niqqud' },
-    { id: 'plain', label: 'Sin niqqud' },
-  ]
   return (
     <div className="grid grid-cols-2 rounded-[17px] bg-slate-100 p-1" aria-label="Modo de lectura">
-      {modes.map(item => (
+      {([{ id: 'nikud', label: 'Con niqqud' }, { id: 'plain', label: 'Sin niqqud' }] as const).map(item => (
         <button key={item.id} type="button" aria-pressed={mode === item.id} onClick={() => onChange(item.id)} className={`min-h-10 rounded-[14px] px-3 text-[12px] font-black transition-colors ${mode === item.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>{item.label}</button>
       ))}
     </div>
@@ -102,69 +198,109 @@ function WordText({ word, mode, className }: { word: CatalogWord; mode: ReadingM
   return <span lang="he" dir="rtl" className={className}>{mode === 'nikud' ? word.lemma : withoutNiqqud(word.lemma)}</span>
 }
 
-function CardsView({ words, mode, selectedId, onSelect }: { words: CatalogWord[]; mode: ReadingMode; selectedId: string | null; onSelect: (word: CatalogWord) => void }) {
+function LearningDetail({ word, mode, compact = false }: { word: CatalogWord; mode: ReadingMode; compact?: boolean }) {
+  const pronunciation = pronunciationFor(word)
+  const spanish = spanishFor(word)
+  const formation = formationParts(word.lemma)
+  const category = partOfSpeechEs(word.partOfSpeech)
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {words.map(word => (
-        <button key={word.lexicalId} type="button" aria-pressed={selectedId === word.lexicalId} onClick={() => onSelect(word)} className={`min-h-[116px] min-w-0 rounded-[22px] border px-3 py-3 text-center transition active:scale-[0.98] motion-reduce:transition-none ${selectedId === word.lexicalId ? 'border-indigo-500 bg-indigo-600 text-white shadow-[0_10px_26px_rgba(79,70,229,0.18)]' : 'border-slate-200 bg-white text-slate-950'}`}>
-          <span className={`block text-[9px] font-black uppercase tracking-[0.08em] ${selectedId === word.lexicalId ? 'text-indigo-100' : 'text-slate-400'}`}>{word.strongNumber ?? word.lexicalId}</span>
-          <WordText word={word} mode={mode} className="mt-2 block break-words text-[2.4rem] font-black leading-tight" />
-          <span className={`mt-2 block min-h-4 break-words text-[11px] font-bold leading-tight ${selectedId === word.lexicalId ? 'text-indigo-100' : 'text-slate-500'}`}>{word.displayGlossEs ?? 'Abrir detalle'}</span>
-        </button>
-      ))}
+    <article className={`${compact ? 'mt-3' : ''} overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_16px_42px_rgba(15,23,42,0.08)]`}>
+      <div className="p-5 text-center">
+        <WordText word={word} mode={mode} className={`${compact ? 'text-[4.15rem]' : 'text-[5rem]'} block break-words font-black leading-[1.3] text-slate-950`} />
+        <p className="mt-2 text-[1rem] font-black text-indigo-700">{pronunciation}</p>
+        <p className="mt-1 text-xl font-black text-slate-950">{spanish}</p>
+        {category && <p className="mt-1 text-[11px] font-bold text-slate-400">{category}</p>}
+
+        <div className="mt-5 divide-y divide-slate-200 border-y border-slate-200 text-left">
+          <div className="py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Cómo se pronuncia</p>
+            <p className="mt-1 text-[15px] font-black text-slate-800">{pronunciation}</p>
+          </div>
+          <div className="py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Cómo se forma</p>
+            <p className="mt-1 text-[13px] leading-relaxed text-slate-700">{formation.length > 0 ? formation.join(' + ') : 'Se conserva la escritura hebrea aprobada de la palabra.'}</p>
+          </div>
+          <div className="py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Qué significa</p>
+            <p className="mt-1 text-[14px] font-bold leading-relaxed text-slate-800">{word.meaningNoteEs ?? (word.spanish ? `Significa «${word.spanish}».` : 'El significado español de esta entrada todavía no está preparado editorialmente.')}</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function CardsView({ words, mode, selectedId, closingId, onToggle }: { words: CatalogWord[]; mode: ReadingMode; selectedId: string | null; closingId: string | null; onToggle: (word: CatalogWord) => void }) {
+  const rows = chunkWords(words, 2)
+  return (
+    <div className="space-y-4">
+      {rows.map((row, rowIndex) => {
+        const selected = row.find(word => word.lexicalId === selectedId) ?? null
+        return (
+          <div key={`word-row-${rowIndex}`}>
+            <div className="grid grid-cols-2 gap-3">
+              {row.map(word => {
+                const active = word.lexicalId === selectedId
+                return (
+                  <button key={word.lexicalId} type="button" aria-pressed={active} onClick={() => onToggle(word)} className={`min-h-[142px] min-w-0 rounded-[22px] border px-3 py-3 text-center transition active:scale-[0.98] motion-reduce:transition-none ${active ? 'border-indigo-500 bg-indigo-600 text-white shadow-[0_10px_26px_rgba(79,70,229,0.18)]' : 'border-slate-200 bg-white text-slate-950'}`}>
+                    <WordText word={word} mode={mode} className="block break-words text-[2.5rem] font-black leading-tight" />
+                    <span className={`mt-2 block text-[12px] font-black ${active ? 'text-indigo-100' : 'text-indigo-700'}`}>{pronunciationFor(word)}</span>
+                    <span className={`mt-1 block break-words text-[13px] font-black leading-tight ${active ? 'text-white' : 'text-slate-800'}`}>{spanishFor(word)}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {selected && <div className={closingId === selected.lexicalId ? 'scale-[0.96] opacity-0 transition duration-150' : 'scale-100 opacity-100 transition duration-200'}><LearningDetail word={selected} mode={mode} compact /></div>}
+          </div>
+        )
+      })}
     </div>
   )
 }
 
-function ListView({ words, mode, onSelect }: { words: CatalogWord[]; mode: ReadingMode; onSelect: (word: CatalogWord) => void }) {
+function ListView({ words, mode }: { words: CatalogWord[]; mode: ReadingMode }) {
   return (
     <div className="divide-y divide-slate-200 border-y border-slate-200">
       {words.map(word => (
-        <button key={word.lexicalId} type="button" onClick={() => onSelect(word)} className="flex min-h-[70px] w-full items-center justify-between gap-4 py-2.5 text-left">
+        <div key={word.lexicalId} className="flex min-h-[76px] items-center justify-between gap-4 py-3">
           <div className="min-w-0">
             <WordText word={word} mode={mode} className="block break-words text-[2rem] font-black leading-tight text-slate-950" />
-            <p className="mt-1 truncate text-[11px] font-semibold text-slate-500">{word.displayGlossEs ?? (word.sourceGloss ? `Glosa fuente: ${word.sourceGloss}` : 'Sin glosa disponible')}</p>
+            <p className="mt-1 text-[12px] font-black text-indigo-700">{pronunciationFor(word)}</p>
           </div>
-          <div className="shrink-0 text-right"><p className="text-[10px] font-black text-indigo-700">{word.strongNumber ?? word.lexicalId}</p><p className="mt-1 text-[10px] text-slate-400">Ver detalle</p></div>
-        </button>
+          <p className="max-w-[44%] shrink-0 text-right text-[13px] font-black leading-tight text-slate-800">{spanishFor(word)}</p>
+        </div>
       ))}
     </div>
   )
 }
 
 function DetailView({ word, mode, onPrevious, onNext, hasPrevious, hasNext }: { word: CatalogWord | null; mode: ReadingMode; onPrevious: () => void; onNext: () => void; hasPrevious: boolean; hasNext: boolean }) {
-  if (!word) return <div className="rounded-[24px] border border-dashed border-slate-300 px-5 py-8 text-center text-sm text-slate-500">Selecciona una palabra para verla en detalle.</div>
-
+  if (!word) return <div className="rounded-[24px] border border-dashed border-slate-300 px-5 py-8 text-center text-sm text-slate-500">No hay palabras en este grupo.</div>
   return (
-    <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_16px_42px_rgba(15,23,42,0.08)]">
-      <div className="p-5 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-700">{word.strongNumber ?? word.lexicalId}</p>
-        <WordText word={word} mode={mode} className="mt-5 block break-words text-[5rem] font-black leading-[1.25] text-slate-950" />
-        <p className="mt-2 text-[12px] font-semibold text-slate-400">{mode === 'nikud' ? 'Forma con signos' : 'Forma sin niqqud'}</p>
-
-        <div className="mt-6 divide-y divide-slate-200 border-y border-slate-200 text-left">
-          <div className="py-4"><p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Significado en español</p><p className="mt-1 text-sm font-bold text-slate-800">{word.displayGlossEs ?? 'Aún no hay una glosa española editorial aprobada.'}</p></div>
-          <div className="py-4"><p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Glosa de la fuente</p><p className="mt-1 text-sm font-bold text-slate-800">{word.sourceGloss ?? 'No disponible'} <span className="font-semibold text-slate-400">{word.sourceGloss ? '(EN)' : ''}</span></p></div>
-          <div className="grid grid-cols-2 gap-4 py-4"><div><p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Categoría</p><p className="mt-1 break-words text-sm font-bold text-slate-800">{word.partOfSpeech ?? 'No especificada'}</p></div><div><p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Transliteración</p><p className="mt-1 break-words text-sm font-bold text-slate-800">{word.transliteration ?? 'Pendiente de versión pedagógica'}</p></div></div>
-          <div className="py-4"><p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Fuente</p><p className="mt-1 break-words text-[12px] leading-relaxed text-slate-600">{word.sourceLocator}</p></div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-2"><button type="button" disabled={!hasPrevious} onClick={onPrevious} className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-slate-200 text-[12px] font-black text-slate-600 disabled:opacity-30"><ChevronLeft className="h-4 w-4" />Anterior</button><button type="button" disabled={!hasNext} onClick={onNext} className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-slate-200 text-[12px] font-black text-slate-600 disabled:opacity-30">Siguiente<ChevronRight className="h-4 w-4" /></button></div>
+    <div>
+      <LearningDetail word={word} mode={mode} />
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button type="button" disabled={!hasPrevious} onClick={onPrevious} className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-slate-200 text-[12px] font-black text-slate-600 disabled:opacity-30"><ChevronLeft className="h-4 w-4" />Anterior</button>
+        <button type="button" disabled={!hasNext} onClick={onNext} className="flex min-h-11 items-center justify-center gap-1 rounded-full border border-slate-200 text-[12px] font-black text-slate-600 disabled:opacity-30">Siguiente<ChevronRight className="h-4 w-4" /></button>
       </div>
-    </article>
+    </div>
   )
 }
 
 export default function ReadingWordsExplorer() {
   const [mode, setMode] = useState<ReadingMode>('nikud')
   const [view, setView] = useState<WordView>('cards')
+  const [group, setGroup] = useState<HebrewLearningGroupId>('essentials')
   const [page, setPage] = useState(1)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [result, setResult] = useState<CatalogResponse>(EMPTY_RESULT)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [closingId, setClosingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const pageBeforeSearch = useRef(1)
 
   useEffect(() => {
     let active = true
@@ -172,7 +308,7 @@ export default function ReadingWordsExplorer() {
     setLoading(true)
     setError(null)
 
-    const params = new URLSearchParams({ page: String(page), pageSize: '24' })
+    const params = new URLSearchParams({ page: String(page), pageSize: '24', group })
     if (search) params.set('q', search)
 
     fetch(`/api/estudios/hebreo/palabras?${params.toString()}`, { cache: 'no-store', signal: controller.signal })
@@ -183,7 +319,8 @@ export default function ReadingWordsExplorer() {
       .then(data => {
         if (!active) return
         setResult(data)
-        setSelectedId(current => data.items.some(item => item.lexicalId === current) ? current : data.items[0]?.lexicalId ?? null)
+        setSelectedId(current => data.items.some(item => item.lexicalId === current) ? current : null)
+        setClosingId(null)
       })
       .catch(cause => {
         if (!active || controller.signal.aborted) return
@@ -192,20 +329,66 @@ export default function ReadingWordsExplorer() {
       .finally(() => { if (active) setLoading(false) })
 
     return () => { active = false; controller.abort() }
-  }, [page, search])
+  }, [page, search, group])
 
   const selectedIndex = useMemo(() => result.items.findIndex(item => item.lexicalId === selectedId), [result.items, selectedId])
-  const selected = selectedIndex >= 0 ? result.items[selectedIndex] : null
+  const effectiveIndex = selectedIndex >= 0 ? selectedIndex : (result.items.length > 0 ? 0 : -1)
+  const selectedForDetail = effectiveIndex >= 0 ? result.items[effectiveIndex] : null
+  const activeGroup = HEBREW_LEARNING_GROUPS.find(item => item.id === group) ?? HEBREW_LEARNING_GROUPS[0]
 
-  function chooseWord(word: CatalogWord) {
-    setSelectedId(word.lexicalId)
-    setView('detail')
+  function toggleCard(word: CatalogWord) {
+    if (selectedId !== word.lexicalId) {
+      setClosingId(null)
+      setSelectedId(word.lexicalId)
+      return
+    }
+    setClosingId(word.lexicalId)
+    window.setTimeout(() => {
+      setSelectedId(current => current === word.lexicalId ? null : current)
+      setClosingId(null)
+    }, 160)
+  }
+
+  function changeView(next: WordView) {
+    setView(next)
+    setClosingId(null)
+    if (next === 'list') setSelectedId(null)
+    if (next === 'detail' && selectedId === null && result.items[0]) setSelectedId(result.items[0].lexicalId)
+  }
+
+  function changeGroup(next: HebrewLearningGroupId) {
+    setGroup(next)
+    setPage(1)
+    pageBeforeSearch.current = 1
+    setSearchInput('')
+    setSearch('')
+    setSelectedId(null)
+    setClosingId(null)
+  }
+
+  function clearSearch() {
+    setSearchInput('')
+    setSearch('')
+    setPage(pageBeforeSearch.current)
+    setSelectedId(null)
+  }
+
+  function handleSearchInput(value: string) {
+    setSearchInput(value)
+    if (value === '' && search) clearSearch()
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const next = searchInput.trim()
+    if (!next) {
+      clearSearch()
+      return
+    }
+    if (!search) pageBeforeSearch.current = page
     setPage(1)
-    setSearch(searchInput.trim())
+    setSelectedId(null)
+    setSearch(next)
   }
 
   return (
@@ -213,48 +396,57 @@ export default function ReadingWordsExplorer() {
       <div className="text-center">
         <p lang="he" dir="rtl" className="text-[1rem] font-black text-indigo-700">קְרִיאַת מִלִּים</p>
         <h2 id="reading-words-title" className="mt-0.5 text-[1.65rem] font-black tracking-[-0.025em] text-slate-950">Lectura y palabras</h2>
-        <p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Practica la misma palabra con signos o sin ellos y explora el catálogo hebreo ya existente en VIDA.</p>
+        <p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Aprende vocabulario por grupos, practica con o sin niqqud y abre cada palabra solo cuando necesites verla con más detalle.</p>
       </div>
 
       <div className="mt-5"><ReadingIntroduction /></div>
 
       <div className="mt-4 space-y-2.5">
         <ModeControl mode={mode} onChange={setMode} />
-        <ViewControl view={view} onChange={setView} />
+        <ViewControl view={view} onChange={changeView} />
       </div>
+
+      <div className="-mx-4 mt-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-max gap-2">
+          {HEBREW_LEARNING_GROUPS.map(item => (
+            <button key={item.id} type="button" aria-pressed={group === item.id} onClick={() => changeGroup(item.id)} className={`min-h-11 shrink-0 rounded-full border px-4 text-[12px] font-black ${group === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>
+          ))}
+        </div>
+      </div>
+      <p className="mt-2 text-center text-[12px] leading-relaxed text-slate-500">{activeGroup.description}</p>
 
       <form onSubmit={submitSearch} className="mt-4 flex min-h-11 items-center gap-2 rounded-[17px] border border-slate-200 bg-white px-3">
         <Search className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
-        <input value={searchInput} onChange={event => setSearchInput(event.target.value)} placeholder="Buscar hebreo, Strong o glosa fuente" className="min-w-0 flex-1 bg-transparent py-2 text-[13px] font-semibold text-slate-800 outline-none placeholder:text-slate-400" />
+        <input value={searchInput} onChange={event => handleSearchInput(event.target.value)} placeholder="Buscar en español o hebreo" className="min-w-0 flex-1 bg-transparent py-2 text-[13px] font-semibold text-slate-800 outline-none placeholder:text-slate-400" />
         {searchInput && <button type="submit" className="text-[11px] font-black text-indigo-700">Buscar</button>}
       </form>
 
       <div className="mt-3 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-500">
-        <span>{loading ? 'Cargando palabras…' : `${result.total.toLocaleString('es-SV')} entradas hebreas`}</span>
-        {search && <button type="button" onClick={() => { setSearchInput(''); setSearch(''); setPage(1) }} className="font-black text-indigo-700">Limpiar búsqueda</button>}
+        <span>{loading ? 'Cargando palabras…' : `${result.total.toLocaleString('es-SV')} palabras`}</span>
+        {search && <button type="button" onClick={clearSearch} className="font-black text-indigo-700">Limpiar búsqueda</button>}
       </div>
 
       {error && <div className="mt-5 rounded-[18px] border border-amber-200 bg-amber-50 p-4 text-center text-[12px] font-semibold text-amber-900">{error}</div>}
 
-      {!error && !loading && result.items.length === 0 && <div className="mt-5 rounded-[20px] border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">No encontramos palabras con ese criterio.</div>}
+      {!error && !loading && result.items.length === 0 && <div className="mt-5 rounded-[20px] border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">No encontramos esa palabra en este grupo. Borra la búsqueda para volver al listado anterior.</div>}
 
       {!error && result.items.length > 0 && (
         <div className="mt-5">
-          {view === 'cards' && <CardsView words={result.items} mode={mode} selectedId={selectedId} onSelect={chooseWord} />}
-          {view === 'list' && <ListView words={result.items} mode={mode} onSelect={chooseWord} />}
-          {view === 'detail' && <DetailView word={selected} mode={mode} hasPrevious={selectedIndex > 0} hasNext={selectedIndex >= 0 && selectedIndex < result.items.length - 1} onPrevious={() => selectedIndex > 0 && setSelectedId(result.items[selectedIndex - 1].lexicalId)} onNext={() => selectedIndex >= 0 && selectedIndex < result.items.length - 1 && setSelectedId(result.items[selectedIndex + 1].lexicalId)} />}
+          {view === 'cards' && <CardsView words={result.items} mode={mode} selectedId={selectedId} closingId={closingId} onToggle={toggleCard} />}
+          {view === 'list' && <ListView words={result.items} mode={mode} />}
+          {view === 'detail' && <DetailView word={selectedForDetail} mode={mode} hasPrevious={effectiveIndex > 0} hasNext={effectiveIndex >= 0 && effectiveIndex < result.items.length - 1} onPrevious={() => effectiveIndex > 0 && setSelectedId(result.items[effectiveIndex - 1].lexicalId)} onNext={() => effectiveIndex >= 0 && effectiveIndex < result.items.length - 1 && setSelectedId(result.items[effectiveIndex + 1].lexicalId)} />}
         </div>
       )}
 
       {result.totalPages > 1 && (
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
-          <button type="button" disabled={page <= 1 || loading} onClick={() => setPage(value => Math.max(1, value - 1))} className="flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-3 text-[11px] font-black text-slate-600 disabled:opacity-30"><ChevronLeft className="h-4 w-4" />Anterior</button>
+          <button type="button" disabled={page <= 1 || loading} onClick={() => { setSelectedId(null); setPage(value => Math.max(1, value - 1)) }} className="flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-3 text-[11px] font-black text-slate-600 disabled:opacity-30"><ChevronLeft className="h-4 w-4" />Anterior</button>
           <p className="text-center text-[11px] font-black text-slate-500">Página {result.page} de {result.totalPages}</p>
-          <button type="button" disabled={page >= result.totalPages || loading} onClick={() => setPage(value => value + 1)} className="flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-3 text-[11px] font-black text-slate-600 disabled:opacity-30">Siguiente<ChevronRight className="h-4 w-4" /></button>
+          <button type="button" disabled={page >= result.totalPages || loading} onClick={() => { setSelectedId(null); setPage(value => value + 1) }} className="flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-3 text-[11px] font-black text-slate-600 disabled:opacity-30">Siguiente<ChevronRight className="h-4 w-4" /></button>
         </div>
       )}
 
-      <p className="mt-5 text-center text-[11px] leading-relaxed text-slate-400">Catálogo de lectura sobre el léxico hebreo aprobado existente. No registra dominio ni inventa traducciones españolas.</p>
+      <p className="mt-5 text-center text-[11px] leading-relaxed text-slate-400">Los grupos didácticos priorizan vocabulario con español preparado. “Todas” conserva acceso al catálogo hebreo aprobado completo sin crear una base paralela.</p>
     </section>
   )
 }
