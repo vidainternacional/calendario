@@ -111,14 +111,18 @@ export async function listarCatalogoHebreoParaAprendizaje(
     .eq('enabled', true)
     .eq('review_status', 'approved')
 
-  if (semanticIds) {
-    query = query.in('lexical_id', semanticIds)
-  } else if (group === 'nouns') {
-    query = query.eq('part_of_speech', 'noun')
-  } else if (group === 'verbs') {
-    query = query.eq('part_of_speech', 'verb')
-  } else if (group === 'adjectives') {
-    query = query.eq('part_of_speech', 'adjective')
+  // La navegación por grupos se aplica al catálogo normal. Una búsqueda es global
+  // para que "rey" encuentre מלך aunque el usuario estuviera viendo otro grupo.
+  if (!search) {
+    if (semanticIds) {
+      query = query.in('lexical_id', semanticIds)
+    } else if (group === 'nouns') {
+      query = query.eq('part_of_speech', 'noun')
+    } else if (group === 'verbs') {
+      query = query.eq('part_of_speech', 'verb')
+    } else if (group === 'adjectives') {
+      query = query.eq('part_of_speech', 'adjective')
+    }
   }
 
   if (search) {
@@ -148,7 +152,7 @@ export async function listarCatalogoHebreoParaAprendizaje(
 
   const total = count ?? 0
   const items = ((data ?? []) as HebrewLexicalRow[]).map(mapRow)
-  if (semanticIds) {
+  if (!search && semanticIds) {
     const position = new Map(semanticIds.map((id, index) => [id, index]))
     items.sort((a, b) => (position.get(a.lexicalId) ?? 999) - (position.get(b.lexicalId) ?? 999))
   }
