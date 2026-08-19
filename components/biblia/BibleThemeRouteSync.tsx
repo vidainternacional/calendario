@@ -25,7 +25,7 @@ function aplicarTema(modo: ModoBiblia) {
 function retirarTema() {
   delete document.documentElement.dataset.bibliaTema
   delete document.body.dataset.bibliaTema
-  document.documentElement.style.colorScheme = 'light'
+  document.documentElement.style.removeProperty('color-scheme')
 }
 
 function esRutaCuaderno(pathname: string) {
