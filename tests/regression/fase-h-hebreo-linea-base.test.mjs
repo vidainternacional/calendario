@@ -94,6 +94,20 @@ test('FASE H: el carrusel RTL conserva una ficha completa y datos técnicos apar
   assert.match(explorer, /Datos técnicos e historia/)
 })
 
+test('FASE H: el Centro de Hebreo abre con una bienvenida simple y una sola ruta activa al Alef-bet', () => {
+  assert.match(page, /Has tomado una buena decisión\./)
+  assert.match(page, /Hoy comienza tu camino para leer, pronunciar y comprender el hebreo bíblico/)
+  assert.equal((page.match(/href="#alef-bet"/g) ?? []).length, 1)
+  assert.match(page, /Vocales y sílabas/)
+  assert.match(page, /Vocabulario/)
+  assert.match(page, /Reglas gramaticales/)
+  assert.match(page, /Diccionario bíblico/)
+  assert.match(page, /Conoce el hebreo/)
+  assert.match(page, /<details className="group">/)
+  assert.doesNotMatch(page, />Referencia</)
+  assert.doesNotMatch(page, /Primer paso/)
+})
+
 test('FASE H: el explorador sigue sin introducir audio ni persistencia', () => {
   assert.doesNotMatch(explorer, /speechSynthesis|Audio\(|supabase|localStorage|sessionStorage/)
 })
