@@ -4,6 +4,7 @@
 No conecta a Supabase. Cada SQL generado sigue siendo un BORRADOR NO ACTIVO.
 La futura inserción queda condicionada a que:
 - la entrada fuente represente exactamente la misma entidad a ambos lados de `»`;
+- la etiqueta inglesa primaria de Wikidata coincida exactamente con esa entidad;
 - la etiqueta española propuesta aparezca como frase completa en al menos dos
   fuentes bíblicas españolas verificadas, exactamente en la referencia ancla TIPNR.
 
@@ -72,6 +73,7 @@ def render_chunk(rows: list[dict[str, str]], index: int) -> str:
 -- No aplicar sin auditoría read-only del lote.
 -- La referencia ancla se usa SOLO para confirmar la grafía española, no como significado.
 -- Gate: source_gloss debe representar exactamente la misma entidad a ambos lados de ».
+-- Gate: la etiqueta inglesa primaria de Wikidata debe coincidir exactamente con esa entidad.
 -- Gate: la etiqueta española debe aparecer como frase completa en >= 2 fuentes españolas verificadas.
 -- Política futura: insert-only + ON CONFLICT DO NOTHING.
 -- Reversión exacta si se activa:
@@ -119,6 +121,8 @@ with map(tipnr_id, anchor_ref, wikidata_id, english_label, display_gloss_es, sou
    and g.lexical_entry_id is null
    and lower(regexp_replace(btrim(split_part(e.source_gloss,'»',1)), '[^[:alnum:]]+', '', 'g')) =
        lower(regexp_replace(btrim(split_part(split_part(e.source_gloss,'»',2),'@',1)), '[^[:alnum:]]+', '', 'g'))
+   and lower(regexp_replace(btrim(evidence.english_label), '[^[:alnum:]]+', '', 'g')) =
+       lower(regexp_replace(btrim(split_part(split_part(e.source_gloss,'»',2),'@',1)), '[^[:alnum:]]+', '', 'g'))
    and evidence.spanish_anchor_sources >= 2
 )
 insert into public.biblical_hebrew_spanish_glosses (
@@ -130,7 +134,7 @@ select
  display_gloss_es,
  '{{}}'::text[],
  99,
- 'tipnr_wikidata_spanish_anchor_2source_exact_entity_v2',
+ 'tipnr_wikidata_spanish_anchor_2source_exact_primary_v3',
  source_gloss,
  'verified_derived',
  jsonb_build_object(
@@ -147,6 +151,7 @@ select
    'spanish_anchor_sources',spanish_anchor_sources,
    'spanish_anchor_sources_minimum',2,
    'exact_source_entity',true,
+   'exact_wikidata_primary_label',true,
    'anchor_used_for_name_spelling_only',true,
    'context_used_as_meaning',false,
    'rv1909_used_as_meaning',false,
@@ -165,7 +170,9 @@ def self_test() -> None:
     sql = render_chunk(rows, 1)
     assert "spanish_anchor_sources >= 2" in sql
     assert "split_part(e.source_gloss,'»',1)" in sql
+    assert "evidence.english_label" in sql
     assert "exact_source_entity',true" in sql
+    assert "exact_wikidata_primary_label',true" in sql
     assert "anchor_used_for_name_spelling_only',true" in sql
     assert "context_used_as_meaning',false" in sql
     assert "on conflict (lexical_entry_id) do nothing" in sql
@@ -211,6 +218,7 @@ def main() -> int:
         "files": files,
         "database_gate": {
             "exact_source_entity_required": True,
+            "exact_wikidata_primary_label_required": True,
             "spanish_verified_sources_at_anchor_minimum": 2,
             "full_phrase_boundary_normalization": True,
             "anchor_used_for_name_spelling_only": True,
