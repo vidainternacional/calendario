@@ -46,10 +46,10 @@ test('FASE H: Alef-bet usa Tarjetas Lista y Detalle', () => {
   for (const label of ['Signo', 'Nombre', 'Valor', 'Sonido', 'Significado']) assert.match(list, new RegExp(label))
 })
 
-test('FASE H: mini-fichas permiten nombres largos sin truncarlos', () => {
+test('FASE H: mini-fichas permiten nombres largos sin truncarlos y priorizan la letra', () => {
   const tile = explorer.slice(explorer.indexOf('function LetterTile'), explorer.indexOf('function ExpandedLetterCard'))
   assert.match(tile, /letter\.orden/)
-  assert.match(tile, /text-\[4\.35rem\]/)
+  assert.match(tile, /text-\[4\.85rem\]/)
   assert.match(tile, /break-words/)
   assert.doesNotMatch(tile, /\btruncate\b/)
 })
