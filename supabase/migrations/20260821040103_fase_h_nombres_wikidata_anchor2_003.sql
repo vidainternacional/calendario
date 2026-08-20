@@ -1,6 +1,6 @@
--- — FASE H / Bloque 3 — nombres propios TIPNR + Wikidata + gate bíblico español.
+-- BORRADOR NO ACTIVO — FASE H / Bloque 3 — nombres propios TIPNR + Wikidata + gate bíblico español.
 -- Chunk 003; candidatos=40.
--- Gate estructural auditado; aplicación insert-only reversible.
+-- No aplicar sin auditoría read-only del lote.
 -- La referencia ancla se usa SOLO para confirmar la grafía española, no como significado.
 -- Gate: la etiqueta española debe aparecer como frase completa en >= 2 fuentes españolas verificadas.
 -- Política futura: insert-only + ON CONFLICT DO NOTHING.
