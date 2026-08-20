@@ -18,7 +18,7 @@ test('FASE H bloque 3: labels españoles vienen de Wikidata CC0 y fijan revisió
   assert.match(fetcher, /languages[^\n]*en\|es/)
   assert.match(fetcher, /lastrevid/)
   assert.match(fetcher, /CC0-1\.0/)
-  assert.doesNotMatch(fetcher, /supabase|service_role|SUPABASE/i)
+  assert.doesNotMatch(fetcher, /createClient|createServiceClient|service_role|from\(['"]biblical_/)
 })
 
 test('FASE H bloque 3: crosswalk TIPNR solo resuelve identidad exacta, sin fuzzy matching', () => {
