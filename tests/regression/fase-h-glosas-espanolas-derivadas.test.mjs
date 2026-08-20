@@ -23,22 +23,23 @@ test('FASE H bloque 3: capa derivada española es solo lectura para cuentas acti
   assert.doesNotMatch(migration, /for (?:insert|update|delete)\s+to authenticated/i)
 })
 
-test('FASE H bloque 3: primer lote exige consenso uno-a-uno de fuente y categoría', () => {
+test('FASE H bloque 3: lote heredado de griego queda como candidato hasta verificación léxica española', () => {
   assert.match(migration, /language='greek'/)
   assert.match(migration, /review_status='approved'/)
   assert.match(migration, /having count\(\*\)=1 and count\(distinct display_gloss_es\)=1/)
   assert.match(migration, /g\.pos=coalesce\(h\.part_of_speech,''\)/)
   assert.match(migration, /not in \('prefix','suffix','connector','pronominal_suffix'\)/)
-  assert.match(migration, /'verified_derived'/)
-  assert.match(migration, /\n  98,/)
+  assert.match(migration, /'candidate'/)
+  assert.match(migration, /\n  70,/)
+  assert.match(migration, /candidate_until_lexical_spanish_verified/)
 })
 
-test('FASE H bloque 3: endpoint conserva español editorial y rellena solo pendientes', () => {
+test('FASE H bloque 3: endpoint solo expone glosas verificadas o aprobadas manualmente', () => {
   assert.match(helper, /import 'server-only'/)
   assert.match(helper, /from\('biblical_hebrew_spanish_glosses'\)/)
+  assert.match(helper, /\.in\('status', \['verified_derived', 'manual_approved'\]\)/)
   assert.match(helper, /if \(item\.spanish\) return item/)
   assert.match(helper, /spanish: derived\.display_gloss_es/)
-  assert.match(helper, /verified_derived/)
   assert.match(route, /enriquecerCatalogoConGlosasEspanolas/)
   assert.match(route, /baseResult\.status === 'ok'/)
 })

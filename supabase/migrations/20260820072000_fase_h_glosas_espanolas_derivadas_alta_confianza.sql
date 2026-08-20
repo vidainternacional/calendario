@@ -73,14 +73,15 @@ insert into public.biblical_hebrew_spanish_glosses (
 select
   lexical_entry_id,
   display_gloss_es,
-  98,
-  'exact_source_gloss_and_pos_unique_greek_consensus_v1',
+  70,
+  'exact_source_gloss_and_pos_unique_greek_candidate_v1',
   source_gloss,
-  'verified_derived',
+  'candidate',
   jsonb_build_object(
     'source_language','greek',
     'criterion','exact_source_gloss_and_part_of_speech_unique_approved_spanish',
     'source_rows',1,
+    'quality_gate','candidate_until_lexical_spanish_verified',
     'phase','FASE_H_BLOQUE_3',
     'imported_at',now()
   )
