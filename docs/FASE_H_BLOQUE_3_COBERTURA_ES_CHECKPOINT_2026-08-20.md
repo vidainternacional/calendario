@@ -65,15 +65,24 @@ Los lotes de cobertura española son:
 - Confianza: 96.
 - Contexto usado como significado: **0**.
 
-## Cobertura auditada después de Batch 004
+### Batch 005
+
+- Migración: `supabase/migrations/20260820214500_fase_h_glosas_espanolas_batch_005.sql`.
+- Batch id: `fase_h_es_batch_005_20260820`.
+- Filas insertadas: **39**.
+- Glosas fuente inglesas cubiertas: **13**.
+- Confianza: 96.
+- Contexto usado como significado: **0**.
+
+## Cobertura auditada después de Batch 005
 
 - Total hebreo aprobado: **10,737**.
-- Español listo: **1,909**.
-- Español pendiente: **8,828**.
+- Español listo: **1,948**.
+- Español pendiente: **8,789**.
 - Filas editoriales antiguas rechazadas y no visibles: **1,011**.
-- Entradas todavía sin fila editorial española: **7,817**.
+- Entradas todavía sin fila editorial española: **7,778**.
 
-Los cuatro lotes nuevos aportaron **1,903** filas verificadas; las otras 6 entradas ya estaban cubiertas antes de estos lotes.
+Los cinco lotes nuevos aportaron **1,942** filas verificadas; las otras 6 entradas ya estaban cubiertas antes de estos lotes.
 
 ## Familias estructurales pendientes
 
@@ -85,10 +94,19 @@ Debe recalcularse esta clasificación después de cada conjunto relevante de lot
 
 No debe asumirse que una grafía inglesa de nombre propio sea automáticamente la forma española canónica.
 
+## Investigación de fuente para nombres propios
+
+Se identificaron dos candidatos de investigación, todavía sin incorporación automática:
+
+- STEPBible `TIPNR` / `TEGH`: archivos de nombres propios con señal explícita de licencia CC BY en el repositorio fuente; falta confirmar si contienen una columna española canónica suficiente para el cruce requerido.
+- `BibleNLP/biblical-names-data`: `names.tsv` declara una columna `rv09` útil para formas españolas, pero antes de reutilizar datos debe verificarse de forma inequívoca la licencia aplicable al dataset y a sus fuentes derivadas.
+
+No se importará ninguna de estas fuentes hasta cerrar licencia, procedencia, cobertura y regla de emparejamiento estable por entidad.
+
 ## Siguiente trabajo autorizado dentro de Bloque 3
 
 1. Continuar lotes conservadores de `plain_gloss` sin contexto bíblico como significado.
-2. Preparar una política específica para nombres propios/entidades bíblicas que distinga:
+2. Resolver la fuente reutilizable para nombres propios/entidades bíblicas y definir un cruce estable que distinga:
    - forma fuente;
    - forma española canónica cuando pueda verificarse;
    - clasificación de nombre propio cuando no exista traducción léxica.
@@ -102,10 +120,10 @@ Cada lote se revierte de forma localizada, por ejemplo:
 
 ```sql
 DELETE FROM public.biblical_hebrew_spanish_glosses
-WHERE provenance->>'batch_id' = 'fase_h_es_batch_004_20260820';
+WHERE provenance->>'batch_id' = 'fase_h_es_batch_005_20260820';
 ```
 
-Cambiar el `batch_id` permite revertir 001, 002 o 003 sin afectar otras filas.
+Cambiar el `batch_id` permite revertir cualquiera de los lotes anteriores sin afectar otras filas.
 
 ## Control de fase
 
