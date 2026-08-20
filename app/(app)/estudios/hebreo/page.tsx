@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
 import HebrewLearningHome from '@/components/hebreo/HebrewLearningHome'
 import { createClient } from '@/lib/supabase/server'
 
@@ -13,10 +12,5 @@ export default async function HebreoBiblicoPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/estudios/hebreo')
 
-  return (
-    <>
-      <HebrewLearningHome />
-      <HebrewKeyboardDock />
-    </>
-  )
+  return <HebrewLearningHome />
 }
