@@ -1,0 +1,47 @@
+.centered {
+  text-align: center;
+}
+
+.centered :global(.text-left),
+.centered :global(.text-right) {
+  text-align: center !important;
+}
+
+.centered :global(table),
+.centered :global(th),
+.centered :global(td) {
+  text-align: center;
+}
+
+.centered :global([dir='rtl']:not(input):not(textarea)) {
+  text-align: center;
+}
+
+.centered :global(.border-y) > button[aria-expanded] {
+  position: relative;
+  justify-content: center !important;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+  text-align: center !important;
+}
+
+.centered :global(.border-y) > button[aria-expanded] > span {
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.centered :global(.border-y) > button[aria-expanded] > svg:last-child {
+  position: absolute;
+  right: 0.5rem;
+}
+
+.centered :global(input),
+.centered :global(textarea) {
+  text-align: initial;
+}
+
+.centered :global(input[dir='rtl']),
+.centered :global(textarea[dir='rtl']) {
+  text-align: right;
+}
