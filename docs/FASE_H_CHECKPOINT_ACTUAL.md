@@ -1,6 +1,6 @@
 # FASE H — CHECKPOINT ACTUAL DE CONTINUIDAD
 
-Fecha del checkpoint: 2026-08-19
+Fecha del checkpoint: 2026-08-20
 Zona horaria de referencia: America/El_Salvador
 
 Este archivo es el handoff operativo estable de FASE H. Existe para que una conversación nueva pueda reconstruir el estado del proyecto aunque el chat anterior termine por límite de contexto.
@@ -10,79 +10,63 @@ Este archivo es el handoff operativo estable de FASE H. Existe para que una conv
 1. Leer primero `__VIDA_INTERNACIONAL.md`.
 2. Leer después este archivo completo.
 3. Revisar el estado REAL de `main`, la rama activa, PR #286, commits posteriores a este checkpoint, CI y Vercel.
-4. Continuar exclusivamente desde el siguiente punto pendiente de la fase/bloque activos.
-5. No reabrir superficies ya aprobadas salvo bug reproducible o instrucción expresa del maestro.
-6. Si el head real es posterior a este archivo, inspeccionar esos commits antes de asumir que el checkpoint es el último cambio.
+4. Continuar exclusivamente desde el siguiente punto pendiente del bloque activo.
+5. No reabrir superficies aprobadas salvo bug reproducible o instrucción expresa del maestro.
+6. Si el head real es posterior a este archivo, inspeccionar esos commits antes de asumir que este checkpoint contiene el último cambio.
 
 ## 1. Estado formal
 
 - Fase activa: **FASE H — CENTRO DE HEBREO BÍBLICO**.
-- Bloque 1: **COMPLETADO Y APROBADO — 2026-08-19**.
-- Bloque activo: **Bloque 2 — Fundamentos de lectura y gramática progresiva**.
+- Bloque 1 — Línea base de fuentes y arquitectura didáctica: **COMPLETADO Y APROBADO — 2026-08-19**.
+- Bloque 2 — Fundamentos de lectura y gramática progresiva: **COMPLETADO Y APROBADO — 2026-08-19**.
+- Bloque activo: **Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente**.
 - FASE I permanece planificada para después del cierre formal de FASE H.
 - No iniciar FASE I.
 
-El maestro ya refleja Bloque 1 cerrado y Bloque 2 activo.
+El cierre de Bloque 2 fue autorizado después de que el usuario recorriera el checklist móvil y confirmara: **“Perfecto! Todo está bien, continuemos”**.
+
+Documento de validación de Bloque 2:
+
+- `docs/FASE_H_BLOQUE_2_CHECKLIST_MOVIL.md`.
 
 ## 2. Repositorio / rama / PR
 
 - Repositorio: `vidainternacional/calendario`.
-- Rama: `agent/fase-h-hebreo-biblico`.
+- Rama activa: `agent/fase-h-hebreo-biblico`.
 - PR: **#286 — `feat(fase-h): Centro de Hebreo Bíblico`**.
-- Estado: OPEN · DRAFT · no mergeado.
 - Base: `main`.
-- Último head funcional validado antes de este commit documental: `b74b33a1d80dfeaad734da1337da8f8e86eb659d`.
-- Commit anterior de gramática: `3b6ee64ce3afb9163d70eaa40d40ec268ae8b338`.
-- Corrección de regresión: `6563e753d9bab8302a22580b3dd6ecfe553a1877`.
-- Repaso avanzado: `b74b33a1d80dfeaad734da1337da8f8e86eb659d`.
-- No fusionar PR #286 sin aprobación explícita del usuario.
-- No actualizar producción sin aprobación explícita del usuario.
+- PR debe permanecer **OPEN · DRAFT · sin merge** hasta aprobación explícita.
+- No actualizar producción sin aprobación explícita.
 
-## 3. Reglas del usuario / guardias
+Head técnico validado inmediatamente antes de este checkpoint:
 
-- Trabajar únicamente la fase y bloque activos del maestro.
+`7e7f3dfe068efee0c97a54e981d88eac42d69d3b`
+
+Ese head contiene el motor de búsqueda progresiva y sus regresiones finales. El commit de este checkpoint es documental y puede ser posterior.
+
+## 3. Reglas operativas que deben preservarse
+
+- Trabajar solo sobre la fase/bloque activos del maestro.
 - No reiniciar auditorías generales.
-- No modificar áreas ya aprobadas salvo bug comprobable.
-- Mantener calidad visual mobile-first tipo app iOS: limpia, táctil, integrada, sin card-in-card innecesario.
-- Todos los textos pedagógicos de Hebreo Bíblico deben permanecer visualmente centrados; buscadores/campos de escritura pueden conservar la alineación funcional necesaria para RTL/cursor.
+- No reabrir áreas aprobadas salvo bug comprobable.
+- Mantener experiencia mobile-first tipo app iOS: limpia, táctil, integrada y sin tarjetas anidadas innecesarias.
+- Textos pedagógicos visibles centrados; campos editables pueden conservar alineación funcional RTL/cursor.
 - No generar imágenes salvo petición explícita del usuario.
-- No hacer cambios sensibles de Supabase/RLS/grants/roles/permisos/funciones sin presentar cambio exacto, motivo, impacto, riesgo y reversión y obtener aprobación explícita.
-- No inventar raíces, traducciones, audio ni datos lingüísticos.
+- No hacer cambios sensibles de Supabase/RLS/grants/roles/permisos sin presentar antes cambio exacto, motivo, impacto, riesgo y reversión y obtener aprobación explícita.
+- No hacer merge de PR #286 ni producción sin aprobación explícita.
 - Evitar commits/deployments innecesarios.
-- No hacer deploy manual de Vercel si Git integration funciona.
+- Teclado hebreo VIDA opcional y apagado por defecto.
+- No presentar inferencias lingüísticas como datos de fuente.
+- No fabricar traducción literal española del AT.
+- No presentar coincidencia contextual RV1909 como equivalencia léxica uno-a-uno.
 
-## 4. Contrato visual aprobado
+## 4. Contrato visual/didáctico aprobado
 
-Documento: `docs/FASE_H_CONTRATO_VISUAL_APP_HEBREO_2026-08-19.md`.
-
-Patrón:
+Patrón transversal:
 
 **Fichas para memorizar + Tablas para comparar + Listas nativas para recorrer + Detalle para profundizar**.
 
-Reglas visuales:
-
-- hebreo/signo como información primaria;
-- español y explicación como capa secundaria;
-- superficies integradas con separadores y jerarquía tipográfica;
-- tablas móviles pueden usar scroll horizontal antes que comprimir el hebreo;
-- evitar doble borde/ring;
-- evitar espacios vacíos sin función didáctica/táctil;
-- mantener altura de línea suficiente para niqqud;
-- botones con áreas táctiles cómodas;
-- no levantar la navegación inferior global sobre el teclado iOS.
-
-El centrado transversal vive en `app/(app)/estudios/hebreo/hebreo.module.css` y aplica también a nuevas superficies.
-
-## 5. Navegación y módulos actuales
-
-Accesos superiores:
-
-- Aprender.
-- Materiales y curso.
-- Prueba tu progreso.
-- Biblia en hebreo.
-
-Ruta Aprender:
+Ruta `Aprender` aprobada:
 
 1. Alef-Bet.
 2. Vocales.
@@ -91,525 +75,420 @@ Ruta Aprender:
 5. Reglas.
 6. Repaso.
 
-## 6. Bloque 1 — ya cerrado y no reabrir sin bug
-
-### Alef-Bet
-
-- 22 letras base.
-- 5 formas finales.
-- Tarjetas · Lista · Detalle.
-- filtros pedagógicos preservados.
-- expansión/retracción en la misma fila.
-- flip frente/reverso.
-- Shin/Sin permanecen una sola letra base.
-- letras y detalle con jerarquía visual grande.
-
-### Vocales
-
-- 12 signos.
-- Básicas = 8.
-- Reducidas = 3.
-- Sheva = 1.
-- Todas = 12.
-- Tarjetas · Lista · Detalle.
-- la Lista aplica el signo sobre una consonante real.
-- no atribuir gematría al niqqud.
-
-### Palabras
-
-- catálogo real.
-- categorías, búsqueda y paginación.
-- Con niqqud / Sin niqqud.
-- Tarjetas · Lista · Detalle.
-- búsqueda hebrea tolera omitir niqqud.
-- búsqueda española actual usa glosas preparadas y, como fallback, contexto RV1909 con etiqueta cautelosa; una coincidencia contextual no debe presentarse como equivalencia léxica uno-a-uno.
-
-### Lectura
-
-- frases/oraciones/versículos reales del corpus.
-- filtros por longitud/nivel.
-- Con niqqud / Sin niqqud.
-- Tarjetas · Lista · Detalle.
-- búsqueda/paginación.
-- comparación RV1909.
-
-### Reglas
-
-- Tablas · Fichas · Detalle.
-- prefijos, género/número, posesivos, constructo, Qere/Ketiv y reglas iniciales.
-
-### Repaso base
-
-- sesión local breve.
-- Mostrar respuesta.
-- Lo sé · Necesito practicar · Repasar después.
-- resumen solo de la sesión.
-- no existe progreso persistente todavía.
-
-### Teclado hebreo VIDA
-
-- 22 letras + 5 formas finales + niqqud.
-- escribe en el último input/textarea enfocado y en práctica libre.
-- compatible con teclado nativo del teléfono; la app no puede forzar el cambio del teclado del sistema.
-- apagado por defecto.
-- activable/desactivable desde la zona superior.
-- acceso flotante solo cuando está activo y colocado más arriba de la navegación inferior.
-- práctica libre no persistente.
-- no toca Supabase.
-
-## 7. Bloque 2 — fundamentos ya implementados
-
-### Sofit
-
-Comparación normal → final:
-
-- כ → ך
-- מ → ם
-- נ → ן
-- פ → ף
-- צ → ץ
-
-Incluye sonido y valor. Los valores 500–900 se presentan únicamente como **convención ampliada de gematría**, separados del valor ordinario.
-
-### Dagesh / Begadkefat
-
-Comparaciones:
-
-- ב / בּ
-- ג / גּ
-- ד / דּ
-- כ / כּ
-- פ / פּ
-- ת / תּ
-
-La explicación distingue aprendizaje inicial de diferencias históricas/tradicionales y no afirma que todas las tradiciones modernas mantengan los mismos contrastes fonéticos.
-
-### Matres lectionis
-
-- א
-- ה
-- ו
-- י
-
-Se enseñan como consonantes que en ciertos contextos ayudan a señalar vocales, no como vocales independientes universales.
-
-### Niqqud avanzado
-
-Implementado en `NiqqudReadingRules.tsx`:
-
-- sheva vocal vs silencioso;
-- qamats común vs qamats qatan;
-- pataj furtivo;
-- consonante → consonante+vocal → sílaba → palabra → palabra sin niqqud.
-
-Ejemplos clave:
-
-- sheva vocal inicial: `בְּרֵאשִׁית`.
-- sheva silencioso: `מַלְכָּה` → lectura orientativa mal-ká.
-- qamats qatan: `כָּל` → kol.
-- pataj furtivo: `רוּחַ`, `גָּבוֹהַּ`.
-- lectura gradual: `מ → מֶ → לֶ → מֶלֶךְ → מלך`.
-
-Cautela: estas son reglas pedagógicas iniciales; no convertirlas en algoritmos universales sin contexto/estructura/tradición.
-
-## 8. Auditoría nominal/morfológica read-only
-
-No hubo escrituras de Supabase. Proyecto consultado: `calendariovida` / ref `atjtjpchslxbseayzflz`.
-
-Componentes hebreos aprobados aproximados:
-
-- `word`: 300,370.
-- `prefix`: 120,154.
-- `suffix`: 40,477.
-- `connector`: 8.
-
-Sustantivos aproximados:
-
-- singular absoluto: 43,693.
-- singular constructo: 39,556.
-- plural absoluto: 13,485.
-- plural constructo: 16,552.
-- formas con marca masculina: 95,029.
-- formas con marca femenina: 29,551.
-
-Ejemplos reales de posesivos/segmentación:
-
-- `בֵּן + ־ִי → בְּנִי`.
-- `פֶּה + ־ִי → פִּי`.
-- `פֶּה + ־וֹ → פִּיו`.
-- `אָב + ־וֹ → אָבִיו`.
-- `אָב + ־נוּ → אֲבוֹתֵינוּ` en forma plural ligada.
-
-Ejemplos reales de constructo:
-
-`בֵּן`
-- absoluta sg: `בֵּן`.
-- constructa sg: `בֶּן`.
-- absoluta pl: `בָנִים`.
-- constructa pl: `בְּנֵי`.
-
-`דָּבָר`
-- absoluta sg: `דָּבָר`.
-- constructa sg: `דְּבַר`.
-- absoluta pl: `דְּבָרִים`.
-- constructa pl: `דִּבְרֵי`.
-
-Decisión pedagógica: enseñar **base → cambio → resultado**, no “pegar una terminación” como regla universal.
-
-Documento detallado: `docs/FASE_H_BLOQUE_2_GRAMATICA_MORFOLOGIA_2026-08-19.md`.
-
-## 9. Auditoría de raíces — decisión vigente
-
-Read-only sobre `biblical_lexical_entries`, `biblical_word_occurrences` y metadata.
-
-Resultado:
-
-- no existe columna de raíz explícita;
-- metadata tampoco aporta raíz léxica explícita verificable;
-- no deducir raíces eliminando prefijos/sufijos ni tomando tres consonantes;
-- raíces quedan bloqueadas hasta incorporar una fuente que las entregue de forma explícita, trazable y compatible.
-
-Documento: `docs/FASE_H_BLOQUE_2_RAICES_AUDITORIA_2026-08-19.md`.
-
-## 10. Sistema verbal — auditoría y UI Qal ya implementadas
-
-Cobertura aproximada de binyanim en hebreo aprobado:
-
-- Qal: 50,186.
-- Hiphil: 9,404.
-- Piel: 6,759.
-- Niphal: 4,148.
-- Hithpael: 1,000.
-- Pual: 511.
-- Hophal: 417.
-
-Formas Qal aproximadas:
-
-- wayyiqtol: 11,499.
-- qatal: 9,677.
-- yiqtol: 8,609.
-- participio activo: 5,526.
-- infinitivo constructo: 4,901.
-- weqatal: 4,259.
-- imperativo: 2,876.
-- participio pasivo: 978.
-- yusivo: 775.
-- infinitivo absoluto: 489.
-- cohortativo `Vqh`: 0 en la importación actual.
-
-OSHB contempla cohortativo, pero VIDA no debe mostrarlo como dato disponible del corpus hasta aclarar por qué la importación actual no contiene `Vqh`.
-
-### Hilo conductor
-
-`H0559`:
-
-- lema: `אָמַר`.
-- español pedagógico ya existente: `decir`.
-- pronunciación pedagógica: `amár`.
-
-Formas verificadas usadas en la UI:
-
-Qatal:
-- `אָמַר` 3ms.
-- `אָמְרָה` 3fs.
-- `אָמַרְתָּ` 2ms.
-- `אָמַרְתְּ` 2fs.
-- `אָמַרְתִּי` 1cs.
-- `אָמְרוּ` 3cp.
-- `אֲמַרְתֶּם` 2mp.
-- `אָמַרְנוּ` 1cp.
-
-Yiqtol:
-- `יֹאמַר` 3ms.
-- `תֹּאמַר` / `תֹאמַר` 3fs/2ms según morfología/contexto.
-- `תֹאמְרִי` 2fs.
-- `אֹמַר` 1cs.
-- `נֹאמַר` 1cp.
-- `יֹאמְרוּ` 3mp.
-- `תֹאמְרוּ` 2mp.
-
-Otras:
-- imperativo `אֱמֹר`.
-- participio activo `אֹמֵר`.
-- infinitivo constructo con ל: `לֵאמֹר`.
-- wayyiqtol reconstruido por grupo: `וַיֹּאמֶר`.
-- weqatal reconstruido por grupo: `וְאָמַרְתָּ`.
-
-Referencias de muestra verificadas:
-
-- qatal `אָמַר`: 1 Crónicas 15:2.
-- yiqtol `יֹאמַר`: 1 Reyes 1:36.
-- imperativo `אֱמֹר`: 1 Reyes 12:23.
-- participio `אֹמֵר`: 1 Reyes 5:5.
-- `לֵאמֹר`: 1 Crónicas 4:9.
-- `וַיֹּאמֶר`: 1 Crónicas 10:4.
-- `וְאָמַרְתָּ`: 1 Crónicas 17:4.
-
-### UI implementada en Reglas
-
-`GrammarExplorer.tsx` ahora incluye filtro:
-
-**Básicas · Prefijos · Nombres · Verbos · Frase · Todas**.
-
-Conteo de fichas protegido:
-
-- Básicas: 2.
-- Prefijos: 3.
-- Nombres: 2.
-- Verbos: 8.
-- Frase: 2.
-- Total: 17.
-
-Tablas nuevas/ampliadas:
-
-- Base → sufijo → palabra real.
-- Estado constructo con ejemplos reales.
-- Primer mapa verbal Qal con `אָמַר`.
-- Qatal: persona/número.
-- Yiqtol: persona/prefijos.
-
-Cautelas obligatorias visibles:
-
-- no enseñar `qatal = pasado`.
-- no enseñar `yiqtol = futuro`.
+Accesos principales conservados:
+
+- Aprender.
+- Materiales y curso.
+- Prueba tu progreso.
+- Biblia en hebreo.
+
+Documentos de referencia:
+
+- `docs/FASE_H_ARQUITECTURA_UX_APRENDIZAJE_2026-08-18.md`;
+- `docs/FASE_H_CONTRATO_VISUAL_APP_HEBREO_2026-08-19.md`;
+- `docs/FASE_H_REFERENCIA_PEDAGOGICA_HOSHIAH_NA_2026-08-19.md`.
+
+## 5. Bloque 1 — cerrado y no reabrir salvo bug
+
+Quedaron establecidos y aprobados:
+
+- Alef-Bet de 22 letras, 5 Sofit y filtros pedagógicos;
+- Vocales/Niqqud inicial;
+- Palabras con catálogo real;
+- Lectura con corpus real y RV1909;
+- Reglas con Tablas/Fichas/Detalle;
+- Repaso local;
+- teclado hebreo VIDA opcional;
+- centrado pedagógico transversal;
+- integración con Estudios sin crear un segundo motor bíblico;
+- uso de STEPBible/TAHOT y estructuras bíblicas existentes.
+
+## 6. Bloque 2 — cerrado y aprobado
+
+### Fundamentos de lectura
+
+- Sofit: כ→ך, מ→ם, נ→ן, פ→ף, צ→ץ.
+- Gematría ordinaria separada de la convención ampliada 500–900.
+- Dagesh/Begadkefat con cautelas históricas/tradicionales.
+- Matres lectionis: א, ה, ו, י como función de lectura según contexto, no vocales independientes universales.
+- Sheva vocal/silencioso.
+- Qamats qatan.
+- Pataj furtivo.
+- Lectura progresiva signo → sílaba → palabra → palabra sin niqqud.
+
+### Gramática nominal
+
+- artículo, conjunción y prefijos inseparables;
+- género/número como pistas, no reglas absolutas;
+- sufijos posesivos;
+- transformaciones reales, por ejemplo `בֵּן + ־ִי → בְּנִי` y `פֶּה + ־וֹ → פִּיו`;
+- estado constructo con formas reales;
+- no deducción heurística de raíces.
+
+### Primer mapa verbal Qal
+
+Hilo conductor principal: **אָמַר — decir**.
+
+Se incorporaron:
+
+- lema vs. forma flexionada;
+- qatal;
+- yiqtol;
+- imperativo `אֱמֹר`;
+- participio `אֹמֵר`;
+- infinitivo constructo `לֵאמֹר`;
+- wayyiqtol;
+- weqatal;
+- persona/género/número mediante tablas.
+
+Cautelas obligatorias:
+
+- no enseñar `qatal = pasado`;
+- no enseñar `yiqtol = futuro`;
 - no enseñar `wayyiqtol = ו + futuro convertido en pasado`.
-- forma morfológica → marcas personales → función discursiva → contexto → traducción final.
 
-### Binyanim posteriores preparados pero no abiertos todos al principiante
+### Repaso
 
-- Niphal: `נִלְחַם` de `לָחַם`.
-- Piel: `דִּבֶּר` de `דָבַר`.
-- Pual: `מְבֹרָךְ` de `בָּרַךְ`.
-- Hiphil: formas de `בּוֹא`, por ejemplo `יְבִיאוּ`.
-- Hophal: `יוּמַת` relacionado con `מוּת`.
-- Hithpael: `הִתְפַּלֵּל`, `מִתְפַּלֵּל`, `יִתְפַּלֵּל` de `פָּלַל`.
+Repaso incluye:
 
-Orden pedagógico futuro: Qal → Niphal → Piel/Pual → Hiphil/Hophal → Hithpael. No mostrar siete paradigmas de golpe.
+- Mixto;
+- Letras;
+- Vocales;
+- Palabras;
+- Lectura;
+- Reglas;
+- Verbos.
 
-## 11. Repaso — integración avanzada ya implementada
+Continúa local/no persistente y no pretende guardar progreso real todavía.
 
-`ReviewExplorer.tsx` conserva las áreas anteriores y añade:
+### Raíces
 
-- Mixto.
-- Letras.
-- Vocales.
-- Palabras.
-- Lectura.
-- Reglas.
-- **Verbos**.
+Auditoría read-only confirmó:
 
-Mixto usa una selección deliberada de hasta 8 elementos e incluye al menos una práctica verbal.
+- `biblical_lexical_entries` no tiene columna de raíz explícita;
+- metadata tampoco entrega una raíz explícita verificable;
+- VIDA no elimina prefijos/sufijos ni toma tres consonantes para fabricar una raíz.
 
-Prácticas nuevas de Vocales:
+Documento:
 
-- sheva vocal en `בְּרֵאשִׁית`.
-- sheva silencioso en `מַלְכָּה`.
-- qamats qatan en `כָּל`.
-- pataj furtivo en `רוּחַ`.
+- `docs/FASE_H_BLOQUE_2_RAICES_AUDITORIA_2026-08-19.md`.
 
-Prácticas nuevas de Reglas:
+## 7. Bloque 3 — objetivo activo
 
-- `בְּנִי` — base + sufijo.
-- `אָבִיו` — sufijo 3ms.
-- `דָּבָר → דְּבַר` — absoluta → constructa.
-- `בְּנֵי` — plural constructo.
+Objetivo: hacer que `Palabras` abarque más búsquedas y que las resoluciones verificadas puedan reutilizarse con el tiempo, **sin convertir lo aprendido por el buscador en un segundo léxico autoritativo**.
 
-Prácticas de Verbos — 8 elementos:
+El usuario preguntó específicamente si la base puede actualizarse para que, cuando alguien busque una palabra, VIDA la resuelva y posteriormente cubra esa búsqueda de forma más automática. Se propuso un índice derivado y el usuario respondió **“Ok avancemos”**, autorizando el diseño sensible presentado.
 
-1. qatal vs yiqtol: `אָמַר · יֹאמַר`.
-2. qatal 1cs: `אָמַרְתִּי`.
-3. yiqtol 1cs: `אֹמַר`.
-4. imperativo: `אֱמֹר`.
-5. participio: `אֹמֵר`.
-6. infinitivo constructo: `לֵאמֹר`.
-7. wayyiqtol: `וַיֹּאמֶר`.
-8. weqatal: `וְאָמַרְתָּ`.
+## 8. Buscador previo al Bloque 3
 
-Sigue sin persistencia, sin Supabase y sin audio. Las marcas solo existen durante la sesión.
+Antes de este bloque el catálogo ya resolvía:
 
-## 12. Buscador/diccionario — dirección acordada pendiente de motor profundo
+- lema hebreo, ignorando niqqud;
+- Strong;
+- español curado;
+- `display_gloss_es` aprobada;
+- fallback contextual español mediante RV1909 + ocurrencias hebreas del mismo versículo.
 
-Arquitectura objetivo:
+El fallback contextual ya protegía la semántica mostrando una nota equivalente a:
 
-`Español → léxico inverso multisentido → lema hebreo → morfología + ocurrencias → traducciones como contexto`.
+`Relacionado con «búsqueda»` y aclarando que no es equivalencia uno-a-uno mientras no exista glosa española aprobada.
 
-Principios:
+Problema anterior: la resolución contextual se recalculaba cada vez; la base no aprendía/reutilizaba esa resolución.
 
-- el lema hebreo es la unidad central;
-- español funciona como búsqueda inversa hacia candidatos/sentidos;
-- una traducción bíblica no es autoridad léxica única;
-- morfología y ocurrencias respaldan resultados;
-- RV1909 puede servir como contexto aprobado;
-- traducciones adicionales requieren licencia/autorización;
-- IA puede interpretar consulta/rankear candidatos, pero no inventar significado, raíz o forma.
+## 9. Migración sensible aprobada y aplicada
 
-La evolución profunda de este motor sigue pendiente dentro de FASE H y no debe mezclarse con el cierre del Bloque 2 si el maestro no lo autoriza.
+Migración aplicada en Supabase:
 
-## 13. Fuentes
+`fase_h_busqueda_lexica_progresiva`
 
-Reutilizar:
+Versión registrada:
 
-- `biblical_verse_texts`.
-- `biblical_word_occurrences`.
-- `biblical_lexical_entries`.
-- Estudio Profundo.
-- morfología existente.
-- transliteración.
-- metadata fuente/licencia/versificación.
+`20260820060448`
 
-Fuente principal aprobada:
+Archivo versionado:
 
-- STEPBible / STEPBible-Data / TAHOT — CC BY 4.0.
+`supabase/migrations/20260820060448_fase_h_busqueda_lexica_progresiva.sql`
 
-Traducción española aprobada:
+Tabla creada:
 
-- RV1909 — dominio público.
+`public.biblical_hebrew_search_resolutions`
 
-No fabricar traducción literal española del AT.
+### Campos
 
-## 14. Referencia pedagógica aportada por el usuario
+- `id uuid`;
+- `search_key text`;
+- `search_kind`: `spanish | hebrew | transliteration | strong`;
+- `lexical_entry_id` FK → `biblical_lexical_entries(id)`;
+- `relation_kind`: `lemma | strong | curated_spanish | editorial_spanish | transliteration | inflected_form | contextual`;
+- `confidence` 0–100;
+- `evidence_count`;
+- `provenance jsonb`;
+- `status`: `derived | approved | rejected`;
+- `enabled`;
+- timestamps.
 
-Documento Hoshiah Na:
-`https://www.scribd.com/document/469832642/HEBREO-1-HOSHIAH-NA-CURSOS-DE-HEBREO`
+Unicidad:
 
-Uso:
+`search_key + search_kind + lexical_entry_id + relation_kind`.
 
-- referencia pedagógica/visual;
-- no copiar texto/tablas/páginas protegidas;
-- contrastar datos con fuentes aprobadas.
+### Separación del léxico fuente
 
-Documento VIDA:
-`docs/FASE_H_REFERENCIA_PEDAGOGICA_HOSHIAH_NA_2026-08-19.md`.
+La tabla es un **índice derivado y reversible**.
 
-Los 11 videos aportados siguen en `lib/hebreo/material-apoyo.ts` con `verificacion: 'pendiente'`; no sustituirlos silenciosamente.
+No modifica:
 
-## 15. Estado técnico actual validado
+- lema;
+- Strong;
+- glosa fuente;
+- definición;
+- `display_gloss_es`;
+- `review_status`;
+- `enabled` de `biblical_lexical_entries`.
 
-Head funcional: `b74b33a1d80dfeaad734da1337da8f8e86eb659d`.
+Eliminar o dejar de consultar el índice devuelve el buscador al motor previo sin pérdida del corpus.
 
-CI temporal:
+## 10. Seguridad del índice derivado
 
-- run #2356.
-- regresiones: SUCCESS.
-- lint: SUCCESS.
-- build Next.js: SUCCESS.
+Verificado después de aplicar la migración:
 
-Validadores del mismo head:
+- RLS: **ON**;
+- `anon`: sin acceso;
+- `authenticated`: **SELECT solamente**;
+- `service_role`: escritura administrativa/server-only;
+- no existen políticas INSERT/UPDATE/DELETE para `authenticated`;
+- SELECT exige cuenta activa y entrada hebrea vinculada aprobada/habilitada;
+- no existe `profile_id`, `user_id`, `searched_by`, `created_by` ni identidad equivalente;
+- `provenance` está destinada solo a evidencia técnica de resolución y no a historial personal.
 
-- documento maestro run #113: SUCCESS.
-- TAHOT Obadías run #264: SUCCESS.
-- esquema observado TAHOT run #242: SUCCESS.
+La escritura se realiza desde `lib/supabase/service.ts`, que está marcado `server-only` y utiliza `SUPABASE_SERVICE_ROLE_KEY` solo del lado servidor.
 
-La regresión anterior del commit `3b6ee64c…` era únicamente una expectativa case-sensitive sobre el texto “No deduciremos raíces”; se corrigió en `6563e753…` sin alterar la regla pedagógica.
+### Revisión de advisors post-DDL
 
-## 16. Vercel actual
+Se ejecutaron advisors de seguridad y rendimiento después de la migración.
 
-El bloqueo `build-rate-limit` quedó resuelto.
+Resultado relevante para la tabla nueva:
 
-Deployment exacto del head funcional:
+- no apareció advertencia nueva de RLS/permisos para `biblical_hebrew_search_resolutions`;
+- los dos índices nuevos aparecen temporalmente como `unused_index` porque la tabla todavía tiene 0 filas antes de la prueba funcional; esto no es un fallo y se reevaluará después de uso real;
+- los demás avisos reportados pertenecen a estructuras históricas fuera del alcance de Bloque 3 y no se reabren aquí.
 
-- id: `dpl_AWEBo93tmi98577DU9FgmbfqnFRL`.
-- commit: `b74b33a1d80dfeaad734da1337da8f8e86eb659d`.
-- mensaje: `feat(fase-h): llevar gramática avanzada a Repaso`.
-- estado: **READY**.
-- source: git.
-- aliasError: null.
+## 11. Motor progresivo implementado
 
-Branch alias:
+Archivo:
+
+`lib/hebreo/word-catalog.ts`
+
+### Escritura de resoluciones
+
+`persistSearchResolutions()`:
+
+- normaliza la clave;
+- recibe candidatos respaldados por el motor;
+- escribe con `createServiceClient()`;
+- hace upsert solo sobre `biblical_hebrew_search_resolutions`;
+- guarda relación, confianza, evidencia y procedencia;
+- una falla de escritura de caché no debe romper el resultado de búsqueda.
+
+### Lectura reutilizable
+
+`cachedResolutionSearch()`:
+
+- busca la clave normalizada + tipo;
+- ordena por confianza/evidencia;
+- vuelve a cargar las entradas desde `biblical_lexical_entries` aprobadas;
+- las relaciones contextuales siguen mostrando la cautela contextual cuando no existe glosa española aprobada.
+
+### Hebreo directo
+
+- búsqueda de lema conserva comportamiento sin niqqud;
+- una resolución directa puede registrarse como `lemma`.
+
+### Strong
+
+- se normaliza a formato `H...`;
+- una resolución directa puede registrarse como `strong`.
+
+### Español directo
+
+- primero usa el vocabulario español pedagógico curado;
+- después `display_gloss_es` aprobada;
+- relaciones registradas como `curated_spanish` o `editorial_spanish`.
+
+### Español contextual
+
+- usa RV1909 aprobada;
+- recupera referencias donde aparece el término;
+- obtiene ocurrencias hebreas de esos versículos;
+- rankea por evidencia/frecuencia;
+- solo guarda candidatos contextuales reutilizables con evidencia suficiente;
+- mantiene explícitamente que la relación no es una traducción uno-a-uno.
+
+### Forma hebrea flexionada → lema
+
+Nuevo resolver `inflectedHebrewSearch()`.
+
+La heurística de prefijos/sufijos **solo genera candidatos de búsqueda**. No se acepta una relación por esa heurística.
+
+La verificación real:
+
+1. localiza morfemas candidatos en `biblical_word_occurrences`;
+2. utiliza `word_group_key`;
+3. reúne todos los morfemas del mismo grupo;
+4. ordena por `morpheme_index`;
+5. reconstruye la superficie completa;
+6. elimina únicamente marcas de vocalización/cantillación para comparar consonantes;
+7. acepta la relación solo si la palabra reconstruida coincide exactamente con la entrada buscada;
+8. retorna el `lexical_entry_id` real del morfema tipo `word`.
+
+Una forma como `וַיֹּאמֶר`/`ויאמר` puede por tanto llevar al lema aprobado `אָמַר` (`H0559`) sin afirmar una raíz inventada.
+
+Relación guardada: `inflected_form`.
+
+### Transliteración
+
+Nuevo resolver `transliterationSearch()`:
+
+- usa `biblical_word_occurrences.occurrence_transliteration`;
+- normaliza mayúsculas, diacríticos, puntos/espacios/puntuación;
+- descubre candidatos y después exige coincidencia normalizada exacta;
+- rankea por frecuencia;
+- guarda relación `transliteration`.
+
+### Orden latino conservador
+
+Para proteger al usuario hispanohablante:
+
+1. español directo aprobado/curado;
+2. resolución española ya guardada;
+3. fallback contextual RV1909;
+4. resolución de transliteración ya guardada;
+5. búsqueda nueva por transliteración.
+
+Así una palabra española conocida tiene prioridad sobre una coincidencia accidental de transliteración.
+
+## 12. Regresiones de Bloque 3
+
+Nuevo archivo:
+
+`tests/regression/fase-h-busqueda-lexica-progresiva.test.mjs`
+
+Protege:
+
+- separación índice derivado ↔ léxico autoritativo;
+- RLS/permisos;
+- ausencia de identidad personal;
+- escritura mediante service-role server-only;
+- reconstrucción exacta de forma flexionada;
+- transliteración desde ocurrencias aprobadas;
+- cautela contextual RV1909;
+- consulta de caché antes de los fallbacks costosos.
+
+También se alinearon guardias históricas que antes prohibían cualquier escritura de base. Ahora permiten únicamente la escritura derivada aprobada y siguen prohibiendo escrituras sobre `biblical_lexical_entries`.
+
+## 13. Validación técnica actual
+
+Head técnico:
+
+`7e7f3dfe068efee0c97a54e981d88eac42d69d3b`
+
+GitHub Actions:
+
+- CI temporal **#2374 — SUCCESS**;
+- regresiones: **270/270 SUCCESS**;
+- lint: **SUCCESS**;
+- build Next.js: **SUCCESS**;
+- validador maestro #122: **SUCCESS**;
+- TAHOT Obadías #273: **SUCCESS**;
+- esquema observado TAHOT #251: **SUCCESS**.
+
+## 14. Vercel / Preview
+
+El deployment de producto más reciente con el motor de Bloque 3 está READY:
+
+- deployment: `dpl_H4HHMvW1kB7VnTDcmEgKeReikz8m`;
+- commit: `8d963256c377b6bc3de47633289cf9be2666ee85`;
+- estado: **READY**;
+- source: git;
+- alias de rama asignado sin error.
+
+Preview:
 
 `https://calendario-git-agent-fase-h-hebreo-biblico-vida-internacional.vercel.app/estudios/hebreo`
 
-La tarea `Vercel Build Watch` cumplió su objetivo y quedó desactivada para no seguir revisando innecesariamente.
+Los tres commits posteriores hasta `7e7f3dfe…` modifican únicamente archivos de regresión. `GitHub.compare_commits(8d963… → 7e7f3dfe…)` confirmó que no existen diferencias de producto entre el deployment READY y el head técnicamente validado.
 
-## 17. Gate actual — lo siguiente es checklist móvil, no más auditoría general
+## 15. Estado del índice antes de prueba funcional
 
-El Bloque 2 ya tiene contenido y práctica suficiente para entrar al gate móvil.
+Consulta read-only posterior a CI:
 
-Checklist versionado:
+`select count(*) from biblical_hebrew_search_resolutions`
 
-`docs/FASE_H_BLOQUE_2_CHECKLIST_MOVIL.md`
+Resultado:
 
-El usuario debe recorrerlo en iPhone sobre un Preview cuyo commit coincida con el head validado. El objetivo es clasificar hallazgos como:
+**0 filas**.
 
-- OK.
-- VISUAL.
-- BUG.
+Esto es intencional: no se sembraron asociaciones manualmente. El objetivo de la prueba funcional es demostrar que una búsqueda real desde una cuenta VIDA crea la resolución derivada automáticamente.
 
-Solo corregir bugs reproducibles o ajustes visuales concretos encontrados en ese recorrido. No reabrir áreas aprobadas sin hallazgo.
+## 16. Gate funcional inmediato de Bloque 3
 
-Alcance principal del checklist:
+No cerrar Bloque 3 todavía.
 
-- teclado opcional/no regresión;
-- centrado transversal;
-- Sofit;
-- Dagesh/Begadkefat;
-- Matres;
-- sheva, qamats qatan y pataj furtivo;
-- lectura silábica;
-- prefijos/género/número;
-- posesivos y constructo;
-- filtro Verbos;
-- Qal con `אָמַר`;
-- qatal/yiqtol persona/número;
-- Repaso avanzado y área Verbos;
-- smoke rápido de Palabras/Lectura;
-- móvil/scroll/niqqud/áreas táctiles.
+Se necesita una prueba real desde el Preview con sesión VIDA. Casos recomendados:
 
-## 18. Cierre esperado de Bloque 2
+1. **Español directo:** `rey`.
+2. **Hebreo lema sin niqqud:** `מלך`.
+3. **Strong:** `H4428`.
+4. **Forma flexionada:** `ויאמר` o `וַיֹּאמֶר`; debe llevar a `אָמַר` / H0559.
+5. **Transliteración:** usar una forma no ambigua del corpus; si una búsqueda coincide con una palabra española, español conserva prioridad.
+6. **Español contextual:** una búsqueda sin glosa directa debe conservar la etiqueta/notificación contextual y no fingir equivalencia uno-a-uno.
 
-No marcar completado todavía.
+Después de ejecutar esas búsquedas, hacer una consulta read-only a `biblical_hebrew_search_resolutions` y verificar:
 
-Para proponer su cierre se necesita:
+- nuevas filas creadas automáticamente;
+- `search_kind`/`relation_kind` correctos;
+- confianza/evidencia razonables;
+- `provenance` técnica;
+- ausencia de identidad personal;
+- repetir una búsqueda reutiliza la resolución guardada.
 
-1. head exacto con CI verde;
-2. Preview Vercel READY del mismo commit;
-3. checklist móvil recorrido;
-4. corrección de bugs reproducibles encontrados;
-5. aprobación explícita del usuario;
-6. actualización formal de `__VIDA_INTERNACIONAL.md`.
+Si la prueba pasa, documentar la evidencia. No cerrar Bloque 3 hasta decidir si quedan mejoras de cobertura dentro del alcance del maestro.
 
-Solo después el maestro podrá definir/activar el siguiente bloque de FASE H.
+## 17. Puntos de FASE H todavía pendientes después de Bloque 3
 
-## 19. Pendientes mayores posteriores de FASE H — NO abrir todavía sin maestro
+Sin asumir orden futuro hasta que el maestro lo documente, el alcance general de FASE H todavía contempla:
 
-Una vez cerrado formalmente Bloque 2, todavía quedan dentro del alcance general de FASE H:
-
-- convertir `Prueba tu progreso` en evaluación real;
-- diseñar progreso personal persistente privado; si requiere Supabase/RLS, presentar propuesta exacta antes de cualquier cambio;
-- pronunciación/audio con fuente/metodología confiable y licencia compatible;
-- evolucionar `Biblia en hebreo` hacia lector completo del AT hebreo y segmentos arameos con ayudas graduables;
-- evolución profunda del diccionario/buscador español↔hebreo;
-- verificar/materializar materiales administrables;
-- validación integral final en iPhone;
-- cierre de FASE H;
+- `Prueba tu progreso` como evaluación real con corrección/puntuación/recomendación;
+- progreso personal persistente, con propuesta separada de privacidad/RLS antes de cualquier Supabase sensible;
+- pronunciación/audio con metodología y licencia confiables;
+- `Biblia en hebreo` como lector completo del AT hebreo y segmentos arameos con ayudas graduables;
+- mejora adicional del diccionario si la validación de Bloque 3 descubre vacíos reales;
+- verificación/administración de materiales y los 11 videos aportados por el usuario;
+- validación integral final de FASE H;
+- cierre formal de FASE H;
 - solo después FASE I.
 
-## 20. Documentos de evidencia relevantes
+## 18. Fuentes/datos que deben seguir reutilizándose
 
-- `__VIDA_INTERNACIONAL.md` — autoridad formal de fase/bloque.
-- `docs/FASE_H_CHECKPOINT_ACTUAL.md` — este handoff operativo.
-- `docs/FASE_H_CONTRATO_VISUAL_APP_HEBREO_2026-08-19.md`.
-- `docs/FASE_H_ARQUITECTURA_UX_APRENDIZAJE_2026-08-18.md`.
-- `docs/FASE_H_REFERENCIA_PEDAGOGICA_HOSHIAH_NA_2026-08-19.md`.
-- `docs/FASE_H_BLOQUE_2_RAICES_AUDITORIA_2026-08-19.md`.
-- `docs/FASE_H_BLOQUE_2_GRAMATICA_MORFOLOGIA_2026-08-19.md`.
-- `docs/FASE_H_BLOQUE_2_CHECKLIST_MOVIL.md`.
-- `docs/REGLAS_OPERATIVAS_USUARIO.md`.
+- `biblical_verse_texts`;
+- `biblical_word_occurrences`;
+- `biblical_lexical_entries`;
+- STEPBible / STEPBible-Data / TAHOT, CC BY 4.0;
+- morfología y transliteración existentes;
+- RV1909 de dominio público como traducción española de comparación/contexto.
 
-## 21. Prompt mínimo de emergencia
+No crear un segundo corpus bíblico ni un léxico paralelo autoritativo.
 
-Si el chat se corta por límite, iniciar uno nuevo con:
+## 19. Prompt mínimo de emergencia
 
-> Continuamos VIDA Internacional. Lee primero `__VIDA_INTERNACIONAL.md` y después `docs/FASE_H_CHECKPOINT_ACTUAL.md` del repositorio `vidainternacional/calendario`. Verifica el estado real de `main`, la rama activa, PR #286, commits posteriores al checkpoint, CI y Vercel. Continúa exclusivamente desde el siguiente punto pendiente documentado. No reinicies auditorías generales, no reabras partes aprobadas y no hagas cambios sensibles de Supabase ni merge/producción sin mi aprobación explícita.
+Si el chat termina por límite, iniciar la nueva conversación con:
 
-El contexto completo debe vivir en documentos versionados, no depender del chat.
+> Continuamos VIDA Internacional. Lee primero `__VIDA_INTERNACIONAL.md` y después `docs/FASE_H_CHECKPOINT_ACTUAL.md` del repositorio `vidainternacional/calendario`. Verifica el estado real de `main`, la rama activa, PR #286, CI, Vercel, Supabase y commits posteriores al checkpoint. Continúa exclusivamente desde el siguiente punto pendiente documentado. No reinicies auditorías generales, no reabras partes aprobadas y no hagas cambios sensibles de Supabase, merge ni producción sin mi aprobación explícita.
 
-## 22. Regla de mantenimiento de este checkpoint
+## 20. Regla de mantenimiento
 
-Antes de cerrar una sesión importante, cambiar de bloque, fusionar PR o cuando haya riesgo de alcanzar el límite de conversación:
+Antes de cerrar una sesión importante, cambiar de bloque, fusionar PR o cuando exista riesgo de agotar el límite:
 
 - actualizar este mismo archivo;
-- mantener `__VIDA_INTERNACIONAL.md` como autoridad formal;
-- registrar aquí head/CI/Vercel/gate y decisiones relevantes;
-- comprobar commits posteriores al checkpoint en una sesión nueva;
-- crear un archivo histórico separado solo cuando convenga preservar un hito cerrado.
+- mantener `__VIDA_INTERNACIONAL.md` como autoridad formal de fase/bloque;
+- registrar aquí head, CI, Vercel, Supabase, decisiones y gate funcional;
+- no crear checkpoints paralelos salvo hito histórico deliberado.
