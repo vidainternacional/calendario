@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { listarCatalogoHebreoParaAprendizaje } from '@/lib/hebreo/word-catalog'
+import { enriquecerCatalogoConGlosasEspanolas } from '@/lib/hebreo/spanish-glosses'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,10 @@ export async function GET(request: Request) {
   const search = url.searchParams.get('q') ?? ''
   const group = url.searchParams.get('group') ?? 'essentials'
 
-  const result = await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search, group })
+  const baseResult = await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search, group })
+  const result = baseResult.status === 'ok'
+    ? await enriquecerCatalogoConGlosasEspanolas(baseResult)
+    : baseResult
 
   if (result.status === 'sin-sesion') {
     return NextResponse.json(result, { status: 401 })
