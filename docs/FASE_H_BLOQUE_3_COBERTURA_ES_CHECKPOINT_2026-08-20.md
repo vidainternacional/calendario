@@ -75,17 +75,15 @@ Los lotes de cobertura española son:
 
 Los cuatro lotes nuevos aportaron **1,903** filas verificadas; las otras 6 entradas ya estaban cubiertas antes de estos lotes.
 
-## Clasificación de trabajo restante
+## Familias estructurales pendientes
 
-La clasificación anterior a Batch 004 identificó tres familias estructurales entre las entradas sin fila editorial:
+Debe recalcularse esta clasificación después de cada conjunto relevante de lotes. La política de nombres propios no se mezcla con la de glosas léxicas planas.
 
-- nombres/entidades exactas codificadas por la fuente;
-- glosas inglesas planas;
-- glosas con referencia o sentido técnico codificado.
+- `exact_named_entity`: nombre anterior a `»` coincide exactamente con la entidad anotada antes de `@`.
+- `plain_gloss`: glosa fuente directa sin codificación de entidad/sentido.
+- `encoded_reference_or_sense`: anotación técnica o referencia incorporada en `source_gloss`.
 
-Batch 004 continúa reduciendo exclusivamente la familia de glosas planas mediante equivalencias inglesas directas y conservadoras. Antes de aplicar una política masiva a nombres propios debe recalcularse el contador de cada familia sobre el estado actual.
-
-La clase `exact_named_entity` se detecta únicamente cuando el nombre anterior a `»` coincide exactamente con la entidad anotada antes de `@`. No debe asumirse que una grafía inglesa sea automáticamente la forma española canónica.
+No debe asumirse que una grafía inglesa de nombre propio sea automáticamente la forma española canónica.
 
 ## Siguiente trabajo autorizado dentro de Bloque 3
 
