@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from 'react'
 type EditableTarget = HTMLInputElement | HTMLTextAreaElement
 type KeyboardMode = 'letters' | 'niqqud'
 
+type HebrewKeyboardDockProps = {
+  enabled: boolean
+  onDisable: () => void
+}
+
 const HEBREW_ROWS = [
   ['ק', 'ר', 'א', 'ט', 'ו', 'ן', 'ם', 'פ'],
   ['ש', 'ד', 'ג', 'כ', 'ע', 'י', 'ח', 'ל', 'ך', 'ף'],
@@ -50,13 +55,17 @@ function targetLabel(target: EditableTarget | null) {
   return 'Campo seleccionado'
 }
 
-export default function HebrewKeyboardDock() {
+export default function HebrewKeyboardDock({ enabled, onDisable }: HebrewKeyboardDockProps) {
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<KeyboardMode>('letters')
   const [practice, setPractice] = useState('')
   const [activeLabel, setActiveLabel] = useState('Práctica libre')
   const lastTargetRef = useRef<EditableTarget | null>(null)
   const practiceRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    if (!enabled) setOpen(false)
+  }, [enabled])
 
   useEffect(() => {
     function rememberTarget(event: FocusEvent) {
@@ -67,6 +76,8 @@ export default function HebrewKeyboardDock() {
     document.addEventListener('focusin', rememberTarget)
     return () => document.removeEventListener('focusin', rememberTarget)
   }, [])
+
+  if (!enabled) return null
 
   function currentTarget() {
     const target = lastTargetRef.current
@@ -137,10 +148,10 @@ export default function HebrewKeyboardDock() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+76px)] right-4 z-[58] flex min-h-11 items-center gap-2 rounded-full border border-indigo-200 bg-white/95 px-4 text-[12px] font-black text-indigo-700 shadow-[0_10px_28px_rgba(15,23,42,0.16)] backdrop-blur"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+148px)] right-4 z-[58] flex min-h-12 items-center gap-2 rounded-full border border-indigo-200 bg-white/95 px-4 text-[12px] font-black text-indigo-700 shadow-[0_10px_28px_rgba(15,23,42,0.16)] backdrop-blur"
           aria-label="Abrir teclado hebreo de VIDA"
         >
-          <span lang="he" dir="rtl" className="text-[1.15rem] leading-none">עברית</span>
+          <span lang="he" dir="rtl" className="text-[1.25rem] leading-none">עברית</span>
           <span>Teclado</span>
         </button>
       )}
@@ -148,7 +159,7 @@ export default function HebrewKeyboardDock() {
       {open && (
         <>
           <button type="button" aria-label="Cerrar teclado hebreo" onClick={() => setOpen(false)} className="fixed inset-0 z-[68] bg-slate-950/20" />
-          <section className="fixed inset-x-0 bottom-0 z-[69] mx-auto max-h-[78dvh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] border-t border-slate-200 bg-[#f9f9fb] px-3 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 shadow-[0_-18px_50px_rgba(15,23,42,0.18)] [-webkit-overflow-scrolling:touch]" aria-label="Teclado hebreo de VIDA">
+          <section className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+84px)] z-[69] mx-auto max-h-[calc(100dvh-150px)] w-auto max-w-2xl overflow-y-auto rounded-[28px] border border-slate-200 bg-[#f9f9fb] px-3 pb-3 pt-3 shadow-[0_20px_60px_rgba(15,23,42,0.22)] [-webkit-overflow-scrolling:touch]" aria-label="Teclado hebreo de VIDA">
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300" />
             <div className="flex items-center justify-between gap-3 px-1">
               <div className="min-w-0">
@@ -156,10 +167,13 @@ export default function HebrewKeyboardDock() {
                 <h2 className="text-[16px] font-black text-slate-950">Teclado hebreo</h2>
                 <p className="truncate text-[10px] font-bold text-slate-400">Escribiendo en: {activeLabel}</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="min-h-10 rounded-full border border-slate-200 bg-white px-4 text-[11px] font-black text-slate-600">Cerrar</button>
+              <div className="flex shrink-0 gap-1.5">
+                <button type="button" onClick={() => setOpen(false)} className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-[10px] font-black text-slate-600">Cerrar</button>
+                <button type="button" onClick={onDisable} className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-[10px] font-black text-slate-500">Desactivar</button>
+              </div>
             </div>
 
-            <div className="mt-3 rounded-[20px] border border-slate-200 bg-white p-3">
+            <div className="mt-3 border-y border-slate-200 py-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Práctica de escritura</p>
@@ -180,7 +194,7 @@ export default function HebrewKeyboardDock() {
                 }}
                 placeholder="כתוב כאן…"
                 rows={2}
-                className="mt-2 w-full resize-none rounded-[16px] bg-slate-50 px-4 py-3 text-right text-[2.1rem] font-black leading-relaxed text-slate-950 outline-none placeholder:text-slate-300"
+                className="mt-2 w-full resize-none rounded-[16px] bg-white px-4 py-3 text-right text-[2.1rem] font-black leading-relaxed text-slate-950 outline-none placeholder:text-slate-300"
               />
             </div>
 
