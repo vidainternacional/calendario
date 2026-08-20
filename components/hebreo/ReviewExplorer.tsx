@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, RotateCcw } from 'lucide-react'
 
-type ReviewArea = 'all' | 'letters' | 'vowels' | 'words' | 'reading' | 'rules'
+type ReviewArea = 'all' | 'letters' | 'vowels' | 'words' | 'reading' | 'rules' | 'verbs'
 type ReviewRating = 'know' | 'practice' | 'later'
 
 type ReviewItem = {
@@ -24,7 +24,19 @@ const AREAS: readonly { id: ReviewArea; label: string }[] = [
   { id: 'words', label: 'Palabras' },
   { id: 'reading', label: 'Lectura' },
   { id: 'rules', label: 'Reglas' },
+  { id: 'verbs', label: 'Verbos' },
 ]
+
+const MIXED_SESSION_IDS = [
+  'bet',
+  'pataj',
+  'melekh',
+  'bereshit-bara',
+  'article',
+  'verb-qatal-yiqtol',
+  'kaf-final',
+  'construct',
+] as const
 
 const ITEMS: readonly ReviewItem[] = [
   { id: 'bet', area: 'letters', label: 'Reconocer', prompt: '¿Qué letra es esta?', hebrew: 'ב', answer: 'Bet', note: 'Con dagesh suele representar /b/; sin dagesh, en la pronunciación pedagógica usada aquí, /v/.' },
@@ -47,6 +59,25 @@ const ITEMS: readonly ReviewItem[] = [
   { id: 'melekh-writing', area: 'words', label: 'Escritura', prompt: 'Escribe «rey» en hebreo sin niqqud.', answer: 'מלך', note: 'Con niqqud: מֶלֶךְ · mélej · rey.', writingTarget: 'מלך' },
   { id: 'genesis-short', area: 'reading', label: 'Lectura', prompt: 'Lee esta secuencia corta manteniendo el ritmo.', hebrew: 'אֵת הַשָּׁמַיִם', answer: 'et ha-shamáyim', note: 'No hace falta traducir אֵת como una palabra española independiente: aquí funciona como marcador gramatical.' },
   { id: 'plural', area: 'rules', label: 'Número', prompt: '¿Qué pista gramatical reconoces?', hebrew: 'טוֹבִים', answer: 'Plural; ־ִים es una terminación plural frecuente', note: 'Es una pista muy útil, pero no una regla absoluta para determinar género en todos los sustantivos.' },
+
+  { id: 'sheva-vocal', area: 'vowels', label: 'Sheva', prompt: 'En esta palabra, ¿qué función inicial estás practicando?', hebrew: 'בְּרֵאשִׁית', answer: 'Sheva vocal al inicio de la palabra', note: 'En esta etapa se practica como apertura de sílaba con vocal muy breve. La clasificación completa depende de estructura y tradición de lectura.' },
+  { id: 'sheva-silent', area: 'vowels', label: 'Sheva', prompt: '¿El sheva bajo ל añade una vocal independiente aquí?', hebrew: 'מַלְכָּה', answer: 'No · se practica como sheva silencioso', note: 'La lectura orientativa es mal-ká: el sheva bajo ל cierra la sílaba anterior.' },
+  { id: 'qamats-qatan', area: 'vowels', label: 'Qamats qatan', prompt: '¿Cómo se lee el qamats de esta palabra?', hebrew: 'כָּל', answer: 'kol · aquí se reconoce qamats qatan con valor o', note: 'No todo qamats se decide visualmente de la misma manera; el contexto y la edición textual importan.' },
+  { id: 'furtive-pataj', area: 'vowels', label: 'Pataj furtivo', prompt: '¿Dónde se oye la a del pataj final?', hebrew: 'רוּחַ', answer: 'Antes de la consonante final ח', note: 'Lectura orientativa: rúaj / rúaḥ. La vocal se anticipa; no crea una sílaba posterior a la consonante.' },
+
+  { id: 'possessive-beni', area: 'rules', label: 'Sufijo', prompt: 'Separa la base y el sufijo posesivo.', hebrew: 'בְּנִי', answer: 'בֵּן + ־ִי → בְּנִי · «mi hijo»', note: 'El corpus separa explícitamente la base y el sufijo. Observa que la vocal de la base cambia.' },
+  { id: 'possessive-aviv', area: 'rules', label: 'Sufijo', prompt: '¿Qué sufijo posesivo reconoces al final?', hebrew: 'אָבִיו', answer: 'אָב + ־וֹ → אָבִיו · «su padre / el padre de él»', note: 'La forma visible incorpora una vocal de enlace antes del sufijo.' },
+  { id: 'construct-devar', area: 'rules', label: 'Constructo', prompt: '¿Qué cambio observas al ligar el sustantivo?', hebrew: 'דָּבָר → דְּבַר', answer: 'Forma absoluta → forma constructa', note: 'Las vocales pueden reducirse cuando el primer sustantivo queda ligado al siguiente.' },
+  { id: 'construct-bnei', area: 'rules', label: 'Constructo', prompt: '¿Qué forma estás viendo?', hebrew: 'בְּנֵי', answer: 'Plural constructo de בֵּן', note: 'Compáralo con el plural absoluto בָנִים. El estado constructo no se reconoce por una única terminación universal.' },
+
+  { id: 'verb-qatal-yiqtol', area: 'verbs', label: 'Qal', prompt: '¿Qué diferencia morfológica principal estás comparando?', hebrew: 'אָמַר · יֹאמַר', answer: 'Qatal · Yiqtol', note: 'Qatal es forma sufijada y yiqtol forma prefijada. No memorices la equivalencia automática pasado/futuro.' },
+  { id: 'verb-qatal-1cs', area: 'verbs', label: 'Qatal', prompt: '¿Qué persona reconoces por la terminación?', hebrew: 'אָמַרְתִּי', answer: '1ª persona singular · forma qatal', note: 'La terminación ־תִּי marca aquí primera persona singular: «yo», pero la traducción temporal final depende del contexto.' },
+  { id: 'verb-yiqtol-1cs', area: 'verbs', label: 'Yiqtol', prompt: '¿Qué persona reconoce el prefijo א־?', hebrew: 'אֹמַר', answer: '1ª persona singular · forma yiqtol', note: 'El prefijo א־ ayuda a reconocer primera persona singular. Yiqtol no equivale automáticamente a futuro.' },
+  { id: 'verb-imperative', area: 'verbs', label: 'Imperativo', prompt: '¿Qué tipo de forma verbal es esta?', hebrew: 'אֱמֹר', answer: 'Imperativo Qal · 2ª masculina singular', note: 'Es una forma de orden o instrucción. La fuerza concreta de la orden depende del contexto.' },
+  { id: 'verb-participle', area: 'verbs', label: 'Participio', prompt: '¿Qué forma verbal reconoces?', hebrew: 'אֹמֵר', answer: 'Participio activo Qal · masculino singular', note: 'Puede traducirse de distintas maneras según la frase; no siempre corresponde a un gerundio español.' },
+  { id: 'verb-inf-construct', area: 'verbs', label: 'Infinitivo', prompt: 'Separa las piezas visibles de esta forma.', hebrew: 'לֵאמֹר', answer: 'לְ + infinitivo constructo de אָמַר', note: 'El corpus conserva la preposición y el infinitivo como componentes morfológicos separados dentro de la palabra.' },
+  { id: 'verb-wayyiqtol', area: 'verbs', label: 'Narración', prompt: '¿Qué forma secuencial frecuente en narración reconoces?', hebrew: 'וַיֹּאמֶר', answer: 'Wayyiqtol Qal de אָמַר', note: 'Se aprende como forma discursiva propia. No es una fórmula de «ו + futuro = pasado».' },
+  { id: 'verb-weqatal', area: 'verbs', label: 'Secuencia', prompt: '¿Qué combinación morfológica observas?', hebrew: 'וְאָמַרְתָּ', answer: 'וְ + qatal 2ª masculina singular · weqatal', note: 'Su valor se interpreta por la secuencia discursiva; no es una inversión mecánica del tiempo verbal.' },
 ] as const
 
 function ReviewIntroduction() {
@@ -65,6 +96,7 @@ function ReviewIntroduction() {
           <div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1 text-[14px] leading-relaxed text-slate-600 [-webkit-overflow-scrolling:touch]">
             <p>Repaso no es un examen. Mezcla elementos ya estudiados y te permite decidir qué recuerdas y qué conviene volver a practicar.</p>
             <p>Cada sesión usa hasta ocho elementos. Primero intenta responder; después revela la respuesta y clasifica cómo te fue.</p>
+            <p>Las reglas nuevas también se practican aquí: niqqud avanzado, transformaciones nominales y reconocimiento verbal. La traducción final de una forma verbal siempre sigue dependiendo del contexto.</p>
             <p>Por ahora las marcas existen solo durante esta sesión y no se guardan. La persistencia futura requerirá un diseño de datos y permisos aprobado por separado.</p>
           </div>
         </div>
@@ -81,7 +113,9 @@ export default function ReviewExplorer() {
   const [writing, setWriting] = useState('')
 
   const session = useMemo(() => {
-    const filtered = area === 'all' ? ITEMS : ITEMS.filter(item => item.area === area)
+    const filtered = area === 'all'
+      ? MIXED_SESSION_IDS.map(id => ITEMS.find(item => item.id === id)).filter((item): item is ReviewItem => Boolean(item))
+      : ITEMS.filter(item => item.area === area)
     return filtered.slice(0, 8)
   }, [area])
 
@@ -120,7 +154,7 @@ export default function ReviewExplorer() {
       <div className="text-center">
         <p lang="he" dir="rtl" className="text-[1rem] font-black text-indigo-700">חֲזָרָה</p>
         <h2 id="review-title" className="mt-0.5 text-[1.65rem] font-black tracking-[-0.025em] text-slate-950">Repasa lo que ya estudiaste</h2>
-        <p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Sesiones breves para recuperar letras, vocales, palabras, lectura y reglas sin convertirlo en otro examen.</p>
+        <p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Sesiones breves para recuperar letras, vocales, palabras, lectura, reglas y formas verbales sin convertirlo en otro examen.</p>
       </div>
 
       <div className="mt-5"><ReviewIntroduction /></div>

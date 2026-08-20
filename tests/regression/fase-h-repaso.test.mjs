@@ -13,8 +13,10 @@ test('FASE H repaso: Aprender abre Repaso como módulo real dentro del Bloque 1'
 
 test('FASE H repaso: distingue repaso de examen y mezcla áreas ya estudiadas', () => {
   assert.match(review, /Repaso no es un examen/)
-  for (const label of ['Mixto', 'Letras', 'Vocales', 'Palabras', 'Lectura', 'Reglas']) assert.match(review, new RegExp(label))
-  for (const area of ["area: 'letters'", "area: 'vowels'", "area: 'words'", "area: 'reading'", "area: 'rules'"]) assert.match(review, new RegExp(area))
+  for (const label of ['Mixto', 'Letras', 'Vocales', 'Palabras', 'Lectura', 'Reglas', 'Verbos']) assert.match(review, new RegExp(label))
+  for (const area of ["area: 'letters'", "area: 'vowels'", "area: 'words'", "area: 'reading'", "area: 'rules'", "area: 'verbs'"]) assert.match(review, new RegExp(area))
+  assert.match(review, /MIXED_SESSION_IDS/)
+  assert.match(review, /'verb-qatal-yiqtol'/)
 })
 
 test('FASE H repaso: usa sesiones cortas y autoevaluación explícita', () => {
@@ -31,6 +33,27 @@ test('FASE H repaso: incluye práctica de escritura compatible con el teclado he
   assert.match(review, /placeholder="כתוב כאן…"/)
   assert.match(review, /activar el teclado hebreo de VIDA arriba/)
   assert.match(review, /writingTarget/)
+})
+
+test('FASE H repaso: incorpora niqqud avanzado y transformaciones nominales verificadas', () => {
+  for (const id of ['sheva-vocal', 'sheva-silent', 'qamats-qatan', 'furtive-pataj', 'possessive-beni', 'possessive-aviv', 'construct-devar', 'construct-bnei']) {
+    assert.match(review, new RegExp(`id: '${id}'`))
+  }
+  for (const form of ['בְּרֵאשִׁית', 'מַלְכָּה', 'כָּל', 'רוּחַ', 'בְּנִי', 'אָבִיו', 'דָּבָר → דְּבַר', 'בְּנֵי']) {
+    assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+})
+
+test('FASE H repaso: practica Qal sin convertir morfología en pasado futuro mecánico', () => {
+  for (const id of ['verb-qatal-yiqtol', 'verb-qatal-1cs', 'verb-yiqtol-1cs', 'verb-imperative', 'verb-participle', 'verb-inf-construct', 'verb-wayyiqtol', 'verb-weqatal']) {
+    assert.match(review, new RegExp(`id: '${id}'`))
+  }
+  for (const form of ['אָמַרְתִּי', 'אֹמַר', 'אֱמֹר', 'אֹמֵר', 'לֵאמֹר', 'וַיֹּאמֶר', 'וְאָמַרְתָּ']) {
+    assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(review, /no equivale automáticamente a futuro/i)
+  assert.match(review, /No memorices la equivalencia automática pasado\/futuro/)
+  assert.match(review, /no es una fórmula de «ו \+ futuro = pasado»/i)
 })
 
 test('FASE H repaso: el resumen describe únicamente la sesión actual', () => {
