@@ -56,23 +56,34 @@ Los lotes de cobertura española son:
 - Confianza: 96.
 - Contexto usado como significado: **0**.
 
-## Cobertura auditada después de Batch 003
+### Batch 004
+
+- Migración: `supabase/migrations/20260820211500_fase_h_glosas_espanolas_batch_004.sql`.
+- Batch id: `fase_h_es_batch_004_20260820`.
+- Filas insertadas: **490**.
+- Glosas fuente inglesas cubiertas: **245**.
+- Confianza: 96.
+- Contexto usado como significado: **0**.
+
+## Cobertura auditada después de Batch 004
 
 - Total hebreo aprobado: **10,737**.
-- Español listo: **1,419**.
-- Español pendiente: **9,318**.
+- Español listo: **1,909**.
+- Español pendiente: **8,828**.
 - Filas editoriales antiguas rechazadas y no visibles: **1,011**.
-- Entradas todavía sin fila editorial española: **8,307**.
+- Entradas todavía sin fila editorial española: **7,817**.
 
-Los tres lotes nuevos aportaron **1,413** filas verificadas; las otras 6 entradas ya estaban cubiertas antes de estos lotes.
+Los cuatro lotes nuevos aportaron **1,903** filas verificadas; las otras 6 entradas ya estaban cubiertas antes de estos lotes.
 
-## Clasificación de las 8,307 entradas todavía sin fila editorial
+## Clasificación de trabajo restante
 
-Auditoría read-only:
+La clasificación anterior a Batch 004 identificó tres familias estructurales entre las entradas sin fila editorial:
 
-- `exact_named_entity`: **3,649** filas / 3,530 glosas fuente distintas.
-- `plain_gloss`: **3,182** filas / 2,529 glosas fuente distintas.
-- `encoded_reference_or_sense`: **1,476** filas / 1,428 glosas fuente distintas.
+- nombres/entidades exactas codificadas por la fuente;
+- glosas inglesas planas;
+- glosas con referencia o sentido técnico codificado.
+
+Batch 004 continúa reduciendo exclusivamente la familia de glosas planas mediante equivalencias inglesas directas y conservadoras. Antes de aplicar una política masiva a nombres propios debe recalcularse el contador de cada familia sobre el estado actual.
 
 La clase `exact_named_entity` se detecta únicamente cuando el nombre anterior a `»` coincide exactamente con la entidad anotada antes de `@`. No debe asumirse que una grafía inglesa sea automáticamente la forma española canónica.
 
@@ -83,8 +94,8 @@ La clase `exact_named_entity` se detecta únicamente cuando el nombre anterior a
    - forma fuente;
    - forma española canónica cuando pueda verificarse;
    - clasificación de nombre propio cuando no exista traducción léxica.
-3. No llenar automáticamente los 3,649 nombres con la grafía inglesa bajo la etiqueta de español solo para llevar el contador a cero.
-4. Resolver después los 1,476 `encoded_reference_or_sense` mediante parser de la glosa fuente, sin copiar la anotación técnica como significado.
+3. No llenar automáticamente los nombres con la grafía inglesa bajo la etiqueta de español solo para llevar el contador a cero.
+4. Resolver después los `encoded_reference_or_sense` mediante parser de la glosa fuente, sin copiar la anotación técnica como significado.
 5. Las 1,011 filas `rejected` antiguas se tratan al final de forma separada y reversible; no reactivarlas por accidente.
 
 ## Reversión
@@ -93,10 +104,10 @@ Cada lote se revierte de forma localizada, por ejemplo:
 
 ```sql
 DELETE FROM public.biblical_hebrew_spanish_glosses
-WHERE provenance->>'batch_id' = 'fase_h_es_batch_003_20260820';
+WHERE provenance->>'batch_id' = 'fase_h_es_batch_004_20260820';
 ```
 
-Cambiar el `batch_id` permite revertir 001 o 002 sin afectar otras filas.
+Cambiar el `batch_id` permite revertir 001, 002 o 003 sin afectar otras filas.
 
 ## Control de fase
 
