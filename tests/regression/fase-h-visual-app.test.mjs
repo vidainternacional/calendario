@@ -59,12 +59,37 @@ test('FASE H visual: Reglas evita tabla comprimida y agranda formas hebreas', ()
   assert.match(grammar, /cellIndex === 0 \? 'text-\[2rem\]/)
 })
 
-test('FASE H visual: Básicas de Reglas sigue siendo subconjunto de Todas', () => {
+test('FASE H visual: filtros de Reglas conservan Básicas y agregan Verbos sin mezclar categorías', () => {
   const rules = grammar.slice(grammar.indexOf('const RULES:'), grammar.indexOf('const TABLES:'))
   assert.equal((rules.match(/group: 'base'/g) ?? []).length, 2)
-  assert.equal((rules.match(/id: '(?:article|conjunction|preposition-b|prepositions|preposition-article|gender|plural|agreement|construct)'/g) ?? []).length, 9)
+  assert.equal((rules.match(/group: 'prefixes'/g) ?? []).length, 3)
+  assert.equal((rules.match(/group: 'nouns'/g) ?? []).length, 2)
+  assert.equal((rules.match(/group: 'verbs'/g) ?? []).length, 8)
+  assert.equal((rules.match(/group: 'phrase'/g) ?? []).length, 2)
+  assert.equal((rules.match(/\{ id: '/g) ?? []).length, 17)
+  assert.match(grammar, /\{ id: 'verbs', label: 'Verbos' \}/)
   assert.match(grammar, /group === 'all' \? RULES : RULES\.filter/)
   assert.match(grammar, /\$\{filtered\.length\} de \$\{RULES\.length\} reglas/)
+})
+
+test('FASE H gramática: posesivos y Qal usan transformaciones verificables y cautelas temporales', () => {
+  for (const marker of [
+    "id: 'possessive-transformations'",
+    "id: 'qal-map'",
+    "id: 'qal-qatal-person'",
+    "id: 'qal-yiqtol-person'",
+    'בְּנִי',
+    'פִּיו',
+    'וַיֹּאמֶר',
+    'וְאָמַרְתָּ',
+    'אֱמֹר',
+    'אֹמֵר',
+    'לֵאמֹר',
+  ]) assert.match(grammar, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(grammar, /no equivale automáticamente a pasado/)
+  assert.match(grammar, /no equivale automáticamente a futuro/)
+  assert.match(grammar, /no es «ו \+ futuro = pasado»/)
+  assert.match(grammar, /Raíces permanecen ocultas hasta contar con una fuente explícita/)
 })
 
 test('FASE H visual: contrato obliga a mantener dinámica de app en superficies nuevas', () => {
