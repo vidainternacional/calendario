@@ -65,11 +65,12 @@ test('FASE H: búsqueda de Palabras es global y al borrar restaura la página pr
   assert.match(words, /if \(value === '' && search\) clearSearch\(\)/)
   assert.match(words, /setPage\(pageBeforeSearch\.current\)/)
   assert.match(catalog, /if \(!search\) \{/)
-  assert.match(catalog, /if \(search\) \{/)
+  assert.match(catalog, /if \/\\p\{Script=Hebrew\}\/u\.test\(search\)/)
   assert.match(catalog, /contextualSpanishSearch/)
+  assert.match(catalog, /transliterationSearch/)
   const noSearch = catalog.indexOf('if (!search) {')
-  const searchBlock = catalog.indexOf('if (search) {')
-  assert.ok(noSearch >= 0 && searchBlock > noSearch)
+  const hebrewSearch = catalog.indexOf("if (/\\p{Script=Hebrew}/u.test(search)) {")
+  assert.ok(noSearch >= 0 && hebrewSearch > noSearch)
 })
 
 test('FASE H: Lectura usa frases y oraciones reales con corpus paginado', () => {
@@ -82,7 +83,10 @@ test('FASE H: Lectura usa frases y oraciones reales con corpus paginado', () => 
   assert.match(readingCatalog, /STARTER_REFERENCES/)
 })
 
-test('FASE H: Palabras y Lectura no introducen audio persistencia ni escrituras de base', () => {
+test('FASE H: Palabras y Lectura no introducen audio ni persistencia local; Palabras solo escribe índice derivado', () => {
   for (const content of [words, reading]) assert.doesNotMatch(content, /speechSynthesis|new Audio|Audio\(|localStorage|sessionStorage/)
-  for (const content of [catalog, readingCatalog]) assert.doesNotMatch(content, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
+  assert.doesNotMatch(readingCatalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
+  assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
+  assert.match(catalog, /\.upsert\(payload/)
+  assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete|upsert)\(/)
 })

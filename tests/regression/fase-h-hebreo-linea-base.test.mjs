@@ -175,10 +175,12 @@ test('FASE H: Biblia en hebreo conserva lector guiado sin duplicar motor', () =>
   assert.match(home, /no crea otro motor bíblico ni nuevas tablas/)
 })
 
-test('FASE H: no introduce audio ni persistencia falsa', () => {
+test('FASE H: no introduce audio ni persistencia falsa; el catálogo solo persiste resoluciones derivadas autorizadas', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
   for (const content of [home, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /speechSynthesis|new Audio|Audio\(/)
-  assert.doesNotMatch(catalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
+  assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
+  assert.match(catalog, /\.upsert\(payload/)
+  assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete|upsert)\(/)
   assert.doesNotMatch(readingCatalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
   assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
 })
