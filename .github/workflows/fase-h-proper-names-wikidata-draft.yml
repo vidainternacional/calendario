@@ -77,6 +77,8 @@ jobs:
           grep -q 'BORRADOR NO ACTIVO' supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
           grep -q "context_used_as_meaning',false" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
           grep -R -q 'spanish_anchor_sources >= 2' supabase/migration-drafts/nombres-wikidata-anchor2
+          grep -R -q "exact_source_entity',true" supabase/migration-drafts/nombres-wikidata-anchor2
+          grep -R -q "split_part(e.source_gloss,'»',1)" supabase/migration-drafts/nombres-wikidata-anchor2
           grep -R -q "anchor_used_for_name_spelling_only',true" supabase/migration-drafts/nombres-wikidata-anchor2
           grep -R -q 'on conflict (lexical_entry_id) do nothing' supabase/migration-drafts/nombres-wikidata-anchor2
           ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql supabase/migration-drafts/nombres-wikidata-anchor2
@@ -107,6 +109,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'Sin cambios que versionar.'
           else
-            git commit -m 'data(fase-h): versionar nombres con doble evidencia española'
+            git commit -m 'data(fase-h): versionar nombres con identidad exacta'
             git push origin HEAD:agent/fase-h-hebreo-biblico
           fi
