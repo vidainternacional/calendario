@@ -8,6 +8,7 @@ on:
       - .github/workflows/fase-h-proper-names-wikidata-draft.yml
       - scripts/hebreo/build_tipnr_wikidata_draft.py
       - scripts/hebreo/fetch_wikidata_labels.py
+      - scripts/hebreo/split_tipnr_wikidata_confirmed_chunks.py
 
 permissions:
   contents: write
@@ -27,6 +28,7 @@ jobs:
         run: |
           python3 scripts/hebreo/fetch_wikidata_labels.py --self-test
           python3 scripts/hebreo/build_tipnr_wikidata_draft.py --self-test
+          python3 scripts/hebreo/split_tipnr_wikidata_confirmed_chunks.py --self-test
 
       - name: Descargar crosswalk TIPNR fijado por blob
         env:
@@ -55,7 +57,7 @@ jobs:
             --batch-size 50 \
             --sleep-ms 150
 
-      - name: Generar borrador auditable
+      - name: Generar borrador auditable y chunks con doble evidencia
         run: |
           mkdir -p supabase/migration-drafts docs/audits
           python3 scripts/hebreo/build_tipnr_wikidata_draft.py \
@@ -63,24 +65,33 @@ jobs:
             --wikidata-labels-tsv /tmp/wikidata-labels.tsv \
             --output-sql supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
             --audit docs/audits/fase_h_nombres_wikidata_20260820.json
+          python3 scripts/hebreo/split_tipnr_wikidata_confirmed_chunks.py \
+            --input-sql supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
+            --output-dir supabase/migration-drafts/nombres-wikidata-anchor2 \
+            --audit docs/audits/fase_h_nombres_wikidata_anchor2_chunks_20260820.json \
+            --chunk-size 40
           cp /tmp/wikidata-labels-audit.json docs/audits/fase_h_wikidata_labels_20260820.json
 
-      - name: Verificar que sigue siendo borrador sin DB
+      - name: Verificar que siguen siendo borradores sin DB
         run: |
           grep -q 'BORRADOR NO ACTIVO' supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
           grep -q "context_used_as_meaning',false" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
-          ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
+          grep -R -q 'spanish_anchor_sources >= 2' supabase/migration-drafts/nombres-wikidata-anchor2
+          grep -R -q "anchor_used_for_name_spelling_only',true" supabase/migration-drafts/nombres-wikidata-anchor2
+          ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql supabase/migration-drafts/nombres-wikidata-anchor2
 
-      - name: Versionar únicamente borrador y auditorías
+      - name: Versionar únicamente borradores y auditorías
         run: |
           git config user.name 'vida-hebreo-data-bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
+                  supabase/migration-drafts/nombres-wikidata-anchor2 \
                   docs/audits/fase_h_nombres_wikidata_20260820.json \
+                  docs/audits/fase_h_nombres_wikidata_anchor2_chunks_20260820.json \
                   docs/audits/fase_h_wikidata_labels_20260820.json
           if git diff --cached --quiet; then
             echo 'Sin cambios que versionar.'
           else
-            git commit -m 'data(fase-h): generar borrador verificado de nombres propios'
+            git commit -m 'data(fase-h): generar nombres con doble evidencia española'
             git push origin HEAD:agent/fase-h-hebreo-biblico
           fi
