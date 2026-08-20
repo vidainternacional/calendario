@@ -1,0 +1,86 @@
+name: FASE H nombres propios Wikidata draft
+
+on:
+  push:
+    branches:
+      - agent/fase-h-hebreo-biblico
+    paths:
+      - .github/workflows/fase-h-proper-names-wikidata-draft.yml
+      - scripts/hebreo/build_tipnr_wikidata_draft.py
+      - scripts/hebreo/fetch_wikidata_labels.py
+
+permissions:
+  contents: write
+
+jobs:
+  build-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/fase-h-hebreo-biblico
+          fetch-depth: 0
+
+      - name: Validar scripts
+        run: |
+          python3 scripts/hebreo/fetch_wikidata_labels.py --self-test
+          python3 scripts/hebreo/build_tipnr_wikidata_draft.py --self-test
+
+      - name: Descargar crosswalk TIPNR fijado por blob
+        env:
+          TIPNR_BLOB: abc3e21b9d08dc310066152f9b62858c4818f4eb
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, urllib.request
+          blob = os.environ['TIPNR_BLOB']
+          url = f'https://api.github.com/repos/PatristicTextArchive/tipnr_data/git/blobs/{blob}'
+          req = urllib.request.Request(url, headers={'User-Agent':'VIDA-Internacional-Hebreo/1.0'})
+          with urllib.request.urlopen(req, timeout=30) as response:
+              payload = json.load(response)
+          if payload.get('sha') != blob:
+              raise SystemExit('Blob TIPNR inesperado')
+          content = base64.b64decode(payload['content'])
+          open('/tmp/tipnr-persons-wikidata.tsv','wb').write(content)
+          print(f'TIPNR bytes={len(content)} blob={blob}')
+          PY
+
+      - name: Obtener etiquetas Wikidata CC0
+        run: |
+          python3 scripts/hebreo/fetch_wikidata_labels.py \
+            --tipnr-wikidata-tsv /tmp/tipnr-persons-wikidata.tsv \
+            --output /tmp/wikidata-labels.tsv \
+            --audit /tmp/wikidata-labels-audit.json \
+            --batch-size 50 \
+            --sleep-ms 150
+
+      - name: Generar borrador auditable
+        run: |
+          mkdir -p supabase/migration-drafts docs/audits
+          python3 scripts/hebreo/build_tipnr_wikidata_draft.py \
+            --tipnr-wikidata-tsv /tmp/tipnr-persons-wikidata.tsv \
+            --wikidata-labels-tsv /tmp/wikidata-labels.tsv \
+            --output-sql supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
+            --audit docs/audits/fase_h_nombres_wikidata_20260820.json
+          cp /tmp/wikidata-labels-audit.json docs/audits/fase_h_wikidata_labels_20260820.json
+
+      - name: Verificar que sigue siendo borrador sin DB
+        run: |
+          grep -q 'BORRADOR NO ACTIVO' supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
+          grep -q "context_used_as_meaning',false" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
+          ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
+
+      - name: Versionar únicamente borrador y auditorías
+        run: |
+          git config user.name 'vida-hebreo-data-bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
+                  docs/audits/fase_h_nombres_wikidata_20260820.json \
+                  docs/audits/fase_h_wikidata_labels_20260820.json
+          if git diff --cached --quiet; then
+            echo 'Sin cambios que versionar.'
+          else
+            git commit -m 'data(fase-h): generar borrador verificado de nombres propios'
+            git push origin HEAD:agent/fase-h-hebreo-biblico
+          fi
