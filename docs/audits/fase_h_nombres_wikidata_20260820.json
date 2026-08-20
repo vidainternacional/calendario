@@ -1,0 +1,27 @@
+{
+  "batch_id_proposed": "fase_h_es_nombres_wikidata_draft_20260820",
+  "crosswalk_rows_with_qid": 848,
+  "distinct_qids_accepted": 293,
+  "mapping_identities_accepted": 546,
+  "phase": "FASE_H_BLOQUE_3",
+  "reasons": {
+    "accepted_identity": 546,
+    "english_identity_mismatch": 46,
+    "wikidata_without_spanish_label": 256
+  },
+  "safety": {
+    "active_migration": false,
+    "context_used_as_meaning": false,
+    "fuzzy_matching": false,
+    "rv1909_used_as_meaning": false,
+    "writes_database": false
+  },
+  "sources": {
+    "step_tipnr_license": "CC BY 4.0",
+    "step_tipnr_revision": "b83a3cf1224af5cf72606d86d6be1789adc69541",
+    "tipnr_crosswalk": "https://github.com/PatristicTextArchive/tipnr_data/blob/master/tipnr-persons-wikidata.tsv",
+    "tipnr_crosswalk_blob": "abc3e21b9d08dc310066152f9b62858c4818f4eb",
+    "wikidata_license": "CC0-1.0"
+  },
+  "status": "draft_only_not_applied"
+}
