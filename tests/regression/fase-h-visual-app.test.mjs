@@ -60,8 +60,9 @@ test('FASE H visual: Reglas evita tabla comprimida y agranda formas hebreas', ()
 })
 
 test('FASE H visual: Básicas de Reglas sigue siendo subconjunto de Todas', () => {
-  assert.equal((grammar.match(/group: 'base'/g) ?? []).length, 2)
-  assert.equal((grammar.match(/id: '(?:article|conjunction|preposition-b|prepositions|preposition-article|gender|plural|agreement|construct)'/g) ?? []).length, 9)
+  const rules = grammar.slice(grammar.indexOf('const RULES:'), grammar.indexOf('const TABLES:'))
+  assert.equal((rules.match(/group: 'base'/g) ?? []).length, 2)
+  assert.equal((rules.match(/id: '(?:article|conjunction|preposition-b|prepositions|preposition-article|gender|plural|agreement|construct)'/g) ?? []).length, 9)
   assert.match(grammar, /group === 'all' \? RULES : RULES\.filter/)
   assert.match(grammar, /\$\{filtered\.length\} de \$\{RULES\.length\} reglas/)
 })
