@@ -27,8 +27,10 @@ El audio no se sustituye con `speechSynthesis`. Escuchar/repetir solo se habilit
 - **Palabras:** diccionario/vocabulario separado de Lectura; validado como dirección pedagógica.
 - **Lectura:** frases, oraciones y versículos reales separados de Palabras; validado como dirección pedagógica.
 - **Reglas:** pedagogía mixta Tablas · Fichas · Detalle validada como dirección general.
-- **Teclado hebreo VIDA:** aprobado como herramienta útil, pero debe permanecer apagado por defecto y activarse manualmente desde la parte superior del módulo.
-- **Gate actual:** **Repaso + ajuste final del teclado opcional**, técnicamente implementados; pendiente validación visual móvil.
+- **Teclado hebreo VIDA:** aprobado como herramienta útil, apagado por defecto y activable/desactivable desde la parte superior del módulo.
+- **Gate actual:** **Repaso + ajuste final del teclado opcional**, implementación técnica verde; pendiente validación visual móvil.
+- CI temporal #2298: **SUCCESS** — regresiones, lint y build.
+- Vercel Preview del head `6d3ef9ec591974ee722a27b94f1da9d19f4567dc`: **READY**.
 - No activar todavía audio, progreso persistente, desbloqueos ni evaluación almacenada.
 
 ## 3. Arquitectura de información
