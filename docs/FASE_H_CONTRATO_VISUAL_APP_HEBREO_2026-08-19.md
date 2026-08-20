@@ -102,3 +102,12 @@ Más específicamente:
 `Fichas para memorizar + Tablas para comparar + Listas nativas para recorrer + Detalle para profundizar`.
 
 Este patrón se aplica a Alef-Bet, Vocales, Palabras, Lectura, Reglas y futuras superficies de Repaso/práctica dentro de FASE H.
+
+## 12. Alineación pedagógica transversal
+
+- Los títulos, subtítulos, explicaciones, instrucciones, cautelas, ayudas, respuestas didácticas y notas visibles del Centro de Hebreo Bíblico se presentan centrados.
+- Las tablas/listas didácticas centran encabezados y celdas para conservar la misma lectura visual del Alef-Bet.
+- El hebreo mantiene dirección semántica `rtl`, pero cuando se presenta como contenido de aprendizaje se centra visualmente dentro de su superficie.
+- En disclosures como “¿Qué es…?” o “¿Cómo vamos a aprender…?”, el título permanece centrado aunque el chevrón de abrir/cerrar se conserve en el extremo.
+- Los campos de búsqueda y práctica de escritura son la excepción funcional: conservan la alineación necesaria para escribir y posicionar el cursor correctamente según el idioma/dirección del contenido.
+- Este criterio es transversal: toda nueva superficie creada dentro de FASE H debe heredarlo sin volver a decidirlo pantalla por pantalla.
