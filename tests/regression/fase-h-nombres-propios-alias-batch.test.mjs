@@ -7,14 +7,23 @@ const migration = fs.readFileSync(
   'utf8',
 )
 
-test('FASE H bloque 3: alias español exige identidad de nombre fuente y ancla exacta', () => {
-  assert.match(migration, /lower\(btrim\(split_part\(e\.source_gloss, '»', 1\)\)\)/)
-  assert.match(migration, /having count\(distinct alias_es\) = 1/)
-  assert.match(migration, /spanish_aliases\.alias_es !~ '\\\\s'/)
-  assert.match(migration, /position\(' ' \|\| alias_norm \|\| ' ' in ' ' \|\| verse_norm \|\| ' '\) > 0/)
+test('FASE H bloque 3: aliases publicados quedan congelados y no dependen de red al migrar', () => {
+  const frozenRows = migration.match(/^\s*\('[^\n]+wikidata-lastrevid:[0-9]+'\),?$/gm) ?? []
+  assert.equal(frozenRows.length, 52)
+  assert.match(migration, /Máximo esperado: 54 entradas léxicas/)
+  assert.doesNotMatch(migration, /wikidata\.org\/w\/api\.php/)
+  assert.doesNotMatch(migration, /http_get\(/)
 })
 
-test('FASE H bloque 3: lote alias fija revisión y no usa contexto como significado', () => {
+test('FASE H bloque 3: alias español exige identidad fuente y ancla RV1909 exacta', () => {
+  assert.match(migration, /map\.tipnr_id =/)
+  assert.match(migration, /lower\(btrim\(split_part\(e\.source_gloss, '»', 1\)\)\)/)
+  assert.match(migration, /slug = 'rv1909-ebible'/)
+  assert.match(migration, /position\(/)
+  assert.match(migration, /ÁÉÍÓÚÜÑáéíóúüñ/)
+})
+
+test('FASE H bloque 3: lote alias fija procedencia y no usa contexto como significado', () => {
   assert.match(migration, /wikidata-lastrevid:/)
   assert.match(migration, /frozen_candidate_sha256/)
   assert.match(migration, /rv1909_used_as_validation', true/)
