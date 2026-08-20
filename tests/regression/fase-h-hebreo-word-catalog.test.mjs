@@ -107,7 +107,12 @@ test('FASE H: endpoint mantiene sesión privada y acepta group', () => {
   assert.match(route, /'Cache-Control': 'private, no-store'/)
 })
 
-test('FASE H: no introduce audio ni persistencia local ni escritura de base', () => {
+test('FASE H: no introduce audio ni persistencia local y limita la escritura al índice derivado', () => {
   assert.doesNotMatch(words, /speechSynthesis|new Audio|Audio\(|localStorage|sessionStorage/)
-  assert.doesNotMatch(catalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
+  assert.match(catalog, /import \{ createServiceClient \} from '@\/lib\/supabase\/service'/)
+  assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
+  assert.match(catalog, /\.upsert\(payload/)
+  assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.upsert\(/)
+  assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete)\(/)
+  assert.doesNotMatch(catalog, /profile_id|user_id|auth\.uid/)
 })
