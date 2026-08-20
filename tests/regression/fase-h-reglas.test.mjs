@@ -46,8 +46,8 @@ test('FASE H reglas: cada regla prioriza forma ejemplo pronunciación significad
 test('FASE H reglas: arquitectura distingue hebreo bíblico de conversación moderna', () => {
   assert.match(architecture, /leer, pronunciar y comprender progresivamente el hebreo bíblico/)
   assert.match(architecture, /no mezcla hebreo moderno conversacional/)
-  assert.match(architecture, /\*\*Gate actual:\*\* \*\*Reglas[^\n]*\*\*/)
-  assert.match(architecture, /Repaso.*siguiente área después de validar Reglas/)
+  assert.match(architecture, /\*\*Reglas:\*\* pedagogía mixta Tablas · Fichas · Detalle validada como dirección general/)
+  assert.match(architecture, /\*\*Gate actual:\*\* \*\*Repaso \+ ajuste final del teclado opcional\*\*/)
 })
 
 test('FASE H reglas: no introduce audio falso ni persistencia', () => {
