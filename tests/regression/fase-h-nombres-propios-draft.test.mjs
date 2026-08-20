@@ -5,6 +5,10 @@ import test from 'node:test'
 
 const builder = fs.readFileSync('scripts/hebreo/build_tipnr_wikidata_draft.py', 'utf8')
 const workflow = fs.readFileSync('.github/workflows/fase-h-preparar-nombres-propios.yml', 'utf8')
+const anchoredMigration = fs.readFileSync(
+  'supabase/migrations/20260820233030_fase_h_glosas_nombres_propios_wikidata_rv1909_anchor.sql',
+  'utf8',
+)
 
 test('FASE H bloque 3: generador TIPNR/Wikidata pasa self-test sin red', () => {
   execFileSync('python3', ['scripts/hebreo/build_tipnr_wikidata_draft.py', '--self-test'], { stdio: 'pipe' })
@@ -39,4 +43,22 @@ test('FASE H bloque 3: preparación en GitHub no recibe credenciales de Supabase
   assert.match(workflow, /supabase\/migration-drafts/)
   assert.match(workflow, /git hash-object/)
   assert.match(workflow, /abc3e21b9d08dc310066152f9b62858c4818f4eb/)
+})
+
+test('FASE H bloque 3: nombres propios publicados exigen ancla española exacta en RV1909', () => {
+  assert.match(anchoredMigration, /e45bd7b1e317c9f152c7978b103811c6807841b0f9d895b82cfd0fcf607d7eb6/)
+  assert.match(anchoredMigration, /slug = 'rv1909-ebible'/)
+  assert.match(anchoredMigration, /position\(' ' \|\| label_norm \|\| ' ' in ' ' \|\| verse_norm \|\| ' '\) > 0/)
+  assert.match(anchoredMigration, /rv1909_used_as_validation', true/)
+  assert.match(anchoredMigration, /rv1909_used_as_meaning', false/)
+  assert.match(anchoredMigration, /context_used_as_meaning', false/)
+})
+
+test('FASE H bloque 3: lote de nombres validado sigue siendo insert-only y reversible', () => {
+  assert.match(anchoredMigration, /g\.lexical_entry_id is null/)
+  assert.match(anchoredMigration, /on conflict \(lexical_entry_id\) do nothing/)
+  assert.match(anchoredMigration, /fase_h_es_nombres_wikidata_rv1909_anchor_001_20260820/)
+  assert.match(anchoredMigration, /DELETE FROM public\.biblical_hebrew_spanish_glosses/)
+  assert.doesNotMatch(anchoredMigration, /update public\.biblical_hebrew_spanish_glosses/i)
+  assert.doesNotMatch(anchoredMigration, /delete from public\.biblical_lexical_entries/i)
 })
