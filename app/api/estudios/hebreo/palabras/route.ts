@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { listarCatalogoHebreoParaAprendizaje } from '@/lib/hebreo/word-catalog'
 import { enriquecerCatalogoConGlosasEspanolas } from '@/lib/hebreo/spanish-glosses'
+import { priorizarAmbiguedadHebrea } from '@/lib/hebreo/hebrew-ambiguity'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,9 +18,12 @@ export async function GET(request: Request) {
   const group = url.searchParams.get('group') ?? 'essentials'
 
   const baseResult = await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search, group })
-  const result = baseResult.status === 'ok'
+  const glossedResult = baseResult.status === 'ok'
     ? await enriquecerCatalogoConGlosasEspanolas(baseResult)
     : baseResult
+  const result = glossedResult.status === 'ok'
+    ? await priorizarAmbiguedadHebrea(glossedResult)
+    : glossedResult
 
   if (result.status === 'sin-sesion') {
     return NextResponse.json(result, { status: 401 })
