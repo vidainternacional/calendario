@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Validar FASE H activa y cierre documentado de FASE G
+      - name: Validar FASE H activa, Bloque 1 cerrado y Bloque 2 activo
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -42,14 +42,16 @@ jobs:
               '**Navegación móvil global:**',
               '**Historial reversible:**',
               'docs/FASE_G_CIERRE_2026-08-18.md',
+              '### Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO — 2026-08-19',
+              '### Bloque 2 — Fundamentos de lectura y gramática progresiva — ACTIVO',
           ]
           missing = [value for value in required_once if text.count(value) != 1]
           if missing:
               raise SystemExit(f'Estado maestro de FASE H inválido o duplicado: {missing}')
 
-          next_gate = 'Iniciar exclusivamente FASE H con el Bloque 1 — línea base de fuentes y arquitectura didáctica'
+          next_gate = 'Continuar exclusivamente FASE H con el Bloque 2 — fundamentos de lectura y gramática progresiva'
           if text.count(next_gate) != 1:
-              raise SystemExit('El documento maestro perdió el siguiente punto autorizado de FASE H')
+              raise SystemExit('El documento maestro perdió el siguiente punto autorizado del Bloque 2 de FASE H')
 
           active_lines = [line for line in text.splitlines() if line.startswith('Fase / prioridad activa:')]
           expected_active = ['Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**']
@@ -75,6 +77,6 @@ jobs:
           if present:
               raise SystemExit(f'El documento maestro reactivó una fase cerrada o una prioridad pausada: {present}')
 
-          print('Documento maestro: FASE G completada; FASE H activa; FASE I planificada; piloto pausado: OK')
+          print('Documento maestro: FASE H activa; Bloque 1 cerrado; Bloque 2 activo; FASE I planificada; piloto pausado: OK')
           PY
           git diff --check
