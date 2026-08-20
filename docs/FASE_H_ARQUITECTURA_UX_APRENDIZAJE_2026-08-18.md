@@ -26,8 +26,9 @@ El audio no se sustituye con `speechSynthesis`. Escuchar/repetir solo se habilit
 - **Vocales / niqqud:** base visual validada; conserva fichas y comparación tabular.
 - **Palabras:** diccionario/vocabulario separado de Lectura; validado como dirección pedagógica.
 - **Lectura:** frases, oraciones y versículos reales separados de Palabras; validado como dirección pedagógica.
-- **Gate actual:** **Reglas — pedagogía mixta**, técnicamente verde; pendiente validación visual móvil.
-- **Repaso:** permanece como siguiente área después de validar Reglas.
+- **Reglas:** pedagogía mixta Tablas · Fichas · Detalle validada como dirección general.
+- **Teclado hebreo VIDA:** aprobado como herramienta útil, pero debe permanecer apagado por defecto y activarse manualmente desde la parte superior del módulo.
+- **Gate actual:** **Repaso + ajuste final del teclado opcional**, técnicamente implementados; pendiente validación visual móvil.
 - No activar todavía audio, progreso persistente, desbloqueos ni evaluación almacenada.
 
 ## 3. Arquitectura de información
@@ -42,6 +43,13 @@ Inicio:
 
 La portada conserva alta densidad útil: encabezado compacto + cuatro accesos 2×2. Ningún bloque se abre por defecto.
 
+Herramienta transversal opcional:
+- **Teclado hebreo** — apagado por defecto;
+- Activar/Desactivar inmediatamente debajo de los cuatro accesos principales;
+- al activarlo aparece un acceso flotante más alto que la navegación inferior;
+- al desactivarlo desaparece completamente;
+- conserva compatibilidad con el teclado hebreo nativo del teléfono.
+
 ## 4. Orden didáctico actual de Aprender
 
 1. **Alef-Bet** — letras y diferencias visuales.
@@ -49,7 +57,7 @@ La portada conserva alta densidad útil: encabezado compacto + cuatro accesos 2�
 3. **Palabras** — vocabulario/diccionario para memorizar términos.
 4. **Lectura** — frases y oraciones reales para ganar continuidad.
 5. **Reglas** — piezas, transformaciones y relaciones gramaticales que explican lo que se está leyendo.
-6. **Repaso** — recuperación de errores y confusiones.
+6. **Repaso** — recuperación de errores y confusiones mediante sesiones locales breves.
 
 Dentro de estas áreas se incorporan progresivamente Sofit, Dagesh, matres lectionis, sheva, qamats qatan, pataj furtivo, inseparables, género/número, posesivos, estado constructo, raíces verificadas, sistema verbal por capas y Qere/Ketiv.
 
@@ -64,6 +72,7 @@ No todo contenido debe usar la misma vista. La interfaz se escoge según la tare
 - **Ejemplo real:** palabra, frase o versículo del corpus aprobado.
 - **Práctica:** comprobar reconocimiento después de la explicación.
 - **Lectura aplicada:** localizar después el mismo fenómeno dentro del texto bíblico.
+- **Repaso:** recuperar contenido ya estudiado sin convertirlo en un segundo examen.
 
 Reglas comunes:
 - contenido hebreo protagonista;
@@ -141,9 +150,9 @@ Conserva:
 
 La lectura debe convertirse progresivamente en el lugar donde se aplican las letras, vocales, palabras y reglas aprendidas.
 
-## 10. Reglas — gate actual
+## 10. Reglas — validado como dirección pedagógica
 
-Reglas debe explicar **por qué una forma se ve como se ve** mediante comparación, transformación y ejemplos; no mediante una sola colección de fichas.
+Reglas explica **por qué una forma se ve como se ve** mediante comparación, transformación y ejemplos; no mediante una sola colección de fichas.
 
 ### Vista principal — Tablas
 
@@ -185,16 +194,21 @@ Permite recorrer una regla por vez con Anterior/Siguiente.
 
 El sistema verbal y las raíces completas se incorporarán por capas posteriores dentro del mismo recorrido.
 
-## 11. Repaso — siguiente después de Reglas
+## 11. Repaso — gate actual
 
-Sesiones breves de 5–10 elementos que combinen lo ya estudiado.
+`ReviewExplorer` implementa una primera sesión real, pero no persistente.
 
-Estados futuros:
-- Lo sé.
-- Necesito practicar.
-- Repasar después.
+Contrato actual:
+- hasta 8 elementos por sesión;
+- filtros Mixto · Letras · Vocales · Palabras · Lectura · Reglas;
+- primero intentar responder;
+- después `Mostrar respuesta`;
+- autoevaluación explícita: `Lo sé · Necesito practicar · Repasar después`;
+- ejercicios de escritura compatibles con teclado nativo y teclado VIDA;
+- resumen final únicamente de la sesión actual;
+- ninguna marca se presenta como progreso permanente.
 
-Cuando exista persistencia real, Repaso priorizará errores, confusiones y antigüedad del último estudio; no porcentajes ficticios.
+Cuando exista persistencia real, Repaso podrá priorizar errores, confusiones y antigüedad del último estudio. Ese paso requerirá diseño de almacenamiento y permisos aprobado por separado.
 
 ## 12. Prueba tu progreso
 
@@ -254,5 +268,6 @@ No se copian páginas, tablas ni textos extensos. La redacción de VIDA es propi
 - jerarquía por espaciado, tipografía y separadores;
 - minimizar scroll vertical cuando la información puede agruparse;
 - permitir scroll horizontal en tablas comparativas extensas;
+- herramientas avanzadas opcionales apagadas por defecto cuando un principiante aún no las necesita;
 - no mascotas, confeti, rachas obligatorias ni saturación de badges;
 - no generar imágenes para este proyecto salvo petición explícita del usuario.
