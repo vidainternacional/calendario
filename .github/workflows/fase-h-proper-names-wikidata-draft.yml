@@ -57,7 +57,7 @@ jobs:
             --batch-size 50 \
             --sleep-ms 150
 
-      - name: Generar borrador auditable y chunks con doble evidencia
+      - name: Generar borrador base y lotes safe-v4
         run: |
           mkdir -p supabase/migration-drafts docs/audits
           python3 scripts/hebreo/build_tipnr_wikidata_draft.py \
@@ -67,50 +67,35 @@ jobs:
             --audit docs/audits/fase_h_nombres_wikidata_20260820.json
           python3 scripts/hebreo/split_tipnr_wikidata_confirmed_chunks.py \
             --input-sql supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
-            --output-dir supabase/migration-drafts/nombres-wikidata-anchor2 \
-            --audit docs/audits/fase_h_nombres_wikidata_anchor2_chunks_20260820.json \
+            --output-dir supabase/migration-drafts/nombres-wikidata-safe-v4 \
+            --audit docs/audits/fase_h_nombres_wikidata_safe_v4_chunks_20260820.json \
             --chunk-size 40
           cp /tmp/wikidata-labels-audit.json docs/audits/fase_h_wikidata_labels_20260820.json
 
-      - name: Verificar que los chunks tienen gate conservador
+      - name: Verificar gates y mantener todo como borrador
         run: |
           grep -q 'BORRADOR NO ACTIVO' supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
-          grep -q "context_used_as_meaning',false" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
-          grep -R -q 'spanish_anchor_sources >= 2' supabase/migration-drafts/nombres-wikidata-anchor2
-          grep -R -q "exact_source_entity',true" supabase/migration-drafts/nombres-wikidata-anchor2
-          grep -R -q "exact_wikidata_primary_label',true" supabase/migration-drafts/nombres-wikidata-anchor2
-          grep -R -q 'evidence.english_label' supabase/migration-drafts/nombres-wikidata-anchor2
-          grep -R -q "split_part(e.source_gloss,'»',1)" supabase/migration-drafts/nombres-wikidata-anchor2
-          grep -R -q "anchor_used_for_name_spelling_only',true" supabase/migration-drafts/nombres-wikidata-anchor2
-          grep -R -q 'on conflict (lexical_entry_id) do nothing' supabase/migration-drafts/nombres-wikidata-anchor2
-          ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql supabase/migration-drafts/nombres-wikidata-anchor2
+          grep -R -q 'BORRADOR NO ACTIVO' supabase/migration-drafts/nombres-wikidata-safe-v4
+          grep -R -q 'evidence.name_similarity >= 0.55' supabase/migration-drafts/nombres-wikidata-safe-v4
+          grep -R -q 'spanish_anchor_sources >= 2' supabase/migration-drafts/nombres-wikidata-safe-v4
+          grep -R -q "exact_source_entity',true" supabase/migration-drafts/nombres-wikidata-safe-v4
+          grep -R -q "exact_wikidata_primary_label',true" supabase/migration-drafts/nombres-wikidata-safe-v4
+          grep -R -q "anchor_used_for_name_spelling_only',true" supabase/migration-drafts/nombres-wikidata-safe-v4
+          grep -R -q 'on conflict (lexical_entry_id) do nothing' supabase/migration-drafts/nombres-wikidata-safe-v4
+          ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql supabase/migration-drafts/nombres-wikidata-safe-v4
 
-      - name: Promover chunks verificados a migraciones insert-only
-        run: |
-          for src in supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_*.sql; do
-            idx=$(basename "$src" | sed -E 's/.*chunk_([0-9]{3})\.sql/\1/')
-            sec=$(printf '%02d' $((10#$idx)))
-            dst="supabase/migrations/202608210401${sec}_fase_h_nombres_wikidata_anchor2_${idx}.sql"
-            sed \
-              -e 's/^-- BORRADOR NO ACTIVO /-- /' \
-              -e 's/^-- No aplicar sin auditoría read-only del lote\./-- Gate estructural auditado; aplicación insert-only reversible./' \
-              "$src" > "$dst"
-          done
-          test "$(find supabase/migrations -maxdepth 1 -name '202608210401*_fase_h_nombres_wikidata_anchor2_*.sql' | wc -l | tr -d ' ')" = '14'
-
-      - name: Versionar borradores, migraciones y auditorías
+      - name: Versionar únicamente borradores y auditorías
         run: |
           git config user.name 'vida-hebreo-data-bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
-                  supabase/migration-drafts/nombres-wikidata-anchor2 \
-                  supabase/migrations/202608210401*_fase_h_nombres_wikidata_anchor2_*.sql \
+                  supabase/migration-drafts/nombres-wikidata-safe-v4 \
                   docs/audits/fase_h_nombres_wikidata_20260820.json \
-                  docs/audits/fase_h_nombres_wikidata_anchor2_chunks_20260820.json \
+                  docs/audits/fase_h_nombres_wikidata_safe_v4_chunks_20260820.json \
                   docs/audits/fase_h_wikidata_labels_20260820.json
           if git diff --cached --quiet; then
             echo 'Sin cambios que versionar.'
           else
-            git commit -m 'data(fase-h): exigir identidad primaria exacta en nombres'
+            git commit -m 'data(fase-h): generar borrador safe-v4 de nombres propios'
             git push origin HEAD:agent/fase-h-hebreo-biblico
           fi

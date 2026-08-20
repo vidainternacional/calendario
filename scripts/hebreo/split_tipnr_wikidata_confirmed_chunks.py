@@ -1,27 +1,34 @@
 #!/usr/bin/env python3
-"""Divide el borrador TIPNR/Wikidata en lotes pequeños con gate de ortografía española.
+"""Divide el borrador TIPNR/Wikidata en lotes pequeños y conservadores.
 
-No conecta a Supabase. Cada SQL generado sigue siendo un BORRADOR NO ACTIVO.
-La futura inserción queda condicionada a que:
-- la entrada fuente represente exactamente la misma entidad a ambos lados de `»`;
-- la etiqueta inglesa primaria de Wikidata coincida exactamente con esa entidad;
-- la etiqueta española propuesta aparezca como frase completa en al menos dos
-  fuentes bíblicas españolas verificadas, exactamente en la referencia ancla TIPNR.
+No conecta a Supabase. Los SQL generados son BORRADORES NO ACTIVOS.
+Una propuesta solo llega al lote seguro cuando:
+- TIPNR/Wikidata ya la identificaron como candidato;
+- la forma inglesa primaria de Wikidata coincide exactamente con la entidad
+  fuente a la derecha de `»`;
+- `source_gloss` representa exactamente esa misma entidad a ambos lados de `»`;
+- la forma española es razonablemente compatible con una adaptación/transliteración
+  del nombre inglés (gate fonético conservador, no traducción semántica);
+- la forma española aparece como frase completa en >=2 fuentes bíblicas españolas
+  verificadas en la referencia ancla.
 
-Ese versículo se usa únicamente para confirmar la grafía/identidad del nombre,
-nunca como fuente del significado léxico.
+La referencia bíblica se usa exclusivamente para corroborar grafía/identidad del
+nombre y nunca como fuente del significado léxico.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import re
+import unicodedata
+from difflib import SequenceMatcher
 from pathlib import Path
 
 TUPLE_RE = re.compile(
     r"^\s*\('((?:''|[^'])*)','((?:''|[^'])*)','((?:''|[^'])*)','((?:''|[^'])*)','((?:''|[^'])*)','((?:''|[^'])*)'\),?\s*$"
 )
 ANCHOR_RE = re.compile(r"_((?:[123])?[A-Za-z]{2,3}\.\d+\.\d+)$")
+MIN_NAME_SIMILARITY = 0.55
 
 
 def unescape_sql(value: str) -> str:
@@ -30,6 +37,27 @@ def unescape_sql(value: str) -> str:
 
 def sql_literal(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
+
+
+def normalize_name_for_similarity(value: str) -> str:
+    value = unicodedata.normalize("NFD", value.lower())
+    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+    value = re.sub(r"\([^)]*\)", "", value)
+    value = re.sub(r"[^a-z]+", "", value)
+    for source, target in (("ph", "f"), ("th", "t"), ("sh", "s"), ("ch", "k"), ("qu", "k")):
+        value = value.replace(source, target)
+    value = value.replace("q", "k").replace("c", "k")
+    if value.endswith("h"):
+        value = value[:-1]
+    return value
+
+
+def name_similarity(english: str, spanish: str) -> float:
+    left = normalize_name_for_similarity(english)
+    right = normalize_name_for_similarity(spanish)
+    if not left or not right:
+        return 0.0
+    return SequenceMatcher(None, left, right).ratio()
 
 
 def parse_rows(sql: str) -> list[dict[str, str]]:
@@ -54,33 +82,48 @@ def parse_rows(sql: str) -> list[dict[str, str]]:
     return rows
 
 
-def render_chunk(rows: list[dict[str, str]], index: int) -> str:
-    batch_id = f"fase_h_es_nombres_wikidata_anchor2_{index:03d}_20260820"
+def filter_similarity(rows: list[dict[str, str]]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    accepted: list[dict[str, object]] = []
+    rejected: list[dict[str, object]] = []
+    for row in rows:
+        score = round(name_similarity(row["english_label"], row["spanish_label"]), 6)
+        enriched: dict[str, object] = {**row, "name_similarity": score}
+        if score >= MIN_NAME_SIMILARITY:
+            accepted.append(enriched)
+        else:
+            rejected.append(enriched)
+    return accepted, rejected
+
+
+def render_chunk(rows: list[dict[str, object]], index: int) -> str:
+    batch_id = f"fase_h_es_nombres_wikidata_safe_v4_{index:03d}_20260820"
     values = ",\n".join(
         "  (" + ",".join([
-            sql_literal(row["tipnr_id"]),
-            sql_literal(row["anchor_ref"]),
-            sql_literal(row["wikidata_id"]),
-            sql_literal(row["english_label"]),
-            sql_literal(row["spanish_label"]),
-            sql_literal(row["source_uri"]),
-            sql_literal(row["source_revision"]),
+            sql_literal(str(row["tipnr_id"])),
+            sql_literal(str(row["anchor_ref"])),
+            sql_literal(str(row["wikidata_id"])),
+            sql_literal(str(row["english_label"])),
+            sql_literal(str(row["spanish_label"])),
+            sql_literal(str(row["source_uri"])),
+            sql_literal(str(row["source_revision"])),
+            f"{float(row['name_similarity']):.6f}",
         ]) + ")"
         for row in rows
     )
-    return f"""-- BORRADOR NO ACTIVO — FASE H / Bloque 3 — nombres propios TIPNR + Wikidata + gate bíblico español.
--- Chunk {index:03d}; candidatos={len(rows)}.
+    return f"""-- BORRADOR NO ACTIVO — FASE H / Bloque 3 — nombres propios TIPNR + Wikidata, gate seguro v4.
+-- Chunk {index:03d}; candidatos seguros={len(rows)}.
 -- No aplicar sin auditoría read-only del lote.
 -- La referencia ancla se usa SOLO para confirmar la grafía española, no como significado.
 -- Gate: source_gloss debe representar exactamente la misma entidad a ambos lados de ».
 -- Gate: la etiqueta inglesa primaria de Wikidata debe coincidir exactamente con esa entidad.
+-- Gate: similitud fonética conservadora inglés/español >= {MIN_NAME_SIMILARITY:.2f}.
 -- Gate: la etiqueta española debe aparecer como frase completa en >= 2 fuentes españolas verificadas.
 -- Política futura: insert-only + ON CONFLICT DO NOTHING.
 -- Reversión exacta si se activa:
 -- DELETE FROM public.biblical_hebrew_spanish_glosses
 -- WHERE provenance->>'batch_id' = '{batch_id}';
 
-with map(tipnr_id, anchor_ref, wikidata_id, english_label, display_gloss_es, source_uri, source_revision) as (
+with map(tipnr_id, anchor_ref, wikidata_id, english_label, display_gloss_es, source_uri, source_revision, name_similarity) as (
  values
 {values}
 ), evidence as (
@@ -102,7 +145,7 @@ with map(tipnr_id, anchor_ref, wikidata_id, english_label, display_gloss_es, sou
    in
    ' ' || btrim(regexp_replace(lower(v.original_text),'[^[:alpha:]]+',' ','g')) || ' '
  ) > 0
- group by map.tipnr_id,map.anchor_ref,map.wikidata_id,map.english_label,map.display_gloss_es,map.source_uri,map.source_revision
+ group by map.tipnr_id,map.anchor_ref,map.wikidata_id,map.english_label,map.display_gloss_es,map.source_uri,map.source_revision,map.name_similarity
 ), eligible as (
  select
    e.id as lexical_entry_id,
@@ -123,6 +166,7 @@ with map(tipnr_id, anchor_ref, wikidata_id, english_label, display_gloss_es, sou
        lower(regexp_replace(btrim(split_part(split_part(e.source_gloss,'»',2),'@',1)), '[^[:alnum:]]+', '', 'g'))
    and lower(regexp_replace(btrim(evidence.english_label), '[^[:alnum:]]+', '', 'g')) =
        lower(regexp_replace(btrim(split_part(split_part(e.source_gloss,'»',2),'@',1)), '[^[:alnum:]]+', '', 'g'))
+   and evidence.name_similarity >= {MIN_NAME_SIMILARITY:.2f}
    and evidence.spanish_anchor_sources >= 2
 )
 insert into public.biblical_hebrew_spanish_glosses (
@@ -134,7 +178,7 @@ select
  display_gloss_es,
  '{{}}'::text[],
  99,
- 'tipnr_wikidata_spanish_anchor_2source_exact_primary_v3',
+ 'tipnr_wikidata_spanish_anchor_similarity_safe_v4',
  source_gloss,
  'verified_derived',
  jsonb_build_object(
@@ -150,6 +194,8 @@ select
    'anchor_reference',anchor_ref,
    'spanish_anchor_sources',spanish_anchor_sources,
    'spanish_anchor_sources_minimum',2,
+   'name_similarity',name_similarity,
+   'name_similarity_minimum',{MIN_NAME_SIMILARITY:.2f},
    'exact_source_entity',true,
    'exact_wikidata_primary_label',true,
    'anchor_used_for_name_spelling_only',true,
@@ -163,20 +209,22 @@ on conflict (lexical_entry_id) do nothing;
 
 
 def self_test() -> None:
-    sample = """with map(...) as (\n  ('Aaron_Exo.4.14','Q51676','Aaron','Aarón','https://www.wikidata.org/entity/Q51676','wikidata-lastrevid:123'),\n  ('Absalom_2Sa.3.3','Q205372','Absalom','Absalón','https://www.wikidata.org/entity/Q205372','wikidata-lastrevid:456')\n)"""
+    sample = """with map(...) as (\n  ('Aaron_Exo.4.14','Q51676','Aaron','Aarón','https://www.wikidata.org/entity/Q51676','wikidata-lastrevid:123'),\n  ('Haran_Gen.11.26','Q1199156','Haran','Taré','https://www.wikidata.org/entity/Q1199156','wikidata-lastrevid:456'),\n  ('Bathsheba_2Sa.11.3','Q272277','Bathsheba','Betsabé','https://www.wikidata.org/entity/Q272277','wikidata-lastrevid:789')\n)"""
     rows = parse_rows(sample)
-    assert len(rows) == 2
-    assert rows[0]["anchor_ref"] == "Exo.4.14"
-    sql = render_chunk(rows, 1)
+    assert len(rows) == 3
+    accepted, rejected = filter_similarity(rows)
+    assert {row["tipnr_id"] for row in accepted} == {"Aaron_Exo.4.14", "Bathsheba_2Sa.11.3"}
+    assert {row["tipnr_id"] for row in rejected} == {"Haran_Gen.11.26"}
+    assert name_similarity("Hezekiah", "Ezequías") >= MIN_NAME_SIMILARITY
+    assert name_similarity("Haran", "Taré") < MIN_NAME_SIMILARITY
+    sql = render_chunk(accepted, 1)
     assert "spanish_anchor_sources >= 2" in sql
-    assert "split_part(e.source_gloss,'»',1)" in sql
-    assert "evidence.english_label" in sql
+    assert "evidence.name_similarity >= 0.55" in sql
     assert "exact_source_entity',true" in sql
     assert "exact_wikidata_primary_label',true" in sql
-    assert "anchor_used_for_name_spelling_only',true" in sql
     assert "context_used_as_meaning',false" in sql
     assert "on conflict (lexical_entry_id) do nothing" in sql
-    print("tipnr confirmed chunks self-test OK")
+    print("tipnr safe-v4 chunks self-test OK")
 
 
 def main() -> int:
@@ -195,30 +243,38 @@ def main() -> int:
     if args.chunk_size < 1 or args.chunk_size > 80:
         parser.error("--chunk-size debe estar entre 1 y 80")
 
-    rows = parse_rows(args.input_sql.read_text(encoding="utf-8"))
-    if not rows:
+    input_rows = parse_rows(args.input_sql.read_text(encoding="utf-8"))
+    if not input_rows:
         raise SystemExit("No se encontraron filas TIPNR/Wikidata en el borrador")
+    rows, rejected = filter_similarity(input_rows)
+    if not rows:
+        raise SystemExit("Ningún candidato superó el gate de similitud")
+
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    for old in args.output_dir.glob("fase_h_nombres_wikidata_anchor2_chunk_*.sql"):
+    for old in args.output_dir.glob("fase_h_nombres_wikidata_safe_v4_chunk_*.sql"):
         old.unlink()
 
     files: list[str] = []
     for offset in range(0, len(rows), args.chunk_size):
         index = offset // args.chunk_size + 1
-        path = args.output_dir / f"fase_h_nombres_wikidata_anchor2_chunk_{index:03d}.sql"
+        path = args.output_dir / f"fase_h_nombres_wikidata_safe_v4_chunk_{index:03d}.sql"
         path.write_text(render_chunk(rows[offset:offset + args.chunk_size], index), encoding="utf-8")
         files.append(str(path))
 
     audit = {
         "phase": "FASE_H_BLOQUE_3",
         "status": "draft_only_not_applied",
-        "candidates": len(rows),
+        "input_candidates": len(input_rows),
+        "similarity_safe_candidates": len(rows),
+        "excluded_low_similarity": len(rejected),
+        "minimum_name_similarity": MIN_NAME_SIMILARITY,
         "chunk_size": args.chunk_size,
         "chunks": len(files),
         "files": files,
         "database_gate": {
             "exact_source_entity_required": True,
             "exact_wikidata_primary_label_required": True,
+            "minimum_name_similarity": MIN_NAME_SIMILARITY,
             "spanish_verified_sources_at_anchor_minimum": 2,
             "full_phrase_boundary_normalization": True,
             "anchor_used_for_name_spelling_only": True,
@@ -226,6 +282,15 @@ def main() -> int:
             "insert_only": True,
             "on_conflict_do_nothing": True,
         },
+        "rejected_low_similarity_sample": [
+            {
+                "tipnr_id": row["tipnr_id"],
+                "english_label": row["english_label"],
+                "spanish_label": row["spanish_label"],
+                "name_similarity": row["name_similarity"],
+            }
+            for row in rejected[:30]
+        ],
     }
     args.audit.parent.mkdir(parents=True, exist_ok=True)
     args.audit.write_text(json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
