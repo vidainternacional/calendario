@@ -23,13 +23,13 @@ test('FASE H reglas: usa Tablas Fichas y Detalle y conserva apertura bajo la fil
 })
 
 test('FASE H reglas: organiza la primera capa por función didáctica', () => {
-  for (const label of ['Básicas', 'Prefijos', 'Nombres', 'Frase', 'Todas']) assert.match(grammar, new RegExp(label))
+  for (const label of ['Básicas', 'Prefijos', 'Nombres', 'Verbos', 'Frase', 'Todas']) assert.match(grammar, new RegExp(label))
   for (const title of ['Artículo definido', 'Conjunción', 'Preposición בְּ', 'Preposiciones frecuentes', 'Preposición + artículo', 'Pistas de género', 'Pistas de plural', 'Sustantivo + adjetivo', 'Cadena constructa']) assert.match(grammar, new RegExp(title.replace('+', '\\+')))
 })
 
 test('FASE H reglas: conserva cautelas y no deduce raíces inexistentes', () => {
   assert.match(grammar, /reglas absolutas|regla absoluta/)
-  assert.match(grammar, /No deduciremos raíces/)
+  assert.match(grammar, /no deduciremos raíces/i)
   assert.match(grammar, /no tengan verificadas/)
   assert.match(grammar, /Ten en cuenta/)
 })
