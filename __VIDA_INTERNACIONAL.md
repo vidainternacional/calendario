@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-18
+Última actualización: 2026-08-19
 
 Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**
 
@@ -375,13 +375,26 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 
 ## Bloque activo de FASE H
 
-### Bloque 1 — Línea base de fuentes y arquitectura didáctica
+### Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO — 2026-08-19
 
-1. Auditar las fuentes hebreas/arameas ya aprobadas en FASE D y separar qué datos pueden reutilizarse directamente para enseñanza, lectura, morfología, transliteración y glosas.
-2. Revisar el estado real de `Estudios`, Biblia y Estudio Profundo para integrar Hebreo Bíblico sin duplicar lectores ni capas de datos existentes.
-3. Definir el contrato didáctico inicial: Alef-bet, dirección RTL, formas finales, niqqud, pronunciación pedagógica, lectura guiada y progresión de lecciones.
-4. Diseñar la arquitectura visual y de navegación mobile-first antes de implementar nuevas tablas o persistencia.
-5. No crear nuevas tablas, RLS, grants o funciones sensibles hasta demostrar que las estructuras actuales son insuficientes y presentar alcance, impacto y reversión para aprobación explícita.
+1. Las fuentes hebreas/arameas aprobadas en FASE D fueron auditadas y reutilizadas sin crear un segundo motor bíblico.
+2. La integración con `Estudios`, Biblia y Estudio Profundo quedó definida y materializada sobre las estructuras textuales/léxicas existentes.
+3. El contrato didáctico inicial quedó validado en iPhone: Alef-Bet → Vocales → Palabras → Lectura → Reglas → Repaso.
+4. La arquitectura visual mobile-first quedó aprobada con fichas para memoria, tablas para comparación, listas nativas para recorrido y detalle para profundizar.
+5. Se validaron Alef-Bet, niqqud, vocabulario, lectura real del corpus, reglas iniciales, Repaso local, teclado hebreo opcional y centrado pedagógico transversal.
+6. No se crearon nuevas tablas, RLS, grants ni funciones sensibles de Supabase durante el cierre del bloque.
+7. La evidencia técnica quedó protegida por regresiones y CI verde; el PR #286 permanece DRAFT y sin merge.
+
+### Bloque 2 — Fundamentos de lectura y gramática progresiva — ACTIVO
+
+1. Profundizar formas finales (Sofit) mediante comparación normal → final, sonido y valores ordinarios; cualquier gematría extendida 500–900 debe etiquetarse expresamente como convención ampliada.
+2. Enseñar Dagesh/Begadkefat de forma visual y cautelosa, distinguiendo los contrastes pedagógicos actuales de diferencias históricas dependientes de la tradición de lectura.
+3. Incorporar matres lectionis y su función como ayudas vocálicas sin presentar las letras como vocales independientes en todos los contextos.
+4. Ampliar niqqud con sheva vocal/silencioso, qamats qatan, pataj furtivo y patrones de lectura que permitan pasar de signo → sílaba → palabra.
+5. Introducir raíces únicamente cuando exista raíz verificada en las fuentes aprobadas; no deducir raíces por heurística visual.
+6. Continuar prefijos/sufijos, género/número, posesivos, constructo y gramática progresiva mediante tablas de transformación, ejemplos reales y práctica.
+7. Conservar Repaso como práctica local mientras este bloque no requiera persistencia; cualquier progreso almacenado queda para una propuesta posterior con alcance, privacidad, RLS e impacto explícitos.
+8. No incorporar audio como pronunciación oficial hasta contar con fuente/metodología confiable y licencia compatible.
 
 # FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
 
@@ -403,4 +416,4 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 
 # Siguiente punto autorizado
 
-**Iniciar exclusivamente FASE H con el Bloque 1 — línea base de fuentes y arquitectura didáctica. Auditar primero las fuentes hebreas/arameas ya aprobadas y la integración real con Estudios/Biblia/Estudio Profundo; definir contrato didáctico y arquitectura visual antes de implementar. No crear nuevas estructuras sensibles de Supabase sin propuesta exacta, impacto, reversión y aprobación explícita. No iniciar FASE I mientras FASE H no esté formalmente completada en este documento.**
+**Continuar exclusivamente FASE H con el Bloque 2 — fundamentos de lectura y gramática progresiva. Empezar por Sofit, Dagesh/Begadkefat y matres lectionis como tablas/comparaciones didácticas, y ampliar después niqqud avanzado y lectura silábica. No crear nuevas estructuras sensibles de Supabase ni progreso persistente sin propuesta exacta, impacto, reversión y aprobación explícita. No iniciar FASE I mientras FASE H no esté formalmente completada en este documento.**
