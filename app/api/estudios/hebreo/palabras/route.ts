@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { listarCatalogoHebreoParaAprendizaje } from '@/lib/hebreo/word-catalog'
 import { enriquecerCatalogoConGlosasEspanolas } from '@/lib/hebreo/spanish-glosses'
 import { priorizarAmbiguedadHebrea } from '@/lib/hebreo/hebrew-ambiguity'
+import { limpiarPresentacionPedagogica } from '@/lib/hebreo/learning-display'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,9 +22,12 @@ export async function GET(request: Request) {
   const glossedResult = baseResult.status === 'ok'
     ? await enriquecerCatalogoConGlosasEspanolas(baseResult)
     : baseResult
-  const result = glossedResult.status === 'ok'
+  const ambiguityResult = glossedResult.status === 'ok'
     ? await priorizarAmbiguedadHebrea(glossedResult)
     : glossedResult
+  const result = ambiguityResult.status === 'ok'
+    ? limpiarPresentacionPedagogica(ambiguityResult)
+    : ambiguityResult
 
   if (result.status === 'sin-sesion') {
     return NextResponse.json(result, { status: 401 })
