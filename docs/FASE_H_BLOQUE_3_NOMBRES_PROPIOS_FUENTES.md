@@ -2,60 +2,123 @@
 
 Fecha: 2026-08-20
 
-Estado: **ACTIVO — investigación de fuente y pipeline listos; no cerrar Bloque 3**.
+Estado: **ACTIVO — fuente y pipeline reproducible definidos; no cerrar Bloque 3**.
 
 ## Problema
 
-Tras los lotes 001–004, la cobertura española quedó en **1,909 / 10,737** entradas hebreas aprobadas. Quedan **8,828** pendientes. Dentro de las entradas sin fila editorial española se mantienen **3,649** glosas TAHOT clasificadas como `exact_named_entity` (`Nombre»Nombre@Referencia`).
+Después del Batch 005, la cobertura española auditada quedó en **1,948 / 10,737** entradas hebreas aprobadas. Quedan **8,789** pendientes.
 
-Los nombres propios no deben rellenarse copiando automáticamente la grafía inglesa. Ejemplos esperados de equivalencia canónica en español incluyen `Zechariah → Zacarías`, `Jeremiah → Jeremías` y `Joseph → José`.
+Dentro de las entradas pendientes existe una familia grande de glosas TAHOT `exact_named_entity` (`Nombre»Nombre@Referencia`). Los nombres propios no deben rellenarse copiando automáticamente la grafía inglesa. Ejemplos esperados incluyen `Zechariah → Zacarías`, `Jeremiah → Jeremías`, `Joseph → José` y `Aaron → Aarón`.
 
-## Fuente candidata descartada por ahora
+## Fuente no autorizada
 
-`BibleNLP/biblical-names-data` es técnicamente muy útil porque alinea nombres bíblicos y contiene una columna RV09 en español, pero el repositorio no declara licencia en su metadata de GitHub (`license: null`) y no contiene un archivo LICENSE en la raíz. Por ello **no se autoriza importar su TSV a VIDA** mientras la licencia de reutilización del dataset no quede explícitamente demostrada.
+`BibleNLP/biblical-names-data` sigue **NO APROBADA para importación**. Aunque `names.tsv` contiene una columna RV09 técnicamente útil, el repositorio no declara una licencia inequívoca para el dataset compilado y mezcla insumos de procedencias distintas. Puede servir como referencia de investigación, no como fuente de filas de VIDA.
 
-Puede utilizarse únicamente como pista de investigación, no como fuente de datos importable.
+## Ruta aprobada de datos abiertos
 
-## Fuente candidata preferente
+### 1. STEPBible TIPNR
 
-Wikidata es prometedora porque:
+TIPNR está publicado como datos de STEPBible bajo **CC BY 4.0** y separa nombres propios en personas, lugares y otras entidades, conservando referencias bíblicas y formas originales.
 
-- sus datos estructurados se publican bajo **CC0**;
-- existe la propiedad **Strong's number (P11416)** para lexemas hebreos/griegos;
-- algunos lexemas enlazan sus sentidos a entidades que disponen de etiqueta en español;
-- el enlace por Strong permite evitar heurísticas basadas en quitar prefijos o adivinar raíces.
+Revisión de referencia usada por el crosswalk PTA:
 
-La ruta deseada es obtener un export reproducible con estas columnas:
+`b83a3cf1224af5cf72606d86d6be1789adc69541`
+
+### 2. Crosswalk TIPNR → Wikidata
+
+Se verificó el repositorio público `PatristicTextArchive/tipnr_data` y el archivo:
+
+`tipnr-persons-wikidata.tsv`
+
+El archivo contiene columnas `TIPNR_ID` y `WIKIDATA_ID`. Ejemplo real verificado:
+
+`Aaron_Exo.4.14 → Q51676`
+
+Blob Git fijado para auditoría:
+
+`abc3e21b9d08dc310066152f9b62858c4818f4eb`
+
+El README del repositorio declara que estos datos fueron convertidos desde TIPNR y reproduce expresamente el contrato **CC BY 4.0** de STEPBible. El crosswalk se usa como evidencia de identidad, no como fuente de traducción española.
+
+### 3. Wikidata
+
+Las etiquetas estructuradas de Wikidata se usan como fuente de la forma española y se publican bajo **CC0 1.0**.
+
+Para cada Q-ID se conserva:
+
+- etiqueta inglesa;
+- alias ingleses;
+- etiqueta española;
+- alias españoles;
+- URI de entidad;
+- `lastrevid` como revisión reproducible.
+
+No se acepta coincidencia difusa. El nombre inglés de TAHOT debe coincidir exactamente, tras normalización tipográfica, con la etiqueta o un alias inglés de la misma entidad Wikidata.
+
+## Pipeline implementado
+
+### `scripts/hebreo/fetch_wikidata_labels.py`
+
+- lee Q-IDs del crosswalk TIPNR → Wikidata;
+- consulta `wbgetentities` de la API oficial de Wikidata;
+- descarga únicamente labels/aliases EN/ES e información de revisión;
+- fija `source_revision = wikidata-lastrevid:<id>`;
+- etiqueta la fuente de labels como `CC0-1.0`;
+- no escribe en Supabase.
+
+### `scripts/hebreo/build_tipnr_wikidata_mapping.py`
+
+- procesa únicamente `exact_named_entity`;
+- reconstruye el `TIPNR_ID` desde `Nombre + referencia ancla`;
+- cruza exactamente contra `tipnr-persons-wikidata.tsv`;
+- exige coincidencia exacta del nombre inglés con label/alias Wikidata;
+- solo emite fila cuando existe `spanish_label`;
+- registra en la revisión el `lastrevid` de Wikidata, blob del crosswalk y commit TIPNR;
+- no usa fuzzy matching;
+- no usa RV1909 ni contexto bíblico como significado;
+- no escribe en Supabase.
+
+### `scripts/hebreo/proper_name_spanish_pipeline.py`
+
+Consume el mapping final:
 
 ```text
 strong_number	english_label	spanish_label	source_uri	license	source_revision
 ```
 
-La importación no se hará directamente desde una respuesta de IA. La respuesta de IA puede ayudar a localizar/documentar la fuente o a construir la consulta, pero el dataset final debe provenir de una fuente machine-readable verificable y con licencia comprobable.
+Una sola equivalencia española CC0 exacta puede pasar a `verified_derived` / confianza 96. Múltiples equivalencias quedan `candidate`; ausencia de evidencia queda `pending`.
 
-## Pipeline preparado
+## Regresiones
 
-`scripts/hebreo/proper_name_spanish_pipeline.py`:
+`tests/regression/fase-h-nombres-propios-fuentes.test.mjs` protege que:
 
-- solo procesa `exact_named_entity`;
-- exige Strong + etiqueta inglesa coincidentes;
-- exige fuente con licencia CC0 o dominio público;
-- una sola equivalencia española licenciada → `verified_derived` / confianza 96;
-- varias equivalencias → `candidate`;
-- sin equivalencia o licencia insuficiente → `pending`;
-- no usa RV1909/co-ocurrencia como significado;
-- no escribe en Supabase;
-- conserva fuente, revisión, licencia, Strong y referencia ancla en `provenance`.
+- los adaptadores pasen self-test sin red;
+- las etiquetas españolas provengan de Wikidata CC0;
+- se preserve `lastrevid`;
+- TIPNR/Wikidata se crucen sin fuzzy matching;
+- RV1909/contexto no se usen como significado;
+- estos scripts no escriban en Supabase.
 
-## Gate
+## Gate antes del primer lote de nombres propios
 
-No aplicar un lote de nombres propios hasta obtener un mapping reproducible y legalmente reutilizable. Antes de escribir Supabase se auditarán:
+Antes de insertar datos se debe generar y auditar el mapping completo y reportar:
 
-1. número de Strong cubiertos;
-2. nombres con una sola equivalencia española;
-3. nombres ambiguos;
-4. nombres sin cobertura;
-5. procedencia/licencia/revisión de todas las filas;
-6. reversión por `batch_id` igual que en los lotes anteriores.
+1. Q-IDs TIPNR con label español;
+2. Strongs cubiertos;
+3. equivalencias únicas;
+4. ambigüedades;
+5. entradas TIPNR sin Wikidata;
+6. entidades Wikidata sin label español;
+7. coincidencias de nombre inglés rechazadas;
+8. hash/revisión de todos los insumos;
+9. SQL insert-only y reversión por `batch_id`.
 
-FASE H y Bloque 3 permanecen activos. PR #286 debe seguir OPEN · DRAFT · sin merge. No iniciar FASE I.
+Solo las equivalencias únicas y reproducibles pueden entrar al lote. Las demás continúan pendientes.
+
+## Control de fase
+
+- FASE H sigue activa.
+- Bloque 3 sigue activo.
+- PR #286 permanece OPEN · DRAFT · sin merge.
+- No producción.
+- No iniciar FASE I.
