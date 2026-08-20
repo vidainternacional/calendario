@@ -5,6 +5,7 @@
   "database_gate": {
     "anchor_used_for_name_spelling_only": true,
     "context_used_as_meaning": false,
+    "exact_source_entity_required": true,
     "full_phrase_boundary_normalization": true,
     "insert_only": true,
     "on_conflict_do_nothing": true,

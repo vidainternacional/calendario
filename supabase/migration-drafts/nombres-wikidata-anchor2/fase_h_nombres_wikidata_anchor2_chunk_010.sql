@@ -2,6 +2,7 @@
 -- Chunk 010; candidatos=40.
 -- No aplicar sin auditoría read-only del lote.
 -- La referencia ancla se usa SOLO para confirmar la grafía española, no como significado.
+-- Gate: source_gloss debe representar exactamente la misma entidad a ambos lados de ».
 -- Gate: la etiqueta española debe aparecer como frase completa en >= 2 fuentes españolas verificadas.
 -- Política futura: insert-only + ON CONFLICT DO NOTHING.
 -- Reversión exacta si se activa:
@@ -86,6 +87,8 @@ with map(tipnr_id, anchor_ref, wikidata_id, english_label, display_gloss_es, sou
    and e.enabled = true
    and e.display_gloss_es is null
    and g.lexical_entry_id is null
+   and lower(regexp_replace(btrim(split_part(e.source_gloss,'»',1)), '[^[:alnum:]]+', '', 'g')) =
+       lower(regexp_replace(btrim(split_part(split_part(e.source_gloss,'»',2),'@',1)), '[^[:alnum:]]+', '', 'g'))
    and evidence.spanish_anchor_sources >= 2
 )
 insert into public.biblical_hebrew_spanish_glosses (
@@ -97,7 +100,7 @@ select
  display_gloss_es,
  '{}'::text[],
  99,
- 'tipnr_wikidata_spanish_anchor_2source_v1',
+ 'tipnr_wikidata_spanish_anchor_2source_exact_entity_v2',
  source_gloss,
  'verified_derived',
  jsonb_build_object(
@@ -113,6 +116,7 @@ select
    'anchor_reference',anchor_ref,
    'spanish_anchor_sources',spanish_anchor_sources,
    'spanish_anchor_sources_minimum',2,
+   'exact_source_entity',true,
    'anchor_used_for_name_spelling_only',true,
    'context_used_as_meaning',false,
    'rv1909_used_as_meaning',false,
