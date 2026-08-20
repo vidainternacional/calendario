@@ -34,7 +34,9 @@ test('FASE H bloque 3: contexto y RV1909 no se convierten en significado', () =>
 })
 
 test('FASE H bloque 3: preparación en GitHub no recibe credenciales de Supabase', () => {
-  assert.doesNotMatch(workflow, /SUPABASE|service_role|database_url/i)
+  assert.doesNotMatch(workflow, /secrets\.[A-Z0-9_]*SUPABASE/i)
+  assert.doesNotMatch(workflow, /SUPABASE_SERVICE_ROLE_KEY|SUPABASE_DB_PASSWORD|DATABASE_URL|service_role/i)
+  assert.match(workflow, /supabase\/migration-drafts/)
   assert.match(workflow, /git hash-object/)
   assert.match(workflow, /abc3e21b9d08dc310066152f9b62858c4818f4eb/)
 })
