@@ -58,6 +58,7 @@ type SearchResolutionRow = {
   relation_kind: RelationKind
   confidence: number
   evidence_count: number
+  provenance: Record<string, unknown> | null
 }
 
 type ResolutionCandidate = {
@@ -94,6 +95,7 @@ const HEBREW_LETTERS = /[\u05D0-\u05EA]/
 const OT_BOOK_CODES = ['GEN','EXO','LEV','NUM','DEU','JOS','JDG','RUT','1SA','2SA','1KI','2KI','1CH','2CH','EZR','NEH','EST','JOB','PSA','PRO','ECC','SNG','ISA','JER','LAM','EZK','DAN','HOS','JOL','AMO','OBA','JON','MIC','NAM','HAB','ZEP','HAG','ZEC','MAL']
 const COMMON_PREFIXES = new Set(['ו', 'ה', 'ב', 'כ', 'ל', 'מ', 'ש'])
 const COMMON_SUFFIXES = ['יהם', 'יהן', 'יכם', 'יכן', 'ינו', 'נו', 'כם', 'כן', 'הם', 'הן', 'יו', 'יה', 'ך', 'י', 'ו', 'ה', 'ם', 'ן'] as const
+const SPANISH_DIACRITIC_REPLACEMENTS: Record<string, string> = { a: 'á', e: 'é', i: 'í', o: 'ó', u: 'ú', n: 'ñ' }
 
 function normalizePage(value: number | undefined) {
   return Number.isInteger(value) && (value ?? 0) > 0 ? value as number : 1
@@ -135,6 +137,22 @@ function hebrewSearchPattern(value: string) {
 function latinSearchPattern(value: string) {
   const compact = normalizeLatinCompact(value)
   return compact ? `%${Array.from(compact).join('%')}%` : '%'
+}
+
+function spanishSearchVariants(value: string) {
+  const variants = new Set<string>([value])
+  const characters = Array.from(value)
+
+  characters.forEach((character, index) => {
+    const lower = character.toLowerCase()
+    const replacement = SPANISH_DIACRITIC_REPLACEMENTS[lower]
+    if (!replacement || character !== lower) return
+    const next = [...characters]
+    next[index] = replacement
+    variants.add(next.join(''))
+  })
+
+  return Array.from(variants).slice(0, 12)
 }
 
 function normalizedSearchKey(search: string, kind: SearchKind) {
@@ -184,7 +202,7 @@ function pageFromRows({
     return {
       ...mapped,
       spanish: `Relacionado con «${search}»`,
-      meaningNoteEs: `Resultado contextual: esta palabra hebrea aparece en versículos donde la RV1909 contiene «${search}». No se presenta como equivalencia uno-a-uno hasta que exista una glosa española aprobada.`,
+      meaningNoteEs: `Resultado contextual principal: esta palabra hebrea es el candidato más específico encontrado en versículos donde la RV1909 contiene «${search}». No se presenta como equivalencia uno-a-uno hasta que exista una glosa española aprobada.`,
     }
   })
   const total = rows.length
@@ -267,7 +285,7 @@ async function cachedResolutionSearch({
 
   const { data, error } = await supabase
     .from('biblical_hebrew_search_resolutions')
-    .select('lexical_entry_id, relation_kind, confidence, evidence_count')
+    .select('lexical_entry_id, relation_kind, confidence, evidence_count, provenance')
     .eq('search_key', searchKey)
     .eq('search_kind', searchKind)
     .order('confidence', { ascending: false })
@@ -279,7 +297,10 @@ async function cachedResolutionSearch({
     return null
   }
 
-  const resolutions = (data ?? []) as SearchResolutionRow[]
+  const resolutions = ((data ?? []) as SearchResolutionRow[]).filter(resolution => {
+    if (resolution.relation_kind !== 'contextual') return true
+    return resolution.provenance?.resolver === 'rv1909-context-v2'
+  })
   if (resolutions.length === 0) return null
 
   const bestById = new Map<string, SearchResolutionRow>()
@@ -314,6 +335,13 @@ function lexicalPriority(row: HebrewLexicalRow) {
   return score
 }
 
+function isContextualLearningCandidate(row: HebrewLexicalRow) {
+  const partOfSpeech = (row.part_of_speech ?? '').toLowerCase()
+  if (!partOfSpeech || partOfSpeech === 'prefix' || partOfSpeech === 'suffix') return false
+  if (/^H90\d/.test(row.lexical_id)) return false
+  return (row.lemma.match(/[\u05D0-\u05EA]/g) ?? []).length >= 2
+}
+
 async function contextualSpanishSearch({
   supabase,
   search,
@@ -327,6 +355,7 @@ async function contextualSpanishSearch({
   pageSize: number
   group: HebrewLearningGroupId
 }): Promise<HebrewWordCatalogPage | null> {
+  const variants = spanishSearchVariants(search)
   const { data: verses, error: verseError } = await supabase
     .from('biblical_verse_texts')
     .select('book_code, chapter, verse')
@@ -335,7 +364,7 @@ async function contextualSpanishSearch({
     .eq('enabled', true)
     .eq('review_status', 'approved')
     .in('book_code', OT_BOOK_CODES)
-    .ilike('original_text', `%${search}%`)
+    .or(variants.map(variant => `original_text.ilike.%${variant}%`).join(','))
     .limit(80)
 
   if (verseError) {
@@ -352,7 +381,7 @@ async function contextualSpanishSearch({
     .eq('enabled', true)
     .eq('review_status', 'approved')
     .or(orReferences(refs))
-    .limit(1800)
+    .limit(2400)
 
   if (occurrenceError) {
     console.error('[hebrew-word-catalog] Falló recuperación de ocurrencias:', occurrenceError)
@@ -360,9 +389,13 @@ async function contextualSpanishSearch({
   }
 
   const frequency = new Map<string, number>()
+  const verseEvidence = new Map<string, Set<string>>()
   for (const row of (occurrences ?? []) as OccurrenceRef[]) {
     if (!row.lexical_entry_id) continue
     frequency.set(row.lexical_entry_id, (frequency.get(row.lexical_entry_id) ?? 0) + 1)
+    const current = verseEvidence.get(row.lexical_entry_id) ?? new Set<string>()
+    current.add(`${row.book_code}:${row.chapter}:${row.verse}`)
+    verseEvidence.set(row.lexical_entry_id, current)
   }
 
   const ids = Array.from(frequency.keys())
@@ -370,31 +403,39 @@ async function contextualSpanishSearch({
 
   const lexicalRows = await loadLexicalRowsByIds(supabase, ids)
   const ranked = lexicalRows
-    .filter(row => HEBREW_LETTERS.test(row.lemma))
+    .filter(isContextualLearningCandidate)
     .sort((a, b) => {
+      const verseDiff = (verseEvidence.get(b.id)?.size ?? 0) - (verseEvidence.get(a.id)?.size ?? 0)
+      if (verseDiff !== 0) return verseDiff
       const frequencyDiff = (frequency.get(b.id) ?? 0) - (frequency.get(a.id) ?? 0)
       if (frequencyDiff !== 0) return frequencyDiff
       return lexicalPriority(b) - lexicalPriority(a)
     })
 
-  const reusable = ranked
-    .filter(row => (frequency.get(row.id) ?? 0) >= 2)
-    .slice(0, 80)
-    .map(row => ({
-      row,
-      relationKind: 'contextual' as const,
-      confidence: Math.min(85, 55 + Math.min(frequency.get(row.id) ?? 0, 6) * 5),
-      evidenceCount: frequency.get(row.id) ?? 0,
+  const primary = ranked[0]
+  const primaryEvidence = primary ? verseEvidence.get(primary.id)?.size ?? 0 : 0
+  if (!primary || primaryEvidence < 2) return emptyPage(page, pageSize, search, group)
+
+  const coverage = Math.min(1, primaryEvidence / Math.max(refs.length, 1))
+  await persistSearchResolutions({
+    search,
+    searchKind: 'spanish',
+    candidates: [{
+      row: primary,
+      relationKind: 'contextual',
+      confidence: Math.min(92, 62 + Math.round(coverage * 30)),
+      evidenceCount: primaryEvidence,
       provenance: {
-        resolver: 'rv1909-context-v1',
+        resolver: 'rv1909-context-v2',
         translation_source_id: RV1909_SOURCE_ID,
         verse_matches: refs.length,
+        matched_verses_for_primary: primaryEvidence,
+        candidate_policy: 'single-primary-content-word',
       },
-    }))
-  await persistSearchResolutions({ search, searchKind: 'spanish', candidates: reusable })
+    }],
+  })
 
-  const contextual = new Set(ranked.map(row => row.id))
-  return pageFromRows({ rows: ranked, page, pageSize, search, group, contextual })
+  return pageFromRows({ rows: [primary], page, pageSize, search, group, contextual: new Set([primary.id]) })
 }
 
 function buildHebrewCoreCandidates(search: string) {
@@ -701,6 +742,7 @@ export async function listarCatalogoHebreoParaAprendizaje(request: HebrewWordCat
   }
 
   const spanishMatches = lexicalIdsForSpanishSearch(search)
+  const spanishVariants = spanishSearchVariants(search)
   const spanishDirect = await executeDirectQuery({
     query: spanishMatches.length > 0
       ? (supabase as any)
@@ -716,7 +758,7 @@ export async function listarCatalogoHebreoParaAprendizaje(request: HebrewWordCat
           .eq('language', 'hebrew')
           .eq('enabled', true)
           .eq('review_status', 'approved')
-          .ilike('display_gloss_es', `%${search}%`),
+          .or(spanishVariants.map(variant => `display_gloss_es.ilike.%${variant}%`).join(',')),
     page,
     pageSize,
     search,
