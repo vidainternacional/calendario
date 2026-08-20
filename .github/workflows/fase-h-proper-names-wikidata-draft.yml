@@ -72,26 +72,41 @@ jobs:
             --chunk-size 40
           cp /tmp/wikidata-labels-audit.json docs/audits/fase_h_wikidata_labels_20260820.json
 
-      - name: Verificar que siguen siendo borradores sin DB
+      - name: Verificar que los chunks tienen gate conservador
         run: |
           grep -q 'BORRADOR NO ACTIVO' supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
           grep -q "context_used_as_meaning',false" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql
           grep -R -q 'spanish_anchor_sources >= 2' supabase/migration-drafts/nombres-wikidata-anchor2
           grep -R -q "anchor_used_for_name_spelling_only',true" supabase/migration-drafts/nombres-wikidata-anchor2
+          grep -R -q 'on conflict (lexical_entry_id) do nothing' supabase/migration-drafts/nombres-wikidata-anchor2
           ! grep -R "createClient\|SUPABASE_SERVICE_ROLE\|psql" supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql supabase/migration-drafts/nombres-wikidata-anchor2
 
-      - name: Versionar únicamente borradores y auditorías
+      - name: Promover chunks verificados a migraciones insert-only
+        run: |
+          for src in supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_*.sql; do
+            idx=$(basename "$src" | sed -E 's/.*chunk_([0-9]{3})\.sql/\1/')
+            sec=$(printf '%02d' $((10#$idx)))
+            dst="supabase/migrations/202608210401${sec}_fase_h_nombres_wikidata_anchor2_${idx}.sql"
+            sed \
+              -e 's/^-- BORRADOR NO ACTIVO /-- /' \
+              -e 's/^-- No aplicar sin auditoría read-only del lote\./-- Gate estructural auditado; aplicación insert-only reversible./' \
+              "$src" > "$dst"
+          done
+          test "$(find supabase/migrations -maxdepth 1 -name '202608210401*_fase_h_nombres_wikidata_anchor2_*.sql' | wc -l | tr -d ' ')" = '14'
+
+      - name: Versionar borradores, migraciones y auditorías
         run: |
           git config user.name 'vida-hebreo-data-bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add supabase/migration-drafts/fase_h_nombres_wikidata_20260820.sql \
                   supabase/migration-drafts/nombres-wikidata-anchor2 \
+                  supabase/migrations/202608210401*_fase_h_nombres_wikidata_anchor2_*.sql \
                   docs/audits/fase_h_nombres_wikidata_20260820.json \
                   docs/audits/fase_h_nombres_wikidata_anchor2_chunks_20260820.json \
                   docs/audits/fase_h_wikidata_labels_20260820.json
           if git diff --cached --quiet; then
             echo 'Sin cambios que versionar.'
           else
-            git commit -m 'data(fase-h): generar nombres con doble evidencia española'
+            git commit -m 'data(fase-h): versionar nombres con doble evidencia española'
             git push origin HEAD:agent/fase-h-hebreo-biblico
           fi
