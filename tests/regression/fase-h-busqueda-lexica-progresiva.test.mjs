@@ -54,12 +54,35 @@ test('FASE H bloque 3: transliteración se resuelve desde ocurrencias aprobadas'
   assert.match(catalog, /exact_normalized_transliteration: true/)
 })
 
-test('FASE H bloque 3: español contextual conserva su cautela y se vuelve reutilizable', () => {
+test('FASE H bloque 3: español contextual conserva cautela pero devuelve un candidato principal', () => {
   assert.match(catalog, /function contextualSpanishSearch/)
-  assert.match(catalog, /Relacionado con «\$\{search\}»/)
+  assert.match(catalog, /Resultado contextual principal/)
   assert.match(catalog, /No se presenta como equivalencia uno-a-uno/)
-  assert.match(catalog, /relationKind: 'contextual'/)
-  assert.match(catalog, /resolver: 'rv1909-context-v1'/)
+  assert.match(catalog, /const primary = ranked\[0\]/)
+  assert.match(catalog, /rows: \[primary\]/)
+  assert.match(catalog, /candidate_policy: 'single-primary-content-word'/)
+  assert.match(catalog, /resolver: 'rv1909-context-v2'/)
+})
+
+test('FASE H bloque 3: ruido contextual no puede dominar la respuesta de aprendizaje', () => {
+  assert.match(catalog, /function isContextualLearningCandidate/)
+  assert.match(catalog, /partOfSpeech === 'prefix' \|\| partOfSpeech === 'suffix'/)
+  assert.match(catalog, /\^H90\\d/)
+  assert.match(catalog, /verseEvidence/)
+  assert.match(catalog, /primaryEvidence < 2/)
+})
+
+test('FASE H bloque 3: búsquedas españolas toleran tildes sin convertirlas en equivalencias inventadas', () => {
+  assert.match(catalog, /SPANISH_DIACRITIC_REPLACEMENTS/)
+  assert.match(catalog, /function spanishSearchVariants/)
+  assert.match(catalog, /original_text\.ilike/)
+  assert.match(catalog, /display_gloss_es\.ilike/)
+})
+
+test('FASE H bloque 3: caché ignora relaciones contextuales antiguas y reutiliza solo resolver preciso', () => {
+  assert.match(catalog, /select\('lexical_entry_id, relation_kind, confidence, evidence_count, provenance'\)/)
+  assert.match(catalog, /resolution\.relation_kind !== 'contextual'/)
+  assert.match(catalog, /resolution\.provenance\?\.resolver === 'rv1909-context-v2'/)
 })
 
 test('FASE H bloque 3: una resolución guardada se consulta antes del fallback costoso', () => {
