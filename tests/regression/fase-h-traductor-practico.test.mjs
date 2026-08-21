@@ -29,6 +29,8 @@ test('palabras exactas priorizan el diccionario bíblico y las frases usan VIDA 
   assert.match(route, /biblical_lexical_entries/)
   assert.match(route, /biblical_hebrew_spanish_glosses/)
   assert.match(route, /FINAL_SPANISH_STATUSES/)
+  assert.match(route, /\['verified_derived', 'manual_approved'\]/)
+  assert.doesNotMatch(route, /FINAL_SPANISH_STATUSES\s*=\s*\[[^\]]*rejected/i)
   assert.match(route, /source: 'dictionary'/)
   assert.match(route, /source: 'translator'/)
   assert.match(route, /kind === 'word'/)
