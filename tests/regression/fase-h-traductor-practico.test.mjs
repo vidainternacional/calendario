@@ -25,11 +25,20 @@ test('la dirección se detecta por escritura hebrea y solo admite es/he', () => 
   assert.match(contract, /maxLength = 1000/)
 })
 
-test('la traducción reutiliza VIDA AI del lado servidor y exige sesión autenticada', () => {
-  assert.match(route, /supabase\.auth\.getUser\(\)/)
-  assert.match(route, /status: 401/)
+test('palabras exactas priorizan el diccionario bíblico y las frases usan VIDA AI', () => {
+  assert.match(route, /biblical_lexical_entries/)
+  assert.match(route, /biblical_hebrew_spanish_glosses/)
+  assert.match(route, /FINAL_SPANISH_STATUSES/)
+  assert.match(route, /source: 'dictionary'/)
+  assert.match(route, /source: 'translator'/)
+  assert.match(route, /kind === 'word'/)
   assert.match(route, /vidaAI\(/)
   assert.match(route, /task: 'interpretar_busqueda_biblica'/)
+})
+
+test('la traducción exige sesión y nunca expone secretos ni análisis académico', () => {
+  assert.match(route, /supabase\.auth\.getUser\(\)/)
+  assert.match(route, /status: 401/)
   assert.match(route, /sin explicaciones, sin transliteración, sin análisis gramatical/)
   assert.doesNotMatch(translatorUi, /GEMINI_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY/)
 })
