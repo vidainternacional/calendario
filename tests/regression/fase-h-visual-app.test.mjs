@@ -80,12 +80,26 @@ test('FASE H gramática: posesivos y Qal usan transformaciones verificables y ca
     "id: 'qal-map'",
     "id: 'qal-qatal-person'",
     "id: 'qal-yiqtol-person'",
-  ]) assert.match(grammar, new RegExp(marker))
-  assert.match(grammar, /no equivale mecánicamente a “pasado”/)
-  assert.match(grammar, /no equivale mecánicamente a “futuro”/)
+    'בְּנִי',
+    'פִּיו',
+    'וַיֹּאמֶר',
+    'וְאָמַרְתָּ',
+    'אֱמֹר',
+    'אֹמֵר',
+    'לֵאמֹר',
+  ]) assert.match(grammar, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(grammar, /no equivale automáticamente a pasado/)
+  assert.match(grammar, /no equivale automáticamente a futuro/)
+  assert.match(grammar, /no es «ו \+ futuro = pasado»/)
+  assert.match(grammar, /Raíces permanecen ocultas hasta contar con una fuente explícita/)
 })
 
 test('FASE H visual: contrato obliga a mantener dinámica de app en superficies nuevas', () => {
-  assert.match(contract, /dinámica de app/i)
-  assert.match(contract, /no convertir/i)
+  for (const phrase of [
+    'Toda la experiencia de Hebreo Bíblico debe sentirse como una aplicación móvil',
+    'Fichas para memorizar + Tablas para comparar + Listas nativas para recorrer + Detalle para profundizar',
+    'puede llegar a los bordes útiles del módulo en móvil',
+    'Evitar `ring` decorativo adicional',
+    'Todo componente nuevo de Hebreo Bíblico debe decidir explícitamente',
+  ]) assert.match(contract, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 })
