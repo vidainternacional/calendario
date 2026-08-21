@@ -56,17 +56,27 @@ def normalize_key(value: str) -> str:
 
 
 def clean_tahot_source_gloss(raw: str) -> str:
-    """Extrae la etiqueta inglesa de aprendizaje sin inventar un sentido nuevo."""
+    """Extrae la etiqueta inglesa de aprendizaje sin inventar un sentido nuevo.
+
+    En las glosas estructuradas de TAHOT el texto anterior a `»` funciona como
+    una etiqueta/forma de índice, mientras que la etiqueta léxica que debe
+    traducirse está a la derecha. El payload numerado posterior a `:` y las
+    referencias posteriores a `@` son metadatos, no parte del significado.
+    """
     value = normalize_text(raw)
     if not value:
         return ""
 
-    # TAHOT puede codificar `etiqueta»anotación/referencia`.
-    if "»" in value:
-        value = value.split("»", 1)[0].strip()
-
-    # Algunas etiquetas de sentido empiezan por `:`.
     value = value.lstrip(":").strip()
+
+    if "»" in value:
+        _index_label, lexical_label = value.split("»", 1)
+        value = lexical_label.strip()
+        if ":" in value:
+            value = value.split(":", 1)[0].strip()
+        if "@" in value:
+            value = value.split("@", 1)[0].strip()
+
     value = value.replace("_", " ")
 
     # Conserva texto dentro de paréntesis normales salvo marcadores técnicos.
@@ -326,8 +336,11 @@ def self_test() -> None:
         "to perish": "to perish",
         ": chariot»chariot:1_chariot": "chariot",
         "Abagtha»Abagtha@Est.1.10": "Abagtha",
-        ": [do](ACTION)»to make:4_[do](ACTION)": "do",
-        ": [inheriting]son»son:7_[inheriting]son;_heir": "inheritingson",
+        ": [do](ACTION)»to make:4_[do](ACTION)": "to make",
+        ": [inheriting]son»son:7_[inheriting]son;_heir": "son",
+        ": walk»to go:1_walk;_move": "to go",
+        ": come»to come out:1_come;_go_out;_escape": "to come out",
+        ": faithful»truth:1_faithful": "truth",
     }
     for raw, expected in cases.items():
         actual = clean_tahot_source_gloss(raw)
