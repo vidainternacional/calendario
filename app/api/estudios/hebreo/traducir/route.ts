@@ -12,7 +12,9 @@ export const runtime = 'nodejs'
 const MAX_INPUT_LENGTH = 1000
 const FINAL_SPANISH_STATUSES = ['verified_derived', 'manual_approved'] as const
 
-function translatorInstructions(source: 'es' | 'he', target: 'es' | 'he') {
+type Language = 'es' | 'he'
+
+function translatorInstructions(source: Language, target: Language) {
   const direction = source === 'he' ? 'hebreo a español' : 'español a hebreo'
   return [
     `Actúa exclusivamente como un traductor de ${direction} para una herramienta de aprendizaje.`,
@@ -131,22 +133,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
   }
 
-  const text = normalizeTranslatorInput(
-    typeof payload === 'object' && payload !== null && 'text' in payload
-      ? (payload as { text?: unknown }).text
-      : '',
-    MAX_INPUT_LENGTH,
-  )
+  const body = typeof payload === 'object' && payload !== null ? payload as { text?: unknown; sourceLanguage?: unknown } : {}
+  const text = normalizeTranslatorInput(body.text ?? '', MAX_INPUT_LENGTH)
 
   if (!text) {
     return NextResponse.json({ error: 'Escribe una palabra o frase.' }, { status: 400 })
   }
 
-  const direction = detectHebrewTranslationDirection(text)
+  const explicitSource: Language | null = body.sourceLanguage === 'es' || body.sourceLanguage === 'he'
+    ? body.sourceLanguage
+    : null
+  const detected = detectHebrewTranslationDirection(text)
+  const source: Language = explicitSource ?? detected.source
+  const target: Language = source === 'es' ? 'he' : 'es'
   const kind = isSingleWord(text) ? 'word' : 'phrase'
 
   if (kind === 'word') {
-    const dictionaryTranslation = direction.source === 'he'
+    const dictionaryTranslation = source === 'he'
       ? await lookupHebrewWord(supabase, text)
       : await lookupSpanishWord(supabase, text)
 
@@ -154,8 +157,8 @@ export async function POST(request: Request) {
       return NextResponse.json({
         input: text,
         translatedText: dictionaryTranslation,
-        sourceLanguage: direction.source,
-        targetLanguage: direction.target,
+        sourceLanguage: source,
+        targetLanguage: target,
         kind,
         source: 'dictionary',
       })
@@ -167,7 +170,7 @@ export async function POST(request: Request) {
       task: 'interpretar_busqueda_biblica',
       ownerId: user.id,
       input: text,
-      instructions: translatorInstructions(direction.source, direction.target),
+      instructions: translatorInstructions(source, target),
     })
     const translatedText = cleanModelTranslation(generated.text)
 
@@ -181,8 +184,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       input: text,
       translatedText,
-      sourceLanguage: direction.source,
-      targetLanguage: direction.target,
+      sourceLanguage: source,
+      targetLanguage: target,
       kind,
       source: 'translator',
     })
