@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type FormEvent, type TouchEvent, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight, Grid2X2, List, Rows3, Search } from 'lucide-react'
 import { HEBREW_LEARNING_GROUPS, type HebrewLearningGroupId } from '@/lib/hebreo/word-learning'
 
@@ -76,6 +76,7 @@ export default function ReadingWordsExplorer(){
   const[dragX,setDragX]=useState(0)
   const[settlingTo,setSettlingTo]=useState<-1|0|1>(0)
   const[transitioning,setTransitioning]=useState(false)
+  const[,bumpCache]=useState(0)
   const cacheRef=useRef(new Map<number,CatalogResponse>())
   const requestRef=useRef(new Map<number,Promise<CatalogResponse>>())
   const carouselRef=useRef<HTMLDivElement|null>(null)
@@ -87,7 +88,7 @@ export default function ReadingWordsExplorer(){
   async function fetchPage(target:number){
     const cached=cacheRef.current.get(target); if(cached)return cached
     const pending=requestRef.current.get(target); if(pending)return pending
-    const promise=fetch(`/api/estudios/hebreo/palabras?page=${target}&pageSize=${PAGE_SIZE}&group=${group}`,{cache:'no-store'}).then(async response=>{if(!response.ok)throw new Error(response.status===401?'Tu sesión necesita renovarse.':'No se pudo cargar el catálogo.');const data=await response.json() as CatalogResponse;data.items=dedupeWords(data.items);cacheRef.current.set(target,data);requestRef.current.delete(target);return data}).catch(cause=>{requestRef.current.delete(target);throw cause})
+    const promise=fetch(`/api/estudios/hebreo/palabras?page=${target}&pageSize=${PAGE_SIZE}&group=${group}`,{cache:'no-store'}).then(async response=>{if(!response.ok)throw new Error(response.status===401?'Tu sesión necesita renovarse.':'No se pudo cargar el catálogo.');const data=await response.json() as CatalogResponse;data.items=dedupeWords(data.items);cacheRef.current.set(target,data);requestRef.current.delete(target);bumpCache(version=>version+1);return data}).catch(cause=>{requestRef.current.delete(target);throw cause})
     requestRef.current.set(target,promise);return promise
   }
 
@@ -98,7 +99,7 @@ export default function ReadingWordsExplorer(){
     void Promise.allSettled(targets.map(target=>fetchPage(target)))
   }
 
-  useEffect(()=>{cacheRef.current.clear();requestRef.current.clear();setPage(1);setSearchResult(null);setSelectedId(null)},[group])
+  useEffect(()=>{cacheRef.current.clear();requestRef.current.clear();setPage(1);setCurrent(EMPTY_RESULT);setSearchResult(null);setSelectedId(null);bumpCache(version=>version+1)},[group])
 
   useEffect(()=>{let active=true;setLoading(true);setError(null);fetchPage(page).then(data=>{if(!active)return;setCurrent(data);setSelectedId(null);prefetchAround(page,data.totalPages)}).catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'No se pudo cargar el catálogo.')}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[page,group])
 
@@ -132,13 +133,13 @@ export default function ReadingWordsExplorer(){
     window.setTimeout(()=>{commitPage(direction);setTransitioning(false);setSettlingTo(0);setDragX(0)},230)
   }
 
-  function onTouchStart(event:React.TouchEvent<HTMLDivElement>){if(searchResult||transitioning)return;touchStartX.current=event.touches[0]?.clientX??null;setDragX(0)}
-  function onTouchMove(event:React.TouchEvent<HTMLDivElement>){if(searchResult||transitioning||touchStartX.current===null)return;const delta=(event.touches[0]?.clientX??touchStartX.current)-touchStartX.current;const canLeft=Boolean(next),canRight=Boolean(previous);const resistance=(delta<0&&!canLeft)||(delta>0&&!canRight)?0.28:1;setDragX(delta*resistance)}
+  function onTouchStart(event:TouchEvent<HTMLDivElement>){if(searchResult||transitioning)return;touchStartX.current=event.touches[0]?.clientX??null;setDragX(0)}
+  function onTouchMove(event:TouchEvent<HTMLDivElement>){if(searchResult||transitioning||touchStartX.current===null)return;const delta=(event.touches[0]?.clientX??touchStartX.current)-touchStartX.current;const canLeft=Boolean(next),canRight=Boolean(previous);const resistance=(delta<0&&!canLeft)||(delta>0&&!canRight)?0.28:1;setDragX(delta*resistance)}
   function onTouchEnd(){if(searchResult||transitioning||touchStartX.current===null||width<=0){touchStartX.current=null;return}const threshold=Math.min(72,width*0.18);const delta=dragX;touchStartX.current=null;if(delta<=-threshold)finishSwipe(1);else if(delta>=threshold)finishSwipe(-1);else{setTransitioning(true);setSettlingTo(0);window.setTimeout(()=>{setDragX(0);setTransitioning(false)},180)}}
 
   const trackOffset=width<=0?0:(-width+dragX-(settlingTo*width))
   const displayWords=searchResult?searchWords:currentWords
-  const noResults=searchResult&&searchResult.total===0
+  const noResults=Boolean(searchResult&&searchResult.total===0)
 
   return <section aria-labelledby="reading-words-title" className="text-left">
     <div className="text-center"><p lang="he" dir="rtl" className="text-[1.25rem] font-black text-indigo-700">מִלִּים</p><h2 id="reading-words-title" className="text-[1.65rem] font-black text-slate-950">Palabras</h2><p className="mt-1 text-[13px] text-slate-500">Diccionario visual Hebreo ↔ Español.</p></div>
@@ -152,12 +153,12 @@ export default function ReadingWordsExplorer(){
     {noResults&&<div className="mt-5 border-y border-dashed border-slate-300 py-9 text-center"><p className="text-sm font-black text-slate-700">No encontramos esa palabra en el diccionario.</p><p className="mt-1 text-[11px] text-slate-400">El Traductor puede ayudarte con palabras o frases que todavía no estén indexadas aquí.</p></div>}
     {!error&&!noResults&&searchResult&&displayWords.length>0&&<div className="mt-5"><SlideContent words={displayWords} view={view} mode={mode} selectedId={selectedId} onToggle={toggleCard}/></div>}
     {!error&&!searchResult&&current.items.length>0&&<>
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] bg-slate-50 px-2 py-2"><button type="button" disabled={page<=1||loading} onClick={()=>finishSwipe(-1)} className="flex min-h-10 items-center gap-1 rounded-full border bg-white px-3 text-[11px] font-black disabled:opacity-30"><ChevronLeft className="h-4 w-4"/>Anterior</button><p className="text-center text-[10px] font-black text-slate-500">Página {page}<br/>de {current.totalPages}</p><button type="button" disabled={page>=current.totalPages||loading} onClick={()=>finishSwipe(1)} className="flex min-h-10 items-center gap-1 rounded-full border bg-white px-3 text-[11px] font-black disabled:opacity-30">Siguiente<ChevronRight className="h-4 w-4"/></button></div>
-      <div ref={carouselRef} className="mt-5 w-full overflow-hidden rounded-[4px]" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] bg-slate-50 px-2 py-2"><button type="button" disabled={page<=1||loading} onClick={()=>finishSwipe(-1)} className="flex min-h-10 items-center gap-1 rounded-full border bg-white px-3 text-[11px] font-black disabled:opacity-30"><ChevronLeft className="h-4 w-4"/>Anterior</button><p className="text-center text-[10px] font-black text-slate-500">Página {page}<br/>de {current.totalPages}</p><button type="button" disabled={page>=current.totalPages||loading||!next} onClick={()=>finishSwipe(1)} className="flex min-h-10 items-center gap-1 rounded-full border bg-white px-3 text-[11px] font-black disabled:opacity-30">Siguiente<ChevronRight className="h-4 w-4"/></button></div>
+      <div ref={carouselRef} className="mt-5 w-full overflow-hidden rounded-[4px] touch-pan-y" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
         <div className="flex w-[300%] will-change-transform" style={{transform:`translate3d(${trackOffset}px,0,0)`,transition:transitioning?'transform 220ms cubic-bezier(0.22,1,0.36,1)':'none'}}>
-          <div className="w-1/3 shrink-0">{previous?<SlideContent words={previous.items} view={view} mode={mode} selectedId={null} onToggle={()=>{}}/>:<div className="w-full"/>}</div>
-          <div className="w-1/3 shrink-0"><SlideContent words={current.items} view={view} mode={mode} selectedId={selectedId} onToggle={toggleCard}/></div>
-          <div className="w-1/3 shrink-0">{next?<SlideContent words={next.items} view={view} mode={mode} selectedId={null} onToggle={()=>{}}/>:<div className="w-full"/>}</div>
+          <div className="w-1/3 shrink-0 overflow-hidden">{previous?<SlideContent words={previous.items} view={view} mode={mode} selectedId={null} onToggle={()=>{}}/>:<div className="w-full"/>}</div>
+          <div className="w-1/3 shrink-0 overflow-hidden"><SlideContent words={current.items} view={view} mode={mode} selectedId={selectedId} onToggle={toggleCard}/></div>
+          <div className="w-1/3 shrink-0 overflow-hidden">{next?<SlideContent words={next.items} view={view} mode={mode} selectedId={null} onToggle={()=>{}}/>:<div className="w-full"/>}</div>
         </div>
       </div>
       <p className="mt-5 text-center text-[11px] leading-relaxed text-slate-400">Varias páginas se precargan en memoria. Desliza a izquierda o derecha; cada superficie ocupa todo el ancho y no vuelve a consultar el servidor al cambiar entre páginas ya preparadas.</p>
