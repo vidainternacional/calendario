@@ -20,6 +20,9 @@ function translatorInstructions(source: 'es' | 'he', target: 'es' | 'he') {
     'Devuelve únicamente la traducción final, sin explicaciones, sin transliteración, sin análisis gramatical, sin Markdown y sin comillas envolventes.',
     'Si la entrada es una sola palabra, devuelve el equivalente principal más natural y breve.',
     'Si la entrada es una frase, tradúcela de forma natural y fiel al sentido completo.',
+    target === 'he'
+      ? 'Escribe la salida hebrea con niqqud completo y coherente para aprendizaje; no omitas los signos vocálicos.'
+      : 'No añadas texto hebreo ni transliteración a la salida española.',
     'Para español a hebreo cotidiano usa hebreo israelí natural; si el texto es claramente bíblico o religioso, conserva la formulación hebrea estándar cuando corresponda.',
     'No inventes contexto que no esté en la entrada.',
   ].join(' ')
