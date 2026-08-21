@@ -101,7 +101,7 @@ export default function HebrewTranslator() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed right-4 z-[55] inline-flex min-h-11 items-center gap-2 rounded-full border border-indigo-200 bg-white/95 px-4 text-sm font-black text-indigo-700 shadow-[0_8px_26px_rgba(15,23,42,0.12)] backdrop-blur active:scale-[0.98]"
+        className="fixed right-4 z-[55] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/65 bg-white/62 px-4 text-sm font-black text-indigo-700 shadow-[0_10px_32px_rgba(79,70,229,0.16)] backdrop-blur-2xl backdrop-saturate-150 transition active:scale-[0.97]"
         style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
         aria-label="Abrir traductor de hebreo"
       >
@@ -111,7 +111,7 @@ export default function HebrewTranslator() {
 
       {open && (
         <div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-5"
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/24 p-0 backdrop-blur-md sm:items-center sm:p-5"
           role="presentation"
           onMouseDown={event => {
             if (event.currentTarget === event.target) setOpen(false)
@@ -121,75 +121,90 @@ export default function HebrewTranslator() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="hebrew-translator-title"
-            className="w-full max-w-xl rounded-t-[28px] bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4 text-left shadow-2xl sm:rounded-[28px] sm:p-5"
+            className="relative w-full max-w-xl overflow-hidden rounded-t-[32px] border border-white/70 bg-white/76 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 text-left shadow-[0_-18px_70px_rgba(15,23,42,0.22)] backdrop-blur-[28px] backdrop-saturate-150 sm:rounded-[32px] sm:p-5"
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/72 to-transparent" aria-hidden="true" />
+            <div className="relative mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300/80 sm:hidden" aria-hidden="true" />
+
+            <div className="relative flex items-start justify-between gap-4">
               <div>
-                <p lang="he" dir="rtl" className="text-sm font-black text-indigo-700">תרגום</p>
-                <h2 id="hebrew-translator-title" className="text-xl font-black tracking-[-0.02em] text-slate-950">Traductor</h2>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">Español ⇄ עברית</p>
+                <p lang="he" dir="rtl" className="text-sm font-black text-indigo-600">תרגום</p>
+                <h2 id="hebrew-translator-title" className="mt-0.5 text-[1.7rem] font-black tracking-[-0.04em] text-slate-950">Traductor</h2>
+                <p className="mt-0.5 text-[13px] font-semibold text-slate-500">Español ⇄ עברית</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label="Cerrar traductor">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="grid h-11 w-11 place-items-center rounded-full border border-white/70 bg-slate-100/72 text-slate-600 shadow-sm backdrop-blur-xl transition active:scale-95"
+                aria-label="Cerrar traductor"
+              >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
-            <form className="mt-5" onSubmit={translate}>
-              <label htmlFor="hebrew-translation-input" className="mb-2 flex items-center justify-between gap-3 text-xs font-black text-slate-500">
-                <span>Escribe una palabra o frase</span>
-                <span className="text-indigo-600">{inputIsHebrew ? 'Hebreo → Español' : 'Español → Hebreo'}</span>
-              </label>
-              <textarea
-                id="hebrew-translation-input"
-                value={text}
-                onChange={event => {
-                  setText(event.target.value.slice(0, 1000))
-                  setError('')
-                }}
-                dir={inputIsHebrew ? 'rtl' : 'ltr'}
-                lang={inputIsHebrew ? 'he' : 'es'}
-                rows={4}
-                autoFocus
-                placeholder={inputIsHebrew ? 'כתוב מילה או משפט' : 'Ej. Dios es bueno'}
-                className="w-full resize-none rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3 text-[1.05rem] font-semibold leading-relaxed text-slate-950 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-50"
-              />
-              <div className="mt-2 flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                <span>{singleWord ? 'Palabra' : 'Frase'}</span>
-                <span>{text.length}/1000</span>
+            <form className="relative mt-5" onSubmit={translate}>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label htmlFor="hebrew-translation-input" className="text-[13px] font-black text-slate-600">Escribe una palabra o frase</label>
+                <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-[11px] font-black text-indigo-700">
+                  {inputIsHebrew ? 'Hebreo → Español' : 'Español → Hebreo'}
+                </span>
+              </div>
+
+              <div className="overflow-hidden rounded-[24px] border border-white/80 bg-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-2xl">
+                <textarea
+                  id="hebrew-translation-input"
+                  value={text}
+                  onChange={event => {
+                    setText(event.target.value.slice(0, 1000))
+                    setError('')
+                  }}
+                  dir={inputIsHebrew ? 'rtl' : 'ltr'}
+                  lang={inputIsHebrew ? 'he' : 'es'}
+                  rows={3}
+                  autoFocus
+                  placeholder={inputIsHebrew ? 'כתוב מילה או משפט' : 'Ej. Dios es bueno'}
+                  className="min-h-[118px] w-full resize-none bg-transparent px-4 pb-3 pt-4 text-[1.08rem] font-semibold leading-relaxed text-slate-950 outline-none placeholder:text-slate-400"
+                />
+                <div className="flex items-center justify-between border-t border-white/70 px-4 py-2 text-[11px] font-semibold text-slate-400">
+                  <span>{singleWord ? 'Palabra' : 'Frase'}</span>
+                  <span>{text.length}/1000</span>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={!text.trim() || loading}
-                className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[18px] bg-indigo-600 px-5 text-sm font-black text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-indigo-600 px-5 text-sm font-black text-white shadow-[0_10px_26px_rgba(79,70,229,0.28)] transition active:scale-[0.985] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
               >
                 {loading ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Languages className="h-5 w-5" aria-hidden="true" />}
                 {loading ? 'Traduciendo…' : 'Traducir'}
               </button>
             </form>
 
-            <div className="mt-5 min-h-24 border-t border-slate-200 pt-4" aria-live="polite">
-              {error && <p className="rounded-[16px] bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</p>}
+            <div className="relative mt-4 min-h-20" aria-live="polite">
+              {error && <p className="rounded-[18px] border border-rose-100 bg-rose-50/82 px-4 py-3 text-sm font-bold text-rose-700 backdrop-blur-xl">{error}</p>}
 
               {result && (
-                <div>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-400">{result.kind === 'word' ? 'Significado' : 'Traducción'}</p>
+                <div className="overflow-hidden rounded-[24px] border border-white/80 bg-white/54 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-2xl">
+                  <div className="flex items-center justify-between gap-3 border-b border-white/70 px-4 py-3">
+                    <p className="text-[11px] font-black uppercase tracking-[0.09em] text-slate-400">{result.kind === 'word' ? 'Significado' : 'Traducción'}</p>
                     <p className="text-[11px] font-bold text-slate-400">{result.sourceLanguage === 'he' ? 'Hebreo → Español' : 'Español → Hebreo'}</p>
                   </div>
-                  <p
-                    lang={outputIsHebrew ? 'he' : 'es'}
-                    dir={outputIsHebrew ? 'rtl' : 'ltr'}
-                    className={`mt-3 break-words font-black leading-relaxed text-slate-950 ${outputIsHebrew ? 'text-[2rem]' : 'text-[1.45rem]'}`}
-                  >
-                    {result.translatedText}
-                  </p>
-                  <div className="mt-4 flex gap-2 border-t border-slate-100 pt-3">
-                    <button type="button" onClick={copyResult} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[15px] bg-slate-100 px-3 text-xs font-black text-slate-700">
+                  <div className="px-4 py-5">
+                    <p
+                      lang={outputIsHebrew ? 'he' : 'es'}
+                      dir={outputIsHebrew ? 'rtl' : 'ltr'}
+                      className={`break-words font-black tracking-[-0.02em] text-slate-950 ${outputIsHebrew ? 'text-[2.45rem] leading-[1.45]' : 'text-[1.65rem] leading-snug'}`}
+                    >
+                      {result.translatedText}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 border-t border-white/70 p-2.5">
+                    <button type="button" onClick={copyResult} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[16px] bg-slate-100/72 px-3 text-xs font-black text-slate-700 transition active:scale-[0.98]">
                       {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                       {copied ? 'Copiado' : 'Copiar'}
                     </button>
-                    <button type="button" onClick={speakHebrew} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[15px] bg-indigo-50 px-3 text-xs font-black text-indigo-700">
+                    <button type="button" onClick={speakHebrew} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[16px] bg-indigo-500/10 px-3 text-xs font-black text-indigo-700 transition active:scale-[0.98]">
                       <Speaker className="h-4 w-4" aria-hidden="true" />
                       Escuchar hebreo
                     </button>
