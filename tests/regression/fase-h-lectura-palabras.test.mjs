@@ -28,9 +28,9 @@ test('FASE H: Palabras conserva catálogo completo pero inicia con vocabulario e
 
 test('FASE H: Palabras distingue con niqqud y sin niqqud sin ayuda redundante', () => {
   assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
-  assert.match(words, /label: 'Con niqqud'/)
-  assert.match(words, /label: 'Sin niqqud'/)
-  assert.doesNotMatch(words, /label: 'Con ayuda'/)
+  assert.match(words, /label:\s*'Con niqqud'/)
+  assert.match(words, /label:\s*'Sin niqqud'/)
+  assert.doesNotMatch(words, /label:\s*'Con ayuda'/)
   assert.match(words, /function withoutNiqqud/)
 })
 
@@ -41,7 +41,8 @@ test('FASE H: Palabras usa tarjetas lista detalle y páginas de vocabulario', ()
   assert.match(words, /function DetailView/)
   assert.match(words, /function toggleCard/)
   assert.match(words, /function PageControl/)
-  assert.match(words, /pageSize: '24'/)
+  assert.match(words, /pageSize:\s*'24'/)
+  assert.match(words, /snap-x snap-mandatory/)
 })
 
 test('FASE H: ficha de Palabras elimina información técnica y explica formación', () => {
@@ -62,7 +63,7 @@ test('FASE H: Palabras se agrupa por temas y español preparado', () => {
 
 test('FASE H: búsqueda de Palabras es global y al borrar restaura la página previa', () => {
   assert.match(words, /placeholder="Buscar en español o hebreo"/)
-  assert.match(words, /if \(value === '' && search\) clearSearch\(\)/)
+  assert.match(words, /if\s*\(value\s*===\s*''\s*&&\s*search\)\s*clearSearch\(\)/)
   assert.match(words, /setPage\(pageBeforeSearch\.current\)/)
   assert.match(catalog, /if \(!search\) \{/)
   assert.match(catalog, /Script=Hebrew/)
