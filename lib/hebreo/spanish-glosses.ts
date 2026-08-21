@@ -13,12 +13,30 @@ type DerivedGlossRow = {
   display_gloss_es: string
   confidence: number
   status: 'verified_derived' | 'manual_approved'
+  provenance: Record<string, unknown> | null
 }
 
 const CONTEXTUAL_SPANISH_PLACEHOLDER = /^Relacionado con «.+»$/
 
+// Estos tres lotes se construyeron interpretando el segmento anterior a `»`
+// como sentido léxico principal en glosas estructuradas TAHOT. La auditoría de
+// FASE H/Bloque 3 demostró que ese criterio no es seguro: en formatos como
+// `come»to come out:...` el sentido que debe traducirse está a la derecha.
+// Mientras se rederivan y verifican, es preferible mostrar "Español pendiente"
+// antes que enseñar una equivalencia potencialmente incorrecta.
+const GLOSS_BATCHES_PENDING_REVERIFICATION = new Set([
+  'fase_h_es_nouns_structured_001_20260820',
+  'fase_h_es_verbs_structured_editorial_001_20260820',
+  'fase_h_es_encoded_primary_safe_001_20260820',
+])
+
 function hasFinalSpanish(value: string | null) {
   return Boolean(value && !CONTEXTUAL_SPANISH_PLACEHOLDER.test(value))
+}
+
+function isReverifiedGloss(row: DerivedGlossRow) {
+  const batchId = typeof row.provenance?.batch_id === 'string' ? row.provenance.batch_id : null
+  return !batchId || !GLOSS_BATCHES_PENDING_REVERIFICATION.has(batchId)
 }
 
 export async function enriquecerCatalogoConGlosasEspanolas(
@@ -61,7 +79,7 @@ export async function enriquecerCatalogoConGlosasEspanolas(
 
   const { data, error } = await (supabase as any)
     .from('biblical_hebrew_spanish_glosses')
-    .select('lexical_entry_id, display_gloss_es, confidence, status')
+    .select('lexical_entry_id, display_gloss_es, confidence, status, provenance')
     .in('lexical_entry_id', entryIds)
     .in('status', ['verified_derived', 'manual_approved'])
 
@@ -70,7 +88,7 @@ export async function enriquecerCatalogoConGlosasEspanolas(
     return page
   }
 
-  const rows = (data ?? []) as DerivedGlossRow[]
+  const rows = ((data ?? []) as DerivedGlossRow[]).filter(isReverifiedGloss)
   if (rows.length === 0) return page
 
   const byLexicalId = new Map(
@@ -91,7 +109,7 @@ export async function enriquecerCatalogoConGlosasEspanolas(
       return {
         ...item,
         spanish: derived.display_gloss_es,
-        meaningNoteEs: item.meaningNoteEs ?? `Glosa española editorial aprobada (${derived.confidence}% de confianza).`,
+        meaningNoteEs: item.meaningNoteEs ?? 'Significado español verificado para esta entrada.',
       }
     }),
   }
