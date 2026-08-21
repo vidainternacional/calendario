@@ -10,6 +10,7 @@ import {
 export const runtime = 'nodejs'
 
 const MAX_INPUT_LENGTH = 1000
+const FINAL_SPANISH_STATUSES = ['verified_derived', 'manual_approved'] as const
 
 function translatorInstructions(source: 'es' | 'he', target: 'es' | 'he') {
   const direction = source === 'he' ? 'hebreo a español' : 'español a hebreo'
@@ -31,6 +32,85 @@ function cleanModelTranslation(value: string) {
     .replace(/\s*```$/u, '')
     .replace(/^["“”]([\s\S]*)["“”]$/u, '$1')
     .trim()
+}
+
+async function lookupHebrewWord(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  text: string,
+) {
+  const { data: lexicalRows, error: lexicalError } = await (supabase as any)
+    .from('biblical_lexical_entries')
+    .select('id, lemma, display_gloss_es')
+    .eq('language', 'hebrew')
+    .eq('review_status', 'approved')
+    .eq('enabled', true)
+    .eq('lemma', text)
+    .limit(8)
+
+  if (lexicalError || !lexicalRows?.length) return null
+
+  const direct = lexicalRows.find((row: any) => typeof row.display_gloss_es === 'string' && row.display_gloss_es.trim())
+  if (direct) return direct.display_gloss_es.trim()
+
+  const ids = lexicalRows.map((row: any) => row.id)
+  const { data: glossRows, error: glossError } = await (supabase as any)
+    .from('biblical_hebrew_spanish_glosses')
+    .select('lexical_entry_id, display_gloss_es, confidence')
+    .in('lexical_entry_id', ids)
+    .in('status', FINAL_SPANISH_STATUSES)
+    .order('confidence', { ascending: false })
+    .limit(8)
+
+  if (glossError || !glossRows?.length) return null
+  const gloss = glossRows.find((row: any) => typeof row.display_gloss_es === 'string' && row.display_gloss_es.trim())
+  return gloss?.display_gloss_es?.trim() || null
+}
+
+async function lookupSpanishWord(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  text: string,
+) {
+  const { data: directRows, error: directError } = await (supabase as any)
+    .from('biblical_lexical_entries')
+    .select('id, lemma, display_gloss_es')
+    .eq('language', 'hebrew')
+    .eq('review_status', 'approved')
+    .eq('enabled', true)
+    .ilike('display_gloss_es', text)
+    .limit(8)
+
+  if (!directError) {
+    const direct = directRows?.find((row: any) => typeof row.lemma === 'string' && row.lemma.trim())
+    if (direct) return direct.lemma.trim()
+  }
+
+  const { data: glossRows, error: glossError } = await (supabase as any)
+    .from('biblical_hebrew_spanish_glosses')
+    .select('lexical_entry_id, display_gloss_es, confidence')
+    .in('status', FINAL_SPANISH_STATUSES)
+    .ilike('display_gloss_es', text)
+    .order('confidence', { ascending: false })
+    .limit(12)
+
+  if (glossError || !glossRows?.length) return null
+
+  const ids = glossRows.map((row: any) => row.lexical_entry_id)
+  const { data: lexicalRows, error: lexicalError } = await (supabase as any)
+    .from('biblical_lexical_entries')
+    .select('id, lemma')
+    .in('id', ids)
+    .eq('language', 'hebrew')
+    .eq('review_status', 'approved')
+    .eq('enabled', true)
+    .limit(12)
+
+  if (lexicalError || !lexicalRows?.length) return null
+  const byId = new Map(lexicalRows.map((row: any) => [row.id, row.lemma]))
+  for (const gloss of glossRows) {
+    const lemma = byId.get(gloss.lexical_entry_id)
+    if (typeof lemma === 'string' && lemma.trim()) return lemma.trim()
+  }
+  return null
 }
 
 export async function POST(request: Request) {
@@ -60,6 +140,24 @@ export async function POST(request: Request) {
   }
 
   const direction = detectHebrewTranslationDirection(text)
+  const kind = isSingleWord(text) ? 'word' : 'phrase'
+
+  if (kind === 'word') {
+    const dictionaryTranslation = direction.source === 'he'
+      ? await lookupHebrewWord(supabase, text)
+      : await lookupSpanishWord(supabase, text)
+
+    if (dictionaryTranslation) {
+      return NextResponse.json({
+        input: text,
+        translatedText: dictionaryTranslation,
+        sourceLanguage: direction.source,
+        targetLanguage: direction.target,
+        kind,
+        source: 'dictionary',
+      })
+    }
+  }
 
   try {
     const generated = await vidaAI({
@@ -82,7 +180,8 @@ export async function POST(request: Request) {
       translatedText,
       sourceLanguage: direction.source,
       targetLanguage: direction.target,
-      kind: isSingleWord(text) ? 'word' : 'phrase',
+      kind,
+      source: 'translator',
     })
   } catch (error) {
     if (error instanceof VidaAiError) {
