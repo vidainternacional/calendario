@@ -25,13 +25,3 @@ export function normalizeTranslatorInput(value: unknown, maxLength = 1000) {
   if (typeof value !== 'string') return ''
   return value.trim().slice(0, maxLength)
 }
-
-export function buildAzureTranslatorUrl(endpoint: string, direction: HebrewTranslationDirection) {
-  const base = endpoint.replace(/\/$/u, '')
-  const params = new URLSearchParams({
-    'api-version': '3.0',
-    from: direction.source,
-    to: direction.target,
-  })
-  return `${base}/translate?${params.toString()}`
-}
