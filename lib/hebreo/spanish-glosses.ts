@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import type { HebrewWordCatalogPage } from '@/lib/hebreo/word-catalog'
 
 type LexicalIdentityRow = {
@@ -23,12 +23,16 @@ export async function enriquecerCatalogoConGlosasEspanolas(
   const lexicalIds = Array.from(new Set(page.items.map(item => item.lexicalId).filter(Boolean)))
   if (lexicalIds.length === 0) return page
 
-  const supabase = await createClient()
+  // Esta función solo se ejecuta del lado servidor y después de que el catálogo
+  // haya validado la sesión activa. La cobertura española es editorial y no
+  // depende de permisos del cliente; usar service role evita que una lectura RLS
+  // intermedia convierta una glosa existente en un falso "Español pendiente".
+  const supabase = createServiceClient()
 
   // `page.items[].lexicalId` conserva el identificador fuente/Strong (H...),
   // mientras `biblical_hebrew_spanish_glosses.lexical_entry_id` referencia el UUID
   // interno de `biblical_lexical_entries`. Resolver primero esa identidad evita que
-  // una glosa aprobada aparezca erróneamente como "Español pendiente".
+  // una glosa aprobada aparezca erróneamente como ausente.
   const { data: lexicalRows, error: lexicalError } = await (supabase as any)
     .from('biblical_lexical_entries')
     .select('id, lexical_id')
