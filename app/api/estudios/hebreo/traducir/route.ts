@@ -29,7 +29,7 @@ function cleanModelTranslation(value: string) {
     .trim()
     .replace(/^```(?:text)?\s*/iu, '')
     .replace(/\s*```$/u, '')
-    .replace(/^["“”](.*)["“”]$/su, '$1')
+    .replace(/^["“”]([\s\S]*)["“”]$/u, '$1')
     .trim()
 }
 
