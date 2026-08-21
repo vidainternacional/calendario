@@ -25,12 +25,11 @@ test('la dirección se detecta por escritura hebrea y solo admite es/he', () => 
   assert.match(contract, /maxLength = 1000/)
 })
 
-test('el proveedor queda server-only, autenticado y con timeout', () => {
+test('la traducción reutiliza VIDA AI del lado servidor y exige sesión autenticada', () => {
   assert.match(route, /supabase\.auth\.getUser\(\)/)
   assert.match(route, /status: 401/)
-  assert.match(route, /process\.env\.AZURE_TRANSLATOR_KEY/)
-  assert.match(route, /Ocp-Apim-Subscription-Key/)
-  assert.match(route, /Ocp-Apim-Subscription-Region/)
-  assert.match(route, /AbortSignal\.timeout\(REQUEST_TIMEOUT_MS\)/)
-  assert.doesNotMatch(translatorUi, /AZURE_TRANSLATOR_KEY|Ocp-Apim-Subscription-Key/)
+  assert.match(route, /vidaAI\(/)
+  assert.match(route, /task: 'interpretar_busqueda_biblica'/)
+  assert.match(route, /sin explicaciones, sin transliteración, sin análisis gramatical/)
+  assert.doesNotMatch(translatorUi, /GEMINI_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY/)
 })
