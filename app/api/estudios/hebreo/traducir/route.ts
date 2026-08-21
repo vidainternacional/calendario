@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
+import { VidaAiError, vidaAI } from '@/lib/ai/vida-ai'
 import { createClient } from '@/lib/supabase/server'
 import {
-  buildAzureTranslatorUrl,
   detectHebrewTranslationDirection,
   isSingleWord,
   normalizeTranslatorInput,
@@ -9,16 +9,29 @@ import {
 
 export const runtime = 'nodejs'
 
-const DEFAULT_ENDPOINT = 'https://api.cognitive.microsofttranslator.com'
 const MAX_INPUT_LENGTH = 1000
-const REQUEST_TIMEOUT_MS = 8000
 
-type AzureTranslationResponse = Array<{
-  translations?: Array<{
-    text?: string
-    to?: string
-  }>
-}>
+function translatorInstructions(source: 'es' | 'he', target: 'es' | 'he') {
+  const direction = source === 'he' ? 'hebreo a español' : 'español a hebreo'
+  return [
+    `Actúa exclusivamente como un traductor de ${direction} para una herramienta de aprendizaje.`,
+    `El idioma de salida debe ser ${target === 'he' ? 'hebreo' : 'español'}.`,
+    'Devuelve únicamente la traducción final, sin explicaciones, sin transliteración, sin análisis gramatical, sin Markdown y sin comillas envolventes.',
+    'Si la entrada es una sola palabra, devuelve el equivalente principal más natural y breve.',
+    'Si la entrada es una frase, tradúcela de forma natural y fiel al sentido completo.',
+    'Para español a hebreo cotidiano usa hebreo israelí natural; si el texto es claramente bíblico o religioso, conserva la formulación hebrea estándar cuando corresponda.',
+    'No inventes contexto que no esté en la entrada.',
+  ].join(' ')
+}
+
+function cleanModelTranslation(value: string) {
+  return value
+    .trim()
+    .replace(/^```(?:text)?\s*/iu, '')
+    .replace(/\s*```$/u, '')
+    .replace(/^["“”](.*)["“”]$/su, '$1')
+    .trim()
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -46,45 +59,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Escribe una palabra o frase.' }, { status: 400 })
   }
 
-  const key = process.env.AZURE_TRANSLATOR_KEY?.trim()
-  if (!key) {
-    return NextResponse.json(
-      {
-        error: 'El traductor todavía no está conectado.',
-        code: 'translator_not_configured',
-      },
-      { status: 503 },
-    )
-  }
-
   const direction = detectHebrewTranslationDirection(text)
-  const endpoint = process.env.AZURE_TRANSLATOR_ENDPOINT?.trim() || DEFAULT_ENDPOINT
-  const region = process.env.AZURE_TRANSLATOR_REGION?.trim()
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json; charset=UTF-8',
-    'Ocp-Apim-Subscription-Key': key,
-  }
-  if (region) headers['Ocp-Apim-Subscription-Region'] = region
 
   try {
-    const response = await fetch(buildAzureTranslatorUrl(endpoint, direction), {
-      method: 'POST',
-      headers,
-      body: JSON.stringify([{ Text: text }]),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    const generated = await vidaAI({
+      task: 'interpretar_busqueda_biblica',
+      ownerId: user.id,
+      input: text,
+      instructions: translatorInstructions(direction.source, direction.target),
     })
-
-    if (!response.ok) {
-      console.error('Azure Translator error', response.status)
-      return NextResponse.json(
-        { error: 'No se pudo traducir en este momento.' },
-        { status: 502 },
-      )
-    }
-
-    const data = await response.json() as AzureTranslationResponse
-    const translatedText = data[0]?.translations?.[0]?.text?.trim()
+    const translatedText = cleanModelTranslation(generated.text)
 
     if (!translatedText) {
       return NextResponse.json(
@@ -101,10 +85,19 @@ export async function POST(request: Request) {
       kind: isSingleWord(text) ? 'word' : 'phrase',
     })
   } catch (error) {
+    if (error instanceof VidaAiError) {
+      if (error.code === 'rate_limited') {
+        return NextResponse.json({ error: 'Espera un momento antes de volver a traducir.' }, { status: 429 })
+      }
+      if (error.code === 'not_configured') {
+        return NextResponse.json({ error: 'El traductor todavía no está disponible en el servidor.' }, { status: 503 })
+      }
+    }
+
     console.error('Hebrew translator request failed', error)
     return NextResponse.json(
-      { error: 'No se pudo conectar con el traductor.' },
-      { status: 504 },
+      { error: 'No se pudo traducir en este momento.' },
+      { status: 502 },
     )
   }
 }
