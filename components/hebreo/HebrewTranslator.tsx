@@ -1,34 +1,52 @@
 'use client'
 
-import { FormEvent, useMemo, useState } from 'react'
-import { Check, ChevronDown, Copy, Languages, LoaderCircle, Speaker } from 'lucide-react'
-import { detectHebrewTranslationDirection, hasHebrew, isSingleWord } from '@/lib/hebreo/translator'
+import { FormEvent, useState } from 'react'
+import { ArrowLeftRight, Check, ChevronDown, Copy, Languages, LoaderCircle, Speaker } from 'lucide-react'
+import { hasHebrew, isSingleWord } from '@/lib/hebreo/translator'
 
+type Language = 'es' | 'he'
 type TranslationResult = {
   input: string
   translatedText: string
-  sourceLanguage: 'es' | 'he'
-  targetLanguage: 'es' | 'he'
+  sourceLanguage: Language
+  targetLanguage: Language
   kind: 'word' | 'phrase'
 }
 
 const HEBREW_MARKS = /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g
 function withoutNiqqud(value: string) { return value.normalize('NFD').replace(HEBREW_MARKS, '').normalize('NFC') }
 
+function preferredHebrewVoice(voices: SpeechSynthesisVoice[]) {
+  const hebrew = voices.filter(voice => voice.lang.toLowerCase().startsWith('he'))
+  return hebrew.find(voice => voice.lang.toLowerCase() === 'he-il' && voice.localService && /carmit|hebrew|israel/i.test(voice.name))
+    ?? hebrew.find(voice => voice.lang.toLowerCase() === 'he-il' && voice.localService)
+    ?? hebrew.find(voice => /carmit|hebrew|israel/i.test(voice.name))
+    ?? hebrew[0]
+    ?? null
+}
+
 export default function HebrewTranslator() {
   const [open, setOpen] = useState(false)
   const [showNiqqud, setShowNiqqud] = useState(true)
+  const [sourceLanguage, setSourceLanguage] = useState<Language>('es')
   const [text, setText] = useState('')
   const [result, setResult] = useState<TranslationResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const direction = useMemo(() => detectHebrewTranslationDirection(text), [text])
-  const inputIsHebrew = direction.source === 'he'
+  const inputIsHebrew = sourceLanguage === 'he'
+  const targetLanguage: Language = sourceLanguage === 'es' ? 'he' : 'es'
   const outputIsHebrew = result?.targetLanguage === 'he'
   const singleWord = result ? result.kind === 'word' : isSingleWord(text)
   const visibleResult = result?.translatedText && outputIsHebrew && !showNiqqud ? withoutNiqqud(result.translatedText) : result?.translatedText
+
+  function swapDirection() {
+    setSourceLanguage(current => current === 'es' ? 'he' : 'es')
+    setResult(null)
+    setError('')
+    setCopied(false)
+  }
 
   async function translate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -36,7 +54,11 @@ export default function HebrewTranslator() {
     if (!value || loading) return
     setLoading(true); setError(''); setResult(null); setCopied(false)
     try {
-      const response = await fetch('/api/estudios/hebreo/traducir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: value }) })
+      const response = await fetch('/api/estudios/hebreo/traducir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: value, sourceLanguage }),
+      })
       const data = await response.json() as Partial<TranslationResult> & { error?: string }
       if (!response.ok || !data.translatedText || !data.sourceLanguage || !data.targetLanguage) throw new Error(data.error || 'No se pudo traducir.')
       setResult({ input: data.input || value, translatedText: data.translatedText, sourceLanguage: data.sourceLanguage, targetLanguage: data.targetLanguage, kind: data.kind === 'word' ? 'word' : 'phrase' })
@@ -58,8 +80,10 @@ export default function HebrewTranslator() {
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(hebrewText)
     utterance.lang = 'he-IL'
-    const voice = window.speechSynthesis.getVoices().find(item => item.lang.toLowerCase().startsWith('he'))
+    const voice = preferredHebrewVoice(window.speechSynthesis.getVoices())
     if (voice) utterance.voice = voice
+    utterance.rate = 0.84
+    utterance.pitch = 1
     window.speechSynthesis.speak(utterance)
   }
 
@@ -85,8 +109,14 @@ export default function HebrewTranslator() {
                 </div>
               </div>
 
+              <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[18px] bg-slate-100/75 p-1.5">
+                <button type="button" onClick={() => sourceLanguage !== 'es' && swapDirection()} className={`min-h-10 rounded-[14px] px-3 text-[12px] font-black ${sourceLanguage === 'es' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Español</button>
+                <button type="button" onClick={swapDirection} aria-label="Cambiar dirección de traducción" className="grid h-10 w-10 place-items-center rounded-full bg-white text-indigo-700 shadow-sm active:scale-95"><ArrowLeftRight className="h-4 w-4" /></button>
+                <button type="button" onClick={() => sourceLanguage !== 'he' && swapDirection()} lang="he" dir="rtl" className={`min-h-10 rounded-[14px] px-3 text-[13px] font-black ${sourceLanguage === 'he' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>עברית</button>
+              </div>
+
               <form onSubmit={translate}>
-                <div className="mb-2 flex items-center justify-between gap-3"><label htmlFor="hebrew-translation-input" className="text-[12px] font-black text-slate-600">Escribe una palabra o frase</label><span className="text-[11px] font-black text-indigo-700">{inputIsHebrew ? 'Hebreo → Español' : 'Español → Hebreo'}</span></div>
+                <div className="mb-2 flex items-center justify-between gap-3"><label htmlFor="hebrew-translation-input" className="text-[12px] font-black text-slate-600">Escribe una palabra o frase</label><span className="text-[11px] font-black text-indigo-700">{sourceLanguage === 'he' ? 'Hebreo → Español' : 'Español → Hebreo'}</span></div>
                 <div className="overflow-hidden rounded-[22px] border border-white/80 bg-white/58 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-2xl">
                   <textarea id="hebrew-translation-input" value={text} onChange={event => { setText(event.target.value.slice(0, 1000)); setError('') }} dir={inputIsHebrew ? 'rtl' : 'ltr'} lang={inputIsHebrew ? 'he' : 'es'} rows={3} placeholder={inputIsHebrew ? 'כתוב מילה או משפט' : 'Ej. Dios es bueno'} className="min-h-[108px] w-full resize-none bg-transparent px-4 pb-3 pt-4 text-[1.05rem] font-semibold leading-relaxed text-slate-950 outline-none placeholder:text-slate-400" />
                   <div className="flex items-center justify-between border-t border-white/70 px-4 py-2 text-[10px] font-semibold text-slate-400"><span>{singleWord ? 'Palabra' : 'Frase'}</span><span>{text.length}/1000</span></div>
