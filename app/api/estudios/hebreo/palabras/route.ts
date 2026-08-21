@@ -3,6 +3,7 @@ import { listarCatalogoHebreoParaAprendizaje } from '@/lib/hebreo/word-catalog'
 import { enriquecerCatalogoConGlosasEspanolas } from '@/lib/hebreo/spanish-glosses'
 import { priorizarAmbiguedadHebrea } from '@/lib/hebreo/hebrew-ambiguity'
 import { limpiarPresentacionPedagogica } from '@/lib/hebreo/learning-display'
+import { buscarPalabraEspanolaExactaEnDiccionario } from '@/lib/hebreo/strict-word-dictionary'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,11 @@ export async function GET(request: Request) {
   const search = url.searchParams.get('q') ?? ''
   const group = url.searchParams.get('group') ?? 'essentials'
 
-  const baseResult = await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search, group })
+  const latinDictionarySearch = Boolean(search.trim()) && !/\p{Script=Hebrew}/u.test(search)
+  const baseResult = latinDictionarySearch
+    ? await buscarPalabraEspanolaExactaEnDiccionario({ page, pageSize, search, group })
+    : await listarCatalogoHebreoParaAprendizaje({ page, pageSize, search, group })
+
   const glossedResult = baseResult.status === 'ok'
     ? await enriquecerCatalogoConGlosasEspanolas(baseResult)
     : baseResult
