@@ -15,6 +15,12 @@ type DerivedGlossRow = {
   status: 'verified_derived' | 'manual_approved'
 }
 
+const CONTEXTUAL_SPANISH_PLACEHOLDER = /^Relacionado con «.+»$/
+
+function hasFinalSpanish(value: string | null) {
+  return Boolean(value && !CONTEXTUAL_SPANISH_PLACEHOLDER.test(value))
+}
+
 export async function enriquecerCatalogoConGlosasEspanolas(
   page: HebrewWordCatalogPage,
 ): Promise<HebrewWordCatalogPage> {
@@ -77,7 +83,7 @@ export async function enriquecerCatalogoConGlosasEspanolas(
   return {
     ...page,
     items: page.items.map(item => {
-      if (item.spanish) return item
+      if (hasFinalSpanish(item.spanish)) return item
       const entryId = uuidByLexicalId.get(item.lexicalId)
       if (!entryId) return item
       const derived = byLexicalId.get(item.lexicalId)
