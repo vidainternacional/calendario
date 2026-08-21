@@ -1,5 +1,5 @@
 -- FASE H / Bloque 3 — recuperación segura de nombres propios, lote 003.
--- 16 entradas revalidadas con gate safe-v4. Insert-only, reversible por batch_id.
+-- 15 entradas revalidadas con gate safe-v4. Insert-only, reversible por batch_id.
 -- Reversión:
 -- DELETE FROM public.biblical_hebrew_spanish_glosses
 -- WHERE provenance->>'batch_id'='fase_h_es_nombres_safe_v4_recovery_003_20260820';
@@ -19,13 +19,10 @@ with map(lexical_entry_id,expected_source_gloss,display_gloss_es,tipnr_id,wikida
  ('078dedbc-6f78-4d0f-b924-580c2fe295aa'::uuid,'Jeremiah»Jeremiah@1Ch.12.13','Jeremías','Jeremiah_1Ch.12.13','Q158825','wikidata-lastrevid:2533326960',0.933333,3),
  ('fc9f6e98-030e-46ea-993d-bf539cf08d52'::uuid,'Jeremiah»Jeremiah@2Ch.35.25-Mat','Jeremías','Jeremiah_2Ch.35.25','Q158825','wikidata-lastrevid:2533326960',0.933333,3),
  ('fc161c53-0316-4268-9a9b-27a06ecf3e71'::uuid,'Jeremiah»Jeremiah@Neh.10.2-','Jeremías','Jeremiah_Neh.10.2','Q158825','wikidata-lastrevid:2533326960',0.933333,3),
- ('a4571eae-c2d0-4a67-887f-35a753e97f23'::uuid,'Jeremiah»Jeremiah@Jer.35.3','Jeremías','Jeremiah_Jer.35.3','Q158825','wikidata-lastrevid:2533326960',0.933333,3),
- ('fc161c53-0316-4268-9a9b-27a06ecf3e71'::uuid,'Jeremiah»Jeremiah@Neh.10.2-','Jeremías','Jeremiah_Neh.10.2','Q158825','wikidata-lastrevid:2533326960',0.933333,3)
-), dedup as (
- select distinct on (lexical_entry_id) * from map order by lexical_entry_id
+ ('a4571eae-c2d0-4a67-887f-35a753e97f23'::uuid,'Jeremiah»Jeremiah@Jer.35.3','Jeremías','Jeremiah_Jer.35.3','Q158825','wikidata-lastrevid:2533326960',0.933333,3)
 ), eligible as (
- select e.id lexical_entry_id,e.strong_number,e.source_gloss,dedup.*
- from dedup join public.biblical_lexical_entries e on e.id=dedup.lexical_entry_id and e.source_gloss=dedup.expected_source_gloss
+ select e.id lexical_entry_id,e.strong_number,e.source_gloss,map.*
+ from map join public.biblical_lexical_entries e on e.id=map.lexical_entry_id and e.source_gloss=map.expected_source_gloss
  left join public.biblical_hebrew_spanish_glosses g on g.lexical_entry_id=e.id
  where e.language='hebrew' and e.enabled and e.review_status='approved'
    and nullif(btrim(e.display_gloss_es),'') is null and g.lexical_entry_id is null
