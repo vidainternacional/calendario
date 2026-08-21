@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import HebrewLearningHome from '@/components/hebreo/HebrewLearningHome'
+import HebrewTranslator from '@/components/hebreo/HebrewTranslator'
 import { createClient } from '@/lib/supabase/server'
 import styles from './hebreo.module.css'
 
@@ -15,6 +16,7 @@ export default async function HebreoBiblicoPage() {
 
   return (
     <div className={styles.centered}>
+      <HebrewTranslator />
       <HebrewLearningHome />
     </div>
   )
