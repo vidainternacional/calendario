@@ -58,24 +58,36 @@ def normalize_key(value: str) -> str:
 def clean_tahot_source_gloss(raw: str) -> str:
     """Extrae la etiqueta inglesa de aprendizaje sin inventar un sentido nuevo.
 
-    En las glosas estructuradas de TAHOT el texto anterior a `»` funciona como
-    una etiqueta/forma de índice, mientras que la etiqueta léxica que debe
-    traducirse está a la derecha. El payload numerado posterior a `:` y las
-    referencias posteriores a `@` son metadatos, no parte del significado.
+    TAHOT usa `»` con dos funciones distintas:
+    - en glosas estructuradas, la derecha contiene el sentido léxico y después un
+      payload numerado (`:1_...`);
+    - en anotaciones de entidad/referencia, la izquierda sigue siendo la glosa y
+      la derecha identifica un nombre/lugar seguido de `@Referencia`.
+
+    Se distinguen ambos formatos antes de decidir qué lado traducir.
     """
-    value = normalize_text(raw)
-    if not value:
+    raw_value = normalize_text(raw)
+    if not raw_value:
         return ""
 
-    value = value.lstrip(":").strip()
+    leading_sense_marker = raw_value.startswith(":")
+    value = raw_value.lstrip(":").strip()
 
     if "»" in value:
-        _index_label, lexical_label = value.split("»", 1)
-        value = lexical_label.strip()
-        if ":" in value:
-            value = value.split(":", 1)[0].strip()
-        if "@" in value:
-            value = value.split("@", 1)[0].strip()
+        left, right = value.split("»", 1)
+        left = left.strip()
+        right = right.strip()
+        has_numbered_sense_payload = bool(re.search(r":\d+(?:_|$)", right))
+
+        if leading_sense_marker or has_numbered_sense_payload:
+            value = right
+            value = re.split(r":\d+(?:_|$)", value, maxsplit=1)[0].strip()
+            if "@" in value:
+                value = value.split("@", 1)[0].strip()
+        else:
+            # `stone»Abel@1Sa...`, `wilderness»Sinai_Wilderness@...`, etc.
+            # La derecha es una anotación/referencia; el significado está a la izquierda.
+            value = left
 
     value = value.replace("_", " ")
 
@@ -336,6 +348,8 @@ def self_test() -> None:
         "to perish": "to perish",
         ": chariot»chariot:1_chariot": "chariot",
         "Abagtha»Abagtha@Est.1.10": "Abagtha",
+        "stone»Abel@1Sa.6.18": "stone",
+        "to see»Provider|LORD@Gen.1.1-Heb": "to see",
         ": [do](ACTION)»to make:4_[do](ACTION)": "to make",
         ": [inheriting]son»son:7_[inheriting]son;_heir": "son",
         ": walk»to go:1_walk;_move": "to go",
