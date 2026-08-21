@@ -36,6 +36,28 @@
   right: 0.5rem;
 }
 
+/*
+ * La lista de vocabulario conserva toda la fila como superficie táctil, pero
+ * las dos piezas que el alumno necesita comparar (hebreo + significado) viven
+ * en un bloque compacto y simétrico alrededor del centro real de la pantalla.
+ * Evita que una cuadrícula 50/50 empuje visualmente el contenido hacia los
+ * bordes en móviles estrechos.
+ */
+.centered :global(button.grid.grid-cols-2) {
+  grid-template-columns: minmax(0, 8rem) minmax(0, 8rem) !important;
+  justify-content: center !important;
+  column-gap: 1rem !important;
+  min-height: 92px !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+/* La acción ya es evidente porque toda la tarjeta es táctil; repetirla en cada
+ * palabra añade ruido y desplaza el significado sin aportar aprendizaje. */
+.centered :global(button.grid.grid-cols-2 > div:last-child > p:last-child) {
+  display: none;
+}
+
 .centered :global(input),
 .centered :global(textarea) {
   text-align: initial;
@@ -44,4 +66,11 @@
 .centered :global(input[dir='rtl']),
 .centered :global(textarea[dir='rtl']) {
   text-align: right;
+}
+
+@media (min-width: 390px) {
+  .centered :global(button.grid.grid-cols-2) {
+    grid-template-columns: minmax(0, 8.5rem) minmax(0, 8.5rem) !important;
+    column-gap: 1.25rem !important;
+  }
 }
