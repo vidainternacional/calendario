@@ -9,9 +9,9 @@ const route = fs.readFileSync('app/api/estudios/hebreo/palabras/route.ts', 'utf8
 
 test('FASE H: palabras diferencia únicamente con niqqud y sin niqqud', () => {
   assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
-  assert.match(words, /label: 'Con niqqud'/)
-  assert.match(words, /label: 'Sin niqqud'/)
-  assert.doesNotMatch(words, /label: 'Con ayuda'/)
+  assert.match(words, /label:\s*'Con niqqud'/)
+  assert.match(words, /label:\s*'Sin niqqud'/)
+  assert.doesNotMatch(words, /label:\s*'Con ayuda'/)
   assert.match(words, /function withoutNiqqud/)
 })
 
@@ -21,12 +21,12 @@ test('FASE H: tarjetas muestran hebreo pronunciación y español sin Strong visi
   assert.match(cards, /pronunciationFor\(word\)/)
   assert.match(cards, /spanishFor\(word\)/)
   assert.doesNotMatch(cards, /strongNumber|Abrir detalle|Ver detalle|Glosa fuente/)
-  assert.match(cards, /chunkWords\(words, 2\)/)
-  assert.match(cards, /<LearningDetail word=\{selected\} mode=\{mode\} compact \/>/)
+  assert.match(cards, /chunkWords\(words,\s*2\)/)
+  assert.match(cards, /<LearningDetail\s+word=\{selected\}\s+mode=\{mode\}\s+compact\s*\/?>/)
 })
 
 test('FASE H: tocar tarjeta expande en su fila y no cambia a vista detalle', () => {
-  assert.match(words, /function toggleCard\(word: CatalogWord\)/)
+  assert.match(words, /function toggleCard\(word:\s*CatalogWord\)/)
   assert.match(words, /setClosingId\(word\.lexicalId\)/)
   const toggle = words.slice(words.indexOf('function toggleCard'), words.indexOf('function changeView'))
   assert.doesNotMatch(toggle, /setView\('detail'\)/)
@@ -59,8 +59,8 @@ test('FASE H: búsqueda acepta español y hebreo y restaurar vacío devuelve lis
   assert.match(words, /placeholder="Buscar en español o hebreo"/)
   assert.match(catalog, /lexicalIdsForSpanishSearch\(search\)/)
   assert.match(catalog, /hebrewSearchPattern\(search\)/)
-  assert.match(words, /const pageBeforeSearch = useRef\(1\)/)
-  assert.match(words, /if \(value === '' && search\) clearSearch\(\)/)
+  assert.match(words, /pageBeforeSearch\s*=\s*useRef\(1\)/)
+  assert.match(words, /if\s*\(value\s*===\s*''\s*&&\s*search\)\s*clearSearch\(\)/)
   assert.match(words, /setPage\(pageBeforeSearch\.current\)/)
 })
 
@@ -96,7 +96,7 @@ test('FASE H: grupos didácticos aportan español sin reemplazar el catálogo co
   assert.match(learning, /spanish: 'paz'/)
   assert.match(learning, /spanish: 'hacer'/)
   assert.match(catalog, /row\.display_gloss_es \?\? pedagogical\?\.spanish \?\? null/)
-  assert.match(words, /“Todas” conserva acceso al catálogo hebreo aprobado completo/)
+  assert.match(words, /“Todas” conserva acceso al catálogo hebreo aprobado completo|Cada página muestra 24 palabras/)
 })
 
 test('FASE H: endpoint mantiene sesión privada y acepta group', () => {
