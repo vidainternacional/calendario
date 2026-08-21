@@ -83,7 +83,7 @@ export default function ReadingWordsExplorer(){
   const touchStartX=useRef<number|null>(null)
   const activeGroup=HEBREW_LEARNING_GROUPS.find(item=>item.id===group)??HEBREW_LEARNING_GROUPS[0]
 
-  useLayoutEffect(()=>{const node=carouselRef.current;if(!node)return;const update=()=>setWidth(node.clientWidth);update();const observer=new ResizeObserver(update);observer.observe(node);return()=>observer.disconnect()},[])
+  useLayoutEffect(()=>{const node=carouselRef.current;if(!node)return;const update=()=>setWidth(node.clientWidth);update();const observer=new ResizeObserver(update);observer.observe(node);return()=>observer.disconnect()},[current.items.length,view,group])
 
   async function fetchPage(target:number){
     const cached=cacheRef.current.get(target); if(cached)return cached
