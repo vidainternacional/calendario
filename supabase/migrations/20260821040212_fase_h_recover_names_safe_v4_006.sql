@@ -47,7 +47,17 @@ with map(
  ('f5d1c1d1-767e-4005-9e42-643934921ea8'::uuid,'Zebulun»Zebulun@Gen.30.20-Rev','Zabulón','Zebulun_Gen.30.20','Q614575','wikidata-lastrevid:2530699251',0.714286,3),
  ('be37fdc6-55a9-4294-a9fc-2b8ea1e0985b'::uuid,'Zerubbabel»Zerubbabel@1Ch.3.19-Mat','Zorobabel','Zerubbabel_1Ch.3.19','Q320139','wikidata-lastrevid:2530684654',0.736842,3)
 ), eligible as (
- select e.id lexical_entry_id,e.strong_number,e.source_gloss,map.*
+ select
+   e.id as lexical_entry_id,
+   e.strong_number,
+   e.source_gloss,
+   map.expected_source_gloss,
+   map.display_gloss_es,
+   map.tipnr_id,
+   map.wikidata_id,
+   map.wikidata_revision,
+   map.name_similarity,
+   map.spanish_anchor_sources
  from map
  join public.biblical_lexical_entries e
    on e.id=map.lexical_entry_id
