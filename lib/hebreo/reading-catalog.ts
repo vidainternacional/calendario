@@ -68,7 +68,7 @@ const OT_BOOK_CODES = Object.keys(BOOK_NAMES)
 
 const STARTER_REFERENCES = [
   ['GEN', 1, 1], ['GEN', 1, 3], ['EXO', 20, 13], ['EXO', 20, 14], ['EXO', 20, 15],
-  ['NUM', 6, 24], ['DEU', 6, 4], ['JOS', 1, 9], ['PSA', 23, 1], ['PSA', 119, 105],
+  ['NUM', 6, 24], ['DEU', 6, 4], ['DEU', 6, 5], ['JOS', 1, 9], ['PSA', 23, 1], ['PSA', 119, 105],
   ['PRO', 1, 7], ['ECC', 3, 1], ['ISA', 40, 8], ['HAB', 2, 4], ['MIC', 6, 8],
 ] as const
 
