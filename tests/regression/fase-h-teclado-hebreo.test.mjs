@@ -16,15 +16,17 @@ test('FASE H teclado: conserva guardia de sesión y se despliega directamente de
   assert.match(home, />Teclado hebreo</)
   assert.match(home, /aria-expanded=\{keyboardEnabled\}/)
   assert.match(home, /Practica tu escritura en hebreo/)
-  assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\}/)
+  assert.match(home, /keyboardEnabled &&/)
+  assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\} \/>/)
 })
 
-test('FASE H teclado: la práctica se abre en línea y no como botón flotante o modal', () => {
+test('FASE H teclado: queda fusionado con la superficie de la app y no como panel externo', () => {
   assert.match(keyboard, /if \(!enabled\) return null/)
+  assert.match(keyboard, /className="w-full pb-2 pt-1 text-left"/)
   assert.match(keyboard, /Practica tu escritura/)
-  assert.match(keyboard, /border-t border-slate-100/)
-  assert.doesNotMatch(keyboard, /fixed bottom-|fixed inset-|z-\[6[89]\]/)
-  assert.match(keyboard, /onDisable/)
+  assert.match(keyboard, /rounded-\[20px\] border border-slate-200 bg-slate-50/)
+  assert.match(home, /mt-5 border-t border-slate-200 pt-5/)
+  assert.doesNotMatch(keyboard, /bg-\[#f9f9fb\]|fixed bottom-|fixed inset-|z-\[6[89]\]|onDisable/)
 })
 
 test('FASE H teclado: conserva las 22 letras y separa las cinco formas Sofit', () => {
