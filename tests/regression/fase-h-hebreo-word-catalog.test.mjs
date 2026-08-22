@@ -39,7 +39,7 @@ test('FASE H: ficha prioriza pronunciación significado y formación sin datos t
   assert.doesNotMatch(detail, /Fuente|Glosa de la fuente|sourceLocator|providerVersion|contentHash|strongNumber/)
 })
 
-test('FASE H: vocabulario se organiza por temas y categorías pedagógicas', () => {
+test('FASE H: vocabulario se organiza por temas y categorías pedagógicas vigentes', () => {
   for (const label of ['Más comunes', 'Conectores', 'Preposiciones', 'Sujetos y pronombres', 'Personas y familia', 'Cosas y vida diaria', 'Naturaleza', 'Cuerpo y vida', 'Biblia y fe', 'Acciones', 'Sustantivos', 'Verbos', 'Adjetivos', 'Diccionario completo']) assert.match(learning, new RegExp(label))
   assert.match(words, /HEBREW_LEARNING_GROUPS\.map/)
   assert.match(catalog, /lexicalIdsForLearningGroup/)
