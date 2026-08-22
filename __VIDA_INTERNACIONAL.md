@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-19
+Última actualización: 2026-08-22
 
 Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**
 
@@ -402,18 +402,37 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 13. El head `600a516d4bbe2c990f09aa373b2ef637fa601585` tuvo CI temporal #2358, regresiones, lint, build, validador maestro y validadores TAHOT en verde.
 14. Vercel sirvió ese mismo head en Preview READY mediante `dpl_4pbkYgLGWtALemEgNfav3RrvmUvr`; PR #286 permanece DRAFT y sin merge.
 
-### Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — ACTIVO
+### Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — COMPLETADO Y APROBADO — 2026-08-22
 
-1. Evolucionar `Palabras` para resolver búsquedas por español, hebreo, Strong y transliteración sin crear un segundo léxico paralelo.
-2. Resolver formas hebreas flexionadas mediante `biblical_word_occurrences` y su `lexical_entry_id`, de modo que una forma del texto pueda llevar al lema aprobado correspondiente.
-3. Mantener `biblical_lexical_entries` como autoridad léxica; ninguna búsqueda automática puede reescribir lema, glosa fuente, definición o estado editorial de esas entradas.
-4. Incorporar un índice derivado de resoluciones reutilizables para evitar recalcular búsquedas ya verificadas. Ese índice debe guardar relación, confianza, evidencia y procedencia, no una nueva definición léxica autoritativa.
-5. Las coincidencias contextuales derivadas de RV1909 siguen siendo evidencia contextual y nunca equivalencia palabra-a-palabra automática cuando no exista glosa española aprobada.
-6. No guardar identidad del usuario ni historial personal de quién buscó qué. Solo persistir claves de búsqueda normalizadas que hayan producido una relación verificable con una entrada léxica aprobada.
-7. La lectura del índice derivado queda limitada a cuentas autenticadas activas; `anon` no tendrá acceso y los clientes autenticados no podrán INSERT/UPDATE/DELETE. Las escrituras derivadas se ejecutarán únicamente desde código server-only mediante service role.
-8. La tabla derivada debe ser reversible: deshabilitar su consulta devuelve el buscador al motor actual sin pérdida ni alteración del corpus, ocurrencias o entradas léxicas fuente.
-9. Proteger con regresiones las rutas de búsqueda hebrea sin niqqud, forma flexionada → lema, transliteración, español directo, Strong y fallback contextual.
-10. Mantener rendimiento mobile-first: consultar primero resoluciones reutilizables cuando corresponda y acudir al recorrido contextual más costoso únicamente cuando no exista una relación suficiente.
+1. `Palabras` resuelve búsquedas por español, hebreo, Strong y transliteración sin crear un segundo léxico paralelo.
+2. Las formas hebreas flexionadas se resuelven mediante `biblical_word_occurrences.lexical_entry_id` hacia el lema aprobado correspondiente.
+3. `biblical_lexical_entries` permanece como autoridad léxica; ninguna búsqueda automática reescribe lema, glosa fuente, definición ni estado editorial.
+4. `biblical_hebrew_search_resolutions` funciona como índice derivado reutilizable y reversible, con relación, confianza, evidencia y procedencia, sin convertirse en fuente léxica autoritativa.
+5. Las coincidencias contextuales derivadas de RV1909 permanecen como evidencia contextual y no equivalencia automática palabra-a-palabra sin glosa española aprobada.
+6. El índice derivado no guarda identidad del usuario ni historial personal de búsquedas; solo claves normalizadas con relación verificable.
+7. La lectura del índice está limitada a cuentas autenticadas activas; `anon` no tiene acceso y el cliente no escribe. Las escrituras derivadas se ejecutan server-only mediante service role.
+8. La cobertura española editorial quedó cerrada técnicamente en **10,737 / 10,737** entradas hebreas aprobadas/habilitadas, con **0 pendientes** y el lote final de 1,816 filas reversible por `batch_id`.
+9. El traductor práctico Español ⇄ Hebreo quedó integrado como superficie breve: palabra exacta prioriza diccionario aprobado y frase/fallback usa VIDA AI del lado servidor; muestra traducción/significado, pronunciación orientativa escrita, copiar y escuchar, sin Strong, morfología, ocurrencias ni transliteración técnica.
+10. La experiencia fue reorganizada según la pedagogía aprobada: Inicio como hub compacto; `Aprender` en página propia; Alef-Bet/Sofit/Dagesh/Matres, Vocales/Sheva, Palabras/Frases, Lectura bíblica, Reglas y Repaso conservan orden progresivo y superficies integradas.
+11. `Palabras` separa vocabulario bíblico de frases útiles curadas; `Lectura` funciona como lector bíblico por libro/capítulo; el teclado hebreo integrado conserva 22 letras, 5 Sofit, Niqqud, Dagesh y signos bíblicos sin parecer panel externo.
+12. El usuario recorrió y aprobó la validación funcional/visual en iPhone el **2026-08-22**, incluyendo la ronda final del teclado integrado, sin bugs bloqueantes reportados.
+13. El head aprobado `9d29a3cea6b8f5db44ac8646b56b41a6677f9e5a` tuvo regresiones, lint, build, validador maestro y validadores TAHOT en verde; Vercel Preview quedó READY. PR #286 permanece OPEN · DRAFT · sin merge y no se hizo deploy de producción.
+
+### Bloque 4 — Progreso personal y práctica adaptativa — ACTIVO
+
+1. Convertir `Prueba tu progreso` en un instructor personal con historial real por usuario, sin reducir la experiencia a una nota final aislada.
+2. Registrar sesiones e intentos suficientes para saber qué áreas se dominan, cuáles mejoran y cuáles requieren refuerzo, preservando privacidad por usuario.
+3. Clasificar cada ejercicio por habilidad verificable: Alef-Bet, reconocimiento visual, Sofit, Dagesh, Niqqud/vocales, Sheva, vocabulario, lectura y reglas; ampliar categorías únicamente cuando exista contenido real que evaluar.
+4. Ofrecer dos caminos de práctica: **Según mi progreso**, adaptado a errores, dominio y retención del usuario; y **Elegir dificultad**, para practicar manualmente a un nivel Inicial, Intermedio o Avanzado aunque no coincida con la recomendación adaptativa.
+5. Permitir elegir áreas concretas o marcar contenido como **Quiero repasar**, de modo que el usuario pueda añadir una dificultad de práctica voluntaria sin alterar el cálculo de dominio histórico.
+6. Durante la práctica, actualizar avance y aciertos en tiempo real. El cronómetro queda opcional y no es requisito de la primera versión.
+7. Calcular métricas comprensibles: precisión general, dominio por área, evolución entre sesiones, errores recurrentes, retención y tendencia; evitar estadísticas decorativas que no puedan explicarse desde los intentos guardados.
+8. Al terminar, mostrar qué domina, qué mejoró, qué necesita reforzar y una recomendación concreta del siguiente tema o práctica.
+9. Incorporar motivación tipo juego sin infantilizar la experiencia: nivel de aprendizaje, estados **Reforzar → En progreso → Dominado**, metas o rachas cuando se deriven de datos reales y sin penalizaciones artificiales.
+10. Diseñar la persistencia con el mínimo de estructuras necesarias, evitando tablas de estadísticas duplicadas cuando puedan calcularse desde sesiones/respuestas.
+11. Todo progreso persistente será privado por defecto y aislado por `auth.uid()`. Ningún usuario podrá leer o escribir progreso de otra persona; `anon` no tendrá acceso.
+12. Cualquier nueva tabla, RLS, grant, función o migración de Supabase para este bloque deberá presentarse antes con SQL exacto, impacto y rollback y requerirá aprobación explícita antes de aplicarse.
+13. No iniciar FASE I ni Materiales administrables mientras Bloque 4 siga activo.
 
 # FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
 
@@ -435,4 +454,4 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 
 # Siguiente punto autorizado
 
-**Continuar exclusivamente FASE H con el Bloque 3 — cobertura léxica progresiva y búsqueda inteligente. Empezar por transliteración y resolución forma flexionada → lema usando las estructuras existentes; después incorporar el índice derivado `biblical_hebrew_search_resolutions` aprobado por el usuario, con RLS de solo lectura para cuentas autenticadas activas, sin acceso `anon`, sin escrituras desde cliente y con escritura server-only mediante service role. No modificar el léxico autoritativo ni iniciar FASE I.**
+**Continuar exclusivamente FASE H con el Bloque 4 — progreso personal y práctica adaptativa. Primero auditar las estructuras actuales y preparar la propuesta mínima de persistencia, privacidad y RLS para sesiones/respuestas de progreso; no aplicar ninguna tabla, RLS, grant o función nueva hasta presentar SQL exacto, impacto y rollback y obtener aprobación explícita. Después de la aprobación, implementar el modo `Según mi progreso`, el modo `Elegir dificultad`, métricas explicables y recomendaciones de estudio. No iniciar FASE I.**
