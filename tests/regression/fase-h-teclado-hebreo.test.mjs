@@ -6,7 +6,7 @@ const keyboard = fs.readFileSync('components/hebreo/HebrewKeyboardDock.tsx', 'ut
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 
-test('FASE H teclado: conserva guardia de sesión y se controla directamente desde Inicio', () => {
+test('FASE H teclado: conserva guardia de sesión y se despliega directamente desde Inicio', () => {
   assert.match(page, /<HebrewLearningHome \/>/)
   assert.doesNotMatch(page, /HebrewKeyboardDock/)
   assert.match(page, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo'\)/)
@@ -14,23 +14,29 @@ test('FASE H teclado: conserva guardia de sesión y se controla directamente des
   assert.match(home, /useState\(false\)/)
   assert.doesNotMatch(home, />Herramientas</)
   assert.match(home, />Teclado hebreo</)
-  assert.match(home, /aria-pressed=\{keyboardEnabled\}/)
-  assert.match(home, /Activar/)
-  assert.match(home, /Desactivar/)
+  assert.match(home, /aria-expanded=\{keyboardEnabled\}/)
+  assert.match(home, /Practica tu escritura en hebreo/)
   assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\}/)
 })
 
-test('FASE H teclado: no flota hasta que el usuario lo activa y queda más arriba', () => {
+test('FASE H teclado: la práctica se abre en línea y no como botón flotante o modal', () => {
   assert.match(keyboard, /if \(!enabled\) return null/)
-  assert.match(keyboard, /bottom-\[calc\(env\(safe-area-inset-bottom\)\+148px\)\]/)
-  assert.match(keyboard, /bottom-\[calc\(env\(safe-area-inset-bottom\)\+84px\)\]/)
+  assert.match(keyboard, /Practica tu escritura/)
+  assert.match(keyboard, /border-t border-slate-100/)
+  assert.doesNotMatch(keyboard, /fixed bottom-|fixed inset-|z-\[6[89]\]/)
   assert.match(keyboard, /onDisable/)
 })
 
-test('FASE H teclado: conserva letras hebreas formas finales y niqqud', () => {
+test('FASE H teclado: conserva las 22 letras y separa las cinco formas Sofit', () => {
   for (const letter of ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת']) assert.match(keyboard, new RegExp(letter))
   for (const finalForm of ['ך', 'ם', 'ן', 'ף', 'ץ']) assert.match(keyboard, new RegExp(finalForm))
-  for (const name of ['Sheva', 'Hataf Segol', 'Hataf Pataj', 'Hataf Qamats', 'Hiriq', 'Tsere', 'Segol', 'Pataj', 'Qamats', 'Holam', 'Qubuts', 'Dagesh']) assert.match(keyboard, new RegExp(name))
+  assert.match(keyboard, /type KeyboardMode = 'letters' \| 'sofit' \| 'niqqud'/)
+  assert.match(keyboard, /סופית · Sofit/)
+})
+
+test('FASE H teclado: niqqud incluye vocales, Dagesh y signos avanzados de escritura', () => {
+  for (const name of ['Sheva', 'Hataf Segol', 'Hataf Pataj', 'Hataf Qamats', 'Hiriq', 'Tsere', 'Segol', 'Pataj', 'Qamats', 'Qamats Qatan', 'Holam', 'Holam Haser', 'Qubuts', 'Dagesh', 'Meteg', 'Rafe', 'Punto Shin', 'Punto Sin']) assert.match(keyboard, new RegExp(name))
+  for (const name of ['Maqaf', 'Paseq', 'Sof pasuq']) assert.match(keyboard, new RegExp(name))
 })
 
 test('FASE H teclado: puede escribir en el último input o textarea enfocado', () => {
@@ -38,18 +44,17 @@ test('FASE H teclado: puede escribir en el último input o textarea enfocado', (
   assert.match(keyboard, /lastTargetRef\.current = event\.target/)
   assert.match(keyboard, /setNativeValue\(target, next\)/)
   assert.match(keyboard, /target\.dispatchEvent\(new Event\('input', \{ bubbles: true \}\)\)/)
-  assert.match(keyboard, /target\.form\?\.requestSubmit\(\)/)
 })
 
-test('FASE H teclado: incluye práctica libre y dos modos didácticos', () => {
-  assert.match(keyboard, /Práctica de escritura/)
+test('FASE H teclado: inicia directamente con práctica libre y tres modos didácticos', () => {
   assert.match(keyboard, /data-hebrew-practice="true"/)
   assert.match(keyboard, /אותיות · Letras/)
-  assert.match(keyboard, /נִקּוּד · Vocales/)
+  assert.match(keyboard, /סופית · Sofit/)
+  assert.match(keyboard, /נִקּוּד · Niqqud/)
   assert.match(keyboard, /useState<KeyboardMode>\('letters'\)/)
 })
 
-test('FASE H teclado: no pretende forzar el teclado del sistema ni persiste datos', () => {
-  assert.match(keyboard, /VIDA no puede cambiar automáticamente el idioma del teclado del sistema/)
+test('FASE H teclado: no persiste el texto de práctica ni pretende cambiar el teclado del sistema', () => {
+  assert.match(keyboard, /no guarda lo que escribes/)
   assert.doesNotMatch(keyboard, /supabase|localStorage|sessionStorage|speechSynthesis|navigator\.clipboard/)
 })

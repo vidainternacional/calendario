@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 type EditableTarget = HTMLInputElement | HTMLTextAreaElement
-type KeyboardMode = 'letters' | 'niqqud'
+type KeyboardMode = 'letters' | 'sofit' | 'niqqud'
 
 type HebrewKeyboardDockProps = {
   enabled: boolean
@@ -12,8 +12,16 @@ type HebrewKeyboardDockProps = {
 
 const HEBREW_ROWS = [
   ['ק', 'ר', 'א', 'ט', 'ו', 'ן', 'ם', 'פ'],
-  ['ש', 'ד', 'ג', 'כ', 'ע', 'י', 'ח', 'ל', 'ך', 'ף'],
-  ['ז', 'ס', 'ב', 'ה', 'נ', 'מ', 'צ', 'ת', 'ץ'],
+  ['ש', 'ד', 'ג', 'כ', 'ע', 'י', 'ח', 'ל'],
+  ['ז', 'ס', 'ב', 'ה', 'נ', 'מ', 'צ', 'ת'],
+] as const
+
+const SOFIT = [
+  { regular: 'כ', final: 'ך', label: 'Kaf sofit' },
+  { regular: 'מ', final: 'ם', label: 'Mem sofit' },
+  { regular: 'נ', final: 'ן', label: 'Nun sofit' },
+  { regular: 'פ', final: 'ף', label: 'Pe sofit' },
+  { regular: 'צ', final: 'ץ', label: 'Tsadi sofit' },
 ] as const
 
 const NIQQUD = [
@@ -26,11 +34,21 @@ const NIQQUD = [
   { value: '\u05B6', example: 'בֶ', label: 'Segol' },
   { value: '\u05B7', example: 'בַ', label: 'Pataj' },
   { value: '\u05B8', example: 'בָ', label: 'Qamats' },
+  { value: '\u05C7', example: 'בׇ', label: 'Qamats Qatan' },
   { value: '\u05B9', example: 'בֹ', label: 'Holam' },
+  { value: '\u05BA', example: 'וֺ', label: 'Holam Haser' },
   { value: '\u05BB', example: 'בֻ', label: 'Qubuts' },
   { value: '\u05BC', example: 'בּ', label: 'Dagesh' },
-  { value: '\u05C1', example: 'שׁ', label: 'Shin' },
-  { value: '\u05C2', example: 'שׂ', label: 'Sin' },
+  { value: '\u05BD', example: 'בֽ', label: 'Meteg' },
+  { value: '\u05BF', example: 'בֿ', label: 'Rafe' },
+  { value: '\u05C1', example: 'שׁ', label: 'Punto Shin' },
+  { value: '\u05C2', example: 'שׂ', label: 'Punto Sin' },
+] as const
+
+const BIBLICAL_MARKS = [
+  { value: '־', label: 'Maqaf' },
+  { value: '׀', label: 'Paseq' },
+  { value: '׃', label: 'Sof pasuq' },
 ] as const
 
 function isEditableTarget(target: EventTarget | null): target is EditableTarget {
@@ -47,31 +65,16 @@ function setNativeValue(target: EditableTarget, value: string) {
   target.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
-function targetLabel(target: EditableTarget | null) {
-  if (!target) return 'Práctica libre'
-  if (target.dataset.hebrewPractice === 'true') return 'Práctica libre'
-  const placeholder = target.getAttribute('placeholder')
-  if (placeholder) return placeholder
-  return 'Campo seleccionado'
-}
-
 export default function HebrewKeyboardDock({ enabled, onDisable }: HebrewKeyboardDockProps) {
-  const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<KeyboardMode>('letters')
   const [practice, setPractice] = useState('')
-  const [activeLabel, setActiveLabel] = useState('Práctica libre')
   const lastTargetRef = useRef<EditableTarget | null>(null)
   const practiceRef = useRef<HTMLTextAreaElement | null>(null)
-
-  useEffect(() => {
-    if (!enabled) setOpen(false)
-  }, [enabled])
 
   useEffect(() => {
     function rememberTarget(event: FocusEvent) {
       if (!isEditableTarget(event.target)) return
       lastTargetRef.current = event.target
-      setActiveLabel(targetLabel(event.target))
     }
     document.addEventListener('focusin', rememberTarget)
     return () => document.removeEventListener('focusin', rememberTarget)
@@ -98,7 +101,7 @@ export default function HebrewKeyboardDock({ enabled, onDisable }: HebrewKeyboar
     const start = target.selectionStart ?? target.value.length
     const end = target.selectionEnd ?? start
     const next = `${target.value.slice(0, start)}${value}${target.value.slice(end)}`
-    target.setAttribute('dir', 'auto')
+    target.setAttribute('dir', 'rtl')
     target.setAttribute('lang', 'he')
     setNativeValue(target, next)
     restoreSelection(target, start + value.length)
@@ -123,118 +126,93 @@ export default function HebrewKeyboardDock({ enabled, onDisable }: HebrewKeyboar
     restoreSelection(target, 0)
   }
 
-  function submitOrNewline() {
-    const target = currentTarget()
-    if (!target) return
-    if (target instanceof HTMLTextAreaElement) {
-      insert('\n')
-      return
-    }
-    target.form?.requestSubmit()
-    setOpen(false)
-  }
-
-  function usePractice() {
-    const target = practiceRef.current
-    if (!target) return
-    lastTargetRef.current = target
-    setActiveLabel('Práctica libre')
-    requestAnimationFrame(() => target.focus({ preventScroll: true }))
+  function newline() {
+    insert('\n')
   }
 
   return (
-    <div data-hebrew-keyboard-root="true">
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+148px)] right-4 z-[58] flex min-h-12 items-center gap-2 rounded-full border border-indigo-200 bg-white/95 px-4 text-[12px] font-black text-indigo-700 shadow-[0_10px_28px_rgba(15,23,42,0.16)] backdrop-blur"
-          aria-label="Abrir teclado hebreo de VIDA"
-        >
-          <span lang="he" dir="rtl" className="text-[1.25rem] leading-none">עברית</span>
-          <span>Teclado</span>
-        </button>
+    <div data-hebrew-keyboard-root="true" className="border-t border-slate-100 bg-[#f9f9fb] px-3 pb-4 pt-3">
+      <div className="text-center">
+        <p lang="he" dir="rtl" className="text-[13px] font-black text-indigo-700">כְּתִיבָה בְּעִבְרִית</p>
+        <h2 className="mt-1 text-[16px] font-black text-slate-950">Practica tu escritura</h2>
+        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">Toca las letras y los signos para formar palabras directamente aquí.</p>
+      </div>
+
+      <textarea
+        ref={practiceRef}
+        data-hebrew-practice="true"
+        lang="he"
+        dir="rtl"
+        value={practice}
+        onChange={event => setPractice(event.target.value)}
+        onFocus={event => { lastTargetRef.current = event.currentTarget }}
+        placeholder="כתוב כאן…"
+        rows={3}
+        autoFocus
+        className="mt-3 w-full resize-none rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-right text-[2.1rem] font-black leading-relaxed text-slate-950 outline-none placeholder:text-slate-300 focus:border-indigo-300"
+      />
+
+      <div className="mt-3 grid grid-cols-3 rounded-[16px] bg-slate-200/70 p-1">
+        <button type="button" aria-pressed={mode === 'letters'} onClick={() => setMode('letters')} className={`min-h-10 rounded-[13px] px-1 text-[11px] font-black ${mode === 'letters' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>אותיות · Letras</button>
+        <button type="button" aria-pressed={mode === 'sofit'} onClick={() => setMode('sofit')} className={`min-h-10 rounded-[13px] px-1 text-[11px] font-black ${mode === 'sofit' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>סופית · Sofit</button>
+        <button type="button" aria-pressed={mode === 'niqqud'} onClick={() => setMode('niqqud')} className={`min-h-10 rounded-[13px] px-1 text-[11px] font-black ${mode === 'niqqud' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>נִקּוּד · Niqqud</button>
+      </div>
+
+      {mode === 'letters' && (
+        <div className="mt-3 space-y-1.5" dir="ltr">
+          {HEBREW_ROWS.map((row, rowIndex) => (
+            <div key={`hebrew-row-${rowIndex}`} className="grid gap-1" style={{ gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))` }}>
+              {row.map(letter => (
+                <button key={letter} type="button" onClick={() => insert(letter)} className="min-h-12 rounded-[10px] border border-slate-200 bg-white text-[1.55rem] font-black text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.06)] active:bg-indigo-50">{letter}</button>
+              ))}
+            </div>
+          ))}
+        </div>
       )}
 
-      {open && (
-        <>
-          <button type="button" aria-label="Cerrar teclado hebreo" onClick={() => setOpen(false)} className="fixed inset-0 z-[68] bg-slate-950/20" />
-          <section className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+84px)] z-[69] mx-auto max-h-[calc(100dvh-150px)] w-auto max-w-2xl overflow-y-auto rounded-[28px] border border-slate-200 bg-[#f9f9fb] px-3 pb-3 pt-3 shadow-[0_20px_60px_rgba(15,23,42,0.22)] [-webkit-overflow-scrolling:touch]" aria-label="Teclado hebreo de VIDA">
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300" />
-            <div className="flex items-center justify-between gap-3 px-1">
-              <div className="min-w-0">
-                <p lang="he" dir="rtl" className="text-[13px] font-black text-indigo-700">מִקְלֶדֶת עִבְרִית</p>
-                <h2 className="text-[16px] font-black text-slate-950">Teclado hebreo</h2>
-                <p className="truncate text-[10px] font-bold text-slate-400">Escribiendo en: {activeLabel}</p>
-              </div>
-              <div className="flex shrink-0 gap-1.5">
-                <button type="button" onClick={() => setOpen(false)} className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-[10px] font-black text-slate-600">Cerrar</button>
-                <button type="button" onClick={onDisable} className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-[10px] font-black text-slate-500">Desactivar</button>
-              </div>
-            </div>
-
-            <div className="mt-3 border-y border-slate-200 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Práctica de escritura</p>
-                  <p className="mt-0.5 text-[11px] font-semibold text-slate-500">Tócala para escribir aquí sin afectar el buscador.</p>
-                </div>
-                <button type="button" onClick={usePractice} className="shrink-0 rounded-full bg-indigo-50 px-3 py-2 text-[10px] font-black text-indigo-700">Practicar</button>
-              </div>
-              <textarea
-                ref={practiceRef}
-                data-hebrew-practice="true"
-                lang="he"
-                dir="rtl"
-                value={practice}
-                onChange={event => setPractice(event.target.value)}
-                onFocus={event => {
-                  lastTargetRef.current = event.currentTarget
-                  setActiveLabel('Práctica libre')
-                }}
-                placeholder="כתוב כאן…"
-                rows={2}
-                className="mt-2 w-full resize-none rounded-[16px] bg-white px-4 py-3 text-right text-[2.1rem] font-black leading-relaxed text-slate-950 outline-none placeholder:text-slate-300"
-              />
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 rounded-[16px] bg-slate-200/70 p-1">
-              <button type="button" aria-pressed={mode === 'letters'} onClick={() => setMode('letters')} className={`min-h-10 rounded-[13px] text-[12px] font-black ${mode === 'letters' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>אותיות · Letras</button>
-              <button type="button" aria-pressed={mode === 'niqqud'} onClick={() => setMode('niqqud')} className={`min-h-10 rounded-[13px] text-[12px] font-black ${mode === 'niqqud' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>נִקּוּד · Vocales</button>
-            </div>
-
-            {mode === 'letters' ? (
-              <div className="mt-3 space-y-1.5" dir="ltr">
-                {HEBREW_ROWS.map((row, rowIndex) => (
-                  <div key={`hebrew-row-${rowIndex}`} className="grid gap-1" style={{ gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))` }}>
-                    {row.map(letter => (
-                      <button key={letter} type="button" onClick={() => insert(letter)} className="min-h-12 rounded-[10px] border border-slate-200 bg-white text-[1.55rem] font-black text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.06)] active:bg-indigo-50">{letter}</button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-3 grid grid-cols-4 gap-1.5">
-                {NIQQUD.map(mark => (
-                  <button key={mark.label} type="button" onClick={() => insert(mark.value)} className="min-h-[58px] rounded-[12px] border border-slate-200 bg-white px-1 text-center shadow-[0_1px_2px_rgba(15,23,42,0.06)] active:bg-indigo-50">
-                    <span lang="he" dir="rtl" className="block text-[1.75rem] font-black leading-tight text-indigo-700">{mark.example}</span>
-                    <span className="mt-0.5 block text-[8px] font-black leading-tight text-slate-400">{mark.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-2 grid grid-cols-[1fr_2fr_1fr_1fr] gap-1.5">
-              <button type="button" onClick={clearTarget} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-[10px] font-black text-slate-500">Borrar todo</button>
-              <button type="button" onClick={() => insert(' ')} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-[11px] font-black text-slate-600">Espacio</button>
-              <button type="button" onClick={backspace} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-lg font-black text-slate-600" aria-label="Borrar último carácter">⌫</button>
-              <button type="button" onClick={submitOrNewline} className="min-h-11 rounded-[12px] bg-indigo-600 text-lg font-black text-white" aria-label="Buscar o nueva línea">↵</button>
-            </div>
-
-            <p className="mt-3 px-2 text-center text-[10px] leading-relaxed text-slate-400">También puedes usar el teclado hebreo nativo del teléfono. VIDA no puede cambiar automáticamente el idioma del teclado del sistema; este teclado funciona dentro del módulo para buscar y practicar.</p>
-          </section>
-        </>
+      {mode === 'sofit' && (
+        <div className="mt-3 grid grid-cols-5 gap-1.5">
+          {SOFIT.map(item => (
+            <button key={item.final} type="button" onClick={() => insert(item.final)} className="min-h-[72px] rounded-[12px] border border-slate-200 bg-white px-1 text-center shadow-[0_1px_2px_rgba(15,23,42,0.06)] active:bg-indigo-50">
+              <span lang="he" dir="rtl" className="block text-[2rem] font-black leading-tight text-indigo-700">{item.final}</span>
+              <span className="mt-0.5 block text-[8px] font-black leading-tight text-slate-400">{item.regular} → {item.final}</span>
+            </button>
+          ))}
+        </div>
       )}
+
+      {mode === 'niqqud' && (
+        <div className="mt-3 grid grid-cols-4 gap-1.5">
+          {NIQQUD.map(mark => (
+            <button key={mark.label} type="button" onClick={() => insert(mark.value)} className="min-h-[62px] rounded-[12px] border border-slate-200 bg-white px-1 text-center shadow-[0_1px_2px_rgba(15,23,42,0.06)] active:bg-indigo-50">
+              <span lang="he" dir="rtl" className="block text-[1.75rem] font-black leading-tight text-indigo-700">{mark.example}</span>
+              <span className="mt-0.5 block text-[8px] font-black leading-tight text-slate-400">{mark.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-3 border-t border-slate-200 pt-3">
+        <p className="mb-2 text-center text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Signos bíblicos</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {BIBLICAL_MARKS.map(mark => (
+            <button key={mark.label} type="button" onClick={() => insert(mark.value)} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-center active:bg-indigo-50">
+              <span lang="he" dir="rtl" className="mr-1 text-lg font-black text-indigo-700">{mark.value}</span>
+              <span className="text-[9px] font-black text-slate-500">{mark.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-[1fr_2fr_1fr_1fr] gap-1.5">
+        <button type="button" onClick={clearTarget} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-[10px] font-black text-slate-500">Limpiar</button>
+        <button type="button" onClick={() => insert(' ')} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-[11px] font-black text-slate-600">Espacio</button>
+        <button type="button" onClick={backspace} className="min-h-11 rounded-[12px] border border-slate-200 bg-white text-lg font-black text-slate-600" aria-label="Borrar último carácter">⌫</button>
+        <button type="button" onClick={newline} className="min-h-11 rounded-[12px] bg-indigo-600 text-lg font-black text-white" aria-label="Nueva línea">↵</button>
+      </div>
+
+      <button type="button" onClick={onDisable} className="mt-3 min-h-10 w-full rounded-full text-[10px] font-black text-slate-500">Ocultar teclado</button>
+      <p className="mt-1 px-2 text-center text-[9px] leading-relaxed text-slate-400">También puedes usar el teclado hebreo nativo del teléfono. Este teclado de VIDA es una superficie de práctica dentro del módulo y no guarda lo que escribes.</p>
     </div>
   )
 }
