@@ -6,12 +6,10 @@ import {
   ArrowLeft,
   BookOpenText,
   ChevronDown,
-  GraduationCap,
   History,
   Keyboard,
   Languages,
   Library,
-  Sparkles,
 } from 'lucide-react'
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
@@ -114,14 +112,12 @@ export default function HebrewLearningHome() {
         </header>
 
         <section aria-label="Comenzar a aprender" className="mt-5">
-          <Link href="/estudios/hebreo/aprender" className="relative flex min-h-[104px] items-center gap-4 overflow-hidden rounded-[26px] bg-indigo-600 px-5 py-4 text-left text-white shadow-[0_14px_35px_rgba(79,70,229,0.22)] transition active:scale-[0.985]">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[17px] bg-white/15"><GraduationCap className="h-6 w-6" /></span>
-            <span className="min-w-0 flex-1">
-              <span className="inline-flex rounded-full bg-white/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em]"><Sparkles className="mr-1 h-3 w-3" /> Empieza aquí</span>
-              <span className="mt-1.5 block text-[18px] font-black">Aprender</span>
-              <span className="block text-[11px] font-semibold text-indigo-100">Curso guiado en el orden correcto</span>
+          <Link href="/estudios/hebreo/aprender" className="flex min-h-[104px] items-center justify-center rounded-[26px] bg-indigo-600 px-5 py-4 text-center text-white shadow-[0_14px_35px_rgba(79,70,229,0.22)] transition active:scale-[0.985]">
+            <span className="block w-full">
+              <span className="mx-auto inline-flex rounded-full bg-white/15 px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em]">Empieza aquí</span>
+              <span className="mt-2 block text-[19px] font-black">Aprender</span>
+              <span className="mt-0.5 block text-[11px] font-semibold text-indigo-100">Curso guiado paso a paso</span>
             </span>
-            <span className="text-2xl font-light text-white/70">›</span>
           </Link>
         </section>
 
@@ -136,9 +132,9 @@ export default function HebrewLearningHome() {
             {openQuick === 'translator' && (
               <div>
                 <div className="mb-4 text-center">
-                  <p lang="he" dir="rtl" className="text-[1.35rem] font-black text-indigo-700">תַּרְגּוּם</p>
-                  <h2 className="mt-0.5 text-[1.35rem] font-black">Traductor</h2>
-                  <p className="mt-1 text-[11px] text-slate-500">Escribe una palabra o frase sin salir del inicio.</p>
+                  <p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">תַּרְגּוּם</p>
+                  <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.02em]">Traductor</h2>
+                  <p className="mt-1 text-[12px] leading-relaxed text-slate-500">Escribe una palabra o frase sin salir del inicio.</p>
                 </div>
                 <HebrewTranslator embedded />
               </div>
@@ -147,9 +143,9 @@ export default function HebrewLearningHome() {
             {openQuick === 'materials' && (
               <div>
                 <div className="mb-4 text-center">
-                  <p lang="he" dir="rtl" className="text-[1.35rem] font-black text-indigo-700">חֹמֶר לִמּוּד</p>
-                  <h2 className="mt-0.5 text-[1.35rem] font-black">Materiales</h2>
-                  <p className="mt-1 text-[11px] text-slate-500">Recursos del curso organizados por etapas.</p>
+                  <p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">חֹמֶר לִמּוּד</p>
+                  <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.02em]">Materiales</h2>
+                  <p className="mt-1 text-[12px] leading-relaxed text-slate-500">Recursos del curso organizados por etapas.</p>
                 </div>
                 <HebrewSupportMaterials embedded />
               </div>
@@ -157,20 +153,20 @@ export default function HebrewLearningHome() {
           </section>
         )}
 
-        <section aria-label="Práctica y herramientas" className="mt-4 divide-y divide-slate-200 border-y border-slate-200 bg-white">
-          <details>
-            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-1 text-left">
+        <section aria-label="Práctica y herramientas" className="mt-4 space-y-2.5">
+          <details className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
+            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 text-left">
               <span><span className="block text-[13px] font-black text-slate-900">Prueba tu progreso</span><span className="block text-[10px] text-slate-400">Evaluación breve sin salir de Inicio</span></span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </summary>
-            <ProcessTestPreview />
+            <div className="border-t border-slate-100"><ProcessTestPreview /></div>
           </details>
-          <details>
-            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-1 text-left">
+          <details className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
+            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 text-left">
               <span><span className="block text-[13px] font-black text-slate-900">Herramientas</span><span className="block text-[10px] text-slate-400">Teclado hebreo para practicar</span></span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </summary>
-            <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-pressed={keyboardEnabled} className="flex min-h-[58px] w-full items-center justify-between gap-3 border-t border-slate-100 px-2 text-left">
+            <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-pressed={keyboardEnabled} className="flex min-h-[58px] w-full items-center justify-between gap-3 border-t border-slate-100 px-4 text-left">
               <span className="flex items-center gap-3"><span className={`grid h-9 w-9 place-items-center rounded-[13px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-indigo-700'}`}><Keyboard className="h-4 w-4" /></span><span><span className="block text-[12px] font-black text-slate-900">Teclado hebreo</span><span className="block text-[10px] text-slate-400">Práctica de escritura</span></span></span>
               <span className="text-[10px] font-black text-indigo-700">{keyboardEnabled ? 'Desactivar' : 'Activar'}</span>
             </button>

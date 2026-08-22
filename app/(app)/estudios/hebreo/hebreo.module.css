@@ -49,6 +49,33 @@
   display: none;
 }
 
+/* Jerarquía tipográfica única para los módulos principales de Hebreo.
+ * El título contextual del curso puede ser mayor; cada herramienta interna
+ * usa exactamente esta escala para no competir visualmente con él. */
+.centered :global(#alef-bet-title),
+.centered :global(#niqqud-title),
+.centered :global(#reading-words-title),
+.centered :global(#hebrew-useful-phrases-title),
+.centered :global(#hebrew-bible-reader-title),
+.centered :global(#grammar-title),
+.centered :global(#review-title) {
+  font-size: 1.35rem !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.centered :global(section[aria-labelledby='niqqud-title'] > div:first-child > p:last-child),
+.centered :global(section[aria-labelledby='reading-words-title'] > div:first-child > p:last-child),
+.centered :global(section[aria-labelledby='hebrew-useful-phrases-title'] > div:first-child > p:last-child),
+.centered :global(section[aria-labelledby='hebrew-bible-reader-title'] > div:first-child > p:last-child),
+.centered :global(section[aria-labelledby='grammar-title'] > div:first-child > p:last-child),
+.centered :global(section[aria-labelledby='review-title'] > div:first-child > p:last-child) {
+  font-size: 0.75rem !important;
+  line-height: 1.55 !important;
+  font-weight: 500 !important;
+}
+
 /* El significado del reverso es prioritario, pero se adapta a textos largos
  * para mantener la misma jerarquía visual en las 22 fichas. */
 .centered :global(button[aria-label^='Voltear ficha de'] > span:nth-child(2) > span:nth-child(2) > span:nth-child(3) > span:nth-child(2)) {

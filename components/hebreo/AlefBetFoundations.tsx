@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 
-type FoundationTab = 'sofit' | 'dagesh' | 'matres'
+type FoundationPanel = 'alphabet' | 'sofit' | 'dagesh' | 'matres'
+type FoundationTab = Exclude<FoundationPanel, 'alphabet'>
 
 type TableSpec = {
   id: FoundationTab
@@ -66,6 +67,13 @@ const TABLES: readonly TableSpec[] = [
   },
 ]
 
+const ACCESS: readonly { id: FoundationPanel; label: string }[] = [
+  { id: 'alphabet', label: 'Alef-Bet' },
+  { id: 'sofit', label: 'Sofit' },
+  { id: 'dagesh', label: 'Dagesh' },
+  { id: 'matres', label: 'Matres' },
+]
+
 function isHebrewOnly(value: string) {
   const compact = value.trim()
   return compact.length > 0 && /[\u0590-\u05FF]/u.test(compact) && /^[\s·\u0590-\u05FF]+$/u.test(compact)
@@ -73,10 +81,10 @@ function isHebrewOnly(value: string) {
 
 function FoundationTable({ table }: { table: TableSpec }) {
   return (
-    <div>
-      <p lang="he" dir="rtl" className="text-[1.35rem] font-black text-indigo-700">{table.he}</p>
-      <h4 className="mt-0.5 text-[1.15rem] font-black text-slate-950">{table.title}</h4>
-      <p className="mx-auto mt-1 max-w-xl text-[13px] font-semibold leading-relaxed text-slate-500">{table.intro}</p>
+    <div className="mt-4">
+      <p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">{table.he}</p>
+      <h4 className="mt-1 text-[1.35rem] font-black leading-tight tracking-[-0.02em] text-slate-950">{table.title}</h4>
+      <p className="mx-auto mt-1 max-w-xl text-[12px] leading-relaxed text-slate-500">{table.intro}</p>
       <div className="-mx-4 mt-4 overflow-x-auto border-y border-slate-200 bg-white [-webkit-overflow-scrolling:touch] sm:mx-0 sm:rounded-[20px] sm:border">
         <table className="w-full min-w-[720px] border-collapse text-center">
           <thead className="bg-slate-50">
@@ -101,18 +109,28 @@ function FoundationTable({ table }: { table: TableSpec }) {
 }
 
 export default function AlefBetFoundations() {
-  const [tab, setTab] = useState<FoundationTab>('sofit')
-  const active = TABLES.find(table => table.id === tab) ?? TABLES[0]
+  const [panel, setPanel] = useState<FoundationPanel>('alphabet')
+  const active = panel === 'alphabet' ? null : TABLES.find(table => table.id === panel) ?? null
+
+  function selectPanel(id: FoundationPanel) {
+    setPanel(current => current === id && id !== 'alphabet' ? 'alphabet' : id)
+  }
 
   return (
     <section aria-labelledby="alef-foundations-title" className="mb-5 border-y border-slate-200 py-4 text-center">
       <p lang="he" dir="rtl" className="text-[12px] font-black text-indigo-700">יְסוֹדוֹת קְרִיאָה</p>
-      <h3 id="alef-foundations-title" className="mt-0.5 text-[1.05rem] font-black text-slate-950">Tablas fundamentales</h3>
-      <p className="mx-auto mt-1 max-w-md text-[12px] leading-relaxed text-slate-500">Fichas para memorizar; estas tablas para comparar formas que cambian al leer.</p>
-      <div className="mx-auto mt-3 grid max-w-md grid-cols-3 gap-1 rounded-[17px] bg-slate-100 p-1">
-        {TABLES.map(table => <button key={table.id} type="button" aria-pressed={tab === table.id} onClick={() => setTab(table.id)} className={`min-h-10 rounded-[14px] px-2 text-[11px] font-black ${tab === table.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>{table.label}</button>)}
+      <h3 id="alef-foundations-title" className="mt-1 text-[1.05rem] font-black text-slate-950">Acceso rápido</h3>
+      <p className="mx-auto mt-1 max-w-md text-[12px] leading-relaxed text-slate-500">Empieza por las 22 letras. Abre Sofit, Dagesh o Matres cuando quieras comparar una regla.</p>
+
+      <div className="-mx-4 mt-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mx-auto flex w-max gap-2">
+          {ACCESS.map(item => (
+            <button key={item.id} type="button" aria-pressed={panel === item.id} onClick={() => selectPanel(item.id)} className={`min-h-10 rounded-full border px-4 text-[11px] font-black transition ${panel === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>
+          ))}
+        </div>
       </div>
-      <div className="mt-4"><FoundationTable table={active} /></div>
+
+      {active ? <FoundationTable table={active} /> : <p className="mt-3 text-[11px] font-semibold text-slate-400">El Alef-Bet completo continúa justo debajo.</p>}
     </section>
   )
 }

@@ -9,6 +9,7 @@ const FILTERS: readonly { id: Filter; label: string }[] = [
   { id: 'all', label: 'Todas' },
   { id: 'greetings', label: 'Saludos' },
   { id: 'courtesy', label: 'Cortesía' },
+  { id: 'conversation', label: 'Conversación' },
 ]
 
 export default function HebrewUsefulPhrases() {
@@ -18,18 +19,20 @@ export default function HebrewUsefulPhrases() {
   return (
     <section aria-labelledby="hebrew-useful-phrases-title" className="text-center">
       <div>
-        <p lang="he" dir="rtl" className="text-[1.15rem] font-black text-indigo-700">בִּטּוּיִים שִׁמּוּשִׁיִּים</p>
-        <h3 id="hebrew-useful-phrases-title" className="mt-0.5 text-[1.35rem] font-black text-slate-950">Frases para memorizar</h3>
+        <p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">בִּטּוּיִים שִׁמּוּשִׁיִּים</p>
+        <h3 id="hebrew-useful-phrases-title" className="mt-1 text-[1.35rem] font-black tracking-[-0.02em] text-slate-950">Frases útiles</h3>
         <p className="mx-auto mt-1 max-w-md text-[12px] leading-relaxed text-slate-500">Hebreo moderno · uso cotidiano. Se mantiene separado del vocabulario bíblico para no mezclar registros.</p>
       </div>
 
-      <div className="mx-auto mt-4 grid max-w-sm grid-cols-3 gap-1 rounded-[16px] bg-slate-100 p-1">
-        {FILTERS.map(item => <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)} className={`min-h-10 rounded-[13px] px-2 text-[11px] font-black ${filter === item.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>{item.label}</button>)}
+      <div className="-mx-4 mt-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mx-auto flex w-max gap-2">
+          {FILTERS.map(item => <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)} className={`min-h-10 rounded-full border px-4 text-[11px] font-black ${filter === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>)}
+        </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-[22px] border border-slate-200 bg-white">
+      <div className="-mx-4 mt-4 border-y border-slate-200 bg-white sm:mx-0 sm:rounded-[22px] sm:border">
         {phrases.map((phrase, index) => (
-          <article key={phrase.id} className={`grid min-h-[96px] grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)] items-center gap-3 px-3 py-3 ${index ? 'border-t border-slate-100' : ''}`}>
+          <article key={phrase.id} className={`grid min-h-[96px] grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)] items-center gap-3 px-4 py-3 ${index ? 'border-t border-slate-100' : ''}`}>
             <div className="min-w-0 text-center">
               <p lang="he" dir="rtl" className="break-words text-[2.25rem] font-black leading-tight text-slate-950">{phrase.hebrew}</p>
               <p className="mt-1 text-[13px] font-black text-indigo-700">{phrase.pronunciation}</p>
