@@ -2,13 +2,13 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import test from 'node:test'
 
-const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
 const review = fs.readFileSync('components/hebreo/ReviewExplorer.tsx', 'utf8')
 
-test('FASE H repaso: Aprender abre Repaso como módulo real dentro del Bloque 1', () => {
-  assert.match(home, /import ReviewExplorer/)
-  assert.match(home, /id: 'review',[\s\S]*?short: 'Repaso'/)
-  assert.match(home, /section\.id === 'grammar' \? <GrammarExplorer \/> : <ReviewExplorer \/>/)
+test('FASE H repaso: Aprender abre Repaso como módulo real dentro del curso', () => {
+  assert.match(course, /import ReviewExplorer/)
+  assert.match(course, /id: 'review',[\s\S]*?title: 'Repaso'/)
+  assert.match(course, /return <ReviewExplorer \/>/)
 })
 
 test('FASE H repaso: distingue repaso de examen y mezcla áreas ya estudiadas', () => {

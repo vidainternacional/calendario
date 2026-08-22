@@ -11,8 +11,11 @@ const wordsHub = fs.readFileSync('components/hebreo/HebrewWordsStudy.tsx', 'utf8
 const bible = fs.readFileSync('components/hebreo/HebrewBibleReader.tsx', 'utf8')
 const bibleRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 'utf8')
 const translator = fs.readFileSync('components/hebreo/HebrewTranslator.tsx', 'utf8')
-const roadmap = fs.readFileSync('components/hebreo/CourseRoadmap.tsx', 'utf8')
-const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
+const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
+const translatorPage = fs.readFileSync('app/(app)/estudios/hebreo/traductor/page.tsx', 'utf8')
+const readingPage = fs.readFileSync('app/(app)/estudios/hebreo/lectura/page.tsx', 'utf8')
+const materialsPage = fs.readFileSync('app/(app)/estudios/hebreo/materiales/page.tsx', 'utf8')
 const css = fs.readFileSync('app/(app)/estudios/hebreo/hebreo.module.css', 'utf8')
 
 test('FASE H checklist 2: tablas no convierten texto mixto en titular hebreo', () => {
@@ -63,8 +66,17 @@ test('FASE H checklist 2: traductor añade pronunciación escrita y ralentiza au
   assert.doesNotMatch(translator, /Strong|morfolog|ocurrencias/i)
 })
 
-test('FASE H checklist 2: portada aparece antes que herramientas y ruta queda plegada', () => {
-  assert.match(page, /<HebrewLearningHome \/>[\s\S]*?<HebrewTranslator \/>[\s\S]*?<CourseRoadmap \/>/)
-  assert.match(roadmap, /useState\(false\)/)
-  assert.match(roadmap, /aria-expanded=\{open\}/)
+test('FASE H checklist 2: Inicio es hub y los sectores grandes navegan a páginas propias', () => {
+  assert.match(home, /Empieza aquí/)
+  assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
+  assert.match(home, /href="\/estudios\/hebreo\/traductor"/)
+  assert.match(home, /href="\/estudios\/hebreo\/lectura"/)
+  assert.match(home, /href="\/estudios\/hebreo\/materiales"/)
+  assert.match(home, /Prueba tu progreso/)
+  assert.match(home, /<details>/)
+  assert.match(course, /useState<SectionId \| null>\(null\)/)
+  assert.match(course, /aria-expanded=\{open\}/)
+  assert.match(translatorPage, /<HebrewTranslator \/>/)
+  assert.match(readingPage, /<HebrewBibleReader \/>/)
+  assert.match(materialsPage, /<HebrewSupportMaterials \/>/)
 })

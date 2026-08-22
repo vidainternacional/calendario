@@ -11,7 +11,13 @@ const reading = fs.readFileSync('components/hebreo/HebrewBibleReader.tsx', 'utf8
 const catalog = fs.readFileSync('lib/hebreo/word-catalog.ts', 'utf8')
 const readingRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
+const materials = fs.readFileSync('components/hebreo/HebrewSupportMaterials.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
+const learnPage = fs.readFileSync('app/(app)/estudios/hebreo/aprender/page.tsx', 'utf8')
+const translatorPage = fs.readFileSync('app/(app)/estudios/hebreo/traductor/page.tsx', 'utf8')
+const readingPage = fs.readFileSync('app/(app)/estudios/hebreo/lectura/page.tsx', 'utf8')
+const materialsPage = fs.readFileSync('app/(app)/estudios/hebreo/materiales/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
 
 test('FASE H: Alef-bet conserva 22 letras y cinco formas finales', () => {
@@ -82,10 +88,14 @@ test('FASE H: explicación del Alef-Bet conserva lectura derecha a izquierda', (
   assert.match(explorer, /reconocer → distinguir → combinar → leer → comprender/)
 })
 
-test('FASE H: portada conserva cuatro accesos bilingües', () => {
-  for (const id of ['learn', 'materials', 'test', 'bible']) assert.match(home, new RegExp(`${id}: \\{ he:`))
-  for (const es of ['Aprender', 'Materiales y curso', 'Prueba tu progreso', 'Biblia en hebreo']) assert.match(home, new RegExp(`es: '${es}'`))
-  assert.match(home, /useState<TopMenuId \| null>\(null\)/)
+test('FASE H: portada es un hub compacto y Aprender es la entrada principal', () => {
+  assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
+  assert.match(home, /Empieza aquí/)
+  assert.match(home, />Aprender</)
+  assert.match(home, /href="\/estudios\/hebreo\/traductor"/)
+  assert.match(home, /href="\/estudios\/hebreo\/lectura"/)
+  assert.match(home, /href="\/estudios\/hebreo\/materiales"/)
+  assert.doesNotMatch(home, /<AlefBetExplorer|<NiqqudExplorer|<HebrewWordsStudy|<HebrewBibleReader|<GrammarExplorer|<ReviewExplorer/)
 })
 
 test('FASE H: encabezado conserva título hebreo protagonista', () => {
@@ -94,16 +104,19 @@ test('FASE H: encabezado conserva título hebreo protagonista', () => {
   assert.doesNotMatch(home, /Accessibility/)
 })
 
-test('FASE H: aprender ordena Alef-Bet Vocales Palabras Lectura Reglas Repaso', () => {
-  const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => home.indexOf(`id: '${id}'`))
+test('FASE H: Aprender vive en página propia y ordena el curso de forma progresiva', () => {
+  const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => course.indexOf(`id: '${id}'`))
   assert.ok(order.every(index => index >= 0))
   for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
-  assert.match(home, /id: 'vocabulary',[\s\S]*?short: 'Palabras y frases'/)
-  assert.match(home, /id: 'reading',[\s\S]*?short: 'Lectura bíblica'/)
+  assert.match(course, /title: 'Palabras y frases'/)
+  assert.match(course, /title: 'Lectura bíblica'/)
+  assert.match(course, /useState<SectionId \| null>\(null\)/)
+  assert.match(course, /aria-expanded=\{open\}/)
+  assert.match(learnPage, /<HebrewCourseCenter \/>/)
 })
 
 test('FASE H: Vocales usa tres vistas y la lista didáctica solicitada', () => {
-  assert.match(home, /import NiqqudExplorer/)
+  assert.match(course, /import NiqqudExplorer/)
   assert.match(niqqud, /type NiqqudView = 'cards' \| 'list' \| 'detail'/)
   for (const label of ['Tarjetas', 'Lista', 'Detalle']) assert.match(niqqud, new RegExp(label))
   const list = niqqud.slice(niqqud.indexOf('function ListView'), niqqud.indexOf('function DetailView'))
@@ -119,8 +132,7 @@ test('FASE H: niqqud conserva doce signos trazables y cautelas', () => {
 })
 
 test('FASE H: Palabras usa catálogo real con Lista Tarjetas detalle expandible y paginación discreta', () => {
-  assert.match(home, /section\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
-  assert.match(home, /const ReadingWordsExplorer = HebrewWordsStudy/)
+  assert.match(course, /if \(id === 'vocabulary'\) return <HebrewWordsStudy \/>/)
   assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
   assert.match(words, /type WordView = 'list' \| 'cards'/)
   assert.match(words, /function PrimaryList/)
@@ -142,8 +154,7 @@ test('FASE H: ficha de palabra es puntual y no expone datos técnicos', () => {
 })
 
 test('FASE H: Lectura abre la Biblia real y no duplica el diccionario', () => {
-  assert.match(home, /section\.id === 'reading' \? <ReadingSentencesExplorer \/>/)
-  assert.match(home, /const ReadingSentencesExplorer = HebrewBibleReader/)
+  assert.match(course, /if \(id === 'reading'\) return <HebrewBibleReader \/>/)
   assert.match(reading, /Lectura bíblica/)
   assert.match(reading, /Practica versículos conocidos o abre la Biblia en orden por libro y capítulo\./)
   assert.match(reading, /Génesis 1:1/)
@@ -154,46 +165,52 @@ test('FASE H: Lectura abre la Biblia real y no duplica el diccionario', () => {
   assert.match(readingRoute, /\.order\('verse', \{ ascending: true \}\)/)
 })
 
-test('FASE H: Prueba tu progreso conserva quince preguntas secuenciales', () => {
+test('FASE H: Prueba tu progreso conserva quince preguntas secuenciales en Inicio', () => {
   assert.equal((home.match(/type: '(?:Reconocer|Distinguir|Sofit|Dagesh|Lectura|Comprensión|Integración)'/g) ?? []).length, 15)
-  assert.match(home, /Pregunta \{step \+ 1\} de \{TEST_QUESTIONS\.length\}/)
+  assert.match(home, /\{step \+ 1\} \/ \{TEST_QUESTIONS\.length\}/)
   assert.match(home, /step < TEST_QUESTIONS\.length - 1/)
+  assert.match(home, /<details>/)
 })
 
-test('FASE H: resultado conserva ficha de maestro e historial sin persistencia falsa', () => {
-  assert.match(home, /Ficha de resultado · ejemplo/)
-  assert.match(home, /Tu maestro recomienda reforzar antes de avanzar/)
+test('FASE H: resultado e historial de práctica no fingen persistencia', () => {
+  assert.match(home, /Resultado de práctica/)
+  assert.match(home, /Repasa antes de avanzar/)
   assert.match(home, /Historial de progreso/)
   assert.match(home, /La persistencia de progreso todavía no está activa\./)
 })
 
-test('FASE H: materiales conserva exactamente once enlaces agrupados', () => {
+test('FASE H: materiales conserva exactamente once enlaces y se agrupa en página propia', () => {
   assert.equal((supportCourse.match(/orden:\s*\d+/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/https:\/\/www\.youtube\.com\/watch\?v=/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/verificacion:\s*'pendiente'/g) ?? []).length, 11)
-  assert.match(home, /HEBREW_SUPPORT_COURSE\.filter/)
+  assert.match(materials, /HEBREW_SUPPORT_COURSE\.filter/)
+  assert.match(materials, /Fundamentos/)
+  assert.match(materials, /Vocales y lectura/)
+  assert.match(materials, /Lectura bíblica y reglas/)
+  assert.match(materialsPage, /<HebrewSupportMaterials \/>/)
 })
 
-test('FASE H: Biblia en hebreo reutiliza el lector real por libro y capítulo', () => {
-  assert.match(home, /import HebrewBibleReader/)
-  assert.match(home, /bible: \{ he: 'תַּנַ״ךְ בְּעִבְרִית',[\s\S]*?<HebrewBibleReader \/>/)
+test('FASE H: Traductor y Biblia usan rutas propias autenticadas', () => {
+  assert.match(translatorPage, /<HebrewTranslator \/>/)
+  assert.match(translatorPage, /login\?next=\/estudios\/hebreo\/traductor/)
+  assert.match(readingPage, /<HebrewBibleReader \/>/)
+  assert.match(readingPage, /login\?next=\/estudios\/hebreo\/lectura/)
   assert.match(reading, /HEBREW_BIBLE_BOOKS/)
   assert.match(reading, /Capítulo/)
   assert.match(reading, /Con niqqud/)
   assert.match(reading, /Sin niqqud/)
-  assert.match(readingRoute, /from\('biblical_verse_texts'\)/)
 })
 
 test('FASE H: no introduce persistencia falsa; el catálogo solo persiste resoluciones derivadas autorizadas', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
-  for (const content of [home, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
+  for (const content of [home, course, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
   assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
   assert.match(catalog, /\.upsert\(payload/)
   assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete|upsert)\(/)
   assert.doesNotMatch(readingRoute, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
 })
 
-test('FASE H: ruta exige sesión y conserva destino después del login', () => {
+test('FASE H: ruta principal exige sesión y conserva destino después del login', () => {
   assert.match(page, /createClient\(\)/)
   assert.match(page, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo'\)/)
   assert.match(page, /<HebrewLearningHome \/>/)

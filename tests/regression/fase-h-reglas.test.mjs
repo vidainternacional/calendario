@@ -3,13 +3,13 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const grammar = fs.readFileSync('components/hebreo/GrammarExplorer.tsx', 'utf8')
-const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
 const architecture = fs.readFileSync('docs/FASE_H_ARQUITECTURA_UX_APRENDIZAJE_2026-08-18.md', 'utf8')
 
-test('FASE H reglas: Aprender integra Reglas como módulo real', () => {
-  assert.match(home, /import GrammarExplorer/)
-  assert.match(home, /id: 'grammar',[\s\S]*?short: 'Reglas'/)
-  assert.match(home, /section\.id === 'grammar' \? <GrammarExplorer \/>/)
+test('FASE H reglas: Aprender integra Reglas como módulo real en el centro del curso', () => {
+  assert.match(course, /import GrammarExplorer/)
+  assert.match(course, /id: 'grammar',[\s\S]*?title: 'Reglas'/)
+  assert.match(course, /if \(id === 'grammar'\) return <GrammarExplorer \/>/)
 })
 
 test('FASE H reglas: usa Tablas Fichas y Detalle y conserva apertura bajo la fila', () => {

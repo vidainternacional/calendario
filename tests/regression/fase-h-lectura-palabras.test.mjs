@@ -7,17 +7,15 @@ const reading = fs.readFileSync('components/hebreo/HebrewBibleReader.tsx', 'utf8
 const catalog = fs.readFileSync('lib/hebreo/word-catalog.ts', 'utf8')
 const readingRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 'utf8')
 const learning = fs.readFileSync('lib/hebreo/word-learning.ts', 'utf8')
-const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
 
 test('FASE H: Aprender separa Palabras de Lectura como módulos reales', () => {
-  assert.match(home, /import HebrewBibleReader/)
-  assert.match(home, /import HebrewWordsStudy/)
-  assert.match(home, /const ReadingWordsExplorer = HebrewWordsStudy/)
-  assert.match(home, /const ReadingSentencesExplorer = HebrewBibleReader/)
-  assert.match(home, /id: 'vocabulary',[\s\S]*?short: 'Palabras y frases'/)
-  assert.match(home, /id: 'reading',[\s\S]*?short: 'Lectura bíblica'/)
-  assert.match(home, /section\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
-  assert.match(home, /section\.id === 'reading' \? <ReadingSentencesExplorer \/>/)
+  assert.match(course, /import HebrewBibleReader/)
+  assert.match(course, /import HebrewWordsStudy/)
+  assert.match(course, /id: 'vocabulary',[\s\S]*?title: 'Palabras y frases'/)
+  assert.match(course, /id: 'reading',[\s\S]*?title: 'Lectura bíblica'/)
+  assert.match(course, /if \(id === 'vocabulary'\) return <HebrewWordsStudy \/>/)
+  assert.match(course, /if \(id === 'reading'\) return <HebrewBibleReader \/>/)
 })
 
 test('FASE H: Palabras conserva catálogo completo pero inicia con vocabulario esencial', () => {

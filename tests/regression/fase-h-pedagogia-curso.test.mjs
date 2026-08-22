@@ -8,8 +8,8 @@ const reading = fs.readFileSync('components/hebreo/ReadingSentencesExplorer.tsx'
 const readingCatalog = fs.readFileSync('lib/hebreo/reading-catalog.ts', 'utf8')
 const grammar = fs.readFileSync('components/hebreo/GrammarExplorer.tsx', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
-const roadmap = fs.readFileSync('components/hebreo/CourseRoadmap.tsx', 'utf8')
-const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
+const learnPage = fs.readFileSync('app/(app)/estudios/hebreo/aprender/page.tsx', 'utf8')
 
 test('FASE H curso: Bet Vet y Vav usan la pronunciación pedagógica acordada', () => {
   assert.match(alefBet, /nombre: 'Bet \/ Vet'/)
@@ -44,15 +44,19 @@ test('FASE H curso: las piezas inseparables ya están presentes sin inventar ra�
   assert.match(grammar, /Raíces permanecen ocultas hasta contar con una fuente explícita/)
 })
 
-test('FASE H curso: conserva la arquitectura aprobada de aprendizaje', () => {
-  const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => home.indexOf(`id: '${id}'`))
+test('FASE H curso: Aprender conserva la arquitectura progresiva en página propia', () => {
+  const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => course.indexOf(`id: '${id}'`))
   assert.ok(order.every(position => position >= 0))
   for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
+  assert.match(course, /useState<SectionId \| null>\(null\)/)
+  assert.match(course, /aria-expanded=\{open\}/)
+  assert.match(course, /5–10 min al día · de arriba hacia abajo/)
+  assert.match(learnPage, /<HebrewCourseCenter \/>/)
 })
 
-test('FASE H curso: la portada simple aparece antes de traductor y ruta plegada', () => {
-  for (const label of ['Alef-Bet y Sofit', 'Dagesh y sonidos', 'Vocales A · E · I', 'Vocales O · U + Sheva', 'Lectura · Shemá', 'Prefijos inseparables', 'Raíces y repaso']) assert.match(roadmap, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
-  assert.match(roadmap, /5–10 minutos al día/)
-  assert.match(roadmap, /useState\(false\)/)
-  assert.match(page, /<HebrewLearningHome \/>[\s\S]*?<HebrewTranslator \/>[\s\S]*?<CourseRoadmap \/>/)
+test('FASE H curso: la portada prioriza Aprender y no renderiza el curso completo en Inicio', () => {
+  assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
+  assert.match(home, /Empieza aquí/)
+  assert.match(home, /Curso guiado en el orden correcto/)
+  assert.doesNotMatch(home, /<AlefBetExplorer|<NiqqudExplorer|<HebrewWordsStudy|<HebrewBibleReader|<GrammarExplorer|<ReviewExplorer/)
 })
