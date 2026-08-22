@@ -22,7 +22,7 @@ test('FASE H: Palabras conserva catálogo completo pero inicia con vocabulario e
   assert.doesNotMatch(words, /const WORDS:/)
   assert.match(words, /useState<HebrewLearningGroupId>\('essentials'\)/)
   assert.match(learning, /id: 'all'/)
-  assert.match(learning, /Catálogo hebreo aprobado completo/)
+  assert.match(learning, /Catálogo hebreo aprobado completo\. La búsqueda sigue disponible para llegar directamente a una palabra\./)
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
 })
 
