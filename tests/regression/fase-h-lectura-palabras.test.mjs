@@ -3,19 +3,21 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const words = fs.readFileSync('components/hebreo/ReadingWordsExplorer.tsx', 'utf8')
-const reading = fs.readFileSync('components/hebreo/ReadingSentencesExplorer.tsx', 'utf8')
+const reading = fs.readFileSync('components/hebreo/HebrewBibleReader.tsx', 'utf8')
 const catalog = fs.readFileSync('lib/hebreo/word-catalog.ts', 'utf8')
-const readingCatalog = fs.readFileSync('lib/hebreo/reading-catalog.ts', 'utf8')
+const readingRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 'utf8')
 const learning = fs.readFileSync('lib/hebreo/word-learning.ts', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 
 test('FASE H: Aprender separa Palabras de Lectura como módulos reales', () => {
-  assert.match(home, /import ReadingWordsExplorer/)
-  assert.match(home, /import ReadingSentencesExplorer/)
-  assert.match(home, /id: 'vocabulary',[\s\S]*?short: 'Palabras'[\s\S]*?available: true/)
-  assert.match(home, /id: 'reading',[\s\S]*?short: 'Lectura'[\s\S]*?available: true/)
-  assert.match(home, /activeSection\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
-  assert.match(home, /activeSection\.id === 'reading' \? <ReadingSentencesExplorer \/>/)
+  assert.match(home, /import HebrewBibleReader/)
+  assert.match(home, /import HebrewWordsStudy/)
+  assert.match(home, /const ReadingWordsExplorer = HebrewWordsStudy/)
+  assert.match(home, /const ReadingSentencesExplorer = HebrewBibleReader/)
+  assert.match(home, /id: 'vocabulary',[\s\S]*?short: 'Palabras y frases'/)
+  assert.match(home, /id: 'reading',[\s\S]*?short: 'Lectura bíblica'/)
+  assert.match(home, /section\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
+  assert.match(home, /section\.id === 'reading' \? <ReadingSentencesExplorer \/>/)
 })
 
 test('FASE H: Palabras conserva catálogo completo pero inicia con vocabulario esencial', () => {
@@ -77,19 +79,20 @@ test('FASE H: motor léxico conserva rutas hebrea transliteración Strong y cont
   assert.match(catalog, /biblical_hebrew_search_resolutions/)
 })
 
-test('FASE H: Lectura usa frases y oraciones reales con corpus paginado', () => {
-  assert.match(reading, /Lectura de frases y oraciones/)
-  for (const label of ['Iniciales', 'Cortas', 'Medias', 'Largas', 'Todas']) assert.match(reading, new RegExp(label))
-  assert.match(reading, /Buscar frase en español o hebreo/)
-  assert.match(reading, /function Pagination/)
-  assert.match(readingCatalog, /from\('biblical_verse_texts'\)/)
-  assert.match(readingCatalog, /RV1909_SOURCE_ID/)
-  assert.match(readingCatalog, /STARTER_REFERENCES/)
+test('FASE H: Lectura usa Biblia real con versículos conocidos y navegación canónica', () => {
+  assert.match(reading, /Lectura bíblica/)
+  assert.match(reading, /Practica versículos conocidos o abre la Biblia en orden por libro y capítulo\./)
+  for (const label of ['Génesis 1:1', 'Shemá · Dt 6:4', 'Salmo 23:1']) assert.match(reading, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(reading, /HEBREW_BIBLE_BOOKS\.map/)
+  assert.match(reading, /showSpanish/)
+  assert.match(readingRoute, /from\('biblical_verse_texts'\)/)
+  assert.match(readingRoute, /RV1909_SOURCE_ID/)
+  assert.match(readingRoute, /\.order\('verse', \{ ascending: true \}\)/)
 })
 
 test('FASE H: Palabras y Lectura no persisten estado local; Palabras solo escribe índice derivado', () => {
   for (const content of [words, reading]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
-  assert.doesNotMatch(readingCatalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
+  assert.doesNotMatch(readingRoute, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
   assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
   assert.match(catalog, /\.upsert\(payload/)
   assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete|upsert)\(/)

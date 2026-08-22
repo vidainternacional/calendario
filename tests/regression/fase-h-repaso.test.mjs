@@ -7,8 +7,8 @@ const review = fs.readFileSync('components/hebreo/ReviewExplorer.tsx', 'utf8')
 
 test('FASE H repaso: Aprender abre Repaso como módulo real dentro del Bloque 1', () => {
   assert.match(home, /import ReviewExplorer/)
-  assert.match(home, /id: 'review',[\s\S]*?available: true/)
-  assert.match(home, /activeSection\.id === 'review' \? <ReviewExplorer \/>/)
+  assert.match(home, /id: 'review',[\s\S]*?short: 'Repaso'/)
+  assert.match(home, /section\.id === 'grammar' \? <GrammarExplorer \/> : <ReviewExplorer \/>/)
 })
 
 test('FASE H repaso: distingue repaso de examen y mezcla áreas ya estudiadas', () => {

@@ -50,8 +50,9 @@ test('FASE H curso: conserva la arquitectura aprobada de aprendizaje', () => {
   for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
 })
 
-test('FASE H curso: la ruta visible resume el plan antes de las herramientas', () => {
+test('FASE H curso: la portada simple aparece antes de traductor y ruta plegada', () => {
   for (const label of ['Alef-Bet y Sofit', 'Dagesh y sonidos', 'Vocales A · E · I', 'Vocales O · U + Sheva', 'Lectura · Shemá', 'Prefijos inseparables', 'Raíces y repaso']) assert.match(roadmap, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
   assert.match(roadmap, /5–10 minutos al día/)
-  assert.match(page, /<CourseRoadmap \/>[\s\S]*?<HebrewTranslator \/>[\s\S]*?<HebrewLearningHome \/>/)
+  assert.match(roadmap, /useState\(false\)/)
+  assert.match(page, /<HebrewLearningHome \/>[\s\S]*?<HebrewTranslator \/>[\s\S]*?<CourseRoadmap \/>/)
 })

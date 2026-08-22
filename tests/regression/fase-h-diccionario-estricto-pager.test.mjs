@@ -37,10 +37,10 @@ test('FASE H: traductor permite elegir explícitamente español o hebreo', () =>
   assert.match(translatorRoute, /const target: Language = source === 'es' \? 'he' : 'es'/)
 })
 
-test('FASE H: voz hebrea prioriza una voz local he-IL y un ritmo más natural cuando existe', () => {
+test('FASE H: voz hebrea prioriza una voz local he-IL y un ritmo lento de aprendizaje', () => {
   assert.match(translatorUi, /function preferredHebrewVoice/)
   assert.match(translatorUi, /voice\.lang\.toLowerCase\(\) === 'he-il'/)
   assert.match(translatorUi, /voice\.localService/)
-  assert.match(translatorUi, /utterance\.rate = 0\.84/)
+  assert.match(translatorUi, /utterance\.rate = 0\.68/)
   assert.match(translatorUi, /utterance\.pitch = 1/)
 })

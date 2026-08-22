@@ -8,8 +8,8 @@ const architecture = fs.readFileSync('docs/FASE_H_ARQUITECTURA_UX_APRENDIZAJE_20
 
 test('FASE H reglas: Aprender integra Reglas como módulo real', () => {
   assert.match(home, /import GrammarExplorer/)
-  assert.match(home, /id: 'grammar',[\s\S]*?available: true/)
-  assert.match(home, /activeSection\.id === 'grammar' \? <GrammarExplorer \/>/)
+  assert.match(home, /id: 'grammar',[\s\S]*?short: 'Reglas'/)
+  assert.match(home, /section\.id === 'grammar' \? <GrammarExplorer \/>/)
 })
 
 test('FASE H reglas: usa Tablas Fichas y Detalle y conserva apertura bajo la fila', () => {

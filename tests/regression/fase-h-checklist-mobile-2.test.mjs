@@ -6,6 +6,7 @@ const foundations = fs.readFileSync('components/hebreo/AlefBetFoundations.tsx', 
 const niqqudRules = fs.readFileSync('components/hebreo/NiqqudReadingRules.tsx', 'utf8')
 const learning = fs.readFileSync('lib/hebreo/word-learning.ts', 'utf8')
 const phrases = fs.readFileSync('components/hebreo/HebrewUsefulPhrases.tsx', 'utf8')
+const phraseCatalog = fs.readFileSync('lib/hebreo/useful-phrases.ts', 'utf8')
 const wordsHub = fs.readFileSync('components/hebreo/HebrewWordsStudy.tsx', 'utf8')
 const bible = fs.readFileSync('components/hebreo/HebrewBibleReader.tsx', 'utf8')
 const bibleRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 'utf8')
@@ -40,9 +41,11 @@ test('FASE H checklist 2: conectores preposiciones y pronombres son catálogos c
 test('FASE H checklist 2: Palabras separa catálogo bíblico de frases cotidianas', () => {
   assert.match(wordsHub, /Palabras bíblicas/)
   assert.match(wordsHub, /Frases útiles/)
+  assert.match(phrases, /HEBREW_USEFUL_PHRASES/)
   assert.match(phrases, /Hebreo moderno · uso cotidiano/)
-  assert.match(phrases, /buenos días/)
-  assert.match(phrases, /buenas noches/)
+  assert.match(phraseCatalog, /spanish: 'buenos días'/)
+  assert.match(phraseCatalog, /spanish: 'buenas noches'/)
+  assert.match(phraseCatalog, /Se mantienen deliberadamente separadas del léxico bíblico autoritativo/)
 })
 
 test('FASE H checklist 2: Lectura abre Biblia real por orden canónico y español es opcional', () => {
