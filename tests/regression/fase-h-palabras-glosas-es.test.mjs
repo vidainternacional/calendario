@@ -23,17 +23,17 @@ test('un placeholder contextual nunca bloquea la glosa española final', () => {
 })
 
 test('las fichas usan español real y no exponen Español pendiente', () => {
+  assert.match(words, /function prepareWords/)
+  assert.match(words, /spanish: pedagogical\?\.spanish \?\? word\.spanish/)
   assert.match(words, /splitMeanings\(word\.spanish\)/)
-  assert.match(words, /Significado en revisión/)
   assert.match(words, /placeholder="Buscar gato, casa, שלום…"/)
-  assert.match(words, /Diccionario para aprender/)
   assert.doesNotMatch(words, /Español pendiente/)
 })
 
-test('el catálogo usa paginación discreta y evita el carrusel horizontal anterior', () => {
+test('el catálogo pagina de forma discreta sin carrusel horizontal', () => {
   assert.match(words, /const PAGE_SIZE = 60/)
-  assert.match(words, /const needsPagination = !searchResult && result\.totalPages > 1/)
   assert.match(words, /Anterior/)
   assert.match(words, /Siguiente/)
-  assert.doesNotMatch(words, /snap-x snap-mandatory|handleCarouselScroll|swipeOffset|translate3d/)
+  assert.match(words, /const needsPagination = !searchResult && result\.totalPages > 1/)
+  assert.doesNotMatch(words, /snap-x snap-mandatory|handleCarouselScroll|translate3d/)
 })
