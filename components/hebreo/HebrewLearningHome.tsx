@@ -153,7 +153,7 @@ export default function HebrewLearningHome() {
           </section>
         )}
 
-        <section aria-label="Práctica y herramientas" className="mt-4 space-y-2.5">
+        <section aria-label="Práctica" className="mt-4 space-y-2.5">
           <details className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
             <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 text-left">
               <span><span className="block text-[13px] font-black text-slate-900">Prueba tu progreso</span><span className="block text-[10px] text-slate-400">Evaluación breve sin salir de Inicio</span></span>
@@ -161,16 +161,14 @@ export default function HebrewLearningHome() {
             </summary>
             <div className="border-t border-slate-100"><ProcessTestPreview /></div>
           </details>
-          <details className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
-            <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 text-left">
-              <span><span className="block text-[13px] font-black text-slate-900">Herramientas</span><span className="block text-[10px] text-slate-400">Teclado hebreo para practicar</span></span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </summary>
-            <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-pressed={keyboardEnabled} className="flex min-h-[58px] w-full items-center justify-between gap-3 border-t border-slate-100 px-4 text-left">
-              <span className="flex items-center gap-3"><span className={`grid h-9 w-9 place-items-center rounded-[13px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-indigo-700'}`}><Keyboard className="h-4 w-4" /></span><span><span className="block text-[12px] font-black text-slate-900">Teclado hebreo</span><span className="block text-[10px] text-slate-400">Práctica de escritura</span></span></span>
-              <span className="text-[10px] font-black text-indigo-700">{keyboardEnabled ? 'Desactivar' : 'Activar'}</span>
-            </button>
-          </details>
+
+          <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-pressed={keyboardEnabled} className="flex min-h-[68px] w-full items-center justify-between gap-3 rounded-[22px] border border-slate-200 bg-white px-4 text-left shadow-sm transition active:scale-[0.99]">
+            <span className="flex items-center gap-3">
+              <span className={`grid h-10 w-10 place-items-center rounded-[14px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-indigo-700'}`}><Keyboard className="h-4.5 w-4.5" /></span>
+              <span><span className="block text-[13px] font-black text-slate-900">Teclado hebreo</span><span className="block text-[10px] text-slate-400">Práctica de escritura</span></span>
+            </span>
+            <span className="text-[10px] font-black text-indigo-700">{keyboardEnabled ? 'Desactivar' : 'Activar'}</span>
+          </button>
         </section>
 
         <p className="mt-5 text-center text-[9px] leading-relaxed text-slate-400">FASE H · Aprendizaje en desarrollo · práctica sugerida de 5–10 minutos al día</p>
