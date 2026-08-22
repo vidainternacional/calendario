@@ -23,16 +23,17 @@ test('un placeholder contextual nunca bloquea la glosa española final', () => {
 })
 
 test('las fichas usan español real y no exponen Español pendiente', () => {
-  assert.match(words, /spanishFor\(word\)/)
-  assert.match(words, /Buscar en español o hebreo/)
-  assert.match(words, /diccionario visual/)
+  assert.match(words, /splitMeanings\(word\.spanish\)/)
+  assert.match(words, /Significado en revisión/)
+  assert.match(words, /placeholder="Buscar gato, casa, שלום…"/)
+  assert.match(words, /Diccionario para aprender/)
   assert.doesNotMatch(words, /Español pendiente/)
 })
 
-test('el catálogo pagina con scroll horizontal nativo y snap', () => {
-  assert.match(words, /snap-x snap-mandatory/)
-  assert.match(words, /overflow-x-auto/)
-  assert.match(words, /-webkit-overflow-scrolling:touch/)
-  assert.match(words, /onScroll=\{handleCarouselScroll\}/)
-  assert.doesNotMatch(words, /swipeOffset|translate3d/)
+test('el catálogo usa paginación discreta y evita el carrusel horizontal anterior', () => {
+  assert.match(words, /const PAGE_SIZE = 60/)
+  assert.match(words, /const needsPagination = !searchResult && result\.totalPages > 1/)
+  assert.match(words, /Anterior/)
+  assert.match(words, /Siguiente/)
+  assert.doesNotMatch(words, /snap-x snap-mandatory|handleCarouselScroll|swipeOffset|translate3d/)
 })
