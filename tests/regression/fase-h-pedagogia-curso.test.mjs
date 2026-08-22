@@ -8,6 +8,8 @@ const reading = fs.readFileSync('components/hebreo/ReadingSentencesExplorer.tsx'
 const readingCatalog = fs.readFileSync('lib/hebreo/reading-catalog.ts', 'utf8')
 const grammar = fs.readFileSync('components/hebreo/GrammarExplorer.tsx', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const roadmap = fs.readFileSync('components/hebreo/CourseRoadmap.tsx', 'utf8')
+const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 
 test('FASE H curso: Bet Vet y Vav usan la pronunciación pedagógica acordada', () => {
   assert.match(alefBet, /nombre: 'Bet \/ Vet'/)
@@ -46,4 +48,10 @@ test('FASE H curso: conserva la arquitectura aprobada de aprendizaje', () => {
   const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => home.indexOf(`id: '${id}'`))
   assert.ok(order.every(position => position >= 0))
   for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
+})
+
+test('FASE H curso: la ruta visible resume el plan antes de las herramientas', () => {
+  for (const label of ['Alef-Bet y Sofit', 'Dagesh y sonidos', 'Vocales A · E · I', 'Vocales O · U + Sheva', 'Lectura · Shemá', 'Prefijos inseparables', 'Raíces y repaso']) assert.match(roadmap, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(roadmap, /5–10 minutos al día/)
+  assert.match(page, /<CourseRoadmap \/>[\s\S]*?<HebrewTranslator \/>[\s\S]*?<HebrewLearningHome \/>/)
 })
