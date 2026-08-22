@@ -59,7 +59,7 @@ test('FASE H curso: Aprender conserva la arquitectura progresiva en página prop
 test('FASE H curso: la portada prioriza Aprender y reserva utilidades para despliegue local', () => {
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
   assert.match(home, /Empieza aquí/)
-  assert.match(home, /Curso guiado en el orden correcto/)
+  assert.match(home, /Curso guiado paso a paso/)
   assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
   assert.match(home, /<HebrewTranslator embedded \/>/)
   assert.match(home, /<HebrewSupportMaterials embedded \/>/)
