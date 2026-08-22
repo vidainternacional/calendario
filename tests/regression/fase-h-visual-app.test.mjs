@@ -37,13 +37,14 @@ test('FASE H visual: Básicas y Todas de niqqud son conjuntos distintos', () => 
   assert.match(niqqud, /ocho básicas, tres reducidas y sheva/)
 })
 
-test('FASE H visual: Palabras prioriza hebreo grande en tarjetas lista y detalle', () => {
-  assert.match(words, /text-\[3\.05rem\]/)
-  assert.match(words, /text-\[2\.6rem\]/)
-  assert.match(words, /text-\[5\.5rem\]/)
-  const list = words.slice(words.indexOf('function ListView'), words.indexOf('function DetailView'))
-  assert.match(list, /divide-y divide-slate-200 border-y/)
-  assert.match(words, /snap-x snap-mandatory/)
+test('FASE H visual: Palabras prioriza hebreo grande en Lista Tarjetas y ficha expandida', () => {
+  assert.match(words, /text-\[3rem\]/)
+  assert.match(words, /text-\[3\.15rem\]/)
+  assert.match(words, /text-\[4\.8rem\]/)
+  const list = words.slice(words.indexOf('function PrimaryList'), words.indexOf('function CardsView'))
+  assert.match(list, /rounded-\[24px\] border border-slate-200 bg-white/)
+  assert.match(words, /grid grid-cols-2 gap-3/)
+  assert.doesNotMatch(words, /snap-x snap-mandatory|translate3d/)
 })
 
 test('FASE H visual: Lectura amplía hebreo en tarjetas lista y detalle', () => {
