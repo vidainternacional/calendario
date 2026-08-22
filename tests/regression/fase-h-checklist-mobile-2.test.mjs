@@ -75,7 +75,7 @@ test('FASE H checklist 2: Inicio mantiene Aprender como destino y despliega util
   assert.match(home, /<HebrewBibleReader \/>/)
   assert.match(home, /<HebrewSupportMaterials embedded \/>/)
   assert.match(home, /Prueba tu progreso/)
-  assert.match(home, /<details>/)
+  assert.match(home, /<details\b/)
   assert.match(materials, /if \(embedded\) return <MaterialGroups \/>/)
   assert.match(translator, /embedded = false/)
 })
