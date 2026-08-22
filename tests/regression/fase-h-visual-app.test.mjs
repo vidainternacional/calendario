@@ -29,12 +29,15 @@ test('FASE H visual: Vocales muestra el signo aplicado y tabla de ancho útil', 
   assert.match(niqqud, /text-\[6\.1rem\]/)
 })
 
-test('FASE H visual: Básicas y Todas de niqqud son conjuntos distintos', () => {
-  assert.equal((niqqud.match(/group: 'basic'/g) ?? []).length, 8)
-  assert.equal((niqqud.match(/group: 'reduced'/g) ?? []).length, 3)
+test('FASE H visual: niqqud sigue A-E-I luego O-U y Sheva antes del repaso total', () => {
+  assert.equal((niqqud.match(/group: 'aei'/g) ?? []).length, 5)
+  assert.equal((niqqud.match(/group: 'ou'/g) ?? []).length, 3)
   assert.equal((niqqud.match(/group: 'sheva'/g) ?? []).length, 1)
-  assert.match(niqqud, /ocho vocales completas/)
-  assert.match(niqqud, /ocho básicas, tres reducidas y sheva/)
+  assert.equal((niqqud.match(/group: 'reduced'/g) ?? []).length, 3)
+  const order = ['A · E · I', 'O · U', 'Sheva', 'Reducidas', 'Todas'].map(label => niqqud.indexOf(`label: '${label}'`))
+  assert.ok(order.every(index => index >= 0))
+  for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
+  assert.match(niqqud, /A\/E\/I → O\/U → Sheva → lectura aplicada/)
 })
 
 test('FASE H visual: Palabras prioriza hebreo grande en Lista Tarjetas y ficha expandida', () => {
