@@ -40,12 +40,12 @@ test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas c
   assert.doesNotMatch(materials, /<summary/)
 })
 
-test('FASE H checklist 4: Aprender queda centrado y los acordeones pequeños conservan forma redondeada', () => {
+test('FASE H checklist 4: Aprender queda centrado y los controles pequeños conservan forma redondeada', () => {
   assert.match(home, /items-center justify-center rounded-\[26px\]/)
   assert.match(home, /Curso guiado paso a paso/)
   assert.doesNotMatch(home, /GraduationCap|Sparkles/)
   assert.match(home, /space-y-2\.5/)
-  assert.ok((home.match(/rounded-\[22px\] border border-slate-200 bg-white shadow-sm/g) ?? []).length >= 2)
+  assert.ok((home.match(/rounded-\[22px\] border border-slate-200 bg-white/g) ?? []).length >= 2)
 })
 
 test('FASE H checklist 4: títulos internos comparten una sola escala tipográfica', () => {

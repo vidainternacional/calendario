@@ -6,14 +6,15 @@ const keyboard = fs.readFileSync('components/hebreo/HebrewKeyboardDock.tsx', 'ut
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 
-test('FASE H teclado: conserva guardia de sesión y se controla desde Inicio como acordeón ligero', () => {
+test('FASE H teclado: conserva guardia de sesión y se controla directamente desde Inicio', () => {
   assert.match(page, /<HebrewLearningHome \/>/)
   assert.doesNotMatch(page, /HebrewKeyboardDock/)
   assert.match(page, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo'\)/)
   assert.match(home, /import HebrewKeyboardDock/)
   assert.match(home, /useState\(false\)/)
-  assert.match(home, />Herramientas</)
-  assert.match(home, /Teclado hebreo/)
+  assert.doesNotMatch(home, />Herramientas</)
+  assert.match(home, />Teclado hebreo</)
+  assert.match(home, /aria-pressed=\{keyboardEnabled\}/)
   assert.match(home, /Activar/)
   assert.match(home, /Desactivar/)
   assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\}/)
