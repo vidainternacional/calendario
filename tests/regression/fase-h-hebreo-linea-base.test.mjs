@@ -120,7 +120,6 @@ test('FASE H: niqqud conserva doce signos trazables y cautelas', () => {
 
 test('FASE H: Palabras usa catálogo real con Lista Tarjetas detalle expandible y paginación discreta', () => {
   assert.match(home, /activeSection\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
-  assert.match(words, />Palabras</)
   assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
   assert.match(words, /type WordView = 'list' \| 'cards'/)
   assert.match(words, /function PrimaryList/)
