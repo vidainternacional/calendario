@@ -174,7 +174,7 @@ test('FASE H: Prueba tu progreso conserva quince preguntas secuenciales en Inici
   assert.equal((home.match(/type: '(?:Reconocer|Distinguir|Sofit|Dagesh|Lectura|Comprensión|Integración)'/g) ?? []).length, 15)
   assert.match(home, /\{step \+ 1\} \/ \{TEST_QUESTIONS\.length\}/)
   assert.match(home, /step < TEST_QUESTIONS\.length - 1/)
-  assert.match(home, /<details>/)
+  assert.match(home, /<details\b/)
 })
 
 test('FASE H: resultado e historial de práctica no fingen persistencia', () => {
