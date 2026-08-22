@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-18
+Última actualización: 2026-08-19
 
 Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**
 
@@ -258,7 +258,7 @@ La evidencia inicial se conserva en:
 17. Se implementó un fallback de apertura en frío exclusivo para `/biblia/notas`. El service worker no cachea `/_next/`, API, Supabase ni HTML autenticado privado; utiliza un shell estático sin datos personales y lee el cuaderno únicamente desde la caché local del usuario.
 18. La identificación del cuaderno offline conserva privacidad: utiliza el marcador del usuario activo, un respaldo mínimo del UUID dentro del service worker y, si ambos faltan, solo infiere el dueño cuando existe exactamente un único cuaderno local con UUID válido. Con múltiples cuadernos no adivina y mantiene el bloqueo protector.
 19. El cierre de sesión elimina el marcador local y el respaldo del service worker. El contenido de las notas nunca se guarda dentro del service worker.
-20. Validación funcional real en iPhone completada con Wi-Fi apagado/modo avión: Safari abrió `/biblia/notas` desde cero, mostró `Sin conexión · guardado local` y presentó correctamente las notas y contenido existentes del usuario.
+20. Validación funcional real completada con Wi-Fi apagado/modo avión: Safari abrió `/biblia/notas` desde cero, mostró `Sin conexión · guardado local` y presentó correctamente las notas y contenido existentes del usuario.
 21. El cold-start offline fue fusionado mediante PR #273 (`7d6cf9e995dca7e1de2f4d5488c98cdb110c3ccc`) y el despliegue de producción exacto quedó READY.
 22. No se modificaron grants, políticas RLS ni esquema de Supabase durante los bloques #271–#273.
 
@@ -375,13 +375,45 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 
 ## Bloque activo de FASE H
 
-### Bloque 1 — Línea base de fuentes y arquitectura didáctica
+### Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO — 2026-08-19
 
-1. Auditar las fuentes hebreas/arameas ya aprobadas en FASE D y separar qué datos pueden reutilizarse directamente para enseñanza, lectura, morfología, transliteración y glosas.
-2. Revisar el estado real de `Estudios`, Biblia y Estudio Profundo para integrar Hebreo Bíblico sin duplicar lectores ni capas de datos existentes.
-3. Definir el contrato didáctico inicial: Alef-bet, dirección RTL, formas finales, niqqud, pronunciación pedagógica, lectura guiada y progresión de lecciones.
-4. Diseñar la arquitectura visual y de navegación mobile-first antes de implementar nuevas tablas o persistencia.
-5. No crear nuevas tablas, RLS, grants o funciones sensibles hasta demostrar que las estructuras actuales son insuficientes y presentar alcance, impacto y reversión para aprobación explícita.
+1. Las fuentes hebreas/arameas aprobadas en FASE D fueron auditadas y reutilizadas sin crear un segundo motor bíblico.
+2. La integración con `Estudios`, Biblia y Estudio Profundo quedó definida y materializada sobre las estructuras textuales/léxicas existentes.
+3. El contrato didáctico inicial quedó validado en iPhone: Alef-Bet → Vocales → Palabras → Lectura → Reglas → Repaso.
+4. La arquitectura visual mobile-first quedó aprobada con fichas para memoria, tablas para comparación, listas nativas para recorrido y detalle para profundizar.
+5. Se validaron Alef-Bet, niqqud, vocabulario, lectura real del corpus, reglas iniciales, Repaso local, teclado hebreo opcional y centrado pedagógico transversal.
+6. No se crearon nuevas tablas, RLS, grants ni funciones sensibles de Supabase durante el cierre del bloque.
+7. La evidencia técnica quedó protegida por regresiones y CI verde; el PR #286 permanece DRAFT y sin merge.
+
+### Bloque 2 — Fundamentos de lectura y gramática progresiva — COMPLETADO Y APROBADO — 2026-08-19
+
+1. Profundizar formas finales (Sofit) mediante comparación normal → final, sonido y valores ordinarios; cualquier gematría extendida 500–900 debe etiquetarse expresamente como convención ampliada.
+2. Enseñar Dagesh/Begadkefat de forma visual y cautelosa, distinguiendo los contrastes pedagógicos actuales de diferencias históricas dependientes de la tradición de lectura.
+3. Incorporar matres lectionis y su función como ayudas vocálicas sin presentar las letras como vocales independientes en todos los contextos.
+4. Ampliar niqqud con sheva vocal/silencioso, qamats qatan, pataj furtivo y patrones de lectura que permitan pasar de signo → sílaba → palabra.
+5. Introducir raíces únicamente cuando exista raíz verificada en las fuentes aprobadas; no deducir raíces por heurística visual.
+6. Continuar prefijos/sufijos, género/número, posesivos, constructo y gramática progresiva mediante tablas de transformación, ejemplos reales y práctica.
+7. Conservar Repaso como práctica local mientras este bloque no requiera persistencia; cualquier progreso almacenado queda para una propuesta posterior con alcance, privacidad, RLS e impacto explícitos.
+8. No incorporar audio como pronunciación oficial hasta contar con fuente/metodología confiable y licencia compatible.
+9. Se implementaron y validaron en iPhone Sofit, Dagesh/Begadkefat, matres lectionis, niqqud avanzado, lectura silábica, gramática nominal, primer mapa verbal Qal y Repaso ampliado.
+10. El mapa verbal conserva qatal/yiqtol, imperativo, participio, infinitivo constructo, wayyiqtol y weqatal sin reducir qatal a “pasado”, yiqtol a “futuro” ni wayyiqtol a una inversión mecánica de tiempo.
+11. La auditoría de raíces confirmó que las fuentes actuales no entregan una raíz explícita verificable; VIDA no deduce raíces por heurística.
+12. El checklist móvil `docs/FASE_H_BLOQUE_2_CHECKLIST_MOVIL.md` fue recorrido y aprobado explícitamente por el usuario el 2026-08-19 sin bugs bloqueantes reportados.
+13. El head `600a516d4bbe2c990f09aa373b2ef637fa601585` tuvo CI temporal #2358, regresiones, lint, build, validador maestro y validadores TAHOT en verde.
+14. Vercel sirvió ese mismo head en Preview READY mediante `dpl_4pbkYgLGWtALemEgNfav3RrvmUvr`; PR #286 permanece DRAFT y sin merge.
+
+### Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — ACTIVO
+
+1. Evolucionar `Palabras` para resolver búsquedas por español, hebreo, Strong y transliteración sin crear un segundo léxico paralelo.
+2. Resolver formas hebreas flexionadas mediante `biblical_word_occurrences` y su `lexical_entry_id`, de modo que una forma del texto pueda llevar al lema aprobado correspondiente.
+3. Mantener `biblical_lexical_entries` como autoridad léxica; ninguna búsqueda automática puede reescribir lema, glosa fuente, definición o estado editorial de esas entradas.
+4. Incorporar un índice derivado de resoluciones reutilizables para evitar recalcular búsquedas ya verificadas. Ese índice debe guardar relación, confianza, evidencia y procedencia, no una nueva definición léxica autoritativa.
+5. Las coincidencias contextuales derivadas de RV1909 siguen siendo evidencia contextual y nunca equivalencia palabra-a-palabra automática cuando no exista glosa española aprobada.
+6. No guardar identidad del usuario ni historial personal de quién buscó qué. Solo persistir claves de búsqueda normalizadas que hayan producido una relación verificable con una entrada léxica aprobada.
+7. La lectura del índice derivado queda limitada a cuentas autenticadas activas; `anon` no tendrá acceso y los clientes autenticados no podrán INSERT/UPDATE/DELETE. Las escrituras derivadas se ejecutarán únicamente desde código server-only mediante service role.
+8. La tabla derivada debe ser reversible: deshabilitar su consulta devuelve el buscador al motor actual sin pérdida ni alteración del corpus, ocurrencias o entradas léxicas fuente.
+9. Proteger con regresiones las rutas de búsqueda hebrea sin niqqud, forma flexionada → lema, transliteración, español directo, Strong y fallback contextual.
+10. Mantener rendimiento mobile-first: consultar primero resoluciones reutilizables cuando corresponda y acudir al recorrido contextual más costoso únicamente cuando no exista una relación suficiente.
 
 # FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
 
@@ -403,4 +435,4 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 
 # Siguiente punto autorizado
 
-**Iniciar exclusivamente FASE H con el Bloque 1 — línea base de fuentes y arquitectura didáctica. Auditar primero las fuentes hebreas/arameas ya aprobadas y la integración real con Estudios/Biblia/Estudio Profundo; definir contrato didáctico y arquitectura visual antes de implementar. No crear nuevas estructuras sensibles de Supabase sin propuesta exacta, impacto, reversión y aprobación explícita. No iniciar FASE I mientras FASE H no esté formalmente completada en este documento.**
+**Continuar exclusivamente FASE H con el Bloque 3 — cobertura léxica progresiva y búsqueda inteligente. Empezar por transliteración y resolución forma flexionada → lema usando las estructuras existentes; después incorporar el índice derivado `biblical_hebrew_search_resolutions` aprobado por el usuario, con RLS de solo lectura para cuentas autenticadas activas, sin acceso `anon`, sin escrituras desde cliente y con escritura server-only mediante service role. No modificar el léxico autoritativo ni iniciar FASE I.**

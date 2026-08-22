@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Video, FileText, Clock3, NotebookPen } from 'lucide-react'
+import { BookOpen, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -38,6 +38,17 @@ export default async function EstudiosPage() {
       hoverClass: 'hover:border-[#C0392B]/30',
       arrowClass: 'group-hover:text-[#C0392B]',
       actionClass: 'text-[#C0392B]',
+    },
+    {
+      href: '/estudios/hebreo',
+      title: 'Hebreo Bíblico',
+      description: 'Aprende el Alef-bet paso a paso y prepárate para leer el texto hebreo y arameo con herramientas guiadas.',
+      action: 'Empezar hebreo',
+      icon: Languages,
+      iconClass: 'bg-slate-900 text-white shadow-inner shadow-black/20',
+      hoverClass: 'hover:border-slate-400',
+      arrowClass: 'group-hover:text-slate-900',
+      actionClass: 'text-slate-700',
     },
     {
       href: '/biblia/notas',

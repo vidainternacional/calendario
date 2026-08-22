@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import fs from 'node:fs'
+import test from 'node:test'
+
+const builder = fs.readFileSync('scripts/hebreo/build_tipnr_wikidata_draft.py', 'utf8')
+const workflow = fs.readFileSync('.github/workflows/fase-h-preparar-nombres-propios.yml', 'utf8')
+const anchoredMigration = fs.readFileSync(
+  'supabase/migrations/20260820233030_fase_h_glosas_nombres_propios_wikidata_rv1909_anchor.sql',
+  'utf8',
+)
+
+test('FASE H bloque 3: generador TIPNR/Wikidata pasa self-test sin red', () => {
+  execFileSync('python3', ['scripts/hebreo/build_tipnr_wikidata_draft.py', '--self-test'], { stdio: 'pipe' })
+})
+
+test('FASE H bloque 3: identidad de nombre propio usa TIPNR exacto y Wikidata CC0', () => {
+  assert.match(builder, /TIPNR_CROSSWALK_BLOB = "abc3e21b9d08dc310066152f9b62858c4818f4eb"/)
+  assert.match(builder, /STEP_TIPNR_REVISION = "b83a3cf1224af5cf72606d86d6be1789adc69541"/)
+  assert.match(builder, /english_matches/)
+  assert.match(builder, /english_identity_mismatch/)
+  assert.match(builder, /CC0-1\.0/)
+  assert.doesNotMatch(builder, /fuzzywuzzy|levenshtein|rapidfuzz/i)
+})
+
+test('FASE H bloque 3: el lote generado permanece borrador e insert-only', () => {
+  assert.match(workflow, /supabase\/migration-drafts\/20260820233000_fase_h_glosas_nombres_propios_wikidata_draft\.sql/)
+  assert.doesNotMatch(workflow, /supabase\/migrations\/20260820233000/)
+  assert.match(builder, /g\.lexical_entry_id is null/)
+  assert.match(builder, /on conflict \(lexical_entry_id\) do nothing/)
+  assert.match(builder, /DELETE FROM public\.biblical_hebrew_spanish_glosses/)
+})
+
+test('FASE H bloque 3: contexto y RV1909 no se convierten en significado', () => {
+  assert.match(builder, /'context_used_as_meaning',false/)
+  assert.match(builder, /'rv1909_used_as_meaning',false/)
+  assert.doesNotMatch(builder, /original_text\.ilike|contextualSpanishSearch/)
+})
+
+test('FASE H bloque 3: preparación en GitHub no recibe credenciales de Supabase', () => {
+  assert.doesNotMatch(workflow, /secrets\.[A-Z0-9_]*SUPABASE/i)
+  assert.doesNotMatch(workflow, /SUPABASE_SERVICE_ROLE_KEY|SUPABASE_DB_PASSWORD|DATABASE_URL|service_role/i)
+  assert.match(workflow, /supabase\/migration-drafts/)
+  assert.match(workflow, /git hash-object/)
+  assert.match(workflow, /abc3e21b9d08dc310066152f9b62858c4818f4eb/)
+})
+
+test('FASE H bloque 3: nombres propios publicados exigen ancla española exacta en RV1909', () => {
+  assert.match(anchoredMigration, /e45bd7b1e317c9f152c7978b103811c6807841b0f9d895b82cfd0fcf607d7eb6/)
+  assert.match(anchoredMigration, /slug = 'rv1909-ebible'/)
+  assert.match(anchoredMigration, /position\(' ' \|\| label_norm \|\| ' ' in ' ' \|\| verse_norm \|\| ' '\) > 0/)
+  assert.match(anchoredMigration, /rv1909_used_as_validation', true/)
+  assert.match(anchoredMigration, /rv1909_used_as_meaning', false/)
+  assert.match(anchoredMigration, /context_used_as_meaning', false/)
+})
+
+test('FASE H bloque 3: lote de nombres validado sigue siendo insert-only y reversible', () => {
+  assert.match(anchoredMigration, /g\.lexical_entry_id is null/)
+  assert.match(anchoredMigration, /on conflict \(lexical_entry_id\) do nothing/)
+  assert.match(anchoredMigration, /fase_h_es_nombres_wikidata_rv1909_anchor_001_20260820/)
+  assert.match(anchoredMigration, /DELETE FROM public\.biblical_hebrew_spanish_glosses/)
+  assert.doesNotMatch(anchoredMigration, /update public\.biblical_hebrew_spanish_glosses/i)
+  assert.doesNotMatch(anchoredMigration, /delete from public\.biblical_lexical_entries/i)
+})

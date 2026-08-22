@@ -1,0 +1,101 @@
+'use client'
+
+import { FormEvent, useMemo, useState } from 'react'
+import { ArrowLeftRight, Check, ChevronDown, Copy, Languages, LoaderCircle, Speaker } from 'lucide-react'
+import { hasHebrew, isSingleWord } from '@/lib/hebreo/translator'
+import { pronounceHebrewForSpanish, withoutHebrewMarks } from '@/lib/hebreo/pronunciation'
+
+type Language = 'es' | 'he'
+type TranslationResult = {
+  input: string
+  translatedText: string
+  sourceLanguage: Language
+  targetLanguage: Language
+  kind: 'word' | 'phrase'
+}
+
+function preferredHebrewVoice(voices: SpeechSynthesisVoice[]) {
+  const hebrew = voices.filter(voice => voice.lang.toLowerCase().startsWith('he'))
+  return hebrew.find(voice => voice.lang.toLowerCase() === 'he-il' && voice.localService && /carmit|hebrew|israel/i.test(voice.name))
+    ?? hebrew.find(voice => voice.lang.toLowerCase() === 'he-il' && voice.localService)
+    ?? hebrew.find(voice => /carmit|hebrew|israel/i.test(voice.name))
+    ?? hebrew[0]
+    ?? null
+}
+
+export default function HebrewTranslator({ embedded = false }: { embedded?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [showNiqqud, setShowNiqqud] = useState(true)
+  const [sourceLanguage, setSourceLanguage] = useState<Language>('es')
+  const [text, setText] = useState('')
+  const [result, setResult] = useState<TranslationResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const inputIsHebrew = sourceLanguage === 'he'
+  const outputIsHebrew = result?.targetLanguage === 'he'
+  const singleWord = result ? result.kind === 'word' : isSingleWord(text)
+  const visibleResult = result?.translatedText && outputIsHebrew && !showNiqqud ? withoutHebrewMarks(result.translatedText) : result?.translatedText
+  const writtenPronunciation = useMemo(() => result && outputIsHebrew ? pronounceHebrewForSpanish(result.translatedText) : '', [result, outputIsHebrew])
+
+  function swapDirection() {
+    setSourceLanguage(current => current === 'es' ? 'he' : 'es')
+    setResult(null); setError(''); setCopied(false)
+  }
+
+  async function translate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const value = text.trim()
+    if (!value || loading) return
+    setLoading(true); setError(''); setResult(null); setCopied(false)
+    try {
+      const response = await fetch('/api/estudios/hebreo/traducir', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: value, sourceLanguage }),
+      })
+      const data = await response.json() as Partial<TranslationResult> & { error?: string }
+      if (!response.ok || !data.translatedText || !data.sourceLanguage || !data.targetLanguage) throw new Error(data.error || 'No se pudo traducir.')
+      setResult({ input: data.input || value, translatedText: data.translatedText, sourceLanguage: data.sourceLanguage, targetLanguage: data.targetLanguage, kind: data.kind === 'word' ? 'word' : 'phrase' })
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo traducir.') }
+    finally { setLoading(false) }
+  }
+
+  async function copyResult() {
+    if (!visibleResult) return
+    await navigator.clipboard.writeText(visibleResult)
+    setCopied(true); window.setTimeout(() => setCopied(false), 1600)
+  }
+
+  function speakHebrew() {
+    if (!result || typeof window === 'undefined' || !('speechSynthesis' in window)) return
+    const source = result.sourceLanguage === 'he' ? result.input : result.translatedText
+    const hebrewText = showNiqqud ? source : withoutHebrewMarks(source)
+    if (!hasHebrew(hebrewText)) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(hebrewText)
+    utterance.lang = 'he-IL'
+    const voice = preferredHebrewVoice(window.speechSynthesis.getVoices())
+    if (voice) utterance.voice = voice
+    utterance.rate = 0.68
+    utterance.pitch = 1
+    window.speechSynthesis.speak(utterance)
+  }
+
+  return (
+    <section className={`${embedded ? 'w-full' : 'mb-5 w-full'} text-left`}>
+      <div className={embedded ? '' : 'overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_6px_22px_rgba(15,23,42,0.05)]'}>
+        {!embedded && <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex min-h-[62px] w-full items-center justify-between gap-4 px-4 py-2.5 text-left active:bg-slate-50">
+          <span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-700"><Languages className="h-4.5 w-4.5" /></span><span><span className="block text-[14px] font-black text-slate-950">Traductor</span><span className="block text-[10px] font-semibold text-slate-500">Español ⇄ עברית</span></span></span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>}
+
+        {(embedded || open) && <div className={embedded ? 'pb-2 pt-1' : 'border-t border-slate-100 px-4 pb-4 pt-4'}>
+          <div className="mb-3 flex items-center justify-between gap-3"><span className="text-[12px] font-black text-slate-500">Niqqud</span><div className="grid grid-cols-2 rounded-full bg-slate-100 p-1"><button type="button" onClick={() => setShowNiqqud(true)} className={`min-h-9 rounded-full px-3 text-[11px] font-black ${showNiqqud ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Con</button><button type="button" onClick={() => setShowNiqqud(false)} className={`min-h-9 rounded-full px-3 text-[11px] font-black ${!showNiqqud ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Sin</button></div></div>
+          <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[18px] bg-slate-100 p-1.5"><button type="button" onClick={() => sourceLanguage !== 'es' && swapDirection()} className={`min-h-10 rounded-[14px] px-3 text-[12px] font-black ${sourceLanguage === 'es' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Español</button><button type="button" onClick={swapDirection} aria-label="Cambiar dirección de traducción" className="grid h-10 w-10 place-items-center rounded-full bg-white text-indigo-700 shadow-sm"><ArrowLeftRight className="h-4 w-4" /></button><button type="button" onClick={() => sourceLanguage !== 'he' && swapDirection()} lang="he" dir="rtl" className={`min-h-10 rounded-[14px] px-3 text-[13px] font-black ${sourceLanguage === 'he' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>עברית</button></div>
+          <form onSubmit={translate}><label htmlFor="hebrew-translation-input" className="mb-2 block text-[12px] font-black text-slate-600">Escribe una palabra o frase</label><div className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50"><textarea id="hebrew-translation-input" value={text} onChange={event => { setText(event.target.value.slice(0, 1000)); setError('') }} dir={inputIsHebrew ? 'rtl' : 'ltr'} lang={inputIsHebrew ? 'he' : 'es'} rows={3} placeholder={inputIsHebrew ? 'כתוב מילה או משפט' : 'Ej. Dios es bueno'} className="min-h-[100px] w-full resize-none bg-transparent px-4 pb-3 pt-4 text-[1.05rem] font-semibold leading-relaxed text-slate-950 outline-none placeholder:text-slate-400" /><div className="flex items-center justify-between border-t border-slate-200 px-4 py-2 text-[10px] font-semibold text-slate-400"><span>{singleWord ? 'Palabra' : 'Frase'}</span><span>{text.length}/1000</span></div></div><button type="submit" disabled={!text.trim() || loading} className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[17px] bg-indigo-600 px-5 text-sm font-black text-white disabled:bg-slate-300">{loading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Languages className="h-5 w-5" />}{loading ? 'Traduciendo…' : 'Traducir'}</button></form>
+          <div className="mt-4 min-h-4" aria-live="polite">{error && <p className="rounded-[18px] bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{error}</p>}{result && <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white"><div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3"><p className="text-[10px] font-black uppercase tracking-[0.09em] text-slate-400">{result.kind === 'word' ? 'Significado' : 'Traducción'}</p><p className="text-[10px] font-bold text-slate-400">{result.sourceLanguage === 'he' ? 'Hebreo → Español' : 'Español → Hebreo'}</p></div><div className="px-4 py-5"><p lang={outputIsHebrew ? 'he' : 'es'} dir={outputIsHebrew ? 'rtl' : 'ltr'} className={`break-words font-black tracking-[-0.02em] text-slate-950 ${outputIsHebrew ? 'text-[2.35rem] leading-[1.45]' : 'text-[1.55rem] leading-snug'}`}>{visibleResult}</p>{outputIsHebrew && writtenPronunciation && <div className="mt-3 border-t border-slate-100 pt-3"><p className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-400">Pronunciación orientativa</p><p className="mt-1 break-words text-[13px] font-black leading-relaxed text-indigo-700">{writtenPronunciation}</p></div>}</div><div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-2.5"><button type="button" onClick={copyResult} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[15px] bg-slate-100 px-3 text-xs font-black text-slate-700">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? 'Copiado' : 'Copiar'}</button><button type="button" onClick={speakHebrew} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[15px] bg-indigo-50 px-3 text-xs font-black text-indigo-700"><Speaker className="h-4 w-4" />Escuchar hebreo</button></div></div>}</div>
+        </div>}
+      </div>
+    </section>
+  )
+}

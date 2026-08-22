@@ -1,0 +1,194 @@
+{
+  "chunk_size": 40,
+  "chunks": 13,
+  "database_gate": {
+    "anchor_used_for_name_spelling_only": true,
+    "context_used_as_meaning": false,
+    "exact_source_entity_required": true,
+    "exact_wikidata_primary_label_required": true,
+    "full_phrase_boundary_normalization": true,
+    "insert_only": true,
+    "minimum_name_similarity": 0.55,
+    "on_conflict_do_nothing": true,
+    "spanish_verified_sources_at_anchor_minimum": 2
+  },
+  "excluded_low_similarity": 26,
+  "files": [
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_001.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_002.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_003.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_004.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_005.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_006.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_007.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_008.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_009.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_010.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_011.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_012.sql",
+    "supabase/migration-drafts/nombres-wikidata-safe-v4/fase_h_nombres_wikidata_safe_v4_chunk_013.sql"
+  ],
+  "input_candidates": 546,
+  "minimum_name_similarity": 0.55,
+  "phase": "FASE_H_BLOQUE_3",
+  "rejected_low_similarity_sample": [
+    {
+      "english_label": "Mordecai",
+      "name_similarity": 0.5,
+      "spanish_label": "Mardoqueo",
+      "tipnr_id": "Bilshan_Ezr.2.2"
+    },
+    {
+      "english_label": "Ehud",
+      "name_similarity": 0.285714,
+      "spanish_label": "Aod",
+      "tipnr_id": "Ehud_1Ch.7.10"
+    },
+    {
+      "english_label": "Ehud",
+      "name_similarity": 0.285714,
+      "spanish_label": "Aod",
+      "tipnr_id": "Ehud_Jdg.3.15"
+    },
+    {
+      "english_label": "Haran",
+      "name_similarity": 0.444444,
+      "spanish_label": "Taré",
+      "tipnr_id": "Haran_1Ch.2.46"
+    },
+    {
+      "english_label": "Haran",
+      "name_similarity": 0.444444,
+      "spanish_label": "Taré",
+      "tipnr_id": "Haran_1Ch.23.9"
+    },
+    {
+      "english_label": "Haran",
+      "name_similarity": 0.444444,
+      "spanish_label": "Taré",
+      "tipnr_id": "Haran_Gen.11.26"
+    },
+    {
+      "english_label": "Ish-bosheth",
+      "name_similarity": 0.461538,
+      "spanish_label": "Isbaal",
+      "tipnr_id": "Ish-bosheth_2Sa.2.8"
+    },
+    {
+      "english_label": "St. James the Elder",
+      "name_similarity": 0.413793,
+      "spanish_label": "Santiago el Mayor",
+      "tipnr_id": "James_Mat.10.3"
+    },
+    {
+      "english_label": "St. James the Elder",
+      "name_similarity": 0.413793,
+      "spanish_label": "Santiago el Mayor",
+      "tipnr_id": "James_Mat.13.55"
+    },
+    {
+      "english_label": "St. James the Elder",
+      "name_similarity": 0.413793,
+      "spanish_label": "Santiago el Mayor",
+      "tipnr_id": "James_Mat.4.21"
+    },
+    {
+      "english_label": "Jesse",
+      "name_similarity": 0.222222,
+      "spanish_label": "Isaí",
+      "tipnr_id": "Jesse_Rut.4.17"
+    },
+    {
+      "english_label": "Martha",
+      "name_similarity": 0.526316,
+      "spanish_label": "Marta de Betania",
+      "tipnr_id": "Martha_Luk.10.38"
+    },
+    {
+      "english_label": "Matthew the Apostle",
+      "name_similarity": 0.434783,
+      "spanish_label": "San Mateo",
+      "tipnr_id": "Matthew_Mat.9.9"
+    },
+    {
+      "english_label": "Meshach",
+      "name_similarity": 0.545455,
+      "spanish_label": "Misael",
+      "tipnr_id": "Mishael_Dan.1.6"
+    },
+    {
+      "english_label": "Meshach",
+      "name_similarity": 0.545455,
+      "spanish_label": "Misael",
+      "tipnr_id": "Mishael_Exo.6.22"
+    },
+    {
+      "english_label": "Meshach",
+      "name_similarity": 0.545455,
+      "spanish_label": "Misael",
+      "tipnr_id": "Mishael_Neh.8.4"
+    },
+    {
+      "english_label": "Mordecai",
+      "name_similarity": 0.5,
+      "spanish_label": "Mardoqueo",
+      "tipnr_id": "Mordecai_Est.2.5"
+    },
+    {
+      "english_label": "Mordecai",
+      "name_similarity": 0.5,
+      "spanish_label": "Mardoqueo",
+      "tipnr_id": "Mordecai_Ezr.2.2"
+    },
+    {
+      "english_label": "Saint Peter",
+      "name_similarity": 0.4,
+      "spanish_label": "Pedro",
+      "tipnr_id": "Peter_Mat.4.18"
+    },
+    {
+      "english_label": "Nabu-shar-usur",
+      "name_similarity": 0.444444,
+      "spanish_label": "Sharezer",
+      "tipnr_id": "Sharezer_2Ki.19.37"
+    },
+    {
+      "english_label": "Saint Peter",
+      "name_similarity": 0.4,
+      "spanish_label": "Pedro",
+      "tipnr_id": "Shimon_1Ch.4.20"
+    },
+    {
+      "english_label": "Terah",
+      "name_similarity": 0.5,
+      "spanish_label": "Taré",
+      "tipnr_id": "Terah_Gen.11.24"
+    },
+    {
+      "english_label": "Zephaniah",
+      "name_similarity": 0.533333,
+      "spanish_label": "Sofonías",
+      "tipnr_id": "Zephaniah_2Ki.25.18"
+    },
+    {
+      "english_label": "Zephaniah",
+      "name_similarity": 0.533333,
+      "spanish_label": "Sofonías",
+      "tipnr_id": "Zephaniah_Zec.6.10"
+    },
+    {
+      "english_label": "Zephaniah",
+      "name_similarity": 0.533333,
+      "spanish_label": "Sofonías",
+      "tipnr_id": "Zephaniah_Zep.1.1"
+    },
+    {
+      "english_label": "Zipporah",
+      "name_similarity": 0.461538,
+      "spanish_label": "Séfora",
+      "tipnr_id": "Zipporah_Exo.2.21"
+    }
+  ],
+  "similarity_safe_candidates": 520,
+  "status": "draft_only_not_applied"
+}
