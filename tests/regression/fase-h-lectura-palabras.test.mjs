@@ -22,7 +22,7 @@ test('FASE H: Palabras conserva catálogo completo pero inicia con vocabulario e
   assert.doesNotMatch(words, /const WORDS:/)
   assert.match(words, /useState<HebrewLearningGroupId>\('essentials'\)/)
   assert.match(learning, /id: 'all'/)
-  assert.match(learning, /Acceso al catálogo hebreo aprobado completo/)
+  assert.match(learning, /Catálogo hebreo aprobado completo/)
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
 })
 
@@ -54,7 +54,7 @@ test('FASE H: ficha de Palabras elimina información técnica y explica formaci�
 })
 
 test('FASE H: Palabras se agrupa por temas y español preparado', () => {
-  for (const label of ['Esenciales', 'Familia', 'Vida diaria', 'Naturaleza', 'Cuerpo y vida', 'Fe y conceptos', 'Acciones']) assert.match(learning, new RegExp(label))
+  for (const label of ['Más comunes', 'Conectores', 'Preposiciones', 'Sujetos y pronombres', 'Personas y familia', 'Cosas y vida diaria', 'Naturaleza', 'Cuerpo y vida', 'Biblia y fe', 'Acciones']) assert.match(learning, new RegExp(label))
   assert.match(learning, /spanish: 'padre'/)
   assert.match(learning, /spanish: 'agua'/)
   assert.match(learning, /spanish: 'Dios'/)
