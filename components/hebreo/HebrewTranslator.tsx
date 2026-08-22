@@ -23,7 +23,7 @@ function preferredHebrewVoice(voices: SpeechSynthesisVoice[]) {
     ?? null
 }
 
-export default function HebrewTranslator() {
+export default function HebrewTranslator({ embedded = false }: { embedded?: boolean }) {
   const [open, setOpen] = useState(false)
   const [showNiqqud, setShowNiqqud] = useState(true)
   const [sourceLanguage, setSourceLanguage] = useState<Language>('es')
@@ -82,14 +82,14 @@ export default function HebrewTranslator() {
   }
 
   return (
-    <section className="mb-5 w-full text-left">
-      <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_6px_22px_rgba(15,23,42,0.05)]">
-        <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex min-h-[62px] w-full items-center justify-between gap-4 px-4 py-2.5 text-left active:bg-slate-50">
+    <section className={`${embedded ? 'w-full' : 'mb-5 w-full'} text-left`}>
+      <div className={embedded ? '' : 'overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_6px_22px_rgba(15,23,42,0.05)]'}>
+        {!embedded && <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex min-h-[62px] w-full items-center justify-between gap-4 px-4 py-2.5 text-left active:bg-slate-50">
           <span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-700"><Languages className="h-4.5 w-4.5" /></span><span><span className="block text-[14px] font-black text-slate-950">Traductor</span><span className="block text-[10px] font-semibold text-slate-500">Español ⇄ עברית</span></span></span>
           <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
+        </button>}
 
-        {open && <div className="border-t border-slate-100 px-4 pb-4 pt-4">
+        {(embedded || open) && <div className={embedded ? 'pb-2 pt-1' : 'border-t border-slate-100 px-4 pb-4 pt-4'}>
           <div className="mb-3 flex items-center justify-between gap-3"><span className="text-[12px] font-black text-slate-500">Niqqud</span><div className="grid grid-cols-2 rounded-full bg-slate-100 p-1"><button type="button" onClick={() => setShowNiqqud(true)} className={`min-h-9 rounded-full px-3 text-[11px] font-black ${showNiqqud ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Con</button><button type="button" onClick={() => setShowNiqqud(false)} className={`min-h-9 rounded-full px-3 text-[11px] font-black ${!showNiqqud ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Sin</button></div></div>
           <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[18px] bg-slate-100 p-1.5"><button type="button" onClick={() => sourceLanguage !== 'es' && swapDirection()} className={`min-h-10 rounded-[14px] px-3 text-[12px] font-black ${sourceLanguage === 'es' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Español</button><button type="button" onClick={swapDirection} aria-label="Cambiar dirección de traducción" className="grid h-10 w-10 place-items-center rounded-full bg-white text-indigo-700 shadow-sm"><ArrowLeftRight className="h-4 w-4" /></button><button type="button" onClick={() => sourceLanguage !== 'he' && swapDirection()} lang="he" dir="rtl" className={`min-h-10 rounded-[14px] px-3 text-[13px] font-black ${sourceLanguage === 'he' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>עברית</button></div>
           <form onSubmit={translate}><label htmlFor="hebrew-translation-input" className="mb-2 block text-[12px] font-black text-slate-600">Escribe una palabra o frase</label><div className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50"><textarea id="hebrew-translation-input" value={text} onChange={event => { setText(event.target.value.slice(0, 1000)); setError('') }} dir={inputIsHebrew ? 'rtl' : 'ltr'} lang={inputIsHebrew ? 'he' : 'es'} rows={3} placeholder={inputIsHebrew ? 'כתוב מילה או משפט' : 'Ej. Dios es bueno'} className="min-h-[100px] w-full resize-none bg-transparent px-4 pb-3 pt-4 text-[1.05rem] font-semibold leading-relaxed text-slate-950 outline-none placeholder:text-slate-400" /><div className="flex items-center justify-between border-t border-slate-200 px-4 py-2 text-[10px] font-semibold text-slate-400"><span>{singleWord ? 'Palabra' : 'Frase'}</span><span>{text.length}/1000</span></div></div><button type="submit" disabled={!text.trim() || loading} className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[17px] bg-indigo-600 px-5 text-sm font-black text-white disabled:bg-slate-300">{loading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Languages className="h-5 w-5" />}{loading ? 'Traduciendo…' : 'Traducir'}</button></form>

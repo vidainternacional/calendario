@@ -6,12 +6,13 @@ const translatorUi = await readFile(new URL('../../components/hebreo/HebrewTrans
 const route = await readFile(new URL('../../app/api/estudios/hebreo/traducir/route.ts', import.meta.url), 'utf8')
 const contract = await readFile(new URL('../../lib/hebreo/translator.ts', import.meta.url), 'utf8')
 const home = await readFile(new URL('../../components/hebreo/HebrewLearningHome.tsx', import.meta.url), 'utf8')
-const translatorPage = await readFile(new URL('../../app/(app)/estudios/hebreo/traductor/page.tsx', import.meta.url), 'utf8')
 
-test('FASE H integra un traductor puntual en ruta propia sin convertirlo en Estudio Profundo', () => {
-  assert.match(home, /href="\/estudios\/hebreo\/traductor"/)
-  assert.match(translatorPage, /<HebrewTranslator\s*\/>/)
-  assert.match(translatorPage, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo\/traductor'\)/)
+test('FASE H integra un traductor puntual desplegable en Inicio sin convertirlo en Estudio Profundo', () => {
+  assert.match(home, /<QuickButton id="translator"/)
+  assert.match(home, /openQuick === 'translator'/)
+  assert.match(home, /<HebrewTranslator embedded \/>/)
+  assert.match(translatorUi, /embedded = false/)
+  assert.match(translatorUi, /\(embedded \|\| open\)/)
   assert.match(translatorUi, /Escribe una palabra o frase/)
   assert.match(translatorUi, /Español ⇄ עברית/)
   assert.match(translatorUi, /Significado/)

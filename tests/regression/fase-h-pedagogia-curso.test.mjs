@@ -49,14 +49,19 @@ test('FASE H curso: Aprender conserva la arquitectura progresiva en página prop
   assert.ok(order.every(position => position >= 0))
   for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
   assert.match(course, /useState<SectionId \| null>\(null\)/)
+  assert.match(course, /grid w-full max-w-md grid-cols-3/)
   assert.match(course, /aria-expanded=\{open\}/)
   assert.match(course, /5–10 min al día · de arriba hacia abajo/)
+  assert.match(course, /const activeSection = SECTIONS\.find/)
   assert.match(learnPage, /<HebrewCourseCenter \/>/)
 })
 
-test('FASE H curso: la portada prioriza Aprender y no renderiza el curso completo en Inicio', () => {
+test('FASE H curso: la portada prioriza Aprender y reserva utilidades para despliegue local', () => {
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
   assert.match(home, /Empieza aquí/)
   assert.match(home, /Curso guiado en el orden correcto/)
-  assert.doesNotMatch(home, /<AlefBetExplorer|<NiqqudExplorer|<HebrewWordsStudy|<HebrewBibleReader|<GrammarExplorer|<ReviewExplorer/)
+  assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
+  assert.match(home, /<HebrewTranslator embedded \/>/)
+  assert.match(home, /<HebrewSupportMaterials embedded \/>/)
+  assert.doesNotMatch(home, /<AlefBetExplorer|<NiqqudExplorer|<HebrewWordsStudy|<GrammarExplorer|<ReviewExplorer/)
 })

@@ -13,9 +13,7 @@ const bibleRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 'u
 const translator = fs.readFileSync('components/hebreo/HebrewTranslator.tsx', 'utf8')
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
-const translatorPage = fs.readFileSync('app/(app)/estudios/hebreo/traductor/page.tsx', 'utf8')
-const readingPage = fs.readFileSync('app/(app)/estudios/hebreo/lectura/page.tsx', 'utf8')
-const materialsPage = fs.readFileSync('app/(app)/estudios/hebreo/materiales/page.tsx', 'utf8')
+const materials = fs.readFileSync('components/hebreo/HebrewSupportMaterials.tsx', 'utf8')
 const css = fs.readFileSync('app/(app)/estudios/hebreo/hebreo.module.css', 'utf8')
 
 test('FASE H checklist 2: tablas no convierten texto mixto en titular hebreo', () => {
@@ -66,17 +64,27 @@ test('FASE H checklist 2: traductor añade pronunciación escrita y ralentiza au
   assert.doesNotMatch(translator, /Strong|morfolog|ocurrencias/i)
 })
 
-test('FASE H checklist 2: Inicio es hub y los sectores grandes navegan a páginas propias', () => {
+test('FASE H checklist 2: Inicio mantiene Aprender como destino y despliega utilidades debajo', () => {
   assert.match(home, /Empieza aquí/)
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
-  assert.match(home, /href="\/estudios\/hebreo\/traductor"/)
-  assert.match(home, /href="\/estudios\/hebreo\/lectura"/)
-  assert.match(home, /href="\/estudios\/hebreo\/materiales"/)
+  assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
+  assert.match(home, /<QuickButton id="translator"/)
+  assert.match(home, /<QuickButton id="bible"/)
+  assert.match(home, /<QuickButton id="materials"/)
+  assert.match(home, /<HebrewTranslator embedded \/>/)
+  assert.match(home, /<HebrewBibleReader \/>/)
+  assert.match(home, /<HebrewSupportMaterials embedded \/>/)
   assert.match(home, /Prueba tu progreso/)
   assert.match(home, /<details>/)
+  assert.match(materials, /if \(embedded\) return <MaterialGroups \/>/)
+  assert.match(translator, /embedded = false/)
+})
+
+test('FASE H checklist 2: Aprender usa seis botones 3 por 2 y despliega un solo módulo debajo', () => {
+  assert.match(course, /grid w-full max-w-md grid-cols-3/)
   assert.match(course, /useState<SectionId \| null>\(null\)/)
-  assert.match(course, /aria-expanded=\{open\}/)
-  assert.match(translatorPage, /<HebrewTranslator \/>/)
-  assert.match(readingPage, /<HebrewBibleReader \/>/)
-  assert.match(materialsPage, /<HebrewSupportMaterials \/>/)
+  assert.match(course, /current === section\.id \? null : section\.id/)
+  assert.match(course, /const activeSection = SECTIONS\.find/)
+  assert.match(course, /aria-live="polite"/)
+  assert.match(course, /<SectionContent id=\{activeSection\.id\} \/>/)
 })

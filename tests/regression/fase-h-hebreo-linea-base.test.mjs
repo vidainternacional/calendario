@@ -15,9 +15,6 @@ const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8
 const materials = fs.readFileSync('components/hebreo/HebrewSupportMaterials.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 const learnPage = fs.readFileSync('app/(app)/estudios/hebreo/aprender/page.tsx', 'utf8')
-const translatorPage = fs.readFileSync('app/(app)/estudios/hebreo/traductor/page.tsx', 'utf8')
-const readingPage = fs.readFileSync('app/(app)/estudios/hebreo/lectura/page.tsx', 'utf8')
-const materialsPage = fs.readFileSync('app/(app)/estudios/hebreo/materiales/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
 
 test('FASE H: Alef-bet conserva 22 letras y cinco formas finales', () => {
@@ -92,10 +89,15 @@ test('FASE H: portada es un hub compacto y Aprender es la entrada principal', ()
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
   assert.match(home, /Empieza aquí/)
   assert.match(home, />Aprender</)
-  assert.match(home, /href="\/estudios\/hebreo\/traductor"/)
-  assert.match(home, /href="\/estudios\/hebreo\/lectura"/)
-  assert.match(home, /href="\/estudios\/hebreo\/materiales"/)
-  assert.doesNotMatch(home, /<AlefBetExplorer|<NiqqudExplorer|<HebrewWordsStudy|<HebrewBibleReader|<GrammarExplorer|<ReviewExplorer/)
+  assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
+  assert.match(home, /useState<QuickPanelId \| null>\(null\)/)
+  assert.match(home, /<QuickButton id="translator"/)
+  assert.match(home, /<QuickButton id="bible"/)
+  assert.match(home, /<QuickButton id="materials"/)
+  assert.match(home, /<HebrewTranslator embedded \/>/)
+  assert.match(home, /<HebrewBibleReader \/>/)
+  assert.match(home, /<HebrewSupportMaterials embedded \/>/)
+  assert.doesNotMatch(home, /<AlefBetExplorer|<NiqqudExplorer|<HebrewWordsStudy|<GrammarExplorer|<ReviewExplorer/)
 })
 
 test('FASE H: encabezado conserva título hebreo protagonista', () => {
@@ -104,14 +106,17 @@ test('FASE H: encabezado conserva título hebreo protagonista', () => {
   assert.doesNotMatch(home, /Accessibility/)
 })
 
-test('FASE H: Aprender vive en página propia y ordena el curso de forma progresiva', () => {
+test('FASE H: Aprender vive en página propia y presenta seis botones en cuadrícula 3 por 2', () => {
   const order = ['alef-bet', 'vowels', 'vocabulary', 'reading', 'grammar', 'review'].map(id => course.indexOf(`id: '${id}'`))
   assert.ok(order.every(index => index >= 0))
   for (let index = 1; index < order.length; index += 1) assert.ok(order[index] > order[index - 1])
   assert.match(course, /title: 'Palabras y frases'/)
   assert.match(course, /title: 'Lectura bíblica'/)
   assert.match(course, /useState<SectionId \| null>\(null\)/)
+  assert.match(course, /grid w-full max-w-md grid-cols-3/)
   assert.match(course, /aria-expanded=\{open\}/)
+  assert.match(course, /const activeSection = SECTIONS\.find/)
+  assert.match(course, /<SectionContent id=\{activeSection\.id\} \/>/)
   assert.match(learnPage, /<HebrewCourseCenter \/>/)
 })
 
@@ -179,22 +184,26 @@ test('FASE H: resultado e historial de práctica no fingen persistencia', () => 
   assert.match(home, /La persistencia de progreso todavía no está activa\./)
 })
 
-test('FASE H: materiales conserva exactamente once enlaces y se agrupa en página propia', () => {
+test('FASE H: materiales conserva exactamente once enlaces y admite despliegue embebido', () => {
   assert.equal((supportCourse.match(/orden:\s*\d+/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/https:\/\/www\.youtube\.com\/watch\?v=/g) ?? []).length, 11)
   assert.equal((supportCourse.match(/verificacion:\s*'pendiente'/g) ?? []).length, 11)
+  assert.match(materials, /function MaterialGroups/)
+  assert.match(materials, /embedded = false/)
+  assert.match(materials, /if \(embedded\) return <MaterialGroups \/>/)
   assert.match(materials, /HEBREW_SUPPORT_COURSE\.filter/)
   assert.match(materials, /Fundamentos/)
   assert.match(materials, /Vocales y lectura/)
   assert.match(materials, /Lectura bíblica y reglas/)
-  assert.match(materialsPage, /<HebrewSupportMaterials \/>/)
 })
 
-test('FASE H: Traductor y Biblia usan rutas propias autenticadas', () => {
-  assert.match(translatorPage, /<HebrewTranslator \/>/)
-  assert.match(translatorPage, /login\?next=\/estudios\/hebreo\/traductor/)
-  assert.match(readingPage, /<HebrewBibleReader \/>/)
-  assert.match(readingPage, /login\?next=\/estudios\/hebreo\/lectura/)
+test('FASE H: Traductor Biblia y Materiales se despliegan en Inicio sin navegación obligatoria', () => {
+  assert.match(home, /function toggleQuick\(id: QuickPanelId\)/)
+  assert.match(home, /current === id \? null : id/)
+  assert.match(home, /aria-label=\{`\$\{QUICK_PANELS\[openQuick\]\.title\} desplegado`\}/)
+  assert.match(home, /openQuick === 'translator'/)
+  assert.match(home, /openQuick === 'bible'/)
+  assert.match(home, /openQuick === 'materials'/)
   assert.match(reading, /HEBREW_BIBLE_BOOKS/)
   assert.match(reading, /Capítulo/)
   assert.match(reading, /Con niqqud/)
