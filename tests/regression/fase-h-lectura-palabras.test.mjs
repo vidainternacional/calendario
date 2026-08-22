@@ -26,27 +26,27 @@ test('FASE H: Palabras conserva catálogo completo pero inicia con vocabulario e
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
 })
 
-test('FASE H: Palabras distingue con niqqud y sin niqqud sin ayuda redundante', () => {
+test('FASE H: Palabras practica niqqud dentro de la ficha abierta', () => {
   assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
-  assert.match(words, /label:\s*'Con niqqud'/)
-  assert.match(words, /label:\s*'Sin niqqud'/)
-  assert.doesNotMatch(words, /label:\s*'Con ayuda'/)
   assert.match(words, /function withoutNiqqud/)
+  assert.match(words, /Ocultar niqqud/)
+  assert.match(words, /Mostrar niqqud/)
+  assert.match(words, /El cambio afecta únicamente esta palabra abierta/)
 })
 
-test('FASE H: Palabras usa tarjetas lista detalle y páginas de vocabulario', () => {
-  assert.match(words, /type WordView = 'cards' \| 'list' \| 'detail'/)
+test('FASE H: Palabras usa Lista y Tarjetas con detalle expandible y paginación discreta', () => {
+  assert.match(words, /type WordView = 'list' \| 'cards'/)
+  assert.match(words, /function PrimaryList/)
   assert.match(words, /function CardsView/)
-  assert.match(words, /function ListView/)
-  assert.match(words, /function DetailView/)
-  assert.match(words, /function toggleCard/)
-  assert.match(words, /function PageControl/)
-  assert.match(words, /pageSize:\s*'24'/)
-  assert.match(words, /snap-x snap-mandatory/)
+  assert.match(words, /function LearningDetail/)
+  assert.match(words, /function toggleWord/)
+  assert.match(words, /const PAGE_SIZE = 60/)
+  assert.match(words, /const needsPagination = !searchResult && result\.totalPages > 1/)
+  assert.doesNotMatch(words, /snap-x snap-mandatory|function DetailView|function PageControl/)
 })
 
 test('FASE H: ficha de Palabras elimina información técnica y explica formación', () => {
-  const detail = words.slice(words.indexOf('function LearningDetail'), words.indexOf('function CardsView'))
+  const detail = words.slice(words.indexOf('function LearningDetail'), words.indexOf('function PrimaryList'))
   assert.match(detail, /Cómo se pronuncia/)
   assert.match(detail, /Cómo se forma/)
   assert.match(detail, /Qué significa/)
@@ -61,18 +61,20 @@ test('FASE H: Palabras se agrupa por temas y español preparado', () => {
   assert.match(learning, /spanish: 'decir'/)
 })
 
-test('FASE H: búsqueda de Palabras es global y al borrar restaura la página previa', () => {
-  assert.match(words, /placeholder="Buscar en español o hebreo"/)
-  assert.match(words, /if\s*\(value\s*===\s*''\s*&&\s*search\)\s*clearSearch\(\)/)
-  assert.match(words, /setPage\(pageBeforeSearch\.current\)/)
-  assert.match(catalog, /if \(!search\) \{/)
-  assert.match(catalog, /Script=Hebrew/)
-  assert.match(catalog, /test\(search\)/)
+test('FASE H: búsqueda visible usa diccionario exacto y al limpiar vuelve al grupo', () => {
+  assert.match(words, /placeholder="Buscar gato, casa, שלום…"/)
+  assert.match(words, /\/api\/estudios\/hebreo\/diccionario\?q=/)
+  assert.match(words, /function clearSearch\(\)/)
+  assert.match(words, /setSearchResult\(null\)/)
+  assert.match(words, /Volver al grupo/)
+})
+
+test('FASE H: motor léxico conserva rutas hebrea transliteración Strong y contextual como resolución interna', () => {
+  assert.match(catalog, /hebrewSearchPattern/)
+  assert.match(catalog, /transliteration/)
+  assert.match(catalog, /strong/)
   assert.match(catalog, /contextualSpanishSearch/)
-  assert.match(catalog, /transliterationSearch/)
-  const noSearch = catalog.indexOf('if (!search) {')
-  const hebrewSearch = catalog.indexOf('Script=Hebrew')
-  assert.ok(noSearch >= 0 && hebrewSearch > noSearch)
+  assert.match(catalog, /biblical_hebrew_search_resolutions/)
 })
 
 test('FASE H: Lectura usa frases y oraciones reales con corpus paginado', () => {
@@ -85,8 +87,8 @@ test('FASE H: Lectura usa frases y oraciones reales con corpus paginado', () => 
   assert.match(readingCatalog, /STARTER_REFERENCES/)
 })
 
-test('FASE H: Palabras y Lectura no introducen audio ni persistencia local; Palabras solo escribe índice derivado', () => {
-  for (const content of [words, reading]) assert.doesNotMatch(content, /speechSynthesis|new Audio|Audio\(|localStorage|sessionStorage/)
+test('FASE H: Palabras y Lectura no persisten estado local; Palabras solo escribe índice derivado', () => {
+  for (const content of [words, reading]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
   assert.doesNotMatch(readingCatalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
   assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
   assert.match(catalog, /\.upsert\(payload/)
