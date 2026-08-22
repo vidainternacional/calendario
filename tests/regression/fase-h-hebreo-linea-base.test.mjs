@@ -176,7 +176,7 @@ test('FASE H: materiales conserva exactamente once enlaces agrupados', () => {
 
 test('FASE H: Biblia en hebreo reutiliza el lector real por libro y capítulo', () => {
   assert.match(home, /import HebrewBibleReader/)
-  assert.match(home, /id === 'bible' \? <HebrewBibleReader \/>/)
+  assert.match(home, /bible: \{ he: 'תַּנַ״ךְ בְּעִבְרִית',[\s\S]*?<HebrewBibleReader \/>/)
   assert.match(reading, /HEBREW_BIBLE_BOOKS/)
   assert.match(reading, /Capítulo/)
   assert.match(reading, /Con niqqud/)
