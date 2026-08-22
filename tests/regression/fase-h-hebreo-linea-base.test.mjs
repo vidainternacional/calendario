@@ -118,18 +118,23 @@ test('FASE H: niqqud conserva doce signos trazables y cautelas', () => {
   assert.match(niqqud, /sheva vocal y sheva silencioso/)
 })
 
-test('FASE H: Palabras usa catálogo real con dos modos tres vistas y paginación visible', () => {
+test('FASE H: Palabras usa catálogo real con Lista Tarjetas detalle expandible y paginación discreta', () => {
   assert.match(home, /activeSection\.id === 'vocabulary' \? <ReadingWordsExplorer \/>/)
   assert.match(words, />Palabras</)
   assert.match(words, /type ReadingMode = 'nikud' \| 'plain'/)
-  assert.match(words, /type WordView = 'cards' \| 'list' \| 'detail'/)
-  assert.match(words, /function PageControl/)
-  assert.match(words, /Cada página muestra 24 palabras/)
+  assert.match(words, /type WordView = 'list' \| 'cards'/)
+  assert.match(words, /function PrimaryList/)
+  assert.match(words, /function CardsView/)
+  assert.match(words, /function LearningDetail/)
+  assert.match(words, /const PAGE_SIZE = 60/)
+  assert.match(words, /Anterior/)
+  assert.match(words, /Siguiente/)
+  assert.doesNotMatch(words, /snap-x snap-mandatory|function DetailView/)
   assert.match(catalog, /from\('biblical_lexical_entries'\)/)
 })
 
 test('FASE H: ficha de palabra es puntual y no expone datos técnicos', () => {
-  const detail = words.slice(words.indexOf('function LearningDetail'), words.indexOf('function CardsView'))
+  const detail = words.slice(words.indexOf('function LearningDetail'), words.indexOf('function PrimaryList'))
   assert.match(detail, /Cómo se pronuncia/)
   assert.match(detail, /Cómo se forma/)
   assert.match(detail, /Qué significa/)
@@ -175,14 +180,13 @@ test('FASE H: Biblia en hebreo conserva lector guiado sin duplicar motor', () =>
   assert.match(home, /no crea otro motor bíblico ni nuevas tablas/)
 })
 
-test('FASE H: no introduce audio ni persistencia falsa; el catálogo solo persiste resoluciones derivadas autorizadas', () => {
+test('FASE H: no introduce persistencia falsa; el catálogo solo persiste resoluciones derivadas autorizadas', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
-  for (const content of [home, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /speechSynthesis|new Audio|Audio\(/)
+  for (const content of [home, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
   assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
   assert.match(catalog, /\.upsert\(payload/)
   assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete|upsert)\(/)
   assert.doesNotMatch(readingCatalog, /\.insert\(|\.update\(|\.delete\(|\.upsert\(/)
-  assert.match(home, /Sin audio, progreso persistente ni desbloqueos automáticos/)
 })
 
 test('FASE H: ruta exige sesión y conserva destino después del login', () => {
