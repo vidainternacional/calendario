@@ -18,14 +18,14 @@ test('FASE H: búsqueda española de Palabras usa diccionario estricto y nunca f
   assert.match(words, /No encontramos esa palabra en el diccionario\./)
 })
 
-test('FASE H: swipe promueve la página ya cargada antes de preparar la nueva vecina', () => {
-  assert.match(words, /function promoteLoadedPage\(target:CatalogResponse\)/)
-  assert.match(words, /setPrevious\(result\);setResult\(target\);setNext\(null\)/)
-  assert.match(words, /setNext\(result\);setResult\(target\);setPrevious\(null\)/)
-  assert.match(words, /if\(previous\?\.page===target\)return promoteLoadedPage\(previous\)/)
-  assert.match(words, /if\(next\?\.page===target\)return promoteLoadedPage\(next\)/)
-  assert.match(words, /\[-webkit-overflow-scrolling:touch\]/)
-  assert.match(words, /snap-x snap-mandatory/)
+test('FASE H: catálogo de aprendizaje navega por páginas discretas y reinicia al cambiar de grupo', () => {
+  assert.match(words, /HEBREW_LEARNING_GROUPS/)
+  assert.match(words, /function changeGroup\(next: HebrewLearningGroupId\)/)
+  assert.match(words, /setPage\(1\)/)
+  assert.match(words, /const needsPagination = !searchResult && result\.totalPages > 1/)
+  assert.match(words, /disabled=\{page <= 1 \|\| loading\}/)
+  assert.match(words, /disabled=\{page >= result\.totalPages \|\| loading\}/)
+  assert.doesNotMatch(words, /promoteLoadedPage|translate3d|snap-x snap-mandatory/)
 })
 
 test('FASE H: traductor permite elegir explícitamente español o hebreo', () => {

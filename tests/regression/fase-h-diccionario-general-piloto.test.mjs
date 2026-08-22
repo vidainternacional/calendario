@@ -20,9 +20,11 @@ test('FASE H diccionario general: incluye vocabulario común exacto sin aproxima
     "spanish: 'rey'",
     "hebrew: 'שָׁלוֹם'",
     "spanish: 'paz'",
-  ]) assert.match(dictionary, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  ]) assert.ok(dictionary.includes(marker), `Falta marcador léxico: ${marker}`)
   assert.match(dictionary, /normalize\(entry\.spanish\) === needle/)
   assert.match(dictionary, /stripNiqqud\(entry\.hebrew\) === hebrewNeedle/)
+  assert.match(dictionary, /source: 'curated-pilot'/)
+  assert.doesNotMatch(dictionary, /source: 'kaikki-core'/)
   assert.doesNotMatch(dictionary, /Relacionado con|contextualSpanishSearch|rv1909-context/)
 })
 
@@ -30,23 +32,24 @@ test('FASE H diccionario general: endpoint exige sesión y usa la capa general s
   assert.match(route, /supabase\.auth\.getUser\(\)/)
   assert.match(route, /searchGeneralDictionary/)
   assert.match(route, /status: 401/)
+  assert.match(route, /item\.source === 'curated-pilot'/)
   assert.doesNotMatch(route, /word-catalog|contextualSpanishSearch|biblical_verse_texts/)
 })
 
 test('FASE H diccionario general: UI distingue buscar del catálogo y nunca inventa una coincidencia', () => {
   assert.match(explorer, /\/api\/estudios\/hebreo\/diccionario\?q=/)
   assert.match(explorer, /No encontramos esa palabra en el diccionario\./)
-  assert.match(explorer, /Volver al catálogo/)
-  assert.match(explorer, /coincidencias exactas/)
+  assert.match(explorer, /Volver al grupo/)
+  assert.match(explorer, /Buscar gato, casa, שלום…/)
+  assert.doesNotMatch(explorer, /contextualSpanishSearch|Relacionado con «/)
 })
 
-test('FASE H pager: precarga varias páginas, activa cache al terminar y recorta cada superficie', () => {
-  assert.match(explorer, /PREFETCH_FORWARD = 5/)
-  assert.match(explorer, /PREFETCH_BACK = 2/)
-  assert.match(explorer, /cacheRef\.current\.set\(target,data\)/)
-  assert.match(explorer, /bumpCache\(version=>version\+1\)/)
-  assert.match(explorer, /w-\[300%\]/)
-  assert.match(explorer, /w-1\/3 shrink-0 overflow-hidden/)
-  assert.match(explorer, /touch-pan-y/)
-  assert.match(explorer, /translate3d/)
+test('FASE H pager: usa navegación discreta y evita el carrusel horizontal que producía superficies vecinas', () => {
+  assert.match(explorer, /const PAGE_SIZE = 60/)
+  assert.match(explorer, /const needsPagination = !searchResult && result\.totalPages > 1/)
+  assert.match(explorer, /setPage\(value => Math\.max\(1, value - 1\)\)/)
+  assert.match(explorer, /setPage\(value => Math\.min\(result\.totalPages, value \+ 1\)\)/)
+  assert.match(explorer, /Anterior/)
+  assert.match(explorer, /Siguiente/)
+  assert.doesNotMatch(explorer, /w-\[300%\]|translate3d|snap-x snap-mandatory/)
 })

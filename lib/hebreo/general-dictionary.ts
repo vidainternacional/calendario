@@ -5,35 +5,35 @@ export type GeneralDictionaryEntry = {
   hebrew: string
   pronunciation: string | null
   spanish: string
-  source: 'kaikki-core' | 'wikidict-cc0'
+  source: 'curated-pilot' | 'wikidict-cc0'
 }
 
 const CORE: readonly GeneralDictionaryEntry[] = [
-  { id: 'core-cat', hebrew: 'חָתוּל', pronunciation: 'jatúl', spanish: 'gato', source: 'kaikki-core' },
-  { id: 'core-dog', hebrew: 'כֶּלֶב', pronunciation: 'kélev', spanish: 'perro', source: 'kaikki-core' },
-  { id: 'core-house', hebrew: 'בַּיִת', pronunciation: 'báyit', spanish: 'casa', source: 'kaikki-core' },
-  { id: 'core-water', hebrew: 'מַיִם', pronunciation: 'máyim', spanish: 'agua', source: 'kaikki-core' },
-  { id: 'core-stone', hebrew: 'אֶבֶן', pronunciation: 'éven', spanish: 'piedra', source: 'kaikki-core' },
-  { id: 'core-king', hebrew: 'מֶלֶךְ', pronunciation: 'mélej', spanish: 'rey', source: 'kaikki-core' },
-  { id: 'core-peace', hebrew: 'שָׁלוֹם', pronunciation: 'shalóm', spanish: 'paz', source: 'kaikki-core' },
-  { id: 'core-tree', hebrew: 'עֵץ', pronunciation: 'ets', spanish: 'árbol', source: 'kaikki-core' },
-  { id: 'core-food', hebrew: 'אֹכֶל', pronunciation: 'ójel', spanish: 'comida', source: 'kaikki-core' },
-  { id: 'core-love', hebrew: 'אַהֲבָה', pronunciation: 'ahavá', spanish: 'amor', source: 'kaikki-core' },
-  { id: 'core-book', hebrew: 'סֵפֶר', pronunciation: 'séfer', spanish: 'libro', source: 'kaikki-core' },
-  { id: 'core-table', hebrew: 'שֻׁלְחָן', pronunciation: 'shulján', spanish: 'mesa', source: 'kaikki-core' },
-  { id: 'core-chair', hebrew: 'כִּסֵּא', pronunciation: 'kisé', spanish: 'silla', source: 'kaikki-core' },
-  { id: 'core-bread', hebrew: 'לֶחֶם', pronunciation: 'léjem', spanish: 'pan', source: 'kaikki-core' },
-  { id: 'core-milk', hebrew: 'חָלָב', pronunciation: 'jaláv', spanish: 'leche', source: 'kaikki-core' },
-  { id: 'core-sun', hebrew: 'שֶׁמֶשׁ', pronunciation: 'shémesh', spanish: 'sol', source: 'kaikki-core' },
-  { id: 'core-moon', hebrew: 'יָרֵחַ', pronunciation: 'yaréaj', spanish: 'luna', source: 'kaikki-core' },
-  { id: 'core-day', hebrew: 'יוֹם', pronunciation: 'yom', spanish: 'día', source: 'kaikki-core' },
-  { id: 'core-night', hebrew: 'לַיְלָה', pronunciation: 'láyla', spanish: 'noche', source: 'kaikki-core' },
-  { id: 'core-man', hebrew: 'אִישׁ', pronunciation: 'ish', spanish: 'hombre', source: 'kaikki-core' },
-  { id: 'core-woman', hebrew: 'אִשָּׁה', pronunciation: 'ishá', spanish: 'mujer', source: 'kaikki-core' },
-  { id: 'core-boy', hebrew: 'יֶלֶד', pronunciation: 'yéled', spanish: 'niño', source: 'kaikki-core' },
-  { id: 'core-girl', hebrew: 'יַלְדָּה', pronunciation: 'yaldá', spanish: 'niña', source: 'kaikki-core' },
-  { id: 'core-father', hebrew: 'אַבָּא', pronunciation: 'ába', spanish: 'papá', source: 'kaikki-core' },
-  { id: 'core-mother', hebrew: 'אִמָּא', pronunciation: 'íma', spanish: 'mamá', source: 'kaikki-core' },
+  { id: 'core-cat', hebrew: 'חָתוּל', pronunciation: 'jatúl', spanish: 'gato', source: 'curated-pilot' },
+  { id: 'core-dog', hebrew: 'כֶּלֶב', pronunciation: 'kélev', spanish: 'perro', source: 'curated-pilot' },
+  { id: 'core-house', hebrew: 'בַּיִת', pronunciation: 'báyit', spanish: 'casa', source: 'curated-pilot' },
+  { id: 'core-water', hebrew: 'מַיִם', pronunciation: 'máyim', spanish: 'agua', source: 'curated-pilot' },
+  { id: 'core-stone', hebrew: 'אֶבֶן', pronunciation: 'éven', spanish: 'piedra', source: 'curated-pilot' },
+  { id: 'core-king', hebrew: 'מֶלֶךְ', pronunciation: 'mélej', spanish: 'rey', source: 'curated-pilot' },
+  { id: 'core-peace', hebrew: 'שָׁלוֹם', pronunciation: 'shalóm', spanish: 'paz', source: 'curated-pilot' },
+  { id: 'core-tree', hebrew: 'עֵץ', pronunciation: 'ets', spanish: 'árbol', source: 'curated-pilot' },
+  { id: 'core-food', hebrew: 'אֹכֶל', pronunciation: 'ójel', spanish: 'comida', source: 'curated-pilot' },
+  { id: 'core-love', hebrew: 'אַהֲבָה', pronunciation: 'ahavá', spanish: 'amor', source: 'curated-pilot' },
+  { id: 'core-book', hebrew: 'סֵפֶר', pronunciation: 'séfer', spanish: 'libro', source: 'curated-pilot' },
+  { id: 'core-table', hebrew: 'שֻׁלְחָן', pronunciation: 'shulján', spanish: 'mesa', source: 'curated-pilot' },
+  { id: 'core-chair', hebrew: 'כִּסֵּא', pronunciation: 'kisé', spanish: 'silla', source: 'curated-pilot' },
+  { id: 'core-bread', hebrew: 'לֶחֶם', pronunciation: 'léjem', spanish: 'pan', source: 'curated-pilot' },
+  { id: 'core-milk', hebrew: 'חָלָב', pronunciation: 'jaláv', spanish: 'leche', source: 'curated-pilot' },
+  { id: 'core-sun', hebrew: 'שֶׁמֶשׁ', pronunciation: 'shémesh', spanish: 'sol', source: 'curated-pilot' },
+  { id: 'core-moon', hebrew: 'יָרֵחַ', pronunciation: 'yaréaj', spanish: 'luna', source: 'curated-pilot' },
+  { id: 'core-day', hebrew: 'יוֹם', pronunciation: 'yom', spanish: 'día', source: 'curated-pilot' },
+  { id: 'core-night', hebrew: 'לַיְלָה', pronunciation: 'láyla', spanish: 'noche', source: 'curated-pilot' },
+  { id: 'core-man', hebrew: 'אִישׁ', pronunciation: 'ish', spanish: 'hombre', source: 'curated-pilot' },
+  { id: 'core-woman', hebrew: 'אִשָּׁה', pronunciation: 'ishá', spanish: 'mujer', source: 'curated-pilot' },
+  { id: 'core-boy', hebrew: 'יֶלֶד', pronunciation: 'yéled', spanish: 'niño', source: 'curated-pilot' },
+  { id: 'core-girl', hebrew: 'יַלְדָּה', pronunciation: 'yaldá', spanish: 'niña', source: 'curated-pilot' },
+  { id: 'core-father', hebrew: 'אַבָּא', pronunciation: 'ába', spanish: 'papá', source: 'curated-pilot' },
+  { id: 'core-mother', hebrew: 'אִמָּא', pronunciation: 'íma', spanish: 'mamá', source: 'curated-pilot' },
 ]
 
 const SOURCE_URL = 'https://raw.githubusercontent.com/open-dict-data/wikidict-es/master/data/he-es_wiki.txt'

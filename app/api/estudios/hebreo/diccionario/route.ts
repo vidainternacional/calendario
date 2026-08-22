@@ -27,8 +27,8 @@ export async function GET(request: Request) {
       lemma: item.hebrew,
       spanish: item.spanish,
       pronunciation: item.pronunciation,
-      meaningNoteEs: item.source === 'kaikki-core'
-        ? `Entrada léxica general del piloto Hebreo ↔ Español.`
+      meaningNoteEs: item.source === 'curated-pilot'
+        ? `Entrada léxica general curada para el piloto Hebreo ↔ Español.`
         : `Entrada general Hebreo ↔ Español procedente de WikiDict CC0.`,
       source: item.source,
     })),
