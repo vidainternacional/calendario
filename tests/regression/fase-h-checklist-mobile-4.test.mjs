@@ -45,7 +45,8 @@ test('FASE H checklist 4: Aprender queda centrado y los controles pequeños cons
   assert.match(home, /Curso guiado paso a paso/)
   assert.doesNotMatch(home, /GraduationCap|Sparkles/)
   assert.match(home, /space-y-2\.5/)
-  assert.ok((home.match(/rounded-\[22px\] border border-slate-200 bg-white/g) ?? []).length >= 2)
+  assert.match(home, /rounded-\[22px\] border px-4/)
+  assert.ok((home.match(/rounded-\[22px\] border border-slate-200 bg-white/g) ?? []).length >= 1)
 })
 
 test('FASE H checklist 4: títulos internos comparten una sola escala tipográfica', () => {
