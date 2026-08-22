@@ -6,11 +6,12 @@ const master = fs.readFileSync('__VIDA_INTERNACIONAL.md', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
 const foundations = fs.readFileSync('components/hebreo/AlefBetFoundations.tsx', 'utf8')
 
-test('FASE H: Bloques 1 y 2 están cerrados y Bloque 3 queda activo', () => {
+test('FASE H: Bloques 1 a 3 están cerrados y Bloque 4 queda activo', () => {
   assert.match(master, /Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO/)
   assert.match(master, /Bloque 2 — Fundamentos de lectura y gramática progresiva — COMPLETADO Y APROBADO/)
-  assert.match(master, /Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — ACTIVO/)
-  assert.match(master, /Empezar por transliteración y resolución forma flexionada → lema/)
+  assert.match(master, /Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — COMPLETADO Y APROBADO/)
+  assert.match(master, /Bloque 4 — Progreso personal y práctica adaptativa — ACTIVO/)
+  assert.match(master, /Primero auditar las estructuras actuales y preparar la propuesta mínima de persistencia, privacidad y RLS/)
 })
 
 test('FASE H: Alef-Bet integra tablas fundamentales sin sustituir las fichas', () => {
