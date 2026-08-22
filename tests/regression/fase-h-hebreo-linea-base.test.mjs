@@ -115,7 +115,7 @@ test('FASE H: niqqud conserva doce signos trazables y cautelas', () => {
   assert.equal((niqqud.match(/order:\s*\d+/g) ?? []).length, 12)
   for (const name of ['Pataj', 'Qamats', 'Segol', 'Tsere', 'Hiriq', 'Holam', 'Qubuts', 'Shuruq', 'Sheva', 'Hataf Pataj', 'Hataf Segol', 'Hataf Qamats']) assert.match(niqqud, new RegExp(`name: '${name}'`))
   assert.match(niqqud, /qamats qatan y suena o/)
-  assert.match(niqqud, /sheva vocal y sheva silencioso/)
+  assert.match(niqqud, /Sheva Na \(vocal\) y Sheva Naj \(silenciosa\)/)
 })
 
 test('FASE H: Palabras usa catálogo real con Lista Tarjetas detalle expandible y paginación discreta', () => {
