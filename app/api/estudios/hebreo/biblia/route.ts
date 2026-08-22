@@ -28,7 +28,11 @@ export async function GET(request: Request) {
     .order('chapter', { ascending: true })
 
   if (chapterError) return NextResponse.json({ error: 'No se pudieron cargar los capítulos.' }, { status: 500 })
-  const chapters = Array.from(new Set((chapterRows ?? []).map((row: any) => Number(row.chapter)).filter((value: number) => Number.isFinite(value)))).sort((a, b) => a - b)
+  const chapters: number[] = [...new Set<number>(
+    (chapterRows ?? [])
+      .map((row: any) => Number(row.chapter))
+      .filter((value: number) => Number.isFinite(value)),
+  )].sort((a, b) => a - b)
   const safeChapter = chapters.includes(chapter) ? chapter : (chapters[0] ?? 1)
 
   const { data: hebrewRows, error: hebrewError } = await (supabase as any)
