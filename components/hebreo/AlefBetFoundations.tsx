@@ -59,12 +59,17 @@ const TABLES: readonly TableSpec[] = [
     rows: [
       ['א', 'Alef', 'cierre/glotal o silenciosa según contexto', 'puede quedar quiescente y apoyar la escritura de una vocal', 'רֹאשׁ'],
       ['ה', 'He', 'h', 'al final puede acompañar una vocal final', 'תּוֹרָה'],
-      ['ו', 'Vav', 'v / históricamente w', 'וֹ puede apoyar o; וּ representa u como shuruq', 'אוֹר · שׁוּב'],
+      ['ו', 'Vav', 'v', 'וֹ puede apoyar o; וּ representa u como shuruq', 'אוֹר · שׁוּב'],
       ['י', 'Yod', 'y', 'puede apoyar vocales i/e en ciertas escrituras', 'שִׁיר'],
     ],
-    note: '“Mater lectionis” describe una función de lectura, no una categoría de vocal independiente. La misma letra puede ser consonante en otra palabra.',
+    note: '“Mater lectionis” describe una función de lectura, no una categoría de vocal independiente. Para el aprendizaje inicial del curso, Vav se enseña con sonido v.',
   },
 ]
+
+function isHebrewOnly(value: string) {
+  const compact = value.trim()
+  return compact.length > 0 && /[\u0590-\u05FF]/u.test(compact) && /^[\s·\u0590-\u05FF]+$/u.test(compact)
+}
 
 function FoundationTable({ table }: { table: TableSpec }) {
   return (
@@ -81,9 +86,9 @@ function FoundationTable({ table }: { table: TableSpec }) {
             {table.rows.map((row, rowIndex) => (
               <tr key={`${table.id}-${rowIndex}`} className="border-b border-slate-100 last:border-b-0">
                 {row.map((cell, cellIndex) => {
-                  const hebrew = /[\u0590-\u05FF]/.test(cell)
-                  const primaryHebrew = hebrew && (cellIndex === 0 || cellIndex === 1)
-                  return <td key={`${table.id}-${rowIndex}-${cellIndex}`} className="px-3 py-3.5 align-middle text-[12px] font-semibold leading-relaxed text-slate-700"><span lang={hebrew ? 'he' : undefined} dir={hebrew ? 'rtl' : undefined} className={primaryHebrew ? 'text-[3rem] font-black leading-none text-indigo-700' : hebrew ? 'text-[1.45rem] font-black text-slate-950' : cellIndex === 2 ? 'font-black text-slate-950' : ''}>{cell}</span></td>
+                  const hebrewOnly = isHebrewOnly(cell)
+                  const primaryHebrew = hebrewOnly && (cellIndex === 0 || cellIndex === 1)
+                  return <td key={`${table.id}-${rowIndex}-${cellIndex}`} className="px-3 py-3.5 align-middle text-[12px] font-semibold leading-relaxed text-slate-700"><span lang={hebrewOnly ? 'he' : undefined} dir={hebrewOnly ? 'rtl' : undefined} className={primaryHebrew ? 'text-[3rem] font-black leading-none text-indigo-700' : hebrewOnly ? 'text-[1.45rem] font-black text-slate-950' : cellIndex === 2 ? 'font-black text-slate-950' : ''}>{cell}</span></td>
                 })}
               </tr>
             ))}

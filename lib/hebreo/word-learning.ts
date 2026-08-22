@@ -22,9 +22,9 @@ export type HebrewLearningGroup = {
 
 export const HEBREW_LEARNING_GROUPS: readonly HebrewLearningGroup[] = [
   { id: 'essentials', label: 'Más comunes', description: 'Las palabras de mayor utilidad para empezar a reconocer el hebreo de la Biblia.' },
-  { id: 'connectors', label: 'Conectores', description: 'Conjunciones y partículas que unen ideas y ayudan a entender cómo se construye una frase.' },
-  { id: 'prepositions', label: 'Preposiciones', description: 'Palabras y partículas que expresan relaciones como en, a, de, con o sobre.' },
-  { id: 'pronouns', label: 'Sujetos y pronombres', description: 'Pronombres y formas que ayudan a reconocer quién habla, actúa o recibe una acción.' },
+  { id: 'connectors', label: 'Conectores', description: 'Conjunciones y partículas bíblicas curadas que unen ideas. Aquí no se muestran entradas ajenas a la categoría.' },
+  { id: 'prepositions', label: 'Preposiciones', description: 'Partículas bíblicas verificadas para relaciones como en, a, de, con, desde o como.' },
+  { id: 'pronouns', label: 'Sujetos y pronombres', description: 'Pronombres bíblicos curados para reconocer quién habla o recibe una acción.' },
   { id: 'family', label: 'Personas y familia', description: 'Personas, relaciones familiares y vocabulario humano básico.' },
   { id: 'daily', label: 'Cosas y vida diaria', description: 'Casa, comida, agua, tiempo y objetos o conceptos cotidianos.' },
   { id: 'nature', label: 'Naturaleza', description: 'Tierra, luz, cielo, mar, montaña y otras palabras del mundo creado.' },
@@ -37,15 +37,31 @@ export const HEBREW_LEARNING_GROUPS: readonly HebrewLearningGroup[] = [
   { id: 'all', label: 'Diccionario completo', description: 'Catálogo hebreo aprobado completo. La búsqueda sigue disponible para llegar directamente a una palabra.' },
 ] as const
 
+type PedagogicalTopicId = Exclude<HebrewLearningGroupId, 'nouns' | 'verbs' | 'adjectives' | 'all'>
+
 type PedagogicalWord = {
   lexicalId: string
   spanish: string
   pronunciation: string
-  topics: readonly Exclude<HebrewLearningGroupId, 'connectors' | 'prepositions' | 'pronouns' | 'nouns' | 'verbs' | 'adjectives' | 'all'>[]
+  topics: readonly PedagogicalTopicId[]
   meaning?: string
 }
 
 export const PEDAGOGICAL_HEBREW_WORDS: readonly PedagogicalWord[] = [
+  { lexicalId: 'H9002', spanish: 'y', pronunciation: 've-', topics: ['connectors'], meaning: 'Conjunción prefijada que enlaza palabras o ideas.' },
+  { lexicalId: 'H0176A', spanish: 'o', pronunciation: 'o', topics: ['connectors'] },
+  { lexicalId: 'H1571', spanish: 'también', pronunciation: 'gam', topics: ['connectors'] },
+  { lexicalId: 'H3588A', spanish: 'porque · pues · que', pronunciation: 'ki', topics: ['connectors'], meaning: 'Partícula frecuente cuyo valor exacto depende del contexto de la frase.' },
+  { lexicalId: 'H9003', spanish: 'en · con · por', pronunciation: 'be-', topics: ['prepositions'], meaning: 'Prefijo inseparable; su traducción concreta depende del contexto.' },
+  { lexicalId: 'H4480A', spanish: 'de · desde', pronunciation: 'min-', topics: ['prepositions'] },
+  { lexicalId: 'H9004', spanish: 'como · conforme a', pronunciation: 'ke-', topics: ['prepositions'] },
+  { lexicalId: 'H9005', spanish: 'a · para', pronunciation: 'le-', topics: ['prepositions'] },
+  { lexicalId: 'H0595', spanish: 'yo', pronunciation: 'anojí', topics: ['pronouns'], meaning: 'Pronombre de primera persona singular frecuente en hebreo bíblico.' },
+  { lexicalId: 'H0587', spanish: 'nosotros', pronunciation: 'anájnu', topics: ['pronouns'] },
+  { lexicalId: 'H0859A', spanish: 'tú (masculino)', pronunciation: 'atá', topics: ['pronouns'] },
+  { lexicalId: 'H0859C', spanish: 'tú (femenino)', pronunciation: 'at', topics: ['pronouns'] },
+  { lexicalId: 'H0859D', spanish: 'ustedes (masculino)', pronunciation: 'atém', topics: ['pronouns'] },
+  { lexicalId: 'H0859E', spanish: 'ustedes (femenino)', pronunciation: 'atén', topics: ['pronouns'] },
   { lexicalId: 'H0001G', spanish: 'padre', pronunciation: 'av', topics: ['essentials', 'family'] },
   { lexicalId: 'H0517', spanish: 'madre', pronunciation: 'em', topics: ['essentials', 'family'] },
   { lexicalId: 'H0251G', spanish: 'hermano', pronunciation: 'aj', topics: ['family'] },
@@ -110,8 +126,8 @@ export function normalizeLearningGroup(value: string | null | undefined): Hebrew
 }
 
 export function lexicalIdsForLearningGroup(group: HebrewLearningGroupId) {
-  if (group === 'connectors' || group === 'prepositions' || group === 'pronouns' || group === 'nouns' || group === 'verbs' || group === 'adjectives' || group === 'all') return null
-  return PEDAGOGICAL_HEBREW_WORDS.filter(word => word.topics.includes(group)).map(word => word.lexicalId)
+  if (group === 'nouns' || group === 'verbs' || group === 'adjectives' || group === 'all') return null
+  return PEDAGOGICAL_HEBREW_WORDS.filter(word => word.topics.includes(group as PedagogicalTopicId)).map(word => word.lexicalId)
 }
 
 export function pedagogicalWordForId(lexicalId: string) { return PEDAGOGICAL_BY_ID.get(lexicalId) ?? null }

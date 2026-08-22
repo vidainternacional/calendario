@@ -36,13 +36,6 @@
   right: 0.5rem;
 }
 
-/*
- * La lista de vocabulario conserva toda la fila como superficie táctil, pero
- * las dos piezas que el alumno necesita comparar (hebreo + significado) viven
- * en un bloque compacto y simétrico alrededor del centro real de la pantalla.
- * Evita que una cuadrícula 50/50 empuje visualmente el contenido hacia los
- * bordes en móviles estrechos.
- */
 .centered :global(button.grid.grid-cols-2) {
   grid-template-columns: minmax(0, 8rem) minmax(0, 8rem) !important;
   justify-content: center !important;
@@ -52,10 +45,17 @@
   padding-right: 1rem !important;
 }
 
-/* La acción ya es evidente porque toda la tarjeta es táctil; repetirla en cada
- * palabra añade ruido y desplaza el significado sin aportar aprendizaje. */
 .centered :global(button.grid.grid-cols-2 > div:last-child > p:last-child) {
   display: none;
+}
+
+/* El significado del reverso es prioritario, pero se adapta a textos largos
+ * para mantener la misma jerarquía visual en las 22 fichas. */
+.centered :global(button[aria-label^='Voltear ficha de'] > span:nth-child(2) > span:nth-child(2) > span:nth-child(3) > span:nth-child(2)) {
+  font-size: clamp(1.08rem, 4.6vw, 1.35rem) !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+  text-wrap: balance;
 }
 
 .centered :global(input),

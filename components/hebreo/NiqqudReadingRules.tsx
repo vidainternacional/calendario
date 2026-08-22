@@ -73,6 +73,11 @@ const RULES: readonly RuleSpec[] = [
   },
 ]
 
+function isHebrewOnly(value: string) {
+  const compact = value.trim()
+  return compact.length > 0 && /[\u0590-\u05FF]/u.test(compact) && /^[\s·\u0590-\u05FF]+$/u.test(compact)
+}
+
 function RuleTable({ rule }: { rule: RuleSpec }) {
   return (
     <div>
@@ -82,7 +87,7 @@ function RuleTable({ rule }: { rule: RuleSpec }) {
       <div className="-mx-4 mt-4 overflow-x-auto border-y border-slate-200 bg-white [-webkit-overflow-scrolling:touch] sm:mx-0 sm:rounded-[20px] sm:border">
         <table className="w-full min-w-[690px] border-collapse text-center">
           <thead className="bg-slate-50"><tr>{rule.headers.map(header => <th key={header} className="border-b border-slate-200 px-3 py-2.5 text-[10px] font-black uppercase tracking-[0.05em] text-slate-500">{header}</th>)}</tr></thead>
-          <tbody>{rule.rows.map((row, rowIndex) => <tr key={`${rule.id}-${rowIndex}`} className="border-b border-slate-100 last:border-b-0">{row.map((cell, cellIndex) => { const hebrew = /[\u0590-\u05FF]/.test(cell); return <td key={`${rule.id}-${rowIndex}-${cellIndex}`} className="px-3 py-3.5 align-middle text-[12px] font-semibold leading-relaxed text-slate-700"><span lang={hebrew ? 'he' : undefined} dir={hebrew ? 'rtl' : undefined} className={hebrew ? 'text-[2rem] font-black leading-tight text-indigo-700' : cellIndex === 0 ? 'font-black text-slate-950' : ''}>{cell}</span></td> })}</tr>)}</tbody>
+          <tbody>{rule.rows.map((row, rowIndex) => <tr key={`${rule.id}-${rowIndex}`} className="border-b border-slate-100 last:border-b-0">{row.map((cell, cellIndex) => { const hebrewOnly = isHebrewOnly(cell); return <td key={`${rule.id}-${rowIndex}-${cellIndex}`} className="px-3 py-3.5 align-middle text-[12px] font-semibold leading-relaxed text-slate-700"><span lang={hebrewOnly ? 'he' : undefined} dir={hebrewOnly ? 'rtl' : undefined} className={hebrewOnly ? 'text-[2rem] font-black leading-tight text-indigo-700' : cellIndex === 0 ? 'font-black text-slate-950' : ''}>{cell}</span></td> })}</tr>)}</tbody>
         </table>
       </div>
       <p className="mx-auto mt-3 max-w-xl text-[11px] font-semibold leading-relaxed text-amber-800">{rule.note}</p>
