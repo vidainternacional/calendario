@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, BookOpenText, ChevronDown, Keyboard, Languages, Library, Mic } from 'lucide-react'
+import { ArrowLeft, BarChart3, BookOpenText, ChevronDown, Gauge, Keyboard, Languages, Library, Mic } from 'lucide-react'
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
 import HebrewProgressCoach from '@/components/hebreo/HebrewProgressCoach'
+import HebrewProgressSummary from '@/components/hebreo/HebrewProgressSummary'
 import HebrewSpeechPractice from '@/components/hebreo/HebrewSpeechPractice'
 import HebrewSupportMaterials from '@/components/hebreo/HebrewSupportMaterials'
 import HebrewTranslator from '@/components/hebreo/HebrewTranslator'
 
 type QuickPanelId = 'translator' | 'bible' | 'materials'
-type PracticePanelId = 'evaluation' | 'speech' | 'keyboard'
+type PracticePanelId = 'evaluation' | 'speech' | 'keyboard' | 'progress'
 
 const QUICK_PANELS: Record<QuickPanelId, { title: string; subtitle: string }> = {
   translator: { title: 'Traductor', subtitle: 'Español ⇄ Hebreo' },
@@ -20,9 +21,10 @@ const QUICK_PANELS: Record<QuickPanelId, { title: string; subtitle: string }> = 
 }
 
 const PRACTICE_PANELS: Record<PracticePanelId, { title: string; subtitle: string }> = {
-  evaluation: { title: 'Evaluación y progreso', subtitle: 'Nivel, pruebas, notas y recomendaciones' },
+  evaluation: { title: 'Evaluación', subtitle: 'Según tu progreso o por nivel' },
   speech: { title: 'Práctica oral', subtitle: 'Escucha, habla y compara tu pronunciación' },
   keyboard: { title: 'Teclado hebreo', subtitle: 'Escritura y reconocimiento de letras' },
+  progress: { title: 'Mi progreso', subtitle: 'Notas, dominio, retención y recomendaciones' },
 }
 
 function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: QuickPanelId; icon: React.ReactNode; title: string; subtitle: string; active: boolean; onToggle: (id: QuickPanelId) => void }) {
@@ -101,7 +103,7 @@ export default function HebrewLearningHome() {
               <div className="divide-y divide-slate-100">
                 <div>
                   <PracticeRow id="evaluation" icon={<BarChart3 className="h-4 w-4" />} active={openPractice === 'evaluation'} onToggle={togglePractice} />
-                  {openPractice === 'evaluation' && <div className="border-t border-slate-100 px-1 pb-5 pt-3"><HebrewProgressCoach /></div>}
+                  {openPractice === 'evaluation' && <div data-evaluation-only className="border-t border-slate-100 px-1 pb-5 pt-3"><HebrewProgressCoach /></div>}
                 </div>
                 <div>
                   <PracticeRow id="speech" icon={<Mic className="h-4 w-4" />} active={openPractice === 'speech'} onToggle={togglePractice} />
@@ -110,6 +112,10 @@ export default function HebrewLearningHome() {
                 <div>
                   <PracticeRow id="keyboard" icon={<Keyboard className="h-4 w-4" />} active={openPractice === 'keyboard'} onToggle={togglePractice} />
                   {openPractice === 'keyboard' && <div className="border-t border-slate-100 pb-5 pt-4"><HebrewKeyboardDock enabled /></div>}
+                </div>
+                <div>
+                  <PracticeRow id="progress" icon={<Gauge className="h-4 w-4" />} active={openPractice === 'progress'} onToggle={togglePractice} />
+                  {openPractice === 'progress' && <div className="border-t border-slate-100 px-1 pb-4 pt-3"><HebrewProgressSummary /></div>}
                 </div>
               </div>
             </div>
@@ -121,6 +127,7 @@ export default function HebrewLearningHome() {
       <style jsx global>{`
         @keyframes hebrewGlimmer { 0%, 72%, 100% { opacity: .35; filter: brightness(1); } 80% { opacity: .72; filter: brightness(2.3); } 88% { opacity: .35; filter: brightness(1); } }
         .hebrew-glimmer { animation: hebrewGlimmer 7s ease-in-out infinite; }
+        [data-evaluation-only] .mt-5.border-t.border-slate-200.pt-2.text-center { display: none; }
         @media (prefers-reduced-motion: reduce) { .hebrew-glimmer { animation: none; } }
       `}</style>
     </main>
