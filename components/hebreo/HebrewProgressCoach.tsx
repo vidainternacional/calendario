@@ -184,10 +184,7 @@ export default function HebrewProgressCoach() {
     drawSpectrum(analyser)
   }
 
-  useEffect(() => () => {
-    try { recognition?.stop() } catch { /* ya estaba detenido */ }
-    void releaseMicrophone()
-  }, [recognition])
+  useEffect(() => () => { void releaseMicrophone() }, [])
 
   const metrics = useMemo(() => deriveProgressMetrics(sessions, answers), [sessions, answers])
   const adaptiveLevel = useMemo(() => deriveStrictAdaptiveLevel(answers), [answers])
@@ -278,7 +275,7 @@ export default function HebrewProgressCoach() {
       instance.onstart = () => setListening(true)
       instance.onresult = event => { const transcript = event.results[0][0].transcript; void submitPronunciation(transcript) }
       instance.onerror = () => { setListening(false); setRecognition(null); void releaseMicrophone(); setSpeechError('No pude convertir la voz a texto esta vez. Toca Hablar e inténtalo nuevamente.') }
-      instance.onend = () => { setListening(false); setRecognition(null); pauseSpectrum() }
+      instance.onend = () => { setListening(false); setRecognition(null); void releaseMicrophone() }
       setRecognition(instance)
       instance.start()
     } catch {
