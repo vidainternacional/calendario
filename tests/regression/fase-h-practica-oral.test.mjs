@@ -35,6 +35,22 @@ test('FASE H bloque 4: práctica oral usa banco amplio derivado de todo lo apren
   assert.match(speech, /Salmo 23:1/)
 })
 
+test('FASE H bloque 4: espectro de voz reacciona al micrófono real', () => {
+  assert.match(speech, /createAnalyser/)
+  assert.match(speech, /getByteFrequencyData/)
+  assert.match(speech, /requestAnimationFrame/)
+  assert.match(speech, /Espectro de voz/)
+  assert.match(speech, /Habla cuando veas moverse el espectro/)
+})
+
+test('FASE H bloque 4: feedback explica qué parte reconocida necesita repetirse sin fingir fonética', () => {
+  assert.match(speech, /detailedFeedback/)
+  assert.match(speech, /Según lo reconocido, revisa:/)
+  assert.match(speech, /el navegador entendió/)
+  assert.match(speech, /no quedó reconocida/)
+  assert.match(speech, /Se escuchó muy bien/)
+})
+
 test('FASE H bloque 4: pronunciación ofrece guía y feedback sin guardar nota objetiva', () => {
   assert.match(speech, /speechSynthesis/)
   assert.match(speech, /utterance\.lang = 'he-IL'/)
