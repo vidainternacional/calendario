@@ -40,13 +40,14 @@ test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas c
   assert.doesNotMatch(materials, /<summary/)
 })
 
-test('FASE H checklist 4: Aprender queda centrado y los controles pequeños conservan forma redondeada', () => {
-  assert.match(home, /items-center justify-center rounded-\[26px\]/)
-  assert.match(home, /Curso guiado paso a paso/)
+test('FASE H checklist 4: CTA principal queda centrado y progreso/teclado usan filas nativas equivalentes', () => {
+  assert.match(home, /items-center justify-center overflow-hidden rounded-\[26px\]/)
+  assert.match(home, />Empecemos</)
+  assert.match(home, /hebrew-glimmer/)
   assert.doesNotMatch(home, /GraduationCap|Sparkles/)
-  assert.match(home, /space-y-2\.5/)
-  assert.match(home, /rounded-\[22px\] border px-4/)
-  assert.ok((home.match(/rounded-\[22px\] border border-slate-200 bg-white/g) ?? []).length >= 1)
+  assert.equal((home.match(/min-h-\[72px\]/g) ?? []).length >= 2, true)
+  assert.match(home, /aria-label="Práctica" className="mt-5 border-t border-slate-200"/)
+  assert.match(home, /aria-label="Teclado hebreo" className="border-t border-slate-200"/)
 })
 
 test('FASE H checklist 4: títulos internos comparten una sola escala tipográfica', () => {
