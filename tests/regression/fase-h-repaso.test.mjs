@@ -19,13 +19,16 @@ test('FASE H repaso: distingue repaso de examen y mezcla áreas ya estudiadas', 
   assert.match(review, /'verb-qatal-yiqtol'/)
 })
 
-test('FASE H repaso: usa sesiones cortas y autoevaluación explícita', () => {
+test('FASE H repaso: usa sesiones cortas, autoevaluación y guardado privado', () => {
   assert.match(review, /slice\(0, 8\)/)
   assert.match(review, /Mostrar respuesta/)
   assert.match(review, /Lo sé/)
   assert.match(review, /Necesito practicar/)
   assert.match(review, /Repasar después/)
-  assert.match(review, /Solo esta sesión/)
+  assert.match(review, /Progreso guardado/)
+  assert.match(review, /saveHebrewReviewRating/)
+  assert.match(review, /startHebrewProgressSession/)
+  assert.match(review, /finishHebrewProgressSession/)
 })
 
 test('FASE H repaso: incluye práctica de escritura compatible con el teclado hebreo', () => {
@@ -36,34 +39,25 @@ test('FASE H repaso: incluye práctica de escritura compatible con el teclado he
 })
 
 test('FASE H repaso: incorpora niqqud avanzado y transformaciones nominales verificadas', () => {
-  for (const id of ['sheva-vocal', 'sheva-silent', 'qamats-qatan', 'furtive-pataj', 'possessive-beni', 'possessive-aviv', 'construct-devar', 'construct-bnei']) {
-    assert.match(review, new RegExp(`id: '${id}'`))
-  }
-  for (const form of ['בְּרֵאשִׁית', 'מַלְכָּה', 'כָּל', 'רוּחַ', 'בְּנִי', 'אָבִיו', 'דָּבָר → דְּבַר', 'בְּנֵי']) {
-    assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
-  }
+  for (const id of ['sheva-vocal', 'sheva-silent', 'qamats-qatan', 'furtive-pataj', 'possessive-beni', 'possessive-aviv', 'construct-devar', 'construct-bnei']) assert.match(review, new RegExp(`id: '${id}'`))
+  for (const form of ['בְּרֵאשִׁית', 'מַלְכָּה', 'כָּל', 'רוּחַ', 'בְּנִי', 'אָבִיו', 'דָּבָר → דְּבַר', 'בְּנֵי']) assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 })
 
 test('FASE H repaso: practica Qal sin convertir morfología en pasado futuro mecánico', () => {
-  for (const id of ['verb-qatal-yiqtol', 'verb-qatal-1cs', 'verb-yiqtol-1cs', 'verb-imperative', 'verb-participle', 'verb-inf-construct', 'verb-wayyiqtol', 'verb-weqatal']) {
-    assert.match(review, new RegExp(`id: '${id}'`))
-  }
-  for (const form of ['אָמַרְתִּי', 'אֹמַר', 'אֱמֹר', 'אֹמֵר', 'לֵאמֹר', 'וַיֹּאמֶר', 'וְאָמַרְתָּ']) {
-    assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
-  }
+  for (const id of ['verb-qatal-yiqtol', 'verb-qatal-1cs', 'verb-yiqtol-1cs', 'verb-imperative', 'verb-participle', 'verb-inf-construct', 'verb-wayyiqtol', 'verb-weqatal']) assert.match(review, new RegExp(`id: '${id}'`))
+  for (const form of ['אָמַרְתִּי', 'אֹמַר', 'אֱמֹר', 'אֹמֵר', 'לֵאמֹר', 'וַיֹּאמֶר', 'וְאָמַרְתָּ']) assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
   assert.match(review, /no equivale automáticamente a futuro/i)
   assert.match(review, /No memorices la equivalencia automática pasado\/futuro/)
   assert.match(review, /no es una fórmula de «ו \+ futuro = pasado»/i)
 })
 
-test('FASE H repaso: el resumen describe únicamente la sesión actual', () => {
+test('FASE H repaso: el resumen conserva resultados y explica su uso adaptativo', () => {
   assert.match(review, /Sesión terminada/)
-  assert.match(review, /No se guarda como progreso/)
+  assert.match(review, /quedaron guardadas/)
+  assert.match(review, /priorizar lo que conviene repasar/)
   assert.match(review, /counts\.know/)
   assert.match(review, /counts\.practice/)
   assert.match(review, /counts\.later/)
-})
-
-test('FASE H repaso: no introduce persistencia ni audio falso', () => {
-  assert.doesNotMatch(review, /supabase|localStorage|sessionStorage|speechSynthesis|new Audio|Audio\(/)
+  assert.doesNotMatch(review, /No se guarda como progreso/)
+  assert.doesNotMatch(review, /Solo esta sesión/)
 })
