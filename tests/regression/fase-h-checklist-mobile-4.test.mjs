@@ -38,14 +38,17 @@ test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas c
   assert.doesNotMatch(materials, /<summary/)
 })
 
-test('FASE H checklist 4: CTA principal y práctica quedan centrados y ordenados por cuatro acordeones', () => {
+test('FASE H checklist 4: CTA principal y práctica quedan centrados con cuatro accesos horizontales', () => {
   assert.match(home, /items-center justify-center overflow-hidden rounded-\[26px\]/)
   assert.match(home, />Empecemos</)
   assert.match(home, /hebrew-glimmer/)
   assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard' \| 'progress'/)
-  assert.match(home, /function PracticeRow/)
-  assert.match(home, /min-h-\[70px\]/)
-  assert.match(home, /justify-center px-12 text-center/)
+  assert.match(home, /function PracticeTab/)
+  assert.match(home, /grid grid-cols-4 gap-2/)
+  assert.match(home, /min-h-\[72px\]/)
+  assert.match(home, /shortTitle: 'Oral'/)
+  assert.match(home, /shortTitle: 'Teclado'/)
+  assert.match(home, /shortTitle: 'Progreso'/)
   for (const label of ['Evaluación', 'Práctica oral', 'Teclado hebreo', 'Mi progreso']) assert.match(home, new RegExp(label))
 })
 
