@@ -11,7 +11,7 @@ test('FASE H teclado: conserva guardia de sesión y se despliega desde Inicio de
   assert.doesNotMatch(page, /HebrewKeyboardDock/)
   assert.match(page, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo'\)/)
   assert.match(home, /import HebrewKeyboardDock/)
-  assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard'/)
+  assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard' \| 'progress'/)
   assert.doesNotMatch(home, />Herramientas</)
   assert.match(home, /keyboard: \{ title: 'Teclado hebreo'/)
   assert.match(home, /openPractice === 'keyboard'/)
