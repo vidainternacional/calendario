@@ -19,7 +19,7 @@ test('FASE H bloque 4: micrófono pide permiso real, captura y exige envío expl
   assert.match(speech, /SpeechRecognition/)
   assert.match(speech, /webkitSpeechRecognition/)
   assert.match(speech, /interimResults = true/)
-  assert.match(speech, /Escuchando…/)
+  assert.match(speech, /Habla cuando veas moverse el espectro/)
   assert.match(speech, /Enviar resultado/)
   assert.match(speech, /submitResult/)
   assert.match(speech, /micrófono está bloqueado/)
