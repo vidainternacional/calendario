@@ -16,12 +16,22 @@ test('FASE H bloque 4: Inicio usa instructor persistente y CTA principal simple'
   assert.doesNotMatch(home, /progreso persistente todavía no está activo/i)
 })
 
-test('FASE H bloque 4: ofrece práctica adaptativa, niveles y personalización en acordeón', () => {
-  for (const label of ['Según mi progreso', 'Elegir nivel', 'Básico', 'Intermedio', 'Avanzado', 'Nivel 1', 'Nivel 2', 'Nivel 3', 'Personalizar práctica', 'Áreas que quieres reforzar']) assert.match(coach, new RegExp(label))
+test('FASE H bloque 4: ofrece nivel adaptativo que puede subir o bajar y niveles explicados', () => {
+  for (const label of ['Según mi progreso', 'Elegir nivel', 'Básico', 'Intermedio', 'Avanzado', 'Nivel 1', 'Nivel 2', 'Nivel 3', '¿Qué te espera en']) assert.match(coach, new RegExp(label.replace('?', '\\?')))
+  assert.match(progress, /deriveAdaptiveLevel/)
+  assert.match(progress, /slice\(0, 30\)/)
+  assert.match(coach, /Una racha de errores puede bajarlo/)
+  assert.match(coach, /adaptiveLevel\.progress/)
+})
+
+test('FASE H bloque 4: personalización conserva cantidad y no mezcla dificultad para rellenar', () => {
   assert.match(coach, /LENGTHS = \[10, 15, 20\]/)
+  assert.match(coach, /Personalizar práctica/)
+  assert.match(coach, /Áreas que quieres reforzar/)
   assert.match(coach, /selectAdaptiveQuestions/)
-  assert.match(coach, /selectDifficultyQuestions/)
-  assert.match(coach, /SKILL_ORDER\.map/)
+  assert.match(coach, /selectDifficultyQuestions\(difficulty, focusAreas, questionCount\)/)
+  assert.match(coach, /no mezclará niveles para rellenar el número/)
+  assert.equal((progress.match(/difficulty: 'advanced'/g) ?? []).length >= 15, true)
 })
 
 test('FASE H bloque 4: cada respuesta se valida, guarda y permite Quiero repasar', () => {
@@ -32,6 +42,23 @@ test('FASE H bloque 4: cada respuesta se valida, guarda y permite Quiero repasar
   assert.match(coach, /Correcto/)
   assert.match(coach, /Necesita repaso/)
   assert.match(coach, /Aciertos/)
+})
+
+test('FASE H bloque 4: pronunciación usa reconocimiento hebreo sin contaminar la nota objetiva', () => {
+  assert.match(coach, /webkitSpeechRecognition/)
+  assert.match(coach, /instance\.lang = 'he-IL'/)
+  assert.match(coach, /Probar pronunciación/)
+  assert.match(coach, /No modifica tu nota ni sustituye una evaluación fonética profesional/)
+  assert.match(coach, /similarity\(current\.hebrew/)
+  assert.doesNotMatch(coach.slice(coach.indexOf('function startListening'), coach.indexOf('function stopListening')), /saveHebrewProgressAnswer/)
+})
+
+test('FASE H bloque 4: cierre da retroalimentación y recomendación derivada', () => {
+  assert.match(coach, /finalFeedback/)
+  assert.match(coach, /Excelente dominio en esta sesión/)
+  assert.match(coach, /conviene reforzar fundamentos/)
+  assert.match(coach, />Recomendación</)
+  assert.match(coach, /metrics\.recommendation/)
 })
 
 test('FASE H bloque 4: historial deriva métricas reales sin tabla estadística', () => {
