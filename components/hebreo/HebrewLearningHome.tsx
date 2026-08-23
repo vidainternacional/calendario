@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpenText, ChevronDown, Keyboard, Languages, Library } from 'lucide-react'
+import { ArrowLeft, BarChart3, BookOpenText, ChevronDown, Keyboard, Languages, Library, Mic } from 'lucide-react'
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
 import HebrewProgressCoach from '@/components/hebreo/HebrewProgressCoach'
@@ -11,11 +11,18 @@ import HebrewSupportMaterials from '@/components/hebreo/HebrewSupportMaterials'
 import HebrewTranslator from '@/components/hebreo/HebrewTranslator'
 
 type QuickPanelId = 'translator' | 'bible' | 'materials'
+type PracticePanelId = 'evaluation' | 'speech' | 'keyboard'
 
 const QUICK_PANELS: Record<QuickPanelId, { title: string; subtitle: string }> = {
   translator: { title: 'Traductor', subtitle: 'Español ⇄ Hebreo' },
   bible: { title: 'Biblia', subtitle: 'Leer en hebreo' },
   materials: { title: 'Materiales', subtitle: 'Curso y apoyo' },
+}
+
+const PRACTICE_PANELS: Record<PracticePanelId, { title: string; subtitle: string }> = {
+  evaluation: { title: 'Evaluación y progreso', subtitle: 'Nivel, pruebas, notas y recomendaciones' },
+  speech: { title: 'Práctica oral', subtitle: 'Escucha, habla y compara tu pronunciación' },
+  keyboard: { title: 'Teclado hebreo', subtitle: 'Escritura y reconocimiento de letras' },
 }
 
 function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: QuickPanelId; icon: React.ReactNode; title: string; subtitle: string; active: boolean; onToggle: (id: QuickPanelId) => void }) {
@@ -28,12 +35,27 @@ function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: Quic
   )
 }
 
+function PracticeRow({ id, icon, active, onToggle }: { id: PracticePanelId; icon: React.ReactNode; active: boolean; onToggle: (id: PracticePanelId) => void }) {
+  const panel = PRACTICE_PANELS[id]
+  return (
+    <button type="button" onClick={() => onToggle(id)} aria-expanded={active} className="relative flex min-h-[70px] w-full items-center justify-center px-12 text-center transition active:bg-slate-50">
+      <span className={`absolute left-2.5 grid h-9 w-9 place-items-center rounded-[13px] ${active ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{icon}</span>
+      <span>
+        <span className="block text-[13px] font-black text-slate-900">{panel.title}</span>
+        <span className="mt-0.5 block text-[9px] font-semibold text-slate-400">{panel.subtitle}</span>
+      </span>
+      <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${active ? 'rotate-180' : ''}`} />
+    </button>
+  )
+}
+
 export default function HebrewLearningHome() {
-  const [keyboardEnabled, setKeyboardEnabled] = useState(false)
   const [progressOpen, setProgressOpen] = useState(true)
   const [openQuick, setOpenQuick] = useState<QuickPanelId | null>(null)
+  const [openPractice, setOpenPractice] = useState<PracticePanelId | null>('evaluation')
 
   function toggleQuick(id: QuickPanelId) { setOpenQuick(current => current === id ? null : id) }
+  function togglePractice(id: PracticePanelId) { setOpenPractice(current => current === id ? null : id) }
 
   return (
     <main className="min-h-screen bg-[#f9f9fb] text-slate-950">
@@ -70,19 +92,28 @@ export default function HebrewLearningHome() {
 
         <section aria-label="Práctica" className="mt-5 border-t border-slate-200">
           <button type="button" onClick={() => setProgressOpen(value => !value)} aria-expanded={progressOpen} className="relative flex min-h-[76px] w-full items-center justify-center px-12 text-center">
-            <span><span className="block text-[14px] font-black text-slate-900">Prueba tu progreso</span><span className="mt-0.5 block text-[10px] text-slate-400">Mide tu nivel y descubre qué reforzar</span></span>
+            <span><span className="block text-[14px] font-black text-slate-900">Prueba tu progreso</span><span className="mt-0.5 block text-[10px] text-slate-400">Evalúa, practica y revisa tu avance</span></span>
             <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${progressOpen ? 'rotate-180' : ''}`} />
           </button>
-          {progressOpen && <div className="border-t border-slate-100 pb-5 pt-3"><HebrewProgressCoach /><HebrewSpeechPractice /></div>}
-        </section>
 
-        <section aria-label="Teclado hebreo" className="border-t border-slate-200">
-          <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-expanded={keyboardEnabled} className="relative flex min-h-[76px] w-full items-center justify-center px-14 text-center transition active:opacity-70">
-            <span className={`absolute left-3 grid h-10 w-10 place-items-center rounded-[14px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700'}`}><Keyboard className="h-4.5 w-4.5" /></span>
-            <span><span className="block text-[14px] font-black text-slate-900">Teclado hebreo</span><span className="mt-0.5 block text-[10px] text-slate-400">Practica tu escritura en hebreo</span></span>
-            <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${keyboardEnabled ? 'rotate-180' : ''}`} />
-          </button>
-          {keyboardEnabled && <div className="border-t border-slate-100 pb-5 pt-5"><HebrewKeyboardDock enabled={keyboardEnabled} /></div>}
+          {progressOpen && (
+            <div className="border-t border-slate-100">
+              <div className="divide-y divide-slate-100">
+                <div>
+                  <PracticeRow id="evaluation" icon={<BarChart3 className="h-4 w-4" />} active={openPractice === 'evaluation'} onToggle={togglePractice} />
+                  {openPractice === 'evaluation' && <div className="border-t border-slate-100 px-1 pb-5 pt-3"><HebrewProgressCoach /></div>}
+                </div>
+                <div>
+                  <PracticeRow id="speech" icon={<Mic className="h-4 w-4" />} active={openPractice === 'speech'} onToggle={togglePractice} />
+                  {openPractice === 'speech' && <div className="border-t border-slate-100 pb-4"><HebrewSpeechPractice /></div>}
+                </div>
+                <div>
+                  <PracticeRow id="keyboard" icon={<Keyboard className="h-4 w-4" />} active={openPractice === 'keyboard'} onToggle={togglePractice} />
+                  {openPractice === 'keyboard' && <div className="border-t border-slate-100 pb-5 pt-4"><HebrewKeyboardDock enabled /></div>}
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         <p className="mt-5 text-center text-[9px] leading-relaxed text-slate-400">FASE H · Aprendizaje en desarrollo · práctica sugerida de 5–10 minutos al día</p>
