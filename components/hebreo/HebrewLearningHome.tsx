@@ -20,11 +20,11 @@ const QUICK_PANELS: Record<QuickPanelId, { title: string; subtitle: string }> = 
   materials: { title: 'Materiales', subtitle: 'Curso y apoyo' },
 }
 
-const PRACTICE_PANELS: Record<PracticePanelId, { title: string; subtitle: string }> = {
-  evaluation: { title: 'Evaluación', subtitle: 'Según tu progreso o por nivel' },
-  speech: { title: 'Práctica oral', subtitle: 'Escucha, habla y compara tu pronunciación' },
-  keyboard: { title: 'Teclado hebreo', subtitle: 'Escritura y reconocimiento de letras' },
-  progress: { title: 'Mi progreso', subtitle: 'Notas, dominio, retención y recomendaciones' },
+const PRACTICE_PANELS: Record<PracticePanelId, { title: string; shortTitle: string; subtitle: string }> = {
+  evaluation: { title: 'Evaluación', shortTitle: 'Evaluación', subtitle: 'Según tu progreso o por nivel' },
+  speech: { title: 'Práctica oral', shortTitle: 'Oral', subtitle: 'Escucha, habla y compara tu pronunciación' },
+  keyboard: { title: 'Teclado hebreo', shortTitle: 'Teclado', subtitle: 'Escritura y reconocimiento de letras' },
+  progress: { title: 'Mi progreso', shortTitle: 'Progreso', subtitle: 'Notas, dominio, retención y recomendaciones' },
 }
 
 function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: QuickPanelId; icon: React.ReactNode; title: string; subtitle: string; active: boolean; onToggle: (id: QuickPanelId) => void }) {
@@ -37,16 +37,18 @@ function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: Quic
   )
 }
 
-function PracticeRow({ id, icon, active, onToggle }: { id: PracticePanelId; icon: React.ReactNode; active: boolean; onToggle: (id: PracticePanelId) => void }) {
+function PracticeTab({ id, icon, active, onToggle }: { id: PracticePanelId; icon: React.ReactNode; active: boolean; onToggle: (id: PracticePanelId) => void }) {
   const panel = PRACTICE_PANELS[id]
   return (
-    <button type="button" onClick={() => onToggle(id)} aria-expanded={active} className="relative flex min-h-[70px] w-full items-center justify-center px-12 text-center transition active:bg-slate-50">
-      <span className={`absolute left-2.5 grid h-9 w-9 place-items-center rounded-[13px] ${active ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{icon}</span>
-      <span>
-        <span className="block text-[13px] font-black text-slate-900">{panel.title}</span>
-        <span className="mt-0.5 block text-[9px] font-semibold text-slate-400">{panel.subtitle}</span>
-      </span>
-      <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${active ? 'rotate-180' : ''}`} />
+    <button
+      type="button"
+      onClick={() => onToggle(id)}
+      aria-expanded={active}
+      aria-label={panel.title}
+      className={`flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-[16px] px-1.5 py-2 text-center transition active:scale-[0.98] ${active ? 'bg-indigo-600 text-white shadow-[0_8px_20px_rgba(79,70,229,0.18)]' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
+    >
+      <span className={`grid h-8 w-8 place-items-center rounded-[11px] ${active ? 'bg-white/15 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{icon}</span>
+      <span className="mt-1.5 block max-w-full truncate text-[9px] font-black leading-tight">{panel.shortTitle}</span>
     </button>
   )
 }
@@ -99,24 +101,19 @@ export default function HebrewLearningHome() {
           </button>
 
           {progressOpen && (
-            <div className="border-t border-slate-100">
-              <div className="divide-y divide-slate-100">
-                <div>
-                  <PracticeRow id="evaluation" icon={<BarChart3 className="h-4 w-4" />} active={openPractice === 'evaluation'} onToggle={togglePractice} />
-                  {openPractice === 'evaluation' && <div data-evaluation-only className="border-t border-slate-100 px-1 pb-5 pt-3"><HebrewProgressCoach /></div>}
-                </div>
-                <div>
-                  <PracticeRow id="speech" icon={<Mic className="h-4 w-4" />} active={openPractice === 'speech'} onToggle={togglePractice} />
-                  {openPractice === 'speech' && <div className="border-t border-slate-100 pb-4"><HebrewSpeechPractice /></div>}
-                </div>
-                <div>
-                  <PracticeRow id="keyboard" icon={<Keyboard className="h-4 w-4" />} active={openPractice === 'keyboard'} onToggle={togglePractice} />
-                  {openPractice === 'keyboard' && <div className="border-t border-slate-100 pb-5 pt-4"><HebrewKeyboardDock enabled /></div>}
-                </div>
-                <div>
-                  <PracticeRow id="progress" icon={<Gauge className="h-4 w-4" />} active={openPractice === 'progress'} onToggle={togglePractice} />
-                  {openPractice === 'progress' && <div className="border-t border-slate-100 px-1 pb-4 pt-3"><HebrewProgressSummary /></div>}
-                </div>
+            <div className="border-t border-slate-100 pt-3">
+              <nav aria-label="Secciones de práctica" className="grid grid-cols-4 gap-2">
+                <PracticeTab id="evaluation" icon={<BarChart3 className="h-4 w-4" />} active={openPractice === 'evaluation'} onToggle={togglePractice} />
+                <PracticeTab id="speech" icon={<Mic className="h-4 w-4" />} active={openPractice === 'speech'} onToggle={togglePractice} />
+                <PracticeTab id="keyboard" icon={<Keyboard className="h-4 w-4" />} active={openPractice === 'keyboard'} onToggle={togglePractice} />
+                <PracticeTab id="progress" icon={<Gauge className="h-4 w-4" />} active={openPractice === 'progress'} onToggle={togglePractice} />
+              </nav>
+
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                {openPractice === 'evaluation' && <div data-evaluation-only className="px-1 pb-5"><HebrewProgressCoach /></div>}
+                {openPractice === 'speech' && <div className="pb-4"><HebrewSpeechPractice /></div>}
+                {openPractice === 'keyboard' && <div className="pb-5"><HebrewKeyboardDock enabled /></div>}
+                {openPractice === 'progress' && <div className="px-1 pb-4"><HebrewProgressSummary /></div>}
               </div>
             </div>
           )}
