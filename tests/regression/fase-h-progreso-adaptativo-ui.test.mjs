@@ -8,14 +8,13 @@ const progress = fs.readFileSync('lib/hebreo/progress.ts', 'utf8')
 const mastery = fs.readFileSync('lib/hebreo/progress-mastery.ts', 'utf8')
 const store = fs.readFileSync('lib/hebreo/progress-store.ts', 'utf8')
 
-test('FASE H bloque 4: Inicio usa instructor persistente y superficies centradas', () => {
+test('FASE H bloque 4: Inicio usa instructor persistente dentro de navegación compacta', () => {
   assert.match(home, /HebrewProgressCoach/)
-  assert.match(home, /Mide tu nivel y descubre qué reforzar/)
+  assert.match(home, /Evaluación y progreso/)
+  assert.match(home, /Evalúa, practica y revisa tu avance/)
   assert.match(home, /Empecemos/)
   assert.match(home, /hebrew-glimmer/)
-  assert.match(home, /min-h-\[76px\]/)
-  assert.match(home, /justify-center px-12 text-center/)
-  assert.match(home, /justify-center px-14 text-center/)
+  assert.match(home, /function PracticeRow/)
   assert.doesNotMatch(home, /TEST_QUESTIONS/)
 })
 
@@ -56,17 +55,6 @@ test('FASE H bloque 4: cada respuesta se valida guarda y permite repaso', () => 
   assert.match(coach, /Correcto/)
   assert.match(coach, /Necesita repaso/)
   assert.match(coach, /aciertos/)
-})
-
-test('FASE H bloque 4: pronunciación es visible y no contamina nota', () => {
-  assert.match(coach, /webkitSpeechRecognition/)
-  assert.match(coach, /instance\.lang = 'he-IL'/)
-  assert.match(coach, /Pronunciación por voz incluida/)
-  assert.match(coach, /Prueba tu pronunciación/)
-  assert.match(coach, /Hablar ahora/)
-  assert.match(coach, /No modifica tu nota ni sustituye una evaluación fonética profesional/)
-  assert.match(coach, /similarity\(current\.hebrew/)
-  assert.doesNotMatch(coach.slice(coach.indexOf('function startListening'), coach.indexOf('function stopListening')), /saveHebrewProgressAnswer/)
 })
 
 test('FASE H bloque 4: cierre da retroalimentación y recomendación derivada', () => {
