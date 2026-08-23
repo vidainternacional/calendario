@@ -12,15 +12,15 @@ import ReviewExplorer from '@/components/hebreo/ReviewExplorer'
 
 type SectionId = 'alef-bet' | 'vowels' | 'vocabulary' | 'reading' | 'grammar' | 'review'
 
-type LearningSection = { id: SectionId; number: number; he: string; shortTitle: string }
+type LearningSection = { id: SectionId; number: number; he: string; shortTitle: string; title: string }
 
 const SECTIONS: readonly LearningSection[] = [
-  { id: 'alef-bet', number: 1, he: 'אָלֶף־בֵּית', shortTitle: 'Alef-Bet' },
-  { id: 'vowels', number: 2, he: 'תְּנוּעוֹת', shortTitle: 'Vocales' },
-  { id: 'vocabulary', number: 3, he: 'מִלִּים', shortTitle: 'Palabras' },
-  { id: 'reading', number: 4, he: 'קְרִיאָה', shortTitle: 'Lectura' },
-  { id: 'grammar', number: 5, he: 'דִּקְדּוּק', shortTitle: 'Reglas' },
-  { id: 'review', number: 6, he: 'חֲזָרָה', shortTitle: 'Repaso' },
+  { id: 'alef-bet', number: 1, he: 'אָלֶף־בֵּית', shortTitle: 'Alef-Bet', title: 'Alef-Bet' },
+  { id: 'vowels', number: 2, he: 'תְּנוּעוֹת', shortTitle: 'Vocales', title: 'Vocales y Sheva' },
+  { id: 'vocabulary', number: 3, he: 'מִלִּים', shortTitle: 'Palabras', title: 'Palabras y frases' },
+  { id: 'reading', number: 4, he: 'קְרִיאָה', shortTitle: 'Lectura', title: 'Lectura bíblica' },
+  { id: 'grammar', number: 5, he: 'דִּקְדּוּק', shortTitle: 'Reglas', title: 'Reglas' },
+  { id: 'review', number: 6, he: 'חֲזָרָה', shortTitle: 'Repaso', title: 'Repaso' },
 ]
 
 function SectionContent({ id }: { id: SectionId }) {
@@ -52,7 +52,7 @@ export default function HebrewCourseCenter() {
         <section aria-label="Ruta de aprendizaje" className="mx-auto mt-5 grid w-full max-w-md grid-cols-3 gap-2.5">
           {SECTIONS.map(section => {
             const open = openSection === section.id
-            return <button key={section.id} type="button" onClick={() => setOpenSection(current => current === section.id ? null : section.id)} aria-expanded={open} className={`flex min-h-[116px] flex-col items-center justify-center rounded-[22px] px-2 py-3 text-center transition active:scale-[0.98] ${open ? 'bg-indigo-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.22)]' : 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80'}`}><span className={`grid h-7 w-7 place-items-center rounded-full text-[10px] font-black ${open ? 'bg-white/15 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{section.number}</span><span lang="he" dir="rtl" className={`mt-2 text-[16px] font-black leading-none ${open ? 'text-white' : 'text-indigo-700'}`}>{section.he}</span><span className="mt-2 text-[11px] font-black leading-tight">{section.shortTitle}</span></button>
+            return <button key={section.id} type="button" title={section.title} onClick={() => setOpenSection(current => current === section.id ? null : section.id)} aria-expanded={open} className={`flex min-h-[116px] flex-col items-center justify-center rounded-[22px] px-2 py-3 text-center transition active:scale-[0.98] ${open ? 'bg-indigo-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.22)]' : 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80'}`}><span className={`grid h-7 w-7 place-items-center rounded-full text-[10px] font-black ${open ? 'bg-white/15 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{section.number}</span><span lang="he" dir="rtl" className={`mt-2 text-[16px] font-black leading-none ${open ? 'text-white' : 'text-indigo-700'}`}>{section.he}</span><span className="mt-2 text-[11px] font-black leading-tight">{section.shortTitle}</span></button>
           })}
         </section>
 
