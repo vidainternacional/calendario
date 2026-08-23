@@ -26,7 +26,7 @@ const SECTIONS: readonly LearningSection[] = [
   { id: 'vowels', number: 2, he: 'תְּנוּעוֹת', title: 'Vocales y Sheva', shortTitle: 'Vocales', description: 'A · E · I, después O · U, Sheva y formación de sílabas.' },
   { id: 'vocabulary', number: 3, he: 'מִלִּים', title: 'Palabras y frases', shortTitle: 'Palabras', description: 'Memorización por categorías y frases útiles claramente separadas.' },
   { id: 'reading', number: 4, he: 'קְרִיאָה', title: 'Lectura bíblica', shortTitle: 'Lectura', description: 'Shemá, versículos conocidos y lectura continua de la Biblia.' },
-  { id: 'grammar', number: 5, he: 'דִּקְדּוּק', title: 'Reglas', shortTitle: 'Reglas', description: 'Prefijos, patrones y gramática progresiva por capas.' },
+  { id: 'grammar', number: 5, he: 'דִּקְדּוּק', title: 'Reglas', shortTitle: 'Reglas', description: 'Reglas del curso en orden, una por una.' },
   { id: 'review', number: 6, he: 'חֲזָרָה', title: 'Repaso', shortTitle: 'Repaso', description: 'Practica lo aprendido antes de avanzar.' },
 ]
 
@@ -60,13 +60,7 @@ export default function HebrewCourseCenter() {
           {SECTIONS.map(section => {
             const open = openSection === section.id
             return (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setOpenSection(current => current === section.id ? null : section.id)}
-                aria-expanded={open}
-                className={`flex min-h-[116px] flex-col items-center justify-center rounded-[22px] px-2 py-3 text-center transition active:scale-[0.98] ${open ? 'bg-indigo-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.22)]' : 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80'}`}
-              >
+              <button key={section.id} type="button" onClick={() => setOpenSection(current => current === section.id ? null : section.id)} aria-expanded={open} className={`flex min-h-[116px] flex-col items-center justify-center rounded-[22px] px-2 py-3 text-center transition active:scale-[0.98] ${open ? 'bg-indigo-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.22)]' : 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80'}`}>
                 <span className={`grid h-7 w-7 place-items-center rounded-full text-[10px] font-black ${open ? 'bg-white/15 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{section.number}</span>
                 <span lang="he" dir="rtl" className={`mt-2 text-[16px] font-black leading-none ${open ? 'text-white' : 'text-indigo-700'}`}>{section.he}</span>
                 <span className="mt-2 text-[11px] font-black leading-tight">{section.shortTitle}</span>
