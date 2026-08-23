@@ -119,7 +119,7 @@ export default function HebrewSpeechPractice() {
   const prompts = mode === 'words' ? words : sentences
   const current = prompts[index % Math.max(1, prompts.length)]
 
-  function resetMeters() {
+  function pauseSpectrum() {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
     frameRef.current = null
     analyserRef.current = null
@@ -127,7 +127,7 @@ export default function HebrewSpeechPractice() {
   }
 
   async function releaseMicrophone() {
-    resetMeters()
+    pauseSpectrum()
     streamRef.current?.getTracks().forEach(track => track.stop())
     streamRef.current = null
     const context = audioContextRef.current
@@ -156,34 +156,40 @@ export default function HebrewSpeechPractice() {
     draw()
   }
 
-  async function openMicrophone() {
-    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) throw new Error('microphone-unavailable')
-    await releaseMicrophone()
+  function streamIsLive() {
+    return Boolean(streamRef.current?.getAudioTracks().some(track => track.readyState === 'live'))
+  }
 
+  async function ensureMicrophone() {
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) throw new Error('microphone-unavailable')
     const AudioContextCtor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioContextCtor) throw new Error('audio-context-unavailable')
 
-    const context = new AudioContextCtor()
-    audioContextRef.current = context
-    try { if (context.state === 'suspended') await context.resume() } catch { /* continue; stream may still work */ }
-
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
-    streamRef.current = stream
-
-    if (context.state === 'suspended') {
-      try { await context.resume() } catch { /* Safari can resume on first samples */ }
+    if (!streamIsLive()) {
+      streamRef.current?.getTracks().forEach(track => track.stop())
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
     }
 
+    let context = audioContextRef.current
+    if (!context || context.state === 'closed') {
+      context = new AudioContextCtor()
+      audioContextRef.current = context
+    }
+    if (context.state === 'suspended') {
+      try { await context.resume() } catch { /* Safari may resume on user gesture samples */ }
+    }
+
+    pauseSpectrum()
     const analyser = context.createAnalyser()
     analyser.fftSize = 128
     analyser.smoothingTimeConstant = 0.62
-    context.createMediaStreamSource(stream).connect(analyser)
+    context.createMediaStreamSource(streamRef.current!).connect(analyser)
     analyserRef.current = analyser
     drawSpectrum(analyser)
   }
 
   useEffect(() => () => {
-    recognitionRef.current?.stop()
+    try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     void releaseMicrophone()
   }, [])
 
@@ -195,9 +201,9 @@ export default function HebrewSpeechPractice() {
   }
 
   function changeMode(next: SpeechMode) {
-    recognitionRef.current?.stop()
-    void releaseMicrophone()
+    try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     recognitionRef.current = null
+    pauseSpectrum()
     setStatus('idle')
     setMode(next)
     setIndex(0)
@@ -207,9 +213,9 @@ export default function HebrewSpeechPractice() {
 
   function move(delta: number) {
     if (!prompts.length) return
-    recognitionRef.current?.stop()
-    void releaseMicrophone()
+    try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     recognitionRef.current = null
+    pauseSpectrum()
     setStatus('idle')
     setIndex(value => (value + delta + prompts.length) % prompts.length)
     clearAttempt()
@@ -223,11 +229,12 @@ export default function HebrewSpeechPractice() {
     interactionFeedback('listen-start')
 
     try {
-      await openMicrophone()
+      await ensureMicrophone()
       const speechWindow = window as typeof window & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }
       const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
       if (!Recognition) throw new Error('speech-recognition-unavailable')
 
+      await new Promise(resolve => window.setTimeout(resolve, 120))
       const instance = new Recognition()
       recognitionRef.current = instance
       instance.lang = 'he-IL'
@@ -247,29 +254,40 @@ export default function HebrewSpeechPractice() {
         }
       }
       instance.onerror = event => {
-        setError(event.error === 'not-allowed' ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.' : event.error === 'no-speech' ? 'No detecté voz. Toca Hablar y espera a que el espectro se active.' : 'No pude convertir la voz a texto esta vez. Inténtalo nuevamente.')
+        const code = event.error ?? ''
+        setError(code === 'not-allowed'
+          ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.'
+          : code === 'no-speech'
+            ? 'No detecté voz. Toca Hablar otra vez y espera a que el espectro se active.'
+            : code === 'audio-capture'
+              ? 'El audio se interrumpió. El micrófono se reiniciará en el próximo intento.'
+              : 'El reconocimiento se interrumpió. Vuelve a tocar Hablar; el micrófono se conserva listo para reintentar.')
         interactionFeedback('warning')
       }
       instance.onend = () => {
         recognitionRef.current = null
         setStatus('idle')
-        void releaseMicrophone()
+        pauseSpectrum()
         interactionFeedback('listen-end')
-        if (!capturedRef.current) setError(previous => previous ?? 'La escucha terminó sin reconocer texto. Si el espectro se movió, el micrófono sí recibió sonido.')
+        if (!capturedRef.current) setError(previous => previous ?? 'No se reconoció texto. Puedes volver a tocar Hablar sin cambiar de palabra.')
       }
       instance.start()
     } catch (cause) {
-      await releaseMicrophone()
       recognitionRef.current = null
+      pauseSpectrum()
       setStatus('idle')
       interactionFeedback('warning')
       const code = cause instanceof Error ? cause.message : ''
-      setError(code === 'speech-recognition-unavailable' ? 'El micrófono funciona, pero este navegador no puede convertir voz a texto hebreo.' : 'No pude abrir el micrófono de forma estable. Revisa el permiso del navegador y vuelve a tocar Hablar.')
+      if (code === 'speech-recognition-unavailable') setError('El micrófono funciona, pero este navegador no puede convertir voz a texto hebreo.')
+      else {
+        await releaseMicrophone()
+        setError('No pude abrir el micrófono de forma estable. Toca Hablar nuevamente para reiniciarlo.')
+      }
     }
   }
 
   function stop() {
-    recognitionRef.current?.stop()
+    try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     interactionFeedback('tap')
   }
 
@@ -296,11 +314,11 @@ export default function HebrewSpeechPractice() {
   const detail = result && current ? detailedFeedback(current.hebrew, result.transcript, result.score) : null
 
   return (
-    <section aria-label="Práctica oral de hebreo" className="mt-4 border-y border-slate-200 py-3 text-center">
+    <section aria-label="Práctica oral de hebreo" className="mt-2 py-2 text-center">
       <div className="flex items-center justify-center gap-2">
-        <Mic className="h-4 w-4 text-sky-600" />
-        <span className="text-[12px] font-black text-slate-900">Práctica oral</span>
-        <span className="text-[9px] font-bold text-slate-400">{mode === 'words' ? words.length : sentences.length} ejercicios</span>
+        <Mic className="h-5 w-5 text-sky-600" />
+        <span className="text-[13px] font-black text-slate-900">Práctica oral</span>
+        <span className="text-[9px] font-bold text-slate-400">{mode === 'words' ? words.length : sentences.length}</span>
       </div>
 
       <div className="mx-auto mt-2 inline-flex rounded-full bg-slate-100 p-1">
@@ -311,36 +329,35 @@ export default function HebrewSpeechPractice() {
       {current && (
         <div className="mt-3">
           <div className="flex items-center justify-between gap-2">
-            <button type="button" onClick={() => move(-1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 active:bg-slate-100" aria-label="Anterior"><ChevronLeft className="h-5 w-5" /></button>
+            <button type="button" onClick={() => move(-1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100" aria-label="Anterior"><ChevronLeft className="h-6 w-6" /></button>
             <div className="min-w-0 flex-1">
               <p className="text-[9px] font-bold text-slate-400">{index + 1}/{prompts.length} · {current.source}</p>
-              <p lang="he" dir="rtl" className="mx-auto mt-1 text-[2.6rem] font-black leading-[1.3] text-slate-950">{current.hebrew}</p>
-              <p className="mt-1 text-[12px] font-black leading-snug text-sky-700">{pronounceHebrewForSpanish(current.hebrew)}</p>
-              <p className="mt-0.5 text-[11px] font-semibold leading-snug text-slate-500">{current.label}</p>
+              <p lang="he" dir="rtl" className="mx-auto mt-1 text-[3rem] font-black leading-[1.25] text-slate-950">{current.hebrew}</p>
+              <p className="mt-1 text-[13px] font-black leading-snug text-sky-700">{pronounceHebrewForSpanish(current.hebrew)}</p>
+              <p className="mt-1 text-[12px] font-semibold leading-snug text-slate-600">{current.label}</p>
             </div>
-            <button type="button" onClick={() => move(1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 active:bg-slate-100" aria-label="Siguiente"><ChevronRight className="h-5 w-5" /></button>
+            <button type="button" onClick={() => move(1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100" aria-label="Siguiente"><ChevronRight className="h-6 w-6" /></button>
           </div>
 
-          <div className={`voice-spectrum mx-auto mt-3 flex h-12 max-w-[260px] items-center justify-center gap-[3px] overflow-hidden rounded-full border px-5 transition ${status === 'listening' ? 'voice-spectrum-active border-sky-200 bg-sky-50/80' : 'border-slate-100 bg-slate-50'}`} aria-label="Espectro de voz">
+          <div className={`voice-spectrum mx-auto mt-3 flex h-12 max-w-[270px] items-center justify-center gap-[3px] overflow-hidden rounded-full border px-5 transition ${status === 'listening' ? 'voice-spectrum-active border-sky-200 bg-sky-50/80' : 'border-slate-100 bg-slate-50'}`} aria-label="Espectro de voz">
             {levels.map((height, bar) => <span key={bar} className={`w-[3px] rounded-full transition-[height] duration-75 ${status === 'listening' ? 'bg-sky-500' : 'bg-slate-300'}`} style={{ height: `${Math.max(5, Math.round(height * 0.34))}px` }} />)}
           </div>
 
-          <div className="mt-3 flex items-center justify-center gap-3">
-            <button type="button" onClick={speakGuide} className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-sky-700 shadow-sm" aria-label="Escuchar pronunciación"><Volume2 className="h-4.5 w-4.5" /></button>
-            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`grid h-12 w-12 place-items-center rounded-full shadow-sm disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-sky-600 text-white'}`} aria-label={status === 'listening' ? 'Terminar escucha' : 'Hablar'}>{status === 'listening' ? <Square className="h-4 w-4" /> : <Mic className="h-5 w-5" />}</button>
-            <button type="button" onClick={submitResult} disabled={!captured || Boolean(result) || status !== 'idle'} className="grid h-11 w-11 place-items-center rounded-full bg-slate-900 text-white shadow-sm disabled:opacity-25" aria-label="Enviar resultado"><Send className="h-4 w-4" /></button>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <button type="button" onClick={speakGuide} className="grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white text-sky-700" aria-label="Escuchar pronunciación"><Volume2 className="h-5 w-5" /></button>
+            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`grid h-14 w-14 place-items-center rounded-full disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-sky-600 text-white shadow-[0_0_22px_rgba(14,165,233,.22)]'}`} aria-label={status === 'listening' ? 'Terminar escucha' : 'Hablar'}>{status === 'listening' ? <Square className="h-4 w-4" /> : <Mic className="h-6 w-6" />}</button>
+            <button type="button" onClick={submitResult} disabled={!captured || Boolean(result) || status !== 'idle'} className="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white disabled:opacity-20" aria-label="Enviar resultado"><Send className="h-5 w-5" /></button>
           </div>
 
           {status === 'requesting' && <p className="mt-2 text-[10px] font-black text-sky-700">Activando micrófono…</p>}
           {status === 'listening' && <p className="mt-2 text-[10px] font-black text-sky-700">Te escucho…</p>}
-
-          {captured && !result && status === 'idle' && <p className="mx-auto mt-3 max-w-sm text-[11px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[1.25rem] font-black text-slate-900">{captured}</span></p>}
+          {captured && !result && status === 'idle' && <p className="mx-auto mt-3 max-w-sm text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[1.4rem] font-black text-slate-900">{captured}</span></p>}
 
           {result && scoreFeedback && detail && (
             <div className="mx-auto mt-3 max-w-sm rounded-[18px] bg-slate-50 px-4 py-3">
-              <div className="flex items-baseline justify-center gap-2"><p className="text-[22px] font-black text-slate-950">{result.score}%</p><p className={`text-[11px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>
-              <p className="mt-1 text-[12px] font-black text-slate-800">{detail.title}</p>
-              {detail.detail && <p className="mx-auto mt-1 max-w-sm text-[10px] font-semibold leading-relaxed text-slate-500">{detail.detail}</p>}
+              <div className="flex items-baseline justify-center gap-2"><p className="text-[24px] font-black text-slate-950">{result.score}%</p><p className={`text-[12px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>
+              <p className="mt-1 text-[13px] font-black text-slate-800">{detail.title}</p>
+              {detail.detail && <p className="mx-auto mt-1 max-w-sm text-[11px] font-semibold leading-relaxed text-slate-500">{detail.detail}</p>}
               <button type="button" onClick={() => { clearAttempt(); interactionFeedback('tap') }} className="mt-2 text-[10px] font-black text-sky-700">Intentar otra vez</button>
             </div>
           )}
@@ -350,8 +367,8 @@ export default function HebrewSpeechPractice() {
       )}
 
       <style jsx>{`
-        .voice-spectrum-active { box-shadow: inset 0 0 18px rgba(14,165,233,.08), 0 0 24px rgba(14,165,233,.14); }
-        .voice-spectrum-active span { box-shadow: 0 0 7px rgba(14,165,233,.55); }
+        .voice-spectrum-active { box-shadow: inset 0 0 18px rgba(14,165,233,.08), 0 0 28px rgba(14,165,233,.16); }
+        .voice-spectrum-active span { box-shadow: 0 0 8px rgba(14,165,233,.6); }
       `}</style>
     </section>
   )
