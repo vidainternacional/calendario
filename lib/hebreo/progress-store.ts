@@ -38,7 +38,7 @@ export async function loadHebrewProgress(): Promise<{ sessions: HebrewProgressSe
   const { supabase } = await profileId()
   const [sessionsResult, answersResult] = await Promise.all([
     supabase.from('biblical_hebrew_progress_sessions').select('id,mode,requested_difficulty,focus_areas,status,started_at,ended_at').order('started_at', { ascending: false }).limit(60),
-    supabase.from('biblical_hebrew_progress_answers').select('id,session_id,question_key,skill,difficulty,response_text,is_correct,review_requested,answered_at').order('answered_at', { ascending: false }).limit(800),
+    supabase.from('biblical_hebrew_progress_answers').select('id,session_id,question_key,skill,difficulty,response_text,is_correct,review_requested,response_time_ms,answered_at').order('answered_at', { ascending: false }).limit(800),
   ])
   if (sessionsResult.error) throw sessionsResult.error
   if (answersResult.error) throw answersResult.error
@@ -55,11 +55,14 @@ export async function startHebrewProgressSession(mode: HebrewProgressMode, diffi
   return data.id as string
 }
 
-export async function saveHebrewProgressAnswer(input: { sessionId: string; questionKey: string; questionVersion?: number; skill: HebrewSkill; difficulty: HebrewDifficulty; responseText: string; isCorrect: boolean; reviewRequested?: boolean }) {
+export async function saveHebrewProgressAnswer(input: { sessionId: string; questionKey: string; questionVersion?: number; skill: HebrewSkill; difficulty: HebrewDifficulty; responseText: string; isCorrect: boolean; reviewRequested?: boolean; responseTimeMs?: number | null }) {
   const { supabase, profileId: owner } = await profileId()
   const { data: prior, error: priorError } = await supabase.from('biblical_hebrew_progress_answers').select('attempt_number').eq('session_id', input.sessionId).eq('question_key', input.questionKey).order('attempt_number', { ascending: false }).limit(1)
   if (priorError) throw priorError
   const attemptNumber = Math.min(((prior?.[0]?.attempt_number as number | undefined) ?? 0) + 1, 20)
+  const responseTimeMs = input.responseTimeMs == null
+    ? null
+    : Math.max(0, Math.min(300000, Math.round(input.responseTimeMs)))
   const { data, error } = await supabase.from('biblical_hebrew_progress_answers').insert({
     session_id: input.sessionId,
     profile_id: owner,
@@ -71,7 +74,8 @@ export async function saveHebrewProgressAnswer(input: { sessionId: string; quest
     response_text: input.responseText.slice(0, 500),
     is_correct: input.isCorrect,
     review_requested: input.reviewRequested ?? false,
-  }).select('id,session_id,question_key,skill,difficulty,response_text,is_correct,review_requested,answered_at').single()
+    response_time_ms: responseTimeMs,
+  }).select('id,session_id,question_key,skill,difficulty,response_text,is_correct,review_requested,response_time_ms,answered_at').single()
   if (error) throw error
   return data as HebrewProgressAnswer
 }
@@ -99,5 +103,6 @@ export async function saveHebrewReviewRating(input: { sessionId: string; itemId:
     responseText: input.responseText || input.rating,
     isCorrect: input.rating === 'know',
     reviewRequested: input.rating !== 'know',
+    responseTimeMs: null,
   })
 }
