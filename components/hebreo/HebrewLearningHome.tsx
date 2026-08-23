@@ -68,17 +68,18 @@ export default function HebrewLearningHome() {
         )}
 
         <section aria-label="Práctica" className="mt-5 border-t border-slate-200">
-          <button type="button" onClick={() => setProgressOpen(value => !value)} aria-expanded={progressOpen} className="flex min-h-[72px] w-full items-center justify-between gap-3 text-left">
+          <button type="button" onClick={() => setProgressOpen(value => !value)} aria-expanded={progressOpen} className="relative flex min-h-[76px] w-full items-center justify-center px-12 text-center">
             <span><span className="block text-[14px] font-black text-slate-900">Prueba tu progreso</span><span className="mt-0.5 block text-[10px] text-slate-400">Mide tu nivel y descubre qué reforzar</span></span>
-            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${progressOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${progressOpen ? 'rotate-180' : ''}`} />
           </button>
           {progressOpen && <div className="border-t border-slate-100 pb-5 pt-3"><HebrewProgressCoach /></div>}
         </section>
 
         <section aria-label="Teclado hebreo" className="border-t border-slate-200">
-          <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-expanded={keyboardEnabled} className="flex min-h-[72px] w-full items-center justify-between gap-3 text-left transition active:opacity-70">
-            <span className="flex items-center gap-3"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[14px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700'}`}><Keyboard className="h-4.5 w-4.5" /></span><span><span className="block text-[14px] font-black text-slate-900">Teclado hebreo</span><span className="mt-0.5 block text-[10px] text-slate-400">Practica tu escritura en hebreo</span></span></span>
-            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${keyboardEnabled ? 'rotate-180' : ''}`} />
+          <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-expanded={keyboardEnabled} className="relative flex min-h-[76px] w-full items-center justify-center px-14 text-center transition active:opacity-70">
+            <span className={`absolute left-3 grid h-10 w-10 place-items-center rounded-[14px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700'}`}><Keyboard className="h-4.5 w-4.5" /></span>
+            <span><span className="block text-[14px] font-black text-slate-900">Teclado hebreo</span><span className="mt-0.5 block text-[10px] text-slate-400">Practica tu escritura en hebreo</span></span>
+            <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${keyboardEnabled ? 'rotate-180' : ''}`} />
           </button>
           {keyboardEnabled && <div className="border-t border-slate-100 pb-5 pt-5"><HebrewKeyboardDock enabled={keyboardEnabled} /></div>}
         </section>
