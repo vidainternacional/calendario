@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import AlefBetExplorer from '@/components/hebreo/AlefBetExplorer'
-import GrammarExplorer from '@/components/hebreo/GrammarExplorer'
+import GrammarNavigator from '@/components/hebreo/GrammarNavigator'
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewWordsStudy from '@/components/hebreo/HebrewWordsStudy'
 import NiqqudExplorer from '@/components/hebreo/NiqqudExplorer'
@@ -35,7 +35,7 @@ function SectionContent({ id }: { id: SectionId }) {
   if (id === 'vowels') return <NiqqudExplorer />
   if (id === 'vocabulary') return <HebrewWordsStudy />
   if (id === 'reading') return <HebrewBibleReader />
-  if (id === 'grammar') return <GrammarExplorer />
+  if (id === 'grammar') return <GrammarNavigator />
   return <ReviewExplorer />
 }
 
