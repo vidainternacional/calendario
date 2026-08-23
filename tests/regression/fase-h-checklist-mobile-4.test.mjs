@@ -49,13 +49,15 @@ test('FASE H checklist 4: CTA principal queda como pastilla compacta con neón p
 })
 
 test('FASE H checklist 4: práctica usa cuatro accesos horizontales compactos', () => {
-  assert.match(home, /type PracticePanelId='evaluation'\|'speech'\|'keyboard'\|'progress'/)
+  assert.match(home, /type PracticePanelId\s*=\s*'evaluation'\s*\|\s*'speech'\s*\|\s*'keyboard'\s*\|\s*'progress'/)
   assert.match(home, /function PracticeTab/)
   assert.match(home, /grid grid-cols-4 gap-2/)
-  assert.match(home, /min-h-\[72px\]/)
-  assert.match(home, /shortTitle:'Oral'/)
-  assert.match(home, /shortTitle:'Teclado'/)
-  assert.match(home, /shortTitle:'Progreso'/)
+  assert.match(home, /min-h-\[70px\]/)
+  assert.match(home, /shortTitle:\s*'Oral'/)
+  assert.match(home, /shortTitle:\s*'Teclado'/)
+  assert.match(home, /shortTitle:\s*'Progreso'/)
+  assert.match(home, /bg-indigo-600 text-white/)
+  assert.doesNotMatch(home, /absolute bottom-1\.5 h-1 w-5/)
   for (const label of ['Evaluación', 'Práctica oral', 'Teclado hebreo', 'Mi progreso']) assert.match(home, new RegExp(label))
 })
 
