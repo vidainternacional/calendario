@@ -12,7 +12,8 @@ test('FASE H reglas: Aprender integra navegador minimalista y conserva explorado
   assert.match(course, /id: 'grammar',[\s\S]*?title: 'Reglas'/)
   assert.match(course, /if \(id === 'grammar'\) return <GrammarNavigator \/>/)
   assert.match(navigator, /TOPICS/)
-  assert.match(grammar, /Comparaciones y tablas/)
+  assert.match(grammar, /function TeachingTables/)
+  assert.match(grammar, /type GrammarView = 'tables' \| 'cards' \| 'detail'/)
 })
 
 test('FASE H reglas: primera capa usa pasos compactos y detalle desplegable por regla', () => {
