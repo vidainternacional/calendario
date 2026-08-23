@@ -36,6 +36,6 @@ test('FASE H bloque 4: espectro permanece celeste y el resultado oral se calcula
   assert.match(speech, /aria-label=\{status === 'listening' \? 'Terminar escucha' : 'Hablar'\}/)
   assert.match(speech, /setStatus\('processing'\)/)
   assert.match(speech, /score: similarity\(current\.hebrew, transcript\)/)
-  assert.match(speech, /Analizando pronunciación/)
-  assert.doesNotMatch(speech, /aria-label="Enviar resultado"|function submitResult/)
+  assert.match(speech, /setResult\(next\)/)
+  assert.doesNotMatch(speech, /aria-label="Enviar resultado"|function submitResult|\bSend\b/)
 })
