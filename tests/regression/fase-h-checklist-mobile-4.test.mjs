@@ -38,17 +38,15 @@ test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas c
   assert.doesNotMatch(materials, /<summary/)
 })
 
-test('FASE H checklist 4: CTA principal y práctica quedan centrados y ordenados por acordeón', () => {
+test('FASE H checklist 4: CTA principal y práctica quedan centrados y ordenados por cuatro acordeones', () => {
   assert.match(home, /items-center justify-center overflow-hidden rounded-\[26px\]/)
   assert.match(home, />Empecemos</)
   assert.match(home, /hebrew-glimmer/)
-  assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard'/)
+  assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard' \| 'progress'/)
   assert.match(home, /function PracticeRow/)
   assert.match(home, /min-h-\[70px\]/)
   assert.match(home, /justify-center px-12 text-center/)
-  assert.match(home, /Evaluación y progreso/)
-  assert.match(home, /Práctica oral/)
-  assert.match(home, /Teclado hebreo/)
+  for (const label of ['Evaluación', 'Práctica oral', 'Teclado hebreo', 'Mi progreso']) assert.match(home, new RegExp(label))
 })
 
 test('FASE H checklist 4: títulos internos comparten una sola escala tipográfica', () => {
