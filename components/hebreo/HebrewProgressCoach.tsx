@@ -33,6 +33,7 @@ const DIFFICULTIES: readonly { id: HebrewDifficulty; label: string; level: strin
   { id: 'advanced', label: 'Avanzado', level: 'Nivel 3', detail: 'Lectura con menos ayudas, texto sin niqqud, distinciones finas y reglas combinadas.' },
 ]
 const LENGTHS = [10, 15, 20] as const
+const IDLE_LEVELS = [12, 18, 26, 34, 42, 50, 42, 34, 26, 18, 12]
 
 type TimedProgressAnswer = HebrewProgressAnswer & { response_time_ms?: number | null }
 type CoachQuestion = HebrewPracticeQuestion & { interaction?: 'choice' | 'pronunciation'; pronunciationHint?: string }
@@ -41,6 +42,7 @@ type SpeechRecognitionLike = {
   lang: string
   interimResults: boolean
   maxAlternatives: number
+  onstart: (() => void) | null
   onresult: ((event: SpeechResultEvent) => void) | null
   onerror: (() => void) | null
   onend: (() => void) | null
@@ -51,17 +53,17 @@ type SpeechRecognitionCtor = new () => SpeechRecognitionLike
 
 const ORAL_CHECKPOINTS: Record<HebrewDifficulty, readonly CoachQuestion[]> = {
   initial: [
-    { key: 'oral-initial-shalom', version: 1, skill: 'reading', difficulty: 'initial', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee esta palabra en voz alta', hebrew: 'שָׁלוֹם', pronunciationHint: 'shalóm', options: [], correctIndex: 0, explanation: 'שָׁלוֹם se practica como shalóm.' },
-    { key: 'oral-initial-melekh', version: 1, skill: 'reading', difficulty: 'initial', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee esta palabra en voz alta', hebrew: 'מֶלֶךְ', pronunciationHint: 'mélej', options: [], correctIndex: 0, explanation: 'מֶלֶךְ se practica como mélej.' },
-    { key: 'oral-initial-bayit', version: 1, skill: 'reading', difficulty: 'initial', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee esta palabra en voz alta', hebrew: 'בַּיִת', pronunciationHint: 'báyit', options: [], correctIndex: 0, explanation: 'בַּיִת se practica como báyit.' },
+    { key: 'oral-initial-shalom', version: 1, skill: 'reading', difficulty: 'initial', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta palabra', hebrew: 'שָׁלוֹם', pronunciationHint: 'shalóm', options: [], correctIndex: 0, explanation: 'שָׁלוֹם se practica como shalóm.' },
+    { key: 'oral-initial-melekh', version: 1, skill: 'reading', difficulty: 'initial', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta palabra', hebrew: 'מֶלֶךְ', pronunciationHint: 'mélej', options: [], correctIndex: 0, explanation: 'מֶלֶךְ se practica como mélej.' },
+    { key: 'oral-initial-bayit', version: 1, skill: 'reading', difficulty: 'initial', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta palabra', hebrew: 'בַּיִת', pronunciationHint: 'báyit', options: [], correctIndex: 0, explanation: 'בַּיִת se practica como báyit.' },
   ],
   intermediate: [
-    { key: 'oral-intermediate-bereshit', version: 1, skill: 'reading', difficulty: 'intermediate', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee la frase completa en voz alta', hebrew: 'בְּרֵאשִׁית בָּרָא', pronunciationHint: 'be-reshít bará', options: [], correctIndex: 0, explanation: 'La lectura pedagógica usada es be-reshít bará.' },
-    { key: 'oral-intermediate-ha-davar', version: 1, skill: 'reading', difficulty: 'intermediate', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee la frase completa en voz alta', hebrew: 'הַדָּבָר טוֹב', pronunciationHint: 'ha-davár tov', options: [], correctIndex: 0, explanation: 'Lee cada bloque y después une la frase.' },
+    { key: 'oral-intermediate-bereshit', version: 1, skill: 'reading', difficulty: 'intermediate', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta frase completa', hebrew: 'בְּרֵאשִׁית בָּרָא', pronunciationHint: 'be-reshít bará', options: [], correctIndex: 0, explanation: 'La lectura pedagógica usada es be-reshít bará.' },
+    { key: 'oral-intermediate-ha-davar', version: 1, skill: 'reading', difficulty: 'intermediate', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta frase completa', hebrew: 'הַדָּבָר טוֹב', pronunciationHint: 'ha-davár tov', options: [], correctIndex: 0, explanation: 'Lee cada bloque y después une la frase.' },
   ],
   advanced: [
-    { key: 'oral-advanced-ha-davar', version: 1, skill: 'reading', difficulty: 'advanced', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee esta frase sin ayuda de transliteración', hebrew: 'הַדָּבָר הַטּוֹב', options: [], correctIndex: 0, explanation: 'En avanzado la lectura debe sostenerse con menos ayudas.' },
-    { key: 'oral-advanced-construct', version: 1, skill: 'reading', difficulty: 'advanced', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Lee esta expresión completa', hebrew: 'בֵּית הַמֶּלֶךְ', options: [], correctIndex: 0, explanation: 'Esta expresión practica lectura y estado constructo.' },
+    { key: 'oral-advanced-ha-davar', version: 1, skill: 'reading', difficulty: 'advanced', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta frase sin ayuda de transliteración', hebrew: 'הַדָּבָר הַטּוֹב', options: [], correctIndex: 0, explanation: 'En avanzado la lectura debe sostenerse con menos ayudas.' },
+    { key: 'oral-advanced-construct', version: 1, skill: 'reading', difficulty: 'advanced', type: 'Pronunciación', interaction: 'pronunciation', prompt: 'Pronuncia esta expresión completa', hebrew: 'בֵּית הַמֶּלֶךְ', options: [], correctIndex: 0, explanation: 'Esta expresión practica lectura y estado constructo.' },
   ],
 }
 
@@ -111,7 +113,12 @@ export default function HebrewProgressCoach() {
   const [speechResult, setSpeechResult] = useState<{ transcript: string; score: number } | null>(null)
   const [speechError, setSpeechError] = useState<string | null>(null)
   const [recognition, setRecognition] = useState<SpeechRecognitionLike | null>(null)
+  const [levels, setLevels] = useState(IDLE_LEVELS)
   const questionStartedAtRef = useRef<number | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const frameRef = useRef<number | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -120,6 +127,67 @@ export default function HebrewProgressCoach() {
     finally { setLoading(false) }
   }, [])
   useEffect(() => { void refresh() }, [refresh])
+
+  function pauseSpectrum() {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
+    frameRef.current = null
+    analyserRef.current = null
+    setLevels(IDLE_LEVELS)
+  }
+
+  async function releaseMicrophone() {
+    pauseSpectrum()
+    streamRef.current?.getTracks().forEach(track => track.stop())
+    streamRef.current = null
+    const context = audioContextRef.current
+    audioContextRef.current = null
+    if (context && context.state !== 'closed') {
+      try { await context.close() } catch { /* iOS puede haberlo cerrado */ }
+    }
+  }
+
+  function drawSpectrum(analyser: AnalyserNode) {
+    const data = new Uint8Array(analyser.frequencyBinCount)
+    const draw = () => {
+      if (analyserRef.current !== analyser) return
+      analyser.getByteFrequencyData(data)
+      const average = data.length ? data.reduce((sum, value) => sum + value, 0) / data.length : 0
+      const next = IDLE_LEVELS.map((_, bar) => {
+        const centerDistance = Math.abs(bar - Math.floor(IDLE_LEVELS.length / 2))
+        const sampleIndex = Math.min(data.length - 1, Math.max(0, Math.floor((bar / IDLE_LEVELS.length) * data.length)))
+        const sample = data[sampleIndex] ?? average
+        const shape = Math.max(0.52, 1 - centerDistance * 0.055)
+        return Math.max(12, Math.min(100, Math.round(((sample * 0.7 + average * 0.3) / 255) * 100 * shape)))
+      })
+      setLevels(next)
+      frameRef.current = requestAnimationFrame(draw)
+    }
+    draw()
+  }
+
+  async function ensureMicrophone() {
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) throw new Error('microphone-unavailable')
+    const AudioContextCtor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextCtor) throw new Error('audio-context-unavailable')
+    streamRef.current?.getTracks().forEach(track => track.stop())
+    streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+    const context = new AudioContextCtor()
+    audioContextRef.current = context
+    if (context.state === 'suspended') {
+      try { await context.resume() } catch { /* Safari puede reanudarlo con el gesto actual */ }
+    }
+    const analyser = context.createAnalyser()
+    analyser.fftSize = 128
+    analyser.smoothingTimeConstant = 0.62
+    context.createMediaStreamSource(streamRef.current).connect(analyser)
+    analyserRef.current = analyser
+    drawSpectrum(analyser)
+  }
+
+  useEffect(() => () => {
+    try { recognition?.stop() } catch { /* ya estaba detenido */ }
+    void releaseMicrophone()
+  }, [recognition])
 
   const metrics = useMemo(() => deriveProgressMetrics(sessions, answers), [sessions, answers])
   const adaptiveLevel = useMemo(() => deriveStrictAdaptiveLevel(answers), [answers])
@@ -178,6 +246,7 @@ export default function HebrewProgressCoach() {
   async function advanceAfterSave() {
     await new Promise(resolve => window.setTimeout(resolve, 520))
     setSpeechResult(null); setSpeechError(null)
+    await releaseMicrophone()
     if (index + 1 < questions.length) { questionStartedAtRef.current = nowMs(); setIndex(value => value + 1); setSelected(null); return }
     if (!sessionId) return
     questionStartedAtRef.current = null
@@ -197,17 +266,24 @@ export default function HebrewProgressCoach() {
     finally { setSaving(false) }
   }
 
-  function startListening() {
+  async function startListening() {
     if (!current?.hebrew || !isPronunciation || typeof window === 'undefined' || saving) return
     const speechWindow = window as typeof window & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }
     const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
     if (!Recognition) { setSpeechError('Este navegador no ofrece reconocimiento de voz compatible. En iPhone, abre el Preview directamente en Safari y permite el micrófono.'); return }
-    const instance = new Recognition(); instance.lang = 'he-IL'; instance.interimResults = false; instance.maxAlternatives = 1
-    instance.onresult = event => { const transcript = event.results[0][0].transcript; void submitPronunciation(transcript) }
-    instance.onerror = () => { setListening(false); setRecognition(null); setSpeechError('No pude convertir la voz a texto esta vez. Toca Hablar e inténtalo nuevamente.') }
-    instance.onend = () => { setListening(false); setRecognition(null) }
-    setRecognition(instance); setListening(true); setSpeechResult(null); setSpeechError(null)
-    try { instance.start() } catch { setListening(false); setRecognition(null); setSpeechError('El micrófono no pudo iniciar. Inténtalo nuevamente.') }
+    setSpeechResult(null); setSpeechError(null)
+    try {
+      await ensureMicrophone()
+      const instance = new Recognition(); instance.lang = 'he-IL'; instance.interimResults = false; instance.maxAlternatives = 1
+      instance.onstart = () => setListening(true)
+      instance.onresult = event => { const transcript = event.results[0][0].transcript; void submitPronunciation(transcript) }
+      instance.onerror = () => { setListening(false); setRecognition(null); void releaseMicrophone(); setSpeechError('No pude convertir la voz a texto esta vez. Toca Hablar e inténtalo nuevamente.') }
+      instance.onend = () => { setListening(false); setRecognition(null); pauseSpectrum() }
+      setRecognition(instance)
+      instance.start()
+    } catch {
+      setListening(false); setRecognition(null); await releaseMicrophone(); setSpeechError('El micrófono no pudo iniciar. Inténtalo nuevamente.')
+    }
   }
 
   async function submitPronunciation(transcript: string) {
@@ -225,8 +301,8 @@ export default function HebrewProgressCoach() {
     finally { setSaving(false) }
   }
 
-  function stopListening() { recognition?.stop() }
-  function resetPractice() { setSessionId(null); setQuestions([]); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); setSpeechResult(null); setSpeechError(null); questionStartedAtRef.current = null }
+  function stopListening() { recognition?.stop(); void releaseMicrophone() }
+  function resetPractice() { recognition?.stop(); void releaseMicrophone(); setSessionId(null); setQuestions([]); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); setSpeechResult(null); setSpeechError(null); questionStartedAtRef.current = null }
 
   const finalPct = questions.length ? Math.round((correct / questions.length) * 100) : 0
   const finalFeedback = finalPct >= 90 ? 'Excelente sesión. Sigue practicando para sostener la retención y la lectura.' : finalPct >= 75 ? 'Buen resultado. Mantén la práctica y vuelve a los puntos que aún generan duda.' : finalPct >= 60 ? 'Vas avanzando. Los errores quedaron marcados para volver en Repaso.' : 'Conviene reforzar fundamentos antes de subir la dificultad.'
@@ -242,10 +318,10 @@ export default function HebrewProgressCoach() {
     </>}
 
     {active && current && <>
-      <div><p className="text-[10px] font-black uppercase tracking-[.1em] text-indigo-700">{current.type} · {SKILL_LABELS[current.skill]}</p><p className="mt-1 text-[11px] font-bold text-slate-400">Pregunta {index+1} de {questions.length} · {correct} aciertos</p></div>
+      <div><p className="text-[10px] font-black uppercase tracking-[.1em] text-indigo-700">{isPronunciation ? `Prueba oral final · ${levelName(current.difficulty)}` : `${current.type} · ${SKILL_LABELS[current.skill]}`}</p><p className="mt-1 text-[11px] font-bold text-slate-400">{isPronunciation ? `${correct} aciertos en la parte escrita` : `Pregunta ${index+1} de ${questions.length-1} · ${correct} aciertos`}</p></div>
       <div className="mx-auto mt-3 h-2 max-w-sm overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500 transition-all" style={{width:`${progress}%`}}/></div>
       <div className="py-6"><p className="mx-auto max-w-xl text-[1.4rem] font-black leading-snug sm:text-[1.55rem]">{current.prompt}</p>{current.hebrew&&<p lang="he" dir="rtl" className="mt-5 text-[4rem] font-black leading-tight text-indigo-700 sm:text-[4.5rem]">{current.hebrew}</p>}{isPronunciation&&current.pronunciationHint&&<p className="mt-2 text-[14px] font-bold text-slate-500">{current.pronunciationHint}</p>}</div>
-      {isPronunciation ? <div className="mx-auto max-w-sm border-y border-slate-100 py-5"><p className="text-[11px] font-black uppercase tracking-[.1em] text-slate-400">Prueba oral final</p><p className="mt-1 text-[12px] text-slate-500">Toca Hablar, lee una vez y espera. El resultado se guarda automáticamente.</p><button type="button" onClick={listening?stopListening:startListening} disabled={saving} className={`mt-4 inline-flex min-h-14 items-center gap-2 rounded-full px-7 text-[13px] font-black ${listening?'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200':'bg-indigo-600 text-white'}`}>{listening?<Square className="h-4 w-4"/>:<Mic className="h-5 w-5"/>}{listening?'Terminar':'Hablar'}</button>{speechResult&&<div className="mt-4"><p className="text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[18px] font-black text-slate-900">{speechResult.transcript}</span></p><p className={`mt-2 text-[15px] font-black ${speechResult.score>=85?'text-emerald-700':speechResult.score>=60?'text-amber-700':'text-rose-700'}`}>{speechResult.score>=85?'Lectura reconocida correctamente':speechResult.score>=60?'Está cerca; conviene repetirla en Repaso':'Necesita más práctica de lectura'} · {speechResult.score}%</p></div>}{speechError&&<p className="mt-3 text-[12px] font-bold text-rose-600">{speechError}</p>}</div> : <div className="grid grid-cols-3 gap-2">{current.options.map((option,optionIndex)=>{const chosen=selected===optionIndex;const correctOption=selected!==null&&current.correctIndex===optionIndex;return <button key={`${current.key}-${option}`} type="button" disabled={selected!==null||saving} onClick={()=>void answer(optionIndex)} className={`min-h-[5.4rem] rounded-[18px] border px-3 py-3 text-center font-black leading-tight ${normalizeHebrew(option).length?'text-[2.15rem] sm:text-[2.35rem]':'text-[1.22rem] sm:text-[1.35rem]'} ${correctOption?'border-emerald-300 bg-emerald-50 text-emerald-800':chosen?'border-rose-300 bg-rose-50 text-rose-800':'border-slate-200 bg-white text-slate-800'}`}>{option}</button>})}</div>}
+      {isPronunciation ? <div className="mx-auto max-w-sm border-y border-slate-100 py-5" data-oral-checkpoint="true"><p className="text-[11px] font-black uppercase tracking-[.1em] text-slate-400">Prueba oral final</p><p className="mt-1 text-[12px] text-slate-500">Esta pregunta es solo de pronunciación. Toca Hablar, pronuncia el texto y espera el resultado.</p><div className="mx-auto mt-5 flex h-16 max-w-[250px] items-center justify-center gap-1.5" aria-label={listening ? 'Micrófono activo, espectro de voz en movimiento' : 'Micrófono inactivo'}>{levels.map((height, bar)=><span key={bar} className={`w-2 rounded-full transition-[height,background-color] duration-75 ${listening?'bg-cyan-500':'bg-cyan-200'}`} style={{height:`${height}%`}} />)}</div><p className={`mt-1 text-[11px] font-black ${listening?'text-cyan-700':'text-slate-400'}`}>{listening?'Te estoy escuchando…':'Listo para escuchar'}</p><button type="button" onClick={listening?stopListening:()=>void startListening()} disabled={saving} className={`mt-4 inline-flex min-h-14 items-center gap-2 rounded-full px-7 text-[13px] font-black ${listening?'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200':'bg-indigo-600 text-white'}`}>{listening?<Square className="h-4 w-4"/>:<Mic className="h-5 w-5"/>}{listening?'Terminar':'Hablar'}</button>{speechResult&&<div className="mt-4"><p className="text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[18px] font-black text-slate-900">{speechResult.transcript}</span></p><p className={`mt-2 text-[15px] font-black ${speechResult.score>=85?'text-emerald-700':speechResult.score>=60?'text-amber-700':'text-rose-700'}`}>{speechResult.score>=85?'Lectura reconocida correctamente':speechResult.score>=60?'Está cerca; conviene repetirla en Repaso':'Necesita más práctica de lectura'} · {speechResult.score}%</p></div>}{speechError&&<p className="mt-3 text-[12px] font-bold text-rose-600">{speechError}</p>}</div> : <div className="grid grid-cols-3 gap-2">{current.options.map((option,optionIndex)=>{const chosen=selected===optionIndex;const correctOption=selected!==null&&current.correctIndex===optionIndex;return <button key={`${current.key}-${option}`} type="button" disabled={selected!==null||saving} onClick={()=>void answer(optionIndex)} className={`min-h-[5.4rem] rounded-[18px] border px-3 py-3 text-center font-black leading-tight ${normalizeHebrew(option).length?'text-[2.15rem] sm:text-[2.35rem]':'text-[1.22rem] sm:text-[1.35rem]'} ${correctOption?'border-emerald-300 bg-emerald-50 text-emerald-800':chosen?'border-rose-300 bg-rose-50 text-rose-800':'border-slate-200 bg-white text-slate-800'}`}>{option}</button>})}</div>}
     </>}
 
     {finished&&<div><CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600"/><h3 className="mt-2 text-xl font-black">Práctica terminada</h3><div className="mt-4 grid grid-cols-2 divide-x divide-slate-200 border-y border-slate-200 py-4"><div><p className="text-2xl font-black text-emerald-700">{finalPct}%</p><p className="text-[10px] font-black text-slate-500">Nota</p></div><div><p className="text-2xl font-black">{correct}/{questions.length}</p><p className="text-[10px] font-black text-slate-500">Aciertos</p></div></div><p className="mx-auto mt-4 max-w-sm text-[12px] font-semibold leading-relaxed text-slate-600">{finalFeedback}</p><p className="mx-auto mt-3 max-w-sm text-[11px] font-semibold text-indigo-700">{metrics.recommendation}</p><button type="button" onClick={resetPractice} className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-full bg-indigo-600 px-6 text-sm font-black text-white"><RotateCcw className="h-4 w-4"/>Nueva práctica</button></div>}
