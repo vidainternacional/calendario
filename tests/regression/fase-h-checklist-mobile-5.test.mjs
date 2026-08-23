@@ -12,18 +12,19 @@ test('FASE H checklist 5: Teclado hebreo es un desplegable directo con altura na
   assert.equal((home.match(/>Teclado hebreo</g) ?? []).length, 1)
   assert.match(home, /onClick=\{\(\) => setKeyboardEnabled\(value => !value\)\}/)
   assert.match(home, /aria-expanded=\{keyboardEnabled\}/)
-  assert.equal((home.match(/min-h-\[72px\]/g) ?? []).length >= 2, true)
+  assert.equal((home.match(/min-h-\[76px\]/g) ?? []).length >= 2, true)
   assert.match(home, /Practica tu escritura en hebreo/)
   assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\}/)
 })
 
-test('FASE H checklist 5: progreso usa historial persistente sin caja anidada', () => {
+test('FASE H checklist 5: progreso usa cuadro de notas persistente sin caja anidada', () => {
   assert.match(home, /Prueba tu progreso/)
   assert.match(home, /<HebrewProgressCoach \/>/)
   assert.match(home, /Mide tu nivel y descubre qué reforzar/)
   assert.match(home, /border-t border-slate-200/)
   assert.doesNotMatch(home, /<details/)
-  assert.match(coach, /Tu historial/)
+  assert.match(coach, /Cuadro de notas/)
+  assert.match(coach, /evaluaciones registradas/)
   assert.match(coach, /loadHebrewProgress/)
   assert.match(coach, /saveHebrewProgressAnswer/)
   assert.doesNotMatch(home + coach, /La persistencia de progreso todavía no está activa\./)
