@@ -6,6 +6,7 @@ import { ArrowLeft, BookOpenText, ChevronDown, Keyboard, Languages, Library } fr
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
 import HebrewProgressCoach from '@/components/hebreo/HebrewProgressCoach'
+import HebrewSpeechPractice from '@/components/hebreo/HebrewSpeechPractice'
 import HebrewSupportMaterials from '@/components/hebreo/HebrewSupportMaterials'
 import HebrewTranslator from '@/components/hebreo/HebrewTranslator'
 
@@ -72,7 +73,7 @@ export default function HebrewLearningHome() {
             <span><span className="block text-[14px] font-black text-slate-900">Prueba tu progreso</span><span className="mt-0.5 block text-[10px] text-slate-400">Mide tu nivel y descubre qué reforzar</span></span>
             <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${progressOpen ? 'rotate-180' : ''}`} />
           </button>
-          {progressOpen && <div className="border-t border-slate-100 pb-5 pt-3"><HebrewProgressCoach /></div>}
+          {progressOpen && <div className="border-t border-slate-100 pb-5 pt-3"><HebrewProgressCoach /><HebrewSpeechPractice /></div>}
         </section>
 
         <section aria-label="Teclado hebreo" className="border-t border-slate-200">
