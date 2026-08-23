@@ -90,7 +90,8 @@ test('FASE H: explicación del Alef-Bet conserva lectura derecha a izquierda', (
 test('FASE H: portada es un hub compacto y Empecemos es la entrada principal', () => {
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
   assert.match(home, />Empecemos</)
-  assert.match(home, /hebrew-glimmer/)
+  assert.match(home, /cta-neon-orbit/)
+  assert.doesNotMatch(home, /hebrew-glimmer/)
   assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
   assert.match(home, /useState<QuickPanelId \| null>\(null\)/)
   assert.match(home, /<QuickButton id="translator"/)
