@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Mic, Send, Square, Volume2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Mic, Square, Volume2 } from 'lucide-react'
 import { HEBREW_PRACTICE_QUESTIONS } from '@/lib/hebreo/progress'
 import { HEBREW_USEFUL_PHRASES } from '@/lib/hebreo/useful-phrases'
 import { pronounceHebrewForSpanish, withoutHebrewMarks } from '@/lib/hebreo/pronunciation'
@@ -41,7 +41,11 @@ function similarity(expected: string, heard: string) {
   for (let column = 0; column <= b.length; column += 1) rows[0][column] = column
   for (let row = 1; row <= a.length; row += 1) {
     for (let column = 1; column <= b.length; column += 1) {
-      rows[row][column] = Math.min(rows[row - 1][column] + 1, rows[row][column - 1] + 1, rows[row - 1][column - 1] + (a[row - 1] === b[column - 1] ? 0 : 1))
+      rows[row][column] = Math.min(
+        rows[row - 1][column] + 1,
+        rows[row][column - 1] + 1,
+        rows[row - 1][column - 1] + (a[row - 1] === b[column - 1] ? 0 : 1),
+      )
     }
   }
   return Math.max(0, Math.round((1 - rows[a.length][b.length] / Math.max(a.length, b.length)) * 100))
@@ -55,7 +59,10 @@ function detailedFeedback(expected: string, heard: string, score: number): Detai
   if (score >= 90) return { title: 'Se escuchó muy bien.', detail: 'El navegador reconoció prácticamente todo el texto esperado.' }
   const expectedWords = hebrewWords(expected)
   const heardWords = hebrewWords(heard)
-  const mismatches = expectedWords.map((word, index) => ({ expected: word, heard: heardWords[index] })).filter(pair => !pair.heard || pair.expected.normalized !== pair.heard.normalized).slice(0, 3)
+  const mismatches = expectedWords
+    .map((word, index) => ({ expected: word, heard: heardWords[index] }))
+    .filter(pair => !pair.heard || pair.expected.normalized !== pair.heard.normalized)
+    .slice(0, 3)
   if (!mismatches.length) return { title: 'Se escuchó bien.', detail: 'La diferencia detectada es pequeña. Repite una vez más para confirmar.' }
   const parts = mismatches.map(pair => {
     const guide = pronounceHebrewForSpanish(pair.expected.raw)
@@ -76,14 +83,22 @@ function unique(rows: Prompt[]) {
 }
 
 function buildWordPrompts() {
-  const fromCourse = HEBREW_PRACTICE_QUESTIONS.filter(question => question.hebrew && !question.hebrew.includes(' ') && normalizeHebrew(question.hebrew).length >= 2).map(question => ({ key: `course:${question.key}`, hebrew: question.hebrew!, label: question.type, source: 'Curso' }))
-  const fromPhrases = HEBREW_USEFUL_PHRASES.filter(item => !item.hebrew.includes(' ')).map(item => ({ key: `phrase:${item.id}`, hebrew: item.hebrew, label: item.spanish, source: 'Palabras aprendidas' }))
+  const fromCourse = HEBREW_PRACTICE_QUESTIONS
+    .filter(question => question.hebrew && !question.hebrew.includes(' ') && normalizeHebrew(question.hebrew).length >= 2)
+    .map(question => ({ key: `course:${question.key}`, hebrew: question.hebrew!, label: question.type, source: 'Curso' }))
+  const fromPhrases = HEBREW_USEFUL_PHRASES
+    .filter(item => !item.hebrew.includes(' '))
+    .map(item => ({ key: `phrase:${item.id}`, hebrew: item.hebrew, label: item.spanish, source: 'Palabras aprendidas' }))
   return unique([...fromCourse, ...fromPhrases])
 }
 
 function buildSentencePrompts() {
-  const fromCourse = HEBREW_PRACTICE_QUESTIONS.filter(question => question.hebrew && question.hebrew.includes(' ') && normalizeHebrew(question.hebrew).length >= 4).map(question => ({ key: `course:${question.key}`, hebrew: question.hebrew!, label: question.type, source: 'Lectura y reglas' }))
-  const fromPhrases = HEBREW_USEFUL_PHRASES.filter(item => item.hebrew.includes(' ')).map(item => ({ key: `phrase:${item.id}`, hebrew: item.hebrew, label: item.spanish, source: 'Frases aprendidas' }))
+  const fromCourse = HEBREW_PRACTICE_QUESTIONS
+    .filter(question => question.hebrew && question.hebrew.includes(' ') && normalizeHebrew(question.hebrew).length >= 4)
+    .map(question => ({ key: `course:${question.key}`, hebrew: question.hebrew!, label: question.type, source: 'Lectura y reglas' }))
+  const fromPhrases = HEBREW_USEFUL_PHRASES
+    .filter(item => item.hebrew.includes(' '))
+    .map(item => ({ key: `phrase:${item.id}`, hebrew: item.hebrew, label: item.spanish, source: 'Frases aprendidas' }))
   const biblical: Prompt[] = [
     { key: 'biblical:gen-1-1a', hebrew: 'בְּרֵאשִׁית בָּרָא אֱלֹהִים', label: 'Génesis 1:1 · primera parte', source: 'Lectura bíblica' },
     { key: 'biblical:deu-6-4', hebrew: 'שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד', label: 'Shemá · Deuteronomio 6:4', source: 'Lectura bíblica' },
@@ -102,7 +117,7 @@ function feedback(score: number) {
 export default function HebrewSpeechPractice() {
   const [mode, setMode] = useState<SpeechMode>('words')
   const [index, setIndex] = useState(0)
-  const [status, setStatus] = useState<'idle' | 'requesting' | 'listening'>('idle')
+  const [status, setStatus] = useState<'idle' | 'requesting' | 'listening' | 'processing'>('idle')
   const [captured, setCaptured] = useState('')
   const [result, setResult] = useState<{ transcript: string; score: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -176,7 +191,7 @@ export default function HebrewSpeechPractice() {
       audioContextRef.current = context
     }
     if (context.state === 'suspended') {
-      try { await context.resume() } catch { /* Safari may resume on user gesture samples */ }
+      try { await context.resume() } catch { /* Safari resumes again on a later user gesture if necessary */ }
     }
 
     pauseSpectrum()
@@ -234,7 +249,7 @@ export default function HebrewSpeechPractice() {
       const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
       if (!Recognition) throw new Error('speech-recognition-unavailable')
 
-      await new Promise(resolve => window.setTimeout(resolve, 120))
+      await new Promise(resolve => window.setTimeout(resolve, 60))
       const instance = new Recognition()
       recognitionRef.current = instance
       instance.lang = 'he-IL'
@@ -261,15 +276,26 @@ export default function HebrewSpeechPractice() {
             ? 'No detecté voz. Toca Hablar otra vez y espera a que el espectro se active.'
             : code === 'audio-capture'
               ? 'El audio se interrumpió. El micrófono se reiniciará en el próximo intento.'
-              : 'El reconocimiento se interrumpió. Vuelve a tocar Hablar; el micrófono se conserva listo para reintentar.')
+              : 'El reconocimiento se interrumpió. Vuelve a tocar Hablar; el micrófono queda listo para reintentar.')
         interactionFeedback('warning')
       }
       instance.onend = () => {
         recognitionRef.current = null
-        setStatus('idle')
         pauseSpectrum()
-        interactionFeedback('listen-end')
-        if (!capturedRef.current) setError(previous => previous ?? 'No se reconoció texto. Puedes volver a tocar Hablar sin cambiar de palabra.')
+        const transcript = capturedRef.current.trim()
+        if (transcript) {
+          setStatus('processing')
+          const next = { transcript, score: similarity(current.hebrew, transcript) }
+          setCaptured(transcript)
+          setResult(next)
+          setError(null)
+          interactionFeedback(next.score >= 75 ? 'success' : 'warning')
+          window.setTimeout(() => setStatus('idle'), 120)
+        } else {
+          setStatus('idle')
+          interactionFeedback('listen-end')
+          setError(previous => previous ?? 'No se reconoció texto. Puedes volver a tocar Hablar sin cambiar de palabra.')
+        }
       }
       instance.start()
     } catch (cause) {
@@ -289,13 +315,6 @@ export default function HebrewSpeechPractice() {
   function stop() {
     try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     interactionFeedback('tap')
-  }
-
-  function submitResult() {
-    if (!current || !captured.trim()) return
-    const next = { transcript: captured.trim(), score: similarity(current.hebrew, captured.trim()) }
-    setResult(next)
-    interactionFeedback(next.score >= 75 ? 'success' : 'warning')
   }
 
   function speakGuide() {
@@ -326,45 +345,42 @@ export default function HebrewSpeechPractice() {
         <button type="button" onClick={() => changeMode('sentences')} className={`min-h-8 rounded-full px-4 text-[10px] font-black ${mode === 'sentences' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500'}`}>Oraciones</button>
       </div>
 
-      {current && (
-        <div className="mt-3">
-          <div className="flex items-center justify-between gap-2">
-            <button type="button" onClick={() => move(-1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100" aria-label="Anterior"><ChevronLeft className="h-6 w-6" /></button>
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-bold text-slate-400">{index + 1}/{prompts.length} · {current.source}</p>
-              <p lang="he" dir="rtl" className="mx-auto mt-1 text-[3rem] font-black leading-[1.25] text-slate-950">{current.hebrew}</p>
-              <p className="mt-1 text-[13px] font-black leading-snug text-sky-700">{pronounceHebrewForSpanish(current.hebrew)}</p>
-              <p className="mt-1 text-[12px] font-semibold leading-snug text-slate-600">{current.label}</p>
-            </div>
-            <button type="button" onClick={() => move(1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100" aria-label="Siguiente"><ChevronRight className="h-6 w-6" /></button>
+      {current && <div className="mt-3">
+        <div className="flex items-center justify-between gap-2">
+          <button type="button" onClick={() => move(-1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100" aria-label="Anterior"><ChevronLeft className="h-6 w-6" /></button>
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-bold text-slate-400">{index + 1}/{prompts.length} · {current.source}</p>
+            <p lang="he" dir="rtl" className="mx-auto mt-1 text-[3rem] font-black leading-[1.25] text-slate-950">{current.hebrew}</p>
+            <p className="mt-1 text-[13px] font-black leading-snug text-sky-700">{pronounceHebrewForSpanish(current.hebrew)}</p>
+            <p className="mt-1 text-[12px] font-semibold leading-snug text-slate-600">{current.label}</p>
           </div>
-
-          <div className={`voice-spectrum mx-auto mt-3 flex h-12 max-w-[270px] items-center justify-center gap-[3px] overflow-hidden rounded-full border px-5 transition ${status === 'listening' ? 'voice-spectrum-active border-sky-200 bg-sky-50/80' : 'border-slate-100 bg-slate-50'}`} aria-label="Espectro de voz">
-            {levels.map((height, bar) => <span key={bar} className={`w-[3px] rounded-full transition-[height] duration-75 ${status === 'listening' ? 'bg-sky-500' : 'bg-slate-300'}`} style={{ height: `${Math.max(5, Math.round(height * 0.34))}px` }} />)}
-          </div>
-
-          <div className="mt-3 flex items-center justify-center gap-4">
-            <button type="button" onClick={speakGuide} className="grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white text-sky-700" aria-label="Escuchar pronunciación"><Volume2 className="h-5 w-5" /></button>
-            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`grid h-14 w-14 place-items-center rounded-full disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-sky-600 text-white shadow-[0_0_22px_rgba(14,165,233,.22)]'}`} aria-label={status === 'listening' ? 'Terminar escucha' : 'Hablar'}>{status === 'listening' ? <Square className="h-4 w-4" /> : <Mic className="h-6 w-6" />}</button>
-            <button type="button" onClick={submitResult} disabled={!captured || Boolean(result) || status !== 'idle'} className="grid h-12 w-12 place-items-center rounded-full bg-slate-900 text-white disabled:opacity-20" aria-label="Enviar resultado"><Send className="h-5 w-5" /></button>
-          </div>
-
-          {status === 'requesting' && <p className="mt-2 text-[10px] font-black text-sky-700">Activando micrófono…</p>}
-          {status === 'listening' && <p className="mt-2 text-[10px] font-black text-sky-700">Te escucho…</p>}
-          {captured && !result && status === 'idle' && <p className="mx-auto mt-3 max-w-sm text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[1.4rem] font-black text-slate-900">{captured}</span></p>}
-
-          {result && scoreFeedback && detail && (
-            <div className="mx-auto mt-3 max-w-sm rounded-[18px] bg-slate-50 px-4 py-3">
-              <div className="flex items-baseline justify-center gap-2"><p className="text-[24px] font-black text-slate-950">{result.score}%</p><p className={`text-[12px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>
-              <p className="mt-1 text-[13px] font-black text-slate-800">{detail.title}</p>
-              {detail.detail && <p className="mx-auto mt-1 max-w-sm text-[11px] font-semibold leading-relaxed text-slate-500">{detail.detail}</p>}
-              <button type="button" onClick={() => { clearAttempt(); interactionFeedback('tap') }} className="mt-2 text-[10px] font-black text-sky-700">Intentar otra vez</button>
-            </div>
-          )}
-
-          {error && <p role="alert" className="mx-auto mt-2 max-w-sm text-[10px] font-bold leading-relaxed text-rose-600">{error}</p>}
+          <button type="button" onClick={() => move(1)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100" aria-label="Siguiente"><ChevronRight className="h-6 w-6" /></button>
         </div>
-      )}
+
+        <div className={`voice-spectrum mx-auto mt-3 flex h-12 max-w-[270px] items-center justify-center gap-[3px] overflow-hidden rounded-full border px-5 transition ${status === 'listening' ? 'voice-spectrum-active border-sky-200 bg-sky-50/80' : 'border-slate-100 bg-slate-50'}`} aria-label="Espectro de voz">
+          {levels.map((height, bar) => <span key={bar} className={`w-[3px] rounded-full transition-[height] duration-75 ${status === 'listening' ? 'bg-sky-500' : 'bg-slate-300'}`} style={{ height: `${Math.max(5, Math.round(height * 0.34))}px` }} />)}
+        </div>
+
+        <div className="mt-3 flex items-center justify-center gap-5">
+          <button type="button" onClick={speakGuide} className="grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white text-sky-700" aria-label="Escuchar pronunciación"><Volume2 className="h-5 w-5" /></button>
+          <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting' || status === 'processing'} className={`grid h-14 w-14 place-items-center rounded-full disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-sky-600 text-white shadow-[0_0_22px_rgba(14,165,233,.22)]'}`} aria-label={status === 'listening' ? 'Terminar escucha' : 'Hablar'}>{status === 'listening' ? <Square className="h-4 w-4" /> : <Mic className="h-6 w-6" />}</button>
+        </div>
+
+        {status === 'requesting' && <p className="mt-2 text-[10px] font-black text-sky-700">Activando micrófono…</p>}
+        {status === 'listening' && <p className="mt-2 text-[10px] font-black text-sky-700">Te escucho…</p>}
+        {status === 'processing' && <p className="mt-2 text-[10px] font-black text-sky-700">Analizando…</p>}
+
+        {result && scoreFeedback && detail && <div className="mx-auto mt-3 max-w-sm rounded-[18px] bg-slate-50 px-4 py-3">
+          <p className="text-[10px] font-bold text-slate-400">Reconocí</p>
+          <p lang="he" dir="rtl" className="mt-1 text-[1.65rem] font-black text-slate-950">{result.transcript}</p>
+          <div className="mt-1 flex items-baseline justify-center gap-2"><p className="text-[24px] font-black text-slate-950">{result.score}%</p><p className={`text-[12px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>
+          <p className="mt-1 text-[13px] font-black text-slate-800">{detail.title}</p>
+          {detail.detail && <p className="mx-auto mt-1 max-w-sm text-[11px] font-semibold leading-relaxed text-slate-500">{detail.detail}</p>}
+          <button type="button" onClick={() => { clearAttempt(); interactionFeedback('tap') }} className="mt-2 text-[10px] font-black text-sky-700">Intentar otra vez</button>
+        </div>}
+
+        {error && <p role="alert" className="mx-auto mt-2 max-w-sm text-[10px] font-bold leading-relaxed text-rose-600">{error}</p>}
+      </div>}
 
       <style jsx>{`
         .voice-spectrum-active { box-shadow: inset 0 0 18px rgba(14,165,233,.08), 0 0 28px rgba(14,165,233,.16); }
