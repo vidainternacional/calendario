@@ -26,12 +26,15 @@ test('FASE H bloque 4: cada respuesta objetiva puede persistir su tiempo sin afe
 test('FASE H bloque 4: evaluación mide fluidez contra el historial propio', () => {
   assert.match(coach, /questionStartedAtRef/)
   assert.match(coach, /responseTimeMs/)
+  assert.match(coach, /timed\.length < 6/)
+  assert.match(coach, /previous \* 0\.85/)
+  assert.match(coach, /previous \* 1\.2/)
   assert.match(coach, /Creando línea base/)
   assert.match(coach, /Más fluido/)
   assert.match(coach, /Más pausado/)
   assert.match(coach, />Fluidez</)
   assert.match(coach, />Tiempo típico</)
-  assert.match(coach, /No penaliza automáticamente una respuesta correcta ni usa un límite universal de velocidad/)
+  assert.doesNotMatch(coach, /responseTimeMs\s*[<>]=?\s*\d+\s*\?\s*isCorrect/)
 })
 
 test('FASE H traductor: salida hebrea de aprendizaje rechaza abreviaturas que el audio expandiría', () => {
