@@ -29,10 +29,13 @@ test('FASE H bloque 4: práctica oral tiene feedback háptico y sonoro reutiliza
   assert.match(feedback, /AudioContext/)
 })
 
-test('FASE H bloque 4: espectro permanece celeste y controles orales son compactos', () => {
+test('FASE H bloque 4: espectro permanece celeste y el resultado oral se calcula automáticamente', () => {
   assert.match(speech, /voice-spectrum-active/)
   assert.match(speech, /bg-sky-500/)
   assert.match(speech, /aria-label="Escuchar pronunciación"/)
   assert.match(speech, /aria-label=\{status === 'listening' \? 'Terminar escucha' : 'Hablar'\}/)
-  assert.match(speech, /aria-label="Enviar resultado"/)
+  assert.match(speech, /setStatus\('processing'\)/)
+  assert.match(speech, /score: similarity\(current\.hebrew, transcript\)/)
+  assert.match(speech, /Analizando pronunciación/)
+  assert.doesNotMatch(speech, /aria-label="Enviar resultado"|function submitResult/)
 })
