@@ -2,14 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import {
-  ArrowLeft,
-  BookOpenText,
-  ChevronDown,
-  Keyboard,
-  Languages,
-  Library,
-} from 'lucide-react'
+import { ArrowLeft, BookOpenText, ChevronDown, Keyboard, Languages, Library } from 'lucide-react'
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
 import HebrewProgressCoach from '@/components/hebreo/HebrewProgressCoach'
@@ -38,9 +31,7 @@ export default function HebrewLearningHome() {
   const [keyboardEnabled, setKeyboardEnabled] = useState(false)
   const [openQuick, setOpenQuick] = useState<QuickPanelId | null>(null)
 
-  function toggleQuick(id: QuickPanelId) {
-    setOpenQuick(current => current === id ? null : id)
-  }
+  function toggleQuick(id: QuickPanelId) { setOpenQuick(current => current === id ? null : id) }
 
   return (
     <main className="min-h-screen bg-[#f9f9fb] text-slate-950">
@@ -55,12 +46,9 @@ export default function HebrewLearningHome() {
         </header>
 
         <section aria-label="Comenzar a aprender" className="mt-5">
-          <Link href="/estudios/hebreo/aprender" className="flex min-h-[104px] items-center justify-center rounded-[26px] bg-indigo-600 px-5 py-4 text-center text-white shadow-[0_14px_35px_rgba(79,70,229,0.22)] transition active:scale-[0.985]">
-            <span className="block w-full">
-              <span className="mx-auto inline-flex rounded-full bg-white/15 px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em]">Empieza aquí</span>
-              <span className="mt-2 block text-[19px] font-black">Aprender</span>
-              <span className="mt-0.5 block text-[11px] font-semibold text-indigo-100">Curso guiado paso a paso</span>
-            </span>
+          <Link href="/estudios/hebreo/aprender" className="group relative flex min-h-[104px] items-center justify-center overflow-hidden rounded-[26px] bg-indigo-600 px-5 py-4 text-center text-white shadow-[0_14px_35px_rgba(79,70,229,0.22)] transition active:scale-[0.985]">
+            <span aria-hidden="true" lang="he" dir="rtl" className="hebrew-glimmer pointer-events-none absolute inset-0 flex items-center justify-around px-4 text-[2.4rem] font-black tracking-[0.18em] text-white/[0.07]">א ב ג ד ה</span>
+            <span className="relative z-10 text-[21px] font-black tracking-[-0.02em]">Empecemos</span>
           </Link>
         </section>
 
@@ -72,57 +60,37 @@ export default function HebrewLearningHome() {
 
         {openQuick && (
           <section aria-label={`${QUICK_PANELS[openQuick].title} desplegado`} className="mt-5 border-t border-slate-200 pt-5">
-            {openQuick === 'translator' && (
-              <div>
-                <div className="mb-4 text-center">
-                  <p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">תַּרְגּוּם</p>
-                  <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.02em]">Traductor</h2>
-                  <p className="mt-1 text-[12px] leading-relaxed text-slate-500">Escribe una palabra o frase sin salir del inicio.</p>
-                </div>
-                <HebrewTranslator embedded />
-              </div>
-            )}
+            {openQuick === 'translator' && <div><div className="mb-4 text-center"><p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">תַּרְגּוּם</p><h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.02em]">Traductor</h2><p className="mt-1 text-[12px] leading-relaxed text-slate-500">Escribe una palabra o frase sin salir del inicio.</p></div><HebrewTranslator embedded /></div>}
             {openQuick === 'bible' && <HebrewBibleReader />}
-            {openQuick === 'materials' && (
-              <div>
-                <div className="mb-4 text-center">
-                  <p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">חֹמֶר לִמּוּד</p>
-                  <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.02em]">Materiales</h2>
-                  <p className="mt-1 text-[12px] leading-relaxed text-slate-500">Recursos del curso organizados por etapas.</p>
-                </div>
-                <HebrewSupportMaterials embedded />
-              </div>
-            )}
+            {openQuick === 'materials' && <div><div className="mb-4 text-center"><p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">חֹמֶר לִמּוּד</p><h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.02em]">Materiales</h2><p className="mt-1 text-[12px] leading-relaxed text-slate-500">Recursos del curso organizados por etapas.</p></div><HebrewSupportMaterials embedded /></div>}
           </section>
         )}
 
         <section aria-label="Práctica" className="mt-4 space-y-2.5">
           <details className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
             <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 text-left">
-              <span><span className="block text-[13px] font-black text-slate-900">Prueba tu progreso</span><span className="block text-[10px] text-slate-400">Práctica personal según tu historial</span></span>
+              <span><span className="block text-[13px] font-black text-slate-900">Prueba tu progreso</span><span className="block text-[10px] text-slate-400">Mide tu nivel y descubre qué reforzar</span></span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </summary>
             <div className="border-t border-slate-100 px-4 pb-4 pt-2"><HebrewProgressCoach /></div>
           </details>
 
           <div>
-            <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-expanded={keyboardEnabled} className={`flex min-h-[68px] w-full items-center justify-between gap-3 rounded-[22px] border px-4 text-left shadow-sm transition active:scale-[0.99] ${keyboardEnabled ? 'border-indigo-200 bg-indigo-50/40' : 'border-slate-200 bg-white'}`}>
-              <span className="flex items-center gap-3">
-                <span className={`grid h-10 w-10 place-items-center rounded-[14px] ${keyboardEnabled ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-indigo-700'}`}><Keyboard className="h-4.5 w-4.5" /></span>
-                <span><span className="block text-[13px] font-black text-slate-900">Teclado hebreo</span><span className="block text-[10px] text-slate-400">Practica tu escritura en hebreo</span></span>
-              </span>
+            <button type="button" onClick={() => setKeyboardEnabled(value => !value)} aria-expanded={keyboardEnabled} className={`flex w-full items-center justify-between gap-3 rounded-[22px] border px-4 text-left shadow-sm transition active:scale-[0.99] ${keyboardEnabled ? 'min-h-[68px] border-indigo-200 bg-indigo-50/40' : 'min-h-[58px] border-slate-200 bg-white'}`}>
+              <span className="flex items-center gap-3"><span className={`grid place-items-center rounded-[14px] transition-all ${keyboardEnabled ? 'h-10 w-10 bg-indigo-600 text-white' : 'h-9 w-9 bg-slate-100 text-indigo-700'}`}><Keyboard className="h-4.5 w-4.5" /></span><span><span className="block text-[13px] font-black text-slate-900">Teclado hebreo</span><span className="block text-[10px] text-slate-400">Practica tu escritura en hebreo</span></span></span>
               <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${keyboardEnabled ? 'rotate-180' : ''}`} />
             </button>
-            {keyboardEnabled && (
-              <div className="mt-5 border-t border-slate-200 pt-5">
-                <HebrewKeyboardDock enabled={keyboardEnabled} />
-              </div>
-            )}
+            {keyboardEnabled && <div className="mt-5 border-t border-slate-200 pt-5"><HebrewKeyboardDock enabled={keyboardEnabled} /></div>}
           </div>
         </section>
 
         <p className="mt-5 text-center text-[9px] leading-relaxed text-slate-400">FASE H · Aprendizaje en desarrollo · práctica sugerida de 5–10 minutos al día</p>
       </div>
+      <style jsx global>{`
+        @keyframes hebrewGlimmer { 0%, 72%, 100% { opacity: .35; filter: brightness(1); } 80% { opacity: .72; filter: brightness(2.3); } 88% { opacity: .35; filter: brightness(1); } }
+        .hebrew-glimmer { animation: hebrewGlimmer 7s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .hebrew-glimmer { animation: none; } }
+      `}</style>
     </main>
   )
 }
