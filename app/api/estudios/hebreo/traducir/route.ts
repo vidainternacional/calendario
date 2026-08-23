@@ -23,10 +23,18 @@ function translatorInstructions(source: Language, target: Language) {
     'Si la entrada es una sola palabra, devuelve el equivalente principal más natural y breve.',
     'Si la entrada es una frase, tradúcela de forma natural y fiel al sentido completo.',
     target === 'he'
-      ? 'Escribe la salida hebrea con niqqud completo y coherente para aprendizaje; no omitas los signos vocálicos.'
+      ? 'Escribe la salida hebrea con niqqud completo y coherente para aprendizaje; no omitas los signos vocálicos. Escribe todas las palabras completas: no uses abreviaturas, siglas ni sustituciones religiosas con geresh o gershayim (׳ o ״). El texto visible debe coincidir con las palabras que una voz leería en voz alta.'
       : 'No añadas texto hebreo ni transliteración a la salida española.',
-    'Para español a hebreo cotidiano usa hebreo israelí natural; si el texto es claramente bíblico o religioso, conserva la formulación hebrea estándar cuando corresponda.',
+    'Para español a hebreo cotidiano usa hebreo israelí natural; si el texto es claramente bíblico o religioso, conserva la formulación hebrea estándar cuando corresponda, pero siempre con las palabras desarrolladas por completo para aprendizaje.',
     'No inventes contexto que no esté en la entrada.',
+  ].join(' ')
+}
+
+function expansionInstructions(source: Language, target: Language, firstAttempt: string) {
+  return [
+    translatorInstructions(source, target),
+    `Tu primera salida fue: ${firstAttempt}`,
+    'Reescríbela sin ninguna abreviatura hebrea. Expande explícitamente toda forma marcada con ׳ o ״ a las palabras completas que se pronuncian. Mantén el mismo significado y devuelve únicamente la traducción final.',
   ].join(' ')
 }
 
@@ -37,6 +45,10 @@ function cleanModelTranslation(value: string) {
     .replace(/\s*```$/u, '')
     .replace(/^["“”]([\s\S]*)["“”]$/u, '$1')
     .trim()
+}
+
+function containsHebrewAbbreviation(value: string) {
+  return /[׳״]/u.test(value)
 }
 
 async function lookupHebrewWord(
@@ -172,11 +184,28 @@ export async function POST(request: Request) {
       input: text,
       instructions: translatorInstructions(source, target),
     })
-    const translatedText = cleanModelTranslation(generated.text)
+    let translatedText = cleanModelTranslation(generated.text)
+
+    if (target === 'he' && containsHebrewAbbreviation(translatedText)) {
+      const expanded = await vidaAI({
+        task: 'interpretar_busqueda_biblica',
+        ownerId: user.id,
+        input: text,
+        instructions: expansionInstructions(source, target, translatedText),
+      })
+      translatedText = cleanModelTranslation(expanded.text)
+    }
 
     if (!translatedText) {
       return NextResponse.json(
         { error: 'El traductor no devolvió una respuesta.' },
+        { status: 502 },
+      )
+    }
+
+    if (target === 'he' && containsHebrewAbbreviation(translatedText)) {
+      return NextResponse.json(
+        { error: 'No se pudo generar una forma hebrea completa sin abreviaturas. Intenta reformular la frase.' },
         { status: 502 },
       )
     }
