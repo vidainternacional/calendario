@@ -64,8 +64,9 @@ test('FASE H checklist 2: traductor añade pronunciación escrita y ralentiza au
   assert.doesNotMatch(translator, /Strong|morfolog|ocurrencias/i)
 })
 
-test('FASE H checklist 2: Inicio mantiene Aprender como destino y despliega utilidades debajo', () => {
-  assert.match(home, /Empieza aquí/)
+test('FASE H checklist 2: Inicio mantiene el curso como destino y despliega utilidades debajo', () => {
+  assert.match(home, />Empecemos</)
+  assert.match(home, /hebrew-glimmer/)
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
   assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
   assert.match(home, /<QuickButton id="translator"/)
@@ -75,7 +76,8 @@ test('FASE H checklist 2: Inicio mantiene Aprender como destino y despliega util
   assert.match(home, /<HebrewBibleReader \/>/)
   assert.match(home, /<HebrewSupportMaterials embedded \/>/)
   assert.match(home, /Prueba tu progreso/)
-  assert.match(home, /<details\b/)
+  assert.match(home, /setProgressOpen/)
+  assert.doesNotMatch(home, /<details\b/)
   assert.match(materials, /if \(embedded\) return <MaterialGroups \/>/)
   assert.match(translator, /embedded = false/)
 })
