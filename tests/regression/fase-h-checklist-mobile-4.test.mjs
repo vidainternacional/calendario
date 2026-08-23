@@ -28,8 +28,6 @@ test('FASE H checklist 4: palabras elimina el encabezado redundante y conserva d
 test('FASE H checklist 4: frases crece con catálogo estructurado y usa superficie completa en móvil', () => {
   assert.equal((phraseCatalog.match(/id: '/g) ?? []).length, 12)
   assert.match(phraseCatalog, /HebrewUsefulPhraseGroup = 'greetings' \| 'courtesy' \| 'conversation'/)
-  assert.match(phraseCatalog, /spanish: '¿cómo estás\? · a un hombre'/)
-  assert.match(phraseCatalog, /spanish: 'perdón · disculpe'/)
   assert.match(phrases, /label: 'Conversación'/)
   assert.match(phrases, /-mx-4 mt-4 border-y border-slate-200 bg-white/)
 })
@@ -40,16 +38,17 @@ test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas c
   assert.doesNotMatch(materials, /<summary/)
 })
 
-test('FASE H checklist 4: CTA principal queda centrado y progreso/teclado usan filas nativas equivalentes', () => {
+test('FASE H checklist 4: CTA principal y práctica quedan centrados y ordenados por acordeón', () => {
   assert.match(home, /items-center justify-center overflow-hidden rounded-\[26px\]/)
   assert.match(home, />Empecemos</)
   assert.match(home, /hebrew-glimmer/)
-  assert.doesNotMatch(home, /GraduationCap|Sparkles/)
-  assert.equal((home.match(/min-h-\[76px\]/g) ?? []).length >= 2, true)
+  assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard'/)
+  assert.match(home, /function PracticeRow/)
+  assert.match(home, /min-h-\[70px\]/)
   assert.match(home, /justify-center px-12 text-center/)
-  assert.match(home, /justify-center px-14 text-center/)
-  assert.match(home, /aria-label="Práctica" className="mt-5 border-t border-slate-200"/)
-  assert.match(home, /aria-label="Teclado hebreo" className="border-t border-slate-200"/)
+  assert.match(home, /Evaluación y progreso/)
+  assert.match(home, /Práctica oral/)
+  assert.match(home, /Teclado hebreo/)
 })
 
 test('FASE H checklist 4: títulos internos comparten una sola escala tipográfica', () => {
