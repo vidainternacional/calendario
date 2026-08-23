@@ -6,33 +6,15 @@ import {
   ArrowLeft,
   BookOpenText,
   ChevronDown,
-  History,
   Keyboard,
   Languages,
   Library,
 } from 'lucide-react'
 import HebrewBibleReader from '@/components/hebreo/HebrewBibleReader'
 import HebrewKeyboardDock from '@/components/hebreo/HebrewKeyboardDock'
+import HebrewProgressCoach from '@/components/hebreo/HebrewProgressCoach'
 import HebrewSupportMaterials from '@/components/hebreo/HebrewSupportMaterials'
 import HebrewTranslator from '@/components/hebreo/HebrewTranslator'
-
-const TEST_QUESTIONS = [
-  { type: 'Reconocer', prompt: '¿Cuál de estas letras es Bet?', options: ['ב', 'כ', 'פ'] },
-  { type: 'Reconocer', prompt: '¿Cuál de estas letras es Gimel?', options: ['נ', 'ג', 'ז'] },
-  { type: 'Reconocer', prompt: 'Selecciona la letra Lamed.', options: ['ל', 'כ', 'מ'] },
-  { type: 'Distinguir', prompt: 'Selecciona la letra diferente.', options: ['ד', 'ד', 'ר'] },
-  { type: 'Distinguir', prompt: '¿Cuál es He y no Jet?', options: ['ח', 'ה', 'ת'] },
-  { type: 'Distinguir', prompt: 'Encuentra Kaf entre estas formas.', options: ['ב', 'כ', 'פ'] },
-  { type: 'Sofit', prompt: '¿Cuál es una forma final?', options: ['מ', 'ם', 'ס'] },
-  { type: 'Dagesh', prompt: '¿Cuál opción contiene un punto dentro de la letra?', options: ['ב', 'בּ', 'כ'] },
-  { type: 'Lectura', prompt: '¿Qué palabra estás viendo?', hebrew: 'מֶלֶךְ', options: ['Rey', 'Casa', 'Paz'] },
-  { type: 'Lectura', prompt: 'Selecciona la lectura que corresponde.', hebrew: 'בַּיִת', options: ['báyit', 'mélej', 'shalom'] },
-  { type: 'Comprensión', prompt: '¿Qué significa esta palabra?', hebrew: 'שָׁלוֹם', options: ['Paz', 'Agua', 'Tierra'] },
-  { type: 'Comprensión', prompt: '¿Qué significa esta palabra?', hebrew: 'מֶלֶךְ', options: ['Casa', 'Rey', 'Nombre'] },
-  { type: 'Integración', prompt: '¿Qué ayuda representa el punto dentro de algunas letras?', options: ['Dagesh', 'Sofit', 'Matre'] },
-  { type: 'Integración', prompt: '¿Qué nombre recibe una forma usada al final de palabra?', options: ['Sofit', 'Nikud', 'Shewa'] },
-  { type: 'Integración', prompt: '¿Qué conviene hacer antes de depender de la pronunciación escrita?', options: ['Reconocer las letras', 'Memorizar traducciones', 'Saltar a gramática'] },
-] as const
 
 type QuickPanelId = 'translator' | 'bible' | 'materials'
 
@@ -40,45 +22,6 @@ const QUICK_PANELS: Record<QuickPanelId, { title: string; subtitle: string }> = 
   translator: { title: 'Traductor', subtitle: 'Español ⇄ Hebreo' },
   bible: { title: 'Biblia', subtitle: 'Leer en hebreo' },
   materials: { title: 'Materiales', subtitle: 'Curso y apoyo' },
-}
-
-function ProcessTestPreview() {
-  const [step, setStep] = useState(0)
-  const [finished, setFinished] = useState(false)
-  const current = TEST_QUESTIONS[step]
-
-  if (finished) {
-    return (
-      <div className="px-4 pb-4 pt-2 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-indigo-700">Resultado de práctica</p>
-        <h3 className="mt-2 text-lg font-black text-slate-950">Repasa antes de avanzar</h3>
-        <p className="mt-2 text-[12px] leading-relaxed text-slate-500">Esta prueba es una práctica breve; el progreso persistente todavía no está activo.</p>
-        <button type="button" onClick={() => { setStep(0); setFinished(false) }} className="mt-4 min-h-11 rounded-full bg-indigo-600 px-5 text-sm font-black text-white">Volver a probar</button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="px-4 pb-4 pt-2 text-center">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">{step + 1} / {TEST_QUESTIONS.length}</p>
-        <p className="text-[10px] font-black text-indigo-700">{current.type}</p>
-      </div>
-      <h3 className="mt-4 text-[15px] font-black text-slate-950">{current.prompt}</h3>
-      {'hebrew' in current && <p lang="he" dir="rtl" className="my-5 text-[3.5rem] font-black leading-none text-slate-950">{current.hebrew}</p>}
-      <div className="mt-4 grid gap-2">
-        {current.options.map((option, index) => (
-          <button key={`${option}-${index}`} type="button" onClick={() => step < TEST_QUESTIONS.length - 1 ? setStep(value => value + 1) : setFinished(true)} className={`min-h-11 rounded-[14px] border border-slate-200 bg-white px-4 font-black text-slate-800 ${['Reconocer', 'Distinguir', 'Sofit', 'Dagesh'].includes(current.type) ? 'text-[1.55rem]' : 'text-sm'}`}>
-            {option}
-          </button>
-        ))}
-      </div>
-      <details className="mt-3 border-t border-slate-100 pt-1">
-        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-center gap-2 text-[11px] font-black text-slate-500">Historial de progreso <History className="h-3.5 w-3.5" /></summary>
-        <p className="pb-2 text-[10px] text-slate-400">La persistencia de progreso todavía no está activa.</p>
-      </details>
-    </div>
-  )
 }
 
 function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: QuickPanelId; icon: React.ReactNode; title: string; subtitle: string; active: boolean; onToggle: (id: QuickPanelId) => void }) {
@@ -156,10 +99,10 @@ export default function HebrewLearningHome() {
         <section aria-label="Práctica" className="mt-4 space-y-2.5">
           <details className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
             <summary className="flex min-h-[58px] cursor-pointer list-none items-center justify-between gap-3 px-4 text-left">
-              <span><span className="block text-[13px] font-black text-slate-900">Prueba tu progreso</span><span className="block text-[10px] text-slate-400">Evaluación breve sin salir de Inicio</span></span>
+              <span><span className="block text-[13px] font-black text-slate-900">Prueba tu progreso</span><span className="block text-[10px] text-slate-400">Práctica personal según tu historial</span></span>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </summary>
-            <div className="border-t border-slate-100"><ProcessTestPreview /></div>
+            <div className="border-t border-slate-100 px-4 pb-4 pt-2"><HebrewProgressCoach /></div>
           </details>
 
           <div>
