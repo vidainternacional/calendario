@@ -225,6 +225,23 @@ export default function HebrewProgressCoach() {
       setAnswers(previous => [saved, ...previous])
       if (isCorrect) setCorrect(value => value + 1)
       setError(null)
+
+      await new Promise(resolve => window.setTimeout(resolve, 520))
+      setSpeechResult(null)
+      setSpeechError(null)
+      if (index + 1 < questions.length) {
+        questionStartedAtRef.current = nowMs()
+        setIndex(value => value + 1)
+        setSelected(null)
+        setLastAnswer(null)
+      } else {
+        questionStartedAtRef.current = null
+        await finishHebrewProgressSession(sessionId)
+        setFinished(true)
+        setSelected(null)
+        setLastAnswer(null)
+        await refresh()
+      }
     } catch (cause) {
       setSelected(null)
       setError(cause instanceof Error ? cause.message : 'No se pudo guardar esta respuesta.')
@@ -244,32 +261,6 @@ export default function HebrewProgressCoach() {
       setAnswers(previous => previous.map(row => row.id === updated.id ? updated : row))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudo actualizar el repaso.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function next() {
-    if (selected === null || !sessionId) return
-    setSpeechResult(null)
-    setSpeechError(null)
-    if (index + 1 < questions.length) {
-      questionStartedAtRef.current = nowMs()
-      setIndex(value => value + 1)
-      setSelected(null)
-      setLastAnswer(null)
-      return
-    }
-    questionStartedAtRef.current = null
-    setSaving(true)
-    try {
-      await finishHebrewProgressSession(sessionId)
-      setFinished(true)
-      setSelected(null)
-      setLastAnswer(null)
-      await refresh()
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'No se pudo cerrar la sesión.')
     } finally {
       setSaving(false)
     }
@@ -387,7 +378,7 @@ export default function HebrewProgressCoach() {
         <>
           <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[0.1em] text-indigo-700">{current.type} · {SKILL_LABELS[current.skill]}</p><p className="mt-1 text-[11px] font-bold text-slate-400">Pregunta {index + 1} de {questions.length} · {correct} aciertos</p></div>
           <div className="mx-auto mt-3 h-2 max-w-sm overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div>
-          <div className="py-6 text-center"><p className="text-[1.08rem] font-black">{current.prompt}</p>{current.hebrew && <p lang="he" dir="rtl" className="mt-5 text-[3.6rem] font-black leading-tight text-indigo-700">{current.hebrew}</p>}</div>
+          <div className="py-6 text-center"><p className="mx-auto max-w-xl text-[1.35rem] font-black leading-snug sm:text-[1.5rem]">{current.prompt}</p>{current.hebrew && <p lang="he" dir="rtl" className="mt-5 text-[3.6rem] font-black leading-tight text-indigo-700">{current.hebrew}</p>}</div>
 
           {canTestSpeech && (
             <div className="mb-4 border-y border-slate-100 py-4 text-center">
@@ -399,9 +390,9 @@ export default function HebrewProgressCoach() {
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2">{current.options.map((option, optionIndex) => { const chosen = selected === optionIndex; const correctOption = selected !== null && current.correctIndex === optionIndex; return <button key={`${current.key}-${option}`} type="button" disabled={selected !== null || saving} onClick={() => void answer(optionIndex)} className={`min-h-[4.5rem] rounded-[16px] border px-2 py-3 text-center text-lg font-black ${correctOption ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : chosen ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-800'}`}>{option}</button> })}</div>
+          <div className="grid grid-cols-3 gap-2">{current.options.map((option, optionIndex) => { const chosen = selected === optionIndex; const correctOption = selected !== null && current.correctIndex === optionIndex; return <button key={`${current.key}-${option}`} type="button" disabled={selected !== null || saving} onClick={() => void answer(optionIndex)} className={`min-h-[5.25rem] rounded-[18px] border px-3 py-3 text-center font-black leading-tight ${normalizeHebrew(option).length ? 'text-[2rem] sm:text-[2.2rem]' : 'text-[1.18rem] sm:text-[1.3rem]'} ${correctOption ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : chosen ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-800'}`}>{option}</button> })}</div>
 
-          {selected !== null && <div className="mt-4 border-t border-slate-200 pt-4 text-center"><p className={`text-sm font-black ${selected === current.correctIndex ? 'text-emerald-700' : 'text-rose-700'}`}>{selected === current.correctIndex ? 'Correcto' : 'Necesita repaso'}</p><p className="mx-auto mt-1 max-w-sm text-[12px] font-semibold text-slate-500">{current.explanation}</p>{lastAnswer && <p className="mt-2 text-[10px] font-bold text-slate-400">Tiempo de respuesta: {secondsLabel((lastAnswer as TimedProgressAnswer).response_time_ms)}</p>}<button type="button" disabled={!lastAnswer || saving} onClick={() => void toggleReview()} className={`mt-3 min-h-10 rounded-full border px-4 text-[11px] font-black ${lastAnswer?.review_requested ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-600'}`}>{lastAnswer?.review_requested ? 'Marcado para repasar' : 'Quiero repasar'}</button><button type="button" onClick={() => void next()} disabled={saving || !lastAnswer} className="mt-3 min-h-12 w-full rounded-full bg-indigo-600 text-sm font-black text-white">{index + 1 === questions.length ? 'Terminar práctica' : 'Siguiente'}</button></div>}
+          {selected !== null && <div className="mt-4 border-t border-slate-200 pt-4 text-center"><p className={`text-base font-black ${selected === current.correctIndex ? 'text-emerald-700' : 'text-rose-700'}`}>{selected === current.correctIndex ? 'Correcto' : 'Necesita repaso'}</p><p className="mx-auto mt-1 max-w-sm text-[13px] font-semibold leading-relaxed text-slate-500">{current.explanation}</p>{lastAnswer && <p className="mt-2 text-[11px] font-bold text-slate-400">Tiempo de respuesta: {secondsLabel((lastAnswer as TimedProgressAnswer).response_time_ms)}</p>}<button type="button" disabled={!lastAnswer || saving} onClick={() => void toggleReview()} className={`mt-3 min-h-10 rounded-full border px-4 text-[11px] font-black ${lastAnswer?.review_requested ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-600'}`}>{lastAnswer?.review_requested ? 'Marcado para repasar' : 'Quiero repasar'}</button></div>}
         </>
       )}
 
