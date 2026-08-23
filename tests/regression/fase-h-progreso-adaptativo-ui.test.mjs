@@ -9,7 +9,7 @@ const progress = fs.readFileSync('lib/hebreo/progress.ts', 'utf8')
 const mastery = fs.readFileSync('lib/hebreo/progress-mastery.ts', 'utf8')
 const store = fs.readFileSync('lib/hebreo/progress-store.ts', 'utf8')
 
-test('FASE H bloque 4: Inicio usa instructor persistente dentro de navegación compacta', () => {
+test('FASE H bloque 4: Inicio usa instructor persistente dentro de navegación horizontal compacta', () => {
   assert.match(home, /HebrewProgressCoach/)
   assert.match(home, /HebrewProgressSummary/)
   assert.match(home, /evaluation: \{ title: 'Evaluación'/)
@@ -17,7 +17,8 @@ test('FASE H bloque 4: Inicio usa instructor persistente dentro de navegación c
   assert.match(home, /Evalúa, practica y revisa tu avance/)
   assert.match(home, /Empecemos/)
   assert.match(home, /hebrew-glimmer/)
-  assert.match(home, /function PracticeRow/)
+  assert.match(home, /function PracticeTab/)
+  assert.match(home, /grid grid-cols-4 gap-2/)
   assert.doesNotMatch(home, /TEST_QUESTIONS/)
 })
 
