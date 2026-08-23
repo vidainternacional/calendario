@@ -5,49 +5,65 @@ import test from 'node:test'
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8')
 const progress = fs.readFileSync('lib/hebreo/progress.ts', 'utf8')
+const mastery = fs.readFileSync('lib/hebreo/progress-mastery.ts', 'utf8')
 const store = fs.readFileSync('lib/hebreo/progress-store.ts', 'utf8')
 
-test('FASE H bloque 4: Inicio usa instructor persistente y CTA principal simple', () => {
+test('FASE H bloque 4: Inicio usa instructor persistente y superficies centradas', () => {
   assert.match(home, /HebrewProgressCoach/)
   assert.match(home, /Mide tu nivel y descubre qué reforzar/)
   assert.match(home, /Empecemos/)
   assert.match(home, /hebrew-glimmer/)
+  assert.match(home, /min-h-\[76px\]/)
+  assert.match(home, /justify-center px-12 text-center/)
+  assert.match(home, /justify-center px-14 text-center/)
   assert.doesNotMatch(home, /TEST_QUESTIONS/)
-  assert.doesNotMatch(home, /progreso persistente todavía no está activo/i)
 })
 
-test('FASE H bloque 4: ofrece nivel adaptativo que puede subir o bajar y niveles explicados', () => {
+test('FASE H bloque 4: nivel adaptativo exige cobertura real y barra verde', () => {
   for (const label of ['Según mi progreso', 'Elegir nivel', 'Básico', 'Intermedio', 'Avanzado', 'Nivel 1', 'Nivel 2', 'Nivel 3', '¿Qué te espera en']) assert.match(coach, new RegExp(label.replace('?', '\\?')))
-  assert.match(progress, /deriveAdaptiveLevel/)
-  assert.match(progress, /slice\(0, 30\)/)
+  assert.match(mastery, /deriveStrictAdaptiveLevel/)
+  assert.match(mastery, /mastered === pool\.length && accuracy >= 85/)
   assert.match(coach, /Una racha de errores puede bajarlo/)
+  assert.match(coach, /bg-emerald-500/)
   assert.match(coach, /adaptiveLevel\.progress/)
+  assert.match(coach, /una sola prueba buena no basta/)
 })
 
-test('FASE H bloque 4: personalización conserva cantidad y no mezcla dificultad para rellenar', () => {
+test('FASE H bloque 4: banco ampliado y personalización no mezclan dificultad', () => {
   assert.match(coach, /LENGTHS = \[10, 15, 20\]/)
   assert.match(coach, /Personalizar práctica/)
   assert.match(coach, /Áreas que quieres reforzar/)
-  assert.match(coach, /selectAdaptiveQuestions/)
-  assert.match(coach, /selectDifficultyQuestions\(difficulty, focusAreas, questionCount\)/)
+  assert.match(mastery, /ALL_HEBREW_PRACTICE_QUESTIONS/)
+  assert.match(coach, /selectStrictAdaptiveQuestions/)
+  assert.match(coach, /selectMasteryQuestions/)
   assert.match(coach, /no mezclará niveles para rellenar el número/)
-  assert.equal((progress.match(/difficulty: 'advanced'/g) ?? []).length >= 15, true)
+  assert.ok((mastery.match(/difficulty: 'initial'/g) ?? []).length >= 20)
 })
 
-test('FASE H bloque 4: cada respuesta se valida, guarda y permite Quiero repasar', () => {
+test('FASE H bloque 4: acierto sale de la rotación normal hasta retención', () => {
+  assert.match(mastery, /RETENTION_AFTER_MS/)
+  assert.match(mastery, /latest\.is_correct/)
+  assert.match(mastery, /return -1000/)
+  assert.match(coach, /Acertar retira esa pregunta de la práctica normal/)
+  assert.match(coach, /solo vuelve más adelante como control de retención/)
+})
+
+test('FASE H bloque 4: cada respuesta se valida guarda y permite repaso', () => {
   assert.match(coach, /optionIndex === current\.correctIndex/)
   assert.match(coach, /saveHebrewProgressAnswer/)
   assert.match(coach, /setHebrewReviewRequested/)
   assert.match(coach, /Quiero repasar/)
   assert.match(coach, /Correcto/)
   assert.match(coach, /Necesita repaso/)
-  assert.match(coach, /Aciertos/)
+  assert.match(coach, /aciertos/)
 })
 
-test('FASE H bloque 4: pronunciación usa reconocimiento hebreo sin contaminar la nota objetiva', () => {
+test('FASE H bloque 4: pronunciación es visible y no contamina nota', () => {
   assert.match(coach, /webkitSpeechRecognition/)
   assert.match(coach, /instance\.lang = 'he-IL'/)
-  assert.match(coach, /Probar pronunciación/)
+  assert.match(coach, /Pronunciación por voz incluida/)
+  assert.match(coach, /Prueba tu pronunciación/)
+  assert.match(coach, /Hablar ahora/)
   assert.match(coach, /No modifica tu nota ni sustituye una evaluación fonética profesional/)
   assert.match(coach, /similarity\(current\.hebrew/)
   assert.doesNotMatch(coach.slice(coach.indexOf('function startListening'), coach.indexOf('function stopListening')), /saveHebrewProgressAnswer/)
@@ -61,15 +77,19 @@ test('FASE H bloque 4: cierre da retroalimentación y recomendación derivada', 
   assert.match(coach, /metrics\.recommendation/)
 })
 
-test('FASE H bloque 4: historial deriva métricas reales sin tabla estadística', () => {
+test('FASE H bloque 4: historial es cuadro de notas derivado de intentos reales', () => {
   for (const token of ['deriveProgressMetrics', 'accuracy', 'areas', 'evolution', 'retention', 'trend', 'recurringErrors', 'recommendation']) assert.match(progress, new RegExp(token))
-  assert.match(progress, /!answer\.question_key\.startsWith\('review:'\)/)
-  assert.match(coach, /Tu historial/)
+  assert.match(mastery, /deriveSessionGrades/)
+  assert.match(coach, /Cuadro de notas/)
+  assert.match(coach, /evaluaciones registradas/)
+  assert.match(coach, /Aciertos/)
+  assert.match(coach, /Nota/)
   assert.match(coach, /Qué estudiar después/)
+  assert.match(coach, /El historial es privado por usuario/)
   for (const state of ['Reforzar', 'En progreso', 'Dominado']) assert.match(progress, new RegExp(state))
 })
 
-test('FASE H bloque 4: marcas de Repaso conservan clave compatible con la práctica adaptativa', () => {
+test('FASE H bloque 4: marcas de Repaso conservan clave compatible', () => {
   assert.match(store, /REVIEW_TO_PRACTICE_KEY/)
   assert.match(store, /bet: 'letter-bet'/)
   assert.match(store, /pataj: 'niqqud-patah'/)
