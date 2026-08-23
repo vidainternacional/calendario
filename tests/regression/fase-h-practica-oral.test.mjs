@@ -9,18 +9,19 @@ test('FASE H bloque 4: práctica oral queda visible e independiente del examen',
   assert.match(home, /HebrewSpeechPractice/)
   assert.match(home, /<HebrewProgressCoach \/><HebrewSpeechPractice \/>/)
   assert.match(speech, /Práctica oral/)
-  assert.match(speech, /Palabras ·/)
-  assert.match(speech, /Oraciones ·/)
-  assert.match(speech, /independiente de la nota del examen/)
+  assert.match(speech, />Palabras</)
+  assert.match(speech, />Oraciones</)
+  assert.doesNotMatch(speech, /saveHebrewProgressAnswer|startHebrewProgressSession/)
 })
 
-test('FASE H bloque 4: micrófono pide permiso real y siempre produce estado visible', () => {
+test('FASE H bloque 4: micrófono pide permiso real, captura y exige envío explícito', () => {
   assert.match(speech, /navigator\.mediaDevices\?\.getUserMedia/)
   assert.match(speech, /SpeechRecognition/)
   assert.match(speech, /webkitSpeechRecognition/)
-  assert.match(speech, /Abriendo…/)
+  assert.match(speech, /interimResults = true/)
   assert.match(speech, /Escuchando…/)
-  assert.match(speech, /Hablar ahora/)
+  assert.match(speech, /Enviar resultado/)
+  assert.match(speech, /submitResult/)
   assert.match(speech, /micrófono está bloqueado/)
 })
 
@@ -38,5 +39,6 @@ test('FASE H bloque 4: pronunciación ofrece guía y feedback sin guardar nota o
   assert.match(speech, /speechSynthesis/)
   assert.match(speech, /utterance\.lang = 'he-IL'/)
   assert.match(speech, /result\.score/)
+  assert.match(speech, /Intentar otra vez/)
   assert.doesNotMatch(speech, /saveHebrewProgressAnswer|startHebrewProgressSession/)
 })
