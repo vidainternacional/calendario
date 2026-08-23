@@ -4,13 +4,16 @@ import test from 'node:test'
 
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8')
+const summary = fs.readFileSync('components/hebreo/HebrewProgressSummary.tsx', 'utf8')
 const progress = fs.readFileSync('lib/hebreo/progress.ts', 'utf8')
 const mastery = fs.readFileSync('lib/hebreo/progress-mastery.ts', 'utf8')
 const store = fs.readFileSync('lib/hebreo/progress-store.ts', 'utf8')
 
 test('FASE H bloque 4: Inicio usa instructor persistente dentro de navegación compacta', () => {
   assert.match(home, /HebrewProgressCoach/)
-  assert.match(home, /Evaluación y progreso/)
+  assert.match(home, /HebrewProgressSummary/)
+  assert.match(home, /evaluation: \{ title: 'Evaluación'/)
+  assert.match(home, /progress: \{ title: 'Mi progreso'/)
   assert.match(home, /Evalúa, practica y revisa tu avance/)
   assert.match(home, /Empecemos/)
   assert.match(home, /hebrew-glimmer/)
@@ -65,15 +68,16 @@ test('FASE H bloque 4: cierre da retroalimentación y recomendación derivada', 
   assert.match(coach, /metrics\.recommendation/)
 })
 
-test('FASE H bloque 4: historial es cuadro de notas derivado de intentos reales', () => {
+test('FASE H bloque 4: Mi progreso concentra notas dominio retención y recomendación', () => {
   for (const token of ['deriveProgressMetrics', 'accuracy', 'areas', 'evolution', 'retention', 'trend', 'recurringErrors', 'recommendation']) assert.match(progress, new RegExp(token))
-  assert.match(mastery, /deriveSessionGrades/)
-  assert.match(coach, /Cuadro de notas/)
-  assert.match(coach, /evaluaciones registradas/)
-  assert.match(coach, /Aciertos/)
-  assert.match(coach, /Nota/)
-  assert.match(coach, /Qué estudiar después/)
-  assert.match(coach, /El historial es privado por usuario/)
+  assert.match(summary, /deriveSessionGrades/)
+  assert.match(summary, /deriveStrictAdaptiveLevel/)
+  assert.match(summary, /Evaluaciones registradas/)
+  assert.match(summary, /Dominio por área/)
+  assert.match(summary, /Precisión/)
+  assert.match(summary, /Retención/)
+  assert.match(summary, /Qué estudiar después/)
+  assert.match(home, /data-evaluation-only/)
   for (const state of ['Reforzar', 'En progreso', 'Dominado']) assert.match(progress, new RegExp(state))
 })
 
