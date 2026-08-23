@@ -7,15 +7,18 @@ const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8
 const progress = fs.readFileSync('lib/hebreo/progress.ts', 'utf8')
 const store = fs.readFileSync('lib/hebreo/progress-store.ts', 'utf8')
 
-test('FASE H bloque 4: Inicio usa el instructor persistente y retira la prueba fija', () => {
+test('FASE H bloque 4: Inicio usa instructor persistente y CTA principal simple', () => {
   assert.match(home, /HebrewProgressCoach/)
-  assert.match(home, /Práctica personal según tu historial/)
+  assert.match(home, /Mide tu nivel y descubre qué reforzar/)
+  assert.match(home, /Empecemos/)
+  assert.match(home, /hebrew-glimmer/)
   assert.doesNotMatch(home, /TEST_QUESTIONS/)
   assert.doesNotMatch(home, /progreso persistente todavía no está activo/i)
 })
 
-test('FASE H bloque 4: ofrece práctica adaptativa, dificultad y selección de áreas', () => {
-  for (const label of ['Según mi progreso', 'Elegir dificultad', 'Inicial', 'Intermedio', 'Avanzado', 'Áreas que quieres reforzar']) assert.match(coach, new RegExp(label))
+test('FASE H bloque 4: ofrece práctica adaptativa, niveles y personalización en acordeón', () => {
+  for (const label of ['Según mi progreso', 'Elegir nivel', 'Básico', 'Intermedio', 'Avanzado', 'Nivel 1', 'Nivel 2', 'Nivel 3', 'Personalizar práctica', 'Áreas que quieres reforzar']) assert.match(coach, new RegExp(label))
+  assert.match(coach, /LENGTHS = \[10, 15, 20\]/)
   assert.match(coach, /selectAdaptiveQuestions/)
   assert.match(coach, /selectDifficultyQuestions/)
   assert.match(coach, /SKILL_ORDER\.map/)
