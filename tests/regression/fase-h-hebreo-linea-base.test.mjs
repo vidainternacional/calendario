@@ -87,10 +87,10 @@ test('FASE H: explicación del Alef-Bet conserva lectura derecha a izquierda', (
   assert.match(explorer, /reconocer → distinguir → combinar → leer → comprender/)
 })
 
-test('FASE H: portada es un hub compacto y Aprender es la entrada principal', () => {
+test('FASE H: portada es un hub compacto y Empecemos es la entrada principal', () => {
   assert.match(home, /href="\/estudios\/hebreo\/aprender"/)
-  assert.match(home, /Empieza aquí/)
-  assert.match(home, />Aprender</)
+  assert.match(home, />Empecemos</)
+  assert.match(home, /hebrew-glimmer/)
   assert.match(home, /type QuickPanelId = 'translator' \| 'bible' \| 'materials'/)
   assert.match(home, /useState<QuickPanelId \| null>\(null\)/)
   assert.match(home, /<QuickButton id="translator"/)
@@ -174,8 +174,9 @@ test('FASE H: Lectura abre la Biblia real y no duplica el diccionario', () => {
 
 test('FASE H: Prueba tu progreso usa banco real y validación objetiva del Bloque 4', () => {
   assert.match(home, /<HebrewProgressCoach \/>/)
-  assert.match(home, /<details\b/)
-  assert.ok((progress.match(/correctIndex:\s*\d+/g) ?? []).length >= 20)
+  assert.match(home, /setProgressOpen/)
+  assert.doesNotMatch(home, /<details\b/)
+  assert.ok((progress.match(/correctIndex:\s*\d+/g) ?? []).length >= 40)
   assert.match(progress, /HEBREW_PRACTICE_QUESTIONS/)
   assert.match(coach, /optionIndex === current\.correctIndex/)
   assert.doesNotMatch(home, /TEST_QUESTIONS/)
@@ -183,7 +184,7 @@ test('FASE H: Prueba tu progreso usa banco real y validación objetiva del Bloqu
 
 test('FASE H: resultado e historial de práctica reflejan persistencia real autorizada', () => {
   assert.match(coach, /Práctica terminada/)
-  assert.match(coach, /Tus respuestas quedaron guardadas/)
+  assert.match(coach, /finalFeedback/)
   assert.match(coach, /Tu historial/)
   assert.match(coach, /Qué estudiar después/)
   assert.match(coach, /loadHebrewProgress/)
