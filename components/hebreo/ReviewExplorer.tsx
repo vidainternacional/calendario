@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { ChevronDown, RotateCcw } from 'lucide-react'
+import type { HebrewSkill } from '@/lib/hebreo/progress'
+import { finishHebrewProgressSession, saveHebrewReviewRating, startHebrewProgressSession } from '@/lib/hebreo/progress-store'
 
 type ReviewArea = 'all' | 'letters' | 'vowels' | 'words' | 'reading' | 'rules' | 'verbs'
 type ReviewRating = 'know' | 'practice' | 'later'
@@ -27,16 +29,7 @@ const AREAS: readonly { id: ReviewArea; label: string }[] = [
   { id: 'verbs', label: 'Verbos' },
 ]
 
-const MIXED_SESSION_IDS = [
-  'bet',
-  'pataj',
-  'melekh',
-  'bereshit-bara',
-  'article',
-  'verb-qatal-yiqtol',
-  'kaf-final',
-  'construct',
-] as const
+const MIXED_SESSION_IDS = ['bet', 'pataj', 'melekh', 'bereshit-bara', 'article', 'verb-qatal-yiqtol', 'kaf-final', 'construct'] as const
 
 const ITEMS: readonly ReviewItem[] = [
   { id: 'bet', area: 'letters', label: 'Reconocer', prompt: '¿Qué letra es esta?', hebrew: 'ב', answer: 'Bet', note: 'Con dagesh suele representar /b/; sin dagesh, en la pronunciación pedagógica usada aquí, /v/.' },
@@ -59,17 +52,14 @@ const ITEMS: readonly ReviewItem[] = [
   { id: 'melekh-writing', area: 'words', label: 'Escritura', prompt: 'Escribe «rey» en hebreo sin niqqud.', answer: 'מלך', note: 'Con niqqud: מֶלֶךְ · mélej · rey.', writingTarget: 'מלך' },
   { id: 'genesis-short', area: 'reading', label: 'Lectura', prompt: 'Lee esta secuencia corta manteniendo el ritmo.', hebrew: 'אֵת הַשָּׁמַיִם', answer: 'et ha-shamáyim', note: 'No hace falta traducir אֵת como una palabra española independiente: aquí funciona como marcador gramatical.' },
   { id: 'plural', area: 'rules', label: 'Número', prompt: '¿Qué pista gramatical reconoces?', hebrew: 'טוֹבִים', answer: 'Plural; ־ִים es una terminación plural frecuente', note: 'Es una pista muy útil, pero no una regla absoluta para determinar género en todos los sustantivos.' },
-
   { id: 'sheva-vocal', area: 'vowels', label: 'Sheva', prompt: 'En esta palabra, ¿qué función inicial estás practicando?', hebrew: 'בְּרֵאשִׁית', answer: 'Sheva vocal al inicio de la palabra', note: 'En esta etapa se practica como apertura de sílaba con vocal muy breve. La clasificación completa depende de estructura y tradición de lectura.' },
   { id: 'sheva-silent', area: 'vowels', label: 'Sheva', prompt: '¿El sheva bajo ל añade una vocal independiente aquí?', hebrew: 'מַלְכָּה', answer: 'No · se practica como sheva silencioso', note: 'La lectura orientativa es mal-ká: el sheva bajo ל cierra la sílaba anterior.' },
   { id: 'qamats-qatan', area: 'vowels', label: 'Qamats qatan', prompt: '¿Cómo se lee el qamats de esta palabra?', hebrew: 'כָּל', answer: 'kol · aquí se reconoce qamats qatan con valor o', note: 'No todo qamats se decide visualmente de la misma manera; el contexto y la edición textual importan.' },
   { id: 'furtive-pataj', area: 'vowels', label: 'Pataj furtivo', prompt: '¿Dónde se oye la a del pataj final?', hebrew: 'רוּחַ', answer: 'Antes de la consonante final ח', note: 'Lectura orientativa: rúaj / rúaḥ. La vocal se anticipa; no crea una sílaba posterior a la consonante.' },
-
   { id: 'possessive-beni', area: 'rules', label: 'Sufijo', prompt: 'Separa la base y el sufijo posesivo.', hebrew: 'בְּנִי', answer: 'בֵּן + ־ִי → בְּנִי · «mi hijo»', note: 'El corpus separa explícitamente la base y el sufijo. Observa que la vocal de la base cambia.' },
   { id: 'possessive-aviv', area: 'rules', label: 'Sufijo', prompt: '¿Qué sufijo posesivo reconoces al final?', hebrew: 'אָבִיו', answer: 'אָב + ־וֹ → אָבִיו · «su padre / el padre de él»', note: 'La forma visible incorpora una vocal de enlace antes del sufijo.' },
   { id: 'construct-devar', area: 'rules', label: 'Constructo', prompt: '¿Qué cambio observas al ligar el sustantivo?', hebrew: 'דָּבָר → דְּבַר', answer: 'Forma absoluta → forma constructa', note: 'Las vocales pueden reducirse cuando el primer sustantivo queda ligado al siguiente.' },
   { id: 'construct-bnei', area: 'rules', label: 'Constructo', prompt: '¿Qué forma estás viendo?', hebrew: 'בְּנֵי', answer: 'Plural constructo de בֵּן', note: 'Compáralo con el plural absoluto בָנִים. El estado constructo no se reconoce por una única terminación universal.' },
-
   { id: 'verb-qatal-yiqtol', area: 'verbs', label: 'Qal', prompt: '¿Qué diferencia morfológica principal estás comparando?', hebrew: 'אָמַר · יֹאמַר', answer: 'Qatal · Yiqtol', note: 'Qatal es forma sufijada y yiqtol forma prefijada. No memorices la equivalencia automática pasado/futuro.' },
   { id: 'verb-qatal-1cs', area: 'verbs', label: 'Qatal', prompt: '¿Qué persona reconoces por la terminación?', hebrew: 'אָמַרְתִּי', answer: '1ª persona singular · forma qatal', note: 'La terminación ־תִּי marca aquí primera persona singular: «yo», pero la traducción temporal final depende del contexto.' },
   { id: 'verb-yiqtol-1cs', area: 'verbs', label: 'Yiqtol', prompt: '¿Qué persona reconoce el prefijo א־?', hebrew: 'אֹמַר', answer: '1ª persona singular · forma yiqtol', note: 'El prefijo א־ ayuda a reconocer primera persona singular. Yiqtol no equivale automáticamente a futuro.' },
@@ -80,27 +70,23 @@ const ITEMS: readonly ReviewItem[] = [
   { id: 'verb-weqatal', area: 'verbs', label: 'Secuencia', prompt: '¿Qué combinación morfológica observas?', hebrew: 'וְאָמַרְתָּ', answer: 'וְ + qatal 2ª masculina singular · weqatal', note: 'Su valor se interpreta por la secuencia discursiva; no es una inversión mecánica del tiempo verbal.' },
 ] as const
 
+function reviewSkill(item: ReviewItem): HebrewSkill {
+  if (item.area === 'letters') return item.label === 'Sofit' ? 'sofit' : 'alef_bet'
+  if (item.area === 'vowels') return item.id.startsWith('sheva') || item.id === 'sheva' ? 'sheva' : 'niqqud'
+  if (item.area === 'words') return 'vocabulary'
+  if (item.area === 'reading') return 'reading'
+  return 'rules'
+}
+
 function ReviewIntroduction() {
   const [open, setOpen] = useState(false)
   return (
     <section className="border-y border-slate-200 text-left">
       <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex min-h-12 w-full items-center justify-between gap-3 py-2">
-        <span>
-          <span lang="he" dir="rtl" className="block text-[12px] font-black text-indigo-700">חֲזָרָה</span>
-          <span className="mt-0.5 block text-sm font-black text-slate-950">¿Cómo funciona el repaso?</span>
-        </span>
+        <span><span lang="he" dir="rtl" className="block text-[12px] font-black text-indigo-700">חֲזָרָה</span><span className="mt-0.5 block text-sm font-black text-slate-950">¿Cómo funciona el repaso?</span></span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
-      {open && (
-        <div className="border-t border-slate-200 py-4">
-          <div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1 text-[14px] leading-relaxed text-slate-600 [-webkit-overflow-scrolling:touch]">
-            <p>Repaso no es un examen. Mezcla elementos ya estudiados y te permite decidir qué recuerdas y qué conviene volver a practicar.</p>
-            <p>Cada sesión usa hasta ocho elementos. Primero intenta responder; después revela la respuesta y clasifica cómo te fue.</p>
-            <p>Las reglas nuevas también se practican aquí: niqqud avanzado, transformaciones nominales y reconocimiento verbal. La traducción final de una forma verbal siempre sigue dependiendo del contexto.</p>
-            <p>Por ahora las marcas existen solo durante esta sesión y no se guardan. La persistencia futura requerirá un diseño de datos y permisos aprobado por separado.</p>
-          </div>
-        </div>
-      )}
+      {open && <div className="border-t border-slate-200 py-4"><div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1 text-[14px] leading-relaxed text-slate-600 [-webkit-overflow-scrolling:touch]"><p>Repaso no es un examen. Mezcla elementos ya estudiados y te permite decidir qué recuerdas y qué conviene volver a practicar.</p><p>Cada sesión usa hasta ocho elementos. Primero intenta responder; después revela la respuesta y clasifica cómo te fue.</p><p>Las reglas nuevas también se practican aquí: niqqud avanzado, transformaciones nominales y reconocimiento verbal. La traducción final de una forma verbal siempre sigue dependiendo del contexto.</p><p>Tus marcas se guardan en tu historial privado. «Necesito practicar» y «Repasar después» alimentan la prioridad de «Según mi progreso», pero no cuentan como precisión de examen porque aquí la respuesta ya fue revelada.</p></div></div>}
     </section>
   )
 }
@@ -111,122 +97,77 @@ export default function ReviewExplorer() {
   const [revealed, setRevealed] = useState(false)
   const [ratings, setRatings] = useState<Record<string, ReviewRating>>({})
   const [writing, setWriting] = useState('')
+  const [progressSessionId, setProgressSessionId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const session = useMemo(() => {
-    const filtered = area === 'all'
-      ? MIXED_SESSION_IDS.map(id => ITEMS.find(item => item.id === id)).filter((item): item is ReviewItem => Boolean(item))
-      : ITEMS.filter(item => item.area === area)
+    const filtered = area === 'all' ? MIXED_SESSION_IDS.map(id => ITEMS.find(item => item.id === id)).filter((item): item is ReviewItem => Boolean(item)) : ITEMS.filter(item => item.area === area)
     return filtered.slice(0, 8)
   }, [area])
 
   const current = session[index] ?? null
   const finished = session.length > 0 && index >= session.length
-  const counts = Object.values(ratings).reduce((acc, value) => {
-    acc[value] += 1
-    return acc
-  }, { know: 0, practice: 0, later: 0 } as Record<ReviewRating, number>)
+  const counts = Object.values(ratings).reduce((acc, value) => { acc[value] += 1; return acc }, { know: 0, practice: 0, later: 0 } as Record<ReviewRating, number>)
 
-  function changeArea(next: ReviewArea) {
-    setArea(next)
-    setIndex(0)
-    setRevealed(false)
-    setRatings({})
-    setWriting('')
+  async function closeCurrentSession() {
+    if (!progressSessionId) return
+    try { await finishHebrewProgressSession(progressSessionId) } catch { /* La siguiente carga del historial puede recuperar la sesión. */ }
+    setProgressSessionId(null)
   }
 
-  function restart() {
-    setIndex(0)
-    setRevealed(false)
-    setRatings({})
-    setWriting('')
+  async function changeArea(next: ReviewArea) {
+    if (saving) return
+    await closeCurrentSession()
+    setArea(next); setIndex(0); setRevealed(false); setRatings({}); setWriting(''); setError(null)
   }
 
-  function rate(value: ReviewRating) {
-    if (!current) return
-    setRatings(previous => ({ ...previous, [current.id]: value }))
-    setIndex(currentIndex => currentIndex + 1)
-    setRevealed(false)
-    setWriting('')
+  async function restart() {
+    if (saving) return
+    await closeCurrentSession()
+    setIndex(0); setRevealed(false); setRatings({}); setWriting(''); setError(null)
+  }
+
+  async function rate(value: ReviewRating) {
+    if (!current || saving) return
+    setSaving(true)
+    setError(null)
+    try {
+      let id = progressSessionId
+      if (!id) {
+        id = await startHebrewProgressSession('adaptive', null, [])
+        setProgressSessionId(id)
+      }
+      await saveHebrewReviewRating({ sessionId: id, itemId: current.id, skill: reviewSkill(current), rating: value, responseText: writing || value })
+      setRatings(previous => ({ ...previous, [current.id]: value }))
+      if (index + 1 >= session.length) {
+        await finishHebrewProgressSession(id)
+        setProgressSessionId(null)
+      }
+      setIndex(currentIndex => currentIndex + 1)
+      setRevealed(false)
+      setWriting('')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No se pudo guardar este repaso.')
+    } finally { setSaving(false) }
   }
 
   return (
     <section aria-labelledby="review-title" className="text-left">
-      <div className="text-center">
-        <p lang="he" dir="rtl" className="text-[1rem] font-black text-indigo-700">חֲזָרָה</p>
-        <h2 id="review-title" className="mt-0.5 text-[1.65rem] font-black tracking-[-0.025em] text-slate-950">Repasa lo que ya estudiaste</h2>
-        <p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Sesiones breves para recuperar letras, vocales, palabras, lectura, reglas y formas verbales sin convertirlo en otro examen.</p>
-      </div>
-
+      <div className="text-center"><p lang="he" dir="rtl" className="text-[1rem] font-black text-indigo-700">חֲזָרָה</p><h2 id="review-title" className="mt-0.5 text-[1.65rem] font-black tracking-[-0.025em] text-slate-950">Repasa lo que ya estudiaste</h2><p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Sesiones breves para recuperar letras, vocales, palabras, lectura, reglas y formas verbales sin convertirlo en otro examen.</p></div>
       <div className="mt-5"><ReviewIntroduction /></div>
-
-      <div className="-mx-4 mt-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max gap-2">
-          {AREAS.map(item => (
-            <button key={item.id} type="button" aria-pressed={area === item.id} onClick={() => changeArea(item.id)} className={`min-h-11 rounded-full border px-4 text-[12px] font-black ${area === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>
-          ))}
-        </div>
-      </div>
+      <div className="-mx-4 mt-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><div className="flex min-w-max gap-2">{AREAS.map(item => <button key={item.id} type="button" aria-pressed={area === item.id} disabled={saving} onClick={() => void changeArea(item.id)} className={`min-h-11 rounded-full border px-4 text-[12px] font-black ${area === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>)}</div></div>
 
       {!finished && current && (
         <div className="mt-5">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-indigo-700">{current.label}</p>
-              <p className="mt-0.5 text-[11px] font-bold text-slate-400">Elemento {index + 1} de {session.length}</p>
-            </div>
-            <p className="text-[10px] font-black text-slate-400">Solo esta sesión</p>
-          </div>
-
-          <div className="py-6 text-center">
-            <h3 className="mx-auto max-w-lg text-[1.15rem] font-black leading-snug text-slate-950">{current.prompt}</h3>
-            {current.hebrew && <p lang="he" dir="rtl" className="my-6 break-words text-[4.6rem] font-black leading-[1.25] text-indigo-700">{current.hebrew}</p>}
-            {current.writingTarget && (
-              <div className="mx-auto mt-5 max-w-md">
-                <input
-                  type="text"
-                  lang="he"
-                  dir="rtl"
-                  data-hebrew-practice="true"
-                  value={writing}
-                  onChange={event => setWriting(event.target.value)}
-                  placeholder="כתוב כאן…"
-                  className="min-h-16 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-center text-[2.5rem] font-black text-slate-950 outline-none focus:border-indigo-400"
-                />
-                <p className="mt-2 text-[10px] leading-relaxed text-slate-400">Puedes usar el teclado nativo o activar el teclado hebreo de VIDA arriba.</p>
-              </div>
-            )}
-          </div>
-
-          {!revealed ? (
-            <button type="button" onClick={() => setRevealed(true)} className="min-h-12 w-full rounded-full bg-indigo-600 px-5 text-sm font-black text-white">Mostrar respuesta</button>
-          ) : (
-            <div className="border-t border-slate-200 pt-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Respuesta</p>
-              <p className="mt-1 text-center text-[1.2rem] font-black leading-relaxed text-slate-950">{current.answer}</p>
-              <p className="mx-auto mt-2 max-w-xl text-center text-[12px] font-semibold leading-relaxed text-slate-500">{current.note}</p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <button type="button" onClick={() => rate('know')} className="min-h-12 rounded-[16px] border border-emerald-200 bg-emerald-50 px-3 text-[12px] font-black text-emerald-800">Lo sé</button>
-                <button type="button" onClick={() => rate('practice')} className="min-h-12 rounded-[16px] border border-amber-200 bg-amber-50 px-3 text-[12px] font-black text-amber-800">Necesito practicar</button>
-                <button type="button" onClick={() => rate('later')} className="min-h-12 rounded-[16px] border border-slate-200 bg-white px-3 text-[12px] font-black text-slate-600">Repasar después</button>
-              </div>
-            </div>
-          )}
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3"><div><p className="text-[10px] font-black uppercase tracking-[0.1em] text-indigo-700">{current.label}</p><p className="mt-0.5 text-[11px] font-bold text-slate-400">Elemento {index + 1} de {session.length}</p></div><p className="text-[10px] font-black text-emerald-600">Progreso guardado</p></div>
+          <div className="py-6 text-center"><h3 className="mx-auto max-w-lg text-[1.15rem] font-black leading-snug text-slate-950">{current.prompt}</h3>{current.hebrew && <p lang="he" dir="rtl" className="my-6 break-words text-[4.6rem] font-black leading-[1.25] text-indigo-700">{current.hebrew}</p>}{current.writingTarget && <div className="mx-auto mt-5 max-w-md"><input type="text" lang="he" dir="rtl" data-hebrew-practice="true" value={writing} onChange={event => setWriting(event.target.value)} placeholder="כתוב כאן…" className="min-h-16 w-full rounded-[18px] border border-slate-200 bg-white px-4 text-center text-[2.5rem] font-black text-slate-950 outline-none focus:border-indigo-400" /><p className="mt-2 text-[10px] leading-relaxed text-slate-400">Puedes usar el teclado nativo o activar el teclado hebreo de VIDA arriba.</p></div>}</div>
+          {!revealed ? <button type="button" onClick={() => setRevealed(true)} className="min-h-12 w-full rounded-full bg-indigo-600 px-5 text-sm font-black text-white">Mostrar respuesta</button> : <div className="border-t border-slate-200 pt-4"><p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Respuesta</p><p className="mt-1 text-center text-[1.2rem] font-black leading-relaxed text-slate-950">{current.answer}</p><p className="mx-auto mt-2 max-w-xl text-center text-[12px] font-semibold leading-relaxed text-slate-500">{current.note}</p><div className="mt-4 grid gap-2 sm:grid-cols-3"><button type="button" disabled={saving} onClick={() => void rate('know')} className="min-h-12 rounded-[16px] border border-emerald-200 bg-emerald-50 px-3 text-[12px] font-black text-emerald-800">Lo sé</button><button type="button" disabled={saving} onClick={() => void rate('practice')} className="min-h-12 rounded-[16px] border border-amber-200 bg-amber-50 px-3 text-[12px] font-black text-amber-800">Necesito practicar</button><button type="button" disabled={saving} onClick={() => void rate('later')} className="min-h-12 rounded-[16px] border border-slate-200 bg-white px-3 text-[12px] font-black text-slate-600">Repasar después</button></div></div>}
         </div>
       )}
 
-      {finished && (
-        <div className="mt-5 text-center">
-          <p lang="he" dir="rtl" className="text-[2.5rem] font-black text-indigo-700">כָּל הַכָּבוֹד</p>
-          <h3 className="mt-1 text-2xl font-black text-slate-950">Sesión terminada</h3>
-          <p className="mt-1 text-[12px] text-slate-500">Este resumen describe únicamente lo que marcaste ahora. No se guarda como progreso.</p>
-          <div className="mt-5 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 py-4">
-            <div><p className="text-2xl font-black text-emerald-700">{counts.know}</p><p className="mt-1 text-[10px] font-black text-slate-500">Lo sé</p></div>
-            <div><p className="text-2xl font-black text-amber-700">{counts.practice}</p><p className="mt-1 text-[10px] font-black text-slate-500">Practicar</p></div>
-            <div><p className="text-2xl font-black text-slate-600">{counts.later}</p><p className="mt-1 text-[10px] font-black text-slate-500">Después</p></div>
-          </div>
-          <button type="button" onClick={restart} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-indigo-600 px-6 text-sm font-black text-white"><RotateCcw className="h-4 w-4" aria-hidden="true" />Repetir sesión</button>
-        </div>
-      )}
+      {finished && <div className="mt-5 text-center"><p lang="he" dir="rtl" className="text-[2.5rem] font-black text-indigo-700">כָּל הַכָּבוֹד</p><h3 className="mt-1 text-2xl font-black text-slate-950">Sesión terminada</h3><p className="mt-1 text-[12px] text-slate-500">Tus marcas quedaron guardadas y se usarán para priorizar lo que conviene repasar después.</p><div className="mt-5 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 py-4"><div><p className="text-2xl font-black text-emerald-700">{counts.know}</p><p className="mt-1 text-[10px] font-black text-slate-500">Lo sé</p></div><div><p className="text-2xl font-black text-amber-700">{counts.practice}</p><p className="mt-1 text-[10px] font-black text-slate-500">Practicar</p></div><div><p className="text-2xl font-black text-slate-600">{counts.later}</p><p className="mt-1 text-[10px] font-black text-slate-500">Después</p></div></div><button type="button" onClick={() => void restart()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-indigo-600 px-6 text-sm font-black text-white"><RotateCcw className="h-4 w-4" aria-hidden="true" />Repetir sesión</button></div>}
+      {error && <p role="alert" className="mt-4 text-center text-[11px] font-bold text-rose-600">{error}</p>}
     </section>
   )
 }
