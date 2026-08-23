@@ -1,11 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronDown, RotateCcw } from 'lucide-react'
+import { ChevronDown, RotateCcw, Sparkles } from 'lucide-react'
 import type { HebrewSkill } from '@/lib/hebreo/progress'
 import { finishHebrewProgressSession, saveHebrewReviewRating, startHebrewProgressSession } from '@/lib/hebreo/progress-store'
 
-type ReviewArea = 'all' | 'letters' | 'vowels' | 'words' | 'reading' | 'rules' | 'verbs'
+type ReviewArea = 'all' | 'letters' | 'vowels' | 'words' | 'reading' | 'rules' | 'verbs' | 'challenge'
 type ReviewRating = 'know' | 'practice' | 'later'
 
 type ReviewItem = {
@@ -17,6 +17,7 @@ type ReviewItem = {
   answer: string
   note: string
   writingTarget?: string
+  skill?: HebrewSkill
 }
 
 const AREAS: readonly { id: ReviewArea; label: string }[] = [
@@ -27,9 +28,10 @@ const AREAS: readonly { id: ReviewArea; label: string }[] = [
   { id: 'reading', label: 'Lectura' },
   { id: 'rules', label: 'Reglas' },
   { id: 'verbs', label: 'Verbos' },
+  { id: 'challenge', label: 'Perfeccionar' },
 ]
 
-const MIXED_SESSION_IDS = ['bet', 'pataj', 'melekh', 'bereshit-bara', 'article', 'verb-qatal-yiqtol', 'kaf-final', 'construct'] as const
+const MIXED_SESSION_IDS = ['bet', 'pataj', 'melekh', 'bereshit-bara', 'article', 'verb-qatal-yiqtol', 'kaf-final', 'construct', 'challenge-unpointed', 'challenge-analysis'] as const
 
 const ITEMS: readonly ReviewItem[] = [
   { id: 'bet', area: 'letters', label: 'Reconocer', prompt: '¿Qué letra es esta?', hebrew: 'ב', answer: 'Bet', note: 'Con dagesh suele representar /b/; sin dagesh, en la pronunciación pedagógica usada aquí, /v/.' },
@@ -68,9 +70,19 @@ const ITEMS: readonly ReviewItem[] = [
   { id: 'verb-inf-construct', area: 'verbs', label: 'Infinitivo', prompt: 'Separa las piezas visibles de esta forma.', hebrew: 'לֵאמֹר', answer: 'לְ + infinitivo constructo de אָמַר', note: 'El corpus conserva la preposición y el infinitivo como componentes morfológicos separados dentro de la palabra.' },
   { id: 'verb-wayyiqtol', area: 'verbs', label: 'Narración', prompt: '¿Qué forma secuencial frecuente en narración reconoces?', hebrew: 'וַיֹּאמֶר', answer: 'Wayyiqtol Qal de אָמַר', note: 'Se aprende como forma discursiva propia. No es una fórmula de «ו + futuro = pasado».' },
   { id: 'verb-weqatal', area: 'verbs', label: 'Secuencia', prompt: '¿Qué combinación morfológica observas?', hebrew: 'וְאָמַרְתָּ', answer: 'וְ + qatal 2ª masculina singular · weqatal', note: 'Su valor se interpreta por la secuencia discursiva; no es una inversión mecánica del tiempo verbal.' },
+
+  { id: 'challenge-unpointed', area: 'challenge', label: 'Sin niqqud', skill: 'reading', prompt: 'Lee la palabra sin signos vocálicos y recuerda qué palabra ya conoces.', hebrew: 'מלך', answer: 'מֶלֶךְ · mélej · rey', note: 'Perfeccionamiento retira ayudas visuales. La meta es reconocer la secuencia consonántica sin depender siempre del niqqud.' },
+  { id: 'challenge-unpointed-phrase', area: 'challenge', label: 'Lectura', skill: 'reading', prompt: 'Intenta leer esta frase sin niqqud antes de revelar la respuesta.', hebrew: 'בראשית ברא', answer: 'בְּרֵאשִׁית בָּרָא · be-reshít bará', note: 'Aquí se entrena reconocimiento de palabras conocidas con menos apoyo gráfico.' },
+  { id: 'challenge-analysis', area: 'challenge', label: 'Analizar', skill: 'rules', prompt: 'Separa mentalmente las piezas de esta forma.', hebrew: 'וַיֹּאמֶר', answer: 'וַ־ + forma yiqtol de אָמַר · wayyiqtol', note: 'La forma se estudia como patrón discursivo. No la reduzcas a una fórmula mecánica de tiempo verbal.' },
+  { id: 'challenge-construct', area: 'challenge', label: 'Constructo', skill: 'rules', prompt: 'Explica qué relación gramatical reconoces sin traducir palabra por palabra.', hebrew: 'בֵּית הַמֶּלֶךְ', answer: 'Estado constructo · «la casa del rey»', note: 'El primer sustantivo está ligado al segundo. Esa relación es más importante que memorizar una traducción aislada.' },
+  { id: 'challenge-suffix', area: 'challenge', label: 'Sufijo', skill: 'rules', prompt: 'Identifica base y sufijo antes de revelar.', hebrew: 'בְּנִי', answer: 'בֵּן + ־ִי · «mi hijo»', note: 'El reto es reconocer la base aunque cambie su vocalización al recibir el sufijo.' },
+  { id: 'challenge-vowels', area: 'challenge', label: 'Distinción fina', skill: 'niqqud', prompt: '¿Qué detalle especial de lectura debes recordar aquí?', hebrew: 'כָּל', answer: 'Qamats qatan · lectura orientativa kol', note: 'No todo qamats se decide igual. El contexto ortográfico y la tradición de lectura importan.' },
+  { id: 'challenge-furtive', area: 'challenge', label: 'Lectura fina', skill: 'niqqud', prompt: 'Lee la palabra y ubica dónde se oye la vocal final.', hebrew: 'רוּחַ', answer: 'rúaj / rúaḥ · el pataj furtivo se oye antes de ח', note: 'Es un detalle de lectura que exige reconocer la secuencia completa, no solo cada signo por separado.' },
+  { id: 'challenge-context', area: 'challenge', label: 'Contexto', skill: 'rules', prompt: '¿Qué debes evitar afirmar automáticamente al comparar estas formas?', hebrew: 'אָמַר · יֹאמַר', answer: 'Evitar “qatal = pasado” y “yiqtol = futuro” como equivalencias automáticas', note: 'Las formas tienen comportamiento aspectual y discursivo; la traducción temporal final depende del contexto.' },
 ] as const
 
 function reviewSkill(item: ReviewItem): HebrewSkill {
+  if (item.skill) return item.skill
   if (item.area === 'letters') return item.label === 'Sofit' ? 'sofit' : 'alef_bet'
   if (item.area === 'vowels') return item.id.startsWith('sheva') || item.id === 'sheva' ? 'sheva' : 'niqqud'
   if (item.area === 'words') return 'vocabulary'
@@ -86,7 +98,7 @@ function ReviewIntroduction() {
         <span><span lang="he" dir="rtl" className="block text-[12px] font-black text-indigo-700">חֲזָרָה</span><span className="mt-0.5 block text-sm font-black text-slate-950">¿Cómo funciona el repaso?</span></span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
-      {open && <div className="border-t border-slate-200 py-4"><div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1 text-[14px] leading-relaxed text-slate-600 [-webkit-overflow-scrolling:touch]"><p>Repaso no es un examen. Mezcla elementos ya estudiados y te permite decidir qué recuerdas y qué conviene volver a practicar.</p><p>Cada sesión usa hasta ocho elementos. Primero intenta responder; después revela la respuesta y clasifica cómo te fue.</p><p>Las reglas nuevas también se practican aquí: niqqud avanzado, transformaciones nominales y reconocimiento verbal. La traducción final de una forma verbal siempre sigue dependiendo del contexto.</p><p>Tus marcas se guardan en tu historial privado. «Necesito practicar» y «Repasar después» alimentan la prioridad de «Según mi progreso», pero no cuentan como precisión de examen porque aquí la respuesta ya fue revelada.</p></div></div>}
+      {open && <div className="border-t border-slate-200 py-4"><div className="max-h-72 space-y-3 overflow-y-auto overscroll-contain pr-1 text-[14px] leading-relaxed text-slate-600 [-webkit-overflow-scrolling:touch]"><p>Repaso no es un examen. Mezcla elementos ya estudiados y te permite decidir qué recuerdas y qué conviene volver a practicar.</p><p>Cada sesión usa hasta diez elementos. Primero intenta responder; después revela la respuesta y clasifica cómo te fue.</p><p>Perfeccionar añade retos con menos ayudas: lectura sin niqqud, reglas combinadas, sufijos, constructo y detalles de lectura. Sirve incluso cuando los fundamentos ya están al 100%.</p><p>Tus marcas se guardan en tu historial privado. «Necesito practicar» y «Repasar después» alimentan la prioridad de «Según mi progreso», pero no cuentan como precisión de examen porque aquí la respuesta ya fue revelada.</p></div></div>}
     </section>
   )
 }
@@ -102,8 +114,10 @@ export default function ReviewExplorer() {
   const [error, setError] = useState<string | null>(null)
 
   const session = useMemo(() => {
-    const filtered = area === 'all' ? MIXED_SESSION_IDS.map(id => ITEMS.find(item => item.id === id)).filter((item): item is ReviewItem => Boolean(item)) : ITEMS.filter(item => item.area === area)
-    return filtered.slice(0, 8)
+    const filtered = area === 'all'
+      ? MIXED_SESSION_IDS.map(id => ITEMS.find(item => item.id === id)).filter((item): item is ReviewItem => Boolean(item))
+      : ITEMS.filter(item => item.area === area)
+    return filtered.slice(0, area === 'challenge' ? 8 : 10)
   }, [area])
 
   const current = session[index] ?? null
@@ -154,9 +168,9 @@ export default function ReviewExplorer() {
 
   return (
     <section aria-labelledby="review-title" className="text-left">
-      <div className="text-center"><p lang="he" dir="rtl" className="text-[1rem] font-black text-indigo-700">חֲזָרָה</p><h2 id="review-title" className="mt-0.5 text-[1.65rem] font-black tracking-[-0.025em] text-slate-950">Repasa lo que ya estudiaste</h2><p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Sesiones breves para recuperar letras, vocales, palabras, lectura, reglas y formas verbales sin convertirlo en otro examen.</p></div>
+      <div className="text-center"><p lang="he" dir="rtl" className="text-[1rem] font-black text-indigo-700">חֲזָרָה</p><h2 id="review-title" className="mt-0.5 text-[1.65rem] font-black tracking-[-0.025em] text-slate-950">Repasa lo que ya estudiaste</h2><p className="mx-auto mt-1 max-w-md text-[13px] leading-relaxed text-slate-500">Recupera lo aprendido y, cuando quieras más dificultad, entra en Perfeccionar.</p></div>
       <div className="mt-5"><ReviewIntroduction /></div>
-      <div className="-mx-4 mt-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><div className="flex min-w-max gap-2">{AREAS.map(item => <button key={item.id} type="button" aria-pressed={area === item.id} disabled={saving} onClick={() => void changeArea(item.id)} className={`min-h-11 rounded-full border px-4 text-[12px] font-black ${area === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>)}</div></div>
+      <div className="-mx-4 mt-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><div className="flex min-w-max gap-2">{AREAS.map(item => <button key={item.id} type="button" aria-pressed={area === item.id} disabled={saving} onClick={() => void changeArea(item.id)} className={`min-h-11 rounded-full border px-4 text-[12px] font-black ${area === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>{item.id === 'challenge' && <Sparkles className="mr-1 inline h-3.5 w-3.5" />}{item.label}</button>)}</div></div>
 
       {!finished && current && (
         <div className="mt-5">
