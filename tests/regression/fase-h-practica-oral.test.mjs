@@ -5,9 +5,10 @@ import test from 'node:test'
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const speech = fs.readFileSync('components/hebreo/HebrewSpeechPractice.tsx', 'utf8')
 
-test('FASE H bloque 4: práctica oral queda visible e independiente del examen', () => {
+test('FASE H bloque 4: práctica oral queda como submenú visible e independiente del examen', () => {
   assert.match(home, /HebrewSpeechPractice/)
-  assert.match(home, /<HebrewProgressCoach \/><HebrewSpeechPractice \/>/)
+  assert.match(home, /speech: \{ title: 'Práctica oral'/)
+  assert.match(home, /openPractice === 'speech'/)
   assert.match(speech, /Práctica oral/)
   assert.match(speech, />Palabras</)
   assert.match(speech, />Oraciones</)
