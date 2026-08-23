@@ -52,7 +52,7 @@ test('FASE H checklist 4: práctica usa cuatro accesos horizontales compactos', 
   assert.match(home, /type PracticePanelId\s*=\s*'evaluation'\s*\|\s*'speech'\s*\|\s*'keyboard'\s*\|\s*'progress'/)
   assert.match(home, /function PracticeTab/)
   assert.match(home, /grid grid-cols-4 gap-2/)
-  assert.match(home, /min-h-\[70px\]/)
+  assert.match(home, /min-h-\[74px\]/)
   assert.match(home, /shortTitle:\s*'Oral'/)
   assert.match(home, /shortTitle:\s*'Teclado'/)
   assert.match(home, /shortTitle:\s*'Progreso'/)
