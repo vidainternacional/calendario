@@ -4,6 +4,7 @@ import test from 'node:test'
 
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8')
+const summary = fs.readFileSync('components/hebreo/HebrewProgressSummary.tsx', 'utf8')
 
 test('FASE H checklist 5: Teclado hebreo vive como submenú del bloque de progreso', () => {
   assert.match(home, /aria-label="Práctica"/)
@@ -14,16 +15,17 @@ test('FASE H checklist 5: Teclado hebreo vive como submenú del bloque de progre
   assert.match(home, /Escritura y reconocimiento de letras/)
 })
 
-test('FASE H checklist 5: evaluación conserva cuadro de notas persistente dentro del acordeón', () => {
+test('FASE H checklist 5: evaluación y Mi progreso quedan separados sin perder persistencia', () => {
   assert.match(home, /Prueba tu progreso/)
-  assert.match(home, /Evaluación y progreso/)
+  assert.match(home, /evaluation: \{ title: 'Evaluación'/)
+  assert.match(home, /progress: \{ title: 'Mi progreso'/)
   assert.match(home, /<HebrewProgressCoach \/>/)
+  assert.match(home, /<HebrewProgressSummary \/>/)
   assert.match(home, /Evalúa, practica y revisa tu avance/)
   assert.doesNotMatch(home, /<details/)
-  assert.match(coach, /Cuadro de notas/)
-  assert.match(coach, /evaluaciones registradas/)
-  assert.match(coach, /loadHebrewProgress/)
+  assert.match(summary, /Evaluaciones registradas/)
+  assert.match(summary, /loadHebrewProgress/)
   assert.match(coach, /saveHebrewProgressAnswer/)
-  assert.doesNotMatch(home + coach, /La persistencia de progreso todavía no está activa\./)
-  assert.doesNotMatch(home + coach, /localStorage|sessionStorage/)
+  assert.doesNotMatch(home + coach + summary, /La persistencia de progreso todavía no está activa\./)
+  assert.doesNotMatch(home + coach + summary, /localStorage|sessionStorage/)
 })
