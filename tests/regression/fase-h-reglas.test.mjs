@@ -11,23 +11,25 @@ test('FASE H reglas: Aprender integra navegador minimalista y conserva explorado
   assert.match(course, /import GrammarNavigator/)
   assert.match(course, /id: 'grammar',[\s\S]*?title: 'Reglas'/)
   assert.match(course, /if \(id === 'grammar'\) return <GrammarNavigator \/>/)
-  assert.match(navigator, /import GrammarExplorer/)
-  assert.match(navigator, /Comparaciones y tablas/)
+  assert.match(navigator, /TOPICS/)
+  assert.match(grammar, /Comparaciones y tablas/)
 })
 
-test('FASE H reglas: primera capa usa categorías compactas y acordeón por regla', () => {
-  for (const label of ['Básicas', 'Prefijos', 'Nombres', 'Verbos', 'Frase']) assert.match(navigator, new RegExp(label))
-  assert.match(navigator, /grid grid-cols-2 gap-2/)
-  assert.match(navigator, /setOpenRule/)
-  assert.match(navigator, /aria-expanded=\{active\}/)
-  assert.match(navigator, /openRule === rule\.id/)
+test('FASE H reglas: primera capa usa pasos compactos y detalle desplegable por regla', () => {
+  for (const label of ['Sheva', 'Dagesh', 'Shin / Sin', 'Prefijos', 'Género', 'Número', 'Verbos']) assert.match(navigator, new RegExp(label.replace('/', '\\/')))
+  assert.match(navigator, /grid grid-cols-3 gap-2\.5/)
+  assert.match(navigator, /setOpen/)
+  assert.match(navigator, /aria-expanded=\{selected\}/)
+  assert.match(navigator, /open===topic\.id/)
+  assert.match(navigator, /<RuleCard topic=/)
 })
 
 test('FASE H reglas: conserva reglas fundamentales y ejemplos pedagógicos', () => {
-  for (const title of ['Artículo definido', 'Conjunción', 'Preposición בְּ', 'Preposiciones frecuentes', 'Preposición + artículo', 'Pistas de género', 'Pistas de plural', 'Sustantivo + adjetivo', 'Cadena constructa']) assert.match(navigator, new RegExp(title.replace('+', '\\+')))
-  assert.match(navigator, /rule\.pronunciation/)
-  assert.match(navigator, /rule\.meaning/)
-  assert.match(navigator, /rule\.summary/)
+  for (const title of ['Artículo · el, la, los, las', 'Prefijos · piezas pegadas al inicio', 'Género · masculino y femenino', 'Número · singular y plural', 'Posesión · mi, tu, su', 'Constructo · relacionar dos nombres', 'Verbos · cómo cambia una acción']) assert.match(navigator, new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(navigator, /topic\.what/)
+  assert.match(navigator, /topic\.how/)
+  assert.match(navigator, /topic\.example/)
+  assert.match(navigator, /topic\.caution/)
 })
 
 test('FASE H reglas: explorador avanzado conserva cautelas tablas y detalle', () => {
