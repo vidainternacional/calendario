@@ -3,6 +3,23 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { HebrewDifficulty, HebrewProgressAnswer, HebrewProgressMode, HebrewProgressSession, HebrewSkill } from '@/lib/hebreo/progress'
 
+const REVIEW_TO_PRACTICE_KEY: Record<string, string> = {
+  bet: 'letter-bet',
+  pataj: 'niqqud-patah',
+  melekh: 'vocab-melekh',
+  'bereshit-bara': 'reading-bereshit-bara',
+  article: 'rule-article',
+  'kaf-final': 'sofit-kaf',
+  tsere: 'niqqud-tsere',
+  construct: 'rule-construct',
+  shalom: 'vocab-shalom',
+  segol: 'niqqud-segol',
+  sheva: 'sheva-recognition',
+  'qamats-qatan': 'niqqud-qamats-qatan',
+  'furtive-pataj': 'reading-furtive-patah',
+  'ha-davar-tov': 'reading-ha-davar-tov',
+}
+
 function client() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,9 +90,10 @@ export async function finishHebrewProgressSession(sessionId: string, status: 'co
 }
 
 export async function saveHebrewReviewRating(input: { sessionId: string; itemId: string; skill: HebrewSkill; rating: 'know' | 'practice' | 'later'; responseText?: string }) {
+  const practiceKey = REVIEW_TO_PRACTICE_KEY[input.itemId] ?? input.itemId
   return saveHebrewProgressAnswer({
     sessionId: input.sessionId,
-    questionKey: `review:${input.itemId}`,
+    questionKey: `review:${practiceKey}`,
     skill: input.skill,
     difficulty: 'intermediate',
     responseText: input.responseText || input.rating,
