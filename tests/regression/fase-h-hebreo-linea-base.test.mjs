@@ -13,6 +13,8 @@ const readingRoute = fs.readFileSync('app/api/estudios/hebreo/biblia/route.ts', 
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
 const materials = fs.readFileSync('components/hebreo/HebrewSupportMaterials.tsx', 'utf8')
+const progress = fs.readFileSync('lib/hebreo/progress.ts', 'utf8')
+const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 const learnPage = fs.readFileSync('app/(app)/estudios/hebreo/aprender/page.tsx', 'utf8')
 const estudios = fs.readFileSync('app/(app)/estudios/page.tsx', 'utf8')
@@ -170,18 +172,22 @@ test('FASE H: Lectura abre la Biblia real y no duplica el diccionario', () => {
   assert.match(readingRoute, /\.order\('verse', \{ ascending: true \}\)/)
 })
 
-test('FASE H: Prueba tu progreso conserva quince preguntas secuenciales en Inicio', () => {
-  assert.equal((home.match(/type: '(?:Reconocer|Distinguir|Sofit|Dagesh|Lectura|Comprensión|Integración)'/g) ?? []).length, 15)
-  assert.match(home, /\{step \+ 1\} \/ \{TEST_QUESTIONS\.length\}/)
-  assert.match(home, /step < TEST_QUESTIONS\.length - 1/)
+test('FASE H: Prueba tu progreso usa banco real y validación objetiva del Bloque 4', () => {
+  assert.match(home, /<HebrewProgressCoach \/>/)
   assert.match(home, /<details\b/)
+  assert.ok((progress.match(/correctIndex:\s*\d+/g) ?? []).length >= 20)
+  assert.match(progress, /HEBREW_PRACTICE_QUESTIONS/)
+  assert.match(coach, /optionIndex === current\.correctIndex/)
+  assert.doesNotMatch(home, /TEST_QUESTIONS/)
 })
 
-test('FASE H: resultado e historial de práctica no fingen persistencia', () => {
-  assert.match(home, /Resultado de práctica/)
-  assert.match(home, /Repasa antes de avanzar/)
-  assert.match(home, /Historial de progreso/)
-  assert.match(home, /La persistencia de progreso todavía no está activa\./)
+test('FASE H: resultado e historial de práctica reflejan persistencia real autorizada', () => {
+  assert.match(coach, /Práctica terminada/)
+  assert.match(coach, /Tus respuestas quedaron guardadas/)
+  assert.match(coach, /Tu historial/)
+  assert.match(coach, /Qué estudiar después/)
+  assert.match(coach, /loadHebrewProgress/)
+  assert.doesNotMatch(home + coach, /La persistencia de progreso todavía no está activa\./)
 })
 
 test('FASE H: materiales conserva exactamente once enlaces y admite despliegue embebido', () => {
@@ -210,9 +216,9 @@ test('FASE H: Traductor Biblia y Materiales se despliegan en Inicio sin navegaci
   assert.match(reading, /Sin niqqud/)
 })
 
-test('FASE H: no introduce persistencia falsa; el catálogo solo persiste resoluciones derivadas autorizadas', () => {
+test('FASE H: persistencia personal queda aislada del catálogo y sin almacenamiento local', () => {
   assert.doesNotMatch(home, /supabase|localStorage|sessionStorage/)
-  for (const content of [home, course, explorer, niqqud, words, reading]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
+  for (const content of [home, course, explorer, niqqud, words, reading, coach]) assert.doesNotMatch(content, /localStorage|sessionStorage/)
   assert.match(catalog, /from\('biblical_hebrew_search_resolutions'\)/)
   assert.match(catalog, /\.upsert\(payload/)
   assert.doesNotMatch(catalog, /from\('biblical_lexical_entries'\)[\s\S]{0,500}\.(?:insert|update|delete|upsert)\(/)
