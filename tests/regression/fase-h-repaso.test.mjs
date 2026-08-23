@@ -13,14 +13,15 @@ test('FASE H repaso: Aprender abre Repaso como módulo real dentro del curso', (
 
 test('FASE H repaso: distingue repaso de examen y mezcla áreas ya estudiadas', () => {
   assert.match(review, /Repaso no es un examen/)
-  for (const label of ['Mixto', 'Letras', 'Vocales', 'Palabras', 'Lectura', 'Reglas', 'Verbos']) assert.match(review, new RegExp(label))
-  for (const area of ["area: 'letters'", "area: 'vowels'", "area: 'words'", "area: 'reading'", "area: 'rules'", "area: 'verbs'"]) assert.match(review, new RegExp(area))
+  for (const label of ['Mixto', 'Letras', 'Vocales', 'Palabras', 'Lectura', 'Reglas', 'Verbos', 'Perfeccionar']) assert.match(review, new RegExp(label))
+  for (const area of ["area: 'letters'", "area: 'vowels'", "area: 'words'", "area: 'reading'", "area: 'rules'", "area: 'verbs'", "area: 'challenge'"]) assert.match(review, new RegExp(area))
   assert.match(review, /MIXED_SESSION_IDS/)
   assert.match(review, /'verb-qatal-yiqtol'/)
+  assert.match(review, /'challenge-unpointed'/)
 })
 
-test('FASE H repaso: usa sesiones cortas, autoevaluación y guardado privado', () => {
-  assert.match(review, /slice\(0, 8\)/)
+test('FASE H repaso: usa sesiones breves, autoevaluación y guardado privado', () => {
+  assert.match(review, /area === 'challenge' \? 8 : 10/)
   assert.match(review, /Mostrar respuesta/)
   assert.match(review, /Lo sé/)
   assert.match(review, /Necesito practicar/)
@@ -29,6 +30,12 @@ test('FASE H repaso: usa sesiones cortas, autoevaluación y guardado privado', (
   assert.match(review, /saveHebrewReviewRating/)
   assert.match(review, /startHebrewProgressSession/)
   assert.match(review, /finishHebrewProgressSession/)
+})
+
+test('FASE H repaso: Perfeccionar sigue después del dominio fundamental sin inflar la escala', () => {
+  for (const id of ['challenge-unpointed', 'challenge-unpointed-phrase', 'challenge-analysis', 'challenge-construct', 'challenge-suffix', 'challenge-vowels', 'challenge-furtive', 'challenge-context']) assert.match(review, new RegExp(`id: '${id}'`))
+  assert.match(review, /lectura sin niqqud, reglas combinadas, sufijos, constructo y detalles de lectura/i)
+  assert.match(review, /Sirve incluso cuando los fundamentos ya están al 100%/)
 })
 
 test('FASE H repaso: incluye práctica de escritura compatible con el teclado hebreo', () => {
