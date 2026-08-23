@@ -15,14 +15,16 @@ test('FASE H bloque 4: práctica oral queda como submenú visible e independient
   assert.doesNotMatch(speech, /saveHebrewProgressAnswer|startHebrewProgressSession/)
 })
 
-test('FASE H bloque 4: micrófono pide permiso real, captura y exige envío explícito', () => {
+test('FASE H bloque 4: micrófono pide permiso real, captura y evalúa automáticamente al terminar', () => {
   assert.match(speech, /navigator\.mediaDevices\?\.getUserMedia/)
   assert.match(speech, /SpeechRecognition/)
   assert.match(speech, /webkitSpeechRecognition/)
   assert.match(speech, /interimResults = true/)
-  assert.match(speech, /Habla cuando veas moverse el espectro/)
-  assert.match(speech, /Enviar resultado/)
-  assert.match(speech, /submitResult/)
+  assert.match(speech, /setStatus\('processing'\)/)
+  assert.match(speech, /similarity\(current\.hebrew, transcript\)/)
+  assert.match(speech, /setResult\(next\)/)
+  assert.match(speech, /Analizando…/)
+  assert.doesNotMatch(speech, /Enviar resultado|submitResult/)
   assert.match(speech, /micrófono está bloqueado/)
 })
 
@@ -41,7 +43,7 @@ test('FASE H bloque 4: espectro de voz reacciona al micrófono real', () => {
   assert.match(speech, /getByteFrequencyData/)
   assert.match(speech, /requestAnimationFrame/)
   assert.match(speech, /Espectro de voz/)
-  assert.match(speech, /Habla cuando veas moverse el espectro/)
+  assert.match(speech, /Te escucho…/)
 })
 
 test('FASE H bloque 4: feedback explica qué parte reconocida necesita repetirse sin fingir fonética', () => {
