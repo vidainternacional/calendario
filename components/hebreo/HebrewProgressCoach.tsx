@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, ChevronDown, Mic, RotateCcw, SlidersHorizontal, Square } from 'lucide-react'
 import {
   deriveProgressMetrics,
@@ -35,6 +35,7 @@ const DIFFICULTIES: readonly { id: HebrewDifficulty; label: string; level: strin
 ]
 const LENGTHS = [10, 15, 20] as const
 
+type TimedProgressAnswer = HebrewProgressAnswer & { response_time_ms?: number | null }
 type SpeechResultEvent = { results: { [index: number]: { [index: number]: { transcript: string } } } }
 type SpeechRecognitionLike = {
   lang: string
@@ -81,6 +82,23 @@ function dateLabel(value: string) {
   return new Intl.DateTimeFormat('es', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(value))
 }
 
+function nowMs() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now()
+}
+
+function median(values: number[]) {
+  if (!values.length) return null
+  const sorted = [...values].sort((a, b) => a - b)
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2 ? sorted[middle] : Math.round((sorted[middle - 1] + sorted[middle]) / 2)
+}
+
+function secondsLabel(value: number | null | undefined) {
+  if (value == null || !Number.isFinite(value)) return '—'
+  const seconds = value / 1000
+  return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s`
+}
+
 export default function HebrewProgressCoach() {
   const [historyOpen, setHistoryOpen] = useState(true)
   const [customOpen, setCustomOpen] = useState(false)
@@ -104,6 +122,7 @@ export default function HebrewProgressCoach() {
   const [speechResult, setSpeechResult] = useState<{ transcript: string; score: number } | null>(null)
   const [speechError, setSpeechError] = useState<string | null>(null)
   const [recognition, setRecognition] = useState<SpeechRecognitionLike | null>(null)
+  const questionStartedAtRef = useRef<number | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -129,6 +148,20 @@ export default function HebrewProgressCoach() {
   const previewQuestions = useMemo(() => mode === 'adaptive'
     ? selectStrictAdaptiveQuestions(answers, focusAreas, questionCount)
     : selectMasteryQuestions(answers, difficulty, focusAreas, questionCount), [answers, difficulty, focusAreas, mode, questionCount])
+  const responseTiming = useMemo(() => {
+    const timed = (answers as TimedProgressAnswer[])
+      .filter(answer => !answer.question_key.startsWith('review:') && typeof answer.response_time_ms === 'number' && answer.response_time_ms >= 0)
+      .sort((a, b) => Date.parse(a.answered_at) - Date.parse(b.answered_at))
+    const typicalMs = median(timed.map(answer => answer.response_time_ms as number))
+    if (timed.length < 6) return { typicalMs, trend: 'Creando línea base' as const }
+    const split = Math.floor(timed.length / 2)
+    const previous = median(timed.slice(0, split).map(answer => answer.response_time_ms as number))
+    const recent = median(timed.slice(split).map(answer => answer.response_time_ms as number))
+    if (previous == null || recent == null) return { typicalMs, trend: 'Creando línea base' as const }
+    if (recent <= previous * 0.85) return { typicalMs, trend: 'Más fluido' as const }
+    if (recent >= previous * 1.2) return { typicalMs, trend: 'Más pausado' as const }
+    return { typicalMs, trend: 'Estable' as const }
+  }, [answers])
 
   const current = questions[index] ?? null
   const active = Boolean(sessionId && current && !finished)
@@ -163,6 +196,7 @@ export default function HebrewProgressCoach() {
       setSelected(null)
       setLastAnswer(null)
       setFinished(false)
+      questionStartedAtRef.current = nowMs()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudo iniciar la práctica.')
     } finally {
@@ -172,6 +206,7 @@ export default function HebrewProgressCoach() {
 
   async function answer(optionIndex: number) {
     if (!current || !sessionId || selected !== null || saving) return
+    const responseTimeMs = questionStartedAtRef.current == null ? null : Math.max(0, nowMs() - questionStartedAtRef.current)
     setSaving(true)
     setSelected(optionIndex)
     const isCorrect = optionIndex === current.correctIndex
@@ -184,6 +219,7 @@ export default function HebrewProgressCoach() {
         difficulty: current.difficulty,
         responseText: current.options[optionIndex],
         isCorrect,
+        responseTimeMs,
       })
       setLastAnswer(saved)
       setAnswers(previous => [saved, ...previous])
@@ -218,11 +254,13 @@ export default function HebrewProgressCoach() {
     setSpeechResult(null)
     setSpeechError(null)
     if (index + 1 < questions.length) {
+      questionStartedAtRef.current = nowMs()
       setIndex(value => value + 1)
       setSelected(null)
       setLastAnswer(null)
       return
     }
+    questionStartedAtRef.current = null
     setSaving(true)
     try {
       await finishHebrewProgressSession(sessionId)
@@ -274,6 +312,7 @@ export default function HebrewProgressCoach() {
     setFinished(false)
     setSpeechResult(null)
     setSpeechError(null)
+    questionStartedAtRef.current = null
   }
 
   const finalPct = questions.length ? Math.round((correct / questions.length) * 100) : 0
@@ -291,7 +330,7 @@ export default function HebrewProgressCoach() {
         <>
           <div className="py-3">
             <p className="text-[13px] font-black text-slate-900">Mide lo que ya sabes y decide qué reforzar</p>
-            <p className="mx-auto mt-1 max-w-sm text-[11px] leading-relaxed text-slate-500">Cada respuesta alimenta tu historial. Acertar retira esa pregunta de la práctica normal; solo vuelve más adelante como control de retención.</p>
+            <p className="mx-auto mt-1 max-w-sm text-[11px] leading-relaxed text-slate-500">Cada respuesta alimenta tu historial. Acertar retira esa pregunta de la práctica normal; solo vuelve más adelante como control de retención. El tiempo de respuesta también se registra de forma silenciosa para medir tu fluidez contra tu propio historial.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-3">
@@ -362,7 +401,7 @@ export default function HebrewProgressCoach() {
 
           <div className="grid grid-cols-3 gap-2">{current.options.map((option, optionIndex) => { const chosen = selected === optionIndex; const correctOption = selected !== null && current.correctIndex === optionIndex; return <button key={`${current.key}-${option}`} type="button" disabled={selected !== null || saving} onClick={() => void answer(optionIndex)} className={`min-h-[4.5rem] rounded-[16px] border px-2 py-3 text-center text-lg font-black ${correctOption ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : chosen ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-800'}`}>{option}</button> })}</div>
 
-          {selected !== null && <div className="mt-4 border-t border-slate-200 pt-4 text-center"><p className={`text-sm font-black ${selected === current.correctIndex ? 'text-emerald-700' : 'text-rose-700'}`}>{selected === current.correctIndex ? 'Correcto' : 'Necesita repaso'}</p><p className="mx-auto mt-1 max-w-sm text-[12px] font-semibold text-slate-500">{current.explanation}</p><button type="button" disabled={!lastAnswer || saving} onClick={() => void toggleReview()} className={`mt-3 min-h-10 rounded-full border px-4 text-[11px] font-black ${lastAnswer?.review_requested ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-600'}`}>{lastAnswer?.review_requested ? 'Marcado para repasar' : 'Quiero repasar'}</button><button type="button" onClick={() => void next()} disabled={saving || !lastAnswer} className="mt-3 min-h-12 w-full rounded-full bg-indigo-600 text-sm font-black text-white">{index + 1 === questions.length ? 'Terminar práctica' : 'Siguiente'}</button></div>}
+          {selected !== null && <div className="mt-4 border-t border-slate-200 pt-4 text-center"><p className={`text-sm font-black ${selected === current.correctIndex ? 'text-emerald-700' : 'text-rose-700'}`}>{selected === current.correctIndex ? 'Correcto' : 'Necesita repaso'}</p><p className="mx-auto mt-1 max-w-sm text-[12px] font-semibold text-slate-500">{current.explanation}</p>{lastAnswer && <p className="mt-2 text-[10px] font-bold text-slate-400">Tiempo de respuesta: {secondsLabel((lastAnswer as TimedProgressAnswer).response_time_ms)}</p>}<button type="button" disabled={!lastAnswer || saving} onClick={() => void toggleReview()} className={`mt-3 min-h-10 rounded-full border px-4 text-[11px] font-black ${lastAnswer?.review_requested ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 bg-white text-slate-600'}`}>{lastAnswer?.review_requested ? 'Marcado para repasar' : 'Quiero repasar'}</button><button type="button" onClick={() => void next()} disabled={saving || !lastAnswer} className="mt-3 min-h-12 w-full rounded-full bg-indigo-600 text-sm font-black text-white">{index + 1 === questions.length ? 'Terminar práctica' : 'Siguiente'}</button></div>}
         </>
       )}
 
@@ -389,7 +428,8 @@ export default function HebrewProgressCoach() {
                   <div className="grid grid-cols-[1fr_auto_auto] gap-2 bg-slate-50 px-3 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-slate-400"><span>Evaluación</span><span>Aciertos</span><span>Nota</span></div>
                   {gradebook.slice(0, 12).map(row => <div key={row.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-slate-100 px-3 py-3 text-[10px]"><div><p className="font-black text-slate-800">{levelName(row.difficulty)}</p><p className="mt-0.5 text-[9px] text-slate-400">{dateLabel(row.startedAt)}{row.status !== 'completed' ? ' · incompleta' : ''}</p></div><span className="font-bold text-slate-600">{row.correct}/{row.answers}</span><span className={`min-w-11 rounded-full px-2 py-1 text-center font-black ${row.score >= 85 ? 'bg-emerald-50 text-emerald-700' : row.score >= 65 ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'}`}>{row.score}%</span></div>)}
                 </div>
-                <div className="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200 py-3 text-center"><div><p className="text-xl font-black text-emerald-700">{metrics.accuracy ?? 0}%</p><p className="text-[9px] font-black text-slate-400">Precisión</p></div><div><p className="text-xl font-black">{metrics.retention === null ? '—' : `${metrics.retention}%`}</p><p className="text-[9px] font-black text-slate-400">Retención</p></div><div><p className="text-[11px] font-black">{metrics.trend}</p><p className="text-[9px] font-black text-slate-400">Tendencia</p></div></div>
+                <div className="mt-4 grid grid-cols-2 border-y border-slate-200 text-center"><div className="border-b border-r border-slate-200 py-3"><p className="text-xl font-black text-emerald-700">{metrics.accuracy ?? 0}%</p><p className="text-[9px] font-black text-slate-400">Precisión</p></div><div className="border-b border-slate-200 py-3"><p className="text-xl font-black">{metrics.retention === null ? '—' : `${metrics.retention}%`}</p><p className="text-[9px] font-black text-slate-400">Retención</p></div><div className="border-r border-slate-200 py-3"><p className="text-[11px] font-black">{responseTiming.trend}</p><p className="text-[9px] font-black text-slate-400">Fluidez</p></div><div className="py-3"><p className="text-xl font-black">{secondsLabel(responseTiming.typicalMs)}</p><p className="text-[9px] font-black text-slate-400">Tiempo típico</p></div></div>
+                <p className="mx-auto mt-2 max-w-sm text-[9px] leading-relaxed text-slate-400">La fluidez compara tus tiempos recientes con tu propio historial. No penaliza automáticamente una respuesta correcta ni usa un límite universal de velocidad.</p>
                 <div className="mt-4 space-y-2">{metrics.areas.filter(area => area.attempts > 0).map(area => <div key={area.skill} className="text-[11px]"><p className="font-bold text-slate-600">{SKILL_LABELS[area.skill]}</p><p className="font-black text-slate-900">{area.accuracy ?? 0}% · {area.state}</p></div>)}</div>
                 {metrics.evolution !== null && <p className="mt-4 text-[11px] text-slate-500">Evolución frente a tu evaluación anterior: <span className="font-black text-slate-800">{metrics.evolution > 0 ? '+' : ''}{metrics.evolution} puntos</span>.</p>}
                 <div className="mx-auto mt-4 max-w-sm border-t border-slate-100 pt-3"><p className="text-[9px] font-black uppercase tracking-[0.1em] text-indigo-700">Qué estudiar después</p><p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600">{metrics.recommendation}</p></div>
