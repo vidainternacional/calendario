@@ -185,7 +185,7 @@ test('FASE H: Prueba tu progreso usa banco real y validación objetiva del Bloqu
 test('FASE H: resultado e historial de práctica reflejan persistencia real autorizada', () => {
   assert.match(coach, /Práctica terminada/)
   assert.match(coach, /finalFeedback/)
-  assert.match(coach, /Tu historial/)
+  assert.match(coach, /Cuadro de notas/)
   assert.match(coach, /Qué estudiar después/)
   assert.match(coach, /loadHebrewProgress/)
   assert.doesNotMatch(home + coach, /La persistencia de progreso todavía no está activa\./)
