@@ -11,21 +11,119 @@ import HebrewSpeechPractice from '@/components/hebreo/HebrewSpeechPractice'
 import HebrewSupportMaterials from '@/components/hebreo/HebrewSupportMaterials'
 import HebrewTranslator from '@/components/hebreo/HebrewTranslator'
 
-type QuickPanelId='translator'|'bible'|'materials'; type PracticePanelId='evaluation'|'speech'|'keyboard'|'progress'
-const QUICK_PANELS:Record<QuickPanelId,{title:string;subtitle:string}>={translator:{title:'Traductor',subtitle:'Español ⇄ Hebreo'},bible:{title:'Biblia',subtitle:'Leer en hebreo'},materials:{title:'Materiales',subtitle:'Curso y apoyo'}}
-const PRACTICE_PANELS:Record<PracticePanelId,{title:string;shortTitle:string}>={evaluation:{title:'Evaluación',shortTitle:'Evaluación'},speech:{title:'Práctica oral',shortTitle:'Oral'},keyboard:{title:'Teclado hebreo',shortTitle:'Teclado'},progress:{title:'Mi progreso',shortTitle:'Progreso'}}
-function QuickButton({id,icon,title,subtitle,active,onToggle}:{id:QuickPanelId;icon:React.ReactNode;title:string;subtitle:string;active:boolean;onToggle:(id:QuickPanelId)=>void}){return <button type="button" onClick={()=>onToggle(id)} aria-expanded={active} className={`flex min-h-[96px] flex-col items-center justify-center rounded-[20px] px-2 py-3 text-center transition active:scale-[0.98] ${active?'bg-indigo-600 text-white shadow-[0_10px_25px_rgba(79,70,229,0.2)]':'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80'}`}><span className={`grid h-9 w-9 place-items-center rounded-[13px] ${active?'bg-white/15 text-white':'bg-indigo-50 text-indigo-700'}`}>{icon}</span><span className="mt-2 text-[12px] font-black leading-tight">{title}</span><span className={`mt-0.5 text-[9px] font-semibold leading-tight ${active?'text-indigo-100':'text-slate-400'}`}>{subtitle}</span></button>}
-function PracticeTab({id,icon,active,onToggle}:{id:PracticePanelId;icon:React.ReactNode;active:boolean;onToggle:(id:PracticePanelId)=>void}){const panel=PRACTICE_PANELS[id];return <button type="button" onClick={()=>onToggle(id)} aria-expanded={active} aria-label={panel.title} className={`relative flex min-h-[76px] min-w-0 flex-col items-center justify-center rounded-[16px] px-1 py-2 text-center transition active:scale-[0.98] ${active?'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200':'bg-transparent text-slate-500 ring-1 ring-slate-200'}`}><span className="grid h-10 w-10 place-items-center">{icon}</span><span className={`mt-1 block max-w-full truncate text-[9px] font-black leading-tight ${active?'text-indigo-800':'text-slate-600'}`}>{panel.shortTitle}</span>{active&&<span aria-hidden="true" className="absolute bottom-1.5 h-1 w-5 rounded-full bg-indigo-500"/>}</button>}
-export default function HebrewLearningHome(){
- const[progressOpen,setProgressOpen]=useState(true);const[openQuick,setOpenQuick]=useState<QuickPanelId|null>(null);const[openPractice,setOpenPractice]=useState<PracticePanelId|null>(null);const[helpOpen,setHelpOpen]=useState(false)
- function toggleQuick(id:QuickPanelId){setOpenQuick(current=>current===id?null:id)} function togglePractice(id:PracticePanelId){setOpenPractice(current=>current===id?null:id)}
- return <main className="min-h-screen bg-[#f9f9fb] text-slate-950"><div className="mx-auto w-full max-w-xl px-4 pb-8 pt-3 sm:px-6">
- <header><Link href="/estudios" className="inline-flex min-h-10 items-center gap-1.5 text-[13px] font-black text-slate-600"><ArrowLeft className="h-4 w-4"/> Estudios</Link><div className="mt-1 text-center"><p lang="he" dir="rtl" className="text-[2.25rem] font-black leading-none text-indigo-700">עברית מקראית</p><h1 className="mt-1.5 text-[1.6rem] font-black tracking-[-0.035em]">Hebreo Bíblico</h1><p className="mt-0.5 text-[12px] font-semibold text-slate-500">Aprende, practica y lee los textos originales.</p></div></header>
- <section aria-label="Comenzar a aprender" className="mt-5 flex justify-center"><Link href="/estudios/hebreo/aprender" className="cta-pill group relative inline-flex min-h-[58px] w-auto min-w-[210px] items-center justify-center overflow-hidden rounded-full p-[2px] text-center text-white transition active:scale-[0.985]"><span aria-hidden="true" className="cta-neon-orbit pointer-events-none absolute inset-[-70%]"/><span className="relative z-10 flex min-h-[54px] w-full items-center justify-center rounded-full bg-indigo-600 px-8"><span className="text-[18px] font-black tracking-[-0.02em]">Empecemos</span></span></Link></section>
- <nav aria-label="Accesos desplegables de Hebreo Bíblico" className="mt-3 grid grid-cols-3 gap-2.5"><QuickButton id="translator" icon={<Languages className="h-4.5 w-4.5"/>} title="Traductor" subtitle="Español ⇄ Hebreo" active={openQuick==='translator'} onToggle={toggleQuick}/><QuickButton id="bible" icon={<BookOpenText className="h-4.5 w-4.5"/>} title="Biblia" subtitle="Leer en hebreo" active={openQuick==='bible'} onToggle={toggleQuick}/><QuickButton id="materials" icon={<Library className="h-4.5 w-4.5"/>} title="Materiales" subtitle="Curso y apoyo" active={openQuick==='materials'} onToggle={toggleQuick}/></nav>
- {openQuick&&<section aria-label={`${QUICK_PANELS[openQuick].title} desplegado`} className="mt-5 border-t border-slate-200 pt-5">{openQuick==='translator'&&<div><div className="mb-4 text-center"><p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">תַּרְגּוּם</p><h2 className="mt-1 text-[1.35rem] font-black">Traductor</h2></div><HebrewTranslator embedded/></div>}{openQuick==='bible'&&<HebrewBibleReader/>}{openQuick==='materials'&&<div><div className="mb-4 text-center"><p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">חֹמֶר לִמּוּד</p><h2 className="mt-1 text-[1.35rem] font-black">Materiales</h2></div><HebrewSupportMaterials embedded/></div>}</section>}
- <section aria-label="Práctica" className="mt-5 border-t border-slate-200"><button type="button" onClick={()=>setProgressOpen(v=>!v)} aria-expanded={progressOpen} className="relative flex min-h-[76px] w-full items-center justify-center px-12 text-center"><span><span className="block text-[14px] font-black">Prueba tu progreso</span><span className="mt-0.5 block text-[10px] text-slate-400">Entrena a tu ritmo</span></span><ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${progressOpen?'rotate-180':''}`}/></button>
- {progressOpen&&<div className="border-t border-slate-100 pt-3"><div className="relative"><nav aria-label="Secciones de práctica" className="grid grid-cols-4 gap-2"><PracticeTab id="evaluation" icon={<BarChart3 className="h-7 w-7"/>} active={openPractice==='evaluation'} onToggle={togglePractice}/><PracticeTab id="speech" icon={<Mic className="h-7 w-7"/>} active={openPractice==='speech'} onToggle={togglePractice}/><PracticeTab id="keyboard" icon={<Keyboard className="h-7 w-7"/>} active={openPractice==='keyboard'} onToggle={togglePractice}/><PracticeTab id="progress" icon={<Gauge className="h-7 w-7"/>} active={openPractice==='progress'} onToggle={togglePractice}/></nav><button type="button" onClick={()=>setHelpOpen(v=>!v)} aria-label="Ayuda sobre las herramientas" className="absolute -right-1 -top-3 grid h-7 w-7 place-items-center rounded-full bg-slate-900 text-white shadow-lg"><HelpCircle className="h-4 w-4"/></button>{helpOpen&&<div role="tooltip" className="absolute right-0 top-[82px] z-20 w-[min(92vw,320px)] rounded-[18px] bg-slate-950 p-4 text-left text-[10px] leading-relaxed text-white shadow-2xl"><p><b>Evaluación:</b> entrena con preguntas.</p><p className="mt-1"><b>Oral:</b> escucha y practica pronunciación.</p><p className="mt-1"><b>Teclado:</b> practica escritura.</p><p className="mt-1"><b>Progreso:</b> consulta nivel, notas, errores y recomendaciones.</p></div>}</div>
- {openPractice&&<div className="mt-4 border-t border-slate-100 pt-3">{openPractice==='evaluation'&&<div data-evaluation-only className="px-1 pb-5"><HebrewProgressCoach/></div>}{openPractice==='speech'&&<div className="pb-4"><HebrewSpeechPractice/></div>}{openPractice==='keyboard'&&<div className="pb-5"><HebrewKeyboardDock enabled/></div>}{openPractice==='progress'&&<div className="px-1 pb-4"><HebrewProgressSummary/></div>}</div>}</div>}
- </section><p className="mt-5 text-center text-[9px] leading-relaxed text-slate-400">FASE H · Aprendizaje en desarrollo · práctica sugerida de 5–10 minutos al día</p></div>
- <style jsx global>{`@keyframes ctaNeonOrbit{to{transform:rotate(360deg)}}.cta-pill{background:rgba(79,70,229,.98);box-shadow:0 6px 18px rgba(79,70,229,.20),0 0 10px rgba(56,189,248,.16)}.cta-neon-orbit{background:conic-gradient(from 0deg,transparent 0 70%,rgba(125,211,252,.18) 74%,rgba(224,242,254,.95) 80%,rgba(56,189,248,.95) 84%,rgba(129,140,248,.35) 89%,transparent 94%);animation:ctaNeonOrbit 2.8s linear infinite;filter:blur(.3px)}[data-evaluation-only]>.text-center>.py-3,[data-evaluation-only] .mt-4.border-b.border-slate-100.pb-4.text-center,[data-evaluation-only] .mt-5.border-t.border-slate-200.pt-2.text-center{display:none}[data-evaluation-only] .mt-4.text-center>:not(.grid.grid-cols-3){display:none}[aria-label="Práctica oral de hebreo"]{border:0;margin-top:0}[aria-label="Práctica oral de hebreo"] p[lang="he"]{font-size:3rem!important;line-height:1.25!important}[aria-label="Práctica oral de hebreo"] span[lang="he"]{font-size:1.15rem!important}[aria-label="Espectro de voz"]{height:48px!important;max-width:270px!important;border-color:rgb(186 230 253)!important;background:rgba(240,249,255,.85)!important;box-shadow:0 0 24px rgba(14,165,233,.10)}[aria-label="Espectro de voz"] span{background:rgb(14 165 233)!important;box-shadow:0 0 7px rgba(14,165,233,.55)}@media(prefers-reduced-motion:reduce){.cta-neon-orbit{animation:none}}`}</style></main>}
+type QuickPanelId = 'translator' | 'bible' | 'materials'
+type PracticePanelId = 'evaluation' | 'speech' | 'keyboard' | 'progress'
+
+const QUICK_PANELS: Record<QuickPanelId, { title: string; subtitle: string }> = {
+  translator: { title: 'Traductor', subtitle: 'Español ⇄ Hebreo' },
+  bible: { title: 'Biblia', subtitle: 'Leer en hebreo' },
+  materials: { title: 'Materiales', subtitle: 'Curso y apoyo' },
+}
+
+const PRACTICE_PANELS: Record<PracticePanelId, { title: string; shortTitle: string }> = {
+  evaluation: { title: 'Evaluación', shortTitle: 'Evaluación' },
+  speech: { title: 'Práctica oral', shortTitle: 'Oral' },
+  keyboard: { title: 'Teclado hebreo', shortTitle: 'Teclado' },
+  progress: { title: 'Mi progreso', shortTitle: 'Progreso' },
+}
+
+function QuickButton({ id, icon, title, subtitle, active, onToggle }: { id: QuickPanelId; icon: React.ReactNode; title: string; subtitle: string; active: boolean; onToggle: (id: QuickPanelId) => void }) {
+  return <button type="button" onClick={() => onToggle(id)} aria-expanded={active} className={`flex min-h-[96px] flex-col items-center justify-center rounded-[20px] px-2 py-3 text-center transition active:scale-[0.98] ${active ? 'bg-indigo-600 text-white shadow-[0_10px_25px_rgba(79,70,229,0.2)]' : 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80'}`}>
+    <span className={`grid h-9 w-9 place-items-center rounded-[13px] ${active ? 'bg-white/15 text-white' : 'bg-indigo-50 text-indigo-700'}`}>{icon}</span>
+    <span className="mt-2 text-[12px] font-black leading-tight">{title}</span>
+    <span className={`mt-0.5 text-[9px] font-semibold leading-tight ${active ? 'text-indigo-100' : 'text-slate-400'}`}>{subtitle}</span>
+  </button>
+}
+
+function PracticeTab({ id, icon, active, onToggle }: { id: PracticePanelId; icon: React.ReactNode; active: boolean; onToggle: (id: PracticePanelId) => void }) {
+  const panel = PRACTICE_PANELS[id]
+  return <button type="button" onClick={() => onToggle(id)} aria-expanded={active} aria-label={panel.title} className={`flex min-h-[74px] min-w-0 flex-col items-center justify-center rounded-[17px] px-1 py-2 text-center transition active:scale-[0.97] ${active ? 'bg-indigo-600 text-white shadow-[0_8px_20px_rgba(79,70,229,0.18)]' : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100'}`}>
+    <span className="grid h-10 w-10 place-items-center">{icon}</span>
+    <span className={`mt-0.5 block max-w-full truncate text-[9px] font-black leading-tight ${active ? 'text-white' : 'text-indigo-800'}`}>{panel.shortTitle}</span>
+  </button>
+}
+
+export default function HebrewLearningHome() {
+  const [progressOpen, setProgressOpen] = useState(true)
+  const [openQuick, setOpenQuick] = useState<QuickPanelId | null>(null)
+  const [openPractice, setOpenPractice] = useState<PracticePanelId | null>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
+
+  function toggleQuick(id: QuickPanelId) { setOpenQuick(current => current === id ? null : id) }
+  function togglePractice(id: PracticePanelId) { setOpenPractice(current => current === id ? null : id) }
+
+  return <main className="min-h-screen bg-[#f9f9fb] text-slate-950">
+    <div className="mx-auto w-full max-w-xl px-4 pb-8 pt-3 sm:px-6">
+      <header>
+        <Link href="/estudios" className="inline-flex min-h-10 items-center gap-1.5 text-[13px] font-black text-slate-600"><ArrowLeft className="h-4 w-4" /> Estudios</Link>
+        <div className="mt-1 text-center">
+          <p lang="he" dir="rtl" className="text-[2.25rem] font-black leading-none text-indigo-700">עברית מקראית</p>
+          <h1 className="mt-1.5 text-[1.6rem] font-black tracking-[-0.035em]">Hebreo Bíblico</h1>
+          <p className="mt-0.5 text-[12px] font-semibold text-slate-500">Aprende, practica y lee los textos originales.</p>
+        </div>
+      </header>
+
+      <section aria-label="Comenzar a aprender" className="mt-5 flex justify-center">
+        <Link href="/estudios/hebreo/aprender" className="cta-pill group relative inline-flex min-h-[58px] w-auto min-w-[210px] items-center justify-center overflow-hidden rounded-full p-[2px] text-center text-white transition active:scale-[0.985]">
+          <span aria-hidden="true" className="cta-neon-orbit pointer-events-none absolute inset-[-70%]" />
+          <span className="relative z-10 flex min-h-[54px] w-full items-center justify-center rounded-full bg-indigo-600 px-8"><span className="text-[18px] font-black tracking-[-0.02em]">Empecemos</span></span>
+        </Link>
+      </section>
+
+      <nav aria-label="Accesos desplegables de Hebreo Bíblico" className="mt-3 grid grid-cols-3 gap-2.5">
+        <QuickButton id="translator" icon={<Languages className="h-4.5 w-4.5" />} title="Traductor" subtitle="Español ⇄ Hebreo" active={openQuick === 'translator'} onToggle={toggleQuick} />
+        <QuickButton id="bible" icon={<BookOpenText className="h-4.5 w-4.5" />} title="Biblia" subtitle="Leer en hebreo" active={openQuick === 'bible'} onToggle={toggleQuick} />
+        <QuickButton id="materials" icon={<Library className="h-4.5 w-4.5" />} title="Materiales" subtitle="Curso y apoyo" active={openQuick === 'materials'} onToggle={toggleQuick} />
+      </nav>
+
+      {openQuick && <section aria-label={`${QUICK_PANELS[openQuick].title} desplegado`} className="mt-5 border-t border-slate-200 pt-5">
+        {openQuick === 'translator' && <div><div className="mb-4 text-center"><p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">תַּרְגּוּם</p><h2 className="mt-1 text-[1.35rem] font-black">Traductor</h2></div><HebrewTranslator embedded /></div>}
+        {openQuick === 'bible' && <HebrewBibleReader />}
+        {openQuick === 'materials' && <div><div className="mb-4 text-center"><p lang="he" dir="rtl" className="text-[1.05rem] font-black text-indigo-700">חֹמֶר לִמּוּד</p><h2 className="mt-1 text-[1.35rem] font-black">Materiales</h2></div><HebrewSupportMaterials embedded /></div>}
+      </section>}
+
+      <section aria-label="Práctica" className="mt-5 border-t border-slate-200">
+        <button type="button" onClick={() => setProgressOpen(value => !value)} aria-expanded={progressOpen} className="relative flex min-h-[76px] w-full items-center justify-center px-12 text-center">
+          <span><span className="block text-[14px] font-black">Prueba tu progreso</span><span className="mt-0.5 block text-[10px] text-slate-400">Entrena a tu ritmo</span></span>
+          <ChevronDown className={`absolute right-3 h-4 w-4 text-slate-400 transition-transform ${progressOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {progressOpen && <div className="border-t border-slate-100 pt-3">
+          <div className="relative">
+            <nav aria-label="Secciones de práctica" className="grid grid-cols-4 gap-2">
+              <PracticeTab id="evaluation" icon={<BarChart3 className="h-8 w-8" />} active={openPractice === 'evaluation'} onToggle={togglePractice} />
+              <PracticeTab id="speech" icon={<Mic className="h-8 w-8" />} active={openPractice === 'speech'} onToggle={togglePractice} />
+              <PracticeTab id="keyboard" icon={<Keyboard className="h-8 w-8" />} active={openPractice === 'keyboard'} onToggle={togglePractice} />
+              <PracticeTab id="progress" icon={<Gauge className="h-8 w-8" />} active={openPractice === 'progress'} onToggle={togglePractice} />
+            </nav>
+            <button type="button" onClick={() => setHelpOpen(value => !value)} aria-label="Ayuda sobre las herramientas" className="absolute -right-1 -top-3 grid h-7 w-7 place-items-center rounded-full bg-slate-900 text-white shadow-lg"><HelpCircle className="h-4 w-4" /></button>
+            {helpOpen && <div role="tooltip" className="absolute right-0 top-[82px] z-20 w-[min(92vw,320px)] rounded-[18px] bg-slate-950 p-4 text-left text-[10px] leading-relaxed text-white shadow-2xl"><p><b>Evaluación:</b> entrena con preguntas.</p><p className="mt-1"><b>Oral:</b> escucha y practica pronunciación.</p><p className="mt-1"><b>Teclado:</b> practica escritura.</p><p className="mt-1"><b>Progreso:</b> consulta nivel, notas, errores y recomendaciones.</p></div>}
+          </div>
+
+          {openPractice && <div className="mt-4 border-t border-slate-100 pt-3">
+            {openPractice === 'evaluation' && <div data-evaluation-only className="px-1 pb-5"><HebrewProgressCoach /></div>}
+            {openPractice === 'speech' && <div className="pb-4"><HebrewSpeechPractice /></div>}
+            {openPractice === 'keyboard' && <div className="pb-5"><HebrewKeyboardDock enabled /></div>}
+            {openPractice === 'progress' && <div className="px-1 pb-4"><HebrewProgressSummary /></div>}
+          </div>}
+        </div>}
+      </section>
+
+      <p className="mt-5 text-center text-[9px] leading-relaxed text-slate-400">FASE H · Aprendizaje en desarrollo · práctica sugerida de 5–10 minutos al día</p>
+    </div>
+
+    <style jsx global>{`
+      @keyframes ctaNeonOrbit{to{transform:rotate(360deg)}}
+      .cta-pill{background:rgba(79,70,229,.98);box-shadow:0 6px 18px rgba(79,70,229,.20),0 0 10px rgba(56,189,248,.16)}
+      .cta-neon-orbit{background:conic-gradient(from 0deg,transparent 0 70%,rgba(125,211,252,.18) 74%,rgba(224,242,254,.95) 80%,rgba(56,189,248,.95) 84%,rgba(129,140,248,.35) 89%,transparent 94%);animation:ctaNeonOrbit 2.8s linear infinite;filter:blur(.3px)}
+      [data-evaluation-only]>.text-center>.py-3,[data-evaluation-only] .mt-4.border-b.border-slate-100.pb-4.text-center,[data-evaluation-only] .mt-5.border-t.border-slate-200.pt-2.text-center{display:none}
+      [data-evaluation-only] .mt-4.text-center>:not(.grid.grid-cols-3){display:none}
+      [aria-label="Práctica oral de hebreo"]{border:0;margin-top:0}
+      [aria-label="Práctica oral de hebreo"] p[lang="he"]{font-size:3rem!important;line-height:1.25!important}
+      [aria-label="Práctica oral de hebreo"] span[lang="he"]{font-size:1.15rem!important}
+      [aria-label="Espectro de voz"]{height:48px!important;max-width:270px!important;border-color:rgb(186 230 253)!important;background:rgba(240,249,255,.85)!important;box-shadow:0 0 24px rgba(14,165,233,.10)}
+      [aria-label="Espectro de voz"] span{background:rgb(14 165 233)!important;box-shadow:0 0 7px rgba(14,165,233,.55)}
+      @media(prefers-reduced-motion:reduce){.cta-neon-orbit{animation:none}}
+    `}</style>
+  </main>
+}
