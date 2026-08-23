@@ -36,6 +36,13 @@ type Prompt = {
   source: string
 }
 
+type DetailedFeedback = {
+  title: string
+  detail: string | null
+}
+
+const IDLE_LEVELS = [12, 18, 26, 34, 42, 50, 42, 34, 26, 18, 12]
+
 function normalizeHebrew(value: string) {
   return withoutHebrewMarks(value).replace(/[^\u05D0-\u05EA]/g, '')
 }
@@ -56,6 +63,34 @@ function similarity(expected: string, heard: string) {
     }
   }
   return Math.max(0, Math.round((1 - rows[a.length][b.length] / Math.max(a.length, b.length)) * 100))
+}
+
+function hebrewWords(value: string) {
+  return value.split(/\s+/).map(word => ({ raw: word, normalized: normalizeHebrew(word) })).filter(word => word.normalized)
+}
+
+function detailedFeedback(expected: string, heard: string, score: number): DetailedFeedback {
+  if (score >= 90) return { title: 'Se escuchó muy bien.', detail: 'El navegador reconoció prácticamente todo el texto esperado.' }
+
+  const expectedWords = hebrewWords(expected)
+  const heardWords = hebrewWords(heard)
+  const mismatches = expectedWords
+    .map((word, index) => ({ expected: word, heard: heardWords[index] }))
+    .filter(pair => !pair.heard || pair.expected.normalized !== pair.heard.normalized)
+    .slice(0, 3)
+
+  if (!mismatches.length) return { title: 'Se escuchó bien.', detail: 'La diferencia detectada es pequeña. Repite una vez más para confirmar.' }
+
+  const parts = mismatches.map(pair => {
+    const guide = pronounceHebrewForSpanish(pair.expected.raw)
+    if (!pair.heard) return `${pair.expected.raw}${guide ? ` (${guide})` : ''}: no quedó reconocida.`
+    return `${pair.expected.raw}${guide ? ` (${guide})` : ''}: el navegador entendió ${pair.heard.raw}.`
+  })
+
+  return {
+    title: 'Hay partes que conviene repetir.',
+    detail: `Según lo reconocido, revisa: ${parts.join(' ')}`,
+  }
 }
 
 function unique(rows: Prompt[]) {
@@ -94,10 +129,10 @@ function buildSentencePrompts() {
 }
 
 function feedback(score: number) {
-  if (score >= 90) return { text: 'Muy buena coincidencia. La lectura fue reconocida casi completa.', tone: 'text-emerald-700' }
-  if (score >= 75) return { text: 'Buena coincidencia. Hay pequeños detalles que puedes pulir.', tone: 'text-emerald-700' }
-  if (score >= 55) return { text: 'Va cerca. Repite más despacio y separa mejor los sonidos.', tone: 'text-amber-700' }
-  return { text: 'El reconocimiento fue bastante distinto. Escucha la guía, repite por partes y vuelve a probar.', tone: 'text-rose-700' }
+  if (score >= 90) return { text: 'Muy buena coincidencia.', tone: 'text-emerald-700' }
+  if (score >= 75) return { text: 'Buena coincidencia.', tone: 'text-emerald-700' }
+  if (score >= 55) return { text: 'Va cerca.', tone: 'text-amber-700' }
+  return { text: 'Hay bastante diferencia.', tone: 'text-rose-700' }
 }
 
 export default function HebrewSpeechPractice() {
@@ -109,11 +144,52 @@ export default function HebrewSpeechPractice() {
   const capturedRef = useRef('')
   const [result, setResult] = useState<{ transcript: string; score: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [levels, setLevels] = useState(IDLE_LEVELS)
+  const streamRef = useRef<MediaStream | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const frameRef = useRef<number | null>(null)
 
   const words = useMemo(buildWordPrompts, [])
   const sentences = useMemo(buildSentencePrompts, [])
   const prompts = mode === 'words' ? words : sentences
   const current = prompts[index % Math.max(1, prompts.length)]
+
+  function stopVisualizer() {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
+    frameRef.current = null
+    streamRef.current?.getTracks().forEach(track => track.stop())
+    streamRef.current = null
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') void audioContextRef.current.close()
+    audioContextRef.current = null
+    setLevels(IDLE_LEVELS)
+  }
+
+  function startVisualizer(stream: MediaStream) {
+    if (typeof window === 'undefined') return
+    const AudioContextCtor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextCtor) return
+    const context = new AudioContextCtor()
+    const analyser = context.createAnalyser()
+    analyser.fftSize = 64
+    analyser.smoothingTimeConstant = 0.72
+    context.createMediaStreamSource(stream).connect(analyser)
+    const data = new Uint8Array(analyser.frequencyBinCount)
+    audioContextRef.current = context
+
+    const draw = () => {
+      analyser.getByteFrequencyData(data)
+      const center = Math.floor(data.length / 2)
+      const next = IDLE_LEVELS.map((_, bar) => {
+        const offset = Math.abs(bar - Math.floor(IDLE_LEVELS.length / 2))
+        const sampleIndex = Math.max(0, Math.min(data.length - 1, center - offset * 2))
+        const value = data[sampleIndex] ?? 0
+        return Math.max(10, Math.min(100, Math.round((value / 255) * 100)))
+      })
+      setLevels(next)
+      frameRef.current = requestAnimationFrame(draw)
+    }
+    draw()
+  }
 
   function clearAttempt() {
     setCaptured('')
@@ -124,6 +200,7 @@ export default function HebrewSpeechPractice() {
 
   function changeMode(next: SpeechMode) {
     recognition?.stop()
+    stopVisualizer()
     setRecognition(null)
     setStatus('idle')
     setMode(next)
@@ -134,6 +211,7 @@ export default function HebrewSpeechPractice() {
   function move(delta: number) {
     if (!prompts.length) return
     recognition?.stop()
+    stopVisualizer()
     setRecognition(null)
     setStatus('idle')
     setIndex(value => (value + delta + prompts.length) % prompts.length)
@@ -146,16 +224,19 @@ export default function HebrewSpeechPractice() {
     setStatus('requesting')
 
     try {
+      let stream: MediaStream | null = null
       if (navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        stream.getTracks().forEach(track => track.stop())
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        streamRef.current = stream
+        startVisualizer(stream)
       }
 
       const speechWindow = window as typeof window & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }
       const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
       if (!Recognition) {
+        stopVisualizer()
         setStatus('idle')
-        setError('El micrófono está disponible, pero este navegador no puede convertir la voz a texto hebreo. Abre el mismo enlace directamente en Safari; si el mensaje continúa, esta función no está disponible en esa versión de iOS.')
+        setError('El micrófono funciona, pero este navegador no puede convertir la voz a texto hebreo. El espectro confirma si entra sonido, pero la comparación necesita reconocimiento de voz compatible.')
         return
       }
 
@@ -180,17 +261,19 @@ export default function HebrewSpeechPractice() {
         setError(event.error === 'not-allowed'
           ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.'
           : event.error === 'no-speech'
-            ? 'No detecté voz. Acércate al micrófono, toca Hablar y pronuncia después de que aparezca “Escuchando”.'
+            ? 'No detecté voz. Toca Hablar y espera a que el espectro comience a moverse antes de pronunciar.'
             : 'No pude convertir la voz a texto esta vez. Inténtalo nuevamente en un ambiente tranquilo.')
       }
       instance.onend = () => {
+        stopVisualizer()
         setStatus('idle')
         setRecognition(null)
-        if (!capturedRef.current) setError(previous => previous ?? 'La escucha terminó sin reconocer texto. Intenta otra vez y espera a ver “Escuchando” antes de hablar.')
+        if (!capturedRef.current) setError(previous => previous ?? 'La escucha terminó sin reconocer texto. Si el espectro sí se movió, el micrófono recibió sonido pero el reconocimiento no pudo interpretarlo.')
       }
       setRecognition(instance)
       instance.start()
     } catch {
+      stopVisualizer()
       setStatus('idle')
       setRecognition(null)
       setError('No pude abrir el micrófono. Revisa el permiso del navegador para este sitio y vuelve a intentarlo.')
@@ -218,6 +301,7 @@ export default function HebrewSpeechPractice() {
   }
 
   const scoreFeedback = result ? feedback(result.score) : null
+  const detail = result && current ? detailedFeedback(current.hebrew, result.transcript, result.score) : null
 
   return (
     <section aria-label="Práctica oral de hebreo" className="mt-4 border-y border-slate-200 py-3 text-center">
@@ -244,25 +328,30 @@ export default function HebrewSpeechPractice() {
             <button type="button" onClick={() => move(1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 active:bg-slate-100" aria-label="Siguiente"><ChevronRight className="h-5 w-5" /></button>
           </div>
 
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <button type="button" onClick={speakGuide} className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-indigo-700" aria-label="Escuchar pronunciación"><Volume2 className="h-4 w-4" /></button>
-            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`inline-flex min-h-11 min-w-[150px] items-center justify-center gap-2 rounded-full px-5 text-[11px] font-black disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-indigo-600 text-white'}`}>{status === 'listening' ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-4 w-4" />}{status === 'requesting' ? 'Abriendo…' : status === 'listening' ? 'Terminar' : 'Hablar'}</button>
+          <div className={`mx-auto mt-3 flex h-9 max-w-[210px] items-center justify-center gap-[3px] overflow-hidden rounded-full border px-4 transition ${status === 'listening' ? 'border-emerald-200 bg-emerald-50/70' : 'border-slate-100 bg-slate-50'}`} aria-label="Espectro de voz">
+            {levels.map((height, bar) => <span key={bar} className={`w-[3px] rounded-full transition-[height] duration-75 ${status === 'listening' ? 'bg-emerald-500' : 'bg-slate-300'}`} style={{ height: `${Math.max(4, Math.round(height * 0.28))}px` }} />)}
           </div>
 
-          {status === 'listening' && <p className="mt-2 text-[10px] font-black text-rose-600">Escuchando… al terminar puedes esperar la pausa automática o tocar Terminar.</p>}
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <button type="button" onClick={speakGuide} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-indigo-700" aria-label="Escuchar pronunciación"><Volume2 className="h-4 w-4" /></button>
+            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`inline-flex min-h-10 min-w-[138px] items-center justify-center gap-2 rounded-full px-5 text-[11px] font-black disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-indigo-600 text-white'}`}>{status === 'listening' ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-4 w-4" />}{status === 'requesting' ? 'Abriendo…' : status === 'listening' ? 'Terminar' : 'Hablar'}</button>
+          </div>
+
+          {status === 'listening' && <p className="mt-1.5 text-[9px] font-black text-emerald-700">Habla cuando veas moverse el espectro. Puedes esperar la pausa automática o tocar Terminar.</p>}
 
           {captured && !result && status === 'idle' && (
             <div className="mt-2">
               <p className="text-[9px] text-slate-400">Reconocí: <span lang="he" dir="rtl" className="font-black text-slate-700">{captured}</span></p>
-              <button type="button" onClick={submitResult} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-full bg-emerald-600 px-5 text-[10px] font-black text-white"><Send className="h-3.5 w-3.5" />Enviar resultado</button>
+              <button type="button" onClick={submitResult} className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-full bg-emerald-600 px-5 text-[10px] font-black text-white"><Send className="h-3.5 w-3.5" />Enviar resultado</button>
             </div>
           )}
 
-          {result && scoreFeedback && (
+          {result && scoreFeedback && detail && (
             <div className="mx-auto mt-2 max-w-sm border-t border-slate-100 pt-2">
-              <p className="text-[18px] font-black text-slate-950">{result.score}%</p>
-              <p className={`text-[10px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p>
-              <button type="button" onClick={clearAttempt} className="mt-1 text-[9px] font-black text-indigo-700">Intentar otra vez</button>
+              <div className="flex items-baseline justify-center gap-2"><p className="text-[18px] font-black text-slate-950">{result.score}%</p><p className={`text-[10px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>
+              <p className="mt-1 text-[10px] font-black text-slate-800">{detail.title}</p>
+              {detail.detail && <p className="mx-auto mt-1 max-w-sm text-[9px] font-semibold leading-relaxed text-slate-500">{detail.detail}</p>}
+              <button type="button" onClick={clearAttempt} className="mt-1.5 text-[9px] font-black text-indigo-700">Intentar otra vez</button>
             </div>
           )}
 
