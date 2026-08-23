@@ -6,18 +6,16 @@ const keyboard = fs.readFileSync('components/hebreo/HebrewKeyboardDock.tsx', 'ut
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const page = fs.readFileSync('app/(app)/estudios/hebreo/page.tsx', 'utf8')
 
-test('FASE H teclado: conserva guardia de sesión y se despliega directamente desde Inicio', () => {
+test('FASE H teclado: conserva guardia de sesión y se despliega desde Inicio dentro de progreso', () => {
   assert.match(page, /<HebrewLearningHome \/>/)
   assert.doesNotMatch(page, /HebrewKeyboardDock/)
   assert.match(page, /if \(!user\) redirect\('\/login\?next=\/estudios\/hebreo'\)/)
   assert.match(home, /import HebrewKeyboardDock/)
-  assert.match(home, /useState\(false\)/)
+  assert.match(home, /type PracticePanelId = 'evaluation' \| 'speech' \| 'keyboard'/)
   assert.doesNotMatch(home, />Herramientas</)
-  assert.match(home, />Teclado hebreo</)
-  assert.match(home, /aria-expanded=\{keyboardEnabled\}/)
-  assert.match(home, /Practica tu escritura en hebreo/)
-  assert.match(home, /keyboardEnabled &&/)
-  assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\} \/>/)
+  assert.match(home, /keyboard: \{ title: 'Teclado hebreo'/)
+  assert.match(home, /openPractice === 'keyboard'/)
+  assert.match(home, /<HebrewKeyboardDock enabled \/>/)
 })
 
 test('FASE H teclado: queda fusionado con la superficie de la app y no como panel externo', () => {
@@ -25,7 +23,7 @@ test('FASE H teclado: queda fusionado con la superficie de la app y no como pane
   assert.match(keyboard, /className="w-full pb-2 pt-1 text-left"/)
   assert.match(keyboard, /Practica tu escritura/)
   assert.match(keyboard, /rounded-\[20px\] border border-slate-200 bg-slate-50/)
-  assert.match(home, /mt-5 border-t border-slate-200 pt-5/)
+  assert.match(home, /border-t border-slate-100 pb-5 pt-4/)
   assert.doesNotMatch(keyboard, /bg-\[#f9f9fb\]|fixed bottom-|fixed inset-|z-\[6[89]\]|onDisable/)
 })
 
