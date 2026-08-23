@@ -5,23 +5,20 @@ import test from 'node:test'
 const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
 const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8')
 
-test('FASE H checklist 5: Teclado hebreo es un desplegable directo con altura nativa equivalente', () => {
+test('FASE H checklist 5: Teclado hebreo vive como submenú del bloque de progreso', () => {
   assert.match(home, /aria-label="Práctica"/)
   assert.doesNotMatch(home, />Herramientas</)
-  assert.match(home, />Teclado hebreo</)
-  assert.equal((home.match(/>Teclado hebreo</g) ?? []).length, 1)
-  assert.match(home, /onClick=\{\(\) => setKeyboardEnabled\(value => !value\)\}/)
-  assert.match(home, /aria-expanded=\{keyboardEnabled\}/)
-  assert.equal((home.match(/min-h-\[76px\]/g) ?? []).length >= 2, true)
-  assert.match(home, /Practica tu escritura en hebreo/)
-  assert.match(home, /<HebrewKeyboardDock enabled=\{keyboardEnabled\}/)
+  assert.match(home, /keyboard: \{ title: 'Teclado hebreo'/)
+  assert.match(home, /openPractice === 'keyboard'/)
+  assert.match(home, /<HebrewKeyboardDock enabled \/>/)
+  assert.match(home, /Escritura y reconocimiento de letras/)
 })
 
-test('FASE H checklist 5: progreso usa cuadro de notas persistente sin caja anidada', () => {
+test('FASE H checklist 5: evaluación conserva cuadro de notas persistente dentro del acordeón', () => {
   assert.match(home, /Prueba tu progreso/)
+  assert.match(home, /Evaluación y progreso/)
   assert.match(home, /<HebrewProgressCoach \/>/)
-  assert.match(home, /Mide tu nivel y descubre qué reforzar/)
-  assert.match(home, /border-t border-slate-200/)
+  assert.match(home, /Evalúa, practica y revisa tu avance/)
   assert.doesNotMatch(home, /<details/)
   assert.match(coach, /Cuadro de notas/)
   assert.match(coach, /evaluaciones registradas/)
