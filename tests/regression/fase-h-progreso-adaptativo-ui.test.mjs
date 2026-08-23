@@ -39,6 +39,15 @@ test('FASE H bloque 4: historial deriva métricas reales sin tabla estadística'
   for (const state of ['Reforzar', 'En progreso', 'Dominado']) assert.match(progress, new RegExp(state))
 })
 
+test('FASE H bloque 4: marcas de Repaso conservan clave compatible con la práctica adaptativa', () => {
+  assert.match(store, /REVIEW_TO_PRACTICE_KEY/)
+  assert.match(store, /bet: 'letter-bet'/)
+  assert.match(store, /pataj: 'niqqud-patah'/)
+  assert.match(store, /'bereshit-bara': 'reading-bereshit-bara'/)
+  assert.match(store, /questionKey: `review:\$\{practiceKey\}`/)
+  assert.match(progress, /answer\.question_key\.replace\(\/\^review:\//)
+})
+
 test('FASE H bloque 4: acceso usa sesión autenticada y tablas RLS aprobadas', () => {
   assert.match(store, /auth\.getUser\(\)/)
   assert.match(store, /biblical_hebrew_progress_sessions/)
