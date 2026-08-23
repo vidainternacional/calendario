@@ -38,12 +38,17 @@ test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas c
   assert.doesNotMatch(materials, /<summary/)
 })
 
-test('FASE H checklist 4: CTA principal y práctica quedan centrados con cuatro accesos horizontales', () => {
-  assert.match(home, /items-center justify-center overflow-hidden rounded-\[26px\]/)
+test('FASE H checklist 4: CTA principal queda como pastilla compacta con neón perimetral', () => {
+  assert.match(home, /cta-pill/)
+  assert.match(home, /min-h-\[58px\]/)
+  assert.match(home, /min-w-\[210px\]/)
   assert.match(home, />Empecemos</)
-  assert.match(home, /cta-edge-glow/)
-  assert.match(home, /ctaEdgeOrbit/)
+  assert.match(home, /cta-neon-orbit/)
+  assert.match(home, /ctaNeonOrbit/)
   assert.doesNotMatch(home, /hebrew-glimmer/)
+})
+
+test('FASE H checklist 4: práctica usa cuatro accesos horizontales compactos', () => {
   assert.match(home, /type PracticePanelId='evaluation'\|'speech'\|'keyboard'\|'progress'/)
   assert.match(home, /function PracticeTab/)
   assert.match(home, /grid grid-cols-4 gap-2/)
