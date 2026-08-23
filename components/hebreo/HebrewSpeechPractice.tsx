@@ -1,17 +1,24 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Mic, Square, Volume2 } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, Mic, Send, Square, Volume2 } from 'lucide-react'
 import { HEBREW_PRACTICE_QUESTIONS } from '@/lib/hebreo/progress'
 import { HEBREW_USEFUL_PHRASES } from '@/lib/hebreo/useful-phrases'
 import { pronounceHebrewForSpanish, withoutHebrewMarks } from '@/lib/hebreo/pronunciation'
 
 type SpeechMode = 'words' | 'sentences'
-type SpeechResultEvent = { results: { [index: number]: { [index: number]: { transcript: string } } } }
+type SpeechResultEvent = {
+  resultIndex?: number
+  results: {
+    length?: number
+    [index: number]: { isFinal?: boolean; [index: number]: { transcript: string } }
+  }
+}
 type SpeechErrorEvent = { error?: string }
 type SpeechRecognitionLike = {
   lang: string
   interimResults: boolean
+  continuous?: boolean
   maxAlternatives: number
   onstart: (() => void) | null
   onresult: ((event: SpeechResultEvent) => void) | null
@@ -88,7 +95,7 @@ function buildSentencePrompts() {
 
 function feedback(score: number) {
   if (score >= 90) return { text: 'Muy buena coincidencia. La lectura fue reconocida casi completa.', tone: 'text-emerald-700' }
-  if (score >= 75) return { text: 'Buena pronunciación. Hay pequeños detalles que puedes pulir.', tone: 'text-emerald-700' }
+  if (score >= 75) return { text: 'Buena coincidencia. Hay pequeños detalles que puedes pulir.', tone: 'text-emerald-700' }
   if (score >= 55) return { text: 'Va cerca. Repite más despacio y separa mejor los sonidos.', tone: 'text-amber-700' }
   return { text: 'El reconocimiento fue bastante distinto. Escucha la guía, repite por partes y vuelve a probar.', tone: 'text-rose-700' }
 }
@@ -98,6 +105,8 @@ export default function HebrewSpeechPractice() {
   const [index, setIndex] = useState(0)
   const [recognition, setRecognition] = useState<SpeechRecognitionLike | null>(null)
   const [status, setStatus] = useState<'idle' | 'requesting' | 'listening'>('idle')
+  const [captured, setCaptured] = useState('')
+  const capturedRef = useRef('')
   const [result, setResult] = useState<{ transcript: string; score: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -106,14 +115,20 @@ export default function HebrewSpeechPractice() {
   const prompts = mode === 'words' ? words : sentences
   const current = prompts[index % Math.max(1, prompts.length)]
 
+  function clearAttempt() {
+    setCaptured('')
+    capturedRef.current = ''
+    setResult(null)
+    setError(null)
+  }
+
   function changeMode(next: SpeechMode) {
     recognition?.stop()
     setRecognition(null)
     setStatus('idle')
     setMode(next)
     setIndex(0)
-    setResult(null)
-    setError(null)
+    clearAttempt()
   }
 
   function move(delta: number) {
@@ -122,14 +137,12 @@ export default function HebrewSpeechPractice() {
     setRecognition(null)
     setStatus('idle')
     setIndex(value => (value + delta + prompts.length) % prompts.length)
-    setResult(null)
-    setError(null)
+    clearAttempt()
   }
 
   async function start() {
     if (!current || typeof window === 'undefined' || status !== 'idle') return
-    setError(null)
-    setResult(null)
+    clearAttempt()
     setStatus('requesting')
 
     try {
@@ -142,28 +155,38 @@ export default function HebrewSpeechPractice() {
       const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
       if (!Recognition) {
         setStatus('idle')
-        setError('El permiso del micrófono funciona, pero este navegador no ofrece reconocimiento de voz en hebreo. Abre este mismo enlace directamente en Safari o Chrome actualizado; la práctica oral no se ocultará.')
+        setError('El micrófono está disponible, pero este navegador no puede convertir la voz a texto hebreo. Abre el mismo enlace directamente en Safari; si el mensaje continúa, esta función no está disponible en esa versión de iOS.')
         return
       }
 
       const instance = new Recognition()
       instance.lang = 'he-IL'
-      instance.interimResults = false
+      instance.interimResults = true
+      instance.continuous = false
       instance.maxAlternatives = 1
       instance.onstart = () => setStatus('listening')
       instance.onresult = event => {
-        const transcript = event.results[0][0].transcript
-        setResult({ transcript, score: similarity(current.hebrew, transcript) })
-        setError(null)
+        let transcript = ''
+        const length = typeof event.results.length === 'number' ? event.results.length : 1
+        for (let item = 0; item < length; item += 1) transcript += `${event.results[item]?.[0]?.transcript ?? ''} `
+        transcript = transcript.trim()
+        if (transcript) {
+          capturedRef.current = transcript
+          setCaptured(transcript)
+          setError(null)
+        }
       }
       instance.onerror = event => {
         setError(event.error === 'not-allowed'
-          ? 'El micrófono está bloqueado. Permite el acceso al micrófono para este sitio y vuelve a intentarlo.'
-          : 'No pude reconocer la voz esta vez. Habla cerca del micrófono, en un ambiente tranquilo, y vuelve a intentar.')
+          ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.'
+          : event.error === 'no-speech'
+            ? 'No detecté voz. Acércate al micrófono, toca Hablar y pronuncia después de que aparezca “Escuchando”.'
+            : 'No pude convertir la voz a texto esta vez. Inténtalo nuevamente en un ambiente tranquilo.')
       }
       instance.onend = () => {
         setStatus('idle')
         setRecognition(null)
+        if (!capturedRef.current) setError(previous => previous ?? 'La escucha terminó sin reconocer texto. Intenta otra vez y espera a ver “Escuchando” antes de hablar.')
       }
       setRecognition(instance)
       instance.start()
@@ -176,7 +199,11 @@ export default function HebrewSpeechPractice() {
 
   function stop() {
     recognition?.stop()
-    setStatus('idle')
+  }
+
+  function submitResult() {
+    if (!current || !captured.trim()) return
+    setResult({ transcript: captured.trim(), score: similarity(current.hebrew, captured.trim()) })
   }
 
   function speakGuide() {
@@ -193,32 +220,53 @@ export default function HebrewSpeechPractice() {
   const scoreFeedback = result ? feedback(result.score) : null
 
   return (
-    <section aria-label="Práctica oral de hebreo" className="mt-4 border-y border-slate-200 py-4 text-center">
-      <div className="inline-flex items-center gap-2 text-indigo-700"><Mic className="h-4 w-4" /><span className="text-[12px] font-black">Práctica oral</span></div>
-      <p className="mx-auto mt-1 max-w-sm text-[10px] leading-relaxed text-slate-500">Practica palabras y oraciones de todo lo estudiado. Esta práctica es independiente de la nota del examen.</p>
+    <section aria-label="Práctica oral de hebreo" className="mt-4 border-y border-slate-200 py-3 text-center">
+      <div className="flex items-center justify-center gap-2">
+        <Mic className="h-4 w-4 text-indigo-700" />
+        <span className="text-[12px] font-black text-slate-900">Práctica oral</span>
+        <span className="text-[9px] font-bold text-slate-400">{mode === 'words' ? words.length : sentences.length} ejercicios</span>
+      </div>
 
-      <div className="mx-auto mt-3 grid max-w-xs grid-cols-2 gap-2 rounded-[16px] bg-slate-100 p-1">
-        <button type="button" onClick={() => changeMode('words')} className={`min-h-10 rounded-[13px] text-[11px] font-black ${mode === 'words' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Palabras · {words.length}</button>
-        <button type="button" onClick={() => changeMode('sentences')} className={`min-h-10 rounded-[13px] text-[11px] font-black ${mode === 'sentences' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Oraciones · {sentences.length}</button>
+      <div className="mx-auto mt-2 inline-flex rounded-full bg-slate-100 p-1">
+        <button type="button" onClick={() => changeMode('words')} className={`min-h-8 rounded-full px-4 text-[10px] font-black ${mode === 'words' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Palabras</button>
+        <button type="button" onClick={() => changeMode('sentences')} className={`min-h-8 rounded-full px-4 text-[10px] font-black ${mode === 'sentences' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'}`}>Oraciones</button>
       </div>
 
       {current && (
-        <div className="mt-4">
-          <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{current.source} · {index + 1} de {prompts.length}</p>
-          <p lang="he" dir="rtl" className="mx-auto mt-3 max-w-md text-[2.35rem] font-black leading-[1.45] text-slate-950">{current.hebrew}</p>
-          <p className="mx-auto mt-2 max-w-sm text-[12px] font-bold text-indigo-700">{pronounceHebrewForSpanish(current.hebrew)}</p>
-          <p className="mx-auto mt-1 max-w-sm text-[10px] text-slate-500">{current.label}</p>
-
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <button type="button" onClick={() => move(-1)} className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600" aria-label="Anterior"><ChevronLeft className="h-5 w-5" /></button>
-            <button type="button" onClick={speakGuide} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 text-[11px] font-black text-indigo-700"><Volume2 className="h-4 w-4" />Escuchar</button>
-            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-[11px] font-black disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-indigo-600 text-white'}`}>{status === 'listening' ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-4 w-4" />}{status === 'requesting' ? 'Abriendo…' : status === 'listening' ? 'Detener' : 'Hablar ahora'}</button>
-            <button type="button" onClick={() => move(1)} className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-slate-600" aria-label="Siguiente"><ChevronRight className="h-5 w-5" /></button>
+        <div className="mt-3">
+          <div className="flex items-center justify-between gap-2">
+            <button type="button" onClick={() => move(-1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 active:bg-slate-100" aria-label="Anterior"><ChevronLeft className="h-5 w-5" /></button>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-bold text-slate-400">{index + 1}/{prompts.length} · {current.source}</p>
+              <p lang="he" dir="rtl" className="mx-auto mt-1 text-[2rem] font-black leading-[1.35] text-slate-950">{current.hebrew}</p>
+              <p className="mt-1 truncate text-[10px] font-bold text-indigo-700">{pronounceHebrewForSpanish(current.hebrew)} · {current.label}</p>
+            </div>
+            <button type="button" onClick={() => move(1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 active:bg-slate-100" aria-label="Siguiente"><ChevronRight className="h-5 w-5" /></button>
           </div>
 
-          {status === 'listening' && <p className="mt-3 text-[11px] font-black text-rose-600">Escuchando… pronuncia el texto completo.</p>}
-          {result && scoreFeedback && <div className="mx-auto mt-3 max-w-sm rounded-[16px] bg-slate-50 px-4 py-3"><p className="text-[10px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="font-black text-slate-900">{result.transcript}</span></p><p className="mt-1 text-[18px] font-black text-slate-950">{result.score}%</p><p className={`mt-1 text-[11px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>}
-          {error && <p role="alert" className="mx-auto mt-3 max-w-sm text-[10px] font-bold leading-relaxed text-rose-600">{error}</p>}
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button type="button" onClick={speakGuide} className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 bg-white text-indigo-700" aria-label="Escuchar pronunciación"><Volume2 className="h-4 w-4" /></button>
+            <button type="button" onClick={status === 'listening' ? stop : () => void start()} disabled={status === 'requesting'} className={`inline-flex min-h-11 min-w-[150px] items-center justify-center gap-2 rounded-full px-5 text-[11px] font-black disabled:opacity-60 ${status === 'listening' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-indigo-600 text-white'}`}>{status === 'listening' ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-4 w-4" />}{status === 'requesting' ? 'Abriendo…' : status === 'listening' ? 'Terminar' : 'Hablar'}</button>
+          </div>
+
+          {status === 'listening' && <p className="mt-2 text-[10px] font-black text-rose-600">Escuchando… al terminar puedes esperar la pausa automática o tocar Terminar.</p>}
+
+          {captured && !result && status === 'idle' && (
+            <div className="mt-2">
+              <p className="text-[9px] text-slate-400">Reconocí: <span lang="he" dir="rtl" className="font-black text-slate-700">{captured}</span></p>
+              <button type="button" onClick={submitResult} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-full bg-emerald-600 px-5 text-[10px] font-black text-white"><Send className="h-3.5 w-3.5" />Enviar resultado</button>
+            </div>
+          )}
+
+          {result && scoreFeedback && (
+            <div className="mx-auto mt-2 max-w-sm border-t border-slate-100 pt-2">
+              <p className="text-[18px] font-black text-slate-950">{result.score}%</p>
+              <p className={`text-[10px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p>
+              <button type="button" onClick={clearAttempt} className="mt-1 text-[9px] font-black text-indigo-700">Intentar otra vez</button>
+            </div>
+          )}
+
+          {error && <p role="alert" className="mx-auto mt-2 max-w-sm text-[9px] font-bold leading-relaxed text-rose-600">{error}</p>}
         </div>
       )}
     </section>
