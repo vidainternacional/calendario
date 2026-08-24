@@ -1,0 +1,76 @@
+name: FASE H preparar draft de nombres propios
+
+on:
+  push:
+    branches:
+      - agent/fase-h-hebreo-biblico
+    paths:
+      - ".github/workflows/fase-h-preparar-nombres-propios.yml"
+      - "scripts/hebreo/fetch_wikidata_labels.py"
+      - "scripts/hebreo/build_tipnr_wikidata_draft.py"
+      - "tests/regression/fase-h-nombres-propios-draft.test.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/fase-h-hebreo-biblico
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verificar scripts sin red
+        run: |
+          python scripts/hebreo/fetch_wikidata_labels.py --self-test
+          python scripts/hebreo/build_tipnr_wikidata_draft.py --self-test
+
+      - name: Fijar crosswalk TIPNR
+        run: |
+          mkdir -p /tmp/fase-h-nombres
+          curl -fsSL \
+            https://raw.githubusercontent.com/PatristicTextArchive/tipnr_data/master/tipnr-persons-wikidata.tsv \
+            -o /tmp/fase-h-nombres/tipnr-persons-wikidata.tsv
+          test "$(git hash-object /tmp/fase-h-nombres/tipnr-persons-wikidata.tsv)" = "abc3e21b9d08dc310066152f9b62858c4818f4eb"
+
+      - name: Descargar labels Wikidata CC0
+        run: |
+          python scripts/hebreo/fetch_wikidata_labels.py \
+            --tipnr-wikidata-tsv /tmp/fase-h-nombres/tipnr-persons-wikidata.tsv \
+            --output /tmp/fase-h-nombres/wikidata-labels.tsv \
+            --audit /tmp/fase-h-nombres/wikidata-labels-audit.json \
+            --batch-size 50 \
+            --sleep-ms 150
+
+      - name: Generar borrador SQL y auditoría
+        run: |
+          mkdir -p supabase/migration-drafts artifacts/fase-h
+          python scripts/hebreo/build_tipnr_wikidata_draft.py \
+            --tipnr-wikidata-tsv /tmp/fase-h-nombres/tipnr-persons-wikidata.tsv \
+            --wikidata-labels-tsv /tmp/fase-h-nombres/wikidata-labels.tsv \
+            --output-sql supabase/migration-drafts/20260820233000_fase_h_glosas_nombres_propios_wikidata_draft.sql \
+            --audit artifacts/fase-h/nombres-propios-wikidata-audit.json
+          cat /tmp/fase-h-nombres/wikidata-labels-audit.json
+          cat artifacts/fase-h/nombres-propios-wikidata-audit.json
+          git diff --check
+
+      - name: Versionar solamente el borrador reproducible
+        run: |
+          TARGETS="supabase/migration-drafts/20260820233000_fase_h_glosas_nombres_propios_wikidata_draft.sql artifacts/fase-h/nombres-propios-wikidata-audit.json"
+          if [ -z "$(git status --porcelain -- $TARGETS)" ]; then
+            echo "Borrador ya actualizado"
+            exit 0
+          fi
+          git config user.name "vida-internacional-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add $TARGETS
+          git commit -m "data(fase-h): preparar draft Wikidata de nombres propios"
+          git push origin HEAD:agent/fase-h-hebreo-biblico

@@ -1,0 +1,33 @@
+{
+  "candidates": 546,
+  "chunk_size": 40,
+  "chunks": 14,
+  "database_gate": {
+    "anchor_used_for_name_spelling_only": true,
+    "context_used_as_meaning": false,
+    "exact_source_entity_required": true,
+    "exact_wikidata_primary_label_required": true,
+    "full_phrase_boundary_normalization": true,
+    "insert_only": true,
+    "on_conflict_do_nothing": true,
+    "spanish_verified_sources_at_anchor_minimum": 2
+  },
+  "files": [
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_001.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_002.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_003.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_004.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_005.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_006.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_007.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_008.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_009.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_010.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_011.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_012.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_013.sql",
+    "supabase/migration-drafts/nombres-wikidata-anchor2/fase_h_nombres_wikidata_anchor2_chunk_014.sql"
+  ],
+  "phase": "FASE_H_BLOQUE_3",
+  "status": "draft_only_not_applied"
+}

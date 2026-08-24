@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import test from 'node:test'
+
+const foundations = fs.readFileSync('components/hebreo/AlefBetFoundations.tsx', 'utf8')
+const wordsHub = fs.readFileSync('components/hebreo/HebrewWordsStudy.tsx', 'utf8')
+const phrases = fs.readFileSync('components/hebreo/HebrewUsefulPhrases.tsx', 'utf8')
+const phraseCatalog = fs.readFileSync('lib/hebreo/useful-phrases.ts', 'utf8')
+const materials = fs.readFileSync('components/hebreo/HebrewSupportMaterials.tsx', 'utf8')
+const home = fs.readFileSync('components/hebreo/HebrewLearningHome.tsx', 'utf8')
+const css = fs.readFileSync('app/(app)/estudios/hebreo/hebreo.module.css', 'utf8')
+
+test('FASE H checklist 4: fundamentos prioriza Alef-Bet y abre Sofit Dagesh o Matres bajo demanda', () => {
+  assert.match(foundations, /type FoundationPanel = 'alphabet' \| 'sofit' \| 'dagesh' \| 'matres'/)
+  assert.match(foundations, /useState<FoundationPanel>\('alphabet'\)/)
+  for (const label of ['Alef-Bet', 'Sofit', 'Dagesh', 'Matres']) assert.match(foundations, new RegExp(`label: '${label}'`))
+  assert.match(foundations, /rounded-full border px-4/)
+  assert.match(foundations, /El Alef-Bet completo continúa justo debajo/)
+})
+
+test('FASE H checklist 4: palabras elimina el encabezado redundante y conserva dos modos claros', () => {
+  assert.doesNotMatch(wordsHub, /hebrew-words-study-title/)
+  assert.match(wordsHub, /Palabras bíblicas/)
+  assert.match(wordsHub, /Frases útiles/)
+  assert.match(wordsHub, /rounded-full border px-4/)
+})
+
+test('FASE H checklist 4: frases crece con catálogo estructurado y usa superficie completa en móvil', () => {
+  assert.equal((phraseCatalog.match(/id: '/g) ?? []).length, 12)
+  assert.match(phraseCatalog, /HebrewUsefulPhraseGroup = 'greetings' \| 'courtesy' \| 'conversation'/)
+  assert.match(phrases, /label: 'Conversación'/)
+  assert.match(phrases, /-mx-4 mt-4 border-y border-slate-200 bg-white/)
+})
+
+test('FASE H checklist 4: materiales usa selector de píldoras en vez de filas cuadradas', () => {
+  assert.match(materials, /const \[activeIndex, setActiveIndex\] = useState\(0\)/)
+  assert.match(materials, /rounded-full border px-4/)
+  assert.doesNotMatch(materials, /<summary/)
+})
+
+test('FASE H checklist 4: CTA principal queda como pastilla compacta con neón perimetral', () => {
+  assert.match(home, /cta-pill/)
+  assert.match(home, /min-h-\[58px\]/)
+  assert.match(home, /min-w-\[210px\]/)
+  assert.match(home, />Empecemos</)
+  assert.match(home, /cta-neon-orbit/)
+  assert.match(home, /ctaNeonOrbit/)
+  assert.doesNotMatch(home, /hebrew-glimmer/)
+})
+
+test('FASE H checklist 4: práctica usa cuatro accesos horizontales compactos', () => {
+  assert.match(home, /type PracticePanelId\s*=\s*'evaluation'\s*\|\s*'speech'\s*\|\s*'keyboard'\s*\|\s*'progress'/)
+  assert.match(home, /function PracticeTab/)
+  assert.match(home, /grid grid-cols-4 gap-2/)
+  assert.match(home, /min-h-\[74px\]/)
+  assert.match(home, /shortTitle:\s*'Oral'/)
+  assert.match(home, /shortTitle:\s*'Teclado'/)
+  assert.match(home, /shortTitle:\s*'Progreso'/)
+  assert.match(home, /bg-indigo-600 text-white/)
+  assert.doesNotMatch(home, /absolute bottom-1\.5 h-1 w-5/)
+  for (const label of ['Evaluación', 'Práctica oral', 'Teclado hebreo', 'Mi progreso']) assert.match(home, new RegExp(label))
+})
+
+test('FASE H checklist 4: títulos internos comparten una sola escala tipográfica', () => {
+  for (const id of ['alef-bet-title', 'niqqud-title', 'reading-words-title', 'hebrew-useful-phrases-title', 'hebrew-bible-reader-title', 'grammar-title', 'review-title']) assert.match(css, new RegExp(`#${id}`))
+  assert.match(css, /font-size: 1\.35rem !important/)
+  assert.match(css, /line-height: 1\.2 !important/)
+})

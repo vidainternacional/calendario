@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-18
+Última actualización: 2026-08-23
 
-Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**
+Fase / prioridad activa: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -42,8 +42,8 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |
 | FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |
 | FASE G | Validación integral y cierre de deudas transversales | **COMPLETADA — 2026-08-18** |
-| FASE H | Centro de Hebreo Bíblico | **ACTIVA — 2026-08-18** |
-| FASE I | Guía interactiva y ayuda contextual por rol | **PLANIFICADA — posterior a FASE H** |
+| FASE H | Centro de Hebreo Bíblico | **COMPLETADA Y APROBADA — 2026-08-23** |
+| FASE I | Guía interactiva y ayuda contextual por rol | **ACTIVA — 2026-08-23** |
 
 # PRIORIDADES RECIENTES CERRADAS
 
@@ -258,7 +258,7 @@ La evidencia inicial se conserva en:
 17. Se implementó un fallback de apertura en frío exclusivo para `/biblia/notas`. El service worker no cachea `/_next/`, API, Supabase ni HTML autenticado privado; utiliza un shell estático sin datos personales y lee el cuaderno únicamente desde la caché local del usuario.
 18. La identificación del cuaderno offline conserva privacidad: utiliza el marcador del usuario activo, un respaldo mínimo del UUID dentro del service worker y, si ambos faltan, solo infiere el dueño cuando existe exactamente un único cuaderno local con UUID válido. Con múltiples cuadernos no adivina y mantiene el bloqueo protector.
 19. El cierre de sesión elimina el marcador local y el respaldo del service worker. El contenido de las notas nunca se guarda dentro del service worker.
-20. Validación funcional real en iPhone completada con Wi-Fi apagado/modo avión: Safari abrió `/biblia/notas` desde cero, mostró `Sin conexión · guardado local` y presentó correctamente las notas y contenido existentes del usuario.
+20. Validación funcional real completada con Wi-Fi apagado/modo avión: Safari abrió `/biblia/notas` desde cero, mostró `Sin conexión · guardado local` y presentó correctamente las notas y contenido existentes del usuario.
 21. El cold-start offline fue fusionado mediante PR #273 (`7d6cf9e995dca7e1de2f4d5488c98cdb110c3ccc`) y el despliegue de producción exacto quedó READY.
 22. No se modificaron grants, políticas RLS ni esquema de Supabase durante los bloques #271–#273.
 
@@ -350,9 +350,9 @@ Validar la aplicación completa en producción como un solo sistema, por rol y p
 
 FASE G queda **COMPLETADA Y APROBADA — 2026-08-18** y no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
 
-# FASE H — ACTIVA — CENTRO DE HEBREO BÍBLICO
+# FASE H — COMPLETADA Y APROBADA — CENTRO DE HEBREO BÍBLICO — 2026-08-23
 
-FASE H se activa formalmente el 2026-08-18 después del cierre documentado de FASE G.
+FASE H se activó formalmente el 2026-08-18 después del cierre documentado de FASE G y queda cerrada el 2026-08-23 tras completar los cuatro bloques, validación funcional final en iPhone, persistencia real por usuario, práctica adaptativa, checkpoint oral y evidencia técnica verde.
 
 ## Objetivo de FASE H
 
@@ -373,25 +373,83 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 9. **Materiales administrables:** permitir que Administrador pueda agregar posteriormente enlaces, documentación, recursos, tareas o materiales de aprendizaje. Cualquier almacenamiento nuevo en Supabase deberá diseñarse y aprobarse cuando FASE H esté activa.
 10. **Diseño:** mantener la línea visual actual de VIDA: minimalista, clara, coherente, táctil, mobile-first, didáctica y sin tarjetas anidadas innecesarias.
 
-## Bloque activo de FASE H
+## Bloques de FASE H
 
-### Bloque 1 — Línea base de fuentes y arquitectura didáctica
+### Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO — 2026-08-19
 
-1. Auditar las fuentes hebreas/arameas ya aprobadas en FASE D y separar qué datos pueden reutilizarse directamente para enseñanza, lectura, morfología, transliteración y glosas.
-2. Revisar el estado real de `Estudios`, Biblia y Estudio Profundo para integrar Hebreo Bíblico sin duplicar lectores ni capas de datos existentes.
-3. Definir el contrato didáctico inicial: Alef-bet, dirección RTL, formas finales, niqqud, pronunciación pedagógica, lectura guiada y progresión de lecciones.
-4. Diseñar la arquitectura visual y de navegación mobile-first antes de implementar nuevas tablas o persistencia.
-5. No crear nuevas tablas, RLS, grants o funciones sensibles hasta demostrar que las estructuras actuales son insuficientes y presentar alcance, impacto y reversión para aprobación explícita.
+1. Las fuentes hebreas/arameas aprobadas en FASE D fueron auditadas y reutilizadas sin crear un segundo motor bíblico.
+2. La integración con `Estudios`, Biblia y Estudio Profundo quedó definida y materializada sobre las estructuras textuales/léxicas existentes.
+3. El contrato didáctico inicial quedó validado en iPhone: Alef-Bet → Vocales → Palabras → Lectura → Reglas → Repaso.
+4. La arquitectura visual mobile-first quedó aprobada con fichas para memoria, tablas para comparación, listas nativas para recorrido y detalle para profundizar.
+5. Se validaron Alef-Bet, niqqud, vocabulario, lectura real del corpus, reglas iniciales, Repaso local, teclado hebreo opcional y centrado pedagógico transversal.
+6. No se crearon nuevas tablas, RLS, grants ni funciones sensibles de Supabase durante el cierre del bloque.
+7. La evidencia técnica quedó protegida por regresiones y CI verde; el PR #286 permanece DRAFT y sin merge.
 
-# FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
+### Bloque 2 — Fundamentos de lectura y gramática progresiva — COMPLETADO Y APROBADO — 2026-08-19
 
-FASE I comenzará únicamente después del cierre formal de FASE H, salvo que el documento maestro cambie explícitamente el orden.
+1. Profundizar formas finales (Sofit) mediante comparación normal → final, sonido y valores ordinarios; cualquier gematría extendida 500–900 debe etiquetarse expresamente como convención ampliada.
+2. Enseñar Dagesh/Begadkefat de forma visual y cautelosa, distinguiendo los contrastes pedagógicos actuales de diferencias históricas dependientes de la tradición de lectura.
+3. Incorporar matres lectionis y su función como ayudas vocálicas sin presentar las letras como vocales independientes en todos los contextos.
+4. Ampliar niqqud con sheva vocal/silencioso, qamats qatan, pataj furtivo y patrones de lectura que permitan pasar de signo → sílaba → palabra.
+5. Introducir raíces únicamente cuando exista raíz verificada en las fuentes aprobadas; no deducir raíces por heurística visual.
+6. Continuar prefijos/sufijos, género/número, posesivos, constructo y gramática progresiva mediante tablas de transformación, ejemplos reales y práctica.
+7. Conservar Repaso como práctica local mientras este bloque no requiera persistencia; cualquier progreso almacenado queda para una propuesta posterior con alcance, privacidad, RLS e impacto explícitos.
+8. No incorporar audio como pronunciación oficial hasta contar con fuente/metodología confiable y licencia compatible.
+9. Se implementaron y validaron en iPhone Sofit, Dagesh/Begadkefat, matres lectionis, niqqud avanzado, lectura silábica, gramática nominal, primer mapa verbal Qal y Repaso ampliado.
+10. El mapa verbal conserva qatal/yiqtol, imperativo, participio, infinitivo constructo, wayyiqtol y weqatal sin reducir qatal a “pasado”, yiqtol a “futuro” ni wayyiqtol a una inversión mecánica de tiempo.
+11. La auditoría de raíces confirmó que las fuentes actuales no entregan una raíz explícita verificable; VIDA no deduce raíces por heurística.
+12. El checklist móvil `docs/FASE_H_BLOQUE_2_CHECKLIST_MOVIL.md` fue recorrido y aprobado explícitamente por el usuario el 2026-08-19 sin bugs bloqueantes reportados.
+13. El head `600a516d4bbe2c990f09aa373b2ef637fa601585` tuvo CI temporal #2358, regresiones, lint, build, validador maestro y validadores TAHOT en verde.
+14. Vercel sirvió ese mismo head en Preview READY mediante `dpl_4pbkYgLGWtALemEgNfav3RrvmUvr`; PR #286 permanece DRAFT y sin merge.
 
-## Objetivo previsto
+### Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — COMPLETADO Y APROBADO — 2026-08-22
+
+1. `Palabras` resuelve búsquedas por español, hebreo, Strong y transliteración sin crear un segundo léxico paralelo.
+2. Las formas hebreas flexionadas se resuelven mediante `biblical_word_occurrences.lexical_entry_id` hacia el lema aprobado correspondiente.
+3. `biblical_lexical_entries` permanece como autoridad léxica; ninguna búsqueda automática reescribe lema, glosa fuente, definición ni estado editorial.
+4. `biblical_hebrew_search_resolutions` funciona como índice derivado reutilizable y reversible, con relación, confianza, evidencia y procedencia, sin convertirse en fuente léxica autoritativa.
+5. Las coincidencias contextuales derivadas de RV1909 permanecen como evidencia contextual y no equivalencia automática palabra-a-palabra sin glosa española aprobada.
+6. El índice derivado no guarda identidad del usuario ni historial personal de búsquedas; solo claves normalizadas con relación verificable.
+7. La lectura del índice está limitada a cuentas autenticadas activas; `anon` no tiene acceso y el cliente no escribe. Las escrituras derivadas se ejecutan server-only mediante service role.
+8. La cobertura española editorial quedó cerrada técnicamente en **10,737 / 10,737** entradas hebreas aprobadas/habilitadas, con **0 pendientes** y el lote final de 1,816 filas reversible por `batch_id`.
+9. El traductor práctico Español ⇄ Hebreo quedó integrado como superficie breve: palabra exacta prioriza diccionario aprobado y frase/fallback usa VIDA AI del lado servidor; muestra traducción/significado, pronunciación orientativa escrita, copiar y escuchar, sin Strong, morfología, ocurrencias ni transliteración técnica.
+10. La experiencia fue reorganizada según la pedagogía aprobada: Inicio como hub compacto; `Aprender` en página propia; Alef-Bet/Sofit/Dagesh/Matres, Vocales/Sheva, Palabras/Frases, Lectura bíblica, Reglas y Repaso conservan orden progresivo y superficies integradas.
+11. `Palabras` separa vocabulario bíblico de frases útiles curadas; `Lectura` funciona como lector bíblico por libro/capítulo; el teclado hebreo integrado conserva 22 letras, 5 Sofit, Niqqud, Dagesh y signos bíblicos sin parecer panel externo.
+12. El usuario recorrió y aprobó la validación funcional/visual en iPhone el **2026-08-22**, incluyendo la ronda final del teclado integrado, sin bugs bloqueantes reportados.
+13. El head aprobado `9d29a3cea6b8f5db44ac8646b56b41a6677f9e5a` tuvo regresiones, lint, build, validador maestro y validadores TAHOT en verde; Vercel Preview quedó READY. PR #286 permanece OPEN · DRAFT · sin merge y no se hizo deploy de producción.
+
+### Bloque 4 — Progreso personal y práctica adaptativa — COMPLETADO Y APROBADO — 2026-08-23
+
+1. `Prueba tu progreso` funciona como instructor personal con historial real por usuario y no como una nota final aislada.
+2. Las sesiones e intentos guardados permiten derivar dominio, mejora, refuerzo, retención, precisión, tendencia, fluidez y tiempo típico sin tablas estadísticas duplicadas.
+3. Los ejercicios conservan habilidades verificables: Alef-Bet, reconocimiento visual, Sofit, Dagesh, Niqqud/vocales, Sheva, vocabulario, lectura y reglas.
+4. Quedaron operativos los caminos **Según mi progreso** y **Elegir nivel**, con Básico, Intermedio y Avanzado, además de selección de áreas y cantidad de preguntas.
+5. `Quiero repasar` y Repaso reutilizan el historial privado sin alterar artificialmente el cálculo de dominio.
+6. Cada respuesta se valida y guarda antes de avanzar; errores entran a prioridad de refuerzo y aciertos salen de la rotación normal hasta el control de retención.
+7. Al terminar se muestran resultados, fortalezas, refuerzos y recomendación de continuidad; los logros y estados se derivan únicamente de intentos reales y el dominio fundamental se limita a 100%.
+8. La persistencia utiliza únicamente `biblical_hebrew_progress_sessions` y `biblical_hebrew_progress_answers`, aisladas por propietario y cuenta activa. `anon` no tiene acceso.
+9. Las migraciones aplicadas y versionadas son `20260822235632_fase_h_progreso_adaptativo`, `20260822235704_fase_h_progreso_adaptativo_restringir_grants` y `20260823145500_fase_h_progreso_tiempo_respuesta`.
+10. La práctica oral quedó como checkpoint independiente y como modalidad propia de voz: micrófono real, reconocimiento `he-IL`, espectro ligado al nivel real de la señal, confirmación de respuesta enviada y feedback correcto/repaso antes de avanzar.
+11. Se corrigieron los fallos reproducibles de iPhone/Safari: reinicio de micrófono/AudioContext entre intentos, control de `error` + `onend`, timeout de seguridad y reintento transitorio controlado.
+12. Las respuestas largas usan ancho móvil suficiente y las superficies de Prueba, submenús, Personalizar práctica e historial/resultados comienzan cerradas para reducir saturación y scroll.
+13. El usuario validó manualmente en iPhone el checkpoint oral, intentos consecutivos, espectro real, feedback ✓/✕, evaluación completa, resultado final y persistencia del progreso al salir y volver a entrar.
+14. Las pruebas manuales específicas en Android quedan diferidas para una validación posterior y no bloquean el cierre de FASE H; la compatibilidad implementada no se elimina.
+15. El head final aprobado `31e89605fcb9e4d8bff1d2d29e9c6c6e1a19364e` tuvo `CI temporal` #3090, validador del documento maestro, TAHOT Obadías y esquema observado TAHOT en **PASS**.
+16. PR #286 permanece OPEN · DRAFT · sin merge al momento de este cierre documental; no se hizo deploy manual a producción.
+
+## Cierre formal de FASE H — 2026-08-23
+
+Los cuatro bloques de FASE H quedan **COMPLETADOS Y APROBADOS**. El Centro de Hebreo Bíblico conserva la arquitectura didáctica, cobertura léxica española completa, búsqueda inteligente, traductor práctico, lectura bíblica, gramática progresiva, Repaso, teclado hebreo, práctica adaptativa, progreso privado y checkpoint oral validados. FASE H no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
+
+# FASE I — ACTIVA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL — 2026-08-23
+
+FASE I comienza formalmente después del cierre documentado de FASE H.
+
+## Objetivo
 
 Dar a cada persona una guía dentro de VIDA sin depender de capacitación presencial ni reactivar el Piloto Operativo.
 
-## Alcance previsto
+## Alcance
 
 1. Recorrido inicial opcional por primera vez mediante globos/contextos breves anclados a herramientas reales.
 2. Contenido dinámico por rol y permisos: Administrador, Pastor, Líder y Servidor solo verán explicaciones de funciones que realmente pueden utilizar.
@@ -403,4 +461,4 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 
 # Siguiente punto autorizado
 
-**Iniciar exclusivamente FASE H con el Bloque 1 — línea base de fuentes y arquitectura didáctica. Auditar primero las fuentes hebreas/arameas ya aprobadas y la integración real con Estudios/Biblia/Estudio Profundo; definir contrato didáctico y arquitectura visual antes de implementar. No crear nuevas estructuras sensibles de Supabase sin propuesta exacta, impacto, reversión y aprobación explícita. No iniciar FASE I mientras FASE H no esté formalmente completada en este documento.**
+**Iniciar exclusivamente FASE I — Guía interactiva y ayuda contextual por rol. Primero auditar las superficies actuales de ayuda/onboarding y los permisos reales por rol; definir un recorrido mínimo reutilizando la interfaz existente y sin reactivar telemetría del Piloto. No reabrir FASE H salvo bug comprobable.**

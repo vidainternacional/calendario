@@ -1,0 +1,70 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import test from 'node:test'
+
+const course = fs.readFileSync('components/hebreo/HebrewCourseCenter.tsx', 'utf8')
+const review = fs.readFileSync('components/hebreo/ReviewExplorer.tsx', 'utf8')
+
+test('FASE H repaso: Aprender abre Repaso como módulo real dentro del curso', () => {
+  assert.match(course, /import ReviewExplorer/)
+  assert.match(course, /id: 'review',[\s\S]*?title: 'Repaso'/)
+  assert.match(course, /return <ReviewExplorer \/>/)
+})
+
+test('FASE H repaso: distingue repaso de examen y mezcla áreas ya estudiadas', () => {
+  assert.match(review, /Repaso no es un examen/)
+  for (const label of ['Mixto', 'Letras', 'Vocales', 'Palabras', 'Lectura', 'Reglas', 'Verbos', 'Perfeccionar']) assert.match(review, new RegExp(label))
+  for (const area of ["area: 'letters'", "area: 'vowels'", "area: 'words'", "area: 'reading'", "area: 'rules'", "area: 'verbs'", "area: 'challenge'"]) assert.match(review, new RegExp(area))
+  assert.match(review, /MIXED_SESSION_IDS/)
+  assert.match(review, /'verb-qatal-yiqtol'/)
+  assert.match(review, /'challenge-unpointed'/)
+})
+
+test('FASE H repaso: usa sesiones breves, autoevaluación y guardado privado', () => {
+  assert.match(review, /area === 'challenge' \? 8 : 10/)
+  assert.match(review, /Mostrar respuesta/)
+  assert.match(review, /Lo sé/)
+  assert.match(review, /Necesito practicar/)
+  assert.match(review, /Repasar después/)
+  assert.match(review, /Progreso guardado/)
+  assert.match(review, /saveHebrewReviewRating/)
+  assert.match(review, /startHebrewProgressSession/)
+  assert.match(review, /finishHebrewProgressSession/)
+})
+
+test('FASE H repaso: Perfeccionar sigue después del dominio fundamental sin inflar la escala', () => {
+  for (const id of ['challenge-unpointed', 'challenge-unpointed-phrase', 'challenge-analysis', 'challenge-construct', 'challenge-suffix', 'challenge-vowels', 'challenge-furtive', 'challenge-context']) assert.match(review, new RegExp(`id: '${id}'`))
+  assert.match(review, /lectura sin niqqud, reglas combinadas, sufijos, constructo y detalles de lectura/i)
+  assert.match(review, /Sirve incluso cuando los fundamentos ya están al 100%/)
+})
+
+test('FASE H repaso: incluye práctica de escritura compatible con el teclado hebreo', () => {
+  assert.match(review, /data-hebrew-practice="true"/)
+  assert.match(review, /placeholder="כתוב כאן…"/)
+  assert.match(review, /activar el teclado hebreo de VIDA arriba/)
+  assert.match(review, /writingTarget/)
+})
+
+test('FASE H repaso: incorpora niqqud avanzado y transformaciones nominales verificadas', () => {
+  for (const id of ['sheva-vocal', 'sheva-silent', 'qamats-qatan', 'furtive-pataj', 'possessive-beni', 'possessive-aviv', 'construct-devar', 'construct-bnei']) assert.match(review, new RegExp(`id: '${id}'`))
+  for (const form of ['בְּרֵאשִׁית', 'מַלְכָּה', 'כָּל', 'רוּחַ', 'בְּנִי', 'אָבִיו', 'דָּבָר → דְּבַר', 'בְּנֵי']) assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+})
+
+test('FASE H repaso: practica Qal sin convertir morfología en pasado futuro mecánico', () => {
+  for (const id of ['verb-qatal-yiqtol', 'verb-qatal-1cs', 'verb-yiqtol-1cs', 'verb-imperative', 'verb-participle', 'verb-inf-construct', 'verb-wayyiqtol', 'verb-weqatal']) assert.match(review, new RegExp(`id: '${id}'`))
+  for (const form of ['אָמַרְתִּי', 'אֹמַר', 'אֱמֹר', 'אֹמֵר', 'לֵאמֹר', 'וַיֹּאמֶר', 'וְאָמַרְתָּ']) assert.match(review, new RegExp(form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.match(review, /no equivale automáticamente a futuro/i)
+  assert.match(review, /No memorices la equivalencia automática pasado\/futuro/)
+  assert.match(review, /no es una fórmula de «ו \+ futuro = pasado»/i)
+})
+
+test('FASE H repaso: el resumen conserva resultados y explica su uso adaptativo', () => {
+  assert.match(review, /Sesión terminada/)
+  assert.match(review, /quedaron guardadas/)
+  assert.match(review, /priorizar lo que conviene repasar/)
+  assert.match(review, /counts\.know/)
+  assert.match(review, /counts\.practice/)
+  assert.match(review, /counts\.later/)
+  assert.doesNotMatch(review, /No se guarda como progreso/)
+  assert.doesNotMatch(review, /Solo esta sesión/)
+})
