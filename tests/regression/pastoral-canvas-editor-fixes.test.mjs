@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import test from 'node:test'
+
+const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspace.tsx', 'utf8')
+const canvas = fs.readFileSync('components/pastoral/PastoralVisualCanvas.tsx', 'utf8')
+const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'utf8')
+const actions = fs.readFileSync('app/actions/pastoral-paquetes.ts', 'utf8')
+
+test('texto editable mantiene DOM estable y dirección LTR mientras se escribe', () => {
+  assert.match(canvas, /function TextoCanvas/)
+  assert.match(canvas, /document\.activeElement === editor/)
+  assert.match(canvas, /editor\.innerHTML !== contenidoSeguro/)
+  assert.match(canvas, /dir="ltr"/)
+  assert.match(canvas, /direction: 'ltr'/)
+  assert.match(canvas, /unicodeBidi: 'plaintext'/)
+  assert.match(canvas, /writingMode: 'horizontal-tb'/)
+  const textoDesde = canvas.indexOf('function TextoCanvas')
+  const textoHasta = canvas.indexOf('export default function PastoralVisualCanvas')
+  assert.ok(textoDesde >= 0 && textoHasta > textoDesde)
+  assert.doesNotMatch(canvas.slice(textoDesde, textoHasta), /dangerouslySetInnerHTML/)
+})
+
+test('texto e imagen se pueden eliminar directamente desde el lienzo y la faja', () => {
+  assert.match(canvas, /aria-label="Eliminar elemento"/)
+  assert.match(canvas, /onDeleteElement\?\.\(elemento\.id\)/)
+  assert.match(workspace, /onDeleteElement=\{eliminarElemento\}/)
+  assert.match(workspace, /const eliminarElemento =/)
+  assert.match(workspace, /> Borrar<\/button>/)
+  assert.match(workspace, /Quitar fondo/)
+})
+
+test('tamaño tipográfico se expresa en puntos y admite hasta 160 pt', () => {
+  assert.match(workspace, /Tamaño de letra en puntos/)
+  assert.match(workspace, /type="number" min="8" max="160"/)
+  assert.match(workspace, /type="range" min="8" max="160"/)
+  assert.match(workspace, /<span>pt<\/span>/)
+  assert.match(canvas, /fontSize: `\$\{\(puntos \* 4\) \/ 3\}px`/)
+  assert.match(model, /tamano_fuente:[\s\S]*8, 160/)
+  assert.match(actions, /tamano_fuente: numeroAcotado\(item\.tamano_fuente, 8, 160/)
+})
+
+test('botones de formato reflejan visualmente el estado activo', () => {
+  assert.match(workspace, /const claseBotonActivo/)
+  assert.match(workspace, /bg-violet-600 text-white/)
+  assert.match(workspace, /aria-pressed=\{\(textoSeleccionado\.peso/)
+  assert.match(workspace, /aria-pressed=\{Boolean\(textoSeleccionado\.cursiva\)\}/)
+  assert.match(workspace, /aria-pressed=\{Boolean\(textoSeleccionado\.subrayado\)\}/)
+  assert.match(workspace, /aria-pressed=\{Boolean\(textoSeleccionado\.tachado\)\}/)
+})
+
+test('texto ofrece Título Subtítulo Cuerpo y más familias tipográficas', () => {
+  assert.match(model, /type RolTexto = 'titulo' \| 'subtitulo' \| 'cuerpo' \| 'libre'/)
+  for (const etiqueta of ['Título', 'Subtítulo', 'Cuerpo']) assert.match(model, new RegExp(`label: '${etiqueta}'`))
+  for (const fuente of ['Helvetica', 'Verdana', 'Tahoma', 'Palatino Linotype', 'Garamond', 'Lucida Console', 'Impact', 'Arial Black']) {
+    assert.match(model, new RegExp(fuente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    assert.match(actions, new RegExp(fuente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(actions, /item\.rol === 'subtitulo'/)
+})
