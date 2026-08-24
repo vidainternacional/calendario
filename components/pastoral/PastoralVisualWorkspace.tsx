@@ -15,10 +15,10 @@ import PackageDistributionControls from '@/components/pastoral/PackageDistributi
 import PastoralVersePicker from '@/components/pastoral/PastoralVersePicker'
 import PastoralVisualCanvas from '@/components/pastoral/PastoralVisualCanvas'
 import {
-  FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clonar, limpiarHtmlCanvas, nuevaPaginaCanvas,
+  ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clonar, limpiarHtmlCanvas, nuevaPaginaCanvas,
   nuevoIdCanvas, normalizarElementoCanvas, normalizarPaginaCanvas,
   type Alineacion, type DiapositivaCanvas, type ElementoCanvas, type PanelLienzo, type RecursoPastoral,
-  type VistaLienzo,
+  type RolTexto, type VistaLienzo,
 } from '@/components/pastoral/pastoral-canvas-model'
 
 type Audiencia = 'iglesia' | 'lideres' | 'servidores' | 'publico'
@@ -42,6 +42,7 @@ const BANCOS_EXTERNOS = [
 ]
 const COLORES_FONDO = ['#ffffff', '#f8fafc', '#f5f3ff', '#fff7ed', '#0f172a', '#312e81', '#4c0519']
 const COLORES_TEXTO = ['#0f172a', '#ffffff', '#312e81', '#7f1d1d', '#14532d', '#1e3a8a']
+const claseBotonActivo = (activo: boolean) => `grid h-10 w-10 place-items-center rounded-full transition ${activo ? 'bg-violet-600 text-white shadow-sm' : 'bg-white text-slate-700'}`
 
 function textoPlano(html: string) {
   if (typeof window !== 'undefined') { const div = document.createElement('div'); div.innerHTML = limpiarHtmlCanvas(html); return div.innerText.trim() }
@@ -71,6 +72,7 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
   const [versionHistorial, setVersionHistorial] = useState(0)
   const pagina = paginas[indice] ?? paginas[0]
   const elementoSeleccionado = pagina?.elementos?.find((item) => item.id === seleccion) ?? null
+  const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' ? elementoSeleccionado : null
   const imagenes = useMemo(() => biblioteca.filter((item) => item.mime_type?.startsWith('image/') && item.acceso_url), [biblioteca])
   const recursosFiltrados = useMemo(() => {
     const q = busquedaRecursos.trim().toLowerCase()
@@ -84,14 +86,8 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
     setVersionHistorial((v) => v + 1)
   }
   const restaurar = (s: Snapshot) => { setTitulo(s.titulo); setPaginas(clonar(s.paginas)); setIndice(Math.min(s.indice, s.paginas.length - 1)); setSeleccion(null); setPanel(null) }
-  const deshacer = () => {
-    const anterior = undoRef.current.pop(); if (!anterior) return
-    redoRef.current.push(snapshot()); restaurar(anterior); setVersionHistorial((v) => v + 1)
-  }
-  const rehacer = () => {
-    const siguiente = redoRef.current.pop(); if (!siguiente) return
-    undoRef.current.push(snapshot()); restaurar(siguiente); setVersionHistorial((v) => v + 1)
-  }
+  const deshacer = () => { const anterior = undoRef.current.pop(); if (!anterior) return; redoRef.current.push(snapshot()); restaurar(anterior); setVersionHistorial((v) => v + 1) }
+  const rehacer = () => { const siguiente = redoRef.current.pop(); if (!siguiente) return; undoRef.current.push(snapshot()); restaurar(siguiente); setVersionHistorial((v) => v + 1) }
 
   useEffect(() => {
     const teclado = (event: KeyboardEvent) => {
@@ -115,18 +111,21 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
     setSeleccion(nuevo.id)
     return nuevo.id
   }
-  const agregarTexto = () => agregarElemento({ tipo: 'texto', rol: 'libre', contenido: 'Escribe aquí', x: 12, y: 18, w: 76, h: 18, tamano_fuente: 30, fuente: 'Inter' })
+  const agregarTexto = (rol: RolTexto = 'libre') => {
+    const estilo = ESTILOS_TEXTO.find((item) => item.id === rol) ?? ESTILOS_TEXTO[3]
+    return agregarElemento({ tipo: 'texto', rol, contenido: rol === 'titulo' ? 'Título' : rol === 'subtitulo' ? 'Subtítulo' : rol === 'cuerpo' ? 'Escribe el contenido' : 'Escribe aquí', x: 10, y: rol === 'titulo' ? 12 : rol === 'subtitulo' ? 28 : 38, w: 80, h: rol === 'cuerpo' ? 34 : 18, tamano_fuente: estilo.pt, peso: estilo.peso, fuente: 'Inter' })
+  }
+  const aplicarRolTexto = (rol: RolTexto) => {
+    if (!textoSeleccionado) return agregarTexto(rol)
+    const estilo = ESTILOS_TEXTO.find((item) => item.id === rol) ?? ESTILOS_TEXTO[3]
+    actualizarElemento(textoSeleccionado.id, { rol, tamano_fuente: estilo.pt, peso: estilo.peso })
+  }
   const agregarImagen = (recurso: RecursoPastoral) => agregarElemento({ tipo: 'imagen', recurso_id: recurso.id, x: 12, y: 18, w: 56, h: 48, ajuste: 'cover', radio: 14 })
   const aplicarFondoImagen = (recurso: RecursoPastoral) => actualizarPagina({ fondo_modo: 'imagen', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
+  const quitarFondoImagen = () => actualizarPagina({ fondo_modo: 'color', fondo_recurso_id: null, recurso_id: null })
   const eliminarElemento = (id: string) => { registrarHistorial(); patchPaginaSinHistorial({ elementos: (pagina.elementos ?? []).filter((el) => el.id !== id) }); setSeleccion(null) }
-  const duplicarElemento = (id: string) => {
-    const original = pagina.elementos?.find((el) => el.id === id); if (!original) return
-    agregarElemento({ ...clonar(original), id: undefined, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 })
-  }
-  const moverCapa = (id: string, delta: number) => {
-    const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return
-    actualizarElemento(id, { z: Math.max(0, Math.min(200, elemento.z + delta)) })
-  }
+  const duplicarElemento = (id: string) => { const original = pagina.elementos?.find((el) => el.id === id); if (!original) return; agregarElemento({ ...clonar(original), id: undefined, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 }) }
+  const moverCapa = (id: string, delta: number) => { const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return; actualizarElemento(id, { z: Math.max(0, Math.min(200, elemento.z + delta)) }) }
 
   const nuevaPagina = () => { registrarHistorial(); setPaginas((actuales) => [...actuales, nuevaPaginaCanvas()]); setIndice(paginas.length); setSeleccion(null); setPanel(null) }
   const eliminarPagina = (i = indice) => {
@@ -143,7 +142,7 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
 
   const agregarVersiculo = (versiculo: { referencia: string; texto: string; traduccion: string }) => {
     const contenido = `<strong>${versiculo.referencia}${versiculo.traduccion ? ` · ${versiculo.traduccion}` : ''}</strong><br>${versiculo.texto}`
-    agregarElemento({ tipo: 'versiculo', contenido, x: 10, y: 20 + Math.min((pagina.elementos?.length ?? 0) * 3, 35), w: 80, h: 24, tamano_fuente: 30, fuente: 'Georgia', alineacion: 'centro', peso: 500 })
+    agregarElemento({ tipo: 'versiculo', rol: 'cuerpo', contenido, x: 10, y: 20 + Math.min((pagina.elementos?.length ?? 0) * 3, 35), w: 80, h: 24, tamano_fuente: 28, fuente: 'Georgia', alineacion: 'centro', peso: 500 })
   }
 
   const prepararSubida = (destino: DestinoSubida) => { setDestinoSubida(destino); fileInputRef.current?.click() }
@@ -166,10 +165,7 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [biblioteca, recursoPendiente])
 
-  const recursosUsados = () => Array.from(new Set([
-    ...(paquete.recurso_ids ?? []),
-    ...paginas.flatMap((p) => [p.fondo_recurso_id, p.recurso_id, ...(p.elementos ?? []).map((el) => el.recurso_id)].filter(Boolean) as string[]),
-  ])).slice(0, 30)
+  const recursosUsados = () => Array.from(new Set([...(paquete.recurso_ids ?? []), ...paginas.flatMap((p) => [p.fondo_recurso_id, p.recurso_id, ...(p.elementos ?? []).map((el) => el.recurso_id)].filter(Boolean) as string[])])).slice(0, 30)
 
   const construirFormulario = () => {
     const data = new FormData(); data.set('titulo', titulo); data.set('descripcion_publica', paquete.descripcion_publica); data.set('instrucciones', paquete.instrucciones); data.set('notas_privadas', paquete.notas_privadas ?? ''); data.set('estado', paquete.estado); data.set('bosquejo_id', paquete.bosquejo_id ?? ''); data.set('coleccion_id', paquete.coleccion_id ?? ''); data.set('presentacion_pdf_recurso_id', paquete.presentacion_pdf_recurso_id ?? '')
@@ -182,20 +178,14 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
     return data
   }
 
-  const guardar = () => startTransition(async () => {
-    const resultado = await editarPaquetePastoral(paquete.id, construirFormulario())
-    if (!resultado.success) return mostrarToast(resultado.error)
-    setGuardado(true); window.setTimeout(() => setGuardado(false), 1500); mostrarToast('Proyecto guardado'); router.refresh()
-  })
-
+  const guardar = () => startTransition(async () => { const resultado = await editarPaquetePastoral(paquete.id, construirFormulario()); if (!resultado.success) return mostrarToast(resultado.error); setGuardado(true); window.setTimeout(() => setGuardado(false), 1500); mostrarToast('Proyecto guardado'); router.refresh() })
   const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setPanel(null); setVista(siguiente) }
   const moverPresentacion = (delta: number) => setIndice((actual) => Math.min(Math.max(actual + delta, 0), paginas.length - 1))
   const abrirPantallaCompleta = async () => { setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
   const cerrarPantallaCompleta = async () => { setModoPresentacion(false); try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch {} }
   const copiarEnlaceActual = async () => { try { await navigator.clipboard.writeText(window.location.href); mostrarToast('Enlace del proyecto copiado') } catch { mostrarToast('No se pudo copiar el enlace') } }
   const compartirInterno = async () => { try { if (navigator.share) await navigator.share({ title: titulo, text: 'Proyecto de Centro Pastoral', url: window.location.href }); else await copiarEnlaceActual() } catch {} }
-
-  const alinear = (alineacion: Alineacion) => elementoSeleccionado && actualizarElemento(elementoSeleccionado.id, { alineacion })
+  const alinear = (alineacion: Alineacion) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { alineacion })
   void versionHistorial
 
   return <div className="pastoral-content-workspace text-slate-900">
@@ -225,23 +215,40 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
       <div className="sticky top-[84px] z-30 -mx-4 bg-[#f4f5f9]/96 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-1 overflow-x-auto border-y border-slate-200/80 py-1 [scrollbar-width:none]" aria-label="Herramientas del lienzo">
           {PANELES.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setPanel((actual) => actual === id ? null : id)} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-bold ${panel === id ? 'bg-violet-100 text-violet-700' : 'text-slate-700'}`}><Icon className="h-4 w-4" />{label}<ChevronDown className={`h-3 w-3 transition ${panel === id ? 'rotate-180' : ''}`} /></button>)}
+          {elementoSeleccionado && <><span className="mx-1 h-6 w-px shrink-0 bg-slate-300" /><button type="button" onClick={() => eliminarElemento(elementoSeleccionado.id)} className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-rose-50 px-3 text-xs font-bold text-rose-600"><Trash2 className="h-4 w-4" /> Borrar</button></>}
         </div>
       </div>
 
       {panel && <div className="border-b border-slate-200/80 py-3">
         {panel === 'fondo' && <div className="space-y-4">
-          <div className="flex flex-wrap gap-2"><button type="button" onClick={() => prepararSubida('fondo')} disabled={subiendoImagen} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-violet-600 px-4 text-xs font-bold text-white"><Upload className="h-4 w-4" /> Subir imagen</button>{imagenes.slice(0, 8).map((recurso) => <button key={recurso.id} type="button" onClick={() => aplicarFondoImagen(recurso)} className="h-10 w-10 overflow-hidden rounded-full ring-1 ring-slate-200"><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} className="h-full w-full object-cover" /></button>)}</div>
-          <div><p className="mb-2 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">Color</p><div className="flex flex-wrap gap-2">{COLORES_FONDO.map((color) => <button key={color} type="button" onClick={() => actualizarPagina({ fondo_modo: 'color', fondo: color })} className="h-9 w-9 rounded-full border border-slate-300" style={{ backgroundColor: color }} aria-label={`Fondo ${color}`} />)}</div></div>
-          <div><p className="mb-2 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">Temas</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{TEMAS_LIENZO.map((tema) => <button key={tema.id} type="button" onClick={() => actualizarPagina({ fondo_modo: 'tema', fondo_tema: tema.id, color_texto: tema.texto })} className="min-h-14 rounded-xl p-2 text-[10px] font-bold shadow-sm" style={{ background: tema.css, color: tema.texto }}>{tema.label}</button>)}</div></div>
+          <div className="flex flex-wrap gap-2"><button type="button" onClick={() => prepararSubida('fondo')} disabled={subiendoImagen} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-violet-600 px-4 text-xs font-bold text-white"><Upload className="h-4 w-4" /> Subir imagen</button>{pagina.fondo_modo === 'imagen' && <button type="button" onClick={quitarFondoImagen} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-rose-50 px-4 text-xs font-bold text-rose-600"><Trash2 className="h-4 w-4" /> Quitar fondo</button>}{imagenes.slice(0, 8).map((recurso) => <button key={recurso.id} type="button" onClick={() => aplicarFondoImagen(recurso)} className="h-10 w-10 overflow-hidden rounded-full ring-1 ring-slate-200"><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} className="h-full w-full object-cover" /></button>)}</div>
+          <div><p className="mb-2 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">Color</p><div className="flex flex-wrap gap-2">{COLORES_FONDO.map((color) => <button key={color} type="button" onClick={() => actualizarPagina({ fondo_modo: 'color', fondo: color })} className={`h-9 w-9 rounded-full border border-slate-300 ${pagina.fondo_modo === 'color' && pagina.fondo === color ? 'ring-2 ring-violet-500 ring-offset-2' : ''}`} style={{ backgroundColor: color }} aria-label={`Fondo ${color}`} />)}</div></div>
+          <div><p className="mb-2 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">Temas</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{TEMAS_LIENZO.map((tema) => <button key={tema.id} type="button" onClick={() => actualizarPagina({ fondo_modo: 'tema', fondo_tema: tema.id, color_texto: tema.texto })} className={`min-h-14 rounded-xl p-2 text-[10px] font-bold shadow-sm ${pagina.fondo_modo === 'tema' && pagina.fondo_tema === tema.id ? 'ring-2 ring-violet-500 ring-offset-2' : ''}`} style={{ background: tema.css, color: tema.texto }}>{tema.label}</button>)}</div></div>
         </div>}
 
-        {panel === 'texto' && <div className="space-y-3">
-          <button type="button" onClick={agregarTexto} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-violet-600 px-4 text-xs font-bold text-white"><Plus className="h-4 w-4" /> Caja de texto</button>
-          {elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && <><div className="flex flex-wrap gap-2">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { fuente })} className={`min-h-9 rounded-full px-3 text-xs ${elementoSeleccionado.fuente === fuente ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`} style={{ fontFamily: fuente }}>{fuente}</button>)}</div><div className="flex flex-wrap items-center gap-2"><button type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { peso: elementoSeleccionado.peso === 800 ? 500 : 800 })} className="grid h-10 w-10 place-items-center rounded-full bg-white"><Bold className="h-4 w-4" /></button><button type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { cursiva: !elementoSeleccionado.cursiva })} className="grid h-10 w-10 place-items-center rounded-full bg-white"><Italic className="h-4 w-4" /></button><button type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { subrayado: !elementoSeleccionado.subrayado })} className="grid h-10 w-10 place-items-center rounded-full bg-white"><Underline className="h-4 w-4" /></button><button type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { tachado: !elementoSeleccionado.tachado })} className="grid h-10 w-10 place-items-center rounded-full bg-white"><Strikethrough className="h-4 w-4" /></button><label className="flex items-center gap-2 text-xs font-bold text-slate-600">Tamaño <input type="range" min="10" max="96" value={elementoSeleccionado.tamano_fuente ?? 24} onChange={(e) => actualizarElemento(elementoSeleccionado.id, { tamano_fuente: Number(e.target.value) })} /></label>{COLORES_TEXTO.map((color) => <button key={color} type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { color })} className="h-8 w-8 rounded-full border border-slate-300" style={{ backgroundColor: color }} />)}</div></>}
+        {panel === 'texto' && <div className="space-y-4">
+          <div className="flex flex-wrap gap-2"><button type="button" onClick={() => agregarTexto('libre')} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-violet-600 px-4 text-xs font-bold text-white"><Plus className="h-4 w-4" /> Caja de texto</button>{ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" onClick={() => aplicarRolTexto(estilo.id)} className={`min-h-10 rounded-full px-4 text-xs font-bold ${textoSeleccionado?.rol === estilo.id ? 'bg-violet-600 text-white' : 'bg-white text-slate-700'}`}>{estilo.label}</button>)}</div>
+          {textoSeleccionado && <>
+            <div><p className="mb-2 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">Tipografía</p><div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" onClick={() => actualizarElemento(textoSeleccionado.id, { fuente })} className={`min-h-9 shrink-0 rounded-full px-3 text-xs ${textoSeleccionado.fuente === fuente ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`} style={{ fontFamily: fuente }}>{fuente}</button>)}</div></div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => actualizarElemento(textoSeleccionado.id, { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseBotonActivo((textoSeleccionado.peso ?? 500) >= 700)} aria-pressed={(textoSeleccionado.peso ?? 500) >= 700}><Bold className="h-4 w-4" /></button>
+              <button type="button" onClick={() => actualizarElemento(textoSeleccionado.id, { cursiva: !textoSeleccionado.cursiva })} className={claseBotonActivo(Boolean(textoSeleccionado.cursiva))} aria-pressed={Boolean(textoSeleccionado.cursiva)}><Italic className="h-4 w-4" /></button>
+              <button type="button" onClick={() => actualizarElemento(textoSeleccionado.id, { subrayado: !textoSeleccionado.subrayado })} className={claseBotonActivo(Boolean(textoSeleccionado.subrayado))} aria-pressed={Boolean(textoSeleccionado.subrayado)}><Underline className="h-4 w-4" /></button>
+              <button type="button" onClick={() => actualizarElemento(textoSeleccionado.id, { tachado: !textoSeleccionado.tachado })} className={claseBotonActivo(Boolean(textoSeleccionado.tachado))} aria-pressed={Boolean(textoSeleccionado.tachado)}><Strikethrough className="h-4 w-4" /></button>
+              <label className="flex min-h-10 items-center gap-2 rounded-full bg-white px-3 text-xs font-bold text-slate-600">Tamaño <input aria-label="Tamaño de letra en puntos" type="number" min="8" max="160" value={Math.round(textoSeleccionado.tamano_fuente ?? 24)} onChange={(e) => actualizarElemento(textoSeleccionado.id, { tamano_fuente: Math.min(160, Math.max(8, Number(e.target.value) || 8)) })} className="w-14 bg-transparent text-right font-black text-slate-900 outline-none" /><span>pt</span></label>
+              <input aria-label="Ajustar tamaño de letra" type="range" min="8" max="160" value={textoSeleccionado.tamano_fuente ?? 24} onChange={(e) => actualizarElemento(textoSeleccionado.id, { tamano_fuente: Number(e.target.value) })} className="min-w-36 flex-1" />
+            </div>
+            <div className="flex flex-wrap gap-2">{COLORES_TEXTO.map((color) => <button key={color} type="button" onClick={() => actualizarElemento(textoSeleccionado.id, { color })} className={`h-8 w-8 rounded-full border border-slate-300 ${textoSeleccionado.color === color ? 'ring-2 ring-violet-500 ring-offset-2' : ''}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>
+          </>}
         </div>}
 
         {panel === 'parrafo' && <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => alinear('izquierda')} className="grid h-10 w-10 place-items-center rounded-full bg-white"><AlignLeft className="h-4 w-4" /></button><button type="button" onClick={() => alinear('centro')} className="grid h-10 w-10 place-items-center rounded-full bg-white"><AlignCenter className="h-4 w-4" /></button><button type="button" onClick={() => alinear('derecha')} className="grid h-10 w-10 place-items-center rounded-full bg-white"><AlignRight className="h-4 w-4" /></button><button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className="grid h-10 w-10 place-items-center rounded-full bg-white"><List className="h-4 w-4" /></button><button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className="grid h-10 w-10 place-items-center rounded-full bg-white"><ListOrdered className="h-4 w-4" /></button>{elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && <label className="flex items-center gap-2 text-xs font-bold text-slate-600">Interlineado <input type="range" min="0.9" max="2" step="0.05" value={elementoSeleccionado.interlineado ?? 1.25} onChange={(e) => actualizarElemento(elementoSeleccionado.id, { interlineado: Number(e.target.value) })} /></label>}
+          <button type="button" onClick={() => alinear('izquierda')} className={claseBotonActivo(textoSeleccionado?.alineacion !== 'centro' && textoSeleccionado?.alineacion !== 'derecha')} aria-pressed={textoSeleccionado?.alineacion === 'izquierda'}><AlignLeft className="h-4 w-4" /></button>
+          <button type="button" onClick={() => alinear('centro')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'centro')} aria-pressed={textoSeleccionado?.alineacion === 'centro'}><AlignCenter className="h-4 w-4" /></button>
+          <button type="button" onClick={() => alinear('derecha')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'derecha')} aria-pressed={textoSeleccionado?.alineacion === 'derecha'}><AlignRight className="h-4 w-4" /></button>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className="grid h-10 w-10 place-items-center rounded-full bg-white text-slate-700"><List className="h-4 w-4" /></button>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className="grid h-10 w-10 place-items-center rounded-full bg-white text-slate-700"><ListOrdered className="h-4 w-4" /></button>
+          {textoSeleccionado && <label className="flex items-center gap-2 text-xs font-bold text-slate-600">Interlineado <input type="range" min="0.9" max="2" step="0.05" value={textoSeleccionado.interlineado ?? 1.25} onChange={(e) => actualizarElemento(textoSeleccionado.id, { interlineado: Number(e.target.value) })} /></label>}
         </div>}
 
         {panel === 'recursos' && <div className="space-y-3">
@@ -258,8 +265,8 @@ export default function PastoralVisualWorkspace({ paquete, biblioteca }: { paque
         </div>}
       </div>}
 
-      <div className="mt-3"><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} /></div>
-      <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-400"><span>Página {indice + 1} de {paginas.length} · {pagina.formato ?? '16:9'}</span><span className="hidden sm:inline">Arrastra por el control morado · redimensiona desde la esquina</span></div>
+      <div className="mt-3"><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} onDeleteElement={eliminarElemento} /></div>
+      <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-400"><span>Página {indice + 1} de {paginas.length} · {pagina.formato ?? '16:9'}</span><span className="hidden sm:inline">Selecciona un elemento para editarlo · mover arriba izquierda · tamaño abajo derecha · borrar arriba derecha</span></div>
     </section>}
 
     {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black' : 'relative pb-10 pt-5'}>
