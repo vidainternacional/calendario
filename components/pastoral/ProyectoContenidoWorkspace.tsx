@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  AlignCenter, AlignLeft, AlignRight, Bold, BookOpen, Check, ChevronLeft, ChevronRight, Copy,
+  AlignCenter, AlignLeft, AlignRight, Bold, BookOpen, Check, ChevronLeft, ChevronRight,
   Eraser, Heading1, Heading2, Image as ImageIcon, Italic, LayoutTemplate, List, ListOrdered,
   Loader2, Maximize2, Palette, Pilcrow, Plus, Quote, Redo2, Save, Strikethrough, Trash2,
   Underline, Undo2,
@@ -53,14 +53,14 @@ type Paquete = {
   publicado: boolean
   destacado: boolean
 }
-type Vista = 'contenido' | 'presentacion' | 'guia' | 'publicar'
+type Vista = 'contenido' | 'presentacion' | 'congregacion' | 'publicar'
 type Panel = 'imagen' | 'diseno' | null
 
-const PLANTILLAS: Array<{ id: Plantilla; label: string }> = [
-  { id: 'limpia', label: 'Limpia' },
-  { id: 'titulo', label: 'Título' },
-  { id: 'imagen', label: 'Imagen' },
-  { id: 'versiculo', label: 'Versículo' },
+const PLANTILLAS: Array<{ id: Plantilla; label: string; descripcion: string }> = [
+  { id: 'limpia', label: 'Limpia', descripcion: 'Documento claro' },
+  { id: 'titulo', label: 'Título', descripcion: 'Título protagonista' },
+  { id: 'imagen', label: 'Imagen', descripcion: 'Imagen a pantalla' },
+  { id: 'versiculo', label: 'Versículo', descripcion: 'Texto bíblico destacado' },
 ]
 const FONDOS = ['#ffffff', '#f8fafc', '#f5f3ff', '#fff7ed', '#0f172a', '#312e81']
 const TAGS_SEGUROS = new Set(['P', 'BR', 'DIV', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3'])
@@ -142,10 +142,17 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
     setPaginas((actuales) => actuales.map((item, i) => i === indice ? { ...item, [campo]: valor } : item))
   }
 
+  const sincronizarEditor = () => {
+    const editor = editorRef.current
+    if (!editor) return
+    actualizarPagina('contenido', limpiarHtmlSeguro(editor.innerHTML))
+  }
+
   const seleccionarPagina = (i: number) => {
     sincronizarEditor()
     setIndice(i)
     setPanel(null)
+    seleccionRef.current = null
     requestAnimationFrame(() => {
       const editor = editorRef.current
       if (editor) editor.innerHTML = limpiarHtmlSeguro(paginas[i]?.contenido ?? '')
@@ -155,10 +162,11 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
   const nuevaPagina = () => {
     sincronizarEditor()
     const nueva = normalizarPagina({ titulo: '', contenido: '', recurso_id: null })
-    setPaginas((actuales) => [...actuales, nueva])
     const siguiente = paginas.length
+    setPaginas((actuales) => [...actuales, nueva])
     setIndice(siguiente)
     setPanel(null)
+    seleccionRef.current = null
     requestAnimationFrame(() => { if (editorRef.current) editorRef.current.innerHTML = '' })
   }
 
@@ -169,14 +177,9 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
     setPaginas(siguientes)
     setIndice(nuevoIndice)
     setPanel(null)
+    seleccionRef.current = null
     requestAnimationFrame(() => { if (editorRef.current) editorRef.current.innerHTML = limpiarHtmlSeguro(siguientes[nuevoIndice]?.contenido ?? '') })
     mostrarToast('Página eliminada')
-  }
-
-  const sincronizarEditor = () => {
-    const editor = editorRef.current
-    if (!editor) return
-    actualizarPagina('contenido', limpiarHtmlSeguro(editor.innerHTML))
   }
 
   const guardarSeleccion = () => {
@@ -192,7 +195,15 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
     editor.focus()
     const selection = window.getSelection()
     selection?.removeAllRanges()
-    if (seleccionRef.current) selection?.addRange(seleccionRef.current)
+    if (seleccionRef.current && editor.contains(seleccionRef.current.commonAncestorContainer)) {
+      selection?.addRange(seleccionRef.current)
+      return
+    }
+    const range = document.createRange()
+    range.selectNodeContents(editor)
+    range.collapse(false)
+    selection?.addRange(range)
+    seleccionRef.current = range.cloneRange()
   }
 
   const comando = (nombre: string, valor?: string) => {
@@ -205,12 +216,49 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
   const formatoBloque = (tag: 'p' | 'h1' | 'h2' | 'blockquote') => comando('formatBlock', tag)
 
   const insertarVersiculo = (versiculo: { referencia: string; texto: string; traduccion: string }) => {
+    const editor = editorRef.current
+    if (!editor) return
     restaurarSeleccion()
-    const referencia = escaparHtml(`${versiculo.referencia}${versiculo.traduccion ? ` · ${versiculo.traduccion}` : ''}`)
-    const texto = escaparHtml(versiculo.texto)
-    document.execCommand('insertHTML', false, `<blockquote><strong>${referencia}</strong><br>${texto}</blockquote><p><br></p>`)
+    const selection = window.getSelection()
+    let range = selection?.rangeCount ? selection.getRangeAt(0) : null
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      range = document.createRange()
+      range.selectNodeContents(editor)
+      range.collapse(false)
+    }
+
+    const referencia = `${versiculo.referencia}${versiculo.traduccion ? ` · ${versiculo.traduccion}` : ''}`
+    const bloque = document.createElement('blockquote')
+    const ref = document.createElement('strong')
+    ref.textContent = referencia
+    bloque.append(ref, document.createElement('br'), document.createTextNode(versiculo.texto))
+    bloque.dir = 'ltr'
+
+    const espacioAntes = document.createElement('p')
+    espacioAntes.appendChild(document.createElement('br'))
+    const espacioDespues = document.createElement('p')
+    espacioDespues.appendChild(document.createElement('br'))
+
+    const contenedorBloque = (range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer as Element : range.startContainer.parentElement)?.closest('blockquote')
+    if (contenedorBloque && editor.contains(contenedorBloque)) {
+      contenedorBloque.insertAdjacentElement('afterend', bloque)
+      bloque.insertAdjacentElement('afterend', espacioDespues)
+    } else if (range.collapsed && range.startOffset === 0 && editor.childNodes.length === 0) {
+      editor.append(espacioAntes, bloque, espacioDespues)
+    } else {
+      range.deleteContents()
+      const frag = document.createDocumentFragment()
+      frag.append(bloque, espacioDespues)
+      range.insertNode(frag)
+    }
+
+    const nuevaSeleccion = document.createRange()
+    nuevaSeleccion.selectNodeContents(espacioDespues)
+    nuevaSeleccion.collapse(true)
+    selection?.removeAllRanges()
+    selection?.addRange(nuevaSeleccion)
+    seleccionRef.current = nuevaSeleccion.cloneRange()
     sincronizarEditor()
-    guardarSeleccion()
     mostrarToast(`${versiculo.referencia} agregado a Página ${indice + 1}`)
   }
 
@@ -254,7 +302,6 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
     router.refresh()
   })
 
-  const textoGuia = useMemo(() => paginas.map((item) => [item.titulo, htmlATexto(item.contenido)].filter(Boolean).join('\n')).join('\n\n'), [paginas])
   const alineacionClase = pagina?.alineacion === 'centro' ? 'text-center' : pagina?.alineacion === 'derecha' ? 'text-right' : 'text-left'
   const tituloClase = pagina?.tamano === 'grande' ? 'text-4xl' : pagina?.tamano === 'compacto' ? 'text-2xl' : 'text-3xl'
   const cuerpoClase = pagina?.tamano === 'grande' ? 'text-xl leading-9' : pagina?.tamano === 'compacto' ? 'text-sm leading-6' : 'text-[17px] leading-8'
@@ -279,24 +326,32 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
     { label: 'Limpiar', icon: Eraser, accion: () => comando('removeFormat') },
   ]
 
+  const plantillaClase = pagina.plantilla === 'titulo'
+    ? 'pastoral-template-title'
+    : pagina.plantilla === 'versiculo'
+      ? 'pastoral-template-verse'
+      : pagina.plantilla === 'imagen'
+        ? 'pastoral-template-image'
+        : 'pastoral-template-clean'
+
   return (
     <div className="pastoral-content-workspace text-slate-900">
       <header className="sticky top-0 z-30 -mx-4 bg-[#f4f5f9]/96 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
-          <input value={titulo} onChange={(e) => setTitulo(e.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-lg font-bold outline-none" />
+          <input dir="ltr" value={titulo} onChange={(e) => setTitulo(e.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-lg font-bold outline-none" />
           {guardado && <Check className="h-4 w-4 text-emerald-600" />}
           <button type="button" onClick={guardar} disabled={isPending} className="grid h-10 w-10 place-items-center rounded-full bg-violet-600 text-white disabled:opacity-60" aria-label="Guardar proyecto">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}</button>
         </div>
-        <div className="mt-2 flex items-center gap-5 text-xs font-bold text-slate-400">
+        <div className="mt-2 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]">
           <button type="button" onClick={() => setVista('contenido')} className={vista === 'contenido' ? 'text-violet-700' : ''}>Editar</button>
           <button type="button" onClick={() => { sincronizarEditor(); setVista('presentacion') }} className={vista === 'presentacion' ? 'text-violet-700' : ''}>Presentar</button>
-          <button type="button" onClick={() => { sincronizarEditor(); setVista('guia') }} className={vista === 'guia' ? 'text-violet-700' : ''}>Guía</button>
+          <button type="button" onClick={() => { sincronizarEditor(); setVista('congregacion') }} className={vista === 'congregacion' ? 'text-violet-700' : ''}>Congregación</button>
           <button type="button" onClick={() => { sincronizarEditor(); setVista('publicar') }} className={vista === 'publicar' ? 'text-violet-700' : ''}>Compartir</button>
         </div>
       </header>
 
       {vista === 'contenido' && pagina && (
-        <section className="pb-32">
+        <section className="pb-10">
           <div className="mt-3 rounded-2xl bg-slate-200/65 p-1.5">
             <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
               {paginas.map((_, i) => (
@@ -310,32 +365,38 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
           </div>
 
           <div className="sticky top-[82px] z-20 -mx-4 mt-2 bg-[#f4f5f9]/96 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-            <div className="flex items-center gap-1 overflow-x-auto rounded-2xl bg-white/90 p-1.5 shadow-sm [scrollbar-width:none]" aria-label="Formato de texto">
+            <div className="flex items-center gap-1 overflow-x-auto rounded-2xl bg-white/92 p-1.5 shadow-sm [scrollbar-width:none]" aria-label="Herramientas del contenido">
               {formato.map(({ label, icon: Icon, accion }) => <button key={label} type="button" onMouseDown={(e) => e.preventDefault()} onClick={accion} className="flex h-10 min-w-10 shrink-0 items-center justify-center rounded-xl px-2 text-slate-600 active:bg-violet-100 active:text-violet-700" aria-label={label} title={label}><Icon className="h-4 w-4" /></button>)}
+              <span className="mx-1 h-6 w-px shrink-0 bg-slate-200" />
+              <button type="button" onClick={abrirVersiculos} className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-bold text-slate-700 active:bg-violet-100 active:text-violet-700"><BookOpen className="h-4 w-4" /> Versículo</button>
+              <button type="button" onClick={() => setPanel((actual) => actual === 'imagen' ? null : 'imagen')} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-bold ${panel === 'imagen' ? 'bg-violet-100 text-violet-700' : 'text-slate-700'}`}><ImageIcon className="h-4 w-4" /> Imagen</button>
+              <button type="button" onClick={() => setPanel((actual) => actual === 'diseno' ? null : 'diseno')} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 text-xs font-bold ${panel === 'diseno' ? 'bg-violet-100 text-violet-700' : 'text-slate-700'}`}><Palette className="h-4 w-4" /> Diseño</button>
             </div>
           </div>
 
-          {panel === 'diseno' && <div className="mt-2 border-b border-slate-200 pb-4">
-            <div className="flex gap-2 overflow-x-auto [scrollbar-width:none]">{PLANTILLAS.map((item) => <button key={item.id} type="button" onClick={() => actualizarPagina('plantilla', item.id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${pagina.plantilla === item.id ? 'bg-violet-600 text-white' : 'bg-slate-200 text-slate-600'}`}><LayoutTemplate className="mr-1 inline h-3.5 w-3.5" />{item.label}</button>)}</div>
+          {panel === 'diseno' && <div className="mt-2 rounded-2xl bg-white/70 p-3">
+            <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-400">Plantilla</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{PLANTILLAS.map((item) => <button key={item.id} type="button" onClick={() => actualizarPagina('plantilla', item.id)} className={`min-h-16 rounded-2xl p-3 text-left transition ${pagina.plantilla === item.id ? 'bg-violet-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700'}`}><LayoutTemplate className="mb-1 h-4 w-4" /><strong className="block text-xs">{item.label}</strong><span className="mt-0.5 block text-[10px] opacity-70">{item.descripcion}</span></button>)}</div>
             <div className="mt-4 flex items-center gap-3 overflow-x-auto [scrollbar-width:none]"><span className="shrink-0 text-xs font-bold text-slate-500">Fondo</span>{FONDOS.map((color) => <button key={color} type="button" onClick={() => actualizarPagina('fondo', color)} className={`h-8 w-8 shrink-0 rounded-full border ${pagina.fondo === color ? 'ring-2 ring-violet-500 ring-offset-2' : 'border-slate-300'}`} style={{ backgroundColor: color }} aria-label={`Fondo ${color}`} />)}<label className="ml-2 shrink-0 text-xs font-bold text-slate-500">Texto <input type="color" value={pagina.color_texto ?? '#0f172a'} onChange={(e) => actualizarPagina('color_texto', e.target.value)} className="ml-1 h-8 w-10 bg-transparent align-middle" /></label></div>
           </div>}
 
-          {panel === 'imagen' && <div className="grid grid-cols-3 gap-2 border-b border-slate-200 py-4">
+          {panel === 'imagen' && <div className="mt-2 grid grid-cols-3 gap-2 rounded-2xl bg-white/70 p-3">
             {biblioteca.map((recurso) => {
               const esImagen = recurso.mime_type?.startsWith('image/') && recurso.acceso_url
               if (!esImagen) return null
               const activo = pagina.recurso_id === recurso.id
-              return <button key={recurso.id} type="button" onClick={() => { actualizarPagina('recurso_id', activo ? null : recurso.id); setRecursosSeleccionados((actuales) => actuales.includes(recurso.id) ? actuales : [...actuales, recurso.id]) }} className={`overflow-hidden rounded-xl ${activo ? 'ring-2 ring-violet-500' : ''}`}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} className="aspect-square w-full object-cover" /></button>
+              return <button key={recurso.id} type="button" onClick={() => { actualizarPagina('recurso_id', activo ? null : recurso.id); if (!activo) actualizarPagina('plantilla', 'imagen'); setRecursosSeleccionados((actuales) => actuales.includes(recurso.id) ? actuales : [...actuales, recurso.id]) }} className={`overflow-hidden rounded-xl ${activo ? 'ring-2 ring-violet-500' : ''}`}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} className="aspect-square w-full object-cover" /></button>
             })}
             {!biblioteca.some((r) => r.mime_type?.startsWith('image/') && r.acceso_url) && <p className="col-span-3 py-6 text-center text-xs text-slate-500">Agrega imágenes a Biblioteca para utilizarlas aquí.</p>}
           </div>}
 
-          <div className="mt-3 overflow-hidden rounded-[28px] shadow-sm" style={{ backgroundColor: pagina.fondo, color: pagina.color_texto }}>
-            {recursoPagina?.acceso_url && pagina.plantilla === 'imagen' && <img src={recursoPagina.acceso_url} alt="" className="aspect-[16/7] w-full object-cover" />}
-            <div className={`min-h-[52vh] p-6 ${alineacionClase}`}>
-              <input value={pagina.titulo} onChange={(e) => actualizarPagina('titulo', e.target.value)} placeholder="Título" className={`mb-4 w-full bg-transparent font-black outline-none placeholder:opacity-25 ${tituloClase} ${alineacionClase}`} style={{ color: 'inherit' }} />
+          <div className={`pastoral-slide-canvas ${plantillaClase} relative mt-3 overflow-hidden rounded-[28px] shadow-sm`} style={{ backgroundColor: pagina.fondo, color: pagina.color_texto }}>
+            {recursoPagina?.acceso_url && pagina.plantilla === 'imagen' && <><img src={recursoPagina.acceso_url} alt="" className="absolute inset-0 h-full w-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" /></>}
+            <div className={`relative z-10 min-h-[52vh] p-6 ${alineacionClase}`}>
+              <input dir="ltr" value={pagina.titulo} onChange={(e) => actualizarPagina('titulo', e.target.value)} placeholder="Título" className={`mb-4 w-full bg-transparent font-black outline-none placeholder:opacity-25 ${tituloClase} ${alineacionClase}`} style={{ color: 'inherit' }} />
               <div
                 ref={editorRef}
+                dir="ltr"
                 contentEditable
                 suppressContentEditableWarning
                 onFocus={guardarSeleccion}
@@ -346,28 +407,19 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
                 dangerouslySetInnerHTML={{ __html: limpiarHtmlSeguro(pagina.contenido) }}
                 data-placeholder="Empieza a escribir…"
                 className={`pastoral-rich-editor min-h-[36vh] w-full bg-transparent outline-none ${cuerpoClase} ${alineacionClase}`}
-                style={{ color: 'inherit' }}
+                style={{ color: 'inherit', direction: 'ltr', unicodeBidi: 'plaintext' }}
               />
-              {recursoPagina?.acceso_url && pagina.plantilla !== 'imagen' && <img src={recursoPagina.acceso_url} alt="" className="mt-4 max-h-72 w-full rounded-2xl object-cover" />}
             </div>
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-400"><span>Página {indice + 1} de {paginas.length}</span>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="inline-flex min-h-10 items-center gap-1.5 px-2 text-rose-500"><Trash2 className="h-4 w-4" /> Eliminar página</button>}</div>
-
-          <div className="fixed inset-x-0 bottom-[calc(5.35rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-3 rounded-2xl bg-white/95 p-1.5 shadow-[0_10px_35px_rgba(15,23,42,.18)] backdrop-blur-xl">
-              <button type="button" onClick={abrirVersiculos} className="flex min-h-12 items-center justify-center gap-2 rounded-xl text-xs font-bold text-slate-700 active:bg-violet-100 active:text-violet-700"><BookOpen className="h-4 w-4" /> Versículo</button>
-              <button type="button" onClick={() => setPanel((actual) => actual === 'imagen' ? null : 'imagen')} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-xs font-bold ${panel === 'imagen' ? 'bg-violet-100 text-violet-700' : 'text-slate-700'}`}><ImageIcon className="h-4 w-4" /> Imagen</button>
-              <button type="button" onClick={() => setPanel((actual) => actual === 'diseno' ? null : 'diseno')} className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-xs font-bold ${panel === 'diseno' ? 'bg-violet-100 text-violet-700' : 'text-slate-700'}`}><Palette className="h-4 w-4" /> Diseño</button>
-            </div>
-          </div>
         </section>
       )}
 
       {vista === 'presentacion' && pagina && <section className="pb-8 pt-5">
-        <div className="mb-3 flex items-center justify-between"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Gira el teléfono y desliza entre páginas.</p></div><Maximize2 className="h-5 w-5 text-slate-400" /></div>
-        <div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={`relative aspect-video overflow-hidden rounded-3xl p-6 ${alineacionClase}`} style={{ backgroundColor: pagina.fondo, color: pagina.color_texto }}>
-          {recursoPagina?.acceso_url && pagina.plantilla === 'imagen' && <img src={recursoPagina.acceso_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
+        <div className="mb-3 flex items-center justify-between"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Modo horizontal. Desliza izquierda o derecha.</p></div><Maximize2 className="h-5 w-5 text-slate-400" /></div>
+        <div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={`pastoral-presentation-slide ${plantillaClase} relative aspect-video overflow-hidden rounded-3xl p-6 ${alineacionClase}`} style={{ backgroundColor: pagina.fondo, color: pagina.color_texto }}>
+          {recursoPagina?.acceso_url && pagina.plantilla === 'imagen' && <><img src={recursoPagina.acceso_url} alt="" className="absolute inset-0 h-full w-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" /></>}
           <div className="relative z-10 flex h-full flex-col justify-center"><h3 className={`${tituloClase} font-extrabold`}>{pagina.titulo}</h3><div className={`mt-3 ${cuerpoClase}`} dangerouslySetInnerHTML={{ __html: limpiarHtmlSeguro(pagina.contenido) }} /></div>
           <button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/15 p-2 text-current disabled:opacity-0"><ChevronLeft className="h-5 w-5" /></button>
           <button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/15 p-2 text-current disabled:opacity-0"><ChevronRight className="h-5 w-5" /></button>
@@ -375,20 +427,32 @@ export default function ProyectoContenidoWorkspace({ paquete, biblioteca }: { pa
         <div className="mt-4 flex items-center justify-center gap-2">{paginas.map((_, i) => <button key={i} type="button" onClick={() => setIndice(i)} className={`h-2.5 rounded-full transition-all ${i === indice ? 'w-7 bg-violet-600' : 'w-2.5 bg-slate-300'}`} aria-label={`Página ${i + 1}`} />)}</div>
       </section>}
 
-      {vista === 'guia' && <section className="pb-8 pt-5"><div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold">Guía</h2><button type="button" onClick={async () => { await navigator.clipboard.writeText(textoGuia); mostrarToast('Guía copiada') }} className="flex items-center gap-2 rounded-full bg-slate-200 px-3 py-2 text-xs font-bold"><Copy className="h-4 w-4" /> Copiar</button></div><div className="whitespace-pre-wrap text-base leading-8 text-slate-700">{textoGuia || 'Empieza a escribir el contenido del proyecto.'}</div></section>}
+      {vista === 'congregacion' && <section className="pb-8 pt-5">
+        <div className="mb-5"><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="mt-1 text-sm text-slate-500">Así se leerá el material compartido, separado de las herramientas de edición.</p></div>
+        <div className="space-y-8">{paginas.map((item, i) => <article key={i} dir="ltr"><p className="mb-2 text-[10px] font-black uppercase tracking-[.16em] text-violet-500">Página {i + 1}</p>{item.titulo && <h3 className="text-2xl font-black text-slate-950">{item.titulo}</h3>}<div className="pastoral-congregation-content mt-3 text-base leading-8 text-slate-700" dangerouslySetInnerHTML={{ __html: limpiarHtmlSeguro(item.contenido) }} /></article>)}</div>
+      </section>}
+
       {vista === 'publicar' && <div className="pb-8 pt-5"><PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /></div>}
 
       <PastoralVersePicker open={selectorVersiculo} onClose={() => setSelectorVersiculo(false)} onInsert={insertarVersiculo} />
 
       <style jsx global>{`
         .pastoral-content-workspace button { -webkit-tap-highlight-color: transparent; }
+        .pastoral-rich-editor { direction: ltr !important; unicode-bidi: plaintext !important; writing-mode: horizontal-tb !important; }
         .pastoral-rich-editor:empty:before { content: attr(data-placeholder); opacity: .28; pointer-events: none; }
-        .pastoral-rich-editor h1 { font-size: 1.75em; line-height: 1.16; font-weight: 850; margin: .4em 0 .25em; }
-        .pastoral-rich-editor h2 { font-size: 1.32em; line-height: 1.25; font-weight: 800; margin: .55em 0 .3em; }
-        .pastoral-rich-editor p { margin: .35em 0; }
+        .pastoral-rich-editor h1 { font-size: 1.75em; line-height: 1.16; font-weight: 850; margin: .5em 0 .3em; }
+        .pastoral-rich-editor h2 { font-size: 1.32em; line-height: 1.25; font-weight: 800; margin: .6em 0 .35em; }
+        .pastoral-rich-editor p { min-height: 1.35em; margin: .35em 0; }
         .pastoral-rich-editor ul, .pastoral-rich-editor ol { padding-left: 1.4em; margin: .6em 0; }
         .pastoral-rich-editor ul { list-style: disc; } .pastoral-rich-editor ol { list-style: decimal; }
-        .pastoral-rich-editor blockquote { border-left: 3px solid rgba(124,58,237,.6); padding-left: .85em; margin: .8em 0; opacity: .92; }
+        .pastoral-rich-editor blockquote, .pastoral-congregation-content blockquote, .pastoral-presentation-slide blockquote { display:block; border-left: 3px solid rgba(124,58,237,.58); padding:.15em 0 .15em .9em; margin:1em 0; direction:ltr; unicode-bidi:plaintext; }
+        .pastoral-rich-editor blockquote + blockquote { margin-top: 1.1em; }
+        .pastoral-template-title .pastoral-rich-editor { text-align:center; }
+        .pastoral-template-title > div, .pastoral-presentation-slide.pastoral-template-title > div { display:flex; min-height:inherit; flex-direction:column; justify-content:center; text-align:center; }
+        .pastoral-template-image { color:white !important; }
+        .pastoral-template-image input::placeholder, .pastoral-template-image .pastoral-rich-editor:empty:before { color:white; }
+        .pastoral-template-verse .pastoral-rich-editor { font-family: Georgia, 'Times New Roman', serif; font-size:1.12em; }
+        .pastoral-template-verse .pastoral-rich-editor blockquote, .pastoral-presentation-slide.pastoral-template-verse blockquote { border-left:0; padding-left:0; text-align:center; font-size:1.12em; }
       `}</style>
     </div>
   )
