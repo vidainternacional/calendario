@@ -28,6 +28,7 @@ type Prompt = { key: string; hebrew: string; label: string; source: string }
 type DetailedFeedback = { title: string; detail: string | null }
 
 const IDLE_LEVELS = [12, 18, 26, 34, 42, 50, 42, 34, 26, 18, 12]
+const LISTENING_TIMEOUT_MS = 8500
 
 function normalizeHebrew(value: string) {
   return withoutHebrewMarks(value).replace(/[^\u05D0-\u05EA]/g, '')
@@ -128,11 +129,17 @@ export default function HebrewSpeechPractice() {
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const frameRef = useRef<number | null>(null)
+  const listeningTimeoutRef = useRef<number | null>(null)
 
   const words = useMemo(buildWordPrompts, [])
   const sentences = useMemo(buildSentencePrompts, [])
   const prompts = mode === 'words' ? words : sentences
   const current = prompts[index % Math.max(1, prompts.length)]
+
+  function clearListeningTimeout() {
+    if (listeningTimeoutRef.current !== null && typeof window !== 'undefined') window.clearTimeout(listeningTimeoutRef.current)
+    listeningTimeoutRef.current = null
+  }
 
   function pauseSpectrum() {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
@@ -204,7 +211,9 @@ export default function HebrewSpeechPractice() {
   }
 
   useEffect(() => () => {
+    clearListeningTimeout()
     try { recognitionRef.current?.stop() } catch { /* already stopped */ }
+    recognitionRef.current = null
     void releaseMicrophone()
   }, [])
 
@@ -215,11 +224,16 @@ export default function HebrewSpeechPractice() {
     setError(null)
   }
 
-  function changeMode(next: SpeechMode) {
+  function resetRecognition() {
+    clearListeningTimeout()
     try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     recognitionRef.current = null
-    pauseSpectrum()
     setStatus('idle')
+    void releaseMicrophone()
+  }
+
+  function changeMode(next: SpeechMode) {
+    resetRecognition()
     setMode(next)
     setIndex(0)
     clearAttempt()
@@ -228,10 +242,7 @@ export default function HebrewSpeechPractice() {
 
   function move(delta: number) {
     if (!prompts.length) return
-    try { recognitionRef.current?.stop() } catch { /* already stopped */ }
-    recognitionRef.current = null
-    pauseSpectrum()
-    setStatus('idle')
+    resetRecognition()
     setIndex(value => (value + delta + prompts.length) % prompts.length)
     clearAttempt()
     interactionFeedback('tap')
@@ -240,6 +251,8 @@ export default function HebrewSpeechPractice() {
   async function start() {
     if (!current || typeof window === 'undefined' || status !== 'idle') return
     clearAttempt()
+    clearListeningTimeout()
+    await releaseMicrophone()
     setStatus('requesting')
     interactionFeedback('listen-start')
 
@@ -249,14 +262,26 @@ export default function HebrewSpeechPractice() {
       const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
       if (!Recognition) throw new Error('speech-recognition-unavailable')
 
-      await new Promise(resolve => window.setTimeout(resolve, 60))
+      await new Promise(resolve => window.setTimeout(resolve, 80))
       const instance = new Recognition()
       recognitionRef.current = instance
       instance.lang = 'he-IL'
       instance.interimResults = true
       instance.continuous = false
       instance.maxAlternatives = 1
-      instance.onstart = () => setStatus('listening')
+      instance.onstart = () => {
+        setStatus('listening')
+        clearListeningTimeout()
+        listeningTimeoutRef.current = window.setTimeout(() => {
+          if (recognitionRef.current !== instance) return
+          try { instance.stop() } catch { /* Safari may already have stopped it */ }
+          recognitionRef.current = null
+          setStatus('idle')
+          void releaseMicrophone()
+          setError('La escucha tardó demasiado y se reinició. Toca Hablar para intentarlo otra vez.')
+          interactionFeedback('warning')
+        }, LISTENING_TIMEOUT_MS)
+      }
       instance.onresult = event => {
         let transcript = ''
         const length = typeof event.results.length === 'number' ? event.results.length : 1
@@ -269,19 +294,25 @@ export default function HebrewSpeechPractice() {
         }
       }
       instance.onerror = event => {
+        clearListeningTimeout()
+        recognitionRef.current = null
+        setStatus('idle')
+        void releaseMicrophone()
         const code = event.error ?? ''
         setError(code === 'not-allowed'
           ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.'
           : code === 'no-speech'
             ? 'No detecté voz. Toca Hablar otra vez y espera a que el espectro se active.'
             : code === 'audio-capture'
-              ? 'El audio se interrumpió. El micrófono se reiniciará en el próximo intento.'
-              : 'El reconocimiento se interrumpió. Vuelve a tocar Hablar; el micrófono queda listo para reintentar.')
+              ? 'El audio se interrumpió. El micrófono se reinició y ya puedes volver a intentarlo.'
+              : 'El reconocimiento se interrumpió. El micrófono se reinició y puedes volver a tocar Hablar.')
         interactionFeedback('warning')
       }
       instance.onend = () => {
+        clearListeningTimeout()
         recognitionRef.current = null
         pauseSpectrum()
+        void releaseMicrophone()
         const transcript = capturedRef.current.trim()
         if (transcript) {
           setStatus('processing')
@@ -299,20 +330,20 @@ export default function HebrewSpeechPractice() {
       }
       instance.start()
     } catch (cause) {
+      clearListeningTimeout()
       recognitionRef.current = null
       pauseSpectrum()
       setStatus('idle')
       interactionFeedback('warning')
       const code = cause instanceof Error ? cause.message : ''
+      await releaseMicrophone()
       if (code === 'speech-recognition-unavailable') setError('El micrófono funciona, pero este navegador no puede convertir voz a texto hebreo.')
-      else {
-        await releaseMicrophone()
-        setError('No pude abrir el micrófono de forma estable. Toca Hablar nuevamente para reiniciarlo.')
-      }
+      else setError('No pude abrir el micrófono de forma estable. Toca Hablar nuevamente para reiniciarlo.')
     }
   }
 
   function stop() {
+    clearListeningTimeout()
     try { recognitionRef.current?.stop() } catch { /* already stopped */ }
     interactionFeedback('tap')
   }
@@ -376,7 +407,7 @@ export default function HebrewSpeechPractice() {
           <div className="mt-1 flex items-baseline justify-center gap-2"><p className="text-[24px] font-black text-slate-950">{result.score}%</p><p className={`text-[12px] font-black ${scoreFeedback.tone}`}>{scoreFeedback.text}</p></div>
           <p className="mt-1 text-[13px] font-black text-slate-800">{detail.title}</p>
           {detail.detail && <p className="mx-auto mt-1 max-w-sm text-[11px] font-semibold leading-relaxed text-slate-500">{detail.detail}</p>}
-          <button type="button" onClick={() => { clearAttempt(); interactionFeedback('tap') }} className="mt-2 text-[10px] font-black text-sky-700">Intentar otra vez</button>
+          <button type="button" onClick={() => { resetRecognition(); clearAttempt(); interactionFeedback('tap') }} className="mt-2 text-[10px] font-black text-sky-700">Intentar otra vez</button>
         </div>}
 
         {error && <p role="alert" className="mx-auto mt-2 max-w-sm text-[10px] font-bold leading-relaxed text-rose-600">{error}</p>}
