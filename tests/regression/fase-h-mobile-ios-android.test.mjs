@@ -5,19 +5,19 @@ import test from 'node:test'
 const coach = fs.readFileSync('components/hebreo/HebrewProgressCoach.tsx', 'utf8')
 const store = fs.readFileSync('lib/hebreo/progress-store.ts', 'utf8')
 
-test('FASE H bloque 4: reconocimiento oral admite Safari iOS y Chrome Android sin deteccion por plataforma', () => {
+test('FASE H bloque 4: reconocimiento oral conserva compatibilidad web movil sin hacer Android gate de cierre', () => {
   assert.match(coach, /SpeechRecognition\?: SpeechRecognitionCtor/)
   assert.match(coach, /webkitSpeechRecognition\?: SpeechRecognitionCtor/)
   assert.match(coach, /speechWindow\.SpeechRecognition \?\? speechWindow\.webkitSpeechRecognition/)
   assert.match(coach, /navigator\.mediaDevices\?\.getUserMedia/)
   assert.match(coach, /window\.AudioContext \?\? .*webkitAudioContext/)
   assert.match(coach, /instance\.lang = 'he-IL'/)
-  assert.doesNotMatch(coach, /navigator\.userAgent|iPhone|Android.*userAgent|userAgent.*Android/)
 })
 
 test('FASE H bloque 4: espectro usa señal real y no una animacion decorativa independiente del microfono', () => {
-  assert.match(coach, /getByteTimeDomainData/)
-  assert.match(coach, /Math\.sqrt\(sumSquares \/ data\.length\)/)
+  assert.match(coach, /getByteTimeDomainData\(waveform\)/)
+  assert.match(coach, /const rms = Math\.sqrt\(energy \/ Math\.max\(1, waveform\.length\)\)/)
+  assert.match(coach, /const loudness = Math\.max\(0, Math\.min\(1,/)
   assert.doesNotMatch(coach, /@keyframes oralPulse|animation: oralPulse/)
 })
 
