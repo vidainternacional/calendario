@@ -49,14 +49,30 @@ test('FASE H bloque 4: cada respuesta se valida guarda y los errores entran a Re
   assert.match(coach,/aciertos/)
 })
 
-test('FASE H bloque 4: pronunciación es checkpoint independiente al final de la evaluación', () => {
+test('FASE H bloque 4: pronunciación es checkpoint independiente y necesariamente final', () => {
   assert.match(coach,/ORAL_CHECKPOINTS/)
   assert.match(coach,/interaction:\s*'pronunciation'/)
-  assert.match(coach,/\[\.\.\.normalQuestions, checkpointFor\(requested\)\]/)
-  assert.match(coach,/Prueba oral final/)
+  assert.match(coach,/function completeWrittenSelection/)
+  assert.match(coach,/minimumWritten = Math\.min\(questionCount, 10\)/)
+  assert.match(coach,/!normalQuestions\.length \|\| !isWrittenQuestion\(normalQuestions\[0\]\)/)
+  assert.match(coach,/setQuestions\(\[\.\.\.normalQuestions, checkpoint\]\)/)
+  assert.match(coach,/Último paso · Pronunciación/)
+  assert.match(coach,/No hay respuestas para elegir/)
   assert.match(coach,/submitPronunciation/)
   assert.match(coach,/question_key\.startsWith\('oral-/)
   assert.doesNotMatch(coach,/Prueba tu pronunciación/)
+})
+
+test('FASE H bloque 4: checkpoint oral muestra espectro activo antes de procesar el resultado', () => {
+  assert.match(coach,/VoiceStatus = 'idle' \| 'requesting' \| 'listening' \| 'processing'/)
+  assert.match(coach,/setVoiceStatus\('requesting'\)/)
+  assert.match(coach,/await ensureMicrophone\(\)/)
+  assert.match(coach,/setVoiceStatus\('listening'\)/)
+  assert.match(coach,/interimResults = true/)
+  assert.match(coach,/capturedRef\.current/)
+  assert.match(coach,/oral-spectrum-active/)
+  assert.match(coach,/Micrófono activo, espectro de voz en movimiento/)
+  assert.match(coach,/Te estoy escuchando…/)
 })
 
 test('FASE H bloque 4: 100 por ciento abre perfeccionamiento sin inflar la escala', () => {
