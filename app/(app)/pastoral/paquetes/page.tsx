@@ -39,7 +39,7 @@ export default async function PaquetesPastoralesPage() {
   const recursos = recursosResult.data
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
+    <main className="pastoral-project-page mx-auto min-h-screen max-w-6xl px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
       <PastoralPageHeader
         eyebrow="Espacio de trabajo"
         title="Proyecto"
