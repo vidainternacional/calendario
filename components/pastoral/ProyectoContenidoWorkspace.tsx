@@ -1,3 +1,3 @@
 'use client'
 
-export { default } from '@/components/pastoral/PastoralVisualWorkspace'
+export { default } from '@/components/pastoral/PastoralVisualWorkspaceCanva'
