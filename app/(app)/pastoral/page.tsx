@@ -112,11 +112,15 @@ export default async function PastoralPage() {
         </Link>
       </section>
 
-      <nav className="pastoral-tool-grid" aria-label="Herramientas del Centro Pastoral">
+      <nav className="grid grid-cols-3 gap-x-3 gap-y-5 py-6 sm:grid-cols-4" aria-label="Herramientas del Centro Pastoral">
         {areas.map(({ titulo, href, icono: Icono, iconClass }) => (
-          <Link key={titulo} href={href} className="pastoral-tool-link">
-            <Icono className={iconClass} aria-hidden="true" />
-            <span>{titulo}</span>
+          <Link
+            key={titulo}
+            href={href}
+            className="group flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl px-1 text-center text-slate-700 transition active:scale-95"
+          >
+            <Icono className={`h-7 w-7 stroke-[1.8] transition-transform group-active:scale-90 ${iconClass}`} aria-hidden="true" />
+            <span className="text-[11px] font-bold leading-tight">{titulo}</span>
           </Link>
         ))}
       </nav>
