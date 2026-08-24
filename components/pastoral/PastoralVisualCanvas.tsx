@@ -24,16 +24,19 @@ type Props = {
 type TextoProps = {
   elemento: ElementoCanvas
   editable: boolean
+  baseWidth: number
   onSelect?: (id: string | null) => void
   onBeginChange?: () => void
   onTextInput?: (id: string, html: string) => void
 }
 
-function TextoCanvas({ elemento, editable, onSelect, onBeginChange, onTextInput }: TextoProps) {
+function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, onTextInput }: TextoProps) {
   const textoRef = useRef<HTMLDivElement | null>(null)
   const contenidoSeguro = limpiarHtmlCanvas(elemento.contenido ?? '')
   const decoracion = [elemento.subrayado ? 'underline' : '', elemento.tachado ? 'line-through' : ''].filter(Boolean).join(' ') || 'none'
   const puntos = elemento.tamano_fuente ?? 24
+  const pixeles = (puntos * 4) / 3
+  const escalaLienzo = (pixeles / baseWidth) * 100
 
   useEffect(() => {
     const editor = textoRef.current
@@ -53,7 +56,7 @@ function TextoCanvas({ elemento, editable, onSelect, onBeginChange, onTextInput 
     className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-2xl bg-violet-500/[0.08] px-3 py-2' : ''}`}
     style={{
       fontFamily: elemento.fuente ?? 'Inter',
-      fontSize: `${(puntos * 4) / 3}px`,
+      fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
       color: elemento.color ?? '#0f172a',
       textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
       fontWeight: elemento.peso ?? 500,
@@ -73,6 +76,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
   const fondoRecurso = biblioteca.find((item) => item.id === pagina.fondo_recurso_id)
   const background = pagina.fondo_modo === 'tema' ? tema.css : pagina.fondo ?? '#ffffff'
+  const baseWidth = pagina.formato === '9:16' ? 430 : pagina.formato === '1:1' ? 720 : pagina.formato === '4:3' ? 960 : 1100
 
   const iniciarGesto = (event: ReactPointerEvent, elemento: ElementoCanvas, tipo: Gesto['tipo']) => {
     if (!editable || !lienzoRef.current) return
@@ -103,7 +107,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         onPointerCancel={() => setGesto(null)}
         onPointerDown={() => editable && onSelect?.(null)}
         className={`pastoral-visual-canvas relative w-full overflow-hidden bg-white shadow-sm ${editable ? 'touch-pan-y ring-1 ring-slate-200' : ''}`}
-        style={{ aspectRatio: aspectoLienzo(pagina.formato), maxWidth: pagina.formato === '9:16' ? '430px' : pagina.formato === '1:1' ? '720px' : '1100px', background, color: pagina.color_texto }}
+        style={{ aspectRatio: aspectoLienzo(pagina.formato), maxWidth: `${baseWidth}px`, background, color: pagina.color_texto, containerType: 'inline-size' }}
       >
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <div className="pointer-events-none absolute inset-0 bg-black/15" />}
@@ -119,7 +123,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
           >
             {elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
-            ) : <TextoCanvas elemento={elemento} editable={editable} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
+            ) : <TextoCanvas elemento={elemento} editable={editable} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
             {activo && <>
               <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="absolute -left-3 -top-3 grid h-9 w-9 touch-none place-items-center rounded-full bg-violet-600 text-white shadow-lg" aria-label="Mover elemento"><Move className="h-4 w-4" /></button>
               <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="absolute -right-3 -top-3 grid h-9 w-9 place-items-center rounded-full bg-rose-600 text-white shadow-lg" aria-label="Eliminar elemento"><Trash2 className="h-4 w-4" /></button>
