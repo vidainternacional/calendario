@@ -6,6 +6,7 @@ const page = fs.readFileSync('app/(app)/pastoral/page.tsx', 'utf8')
 const header = fs.readFileSync('components/pastoral/PastoralPageHeader.tsx', 'utf8')
 const packages = fs.readFileSync('components/pastoral/PaquetesClient.tsx', 'utf8')
 const styles = fs.readFileSync('app/(app)/pastoral/pastoral-workspace-v2.css', 'utf8')
+const detailStyles = fs.readFileSync('app/(app)/pastoral/paquetes/[id]/workspace-mobile.css', 'utf8')
 
 test('Centro Pastoral conserva Proyecto visible y herramientas en rejilla horizontal', () => {
   assert.match(page, /<h2 id="proyecto-pastoral">Proyecto<\/h2>/)
@@ -42,19 +43,40 @@ test('Centro Pastoral mantiene iconos directos y feedback móvil', () => {
   assert.match(styles, /-webkit-tap-highlight-color: transparent/)
 })
 
-test('Proyecto nuevo usa acordeones minimalistas y no tarjetas encajadas', () => {
-  assert.match(packages, /className="pastoral-project-builder"/)
-  assert.equal((packages.match(/className="pastoral-accordion"/g) ?? []).length, 3)
-  for (const title of ['Información básica', 'Contenido', 'Aplicación y recursos']) assert.match(packages, new RegExp(title))
-  assert.match(styles, /@keyframes pastoralReveal/)
-  assert.match(styles, /\.pastoral-accordion\[open\]/)
-  assert.doesNotMatch(packages, /rounded-\[24px\] border border-indigo-100 bg-white/)
-  assert.doesNotMatch(packages, /rounded-2xl border border-slate-200 p-4/)
+test('Proyecto nuevo usa iconos horizontales y un solo panel editable', () => {
+  assert.match(packages, /type SeccionNueva = 'general' \| 'contenido' \| 'versiculos' \| 'recursos'/)
+  assert.match(packages, /className="pastoral-builder-tools"/)
+  assert.match(packages, /className="pastoral-builder-panel"/)
+  assert.match(packages, /setSeccionNueva\(id\)/)
+  for (const title of ['General', 'Contenido', 'Versículos', 'Recursos']) assert.match(packages, new RegExp(title))
+  assert.match(styles, /\.pastoral-builder-tools/)
+  assert.match(styles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(styles, /\.pastoral-builder-panel/)
+  assert.doesNotMatch(packages, /className="pastoral-accordion-number"/)
 })
 
-test('Proyectos existentes y ayuda quedan ocultos tras acordeones', () => {
+test('Cambiar de herramienta no pierde los datos del proyecto antes de crearlo', () => {
+  for (const state of ['titulo', 'descripcion', 'instrucciones', 'bosquejoId', 'coleccionId', 'recursoIds']) {
+    assert.match(packages, new RegExp(`useState\\([^)]*\\)|useState<[^>]+>\\([^)]*\\)`))
+  }
+  assert.match(packages, /type="hidden" name="titulo" value=\{titulo\}/)
+  assert.match(packages, /type="hidden" name="descripcion_publica" value=\{descripcion\}/)
+  assert.match(packages, /type="hidden" name="instrucciones" value=\{instrucciones\}/)
+  assert.match(packages, /type="hidden" name="bosquejo_id" value=\{bosquejoId\}/)
+  assert.match(packages, /type="hidden" name="coleccion_id" value=\{coleccionId\}/)
+})
+
+test('Proyecto abierto coloca herramientas arriba y elimina el dock flotante', () => {
+  assert.match(detailStyles, /herramientas arriba, un solo panel activo/)
+  assert.match(detailStyles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(detailStyles, /position: sticky/)
+  assert.doesNotMatch(detailStyles, /position: fixed/)
+  assert.match(detailStyles, /background: transparent !important/)
+  assert.match(detailStyles, /box-shadow: none !important/)
+})
+
+test('Proyectos existentes permanecen cerrados hasta solicitarlos', () => {
   assert.match(packages, /pastoral-projects-accordion/)
-  assert.match(packages, /pastoral-how-it-works/)
   assert.doesNotMatch(packages, /<details[^>]*\sopen(?:\s|=|>)/)
 })
 
