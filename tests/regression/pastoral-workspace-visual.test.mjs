@@ -5,7 +5,8 @@ import test from 'node:test'
 const page = fs.readFileSync('app/(app)/pastoral/page.tsx', 'utf8')
 const header = fs.readFileSync('components/pastoral/PastoralPageHeader.tsx', 'utf8')
 const packages = fs.readFileSync('components/pastoral/PaquetesClient.tsx', 'utf8')
-const workspace = fs.readFileSync('components/pastoral/ProyectoContenidoWorkspace.tsx', 'utf8')
+const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspace.tsx', 'utf8')
+const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'utf8')
 const styles = fs.readFileSync('app/(app)/pastoral/pastoral-workspace-v2.css', 'utf8')
 const detailStyles = fs.readFileSync('app/(app)/pastoral/paquetes/[id]/workspace-mobile.css', 'utf8')
 
@@ -18,15 +19,7 @@ test('Centro Pastoral conserva Proyecto visible y herramientas en rejilla horizo
 })
 
 test('Centro Pastoral conserva las rutas funcionales existentes', () => {
-  for (const route of [
-    '/pastoral/bosquejos',
-    '/pastoral/colecciones',
-    '/pastoral/biblioteca',
-    '/pastoral/materiales',
-    '/biblia?from=pastoral',
-    '/estudios/profundo?from=pastoral',
-    '/pastoral/paquetes',
-  ]) assert.match(page, new RegExp(route.replace(/[?]/g, '\\?')))
+  for (const route of ['/pastoral/bosquejos','/pastoral/colecciones','/pastoral/biblioteca','/pastoral/materiales','/biblia?from=pastoral','/estudios/profundo?from=pastoral','/pastoral/paquetes']) assert.match(page, new RegExp(route.replace(/[?]/g, '\\?')))
 })
 
 test('Centro Pastoral evita composición de lista y tarjetas anidadas', () => {
@@ -65,12 +58,19 @@ test('La creación simple conserva título y descripción mientras el formulario
 
 test('Proyecto abierto coloca Editar Presentar Congregación y Compartir arriba', () => {
   for (const label of ['Editar', 'Presentar', 'Congregación', 'Compartir']) assert.match(workspace, new RegExp(`>${label}<\\/button>`))
-  assert.match(workspace, /type Vista = 'contenido' \| 'presentacion' \| 'congregacion' \| 'publicar'/)
+  assert.match(model, /type VistaLienzo = 'contenido' \| 'presentacion' \| 'congregacion' \| 'publicar'/)
   assert.match(detailStyles, /herramientas arriba, un solo panel activo/)
   assert.match(detailStyles, /position: sticky/)
   assert.doesNotMatch(detailStyles, /position: fixed/)
   assert.match(detailStyles, /background: transparent !important/)
   assert.match(detailStyles, /box-shadow: none !important/)
+})
+
+test('Proyecto abierto usa herramientas desplegables bajo una sola barra superior', () => {
+  assert.match(workspace, /aria-label="Herramientas del lienzo"/)
+  for (const label of ['Fondo', 'Texto', 'Párrafo', 'Recursos', 'Biblia', 'Diseño']) assert.match(workspace, new RegExp(`label: '${label}'`))
+  assert.match(workspace, /panel && <div className="border-b/)
+  assert.doesNotMatch(workspace, /position:\s*fixed/)
 })
 
 test('Proyectos existentes permanecen cerrados hasta solicitarlos', () => {
