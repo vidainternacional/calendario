@@ -3,7 +3,18 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, CheckCircle2, ChevronRight, FileText, Loader2, PackagePlus, Search, Trash2, X } from 'lucide-react'
+import {
+  BookOpen,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Loader2,
+  PackagePlus,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { crearPaquetePastoral, eliminarPaquetePastoral } from '@/app/actions/pastoral-paquetes'
 import { mostrarToast } from '@/lib/ui/toast'
 
@@ -31,7 +42,7 @@ export default function PaquetesClient({
 }) {
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
-  const [mostrarFormulario, setMostrarFormulario] = useState(paquetes.length === 0)
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const termino = busqueda.trim().toLowerCase()
@@ -64,117 +75,186 @@ export default function PaquetesClient({
   const estadoLabel = { borrador: 'En preparación', listo: 'Listo', compartido: 'Publicado' }
 
   return (
-    <div className="space-y-5">
-      <details className="pastoral-help-card">
-        <summary>
-          <span className="flex items-center gap-2"><PackagePlus className="h-4 w-4" aria-hidden="true" /> Cómo funciona un paquete</span>
-        </summary>
-        <div className="pastoral-help-content">
-          <p>Un paquete reúne todo lo necesario para un mensaje o estudio.</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <div className="rounded-xl bg-white p-3 ring-1 ring-indigo-100"><strong className="text-indigo-700">1. Prepara</strong><p className="mt-1">Elige bosquejo y versículos.</p></div>
-            <div className="rounded-xl bg-white p-3 ring-1 ring-indigo-100"><strong className="text-indigo-700">2. Completa</strong><p className="mt-1">Agrega recursos y aplicación.</p></div>
-            <div className="rounded-xl bg-white p-3 ring-1 ring-indigo-100"><strong className="text-indigo-700">3. Comparte</strong><p className="mt-1">Revisa, publica o imprime.</p></div>
-          </div>
-        </div>
-      </details>
-
-      <section className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar paquetes" aria-label="Buscar paquetes por nombre o tema" className="min-h-12 w-full rounded-xl border border-slate-200 pl-10 pr-11 text-base text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" />
-            {busqueda && <button type="button" onClick={() => setBusqueda('')} aria-label="Limpiar búsqueda" className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>}
-          </label>
-          <button type="button" onClick={() => setMostrarFormulario((actual) => !actual)} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white">
-            <PackagePlus className="h-4 w-4" /> {mostrarFormulario ? 'Cerrar' : 'Nuevo paquete'}
-          </button>
-        </div>
-        {termino && <p className="mt-3 rounded-xl bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700">“{busqueda.trim()}” · {filtrados.length} resultado{filtrados.length === 1 ? '' : 's'}</p>}
-      </section>
+    <div className="pastoral-project-workspace">
+      <div className="pastoral-project-actions">
+        <button
+          type="button"
+          onClick={() => setMostrarFormulario((actual) => !actual)}
+          className="pastoral-project-create"
+          aria-expanded={mostrarFormulario}
+        >
+          <PackagePlus aria-hidden="true" />
+          <span>{mostrarFormulario ? 'Cerrar proyecto nuevo' : 'Nuevo proyecto'}</span>
+        </button>
+      </div>
 
       {mostrarFormulario && (
-        <form action={crear} className="rounded-[24px] border border-indigo-100 bg-white p-5 shadow-sm sm:p-6">
-          <div className="mb-5 max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-600">Nuevo paquete</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Prepara el material</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">Comienza con el título; lo demás puede completarse después.</p>
+        <form action={crear} className="pastoral-project-builder">
+          <div className="pastoral-project-builder-head">
+            <p>Nuevo proyecto</p>
+            <h2>Prepara el estudio</h2>
           </div>
 
-          <section className="rounded-2xl border border-slate-200 p-4 sm:p-5">
-            <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">1</span><h3 className="font-bold text-slate-900">Información básica</h3></div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label className="md:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Título</span><input name="titulo" required maxLength={140} placeholder="Ej. La fe que permanece" className="min-h-12 w-full rounded-xl border border-slate-200 px-3 text-base text-slate-900" /></label>
-              <label className="md:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Resumen <span className="font-normal text-slate-400">(opcional)</span></span><textarea name="descripcion_publica" maxLength={2000} rows={3} placeholder="Explica brevemente de qué trata." className="w-full rounded-xl border border-slate-200 p-3 text-base leading-7 text-slate-900" /></label>
+          <details className="pastoral-accordion">
+            <summary>
+              <span className="pastoral-accordion-number">1</span>
+              <span className="pastoral-accordion-copy">
+                <strong>Información básica</strong>
+                <small>Título y resumen</small>
+              </span>
+              <ChevronDown aria-hidden="true" />
+            </summary>
+            <div className="pastoral-accordion-content">
+              <label className="pastoral-field">
+                <span>Título</span>
+                <input name="titulo" required maxLength={140} placeholder="Ej. La fe que permanece" />
+              </label>
+              <label className="pastoral-field">
+                <span>Resumen <em>opcional</em></span>
+                <textarea name="descripcion_publica" maxLength={2000} rows={3} placeholder="Explica brevemente de qué trata." />
+              </label>
             </div>
-          </section>
+          </details>
 
-          <section className="mt-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
-            <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">2</span><h3 className="font-bold text-slate-900">Contenido existente</h3></div>
-            <p className="mt-2 text-xs leading-5 text-slate-500">Vincula lo que ya preparaste o déjalo para después.</p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <label><span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700"><FileText className="h-4 w-4" /> Bosquejo</span><select name="bosquejo_id" className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900"><option value="">Ninguno por ahora</option>{bosquejos.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}</select><span className="mt-1 block text-[11px] leading-4 text-slate-400">Estructura y puntos del mensaje.</span></label>
-              <label><span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700"><BookOpen className="h-4 w-4" /> Versículos</span><select name="coleccion_id" className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900"><option value="">Ninguna por ahora</option>{colecciones.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}</select><span className="mt-1 block text-[11px] leading-4 text-slate-400">Pasajes relacionados con el tema.</span></label>
+          <details className="pastoral-accordion">
+            <summary>
+              <span className="pastoral-accordion-number">2</span>
+              <span className="pastoral-accordion-copy">
+                <strong>Contenido</strong>
+                <small>Bosquejo y versículos</small>
+              </span>
+              <ChevronDown aria-hidden="true" />
+            </summary>
+            <div className="pastoral-accordion-content pastoral-field-grid">
+              <label className="pastoral-field">
+                <span><FileText aria-hidden="true" /> Bosquejo</span>
+                <select name="bosquejo_id">
+                  <option value="">Ninguno por ahora</option>
+                  {bosquejos.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}
+                </select>
+              </label>
+              <label className="pastoral-field">
+                <span><BookOpen aria-hidden="true" /> Versículos</span>
+                <select name="coleccion_id">
+                  <option value="">Ninguna por ahora</option>
+                  {colecciones.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}
+                </select>
+              </label>
             </div>
-          </section>
+          </details>
 
-          <section className="mt-4 rounded-2xl border border-slate-200 p-4 sm:p-5">
-            <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">3</span><h3 className="font-bold text-slate-900">Aplicación y recursos</h3></div>
-            <label className="mt-4 block"><span className="mb-1.5 block text-xs font-bold text-slate-700">Preguntas o pasos <span className="font-normal text-slate-400">(opcional)</span></span><textarea name="instrucciones" maxLength={3000} rows={4} placeholder="Preguntas, lectura semanal o pasos prácticos." className="w-full rounded-xl border border-slate-200 p-3 text-base leading-7 text-slate-900" /></label>
+          <details className="pastoral-accordion">
+            <summary>
+              <span className="pastoral-accordion-number">3</span>
+              <span className="pastoral-accordion-copy">
+                <strong>Aplicación y recursos</strong>
+                <small>Pasos, archivos y enlaces</small>
+              </span>
+              <ChevronDown aria-hidden="true" />
+            </summary>
+            <div className="pastoral-accordion-content">
+              <label className="pastoral-field">
+                <span>Preguntas o pasos <em>opcional</em></span>
+                <textarea name="instrucciones" maxLength={3000} rows={4} placeholder="Preguntas, lectura semanal o pasos prácticos." />
+              </label>
 
-            {recursos.length > 0 ? (
-              <fieldset className="mt-5">
-                <legend className="text-xs font-bold text-slate-700">Archivos y enlaces</legend>
-                <p className="mt-1 text-xs text-slate-500">Selecciona hasta 30 recursos relacionados.</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {recursos.map((recurso) => (
-                    <label key={recurso.id} className="flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
-                      <input type="checkbox" name="recurso_ids" value={recurso.id} className="mt-0.5 h-4 w-4 rounded border-slate-300" />
-                      <span className="min-w-0"><span className="block truncate font-semibold">{recurso.titulo}</span><span className="text-[11px] text-slate-500">{recurso.tipo === 'archivo' ? 'Archivo' : 'Enlace'} · {recurso.categoria}</span></span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            ) : <p className="mt-4 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">No hay recursos todavía. Puedes agregarlos después.</p>}
-          </section>
+              {recursos.length > 0 ? (
+                <fieldset className="pastoral-resource-picker">
+                  <legend>Archivos y enlaces</legend>
+                  <div className="pastoral-resource-grid">
+                    {recursos.map((recurso) => (
+                      <label key={recurso.id} className="pastoral-resource-option">
+                        <input type="checkbox" name="recurso_ids" value={recurso.id} />
+                        <span>
+                          <strong>{recurso.titulo}</strong>
+                          <small>{recurso.tipo === 'archivo' ? 'Archivo' : 'Enlace'} · {recurso.categoria}</small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ) : <p className="pastoral-inline-note">No hay recursos todavía. Puedes agregarlos después.</p>}
+            </div>
+          </details>
 
           <input type="hidden" name="estado" value="borrador" />
-          <button type="submit" disabled={isPending} className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white disabled:opacity-60">
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+          <button type="submit" disabled={isPending} className="pastoral-project-submit">
+            {isPending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
             {isPending ? 'Creando…' : 'Crear y continuar'}
           </button>
         </form>
       )}
 
-      <section>
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <div><h2 className="text-sm font-bold text-slate-900">Paquetes</h2><p className="mt-0.5 text-xs text-slate-500">{filtrados.length} resultado{filtrados.length === 1 ? '' : 's'}</p></div>
-        </div>
+      <details className="pastoral-accordion pastoral-projects-accordion">
+        <summary>
+          <span className="pastoral-accordion-copy">
+            <strong>Mis proyectos</strong>
+            <small>{paquetes.length} proyecto{paquetes.length === 1 ? '' : 's'}</small>
+          </span>
+          <ChevronDown aria-hidden="true" />
+        </summary>
+        <div className="pastoral-accordion-content">
+          <label className="pastoral-search-field">
+            <Search aria-hidden="true" />
+            <input
+              value={busqueda}
+              onChange={(event) => setBusqueda(event.target.value)}
+              placeholder="Buscar proyecto"
+              aria-label="Buscar paquetes por nombre o tema"
+            />
+            {busqueda && (
+              <button type="button" onClick={() => setBusqueda('')} aria-label="Limpiar búsqueda">
+                <X aria-hidden="true" />
+              </button>
+            )}
+          </label>
 
-        {filtrados.length === 0 ? (
-          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white p-8 text-center">
-            <Search className="mx-auto h-8 w-8 text-slate-300" />
-            <div className="pastoral-centered-copy">
-              <p className="mt-3 font-bold text-slate-800">{termino ? 'No hay coincidencias' : 'No hay paquetes todavía'}</p>
-              <p className="mt-1 text-sm text-slate-500">{termino ? `No encontramos “${busqueda.trim()}”.` : 'Crea el primero para comenzar.'}</p>
+          {filtrados.length === 0 ? (
+            <div className="pastoral-empty-state">
+              <Search aria-hidden="true" />
+              <strong>{termino ? 'No hay coincidencias' : 'No hay proyectos todavía'}</strong>
+              <span>{termino ? `No encontramos “${busqueda.trim()}”.` : 'Crea el primero para comenzar.'}</span>
             </div>
-            {termino && <button type="button" onClick={() => setBusqueda('')} className="mt-4 min-h-11 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white">Limpiar búsqueda</button>}
-          </div>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filtrados.map((paquete) => (
-              <article key={paquete.id} className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0"><span className="inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold text-indigo-700">{estadoLabel[paquete.estado]}</span><h3 className="mt-3 line-clamp-2 text-lg font-bold text-slate-900">{paquete.titulo}</h3></div>
-                  <button type="button" onClick={() => eliminar(paquete.id)} disabled={isPending} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500" aria-label={`Eliminar ${paquete.titulo}`}><Trash2 className="h-4 w-4" /></button>
+          ) : (
+            <div className="pastoral-project-links">
+              {filtrados.map((paquete) => (
+                <div key={paquete.id} className="pastoral-project-link-row">
+                  <Link href={`/pastoral/paquetes/${paquete.id}`}>
+                    <span>
+                      <strong>{paquete.titulo}</strong>
+                      <small>{estadoLabel[paquete.estado]}</small>
+                    </span>
+                    <ChevronRight aria-hidden="true" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => eliminar(paquete.id)}
+                    disabled={isPending}
+                    aria-label={`Eliminar ${paquete.titulo}`}
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </button>
                 </div>
-                {paquete.descripcion_publica && <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{paquete.descripcion_publica}</p>}
-                <Link href={`/pastoral/paquetes/${paquete.id}`} className="mt-4 flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3 text-sm font-bold text-indigo-700">Abrir <ChevronRight className="h-4 w-4" /></Link>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
+
+      <details className="pastoral-accordion pastoral-how-it-works">
+        <summary>
+          <span className="pastoral-accordion-copy">
+            <strong>Cómo funciona</strong>
+            <small>Preparar, completar y compartir</small>
+          </span>
+          <ChevronDown aria-hidden="true" />
+        </summary>
+        <div className="pastoral-accordion-content pastoral-how-steps">
+          <p><strong>1. Prepara</strong><span>Elige bosquejo y versículos.</span></p>
+          <p><strong>2. Completa</strong><span>Agrega recursos y aplicación.</span></p>
+          <p><strong>3. Comparte</strong><span>Revisa, publica o imprime.</span></p>
+        </div>
+      </details>
     </div>
   )
 }
