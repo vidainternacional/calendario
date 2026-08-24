@@ -3,14 +3,15 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const page = fs.readFileSync('app/(app)/pastoral/page.tsx', 'utf8')
+const header = fs.readFileSync('components/pastoral/PastoralPageHeader.tsx', 'utf8')
 const styles = fs.readFileSync('app/(app)/pastoral/pastoral-visual-system.css', 'utf8')
 
-test('Centro Pastoral conserva Proyecto visible y áreas secundarias cerradas por defecto', () => {
+test('Centro Pastoral conserva Proyecto visible y herramientas en rejilla horizontal', () => {
   assert.match(page, /<h2 id="proyecto-pastoral">Proyecto<\/h2>/)
   assert.match(page, /className="pastoral-primary-action"/)
-  assert.match(page, /<details key=\{id\} className="pastoral-work-section">/)
-  assert.match(page, /<details className="pastoral-work-section">/)
-  assert.doesNotMatch(page, /<details[^>]*\sopen(?:\s|=|>)/)
+  assert.match(page, /grid grid-cols-3/)
+  assert.match(page, /sm:grid-cols-4/)
+  assert.doesNotMatch(page, /<details/)
 })
 
 test('Centro Pastoral conserva las rutas funcionales existentes', () => {
@@ -25,18 +26,23 @@ test('Centro Pastoral conserva las rutas funcionales existentes', () => {
   ]) assert.match(page, new RegExp(route.replace(/[?]/g, '\\?')))
 })
 
-test('Centro Pastoral evita la composición principal de tarjetas anidadas', () => {
+test('Centro Pastoral evita composición de lista y tarjetas anidadas', () => {
   assert.match(page, /pastoral-workspace/)
   assert.match(styles, /superficie de trabajo integrada, sin tarjetas anidadas/)
-  assert.match(styles, /\.pastoral-work-section/)
-  assert.match(styles, /border-bottom: 1px solid #e2e8f0/)
+  assert.match(page, /flex min-h-\[78px\] flex-col items-center justify-center/)
+  assert.doesNotMatch(page, /pastoral-work-section/)
   assert.doesNotMatch(page, /bg-gradient-to-br from-indigo-600 to-violet-700/)
-  assert.doesNotMatch(page, /overflow-hidden rounded-\[28px\] border border-slate-200 bg-white shadow-sm/)
 })
 
-test('Centro Pastoral mantiene áreas táctiles y feedback móvil', () => {
-  assert.match(styles, /min-height: 3\.85rem/)
-  assert.match(styles, /min-height: 3rem/)
-  assert.match(styles, /-webkit-tap-highlight-color: transparent/)
-  assert.match(styles, /transform: rotate\(90deg\)/)
+test('Centro Pastoral mantiene iconos directos y feedback móvil', () => {
+  assert.match(page, /h-7 w-7 stroke-\[1\.8\]/)
+  assert.match(page, /active:scale-95/)
+  assert.match(page, /text-\[11px\] font-bold/)
+})
+
+test('Áreas internas usan encabezado compacto sin descripción permanente', () => {
+  assert.match(header, /mb-5 border-b border-slate-200 pb-4/)
+  assert.match(header, /min-h-11/)
+  assert.match(header, /text-\[1\.65rem\]/)
+  assert.doesNotMatch(header, /pastoral-page-description/)
 })
