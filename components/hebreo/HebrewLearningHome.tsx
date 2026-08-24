@@ -44,7 +44,7 @@ function PracticeTab({ id, icon, active, onToggle }: { id: PracticePanelId; icon
 }
 
 export default function HebrewLearningHome() {
-  const [progressOpen, setProgressOpen] = useState(true)
+  const [progressOpen, setProgressOpen] = useState(false)
   const [openQuick, setOpenQuick] = useState<QuickPanelId | null>(null)
   const [openPractice, setOpenPractice] = useState<PracticePanelId | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
