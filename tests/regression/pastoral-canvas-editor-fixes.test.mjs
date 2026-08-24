@@ -30,12 +30,13 @@ test('texto e imagen se pueden eliminar directamente desde el lienzo y la faja',
   assert.match(workspace, /Quitar fondo/)
 })
 
-test('tamaño tipográfico se expresa en puntos y admite hasta 160 pt', () => {
+test('tamaño tipográfico se expresa en puntos admite 160 pt y escala con el lienzo', () => {
   assert.match(workspace, /Tamaño de letra en puntos/)
   assert.match(workspace, /type="number" min="8" max="160"/)
   assert.match(workspace, /type="range" min="8" max="160"/)
   assert.match(workspace, /<span>pt<\/span>/)
-  assert.match(canvas, /fontSize: `\$\{\(puntos \* 4\) \/ 3\}px`/)
+  assert.match(canvas, /const pixeles = \(puntos \* 4\) \/ 3/)
+  assert.match(canvas, /fontSize: `min\(\$\{pixeles\}px, \$\{escalaLienzo\}cqw\)`/)
   assert.match(model, /tamano_fuente:[\s\S]*8, 160/)
   assert.match(actions, /tamano_fuente: numeroAcotado\(item\.tamano_fuente, 8, 160/)
 })
