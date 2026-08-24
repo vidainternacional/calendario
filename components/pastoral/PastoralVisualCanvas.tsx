@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Move } from 'lucide-react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { Move, Trash2 } from 'lucide-react'
 import {
   TEMAS_LIENZO, aspectoLienzo, clamp, limpiarHtmlCanvas,
   type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
@@ -18,9 +18,56 @@ type Props = {
   onBeginChange?: () => void
   onPatchElement?: (id: string, patch: Partial<ElementoCanvas>) => void
   onTextInput?: (id: string, html: string) => void
+  onDeleteElement?: (id: string) => void
 }
 
-export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput }: Props) {
+type TextoProps = {
+  elemento: ElementoCanvas
+  editable: boolean
+  onSelect?: (id: string | null) => void
+  onBeginChange?: () => void
+  onTextInput?: (id: string, html: string) => void
+}
+
+function TextoCanvas({ elemento, editable, onSelect, onBeginChange, onTextInput }: TextoProps) {
+  const textoRef = useRef<HTMLDivElement | null>(null)
+  const contenidoSeguro = limpiarHtmlCanvas(elemento.contenido ?? '')
+  const decoracion = [elemento.subrayado ? 'underline' : '', elemento.tachado ? 'line-through' : ''].filter(Boolean).join(' ') || 'none'
+  const puntos = elemento.tamano_fuente ?? 24
+
+  useEffect(() => {
+    const editor = textoRef.current
+    if (!editor || document.activeElement === editor) return
+    if (editor.innerHTML !== contenidoSeguro) editor.innerHTML = contenidoSeguro
+  }, [contenidoSeguro])
+
+  return <div
+    ref={textoRef}
+    dir="ltr"
+    lang="es"
+    contentEditable={editable}
+    suppressContentEditableWarning
+    spellCheck
+    onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
+    onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
+    className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-2xl bg-violet-500/[0.08] px-3 py-2' : ''}`}
+    style={{
+      fontFamily: elemento.fuente ?? 'Inter',
+      fontSize: `${(puntos * 4) / 3}px`,
+      color: elemento.color ?? '#0f172a',
+      textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
+      fontWeight: elemento.peso ?? 500,
+      fontStyle: elemento.cursiva ? 'italic' : 'normal',
+      textDecoration: decoracion,
+      lineHeight: elemento.interlineado ?? 1.25,
+      direction: 'ltr',
+      unicodeBidi: 'plaintext',
+      writingMode: 'horizontal-tb',
+    }}
+  />
+}
+
+export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput, onDeleteElement }: Props) {
   const lienzoRef = useRef<HTMLDivElement | null>(null)
   const [gesto, setGesto] = useState<Gesto | null>(null)
   const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
@@ -63,7 +110,6 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         {(pagina.elementos ?? []).slice().sort((a, b) => a.z - b.z).map((elemento) => {
           const activo = editable && seleccion === elemento.id
           const recurso = elemento.tipo === 'imagen' ? biblioteca.find((item) => item.id === elemento.recurso_id) : null
-          const decoracion = [elemento.subrayado ? 'underline' : '', elemento.tachado ? 'line-through' : ''].filter(Boolean).join(' ') || 'none'
           return <div
             key={elemento.id}
             data-canvas-element={elemento.tipo}
@@ -73,28 +119,17 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
           >
             {elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
-            ) : (
-              <div
-                dir="ltr"
-                lang="es"
-                contentEditable={editable}
-                suppressContentEditableWarning
-                onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
-                onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
-                dangerouslySetInnerHTML={{ __html: limpiarHtmlCanvas(elemento.contenido ?? '') }}
-                className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-2xl bg-violet-500/[0.08] px-3 py-2' : ''}`}
-                style={{ fontFamily: elemento.fuente ?? 'Inter', fontSize: `clamp(12px,${(elemento.tamano_fuente ?? 24) / 28}vw,${elemento.tamano_fuente ?? 24}px)`, color: elemento.color ?? '#0f172a', textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left', fontWeight: elemento.peso ?? 500, fontStyle: elemento.cursiva ? 'italic' : 'normal', textDecoration: decoracion, lineHeight: elemento.interlineado ?? 1.25, direction: 'ltr', unicodeBidi: 'isolate' }}
-              />
-            )}
+            ) : <TextoCanvas elemento={elemento} editable={editable} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
             {activo && <>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="absolute -left-3 -top-3 grid h-8 w-8 touch-none place-items-center rounded-full bg-violet-600 text-white shadow-lg" aria-label="Mover elemento"><Move className="h-4 w-4" /></button>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-3 -right-3 h-7 w-7 touch-none rounded-full border-4 border-white bg-violet-600 shadow-lg" aria-label="Redimensionar elemento" />
+              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="absolute -left-3 -top-3 grid h-9 w-9 touch-none place-items-center rounded-full bg-violet-600 text-white shadow-lg" aria-label="Mover elemento"><Move className="h-4 w-4" /></button>
+              <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="absolute -right-3 -top-3 grid h-9 w-9 place-items-center rounded-full bg-rose-600 text-white shadow-lg" aria-label="Eliminar elemento"><Trash2 className="h-4 w-4" /></button>
+              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-3 -right-3 h-8 w-8 touch-none rounded-full border-4 border-white bg-violet-600 shadow-lg" aria-label="Redimensionar elemento" />
             </>}
           </div>
         })}
       </div>
       <style jsx global>{`
-        .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; }
+        .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; direction:ltr !important; unicode-bidi:plaintext !important; writing-mode:horizontal-tb !important; }
         .pastoral-visual-canvas [contenteditable='true'] ul { list-style:disc; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] ol { list-style:decimal; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] blockquote { border-left:3px solid currentColor; margin:.5em 0; padding-left:.75em; opacity:.92; }
