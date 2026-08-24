@@ -124,7 +124,7 @@ export default function PastoralVersePicker({ open, onClose, onInsert }: Props) 
       const entradas: any[] = d.chapter?.content ?? []
       const entrada = entradas.find((item: any) => Number(item.verse) === versiculo.verso)
       const refs: ReferenciaRelacionada[] = (entrada?.references ?? []).slice(0, 16)
-      const resultados = await Promise.all(refs.map(async ref => {
+      const resultados: Array<(VersiculoElegido & { score?: number }) | null> = await Promise.all(refs.map(async ref => {
         try {
           const texto = await textoReferencia(ref)
           const nombre = libros.find(b => b.id === ref.book)?.name ?? ref.book
@@ -140,7 +140,7 @@ export default function PastoralVersePicker({ open, onClose, onInsert }: Props) 
           }
         } catch { return null }
       }))
-      setRelacionados(resultados.filter((v): v is VersiculoElegido & { score?: number } => Boolean(v?.texto)))
+      setRelacionados(resultados.filter((v): v is VersiculoElegido & { score?: number } => v !== null && Boolean(v.texto)))
     } catch {
       setRelacionados([])
       mostrarToast('No se pudieron cargar las concordancias')
