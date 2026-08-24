@@ -5,7 +5,7 @@ import test from 'node:test'
 const speech = fs.readFileSync('components/hebreo/HebrewSpeechPractice.tsx', 'utf8')
 const feedback = fs.readFileSync('lib/ui/interaction-feedback.ts', 'utf8')
 
-test('FASE H bloque 4: práctica oral conserva micrófono vivo y recupera AudioContext entre intentos', () => {
+test('FASE H bloque 4: práctica oral reinicia micrófono y AudioContext entre intentos', () => {
   assert.match(speech, /async function ensureMicrophone/)
   assert.match(speech, /function streamIsLive/)
   assert.match(speech, /readyState === 'live'/)
@@ -18,7 +18,11 @@ test('FASE H bloque 4: práctica oral conserva micrófono vivo y recupera AudioC
   assert.match(speech, /pauseSpectrum/)
   assert.match(speech, /releaseMicrophone/)
   assert.match(speech, /recognitionRef/)
-  assert.match(speech, /Vuelve a tocar Hablar/)
+  assert.match(speech, /listeningTimeoutRef/)
+  assert.match(speech, /LISTENING_TIMEOUT_MS/)
+  assert.match(speech, /await releaseMicrophone\(\)/)
+  assert.match(speech, /void releaseMicrophone\(\)/)
+  assert.match(speech, /La escucha tardó demasiado y se reinició/)
 })
 
 test('FASE H bloque 4: práctica oral tiene feedback háptico y sonoro reutilizable', () => {
