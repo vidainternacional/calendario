@@ -37,19 +37,23 @@ const IDLE_LEVELS = [12, 18, 26, 34, 42, 50, 42, 34, 26, 18, 12]
 
 type TimedProgressAnswer = HebrewProgressAnswer & { response_time_ms?: number | null }
 type CoachQuestion = HebrewPracticeQuestion & { interaction?: 'choice' | 'pronunciation'; pronunciationHint?: string }
-type SpeechResultEvent = { results: { [index: number]: { [index: number]: { transcript: string } } } }
+type SpeechResultEvent = { results: { length?: number; [index: number]: { [index: number]: { transcript: string } } } }
+type SpeechErrorEvent = { error?: string }
 type SpeechRecognitionLike = {
   lang: string
   interimResults: boolean
+  continuous?: boolean
   maxAlternatives: number
   onstart: (() => void) | null
   onresult: ((event: SpeechResultEvent) => void) | null
-  onerror: (() => void) | null
+  onerror: ((event: SpeechErrorEvent) => void) | null
   onend: (() => void) | null
   start: () => void
   stop: () => void
 }
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike
+
+type VoiceStatus = 'idle' | 'requesting' | 'listening' | 'processing'
 
 const ORAL_CHECKPOINTS: Record<HebrewDifficulty, readonly CoachQuestion[]> = {
   initial: [
@@ -90,6 +94,7 @@ function median(values: number[]) { if (!values.length) return null; const sorte
 function secondsLabel(value: number | null | undefined) { if (value == null || !Number.isFinite(value)) return '—'; const seconds = value / 1000; return seconds < 10 ? `${seconds.toFixed(1)} s` : `${Math.round(seconds)} s` }
 function levelName(difficulty: HebrewDifficulty | null) { if (difficulty === 'initial') return 'Nivel 1 · Básico'; if (difficulty === 'intermediate') return 'Nivel 2 · Intermedio'; if (difficulty === 'advanced') return 'Nivel 3 · Avanzado'; return 'Según mi progreso' }
 function dateLabel(value: string) { return new Intl.DateTimeFormat('es', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) }
+function isWrittenQuestion(question: CoachQuestion) { return question.interaction !== 'pronunciation' && !question.key.startsWith('oral-') && question.options.length > 0 }
 
 export default function HebrewProgressCoach() {
   const [historyOpen, setHistoryOpen] = useState(true)
@@ -109,12 +114,13 @@ export default function HebrewProgressCoach() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [listening, setListening] = useState(false)
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
   const [speechResult, setSpeechResult] = useState<{ transcript: string; score: number } | null>(null)
   const [speechError, setSpeechError] = useState<string | null>(null)
-  const [recognition, setRecognition] = useState<SpeechRecognitionLike | null>(null)
   const [levels, setLevels] = useState(IDLE_LEVELS)
   const questionStartedAtRef = useRef<number | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const capturedRef = useRef('')
   const streamRef = useRef<MediaStream | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
@@ -133,6 +139,10 @@ export default function HebrewProgressCoach() {
     frameRef.current = null
     analyserRef.current = null
     setLevels(IDLE_LEVELS)
+  }
+
+  function streamIsLive() {
+    return Boolean(streamRef.current?.getAudioTracks().some(track => track.readyState === 'live'))
   }
 
   async function releaseMicrophone() {
@@ -169,22 +179,31 @@ export default function HebrewProgressCoach() {
     if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) throw new Error('microphone-unavailable')
     const AudioContextCtor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioContextCtor) throw new Error('audio-context-unavailable')
-    streamRef.current?.getTracks().forEach(track => track.stop())
-    streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
-    const context = new AudioContextCtor()
-    audioContextRef.current = context
-    if (context.state === 'suspended') {
-      try { await context.resume() } catch { /* Safari puede reanudarlo con el gesto actual */ }
+    if (!streamIsLive()) {
+      streamRef.current?.getTracks().forEach(track => track.stop())
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
     }
+    let context = audioContextRef.current
+    if (!context || context.state === 'closed') {
+      context = new AudioContextCtor()
+      audioContextRef.current = context
+    }
+    if (context.state === 'suspended') {
+      try { await context.resume() } catch { /* Safari reintenta con el gesto actual */ }
+    }
+    pauseSpectrum()
     const analyser = context.createAnalyser()
     analyser.fftSize = 128
     analyser.smoothingTimeConstant = 0.62
-    context.createMediaStreamSource(streamRef.current).connect(analyser)
+    context.createMediaStreamSource(streamRef.current!).connect(analyser)
     analyserRef.current = analyser
     drawSpectrum(analyser)
   }
 
-  useEffect(() => () => { void releaseMicrophone() }, [])
+  useEffect(() => () => {
+    try { recognitionRef.current?.stop() } catch { /* ya estaba detenido */ }
+    void releaseMicrophone()
+  }, [])
 
   const metrics = useMemo(() => deriveProgressMetrics(sessions, answers), [sessions, answers])
   const adaptiveLevel = useMemo(() => deriveStrictAdaptiveLevel(answers), [answers])
@@ -215,6 +234,7 @@ export default function HebrewProgressCoach() {
   const current = questions[index] ?? null
   const active = Boolean(sessionId && current && !finished)
   const isPronunciation = current?.interaction === 'pronunciation'
+  const writtenQuestionTotal = questions.filter(question => !question.key.startsWith('oral-')).length
   const progress = questions.length ? Math.round(((index + (selected !== null || speechResult ? 1 : 0)) / questions.length) * 100) : 0
   const totalPoolForSelectedLevel = ALL_HEBREW_PRACTICE_QUESTIONS.filter(question => question.difficulty === difficulty).length
 
@@ -225,16 +245,44 @@ export default function HebrewProgressCoach() {
     return [...pool].sort((a, b) => (counts.get(a.key) ?? 0) - (counts.get(b.key) ?? 0))[0]
   }
 
+  function completeWrittenSelection(candidate: readonly CoachQuestion[], target: HebrewDifficulty) {
+    const seen = new Set<string>()
+    const selected = candidate.filter(isWrittenQuestion).filter(question => {
+      if (seen.has(question.key)) return false
+      seen.add(question.key)
+      return true
+    })
+    const minimumWritten = Math.min(questionCount, 10)
+    if (selected.length >= minimumWritten) return selected.slice(0, questionCount)
+
+    const fullPool = ALL_HEBREW_PRACTICE_QUESTIONS
+      .filter(question => question.difficulty === target)
+      .filter(question => !focusAreas.length || focusAreas.includes(question.skill))
+      .filter(question => isWrittenQuestion(question as CoachQuestion))
+    const broadPool = fullPool.length >= minimumWritten ? fullPool : ALL_HEBREW_PRACTICE_QUESTIONS.filter(question => question.difficulty === target).filter(question => isWrittenQuestion(question as CoachQuestion))
+    const correctKeys = new Set(answers.filter(answer => answer.is_correct && !answer.review_requested).map(answer => answer.question_key))
+    const supplements = [...broadPool.filter(question => !correctKeys.has(question.key)), ...broadPool.filter(question => correctKeys.has(question.key))]
+    for (const question of supplements) {
+      if (seen.has(question.key)) continue
+      selected.push(question)
+      seen.add(question.key)
+      if (selected.length >= minimumWritten) break
+    }
+    return selected.slice(0, questionCount)
+  }
+
   async function begin() {
-    setSaving(true); setError(null); setSpeechResult(null); setSpeechError(null)
+    setSaving(true); setError(null); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''
     try {
       let nextQuestions = mode === 'adaptive' ? selectStrictAdaptiveQuestions(answers, focusAreas, questionCount) : selectMasteryQuestions(answers, difficulty, focusAreas, questionCount)
       if (!nextQuestions.length && focusAreas.length) nextQuestions = mode === 'adaptive' ? selectStrictAdaptiveQuestions(answers, [], questionCount) : selectMasteryQuestions(answers, difficulty, [], questionCount)
       const requested: HebrewDifficulty = mode === 'difficulty' ? difficulty : adaptiveLevel.level === 1 ? 'initial' : adaptiveLevel.level === 2 ? 'intermediate' : 'advanced'
-      const normalQuestions = nextQuestions.length ? nextQuestions : selectMasteryQuestions(answers, requested, [], questionCount)
-      if (!normalQuestions.length) throw new Error('No hay preguntas disponibles en esta selección.')
+      const baseQuestions = nextQuestions.length ? nextQuestions : selectMasteryQuestions(answers, requested, [], questionCount)
+      const normalQuestions = completeWrittenSelection(baseQuestions as CoachQuestion[], requested)
+      if (!normalQuestions.length || !isWrittenQuestion(normalQuestions[0])) throw new Error('No hay preguntas escritas disponibles antes de la prueba oral.')
       const id = await startHebrewProgressSession(mode, requested, focusAreas)
-      setQuestions([...normalQuestions, checkpointFor(requested)])
+      const checkpoint = checkpointFor(requested)
+      setQuestions([...normalQuestions, checkpoint])
       setSessionId(id); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); questionStartedAtRef.current = nowMs()
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo iniciar la práctica.') }
     finally { setSaving(false) }
@@ -242,7 +290,7 @@ export default function HebrewProgressCoach() {
 
   async function advanceAfterSave() {
     await new Promise(resolve => window.setTimeout(resolve, 520))
-    setSpeechResult(null); setSpeechError(null)
+    setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''
     await releaseMicrophone()
     if (index + 1 < questions.length) { questionStartedAtRef.current = nowMs(); setIndex(value => value + 1); setSelected(null); return }
     if (!sessionId) return
@@ -264,22 +312,46 @@ export default function HebrewProgressCoach() {
   }
 
   async function startListening() {
-    if (!current?.hebrew || !isPronunciation || typeof window === 'undefined' || saving) return
+    if (!current?.hebrew || !isPronunciation || typeof window === 'undefined' || saving || voiceStatus !== 'idle') return
     const speechWindow = window as typeof window & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }
     const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
     if (!Recognition) { setSpeechError('Este navegador no ofrece reconocimiento de voz compatible. En iPhone, abre el Preview directamente en Safari y permite el micrófono.'); return }
-    setSpeechResult(null); setSpeechError(null)
+    setSpeechResult(null); setSpeechError(null); capturedRef.current = ''; setVoiceStatus('requesting')
     try {
       await ensureMicrophone()
-      const instance = new Recognition(); instance.lang = 'he-IL'; instance.interimResults = false; instance.maxAlternatives = 1
-      instance.onstart = () => setListening(true)
-      instance.onresult = event => { const transcript = event.results[0][0].transcript; void submitPronunciation(transcript) }
-      instance.onerror = () => { setListening(false); setRecognition(null); void releaseMicrophone(); setSpeechError('No pude convertir la voz a texto esta vez. Toca Hablar e inténtalo nuevamente.') }
-      instance.onend = () => { setListening(false); setRecognition(null); void releaseMicrophone() }
-      setRecognition(instance)
+      setVoiceStatus('listening')
+      await new Promise(resolve => window.setTimeout(resolve, 90))
+      const instance = new Recognition()
+      recognitionRef.current = instance
+      instance.lang = 'he-IL'; instance.interimResults = true; instance.continuous = false; instance.maxAlternatives = 1
+      instance.onstart = () => setVoiceStatus('listening')
+      instance.onresult = event => {
+        let transcript = ''
+        const length = typeof event.results.length === 'number' ? event.results.length : 1
+        for (let item = 0; item < length; item += 1) transcript += `${event.results[item]?.[0]?.transcript ?? ''} `
+        transcript = transcript.trim()
+        if (transcript) { capturedRef.current = transcript; setSpeechError(null) }
+      }
+      instance.onerror = event => {
+        const code = event.error ?? ''
+        setSpeechError(code === 'not-allowed' ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.' : code === 'no-speech' ? 'No detecté voz. Toca Hablar otra vez y espera a que el espectro se active.' : 'El reconocimiento se interrumpió. Toca Hablar nuevamente.')
+      }
+      instance.onend = () => {
+        recognitionRef.current = null
+        pauseSpectrum()
+        const transcript = capturedRef.current.trim()
+        if (transcript) {
+          setVoiceStatus('processing')
+          void submitPronunciation(transcript)
+        } else {
+          setVoiceStatus('idle')
+          void releaseMicrophone()
+          setSpeechError(previous => previous ?? 'No se reconoció texto. Puedes volver a tocar Hablar.')
+        }
+      }
       instance.start()
     } catch {
-      setListening(false); setRecognition(null); await releaseMicrophone(); setSpeechError('El micrófono no pudo iniciar. Inténtalo nuevamente.')
+      recognitionRef.current = null; setVoiceStatus('idle'); await releaseMicrophone(); setSpeechError('El micrófono no pudo iniciar de forma estable. Toca Hablar nuevamente.')
     }
   }
 
@@ -292,38 +364,46 @@ export default function HebrewProgressCoach() {
     try {
       const saved = await saveHebrewProgressAnswer({ sessionId, questionKey: current.key, questionVersion: current.version, skill: current.skill, difficulty: current.difficulty, responseText: transcript, isCorrect, reviewRequested: !isCorrect, responseTimeMs })
       setAnswers(previous => [saved, ...previous]); if (isCorrect) setCorrect(value => value + 1); setError(null)
-      await new Promise(resolve => window.setTimeout(resolve, 1100))
+      await new Promise(resolve => window.setTimeout(resolve, 1250))
       await advanceAfterSave()
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar la evaluación oral.') }
+    } catch (cause) { setVoiceStatus('idle'); setError(cause instanceof Error ? cause.message : 'No se pudo guardar la evaluación oral.') }
     finally { setSaving(false) }
   }
 
-  function stopListening() { recognition?.stop(); void releaseMicrophone() }
-  function resetPractice() { recognition?.stop(); void releaseMicrophone(); setSessionId(null); setQuestions([]); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); setSpeechResult(null); setSpeechError(null); questionStartedAtRef.current = null }
+  function stopListening() { try { recognitionRef.current?.stop() } catch { /* ya estaba detenido */ } }
+  function resetPractice() { try { recognitionRef.current?.stop() } catch { /* ya estaba detenido */ }; recognitionRef.current = null; void releaseMicrophone(); setSessionId(null); setQuestions([]); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''; questionStartedAtRef.current = null }
 
   const finalPct = questions.length ? Math.round((correct / questions.length) * 100) : 0
   const finalFeedback = finalPct >= 90 ? 'Excelente sesión. Sigue practicando para sostener la retención y la lectura.' : finalPct >= 75 ? 'Buen resultado. Mantén la práctica y vuelve a los puntos que aún generan duda.' : finalPct >= 60 ? 'Vas avanzando. Los errores quedaron marcados para volver en Repaso.' : 'Conviene reforzar fundamentos antes de subir la dificultad.'
+  const voiceActive = voiceStatus === 'requesting' || voiceStatus === 'listening'
 
   return <div className="text-center">
     {!active && !finished && <>
-      <div className="py-3"><p className="text-[13px] font-black text-slate-900">Entrena, responde y termina leyendo en voz alta</p><p className="mx-auto mt-1 max-w-sm text-[11px] leading-relaxed text-slate-500">La evaluación avanza sola. Al final aparece una prueba oral independiente para comprobar que también puedes leer lo aprendido.</p></div>
+      <div className="py-3"><p className="text-[13px] font-black text-slate-900">Entrena, responde y termina leyendo en voz alta</p><p className="mx-auto mt-1 max-w-sm text-[11px] leading-relaxed text-slate-500">La evaluación avanza sola. La prueba oral siempre aparece al final, después de la parte escrita.</p></div>
       <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-3"><button type="button" onClick={() => setMode('adaptive')} className={`min-h-12 rounded-[16px] border px-3 text-[12px] font-black ${mode === 'adaptive' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>Según mi progreso</button><button type="button" onClick={() => setMode('difficulty')} className={`min-h-12 rounded-[16px] border px-3 text-[12px] font-black ${mode === 'difficulty' ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>Elegir nivel</button></div>
       {mode === 'adaptive' ? <div className="mt-4"><p className="text-[9px] font-black uppercase tracking-[.12em] text-slate-400">Nivel adaptativo</p><p className="mt-1 text-[18px] font-black">Nivel {adaptiveLevel.level} · {adaptiveLevel.label}</p><div className="mx-auto mt-3 h-2.5 max-w-sm overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${adaptiveLevel.progress}%` }} /></div></div> : <div className="mt-4"><div className="grid grid-cols-3 gap-2">{DIFFICULTIES.map(item => <button key={item.id} type="button" onClick={() => setDifficulty(item.id)} className={`min-h-[58px] rounded-[16px] border px-1 ${difficulty === item.id ? 'border-indigo-300 bg-indigo-50 text-indigo-800' : 'border-slate-200 bg-white text-slate-500'}`}><span className="block text-[9px] font-black uppercase">{item.level}</span><span className="block text-[12px] font-black">{item.label}</span></button>)}</div><p className="mt-3 text-[12px] font-black">¿Qué te espera en {level.label}?</p><p className="mx-auto mt-1 max-w-sm text-[11px] leading-relaxed text-slate-500">{level.detail}</p><p className="mt-2 text-[10px] font-bold text-emerald-700">Dominio: {levelMastery.mastered}/{levelMastery.total} · {levelMastery.coverage}%</p></div>}
       <div className="mt-4 border-y border-slate-200"><button type="button" onClick={() => setCustomOpen(value => !value)} className="flex min-h-[56px] w-full items-center justify-center gap-3"><SlidersHorizontal className="h-4 w-4 text-indigo-600"/><span><span className="block text-[12px] font-black">Personalizar práctica</span><span className="block text-[9px] text-slate-400">Cantidad y áreas</span></span><ChevronDown className={`h-4 w-4 text-slate-400 ${customOpen ? 'rotate-180' : ''}`}/></button>{customOpen && <div className="border-t border-slate-100 pb-4 pt-3"><p className="text-[10px] font-black uppercase text-slate-400">Preguntas</p><div className="mx-auto mt-2 grid max-w-xs grid-cols-3 gap-2">{LENGTHS.map(length => <button key={length} type="button" onClick={() => setQuestionCount(length)} className={`min-h-10 rounded-full border text-[12px] font-black ${questionCount===length?'border-indigo-300 bg-indigo-50 text-indigo-800':'border-slate-200 text-slate-500'}`}>{length}</button>)}</div><p className="mt-4 text-[10px] font-black uppercase text-slate-400">Áreas</p><div className="mt-2 flex flex-wrap justify-center gap-2">{SKILL_ORDER.map(skill => <button key={skill} type="button" onClick={() => toggleArea(skill)} className={`min-h-9 rounded-full border px-3 text-[10px] font-black ${focusAreas.includes(skill)?'border-indigo-300 bg-indigo-50 text-indigo-800':'border-slate-200 bg-white text-slate-500'}`}>{SKILL_LABELS[skill]}</button>)}</div>{mode==='difficulty'&&<p className="mt-3 text-[10px] text-slate-500">Banco del nivel: {totalPoolForSelectedLevel} preguntas + prueba oral final.</p>}</div>}</div>
       {fundamentalsComplete && <div className="mx-auto mt-4 max-w-sm rounded-[18px] bg-indigo-50 px-4 py-4"><Sparkles className="mx-auto h-5 w-5 text-indigo-600"/><p className="mt-1 text-[12px] font-black text-indigo-900">Fundamentos dominados · 100%</p><p className="mt-1 text-[10px] leading-relaxed text-indigo-700">Desde aquí la práctica sigue como Perfeccionamiento: retención, lectura, reglas combinadas y desafíos avanzados. El curso no sube artificialmente de 100%.</p></div>}
-      <button type="button" onClick={() => void begin()} disabled={saving || loading || previewQuestions.length===0} className="mt-4 min-h-12 w-full rounded-full bg-indigo-600 px-5 text-sm font-black text-white disabled:opacity-50">{saving?'Preparando…':`Comenzar · ${Math.min(questionCount, previewQuestions.length)} + oral`}</button>
+      <button type="button" onClick={() => void begin()} disabled={saving || loading || previewQuestions.length===0} className="mt-4 min-h-12 w-full rounded-full bg-indigo-600 px-5 text-sm font-black text-white disabled:opacity-50">{saving?'Preparando…':`Comenzar · ${Math.min(questionCount, previewQuestions.length)} + oral final`}</button>
     </>}
 
     {active && current && <>
-      <div><p className="text-[10px] font-black uppercase tracking-[.1em] text-indigo-700">{isPronunciation ? `Prueba oral final · ${levelName(current.difficulty)}` : `${current.type} · ${SKILL_LABELS[current.skill]}`}</p><p className="mt-1 text-[11px] font-bold text-slate-400">{isPronunciation ? `${correct} aciertos en la parte escrita` : `Pregunta ${index+1} de ${questions.length-1} · ${correct} aciertos`}</p></div>
+      <div><p className="text-[10px] font-black uppercase tracking-[.1em] text-indigo-700">{isPronunciation ? `Prueba oral final · ${levelName(current.difficulty)}` : `${current.type} · ${SKILL_LABELS[current.skill]}`}</p><p className="mt-1 text-[11px] font-bold text-slate-400">{isPronunciation ? `Cierre del nivel · ${correct} aciertos escritos` : `Pregunta ${index+1} de ${writtenQuestionTotal} · ${correct} aciertos`}</p></div>
       <div className="mx-auto mt-3 h-2 max-w-sm overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500 transition-all" style={{width:`${progress}%`}}/></div>
       <div className="py-6"><p className="mx-auto max-w-xl text-[1.4rem] font-black leading-snug sm:text-[1.55rem]">{current.prompt}</p>{current.hebrew&&<p lang="he" dir="rtl" className="mt-5 text-[4rem] font-black leading-tight text-indigo-700 sm:text-[4.5rem]">{current.hebrew}</p>}{isPronunciation&&current.pronunciationHint&&<p className="mt-2 text-[14px] font-bold text-slate-500">{current.pronunciationHint}</p>}</div>
-      {isPronunciation ? <div className="mx-auto max-w-sm border-y border-slate-100 py-5" data-oral-checkpoint="true"><p className="text-[11px] font-black uppercase tracking-[.1em] text-slate-400">Prueba oral final</p><p className="mt-1 text-[12px] text-slate-500">Esta pregunta es solo de pronunciación. Toca Hablar, pronuncia el texto y espera el resultado.</p><div className="mx-auto mt-5 flex h-16 max-w-[250px] items-center justify-center gap-1.5" aria-label={listening ? 'Micrófono activo, espectro de voz en movimiento' : 'Micrófono inactivo'}>{levels.map((height, bar)=><span key={bar} className={`w-2 rounded-full transition-[height,background-color] duration-75 ${listening?'bg-cyan-500':'bg-cyan-200'}`} style={{height:`${height}%`}} />)}</div><p className={`mt-1 text-[11px] font-black ${listening?'text-cyan-700':'text-slate-400'}`}>{listening?'Te estoy escuchando…':'Listo para escuchar'}</p><button type="button" onClick={listening?stopListening:()=>void startListening()} disabled={saving} className={`mt-4 inline-flex min-h-14 items-center gap-2 rounded-full px-7 text-[13px] font-black ${listening?'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200':'bg-indigo-600 text-white'}`}>{listening?<Square className="h-4 w-4"/>:<Mic className="h-5 w-5"/>}{listening?'Terminar':'Hablar'}</button>{speechResult&&<div className="mt-4"><p className="text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[18px] font-black text-slate-900">{speechResult.transcript}</span></p><p className={`mt-2 text-[15px] font-black ${speechResult.score>=85?'text-emerald-700':speechResult.score>=60?'text-amber-700':'text-rose-700'}`}>{speechResult.score>=85?'Lectura reconocida correctamente':speechResult.score>=60?'Está cerca; conviene repetirla en Repaso':'Necesita más práctica de lectura'} · {speechResult.score}%</p></div>}{speechError&&<p className="mt-3 text-[12px] font-bold text-rose-600">{speechError}</p>}</div> : <div className="grid grid-cols-3 gap-2">{current.options.map((option,optionIndex)=>{const chosen=selected===optionIndex;const correctOption=selected!==null&&current.correctIndex===optionIndex;return <button key={`${current.key}-${option}`} type="button" disabled={selected!==null||saving} onClick={()=>void answer(optionIndex)} className={`min-h-[5.4rem] rounded-[18px] border px-3 py-3 text-center font-black leading-tight ${normalizeHebrew(option).length?'text-[2.15rem] sm:text-[2.35rem]':'text-[1.22rem] sm:text-[1.35rem]'} ${correctOption?'border-emerald-300 bg-emerald-50 text-emerald-800':chosen?'border-rose-300 bg-rose-50 text-rose-800':'border-slate-200 bg-white text-slate-800'}`}>{option}</button>})}</div>}
+      {isPronunciation ? <div className="mx-auto max-w-sm border-y border-slate-100 py-5" data-oral-checkpoint="true"><p className="text-[11px] font-black uppercase tracking-[.1em] text-slate-400">Último paso · Pronunciación</p><p className="mt-1 text-[12px] text-slate-500">Esta pantalla es solo para hablar. No hay respuestas para elegir.</p><div className={`oral-spectrum mx-auto mt-5 flex h-16 max-w-[270px] items-center justify-center gap-[4px] overflow-hidden rounded-full border px-5 transition ${voiceActive?'oral-spectrum-active border-cyan-200 bg-cyan-50/90':'border-slate-100 bg-slate-50'}`} aria-label={voiceActive ? 'Micrófono activo, espectro de voz en movimiento' : 'Micrófono inactivo'}>{levels.map((height, bar)=><span key={bar} style={{height:`${Math.max(5, Math.round(height*.42))}px`,animationDelay:`${bar*45}ms`}} className={`w-[4px] rounded-full transition-[height] duration-75 ${voiceActive?'bg-cyan-500':'bg-slate-300'}`} />)}</div><p className={`mt-2 text-[11px] font-black ${voiceActive?'text-cyan-700':'text-slate-400'}`}>{voiceStatus==='requesting'?'Activando micrófono…':voiceStatus==='listening'?'Te estoy escuchando…':voiceStatus==='processing'?'Analizando pronunciación…':'Listo para escuchar'}</p><button type="button" onClick={voiceStatus==='listening'?stopListening:()=>void startListening()} disabled={saving||voiceStatus==='requesting'||voiceStatus==='processing'} className={`mt-4 inline-flex min-h-14 items-center gap-2 rounded-full px-7 text-[13px] font-black disabled:opacity-60 ${voiceStatus==='listening'?'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200':'bg-indigo-600 text-white'}`}>{voiceStatus==='listening'?<Square className="h-4 w-4"/>:<Mic className="h-5 w-5"/>}{voiceStatus==='listening'?'Terminar':'Hablar'}</button>{speechResult&&<div className="mt-4"><p className="text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[18px] font-black text-slate-900">{speechResult.transcript}</span></p><p className={`mt-2 text-[15px] font-black ${speechResult.score>=85?'text-emerald-700':speechResult.score>=60?'text-amber-700':'text-rose-700'}`}>{speechResult.score>=85?'Lectura reconocida correctamente':speechResult.score>=60?'Está cerca; conviene repetirla en Repaso':'Necesita más práctica de lectura'} · {speechResult.score}%</p></div>}{speechError&&<p className="mt-3 text-[12px] font-bold text-rose-600">{speechError}</p>}</div> : <div className="grid grid-cols-3 gap-2">{current.options.map((option,optionIndex)=>{const chosen=selected===optionIndex;const correctOption=selected!==null&&current.correctIndex===optionIndex;return <button key={`${current.key}-${option}`} type="button" disabled={selected!==null||saving} onClick={()=>void answer(optionIndex)} className={`min-h-[5.4rem] rounded-[18px] border px-3 py-3 text-center font-black leading-tight ${normalizeHebrew(option).length?'text-[2.15rem] sm:text-[2.35rem]':'text-[1.22rem] sm:text-[1.35rem]'} ${correctOption?'border-emerald-300 bg-emerald-50 text-emerald-800':chosen?'border-rose-300 bg-rose-50 text-rose-800':'border-slate-200 bg-white text-slate-800'}`}>{option}</button>})}</div>}
     </>}
 
     {finished&&<div><CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600"/><h3 className="mt-2 text-xl font-black">Práctica terminada</h3><div className="mt-4 grid grid-cols-2 divide-x divide-slate-200 border-y border-slate-200 py-4"><div><p className="text-2xl font-black text-emerald-700">{finalPct}%</p><p className="text-[10px] font-black text-slate-500">Nota</p></div><div><p className="text-2xl font-black">{correct}/{questions.length}</p><p className="text-[10px] font-black text-slate-500">Aciertos</p></div></div><p className="mx-auto mt-4 max-w-sm text-[12px] font-semibold leading-relaxed text-slate-600">{finalFeedback}</p><p className="mx-auto mt-3 max-w-sm text-[11px] font-semibold text-indigo-700">{metrics.recommendation}</p><button type="button" onClick={resetPractice} className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-full bg-indigo-600 px-6 text-sm font-black text-white"><RotateCcw className="h-4 w-4"/>Nueva práctica</button></div>}
 
     {error&&<p role="alert" className="mt-3 text-[11px] font-bold text-rose-600">{error}</p>}
     {!active&&<div className="mt-5 border-t border-slate-200 pt-2"><button type="button" onClick={()=>setHistoryOpen(value=>!value)} className="flex min-h-12 w-full items-center justify-center gap-3"><span><span className="block text-[10px] font-black uppercase tracking-[.1em] text-slate-400">Cuadro de notas</span><span className="block text-sm font-black">{loading?'Cargando historial…':`${gradebook.length} evaluaciones registradas`}</span></span><ChevronDown className={`h-4 w-4 text-slate-400 ${historyOpen?'rotate-180':''}`}/></button>{historyOpen&&<div className="border-t border-slate-200 py-4">{gradebook.length===0?<p className="text-[12px] text-slate-500">Todavía no hay evaluaciones guardadas.</p>:<><div className="overflow-hidden rounded-[18px] bg-slate-100/70 text-left"><div className="grid grid-cols-[1fr_auto_auto] gap-2 px-3 py-2 text-[9px] font-black uppercase text-slate-400"><span>Evaluación</span><span>Aciertos</span><span>Nota</span></div>{gradebook.slice(0,12).map(row=><div key={row.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-white/80 px-3 py-3 text-[10px]"><div><p className="font-black text-slate-800">{levelName(row.difficulty)}</p><p className="text-[9px] text-slate-400">{dateLabel(row.startedAt)}</p></div><span className="font-bold text-slate-600">{row.correct}/{row.answers}</span><span className="font-black">{row.score}%</span></div>)}</div><div className="mt-4 grid grid-cols-2 border-y border-slate-200"><div className="border-b border-r border-slate-200 py-3"><p className="text-xl font-black text-emerald-700">{metrics.accuracy??0}%</p><p className="text-[9px] font-black text-slate-400">Precisión</p></div><div className="border-b border-slate-200 py-3"><p className="text-xl font-black">{metrics.retention===null?'—':`${metrics.retention}%`}</p><p className="text-[9px] font-black text-slate-400">Retención</p></div><div className="border-r border-slate-200 py-3"><p className="text-[11px] font-black">{responseTiming.trend}</p><p className="text-[9px] font-black text-slate-400">Fluidez</p></div><div className="py-3"><p className="text-xl font-black">{secondsLabel(responseTiming.typicalMs)}</p><p className="text-[9px] font-black text-slate-400">Tiempo típico</p></div></div><div className="mt-4 space-y-2">{metrics.areas.filter(area=>area.attempts>0).map(area=><div key={area.skill} className="text-[11px]"><p className="font-bold text-slate-600">{SKILL_LABELS[area.skill]}</p><p className="font-black">{area.accuracy??0}% · {area.state}</p></div>)}</div></>}</div>}</div>}
+
+    <style jsx>{`
+      .oral-spectrum-active { box-shadow: inset 0 0 18px rgba(6,182,212,.08), 0 0 30px rgba(6,182,212,.18); }
+      .oral-spectrum-active span { animation: oralPulse 620ms ease-in-out infinite alternate; box-shadow: 0 0 9px rgba(6,182,212,.65); transform-origin: center; }
+      @keyframes oralPulse { from { transform: scaleY(.72); } to { transform: scaleY(1.28); } }
+      @media (prefers-reduced-motion: reduce) { .oral-spectrum-active span { animation: none; } }
+    `}</style>
   </div>
 }
