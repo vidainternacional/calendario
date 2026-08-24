@@ -13,6 +13,14 @@ test('FASE H bloque 4: Inicio usa instructor persistente dentro de navegación h
   assert.match(home, /HebrewProgressCoach/); assert.match(home, /HebrewProgressSummary/); assert.match(home, /evaluation:\s*\{\s*title:\s*'Evaluación'/); assert.match(home, /progress:\s*\{\s*title:\s*'Mi progreso'/); assert.match(home, /Entrena a tu ritmo/); assert.match(home, /Empecemos/); assert.match(home, /cta-neon-orbit/); assert.doesNotMatch(home, /hebrew-glimmer/); assert.match(home, /function PracticeTab/); assert.match(home, /grid grid-cols-4 gap-2/); assert.match(home, /useState<PracticePanelId\s*\|\s*null>\(null\)/); assert.match(home, /HelpCircle/); assert.match(home, /bg-indigo-600 text-white/); assert.doesNotMatch(home, /absolute bottom-1\.5 h-1 w-5/); assert.doesNotMatch(home, /TEST_QUESTIONS/)
 })
 
+test('FASE H bloque 4: todos los desplegables principales inician cerrados', () => {
+  assert.match(home, /useState\(false\)/)
+  assert.match(home, /useState<QuickPanelId \| null>\(null\)/)
+  assert.match(home, /useState<PracticePanelId \| null>\(null\)/)
+  assert.match(coach, /const \[historyOpen, setHistoryOpen\] = useState\(false\)/)
+  assert.match(coach, /const \[customOpen, setCustomOpen\] = useState\(false\)/)
+})
+
 test('FASE H bloque 4: nivel adaptativo exige cobertura real y barra verde', () => {
   for (const label of ['Según mi progreso','Elegir nivel','Básico','Intermedio','Avanzado','Nivel 1','Nivel 2','Nivel 3','¿Qué te espera en']) assert.match(coach,new RegExp(label.replace('?','\\?')))
   assert.match(mastery,/deriveStrictAdaptiveLevel/)
@@ -31,6 +39,13 @@ test('FASE H bloque 4: banco ampliado y personalización no mezclan dificultad',
   assert.match(coach,/selectStrictAdaptiveQuestions/)
   assert.match(coach,/selectMasteryQuestions/)
   assert.ok((mastery.match(/difficulty: 'initial'/g)??[]).length>=20)
+})
+
+test('FASE H bloque 4: respuestas largas usan ancho completo y no se montan en móvil', () => {
+  assert.match(coach,/optionsNeedWideLayout/)
+  assert.match(coach,/option\.trim\(\)\.length > 14/)
+  assert.match(coach,/optionsNeedWideLayout \? 'grid-cols-1' : 'grid-cols-3'/)
+  assert.match(coach,/min-w-0 whitespace-normal break-words overflow-hidden/)
 })
 
 test('FASE H bloque 4: acierto sale de la rotación normal hasta retención', () => {
@@ -80,6 +95,8 @@ test('FASE H bloque 4: checkpoint oral muestra espectro activo antes de procesar
   assert.match(coach,/oral-spectrum-active/)
   assert.match(coach,/Micrófono activo, espectro de voz en movimiento/)
   assert.match(coach,/Te estoy escuchando…/)
+  assert.match(coach,/voiceTimeoutRef/)
+  assert.match(coach,/VOICE_TIMEOUT_MS/)
 })
 
 test('FASE H bloque 4: evita repetir símbolo hebreo cuando ya forma parte del enunciado', () => {
