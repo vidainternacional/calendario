@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
+  Library,
   Loader2,
   PackagePlus,
   Search,
@@ -28,6 +29,7 @@ type Paquete = {
 
 type Opcion = { id: string; titulo: string }
 type Recurso = Opcion & { categoria: string; tipo: 'archivo' | 'enlace' }
+type SeccionNueva = 'general' | 'contenido' | 'versiculos' | 'recursos'
 
 export default function PaquetesClient({
   paquetes,
@@ -43,6 +45,13 @@ export default function PaquetesClient({
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  const [seccionNueva, setSeccionNueva] = useState<SeccionNueva>('general')
+  const [titulo, setTitulo] = useState('')
+  const [descripcion, setDescripcion] = useState('')
+  const [instrucciones, setInstrucciones] = useState('')
+  const [bosquejoId, setBosquejoId] = useState('')
+  const [coleccionId, setColeccionId] = useState('')
+  const [recursoIds, setRecursoIds] = useState<string[]>([])
   const [isPending, startTransition] = useTransition()
 
   const termino = busqueda.trim().toLowerCase()
@@ -58,28 +67,41 @@ export default function PaquetesClient({
         mostrarToast(resultado.error)
         return
       }
-      mostrarToast('Paquete pastoral creado')
+      mostrarToast('Proyecto pastoral creado')
       router.push(`/pastoral/paquetes/${resultado.id}`)
     })
   }
 
   const eliminar = (id: string) => {
-    if (!window.confirm('¿Eliminar este paquete pastoral?')) return
+    if (!window.confirm('¿Eliminar este proyecto pastoral?')) return
     startTransition(async () => {
       const resultado = await eliminarPaquetePastoral(id)
-      mostrarToast(resultado.success ? 'Paquete eliminado' : resultado.error)
+      mostrarToast(resultado.success ? 'Proyecto eliminado' : resultado.error)
       if (resultado.success) router.refresh()
     })
   }
 
+  const alternarRecurso = (id: string) => {
+    setRecursoIds((actuales) => actuales.includes(id) ? actuales.filter((item) => item !== id) : [...actuales, id].slice(0, 30))
+  }
+
   const estadoLabel = { borrador: 'En preparación', listo: 'Listo', compartido: 'Publicado' }
+  const secciones: Array<{ id: SeccionNueva; label: string; icono: typeof PackagePlus }> = [
+    { id: 'general', label: 'General', icono: PackagePlus },
+    { id: 'contenido', label: 'Contenido', icono: FileText },
+    { id: 'versiculos', label: 'Versículos', icono: BookOpen },
+    { id: 'recursos', label: 'Recursos', icono: Library },
+  ]
 
   return (
     <div className="pastoral-project-workspace">
       <div className="pastoral-project-actions">
         <button
           type="button"
-          onClick={() => setMostrarFormulario((actual) => !actual)}
+          onClick={() => {
+            setMostrarFormulario((actual) => !actual)
+            setSeccionNueva('general')
+          }}
           className="pastoral-project-create"
           aria-expanded={mostrarFormulario}
         >
@@ -89,96 +111,122 @@ export default function PaquetesClient({
       </div>
 
       {mostrarFormulario && (
-        <form action={crear} className="pastoral-project-builder">
+        <form action={crear} className="pastoral-project-builder pastoral-project-builder-tabs">
           <div className="pastoral-project-builder-head">
             <p>Nuevo proyecto</p>
             <h2>Prepara el estudio</h2>
           </div>
 
-          <details className="pastoral-accordion">
-            <summary>
-              <span className="pastoral-accordion-number">1</span>
-              <span className="pastoral-accordion-copy">
-                <strong>Información básica</strong>
-                <small>Título y resumen</small>
-              </span>
-              <ChevronDown aria-hidden="true" />
-            </summary>
-            <div className="pastoral-accordion-content">
-              <label className="pastoral-field">
-                <span>Título</span>
-                <input name="titulo" required maxLength={140} placeholder="Ej. La fe que permanece" />
-              </label>
-              <label className="pastoral-field">
-                <span>Resumen <em>opcional</em></span>
-                <textarea name="descripcion_publica" maxLength={2000} rows={3} placeholder="Explica brevemente de qué trata." />
-              </label>
-            </div>
-          </details>
+          <nav className="pastoral-builder-tools" aria-label="Áreas del proyecto nuevo">
+            {secciones.map(({ id, label, icono: Icono }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setSeccionNueva(id)}
+                className={seccionNueva === id ? 'is-active' : ''}
+                aria-pressed={seccionNueva === id}
+              >
+                <Icono aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
 
-          <details className="pastoral-accordion">
-            <summary>
-              <span className="pastoral-accordion-number">2</span>
-              <span className="pastoral-accordion-copy">
-                <strong>Contenido</strong>
-                <small>Bosquejo y versículos</small>
-              </span>
-              <ChevronDown aria-hidden="true" />
-            </summary>
-            <div className="pastoral-accordion-content pastoral-field-grid">
-              <label className="pastoral-field">
-                <span><FileText aria-hidden="true" /> Bosquejo</span>
-                <select name="bosquejo_id">
-                  <option value="">Ninguno por ahora</option>
-                  {bosquejos.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}
-                </select>
-              </label>
-              <label className="pastoral-field">
-                <span><BookOpen aria-hidden="true" /> Versículos</span>
-                <select name="coleccion_id">
-                  <option value="">Ninguna por ahora</option>
-                  {colecciones.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}
-                </select>
-              </label>
-            </div>
-          </details>
+          <div className="pastoral-builder-panel" key={seccionNueva}>
+            {seccionNueva === 'general' && (
+              <div className="pastoral-builder-section">
+                <div className="pastoral-builder-section-title">
+                  <strong>Información general</strong>
+                  <span>Nombre y resumen del proyecto.</span>
+                </div>
+                <label className="pastoral-field">
+                  <span>Título</span>
+                  <input value={titulo} onChange={(event) => setTitulo(event.target.value)} required maxLength={140} placeholder="Ej. La fe que permanece" />
+                </label>
+                <label className="pastoral-field">
+                  <span>Resumen <em>opcional</em></span>
+                  <textarea value={descripcion} onChange={(event) => setDescripcion(event.target.value)} maxLength={2000} rows={3} placeholder="Explica brevemente de qué trata." />
+                </label>
+              </div>
+            )}
 
-          <details className="pastoral-accordion">
-            <summary>
-              <span className="pastoral-accordion-number">3</span>
-              <span className="pastoral-accordion-copy">
-                <strong>Aplicación y recursos</strong>
-                <small>Pasos, archivos y enlaces</small>
-              </span>
-              <ChevronDown aria-hidden="true" />
-            </summary>
-            <div className="pastoral-accordion-content">
-              <label className="pastoral-field">
-                <span>Preguntas o pasos <em>opcional</em></span>
-                <textarea name="instrucciones" maxLength={3000} rows={4} placeholder="Preguntas, lectura semanal o pasos prácticos." />
-              </label>
+            {seccionNueva === 'contenido' && (
+              <div className="pastoral-builder-section">
+                <div className="pastoral-builder-section-title">
+                  <strong>Contenido</strong>
+                  <span>Deja preparada la idea, aplicación o preguntas iniciales.</span>
+                </div>
+                <label className="pastoral-field">
+                  <span>Bosquejo base</span>
+                  <select value={bosquejoId} onChange={(event) => setBosquejoId(event.target.value)}>
+                    <option value="">Ninguno por ahora</option>
+                    {bosquejos.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}
+                  </select>
+                </label>
+                <label className="pastoral-field">
+                  <span>Aplicación o notas de trabajo <em>opcional</em></span>
+                  <textarea value={instrucciones} onChange={(event) => setInstrucciones(event.target.value)} maxLength={3000} rows={5} placeholder="Ideas, preguntas, pasos o contenido que completarás dentro del proyecto." />
+                </label>
+              </div>
+            )}
 
-              {recursos.length > 0 ? (
-                <fieldset className="pastoral-resource-picker">
-                  <legend>Archivos y enlaces</legend>
+            {seccionNueva === 'versiculos' && (
+              <div className="pastoral-builder-section">
+                <div className="pastoral-builder-section-title">
+                  <strong>Versículos</strong>
+                  <span>Conecta una colección existente; podrás seguir agregando versículos dentro del proyecto.</span>
+                </div>
+                <label className="pastoral-field">
+                  <span><BookOpen aria-hidden="true" /> Colección</span>
+                  <select value={coleccionId} onChange={(event) => setColeccionId(event.target.value)}>
+                    <option value="">Ninguna por ahora</option>
+                    {colecciones.map((item) => <option key={item.id} value={item.id}>{item.titulo}</option>)}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            {seccionNueva === 'recursos' && (
+              <div className="pastoral-builder-section">
+                <div className="pastoral-builder-section-title">
+                  <strong>Recursos</strong>
+                  <span>Selecciona archivos o enlaces que ya pertenecen a tu biblioteca.</span>
+                </div>
+                {recursos.length > 0 ? (
                   <div className="pastoral-resource-grid">
-                    {recursos.map((recurso) => (
-                      <label key={recurso.id} className="pastoral-resource-option">
-                        <input type="checkbox" name="recurso_ids" value={recurso.id} />
-                        <span>
-                          <strong>{recurso.titulo}</strong>
-                          <small>{recurso.tipo === 'archivo' ? 'Archivo' : 'Enlace'} · {recurso.categoria}</small>
-                        </span>
-                      </label>
-                    ))}
+                    {recursos.map((recurso) => {
+                      const seleccionado = recursoIds.includes(recurso.id)
+                      return (
+                        <button
+                          key={recurso.id}
+                          type="button"
+                          onClick={() => alternarRecurso(recurso.id)}
+                          className={`pastoral-resource-option ${seleccionado ? 'is-selected' : ''}`}
+                          aria-pressed={seleccionado}
+                        >
+                          <span>
+                            <strong>{recurso.titulo}</strong>
+                            <small>{recurso.tipo === 'archivo' ? 'Archivo' : 'Enlace'} · {recurso.categoria}</small>
+                          </span>
+                          <CheckCircle2 aria-hidden="true" />
+                        </button>
+                      )
+                    })}
                   </div>
-                </fieldset>
-              ) : <p className="pastoral-inline-note">No hay recursos todavía. Puedes agregarlos después.</p>}
-            </div>
-          </details>
+                ) : <p className="pastoral-inline-note">No hay recursos todavía. Puedes agregarlos después.</p>}
+              </div>
+            )}
+          </div>
 
+          <input type="hidden" name="titulo" value={titulo} />
+          <input type="hidden" name="descripcion_publica" value={descripcion} />
+          <input type="hidden" name="instrucciones" value={instrucciones} />
+          <input type="hidden" name="bosquejo_id" value={bosquejoId} />
+          <input type="hidden" name="coleccion_id" value={coleccionId} />
+          {recursoIds.map((id) => <input key={id} type="hidden" name="recurso_ids" value={id} />)}
           <input type="hidden" name="estado" value="borrador" />
-          <button type="submit" disabled={isPending} className="pastoral-project-submit">
+
+          <button type="submit" disabled={isPending || !titulo.trim()} className="pastoral-project-submit">
             {isPending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
             {isPending ? 'Creando…' : 'Crear y continuar'}
           </button>
@@ -200,7 +248,7 @@ export default function PaquetesClient({
               value={busqueda}
               onChange={(event) => setBusqueda(event.target.value)}
               placeholder="Buscar proyecto"
-              aria-label="Buscar paquetes por nombre o tema"
+              aria-label="Buscar proyectos por nombre o tema"
             />
             {busqueda && (
               <button type="button" onClick={() => setBusqueda('')} aria-label="Limpiar búsqueda">
@@ -238,21 +286,6 @@ export default function PaquetesClient({
               ))}
             </div>
           )}
-        </div>
-      </details>
-
-      <details className="pastoral-accordion pastoral-how-it-works">
-        <summary>
-          <span className="pastoral-accordion-copy">
-            <strong>Cómo funciona</strong>
-            <small>Preparar, completar y compartir</small>
-          </span>
-          <ChevronDown aria-hidden="true" />
-        </summary>
-        <div className="pastoral-accordion-content pastoral-how-steps">
-          <p><strong>1. Prepara</strong><span>Elige bosquejo y versículos.</span></p>
-          <p><strong>2. Completa</strong><span>Agrega recursos y aplicación.</span></p>
-          <p><strong>3. Comparte</strong><span>Revisa, publica o imprime.</span></p>
         </div>
       </details>
     </div>
