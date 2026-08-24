@@ -5,70 +5,63 @@ import { createClient } from '@/lib/supabase/server'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 type Plantilla = 'limpia' | 'titulo' | 'imagen' | 'versiculo'
-type Diapositiva = { titulo: string; contenido: string; recurso_id: string | null; plantilla: Plantilla }
+type Alineacion = 'izquierda' | 'centro' | 'derecha'
+type Tamano = 'compacto' | 'normal' | 'grande'
+type Diapositiva = {
+  titulo: string
+  contenido: string
+  recurso_id: string | null
+  plantilla: Plantilla
+  fondo: string
+  color_texto: string
+  alineacion: Alineacion
+  tamano: Tamano
+}
 
 async function contextoPastoral() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-
-  const { data: profile } = await (supabase as any)
-    .from('profiles')
-    .select('rol, estado_cuenta, acceso_centro_pastoral')
-    .eq('id', user.id)
-    .single()
-
-  if (!tieneAccesoPastoral(profile as any)) return { supabase, user, error: 'No tienes permiso para administrar paquetes pastorales.' }
+  const { data: profile } = await (supabase as any).from('profiles').select('rol, estado_cuenta, acceso_centro_pastoral').eq('id', user.id).single()
+  if (!tieneAccesoPastoral(profile as any)) return { supabase, user, error: 'No tienes permiso para administrar proyectos pastorales.' }
   return { supabase, user, error: null }
 }
 
-function texto(formData: FormData, campo: string, maximo: number) {
-  return String(formData.get(campo) ?? '').trim().slice(0, maximo)
-}
-
-function uuidOpcional(valor: FormDataEntryValue | null) {
-  const value = String(valor ?? '').trim()
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null
-}
-
-function estadoValido(valor: string) {
-  return ['borrador', 'listo', 'compartido'].includes(valor) ? valor : 'borrador'
-}
-
-function plantillaValida(valor: FormDataEntryValue | undefined): Plantilla {
-  const value = String(valor ?? '').trim()
-  return ['limpia', 'titulo', 'imagen', 'versiculo'].includes(value) ? value as Plantilla : 'limpia'
-}
-
-function recursosDesdeFormulario(formData: FormData) {
-  return Array.from(new Set(formData.getAll('recurso_ids').map((valor) => uuidOpcional(valor)).filter(Boolean))).slice(0, 30) as string[]
-}
+function texto(formData: FormData, campo: string, maximo: number) { return String(formData.get(campo) ?? '').trim().slice(0, maximo) }
+function uuidOpcional(valor: FormDataEntryValue | null) { const value = String(valor ?? '').trim(); return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null }
+function estadoValido(valor: string) { return ['borrador', 'listo', 'compartido'].includes(valor) ? valor : 'borrador' }
+function plantillaValida(valor: FormDataEntryValue | undefined): Plantilla { const value = String(valor ?? '').trim(); return ['limpia', 'titulo', 'imagen', 'versiculo'].includes(value) ? value as Plantilla : 'limpia' }
+function alineacionValida(valor: FormDataEntryValue | undefined): Alineacion { const value = String(valor ?? '').trim(); return ['izquierda', 'centro', 'derecha'].includes(value) ? value as Alineacion : 'izquierda' }
+function tamanoValido(valor: FormDataEntryValue | undefined): Tamano { const value = String(valor ?? '').trim(); return ['compacto', 'normal', 'grande'].includes(value) ? value as Tamano : 'normal' }
+function colorValido(valor: FormDataEntryValue | undefined, fallback: string) { const value = String(valor ?? '').trim(); return /^#[0-9a-f]{6}$/i.test(value) ? value : fallback }
+function recursosDesdeFormulario(formData: FormData) { return Array.from(new Set(formData.getAll('recurso_ids').map((valor) => uuidOpcional(valor)).filter(Boolean))).slice(0, 30) as string[] }
 
 function diapositivasDesdeFormulario(formData: FormData): Diapositiva[] {
   const titulos = formData.getAll('diapositiva_titulo')
   const contenidos = formData.getAll('diapositiva_contenido')
   const recursos = formData.getAll('diapositiva_recurso_id')
   const plantillas = formData.getAll('diapositiva_plantilla')
+  const fondos = formData.getAll('diapositiva_fondo')
+  const colores = formData.getAll('diapositiva_color_texto')
+  const alineaciones = formData.getAll('diapositiva_alineacion')
+  const tamanos = formData.getAll('diapositiva_tamano')
   return titulos.map((valor, index) => ({
     titulo: String(valor).trim().slice(0, 160),
-    contenido: String(contenidos[index] ?? '').trim().slice(0, 1800),
+    contenido: String(contenidos[index] ?? '').trim().slice(0, 6000),
     recurso_id: uuidOpcional(recursos[index] ?? null),
     plantilla: plantillaValida(plantillas[index]),
-  })).filter((item) => item.titulo || item.contenido || item.recurso_id).slice(0, 30)
+    fondo: colorValido(fondos[index], '#ffffff'),
+    color_texto: colorValido(colores[index], '#0f172a'),
+    alineacion: alineacionValida(alineaciones[index]),
+    tamano: tamanoValido(tamanos[index]),
+  })).filter((item) => item.titulo || item.contenido || item.recurso_id).slice(0, 50)
 }
 
 export async function listarPaquetesPastoralesParaNotas() {
   const { supabase, user, error } = await contextoPastoral()
   if (error || !user) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error }
-
-  const { data, error: queryError } = await (supabase as any)
-    .from('pastoral_paquetes')
-    .select('id, titulo')
-    .eq('profile_id', user.id)
-    .order('updated_at', { ascending: false })
-    .limit(50)
-
-  if (queryError) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error: 'No se pudieron cargar los paquetes.' }
+  const { data, error: queryError } = await (supabase as any).from('pastoral_paquetes').select('id, titulo').eq('profile_id', user.id).order('updated_at', { ascending: false }).limit(50)
+  if (queryError) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error: 'No se pudieron cargar los proyectos.' }
   return { success: true as const, paquetes: (data ?? []) as Array<{ id: string; titulo: string }> }
 }
 
@@ -76,23 +69,11 @@ export async function crearPaquetePastoral(formData: FormData) {
   const { supabase, user, error } = await contextoPastoral()
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const titulo = texto(formData, 'titulo', 140)
-  if (!titulo) return { success: false, error: 'Escribe un título para el paquete.' }
-
+  if (!titulo) return { success: false, error: 'Escribe un título para el proyecto.' }
   const { data, error: insertError } = await (supabase as any).from('pastoral_paquetes').insert({
-    profile_id: user.id,
-    titulo,
-    descripcion_publica: texto(formData, 'descripcion_publica', 2000),
-    instrucciones: texto(formData, 'instrucciones', 3000),
-    notas_privadas: texto(formData, 'notas_privadas', 12000),
-    bosquejo_id: uuidOpcional(formData.get('bosquejo_id')),
-    coleccion_id: uuidOpcional(formData.get('coleccion_id')),
-    recurso_ids: recursosDesdeFormulario(formData),
-    presentacion_diapositivas: diapositivasDesdeFormulario(formData),
-    presentacion_pdf_recurso_id: uuidOpcional(formData.get('presentacion_pdf_recurso_id')),
-    estado: estadoValido(texto(formData, 'estado', 20)),
+    profile_id: user.id, titulo, descripcion_publica: texto(formData, 'descripcion_publica', 2000), instrucciones: texto(formData, 'instrucciones', 3000), notas_privadas: texto(formData, 'notas_privadas', 12000), bosquejo_id: uuidOpcional(formData.get('bosquejo_id')), coleccion_id: uuidOpcional(formData.get('coleccion_id')), recurso_ids: recursosDesdeFormulario(formData), presentacion_diapositivas: diapositivasDesdeFormulario(formData), presentacion_pdf_recurso_id: uuidOpcional(formData.get('presentacion_pdf_recurso_id')), estado: estadoValido(texto(formData, 'estado', 20)),
   }).select('id').single()
-
-  if (insertError || !data) return { success: false, error: 'No se pudo crear el paquete pastoral.' }
+  if (insertError || !data) return { success: false, error: 'No se pudo crear el proyecto pastoral.' }
   revalidatePath('/pastoral'); revalidatePath('/pastoral/paquetes')
   return { success: true, id: data.id as string }
 }
@@ -102,22 +83,10 @@ export async function editarPaquetePastoral(id: string, formData: FormData) {
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const titulo = texto(formData, 'titulo', 140)
   if (!titulo) return { success: false, error: 'El título es obligatorio.' }
-
   const { error: updateError } = await (supabase as any).from('pastoral_paquetes').update({
-    titulo,
-    descripcion_publica: texto(formData, 'descripcion_publica', 2000),
-    instrucciones: texto(formData, 'instrucciones', 3000),
-    notas_privadas: texto(formData, 'notas_privadas', 12000),
-    bosquejo_id: uuidOpcional(formData.get('bosquejo_id')),
-    coleccion_id: uuidOpcional(formData.get('coleccion_id')),
-    recurso_ids: recursosDesdeFormulario(formData),
-    presentacion_diapositivas: diapositivasDesdeFormulario(formData),
-    presentacion_pdf_recurso_id: uuidOpcional(formData.get('presentacion_pdf_recurso_id')),
-    estado: estadoValido(texto(formData, 'estado', 20)),
-    updated_at: new Date().toISOString(),
+    titulo, descripcion_publica: texto(formData, 'descripcion_publica', 2000), instrucciones: texto(formData, 'instrucciones', 3000), notas_privadas: texto(formData, 'notas_privadas', 12000), bosquejo_id: uuidOpcional(formData.get('bosquejo_id')), coleccion_id: uuidOpcional(formData.get('coleccion_id')), recurso_ids: recursosDesdeFormulario(formData), presentacion_diapositivas: diapositivasDesdeFormulario(formData), presentacion_pdf_recurso_id: uuidOpcional(formData.get('presentacion_pdf_recurso_id')), estado: estadoValido(texto(formData, 'estado', 20)), updated_at: new Date().toISOString(),
   }).eq('id', id).eq('profile_id', user.id)
-
-  if (updateError) return { success: false, error: 'No se pudo guardar el paquete pastoral.' }
+  if (updateError) return { success: false, error: 'No se pudo guardar el proyecto pastoral.' }
   revalidatePath('/pastoral'); revalidatePath('/pastoral/paquetes'); revalidatePath(`/pastoral/paquetes/${id}`)
   return { success: true }
 }
@@ -126,7 +95,7 @@ export async function eliminarPaquetePastoral(id: string) {
   const { supabase, user, error } = await contextoPastoral()
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const { error: deleteError } = await (supabase as any).from('pastoral_paquetes').delete().eq('id', id).eq('profile_id', user.id)
-  if (deleteError) return { success: false, error: 'No se pudo eliminar el paquete pastoral.' }
+  if (deleteError) return { success: false, error: 'No se pudo eliminar el proyecto pastoral.' }
   revalidatePath('/pastoral'); revalidatePath('/pastoral/paquetes')
   return { success: true }
 }
