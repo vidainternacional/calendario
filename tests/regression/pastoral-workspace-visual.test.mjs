@@ -11,9 +11,8 @@ const detailStyles = fs.readFileSync('app/(app)/pastoral/paquetes/[id]/workspace
 test('Centro Pastoral conserva Proyecto visible y herramientas en rejilla horizontal', () => {
   assert.match(page, /<h2 id="proyecto-pastoral">Proyecto<\/h2>/)
   assert.match(page, /className="pastoral-primary-action"/)
-  assert.match(page, /className="pastoral-tool-grid"/)
-  assert.match(styles, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
-  assert.match(styles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(page, /grid grid-cols-3 gap-x-3 gap-y-5 py-6 sm:grid-cols-4/)
+  assert.match(page, /h-7 w-7 stroke-\[1\.8\]/)
   assert.doesNotMatch(page, /<details/)
 })
 
@@ -32,15 +31,13 @@ test('Centro Pastoral conserva las rutas funcionales existentes', () => {
 test('Centro Pastoral evita composición de lista y tarjetas anidadas', () => {
   assert.match(page, /pastoral-workspace/)
   assert.match(styles, /accesos como iconos directos sobre el background/)
-  assert.match(styles, /\.pastoral-tool-link/)
   assert.doesNotMatch(page, /pastoral-work-section/)
   assert.doesNotMatch(page, /bg-gradient-to-br from-indigo-600 to-violet-700/)
 })
 
 test('Centro Pastoral mantiene iconos directos y feedback móvil', () => {
-  assert.match(styles, /\.pastoral-tool-link:active/)
-  assert.match(styles, /transform: scale\(\.96\)/)
-  assert.match(styles, /-webkit-tap-highlight-color: transparent/)
+  assert.match(page, /active:scale-95/)
+  assert.match(page, /group-active:scale-90/)
 })
 
 test('Proyecto nuevo usa iconos horizontales y un solo panel editable', () => {
