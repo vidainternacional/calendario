@@ -1,0 +1,294 @@
+/* Centro Pastoral — compactación y estabilidad visual móvil.
+   Solo UX/UI: evita reflow al abrir paneles y unifica el editor con VIDA. */
+
+/* Controles directos del lienzo: visibles, pero no dominantes. */
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Mover elemento'],
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Eliminar elemento'] {
+  width: 30px !important;
+  height: 30px !important;
+  border-width: 1px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .09) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Mover elemento'] svg,
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Eliminar elemento'] svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Redimensionar elemento'] {
+  width: 23px !important;
+  height: 23px !important;
+  border-width: 3px !important;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, .08) !important;
+}
+
+/* El editor pastoral comparte la misma superficie que la app; sin doble colchón inferior. */
+.flex-1.pb-16:has(.pastoral-canva-workspace) {
+  padding-bottom: 0 !important;
+}
+
+body:has(.pastoral-canva-workspace) .app-bottom-nav {
+  box-shadow: none !important;
+  border-top-color: #e4e7eb !important;
+}
+
+@media (orientation: portrait) and (max-width: 767px) {
+  /* Barra de proyecto y vistas: más compactas, sin perder legibilidad. */
+  .pastoral-canva-workspace > header {
+    padding-top: .38rem !important;
+    padding-bottom: .28rem !important;
+  }
+
+  .pastoral-canva-workspace > header input[aria-label='Título del proyecto'] {
+    font-size: .92rem !important;
+  }
+
+  .pastoral-canva-workspace > header button[aria-label='Deshacer'],
+  .pastoral-canva-workspace > header button[aria-label='Rehacer'],
+  .pastoral-canva-workspace > header button[aria-label='Guardar proyecto'] {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .pastoral-canva-workspace > header button[aria-label='Deshacer'] svg,
+  .pastoral-canva-workspace > header button[aria-label='Rehacer'] svg,
+  .pastoral-canva-workspace > header button[aria-label='Guardar proyecto'] svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .pastoral-canva-workspace > header nav {
+    gap: 1rem !important;
+    margin-top: .05rem !important;
+  }
+
+  .pastoral-canva-workspace > header nav button {
+    min-height: 1.8rem !important;
+    font-size: .72rem !important;
+  }
+
+  /*
+   * Clave: el panel ya no crea una fila nueva ni comprime el lienzo.
+   * Stage + dock mantienen exactamente su posición; el panel se superpone.
+   */
+  .pastoral-canva-workspace .pastoral-editor-shell,
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    position: relative !important;
+    grid-template-areas:
+      'stage'
+      'dock' !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) 47px !important;
+    min-height: calc(100dvh - 154px) !important;
+    background: #f3f4f5 !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel .pastoral-stage,
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel .pastoral-canvas-wrap {
+    min-height: 0 !important;
+  }
+
+  /* No ocultar páginas al abrir opciones: evita que el lienzo cambie de posición/tamaño. */
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel .pastoral-pages-strip {
+    display: flex !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage {
+    min-height: 0 !important;
+    gap: .35rem !important;
+    padding: .42rem .55rem .35rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-canvas-wrap,
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel .pastoral-canvas-wrap {
+    padding: .25rem .55rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip {
+    min-height: 34px !important;
+    padding: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child,
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+    min-height: 34px !important;
+  }
+
+  /* Dock fijo y más pequeño: seis herramientas caben sin sentirse gigantes. */
+  .pastoral-canva-workspace .pastoral-tool-dock {
+    grid-area: dock !important;
+    min-height: 47px !important;
+    height: 47px !important;
+    padding: 0 .18rem env(safe-area-inset-bottom) !important;
+    align-items: stretch !important;
+    background: #fcfcfb !important;
+    border-top: 1px solid #e1e5e9 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button {
+    min-width: 58px !important;
+    min-height: 46px !important;
+    height: 46px !important;
+    gap: .08rem !important;
+    padding: .2rem .12rem !important;
+    font-size: .58rem !important;
+    font-weight: 590 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button svg {
+    width: 17px !important;
+    height: 17px !important;
+    stroke-width: 1.65 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button.is-active::before {
+    height: 2px !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4),
+  .pastoral-canva-workspace:has([data-canvas-element='texto'].ring-2) .pastoral-tool-dock > button:nth-child(6),
+  .pastoral-canva-workspace:has([data-canvas-element='versiculo'].ring-2) .pastoral-tool-dock > button:nth-child(6) {
+    margin-left: .08rem !important;
+  }
+
+  /* Bandeja continua: sin apariencia de card y sin mover el editor. */
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    position: absolute !important;
+    z-index: 42 !important;
+    right: 0 !important;
+    bottom: 47px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: min(38dvh, 330px) !important;
+    max-height: min(38dvh, 330px) !important;
+    border: 0 !important;
+    border-top: 1px solid #e1e5e9 !important;
+    border-radius: 0 !important;
+    background: #fcfcfb !important;
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, .035) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-sheet-handle {
+    height: 15px !important;
+    border-radius: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-sheet-handle span {
+    width: 28px !important;
+    height: 3px !important;
+    background: #d3d8de !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll {
+    height: calc(min(38dvh, 330px) - 15px) !important;
+    padding: .2rem .9rem calc(.75rem + env(safe-area-inset-bottom)) !important;
+    overscroll-behavior: contain;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll > div {
+    gap: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll > div > div + div {
+    margin-top: .65rem !important;
+    padding-top: .65rem !important;
+  }
+
+  /* TEXTO — acción + jerarquías como una sola superficie, no cuatro cajas. */
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .grid.grid-cols-2.gap-2:first-child {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    border-bottom: 1px solid #e7eaee !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .grid.grid-cols-2.gap-2:first-child > button {
+    min-height: 39px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #334155 !important;
+    --tw-ring-shadow: none !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .grid.grid-cols-2.gap-2:first-child > button:first-child {
+    grid-column: 1 / -1 !important;
+    justify-content: flex-start !important;
+    min-height: 40px !important;
+    padding: 0 .35rem !important;
+    border-bottom: 1px solid #e7eaee !important;
+    color: #b6352a !important;
+    font-size: .78rem !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .grid.grid-cols-2.gap-2:first-child > button:not(:first-child) {
+    font-size: .74rem !important;
+    font-weight: 590 !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .grid.grid-cols-2.gap-2:first-child > button:not(:first-child) + button {
+    border-left: 1px solid #e7eaee !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .grid.grid-cols-2.gap-2:first-child > button[class*='bg-violet-600'] {
+    background: rgba(192, 57, 43, .065) !important;
+    color: #b6352a !important;
+  }
+
+  /* Tipografías como lista compacta; no píldoras grandes. */
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .flex.gap-2.overflow-x-auto button {
+    min-height: 31px !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 .55rem !important;
+    box-shadow: none !important;
+    color: #53606f !important;
+    --tw-ring-shadow: none !important;
+    border-bottom: 2px solid transparent !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] .flex.gap-2.overflow-x-auto button[class*='bg-slate-900'] {
+    color: #b6352a !important;
+    border-bottom-color: #c0392b !important;
+  }
+
+  /* Formato inline: más pequeño y alineado. */
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] button[aria-pressed] {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: .35rem !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] button[aria-pressed] svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] label[class*='rounded-full'] {
+    min-height: 34px !important;
+    border-radius: .4rem !important;
+    padding-left: .65rem !important;
+    padding-right: .65rem !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] button[aria-label^='Color de texto'] {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .pastoral-canva-workspace aside[aria-label='Panel texto'] input[type='range'] {
+    height: 22px !important;
+  }
+
+  /* Otros paneles: botones menos altos, para mantener densidad de VIDA/Hebreo. */
+  .pastoral-canva-workspace .pastoral-tool-panel button[class*='min-h-11'] {
+    min-height: 38px !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel button[class*='min-h-10'] {
+    min-height: 34px !important;
+  }
+}
