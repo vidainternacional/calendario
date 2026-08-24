@@ -116,7 +116,8 @@ test('Deshacer y Rehacer son globales siempre visibles y cubren páginas metadat
 test('Los formatos responden a móvil iPad computadora y distintas relaciones de aspecto', () => {
   for (const formato of ['16:9', '9:16', '4:3', '1:1']) assert.match(model, new RegExp(formato.replace(':', '\\:')))
   assert.match(canvas, /aspectRatio: aspectoLienzo/)
-  assert.match(canvas, /maxWidth: pagina\.formato === '9:16'/)
+  assert.match(canvas, /const baseWidth = pagina\.formato === '9:16'/)
+  assert.match(canvas, /maxWidth: `\$\{baseWidth\}px`/)
   assert.match(workspace, /sm:grid-cols-4/)
 })
 
