@@ -49,18 +49,25 @@ test('FASE H bloque 4: cada respuesta se valida guarda y los errores entran a Re
   assert.match(coach,/aciertos/)
 })
 
-test('FASE H bloque 4: pronunciación es checkpoint independiente y necesariamente final', () => {
+test('FASE H bloque 4: modalidades separan mixto vocabulario lectura y pronunciación', () => {
+  assert.match(coach,/type TrainingFocus = 'mixed' \| 'vocabulary' \| 'reading' \| 'pronunciation' \| 'reading_pronunciation'/)
+  for (const label of ['Mixto','Vocabulario','Lectura','Pronunciación','Lectura + voz']) assert.match(coach,new RegExp(label.replace('+','\\+')))
+  assert.match(coach,/skillsForTraining/)
+  assert.match(coach,/trainingFocus === 'pronunciation'/)
+  assert.match(coach,/trainingFocus==='mixed'/)
+})
+
+test('FASE H bloque 4: pronunciación ocupa un tramo final de tres a cinco preguntas', () => {
   assert.match(coach,/ORAL_CHECKPOINTS/)
   assert.match(coach,/interaction:\s*'pronunciation'/)
+  assert.match(coach,/function oralCountFor/)
+  assert.match(coach,/total >= 20 \? 5 : total >= 15 \? 4 : 3/)
   assert.match(coach,/function completeWrittenSelection/)
-  assert.match(coach,/minimumWritten = Math\.min\(questionCount, 10\)/)
-  assert.match(coach,/!normalQuestions\.length \|\| !isWrittenQuestion\(normalQuestions\[0\]\)/)
-  assert.match(coach,/setQuestions\(\[\.\.\.normalQuestions, checkpoint\]\)/)
-  assert.match(coach,/Último paso · Pronunciación/)
+  assert.match(coach,/const sessionQuestions = \[\.\.\.normalQuestions, \.\.\.oralQuestions\]/)
+  assert.match(coach,/La parte oral no puede aparecer antes de la parte escrita/)
   assert.match(coach,/No hay respuestas para elegir/)
   assert.match(coach,/submitPronunciation/)
   assert.match(coach,/question_key\.startsWith\('oral-/)
-  assert.doesNotMatch(coach,/Prueba tu pronunciación/)
 })
 
 test('FASE H bloque 4: checkpoint oral muestra espectro activo antes de procesar el resultado', () => {
@@ -75,7 +82,15 @@ test('FASE H bloque 4: checkpoint oral muestra espectro activo antes de procesar
   assert.match(coach,/Te estoy escuchando…/)
 })
 
-test('FASE H bloque 4: 100 por ciento abre perfeccionamiento sin inflar la escala', () => {
+test('FASE H bloque 4: evita repetir símbolo hebreo cuando ya forma parte del enunciado', () => {
+  assert.match(coach,/promptAlreadyShowsHebrew/)
+  assert.match(coach,/normalizeHebrew\(current\.prompt\)\.includes\(normalizeHebrew\(current\.hebrew\)\)/)
+  assert.match(coach,/isPronunciation \|\| !promptAlreadyShowsHebrew/)
+})
+
+test('FASE H bloque 4: logros se derivan de intentos reales y no inventan niveles mayores de 100', () => {
+  assert.match(coach,/const medals = useMemo/)
+  for (const label of ['Palabras','Lectura','Pronunciación','Reglas','Oro','Plata','Bronce','En camino']) assert.match(coach,new RegExp(label))
   assert.match(coach,/Fundamentos dominados · 100%/)
   assert.match(coach,/Perfeccionamiento/)
   assert.match(coach,/no sube artificialmente de 100%/)
@@ -84,11 +99,14 @@ test('FASE H bloque 4: 100 por ciento abre perfeccionamiento sin inflar la escal
   assert.match(coach,/oralPassed\.advanced/)
 })
 
-test('FASE H bloque 4: cierre da retroalimentación y recomendación derivada', () => {
+test('FASE H bloque 4: cierre da continuidad adaptativa además de retroalimentación', () => {
   assert.match(coach,/finalFeedback/)
   assert.match(coach,/Excelente sesión/)
   assert.match(coach,/reforzar fundamentos/)
   assert.match(coach,/metrics\.recommendation/)
+  assert.match(coach,/continueTraining/)
+  assert.match(coach,/Continuar entrenando/)
+  assert.match(coach,/Cambiar entrenamiento/)
 })
 
 test('FASE H bloque 4: Mi progreso concentra notas dominio retención y recomendación', () => { for(const token of ['deriveProgressMetrics','accuracy','areas','evolution','retention','trend','recurringErrors','recommendation']) assert.match(progress,new RegExp(token)); assert.match(summary,/deriveSessionGrades/); assert.match(summary,/deriveStrictAdaptiveLevel/); assert.match(summary,/Evaluaciones registradas/); assert.match(summary,/Dominio por área/); assert.match(summary,/Precisión/); assert.match(summary,/Retención/); assert.match(summary,/Qué estudiar después/); assert.match(home,/data-evaluation-only/); for(const state of ['Reforzar','En progreso','Dominado']) assert.match(progress,new RegExp(state)) })
