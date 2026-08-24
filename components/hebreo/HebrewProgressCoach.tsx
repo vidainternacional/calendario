@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Award, CheckCircle2, ChevronDown, Mic, RotateCcw, SlidersHorizontal, Square, Sparkles } from 'lucide-react'
+import { Award, CheckCircle2, ChevronDown, Mic, RotateCcw, SlidersHorizontal, Square, Sparkles, XCircle } from 'lucide-react'
 import {
   deriveProgressMetrics,
   SKILL_LABELS,
@@ -35,10 +35,11 @@ const DIFFICULTIES: readonly { id: HebrewDifficulty; label: string; level: strin
 const LENGTHS = [10, 15, 20] as const
 const IDLE_LEVELS = [12, 18, 26, 34, 42, 50, 42, 34, 26, 18, 12]
 const VOICE_TIMEOUT_MS = 8500
+const VOICE_RETRY_DELAY_MS = 520
 
 type TimedProgressAnswer = HebrewProgressAnswer & { response_time_ms?: number | null }
 type CoachQuestion = HebrewPracticeQuestion & { interaction?: 'choice' | 'pronunciation'; pronunciationHint?: string }
-type SpeechResultEvent = { results: { length?: number; [index: number]: { [index: number]: { transcript: string } } } }
+type SpeechResultEvent = { results: { length?: number; [index: number]: { isFinal?: boolean; [index: number]: { transcript: string } } } }
 type SpeechErrorEvent = { error?: string }
 type SpeechRecognitionLike = {
   lang: string
@@ -141,6 +142,9 @@ export default function HebrewProgressCoach() {
   const analyserRef = useRef<AnalyserNode | null>(null)
   const frameRef = useRef<number | null>(null)
   const voiceTimeoutRef = useRef<number | null>(null)
+  const voiceAttemptFailedRef = useRef(false)
+  const voiceSubmittedRef = useRef(false)
+  const voiceRetryRef = useRef(0)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -157,14 +161,25 @@ export default function HebrewProgressCoach() {
     pauseSpectrum(); streamRef.current?.getTracks().forEach(track => track.stop()); streamRef.current = null
     const context = audioContextRef.current; audioContextRef.current = null
     if (context && context.state !== 'closed') try { await context.close() } catch { /* iOS puede haberlo cerrado */ }
+    if (typeof navigator !== 'undefined') {
+      const audioSession = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
+      if (audioSession) try { audioSession.type = 'playback'; audioSession.type = 'auto' } catch { /* Safari puede no exponer esta API */ }
+    }
   }
   function drawSpectrum(analyser: AnalyserNode) {
-    const data = new Uint8Array(analyser.frequencyBinCount)
+    const waveform = new Uint8Array(analyser.fftSize)
     const draw = () => {
       if (analyserRef.current !== analyser) return
-      analyser.getByteFrequencyData(data)
-      const average = data.length ? data.reduce((sum, value) => sum + value, 0) / data.length : 0
-      setLevels(IDLE_LEVELS.map((_, bar) => { const distance = Math.abs(bar - Math.floor(IDLE_LEVELS.length / 2)); const sample = data[Math.min(data.length - 1, Math.max(0, Math.floor((bar / IDLE_LEVELS.length) * data.length)))] ?? average; return Math.max(12, Math.min(100, Math.round(((sample * .7 + average * .3) / 255) * 100 * Math.max(.52, 1 - distance * .055)))) }))
+      analyser.getByteTimeDomainData(waveform)
+      let energy = 0
+      for (let sample = 0; sample < waveform.length; sample += 1) { const centered = (waveform[sample] - 128) / 128; energy += centered * centered }
+      const rms = Math.sqrt(energy / Math.max(1, waveform.length))
+      const loudness = Math.max(0, Math.min(1, (rms - .015) * 7.2))
+      setLevels(IDLE_LEVELS.map((base, bar) => {
+        const distance = Math.abs(bar - Math.floor(IDLE_LEVELS.length / 2)); const shape = Math.max(.45, 1 - distance * .08)
+        const sampleIndex = Math.min(waveform.length - 1, Math.floor((bar / IDLE_LEVELS.length) * waveform.length)); const local = Math.abs((waveform[sampleIndex] - 128) / 128)
+        return Math.max(8, Math.min(100, Math.round(base * .22 + (loudness * 82 + local * 28) * shape)))
+      }))
       frameRef.current = requestAnimationFrame(draw)
     }
     draw()
@@ -177,7 +192,7 @@ export default function HebrewProgressCoach() {
     let context = audioContextRef.current
     if (!context || context.state === 'closed') { context = new AudioContextCtor(); audioContextRef.current = context }
     if (context.state === 'suspended') try { await context.resume() } catch { /* Safari reintenta con el gesto */ }
-    pauseSpectrum(); const analyser = context.createAnalyser(); analyser.fftSize = 128; analyser.smoothingTimeConstant = .62; context.createMediaStreamSource(streamRef.current!).connect(analyser); analyserRef.current = analyser; drawSpectrum(analyser)
+    pauseSpectrum(); const analyser = context.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = .42; context.createMediaStreamSource(streamRef.current!).connect(analyser); analyserRef.current = analyser; drawSpectrum(analyser)
   }
   useEffect(() => () => { clearVoiceTimeout(); try { recognitionRef.current?.stop() } catch { /* ya detenido */ }; void releaseMicrophone() }, [])
 
@@ -232,7 +247,7 @@ export default function HebrewProgressCoach() {
   }
 
   async function begin() {
-    setSaving(true); setError(null); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''
+    setSaving(true); setError(null); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''; voiceRetryRef.current = 0; voiceAttemptFailedRef.current = false; voiceSubmittedRef.current = false
     try {
       const requested: HebrewDifficulty = mode === 'difficulty' ? difficulty : adaptiveLevel.level === 1 ? 'initial' : adaptiveLevel.level === 2 ? 'intermediate' : 'advanced'
       const areas = skillsForTraining(trainingFocus, focusAreas); const oralCount = oralCountFor(questionCount, trainingFocus); const writtenCount = trainingFocus === 'pronunciation' ? 0 : Math.max(1, questionCount - oralCount)
@@ -254,7 +269,7 @@ export default function HebrewProgressCoach() {
   }
 
   async function advanceAfterSave() {
-    await new Promise(resolve => window.setTimeout(resolve, 520)); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''; clearVoiceTimeout(); await releaseMicrophone()
+    await new Promise(resolve => window.setTimeout(resolve, 420)); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''; voiceRetryRef.current = 0; voiceAttemptFailedRef.current = false; voiceSubmittedRef.current = false; clearVoiceTimeout(); await releaseMicrophone()
     if (index + 1 < questions.length) { questionStartedAtRef.current = nowMs(); setIndex(value => value + 1); setSelected(null); return }
     if (!sessionId) return
     questionStartedAtRef.current = null; await finishHebrewProgressSession(sessionId); setFinished(true); setSelected(null); await refresh()
@@ -267,35 +282,53 @@ export default function HebrewProgressCoach() {
     finally { setSaving(false) }
   }
 
-  async function startListening() {
-    if (!current?.hebrew || !isPronunciation || typeof window === 'undefined' || saving || voiceStatus !== 'idle') return
+  async function startListening(isRetry = false) {
+    if (!current?.hebrew || !isPronunciation || typeof window === 'undefined' || saving || (!isRetry && voiceStatus !== 'idle')) return
     const speechWindow = window as typeof window & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }; const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition
     if (!Recognition) { setSpeechError('Este navegador no ofrece reconocimiento de voz compatible. En iPhone, abre el Preview directamente en Safari y permite el micrófono.'); return }
-    clearVoiceTimeout(); await releaseMicrophone(); setSpeechResult(null); setSpeechError(null); capturedRef.current = ''; setVoiceStatus('requesting')
+    if (!isRetry) voiceRetryRef.current = 0
+    clearVoiceTimeout(); await releaseMicrophone(); setSpeechResult(null); setSpeechError(null); capturedRef.current = ''; voiceAttemptFailedRef.current = false; voiceSubmittedRef.current = false; setVoiceStatus('requesting')
     try {
-      await ensureMicrophone(); await new Promise(resolve => window.setTimeout(resolve, 90)); const instance = new Recognition(); recognitionRef.current = instance; instance.lang = 'he-IL'; instance.interimResults = true; instance.continuous = false; instance.maxAlternatives = 1
-      instance.onstart = () => { setVoiceStatus('listening'); clearVoiceTimeout(); voiceTimeoutRef.current = window.setTimeout(() => { if (recognitionRef.current !== instance) return; try { instance.stop() } catch { /* Safari puede haberlo detenido */ }; recognitionRef.current = null; setVoiceStatus('idle'); void releaseMicrophone(); setSpeechError('La escucha tardó demasiado y se reinició. Toca Hablar para intentarlo otra vez.') }, VOICE_TIMEOUT_MS) }
-      instance.onresult = event => { let transcript = ''; const length = typeof event.results.length === 'number' ? event.results.length : 1; for (let item = 0; item < length; item += 1) transcript += `${event.results[item]?.[0]?.transcript ?? ''} `; transcript = transcript.trim(); if (transcript) { capturedRef.current = transcript; setSpeechError(null) } }
-      instance.onerror = event => { clearVoiceTimeout(); recognitionRef.current = null; setVoiceStatus('idle'); void releaseMicrophone(); const code = event.error ?? ''; setSpeechError(code === 'not-allowed' ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.' : code === 'no-speech' ? 'No detecté voz. Toca Hablar otra vez y espera a que el espectro se active.' : 'El reconocimiento se interrumpió. El micrófono se reinició y puedes volver a tocar Hablar.') }
-      instance.onend = () => { clearVoiceTimeout(); recognitionRef.current = null; pauseSpectrum(); void releaseMicrophone(); const transcript = capturedRef.current.trim(); if (transcript) { setVoiceStatus('processing'); void submitPronunciation(transcript) } else { setVoiceStatus('idle'); setSpeechError(previous => previous ?? 'No se reconoció texto. Puedes volver a tocar Hablar.') } }
+      await new Promise(resolve => window.setTimeout(resolve, isRetry ? VOICE_RETRY_DELAY_MS : 120))
+      await ensureMicrophone(); await new Promise(resolve => window.setTimeout(resolve, 110)); const instance = new Recognition(); recognitionRef.current = instance; instance.lang = 'he-IL'; instance.interimResults = true; instance.continuous = false; instance.maxAlternatives = 1
+      instance.onstart = () => { setVoiceStatus('listening'); clearVoiceTimeout(); voiceTimeoutRef.current = window.setTimeout(() => { if (recognitionRef.current !== instance || voiceSubmittedRef.current) return; voiceAttemptFailedRef.current = true; try { instance.stop() } catch { /* Safari puede haberlo detenido */ }; recognitionRef.current = null; setVoiceStatus('idle'); void releaseMicrophone(); setSpeechError('La escucha tardó demasiado y se reinició. Toca Hablar para intentarlo otra vez.') }, VOICE_TIMEOUT_MS) }
+      instance.onresult = event => {
+        let transcript = ''; let hasFinal = false; const length = typeof event.results.length === 'number' ? event.results.length : 1
+        for (let item = 0; item < length; item += 1) { transcript += `${event.results[item]?.[0]?.transcript ?? ''} `; hasFinal = hasFinal || Boolean(event.results[item]?.isFinal) }
+        transcript = transcript.trim(); if (transcript) { capturedRef.current = transcript; setSpeechError(null) }
+        if (hasFinal && transcript && recognitionRef.current === instance) window.setTimeout(() => { try { instance.stop() } catch { /* Safari puede finalizar por sí solo */ } }, 80)
+      }
+      instance.onerror = event => {
+        clearVoiceTimeout(); recognitionRef.current = null; const code = event.error ?? ''
+        if (code === 'aborted' && capturedRef.current.trim()) return
+        voiceAttemptFailedRef.current = true; setVoiceStatus('idle'); void releaseMicrophone()
+        const transient = code === 'audio-capture' || code === 'aborted' || code === 'network'
+        if (transient && voiceRetryRef.current < 1) { voiceRetryRef.current += 1; setSpeechError('Reiniciando el micrófono…'); window.setTimeout(() => { void startListening(true) }, VOICE_RETRY_DELAY_MS); return }
+        setSpeechError(code === 'not-allowed' ? 'El micrófono está bloqueado. Permite el acceso para este sitio y vuelve a intentarlo.' : code === 'no-speech' ? 'No detecté voz. Toca Hablar otra vez y espera a que el espectro responda a tu voz.' : 'El reconocimiento se interrumpió. El micrófono ya se reinició; toca Hablar para intentarlo otra vez.')
+      }
+      instance.onend = () => {
+        clearVoiceTimeout(); recognitionRef.current = null; pauseSpectrum(); void releaseMicrophone()
+        if (voiceAttemptFailedRef.current || voiceSubmittedRef.current) return
+        const transcript = capturedRef.current.trim(); if (transcript) { voiceSubmittedRef.current = true; setVoiceStatus('processing'); void submitPronunciation(transcript) } else { setVoiceStatus('idle'); setSpeechError(previous => previous ?? 'No se reconoció texto. Puedes volver a tocar Hablar.') }
+      }
       instance.start()
-    } catch { clearVoiceTimeout(); recognitionRef.current = null; setVoiceStatus('idle'); await releaseMicrophone(); setSpeechError('El micrófono no pudo iniciar de forma estable. Toca Hablar nuevamente.') }
+    } catch { clearVoiceTimeout(); recognitionRef.current = null; voiceAttemptFailedRef.current = true; setVoiceStatus('idle'); await releaseMicrophone(); if (voiceRetryRef.current < 1) { voiceRetryRef.current += 1; setSpeechError('Reiniciando el micrófono…'); window.setTimeout(() => { void startListening(true) }, VOICE_RETRY_DELAY_MS); return } setSpeechError('El micrófono no pudo iniciar de forma estable. Toca Hablar nuevamente.') }
   }
   async function submitPronunciation(transcript: string) {
     if (!current?.hebrew || !sessionId || !isPronunciation || saving) return
     const score = similarity(current.hebrew, transcript); const isCorrect = score >= 85; const responseTimeMs = questionStartedAtRef.current == null ? null : Math.max(0, nowMs() - questionStartedAtRef.current); setSpeechResult({ transcript, score }); setSaving(true)
-    try { const saved = await saveHebrewProgressAnswer({ sessionId, questionKey: current.key, questionVersion: current.version, skill: current.skill, difficulty: current.difficulty, responseText: transcript, isCorrect, reviewRequested: !isCorrect, responseTimeMs }); setAnswers(previous => [saved, ...previous]); if (isCorrect) setCorrect(value => value + 1); setError(null); await new Promise(resolve => window.setTimeout(resolve, 1250)); await advanceAfterSave() }
-    catch (cause) { setVoiceStatus('idle'); setError(cause instanceof Error ? cause.message : 'No se pudo guardar la evaluación oral.') }
+    try { const saved = await saveHebrewProgressAnswer({ sessionId, questionKey: current.key, questionVersion: current.version, skill: current.skill, difficulty: current.difficulty, responseText: transcript, isCorrect, reviewRequested: !isCorrect, responseTimeMs }); setAnswers(previous => [saved, ...previous]); if (isCorrect) setCorrect(value => value + 1); setError(null); await new Promise(resolve => window.setTimeout(resolve, 760)); await advanceAfterSave() }
+    catch (cause) { voiceSubmittedRef.current = false; setVoiceStatus('idle'); setError(cause instanceof Error ? cause.message : 'No se pudo guardar la evaluación oral.') }
     finally { setSaving(false) }
   }
 
   function stopListening() { clearVoiceTimeout(); try { recognitionRef.current?.stop() } catch { /* ya detenido */ } }
-  function resetPractice() { clearVoiceTimeout(); try { recognitionRef.current?.stop() } catch { /* ya detenido */ }; recognitionRef.current = null; void releaseMicrophone(); setSessionId(null); setQuestions([]); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''; questionStartedAtRef.current = null }
+  function resetPractice() { clearVoiceTimeout(); try { recognitionRef.current?.stop() } catch { /* ya detenido */ }; recognitionRef.current = null; void releaseMicrophone(); setSessionId(null); setQuestions([]); setIndex(0); setCorrect(0); setSelected(null); setFinished(false); setSpeechResult(null); setSpeechError(null); setVoiceStatus('idle'); capturedRef.current = ''; voiceRetryRef.current = 0; voiceAttemptFailedRef.current = false; voiceSubmittedRef.current = false; questionStartedAtRef.current = null }
   function continueTraining() { resetPractice(); window.setTimeout(() => void begin(), 0) }
 
   const finalPct = questions.length ? Math.round((correct / questions.length) * 100) : 0
   const finalFeedback = finalPct >= 90 ? 'Excelente sesión. Sigue practicando para ganar fluidez y sostener la retención.' : finalPct >= 75 ? 'Buen resultado. Continúa entrenando: el sistema priorizará lo que todavía genera duda.' : finalPct >= 60 ? 'Vas avanzando. Los errores quedaron marcados para volver en Repaso.' : 'Conviene reforzar fundamentos antes de subir la dificultad.'
-  const voiceActive = voiceStatus === 'requesting' || voiceStatus === 'listening'
+  const voiceActive = voiceStatus === 'listening'
 
   return <div className="text-center">
     {!active && !finished && <>
@@ -313,7 +346,7 @@ export default function HebrewProgressCoach() {
       <div><p className="text-[10px] font-black uppercase tracking-[.1em] text-indigo-700">{isPronunciation ? `Pronunciación · ${levelName(current.difficulty)}` : `${current.type} · ${SKILL_LABELS[current.skill]}`}</p><p className="mt-1 text-[11px] font-bold text-slate-400">{isPronunciation ? `Tramo oral · ${oralPosition} de ${oralQuestionTotal}` : `Pregunta ${index+1} de ${writtenQuestionTotal} · ${correct} aciertos`}</p></div>
       <div className="mx-auto mt-3 h-2 max-w-sm overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500 transition-all" style={{width:`${progress}%`}}/></div>
       <div className="py-6"><p className="mx-auto max-w-xl text-[1.4rem] font-black leading-snug sm:text-[1.55rem]">{current.prompt}</p>{current.hebrew && (isPronunciation || !promptAlreadyShowsHebrew) && <p lang="he" dir="rtl" className="mt-5 text-[4rem] font-black leading-tight text-indigo-700 sm:text-[4.5rem]">{current.hebrew}</p>}{isPronunciation&&current.pronunciationHint&&<p className="mt-2 text-[14px] font-bold text-slate-500">{current.pronunciationHint}</p>}</div>
-      {isPronunciation ? <div className="mx-auto max-w-sm border-y border-slate-100 py-5" data-oral-checkpoint="true"><p className="text-[11px] font-black uppercase tracking-[.1em] text-slate-400">Pronunciación {oralPosition}/{oralQuestionTotal}</p><p className="mt-1 text-[12px] text-slate-500">Esta pregunta es solo para hablar. No hay respuestas para elegir.</p><div className={`oral-spectrum mx-auto mt-5 flex h-16 max-w-[270px] items-center justify-center gap-[4px] overflow-hidden rounded-full border px-5 transition ${voiceActive?'oral-spectrum-active border-cyan-200 bg-cyan-50/90':'border-slate-100 bg-slate-50'}`} aria-label={voiceActive ? 'Micrófono activo, espectro de voz en movimiento' : 'Micrófono inactivo'}>{levels.map((height, bar)=><span key={bar} style={{height:`${Math.max(5, Math.round(height*.42))}px`,animationDelay:`${bar*45}ms`}} className={`w-[4px] rounded-full transition-[height] duration-75 ${voiceActive?'bg-cyan-500':'bg-slate-300'}`} />)}</div><p className={`mt-2 text-[11px] font-black ${voiceActive?'text-cyan-700':'text-slate-400'}`}>{voiceStatus==='requesting'?'Activando micrófono…':voiceStatus==='listening'?'Te estoy escuchando…':voiceStatus==='processing'?'Analizando pronunciación…':'Listo para escuchar'}</p><button type="button" onClick={voiceStatus==='listening'?stopListening:()=>void startListening()} disabled={saving||voiceStatus==='requesting'||voiceStatus==='processing'} className={`mt-4 inline-flex min-h-14 items-center gap-2 rounded-full px-7 text-[13px] font-black disabled:opacity-60 ${voiceStatus==='listening'?'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200':'bg-indigo-600 text-white'}`}>{voiceStatus==='listening'?<Square className="h-4 w-4"/>:<Mic className="h-5 w-5"/>}{voiceStatus==='listening'?'Terminar':'Hablar'}</button>{speechResult&&<div className="mt-4"><p className="text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[18px] font-black text-slate-900">{speechResult.transcript}</span></p><p className={`mt-2 text-[15px] font-black ${speechResult.score>=85?'text-emerald-700':speechResult.score>=60?'text-amber-700':'text-rose-700'}`}>{speechResult.score>=85?'Lectura reconocida correctamente':speechResult.score>=60?'Está cerca; conviene repetirla en Repaso':'Necesita más práctica de lectura'} · {speechResult.score}%</p></div>}{speechError&&<p className="mt-3 text-[12px] font-bold text-rose-600">{speechError}</p>}</div> : <div data-answer-grid="true" className={`grid gap-2 ${optionsNeedWideLayout ? 'grid-cols-1' : 'grid-cols-3'}`}>{current.options.map((option,optionIndex)=>{const chosen=selected===optionIndex;const correctOption=selected!==null&&current.correctIndex===optionIndex;const isHebrewOption=normalizeHebrew(option).length>0;return <button key={`${current.key}-${option}`} type="button" disabled={selected!==null||saving} onClick={()=>void answer(optionIndex)} className={`min-w-0 whitespace-normal break-words overflow-hidden rounded-[18px] border px-4 py-4 text-center font-black leading-snug ${optionsNeedWideLayout?'min-h-[4.5rem]':'min-h-[5.4rem]'} ${isHebrewOption?'text-[2.15rem] sm:text-[2.35rem]':optionsNeedWideLayout?'text-[1.05rem] sm:text-[1.15rem]':'text-[1.08rem] sm:text-[1.2rem]'} ${correctOption?'border-emerald-300 bg-emerald-50 text-emerald-800':chosen?'border-rose-300 bg-rose-50 text-rose-800':'border-slate-200 bg-white text-slate-800'}`}>{option}</button>})}</div>}
+      {isPronunciation ? <div className="mx-auto max-w-sm border-y border-slate-100 py-5" data-oral-checkpoint="true"><p className="text-[11px] font-black uppercase tracking-[.1em] text-slate-400">Pronunciación {oralPosition}/{oralQuestionTotal}</p><p className="mt-1 text-[12px] text-slate-500">Esta pregunta es solo para hablar. No hay respuestas para elegir.</p><div className={`oral-spectrum mx-auto mt-5 flex h-16 max-w-[270px] items-center justify-center gap-[4px] overflow-hidden rounded-full border px-5 transition ${voiceActive?'oral-spectrum-active border-cyan-200 bg-cyan-50/90':'border-slate-100 bg-slate-50'}`} aria-label={voiceActive ? 'Micrófono activo, espectro de voz en movimiento' : 'Micrófono inactivo'}>{levels.map((height, bar)=><span key={bar} style={{height:`${Math.max(5, Math.round(height*.46))}px`}} className={`w-[4px] rounded-full transition-[height] duration-75 ${voiceActive?'bg-cyan-500':'bg-slate-300'}`} />)}</div><p className={`mt-2 text-[11px] font-black ${voiceActive?'text-cyan-700':'text-slate-400'}`}>{voiceStatus==='requesting'?'Activando micrófono…':voiceStatus==='listening'?'Te estoy escuchando…':voiceStatus==='processing'?'Enviando y comprobando…':'Listo para escuchar'}</p><button type="button" onClick={voiceStatus==='listening'?stopListening:()=>void startListening()} disabled={saving||voiceStatus==='requesting'||voiceStatus==='processing'} className={`mt-4 inline-flex min-h-14 items-center gap-2 rounded-full px-7 text-[13px] font-black disabled:opacity-60 ${voiceStatus==='listening'?'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200':'bg-indigo-600 text-white'}`}>{voiceStatus==='listening'?<Square className="h-4 w-4"/>:<Mic className="h-5 w-5"/>}{voiceStatus==='listening'?'Terminar':'Hablar'}</button>{speechResult&&<div className={`mx-auto mt-4 flex max-w-xs items-center justify-center gap-2 rounded-full px-4 py-3 ${speechResult.score>=85?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-700'}`}>{speechResult.score>=85?<CheckCircle2 className="h-5 w-5 shrink-0"/>:<XCircle className="h-5 w-5 shrink-0"/>}<span className="text-[12px] font-black">{speechResult.score>=85?'Respuesta enviada · correcta':'Respuesta enviada · necesita repaso'}</span></div>}{speechResult&&<div className="mt-3"><p className="text-[12px] text-slate-500">Reconocí: <span lang="he" dir="rtl" className="text-[18px] font-black text-slate-900">{speechResult.transcript}</span></p><p className={`mt-2 text-[14px] font-black ${speechResult.score>=85?'text-emerald-700':speechResult.score>=60?'text-amber-700':'text-rose-700'}`}>{speechResult.score>=85?'Lectura reconocida correctamente':speechResult.score>=60?'Está cerca; quedó marcada para repaso':'Necesita más práctica y quedó marcada para repaso'} · {speechResult.score}%</p></div>}{speechError&&<p className="mt-3 text-[12px] font-bold text-rose-600">{speechError}</p>}</div> : <div data-answer-grid="true" className={`grid gap-2 ${optionsNeedWideLayout ? 'grid-cols-1' : 'grid-cols-3'}`}>{current.options.map((option,optionIndex)=>{const chosen=selected===optionIndex;const correctOption=selected!==null&&current.correctIndex===optionIndex;const isHebrewOption=normalizeHebrew(option).length>0;return <button key={`${current.key}-${option}`} type="button" disabled={selected!==null||saving} onClick={()=>void answer(optionIndex)} className={`min-w-0 whitespace-normal break-words overflow-hidden rounded-[18px] border px-4 py-4 text-center font-black leading-snug ${optionsNeedWideLayout?'min-h-[4.5rem]':'min-h-[5.4rem]'} ${isHebrewOption?'text-[2.15rem] sm:text-[2.35rem]':optionsNeedWideLayout?'text-[1.05rem] sm:text-[1.15rem]':'text-[1.08rem] sm:text-[1.2rem]'} ${correctOption?'border-emerald-300 bg-emerald-50 text-emerald-800':chosen?'border-rose-300 bg-rose-50 text-rose-800':'border-slate-200 bg-white text-slate-800'}`}>{option}</button>})}</div>}
     </>}
 
     {finished&&<div><CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600"/><h3 className="mt-2 text-xl font-black">Entrenamiento terminado</h3><div className="mt-4 grid grid-cols-2 divide-x divide-slate-200 border-y border-slate-200 py-4"><div><p className="text-2xl font-black text-emerald-700">{finalPct}%</p><p className="text-[10px] font-black text-slate-500">Nota</p></div><div><p className="text-2xl font-black">{correct}/{questions.length}</p><p className="text-[10px] font-black text-slate-500">Aciertos</p></div></div><p className="mx-auto mt-4 max-w-sm text-[12px] font-semibold leading-relaxed text-slate-600">{finalFeedback}</p><p className="mx-auto mt-3 max-w-sm text-[11px] font-semibold text-indigo-700">{metrics.recommendation}</p><button type="button" onClick={continueTraining} className="mt-5 min-h-12 w-full rounded-full bg-indigo-600 px-6 text-sm font-black text-white">Continuar entrenando</button><button type="button" onClick={resetPractice} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-[12px] font-black text-slate-500"><RotateCcw className="h-4 w-4"/>Cambiar entrenamiento</button></div>}
@@ -323,9 +356,7 @@ export default function HebrewProgressCoach() {
 
     <style jsx>{`
       .oral-spectrum-active { box-shadow: inset 0 0 18px rgba(6,182,212,.08), 0 0 30px rgba(6,182,212,.18); }
-      .oral-spectrum-active span { animation: oralPulse 620ms ease-in-out infinite alternate; box-shadow: 0 0 9px rgba(6,182,212,.65); transform-origin: center; }
-      @keyframes oralPulse { from { transform: scaleY(.72); } to { transform: scaleY(1.28); } }
-      @media (prefers-reduced-motion: reduce) { .oral-spectrum-active span { animation: none; } }
+      .oral-spectrum-active span { box-shadow: 0 0 9px rgba(6,182,212,.65); transform-origin: center; }
     `}</style>
   </div>
 }
