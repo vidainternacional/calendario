@@ -59,7 +59,7 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
+    <main className="pastoral-package-page mx-auto min-h-screen w-full max-w-none bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
       <div className="mb-2 print:hidden">
         <Link href="/pastoral" className="inline-flex min-h-10 items-center gap-2 px-1 text-sm font-bold text-violet-700">
           <ArrowLeft className="h-4 w-4" /> Centro Pastoral
