@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-22
+Última actualización: 2026-08-23
 
-Fase / prioridad activa: **FASE H — CENTRO DE HEBREO BÍBLICO**
+Fase / prioridad activa: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL**
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -42,8 +42,8 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE E | Rendimiento, seguridad, escalabilidad, pruebas y documentación | **COMPLETADA — 2026-08-13** |
 | FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |
 | FASE G | Validación integral y cierre de deudas transversales | **COMPLETADA — 2026-08-18** |
-| FASE H | Centro de Hebreo Bíblico | **ACTIVA — 2026-08-18** |
-| FASE I | Guía interactiva y ayuda contextual por rol | **PLANIFICADA — posterior a FASE H** |
+| FASE H | Centro de Hebreo Bíblico | **COMPLETADA Y APROBADA — 2026-08-23** |
+| FASE I | Guía interactiva y ayuda contextual por rol | **ACTIVA — 2026-08-23** |
 
 # PRIORIDADES RECIENTES CERRADAS
 
@@ -350,9 +350,9 @@ Validar la aplicación completa en producción como un solo sistema, por rol y p
 
 FASE G queda **COMPLETADA Y APROBADA — 2026-08-18** y no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
 
-# FASE H — ACTIVA — CENTRO DE HEBREO BÍBLICO
+# FASE H — COMPLETADA Y APROBADA — CENTRO DE HEBREO BÍBLICO — 2026-08-23
 
-FASE H se activa formalmente el 2026-08-18 después del cierre documentado de FASE G.
+FASE H se activó formalmente el 2026-08-18 después del cierre documentado de FASE G y queda cerrada el 2026-08-23 tras completar los cuatro bloques, validación funcional final en iPhone, persistencia real por usuario, práctica adaptativa, checkpoint oral y evidencia técnica verde.
 
 ## Objetivo de FASE H
 
@@ -373,7 +373,7 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 9. **Materiales administrables:** permitir que Administrador pueda agregar posteriormente enlaces, documentación, recursos, tareas o materiales de aprendizaje. Cualquier almacenamiento nuevo en Supabase deberá diseñarse y aprobarse cuando FASE H esté activa.
 10. **Diseño:** mantener la línea visual actual de VIDA: minimalista, clara, coherente, táctil, mobile-first, didáctica y sin tarjetas anidadas innecesarias.
 
-## Bloque activo de FASE H
+## Bloques de FASE H
 
 ### Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO — 2026-08-19
 
@@ -418,31 +418,38 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 12. El usuario recorrió y aprobó la validación funcional/visual en iPhone el **2026-08-22**, incluyendo la ronda final del teclado integrado, sin bugs bloqueantes reportados.
 13. El head aprobado `9d29a3cea6b8f5db44ac8646b56b41a6677f9e5a` tuvo regresiones, lint, build, validador maestro y validadores TAHOT en verde; Vercel Preview quedó READY. PR #286 permanece OPEN · DRAFT · sin merge y no se hizo deploy de producción.
 
-### Bloque 4 — Progreso personal y práctica adaptativa — ACTIVO
+### Bloque 4 — Progreso personal y práctica adaptativa — COMPLETADO Y APROBADO — 2026-08-23
 
-1. Convertir `Prueba tu progreso` en un instructor personal con historial real por usuario, sin reducir la experiencia a una nota final aislada.
-2. Registrar sesiones e intentos suficientes para saber qué áreas se dominan, cuáles mejoran y cuáles requieren refuerzo, preservando privacidad por usuario.
-3. Clasificar cada ejercicio por habilidad verificable: Alef-Bet, reconocimiento visual, Sofit, Dagesh, Niqqud/vocales, Sheva, vocabulario, lectura y reglas; ampliar categorías únicamente cuando exista contenido real que evaluar.
-4. Ofrecer dos caminos de práctica: **Según mi progreso**, adaptado a errores, dominio y retención del usuario; y **Elegir dificultad**, para practicar manualmente a un nivel Inicial, Intermedio o Avanzado aunque no coincida con la recomendación adaptativa.
-5. Permitir elegir áreas concretas o marcar contenido como **Quiero repasar**, de modo que el usuario pueda añadir una dificultad de práctica voluntaria sin alterar el cálculo de dominio histórico.
-6. Durante la práctica, actualizar avance y aciertos en tiempo real. El cronómetro queda opcional y no es requisito de la primera versión.
-7. Calcular métricas comprensibles: precisión general, dominio por área, evolución entre sesiones, errores recurrentes, retención y tendencia; evitar estadísticas decorativas que no puedan explicarse desde los intentos guardados.
-8. Al terminar, mostrar qué domina, qué mejoró, qué necesita reforzar y una recomendación concreta del siguiente tema o práctica.
-9. Incorporar motivación tipo juego sin infantilizar la experiencia: nivel de aprendizaje, estados **Reforzar → En progreso → Dominado**, metas o rachas cuando se deriven de datos reales y sin penalizaciones artificiales.
-10. Diseñar la persistencia con el mínimo de estructuras necesarias, evitando tablas de estadísticas duplicadas cuando puedan calcularse desde sesiones/respuestas.
-11. Todo progreso persistente será privado por defecto y aislado por `auth.uid()`. Ningún usuario podrá leer o escribir progreso de otra persona; `anon` no tendrá acceso.
-12. Cualquier nueva tabla, RLS, grant, función o migración de Supabase para este bloque deberá presentarse antes con SQL exacto, impacto y rollback y requerirá aprobación explícita antes de aplicarse.
-13. No iniciar FASE I ni Materiales administrables mientras Bloque 4 siga activo.
+1. `Prueba tu progreso` funciona como instructor personal con historial real por usuario y no como una nota final aislada.
+2. Las sesiones e intentos guardados permiten derivar dominio, mejora, refuerzo, retención, precisión, tendencia, fluidez y tiempo típico sin tablas estadísticas duplicadas.
+3. Los ejercicios conservan habilidades verificables: Alef-Bet, reconocimiento visual, Sofit, Dagesh, Niqqud/vocales, Sheva, vocabulario, lectura y reglas.
+4. Quedaron operativos los caminos **Según mi progreso** y **Elegir nivel**, con Básico, Intermedio y Avanzado, además de selección de áreas y cantidad de preguntas.
+5. `Quiero repasar` y Repaso reutilizan el historial privado sin alterar artificialmente el cálculo de dominio.
+6. Cada respuesta se valida y guarda antes de avanzar; errores entran a prioridad de refuerzo y aciertos salen de la rotación normal hasta el control de retención.
+7. Al terminar se muestran resultados, fortalezas, refuerzos y recomendación de continuidad; los logros y estados se derivan únicamente de intentos reales y el dominio fundamental se limita a 100%.
+8. La persistencia utiliza únicamente `biblical_hebrew_progress_sessions` y `biblical_hebrew_progress_answers`, aisladas por propietario y cuenta activa. `anon` no tiene acceso.
+9. Las migraciones aplicadas y versionadas son `20260822235632_fase_h_progreso_adaptativo`, `20260822235704_fase_h_progreso_adaptativo_restringir_grants` y `20260823145500_fase_h_progreso_tiempo_respuesta`.
+10. La práctica oral quedó como checkpoint independiente y como modalidad propia de voz: micrófono real, reconocimiento `he-IL`, espectro ligado al nivel real de la señal, confirmación de respuesta enviada y feedback correcto/repaso antes de avanzar.
+11. Se corrigieron los fallos reproducibles de iPhone/Safari: reinicio de micrófono/AudioContext entre intentos, control de `error` + `onend`, timeout de seguridad y reintento transitorio controlado.
+12. Las respuestas largas usan ancho móvil suficiente y las superficies de Prueba, submenús, Personalizar práctica e historial/resultados comienzan cerradas para reducir saturación y scroll.
+13. El usuario validó manualmente en iPhone el checkpoint oral, intentos consecutivos, espectro real, feedback ✓/✕, evaluación completa, resultado final y persistencia del progreso al salir y volver a entrar.
+14. Las pruebas manuales específicas en Android quedan diferidas para una validación posterior y no bloquean el cierre de FASE H; la compatibilidad implementada no se elimina.
+15. El head final aprobado `31e89605fcb9e4d8bff1d2d29e9c6c6e1a19364e` tuvo `CI temporal` #3090, validador del documento maestro, TAHOT Obadías y esquema observado TAHOT en **PASS**.
+16. PR #286 permanece OPEN · DRAFT · sin merge al momento de este cierre documental; no se hizo deploy manual a producción.
 
-# FASE I — PLANIFICADA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
+## Cierre formal de FASE H — 2026-08-23
 
-FASE I comenzará únicamente después del cierre formal de FASE H, salvo que el documento maestro cambie explícitamente el orden.
+Los cuatro bloques de FASE H quedan **COMPLETADOS Y APROBADOS**. El Centro de Hebreo Bíblico conserva la arquitectura didáctica, cobertura léxica española completa, búsqueda inteligente, traductor práctico, lectura bíblica, gramática progresiva, Repaso, teclado hebreo, práctica adaptativa, progreso privado y checkpoint oral validados. FASE H no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
 
-## Objetivo previsto
+# FASE I — ACTIVA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL — 2026-08-23
+
+FASE I comienza formalmente después del cierre documentado de FASE H.
+
+## Objetivo
 
 Dar a cada persona una guía dentro de VIDA sin depender de capacitación presencial ni reactivar el Piloto Operativo.
 
-## Alcance previsto
+## Alcance
 
 1. Recorrido inicial opcional por primera vez mediante globos/contextos breves anclados a herramientas reales.
 2. Contenido dinámico por rol y permisos: Administrador, Pastor, Líder y Servidor solo verán explicaciones de funciones que realmente pueden utilizar.
@@ -454,4 +461,4 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 
 # Siguiente punto autorizado
 
-**Continuar exclusivamente FASE H con el Bloque 4 — progreso personal y práctica adaptativa. Primero auditar las estructuras actuales y preparar la propuesta mínima de persistencia, privacidad y RLS para sesiones/respuestas de progreso; no aplicar ninguna tabla, RLS, grant o función nueva hasta presentar SQL exacto, impacto y rollback y obtener aprobación explícita. Después de la aprobación, implementar el modo `Según mi progreso`, el modo `Elegir dificultad`, métricas explicables y recomendaciones de estudio. No iniciar FASE I.**
+**Iniciar exclusivamente FASE I — Guía interactiva y ayuda contextual por rol. Primero auditar las superficies actuales de ayuda/onboarding y los permisos reales por rol; definir un recorrido mínimo reutilizando la interfaz existente y sin reactivar telemetría del Piloto. No reabrir FASE H salvo bug comprobable.**
