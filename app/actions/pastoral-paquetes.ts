@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
-type Diapositiva = { titulo: string; contenido: string; recurso_id: string | null }
+type Plantilla = 'limpia' | 'titulo' | 'imagen' | 'versiculo'
+type Diapositiva = { titulo: string; contenido: string; recurso_id: string | null; plantilla: Plantilla }
 
 async function contextoPastoral() {
   const supabase = await createClient()
@@ -34,6 +35,11 @@ function estadoValido(valor: string) {
   return ['borrador', 'listo', 'compartido'].includes(valor) ? valor : 'borrador'
 }
 
+function plantillaValida(valor: FormDataEntryValue | undefined): Plantilla {
+  const value = String(valor ?? '').trim()
+  return ['limpia', 'titulo', 'imagen', 'versiculo'].includes(value) ? value as Plantilla : 'limpia'
+}
+
 function recursosDesdeFormulario(formData: FormData) {
   return Array.from(new Set(formData.getAll('recurso_ids').map((valor) => uuidOpcional(valor)).filter(Boolean))).slice(0, 30) as string[]
 }
@@ -42,10 +48,12 @@ function diapositivasDesdeFormulario(formData: FormData): Diapositiva[] {
   const titulos = formData.getAll('diapositiva_titulo')
   const contenidos = formData.getAll('diapositiva_contenido')
   const recursos = formData.getAll('diapositiva_recurso_id')
+  const plantillas = formData.getAll('diapositiva_plantilla')
   return titulos.map((valor, index) => ({
     titulo: String(valor).trim().slice(0, 160),
     contenido: String(contenidos[index] ?? '').trim().slice(0, 1800),
     recurso_id: uuidOpcional(recursos[index] ?? null),
+    plantilla: plantillaValida(plantillas[index]),
   })).filter((item) => item.titulo || item.contenido || item.recurso_id).slice(0, 30)
 }
 
