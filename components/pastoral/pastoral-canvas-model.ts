@@ -5,6 +5,7 @@ export type FormatoLienzo = '16:9' | '9:16' | '4:3' | '1:1'
 export type FondoModo = 'color' | 'tema' | 'imagen'
 export type TemaFondo = 'claro' | 'amanecer' | 'cielo' | 'bosque' | 'noche' | 'vino'
 export type TipoElemento = 'texto' | 'imagen' | 'versiculo'
+export type RolTexto = 'titulo' | 'subtitulo' | 'cuerpo' | 'libre'
 export type AjusteImagen = 'cover' | 'contain'
 export type PanelLienzo = 'fondo' | 'texto' | 'parrafo' | 'recursos' | 'biblia' | 'diseno' | null
 export type VistaLienzo = 'contenido' | 'presentacion' | 'congregacion' | 'publicar'
@@ -19,7 +20,7 @@ export type ElementoCanvas = {
   z: number
   contenido?: string
   recurso_id?: string | null
-  rol?: 'titulo' | 'cuerpo' | 'libre'
+  rol?: RolTexto
   fuente?: string
   tamano_fuente?: number
   color?: string
@@ -61,7 +62,19 @@ export type RecursoPastoral = {
   nombre_archivo?: string | null
 }
 
-export const FUENTES_PASTORALES = ['Inter', 'Arial', 'Georgia', 'Trebuchet MS', 'Times New Roman', 'Courier New'] as const
+export const FUENTES_PASTORALES = [
+  'Inter', 'Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS',
+  'Georgia', 'Times New Roman', 'Palatino Linotype', 'Garamond',
+  'Courier New', 'Lucida Console', 'Impact', 'Arial Black',
+] as const
+
+export const ESTILOS_TEXTO: Array<{ id: RolTexto; label: string; pt: number; peso: number }> = [
+  { id: 'titulo', label: 'Título', pt: 54, peso: 800 },
+  { id: 'subtitulo', label: 'Subtítulo', pt: 34, peso: 700 },
+  { id: 'cuerpo', label: 'Cuerpo', pt: 22, peso: 500 },
+  { id: 'libre', label: 'Libre', pt: 28, peso: 500 },
+]
+
 export const FORMATOS_LIENZO: Array<{ id: FormatoLienzo; label: string; detalle: string }> = [
   { id: '16:9', label: 'Horizontal', detalle: '16:9' },
   { id: '9:16', label: 'Vertical', detalle: '9:16' },
@@ -102,9 +115,14 @@ export function limpiarHtmlCanvas(html: string) {
   return contenedor.innerHTML
 }
 
+function rolTextoValido(rol: unknown): RolTexto {
+  return rol === 'titulo' || rol === 'subtitulo' || rol === 'cuerpo' ? rol : 'libre'
+}
+
 export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 0): ElementoCanvas {
   const tipo: TipoElemento = item.tipo === 'imagen' || item.tipo === 'versiculo' ? item.tipo : 'texto'
-  const rol = item.rol === 'titulo' || item.rol === 'cuerpo' ? item.rol : 'libre'
+  const rol = rolTextoValido(item.rol)
+  const estilo = ESTILOS_TEXTO.find((opcion) => opcion.id === rol) ?? ESTILOS_TEXTO[3]
   return {
     id: String(item.id || nuevoIdCanvas()), tipo,
     x: clamp(Number(item.x ?? 8), 0, 97), y: clamp(Number(item.y ?? 8), 0, 97),
@@ -113,10 +131,10 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     contenido: tipo === 'imagen' ? undefined : limpiarHtmlCanvas(String(item.contenido ?? '')),
     recurso_id: tipo === 'imagen' ? item.recurso_id ?? null : undefined,
     rol, fuente: FUENTES_PASTORALES.includes(item.fuente as never) ? item.fuente : 'Inter',
-    tamano_fuente: clamp(Number(item.tamano_fuente ?? (rol === 'titulo' ? 42 : tipo === 'versiculo' ? 30 : 24)), 10, 96),
+    tamano_fuente: clamp(Number(item.tamano_fuente ?? (tipo === 'versiculo' ? 30 : estilo.pt)), 8, 160),
     color: /^#[0-9a-f]{6}$/i.test(String(item.color ?? '')) ? item.color : '#0f172a',
     alineacion: item.alineacion === 'centro' || item.alineacion === 'derecha' ? item.alineacion : 'izquierda',
-    peso: clamp(Number(item.peso ?? (rol === 'titulo' ? 800 : 500)), 300, 900),
+    peso: clamp(Number(item.peso ?? estilo.peso), 300, 900),
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
     interlineado: clamp(Number(item.interlineado ?? 1.25), .9, 2), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
@@ -124,10 +142,10 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
 }
 
 export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
-  let elementos = Array.isArray(item.elementos) ? item.elementos.map((el, i) => normalizarElementoCanvas(el, i)) : []
-  if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 18, tamano_fuente: 44, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
-  if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 24, color: item.color_texto, alineacion: item.alineacion }, 1))
-  else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 24, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
+  const elementos = Array.isArray(item.elementos) ? item.elementos.map((el, i) => normalizarElementoCanvas(el, i)) : []
+  if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 54, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
+  if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
+  else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
   return { ...item, formato: item.formato ?? '16:9', fondo_modo: item.fondo_modo ?? (item.fondo_recurso_id || item.recurso_id ? 'imagen' : 'color'), fondo_tema: item.fondo_tema ?? 'claro', fondo_recurso_id: item.fondo_recurso_id ?? item.recurso_id ?? null, fondo: item.fondo ?? '#ffffff', color_texto: item.color_texto ?? '#0f172a', plantilla: item.plantilla ?? 'limpia', alineacion: item.alineacion ?? 'izquierda', tamano: item.tamano ?? 'normal', elementos }
 }
 
