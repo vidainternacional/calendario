@@ -124,7 +124,7 @@ test('FASE H: Aprender vive en página propia y presenta seis botones en cuadrí
 })
 
 test('FASE H: Vocales usa tres vistas y la lista didáctica solicitada', () => {
-  assert.match(course, /import NiqqudExplorer/)
+  assert.match(course, /if \(id === 'vowels'\) return <NiqqudExplorer \/>/)
   assert.match(niqqud, /type NiqqudView = 'cards' \| 'list' \| 'detail'/)
   for (const label of ['Tarjetas', 'Lista', 'Detalle']) assert.match(niqqud, new RegExp(label))
   const list = niqqud.slice(niqqud.indexOf('function ListView'), niqqud.indexOf('function DetailView'))
@@ -184,7 +184,7 @@ test('FASE H: Prueba tu progreso usa banco real y validación objetiva del Bloqu
 })
 
 test('FASE H: resultado e historial de práctica reflejan persistencia real autorizada', () => {
-  assert.match(coach, /Práctica terminada/)
+  assert.match(coach, /Entrenamiento terminado/)
   assert.match(coach, /finalFeedback/)
   assert.match(coach, /Cuadro de notas/)
   assert.match(coach, /metrics\.recommendation/)
