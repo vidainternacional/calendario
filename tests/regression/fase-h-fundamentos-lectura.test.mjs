@@ -38,8 +38,8 @@ test('FASE H: Dagesh distingue aprendizaje inicial de variación histórica', ()
 
 test('FASE H: Matres se enseña como función de lectura y no como vocal independiente', () => {
   for (const value of ['ה', 'ו', 'י']) assert.match(foundations, new RegExp(value))
-  assert.match(foundations, /ayudas de lectura/)
-  assert.match(foundations, /No son “vocales independientes”/)
+  assert.match(foundations, /función de lectura/)
+  assert.match(foundations, /no una categoría de vocal independiente/)
 })
 
 test('FASE H: fundamentos no crean persistencia ni escrituras de datos', () => {
