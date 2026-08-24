@@ -24,7 +24,7 @@
     background: #f3f4f5 !important;
   }
 
-  /* La barra superior define la única separación vertical del lienzo. */
+  /* La cabecera conserva su alto natural. */
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-canva-workspace > header {
     position: relative !important;
     z-index: 6 !important;
@@ -32,40 +32,76 @@
     margin: 0 !important;
   }
 
+  /*
+   * Clave: el section que envuelve el shell ocupa TODO el espacio restante.
+   * Antes el shell era flex-item dentro de un section de altura natural y el canvas colapsaba.
+   */
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-canva-workspace > section:has(> .pastoral-editor-shell) {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell,
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel {
     position: relative !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    height: auto !important;
+    height: 100% !important;
     max-height: none !important;
     overflow: hidden !important;
   }
 
-  /* El lienzo comienza inmediatamente después de los menús superiores. */
+  /* Stage estable: canvas flexible arriba, páginas debajo. */
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-stage {
+    display: flex !important;
+    min-width: 0 !important;
     min-height: 0 !important;
-    height: 100% !important;
-    align-content: start !important;
+    height: auto !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
     overflow: hidden !important;
   }
 
+  /* El lienzo es la primera zona y absorbe el espacio disponible. */
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-canvas-wrap,
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-canvas-wrap {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
     min-height: 0 !important;
-    align-self: start !important;
+    flex: 1 1 auto !important;
+    align-self: stretch !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
     overflow: hidden !important;
   }
 
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-canvas-wrap > div {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
     min-height: 0 !important;
     align-items: flex-start !important;
     justify-content: center !important;
     overflow: auto !important;
     overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Menús inferiores: siempre en el mismo lugar. */
+  /* Páginas nunca suben por encima del lienzo ni ocupan su espacio flexible. */
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-pages-strip {
+    flex: 0 0 auto !important;
+  }
+
+  /* Menú de edición inferior: permanece en la fila inferior del shell. */
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-tool-dock {
     position: relative !important;
     z-index: 44 !important;
@@ -94,6 +130,7 @@
 @media (orientation: portrait) and (max-width: 767px) {
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell,
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel {
+    display: grid !important;
     grid-template-areas:
       'stage'
       'dock' !important;
@@ -101,24 +138,33 @@
     grid-template-rows: minmax(0, 1fr) 47px !important;
   }
 
-  /* El stage no se centra verticalmente: arranca justo bajo los tabs. */
+  /* El stage comienza inmediatamente bajo Editar / Presentar / Congregación / Compartir. */
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-stage {
-    justify-content: stretch !important;
-    align-items: start !important;
-    padding-top: .22rem !important;
+    grid-area: stage !important;
+    gap: .3rem !important;
+    padding: .28rem .55rem .2rem !important;
   }
 
-  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-canvas-wrap {
-    padding-top: .12rem !important;
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-canvas-wrap,
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-canvas-wrap {
+    padding: .12rem .55rem !important;
   }
 
-  /* Abrir/cerrar herramientas nunca altera el tamaño ni posición del stage. */
-  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-stage,
-  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-pages-strip,
-  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-tool-dock {
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-pages-strip,
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-pages-strip {
+    display: flex !important;
+    min-height: 34px !important;
+    flex: 0 0 34px !important;
     transform: none !important;
   }
 
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-tool-dock,
+  body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel .pastoral-tool-dock {
+    grid-area: dock !important;
+    transform: none !important;
+  }
+
+  /* El panel se superpone; no altera canvas, páginas ni dock. */
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-tool-panel {
     position: absolute !important;
     z-index: 46 !important;
@@ -137,10 +183,10 @@
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell,
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-editor-shell.has-panel {
     min-height: 0 !important;
-    height: auto !important;
+    height: 100% !important;
   }
 
   body:has(.pastoral-canva-workspace .pastoral-editor-shell) .pastoral-stage {
-    align-content: stretch !important;
+    min-height: 0 !important;
   }
 }
