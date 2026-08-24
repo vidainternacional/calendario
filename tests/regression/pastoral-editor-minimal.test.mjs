@@ -8,16 +8,16 @@ const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-minimal.css', 'u
 
 test('editor pastoral carga una capa visual minimalista propia de VIDA', () => {
   assert.match(layout, /pastoral-editor-minimal\.css/)
-  assert.match(css, /Centro Pastoral — edición visual con la jerarquía minimalista de VIDA/)
-  assert.match(css, /pastoral-canva-workspace > header/)
+  assert.match(css, /Centro Pastoral — editor visual VIDA/)
+  assert.match(css, /LIENZO > PANEL > HERRAMIENTAS/)
   assert.match(css, /pastoral-tool-dock/)
   assert.match(css, /pastoral-tool-panel/)
 })
 
 test('móvil conserva lienzo más bandeja sin tarjeta gigante', () => {
-  assert.match(css, /max-height: 37dvh !important/)
-  assert.match(css, /border-radius: 1\.1rem 1\.1rem 0 0 !important/)
-  assert.match(css, /box-shadow: 0 -5px 18px/)
+  assert.match(css, /max-height: 34dvh !important/)
+  assert.match(css, /border-radius: \.9rem \.9rem 0 0 !important/)
+  assert.match(css, /box-shadow: 0 -4px 16px/)
   assert.match(css, /orientation: portrait/)
 })
 
@@ -31,12 +31,14 @@ test('selección del lienzo conserva mover borrar y redimensionar con controles 
   assert.match(css, /aria-label='Mover elemento'/)
   assert.match(css, /aria-label='Eliminar elemento'/)
   assert.match(css, /aria-label='Redimensionar elemento'/)
-  assert.match(css, /width: 1\.8rem !important/)
+  assert.match(css, /width: 1\.72rem !important/)
+  assert.match(css, /width: 1\.08rem !important/)
 })
 
 test('iPad y escritorio aprovechan ancho completo y panel inspector lateral', () => {
   assert.match(page, /pastoral-package-page/)
   assert.match(page, /max-w-none/)
-  assert.match(css, /orientation: landscape/)
-  assert.match(css, /minmax\(270px, 30vw\)/)
+  assert.match(css, /min-width: 768px/)
+  assert.match(css, /minmax\(286px, 30vw\)/)
+  assert.match(css, /grid-template-areas:\s*'pages canvas'/)
 })
