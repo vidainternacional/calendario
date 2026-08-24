@@ -56,5 +56,7 @@ test('texto ofrece Título Subtítulo Cuerpo y más familias tipográficas', () 
     assert.match(model, new RegExp(fuente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
     assert.match(actions, new RegExp(fuente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
   }
-  assert.match(actions, /item\.rol === 'subtitulo'/)
+  assert.match(actions, /type RolTexto = 'titulo' \| 'subtitulo' \| 'cuerpo' \| 'libre'/)
+  assert.match(actions, /rolTextoValido/)
+  assert.match(actions, /valor === 'subtitulo'/)
 })
