@@ -56,54 +56,13 @@ export default async function PastoralPage() {
   const proyectoActual = recientes[0]
 
   const areas = [
-    {
-      id: 'bosquejo',
-      titulo: 'Bosquejo',
-      href: '/pastoral/bosquejos',
-      accion: 'Abrir bosquejos',
-      icono: FileText,
-      iconClass: 'text-violet-600 bg-violet-50',
-    },
-    {
-      id: 'versiculos',
-      titulo: 'Versículos',
-      href: '/pastoral/colecciones',
-      accion: 'Abrir versículos',
-      icono: BookHeart,
-      iconClass: 'text-indigo-600 bg-indigo-50',
-    },
-    {
-      id: 'biblia',
-      titulo: 'Biblia',
-      href: '/biblia?from=pastoral',
-      accion: 'Leer y buscar en la Biblia',
-      icono: BookOpen,
-      iconClass: 'text-indigo-600 bg-indigo-50',
-    },
-    {
-      id: 'estudio',
-      titulo: 'Estudio bíblico',
-      href: '/estudios/profundo?from=pastoral',
-      accion: 'Analizar un pasaje',
-      icono: Sparkles,
-      iconClass: 'text-[#C0392B] bg-rose-50',
-    },
-    {
-      id: 'biblioteca',
-      titulo: 'Biblioteca',
-      href: '/pastoral/biblioteca',
-      accion: 'Abrir biblioteca',
-      icono: Library,
-      iconClass: 'text-amber-700 bg-amber-50',
-    },
-    {
-      id: 'materiales',
-      titulo: 'Materiales',
-      href: '/pastoral/materiales',
-      accion: 'Abrir materiales',
-      icono: BookOpenCheck,
-      iconClass: 'text-cyan-700 bg-cyan-50',
-    },
+    { titulo: 'Bosquejo', href: '/pastoral/bosquejos', icono: FileText, iconClass: 'text-violet-600' },
+    { titulo: 'Versículos', href: '/pastoral/colecciones', icono: BookHeart, iconClass: 'text-indigo-600' },
+    { titulo: 'Biblia', href: '/biblia?from=pastoral', icono: BookOpen, iconClass: 'text-indigo-600' },
+    { titulo: 'Estudio', href: '/estudios/profundo?from=pastoral', icono: Sparkles, iconClass: 'text-[#C0392B]' },
+    { titulo: 'Biblioteca', href: '/pastoral/biblioteca', icono: Library, iconClass: 'text-amber-700' },
+    { titulo: 'Materiales', href: '/pastoral/materiales', icono: BookOpenCheck, iconClass: 'text-cyan-700' },
+    { titulo: 'Proyectos', href: '/pastoral/paquetes', icono: PackageOpen, iconClass: 'text-slate-700' },
   ]
 
   return (
@@ -153,49 +112,14 @@ export default async function PastoralPage() {
         </Link>
       </section>
 
-      <section className="pastoral-work-areas" aria-label="Áreas del proyecto pastoral">
-        {areas.map(({ id, titulo, href, accion, icono: Icono, iconClass }) => (
-          <details key={id} className="pastoral-work-section">
-            <summary>
-              <span className={`pastoral-work-icon ${iconClass}`}><Icono aria-hidden="true" /></span>
-              <strong>{titulo}</strong>
-              <ChevronRight className="pastoral-work-chevron" aria-hidden="true" />
-            </summary>
-            <div className="pastoral-work-panel">
-              <Link href={href} className="pastoral-secondary-action">
-                {accion}
-                <ChevronRight aria-hidden="true" />
-              </Link>
-            </div>
-          </details>
+      <nav className="pastoral-tool-grid" aria-label="Herramientas del Centro Pastoral">
+        {areas.map(({ titulo, href, icono: Icono, iconClass }) => (
+          <Link key={titulo} href={href} className="pastoral-tool-link">
+            <Icono className={iconClass} aria-hidden="true" />
+            <span>{titulo}</span>
+          </Link>
         ))}
-
-        <details className="pastoral-work-section">
-          <summary>
-            <span className="pastoral-work-icon bg-slate-100 text-slate-700"><PackageOpen aria-hidden="true" /></span>
-            <strong>Proyectos</strong>
-            <ChevronRight className="pastoral-work-chevron" aria-hidden="true" />
-          </summary>
-          <div className="pastoral-work-panel pastoral-project-list">
-            {recientes.length > 0 ? recientes.map((paquete) => {
-              const estadoActual = estadoPaquete[paquete.estado] ?? estadoPaquete.borrador
-              return (
-                <Link key={paquete.id} href={`/pastoral/paquetes/${paquete.id}`} className="pastoral-project-row">
-                  <span className="min-w-0 flex-1">
-                    <strong className="truncate">{paquete.titulo}</strong>
-                    <span>{estadoActual.texto}</span>
-                  </span>
-                  <ChevronRight aria-hidden="true" />
-                </Link>
-              )
-            }) : <p className="pastoral-project-empty">No hay proyectos recientes.</p>}
-            <Link href="/pastoral/paquetes" className="pastoral-secondary-action">
-              Ver todos los proyectos
-              <ChevronRight aria-hidden="true" />
-            </Link>
-          </div>
-        </details>
-      </section>
+      </nav>
     </main>
   )
 }
