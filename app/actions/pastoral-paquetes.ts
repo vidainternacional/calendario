@@ -11,6 +11,7 @@ type FormatoLienzo = '16:9' | '9:16' | '4:3' | '1:1'
 type FondoModo = 'color' | 'tema' | 'imagen'
 type TemaFondo = 'claro' | 'amanecer' | 'cielo' | 'bosque' | 'noche' | 'vino'
 type TipoElemento = 'texto' | 'imagen' | 'versiculo'
+type RolTexto = 'titulo' | 'subtitulo' | 'cuerpo' | 'libre'
 type AjusteImagen = 'cover' | 'contain'
 
 type ElementoCanvas = {
@@ -23,7 +24,7 @@ type ElementoCanvas = {
   z: number
   contenido?: string
   recurso_id?: string | null
-  rol?: 'titulo' | 'cuerpo' | 'libre'
+  rol?: RolTexto
   fuente?: string
   tamano_fuente?: number
   color?: string
@@ -54,7 +55,11 @@ type Diapositiva = {
   elementos: ElementoCanvas[]
 }
 
-const FUENTES = new Set(['Inter', 'Arial', 'Georgia', 'Trebuchet MS', 'Times New Roman', 'Courier New'])
+const FUENTES = new Set([
+  'Inter', 'Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS',
+  'Georgia', 'Times New Roman', 'Palatino Linotype', 'Garamond',
+  'Courier New', 'Lucida Console', 'Impact', 'Arial Black',
+])
 const TEMAS = new Set<TemaFondo>(['claro', 'amanecer', 'cielo', 'bosque', 'noche', 'vino'])
 
 async function contextoPastoral() {
@@ -78,6 +83,9 @@ function temaFondoValido(valor: FormDataEntryValue | undefined): TemaFondo { con
 function colorValido(valor: unknown, fallback: string) { const value = String(valor ?? '').trim(); return /^#[0-9a-f]{6}$/i.test(value) ? value : fallback }
 function numeroAcotado(valor: unknown, min: number, max: number, fallback: number) { const numero = Number(valor); return Number.isFinite(numero) ? Math.min(Math.max(numero, min), max) : fallback }
 function recursosDesdeFormulario(formData: FormData) { return Array.from(new Set(formData.getAll('recurso_ids').map((valor) => uuidOpcional(valor)).filter(Boolean))).slice(0, 30) as string[] }
+function rolTextoValido(valor: unknown): RolTexto { return valor === 'titulo' || valor === 'subtitulo' || valor === 'cuerpo' ? valor : 'libre' }
+function tamanoInicialRol(rol: RolTexto, tipo: TipoElemento) { if (tipo === 'versiculo') return 28; if (rol === 'titulo') return 54; if (rol === 'subtitulo') return 34; if (rol === 'cuerpo') return 22; return 28 }
+function pesoInicialRol(rol: RolTexto) { if (rol === 'titulo') return 800; if (rol === 'subtitulo') return 700; return 500 }
 
 function elementosValidos(valor: FormDataEntryValue | undefined): ElementoCanvas[] {
   let items: unknown = []
@@ -91,7 +99,7 @@ function elementosValidos(valor: FormDataEntryValue | undefined): ElementoCanvas
     const id = String(item.id ?? '').trim().slice(0, 80) || `elemento-${index + 1}`
     const recursoId = tipo === 'imagen' ? uuidOpcional(String(item.recurso_id ?? '')) : null
     if (tipo === 'imagen' && !recursoId) return []
-    const rol = item.rol === 'titulo' || item.rol === 'cuerpo' ? item.rol : 'libre'
+    const rol = rolTextoValido(item.rol)
     const fuente = FUENTES.has(String(item.fuente ?? '')) ? String(item.fuente) : 'Inter'
     const ajuste: AjusteImagen = item.ajuste === 'contain' ? 'contain' : 'cover'
     return [{
@@ -106,10 +114,10 @@ function elementosValidos(valor: FormDataEntryValue | undefined): ElementoCanvas
       recurso_id: recursoId,
       rol,
       fuente,
-      tamano_fuente: numeroAcotado(item.tamano_fuente, 10, 96, tipo === 'versiculo' ? 30 : 24),
+      tamano_fuente: numeroAcotado(item.tamano_fuente, 8, 160, tamanoInicialRol(rol, tipo)),
       color: colorValido(item.color, '#0f172a'),
       alineacion: alineacionValida(item.alineacion),
-      peso: numeroAcotado(item.peso, 300, 900, rol === 'titulo' ? 800 : 500),
+      peso: numeroAcotado(item.peso, 300, 900, pesoInicialRol(rol)),
       cursiva: Boolean(item.cursiva),
       subrayado: Boolean(item.subrayado),
       tachado: Boolean(item.tachado),
