@@ -1,4 +1,5 @@
 import type { Alineacion } from '@/components/pastoral/pastoral-canvas-model'
+import { PLANTILLAS_PROFESIONALES } from '@/components/pastoral/pastoral-professional-templates'
 
 export type PlantillaVisual = {
   id: string
@@ -69,6 +70,8 @@ export const PLANTILLAS_VISUALES: PlantillaVisual[] = [
   { id: 'creativo-pastel', nombre: 'Creativo pastel', categoria: 'Generales', fondo: 'radial-gradient(circle at 16% 20%,rgba(251,191,36,.30),transparent 24%),radial-gradient(circle at 84% 72%,rgba(244,114,182,.22),transparent 25%),linear-gradient(135deg,#fff9f1,#f3f5ff)', colorTexto: '#2E3147', titulo: { x: 7, y: 12, w: 50, h: 29, pt: 39, alineacion: 'izquierda', fuente: 'Arial Black' }, subtitulo: { x: 23, y: 52, w: 63, h: 14, pt: 18, alineacion: 'izquierda', fuente: 'Trebuchet MS' }, cuerpo: { x: 47, y: 72, w: 39, h: 13, pt: 16, alineacion: 'izquierda', fuente: 'Inter' } },
   { id: 'pizarra-moderna', nombre: 'Pizarra moderna', categoria: 'Minimalistas', fondo: 'repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),linear-gradient(145deg,#20262f,#303844)', colorTexto: '#F8FAFC', titulo: { x: 7, y: 13, w: 62, h: 30, pt: 42, alineacion: 'izquierda', fuente: 'Helvetica' }, subtitulo: { x: 7, y: 52, w: 77, h: 14, pt: 18, alineacion: 'izquierda', fuente: 'Inter' }, cuerpo: { x: 7, y: 71, w: 58, h: 14, pt: 16, alineacion: 'izquierda', fuente: 'Inter' } },
   { id: 'amanecer-minimal', nombre: 'Amanecer minimal', categoria: 'Minimalistas', fondo: 'linear-gradient(145deg,#fff9ed 0%,#fee8d7 48%,#f8dce4 100%)', colorTexto: '#4C302B', titulo: { x: 15, y: 43, w: 70, h: 29, pt: 40, alineacion: 'centro', fuente: 'Garamond' }, subtitulo: { x: 26, y: 74, w: 48, h: 12, pt: 17, alineacion: 'centro', fuente: 'Inter' } },
+
+  ...PLANTILLAS_PROFESIONALES,
 
   /* Biblioteca existente conservada para no perder opciones ya disponibles. */
   { id: 'predicacion-limpia', nombre: 'Predicación limpia', categoria: 'Cristianas', fondo: '#FFFFFF', colorTexto: '#0F172A', titulo: { x: 9, y: 11, w: 82, h: 30, pt: 42, alineacion: 'izquierda', fuente: 'Georgia' }, subtitulo: { x: 9, y: 45, w: 78, h: 17, pt: 23, alineacion: 'izquierda', fuente: 'Inter' }, cuerpo: { x: 9, y: 67, w: 78, h: 22, pt: 18, alineacion: 'izquierda', fuente: 'Inter' } },
