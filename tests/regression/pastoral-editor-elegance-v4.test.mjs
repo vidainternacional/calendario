@@ -3,15 +3,17 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-elegance-v4.css', 'utf8')
+const finalCss = fs.readFileSync('app/(app)/pastoral/pastoral-editor-elegance-v4-final.css', 'utf8')
 const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 
-test('la capa elegante se carga al final y neutraliza la caja externa', () => {
-  assert.match(layout, /pastoral-editor-capcut-v2\.css'[\s\S]*pastoral-editor-elegance-v4\.css'/)
+test('las capas elegantes se cargan al final y neutralizan la caja externa', () => {
+  assert.match(layout, /pastoral-editor-capcut-v2\.css'[\s\S]*pastoral-editor-elegance-v4\.css'[\s\S]*pastoral-editor-elegance-v4-final\.css'/)
   assert.match(css, /\.pastoral-editor-v4 \.pastoral-tool-panel[\s\S]*border: 0 !important/)
   assert.match(css, /border-radius: 0 !important/)
   assert.match(css, /background: transparent !important/)
   assert.match(css, /box-shadow: none !important/)
+  assert.match(finalCss, /pastoral-tool-button\.is-active::before[\s\S]*display: none !important/)
 })
 
 test('Fondo deja de competir como herramienta y permanece unificado dentro de Plantillas', () => {
@@ -26,10 +28,11 @@ test('Fondo deja de competir como herramienta y permanece unificado dentro de Pl
 
 test('cada herramienta móvil reserva solo la altura que necesita', () => {
   assert.match(css, /:has\(\.panel-plantillas\)[\s\S]*--pastoral-panel-h: 162px/)
-  assert.match(css, /:has\(\.panel-texto\)[\s\S]*--pastoral-panel-h: 108px/)
   assert.match(css, /:has\(\.panel-biblia\)[\s\S]*clamp\(218px, 30dvh, 258px\)/)
-  assert.match(css, /:has\(\.panel-diseno\)[\s\S]*--pastoral-panel-h: 82px/)
   assert.match(css, /grid-template-rows: minmax\(0, 1fr\) var\(--pastoral-panel-h\) 49px/)
+  assert.match(finalCss, /:has\(\.panel-recursos\)[\s\S]*--pastoral-panel-h: 148px/)
+  assert.match(finalCss, /:has\(\.panel-texto\)[\s\S]*--pastoral-panel-h: 116px/)
+  assert.match(finalCss, /:has\(\.panel-diseno\)[\s\S]*--pastoral-panel-h: 88px/)
 })
 
 test('Texto conserva tres líneas compactas y estados activos visibles', () => {
