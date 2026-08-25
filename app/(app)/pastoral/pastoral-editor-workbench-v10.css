@@ -1,0 +1,96 @@
+/* Centro Pastoral V10 — mesa de trabajo neutra + doble scroll + feedback táctil del dock.
+   Alcance: entorno de edición y Plantillas. No modifica lógica ni otras herramientas. */
+
+.pastoral-editor-v4 {
+  --pastoral-edit-desk: #626568;
+  --pastoral-edit-panel: #e7e9eb;
+}
+
+@media (max-width: 1023px) {
+  /* Mesa de trabajo tipo Illustrator/Photoshop: gris medio solo alrededor del lienzo. */
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-stage,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-canvas-wrap {
+    background: var(--pastoral-edit-desk) !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-canvas-wrap {
+    box-sizing: border-box !important;
+    padding: 10px 12px !important;
+    overflow: hidden !important;
+  }
+
+  /* Las herramientas siguen claras: no convertimos VIDA en tema oscuro. */
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel-scroll,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-panel-content {
+    background: var(--pastoral-edit-panel) !important;
+  }
+
+  /* Doble desplazamiento: panel completo vertical + cada cinta horizontal. */
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-tool-panel-scroll {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    padding-bottom: 18px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-panel {
+    height: auto !important;
+    min-height: 286px !important;
+    padding-bottom: 10px !important;
+    align-content: start !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-theme-grid,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
+  }
+
+  /* Feedback táctil breve tipo editor profesional, sin animación decorativa. */
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button {
+    transform-origin: center bottom !important;
+    transition: transform 120ms cubic-bezier(.2,.75,.25,1), color 150ms ease, background-color 150ms ease !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg {
+    transition: transform 120ms cubic-bezier(.2,.75,.25,1), stroke-width 120ms ease !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active {
+    transform: translateY(1px) scale(.94) !important;
+    background: rgba(192,57,43,.055) !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active svg {
+    transform: scale(.88) !important;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 767px) {
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas {
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
+    overflow: hidden !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg {
+    transition: none !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active,
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active svg {
+    transform: none !important;
+  }
+}
