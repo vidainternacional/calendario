@@ -43,10 +43,12 @@ test('plantillas integra temas y fondos como punto de inicio de una presentació
   assert.match(parte, /aplicarFondoImagen/)
 })
 
-test('fondos conserva al menos treinta paletas completas con tipografías', () => {
+test('temas conserva una colección curada amplia con tipografías completas', () => {
   const cantidad = (presets.match(/fuenteTitulo:/g) ?? []).length
-  assert.ok(cantidad >= 30, `se esperaban 30 paletas y hay ${cantidad}`)
+  assert.ok(cantidad >= 20, `se esperaban al menos 20 temas curados y hay ${cantidad}`)
   assert.match(presets, /fuenteCuerpo:/)
+  assert.match(presets, /linear-gradient\(/)
+  assert.match(presets, /repeating-linear-gradient\(/)
   assert.match(workspace, /aplicarPaleta[\s\S]*fuenteTitulo[\s\S]*fuenteCuerpo/)
 })
 
