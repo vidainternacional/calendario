@@ -16,8 +16,6 @@ import './pastoral-editor-accessible-v5.css'
 import './pastoral-editor-accessible-v5-authority.css'
 import './pastoral-editor-notes-language-v6.css'
 import './pastoral-editor-plantillas-v7.css'
-import './pastoral-editor-plantillas-v8.css'
-import './pastoral-editor-plantillas-v9.css'
 import './pastoral-editor-workbench-v10.css'
 
 export default function PastoralLayout({ children }: { children: React.ReactNode }) {
