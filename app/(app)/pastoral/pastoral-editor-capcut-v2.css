@@ -1,0 +1,565 @@
+/* Centro Pastoral V4 — editor móvil tipo CapCut integrado al fondo de VIDA. */
+
+.pastoral-editor-v4 .pastoral-tool-panel,
+.pastoral-editor-v4 .pastoral-tool-panel-scroll,
+.pastoral-editor-v4 .pastoral-panel-content {
+  box-sizing: border-box;
+}
+
+.pastoral-editor-v4 .pastoral-tool-panel {
+  background: #f6f7f7;
+  border: 0;
+  border-top: 1px solid #e3e6e8;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pastoral-editor-v4 .pastoral-tool-panel-scroll {
+  height: 100%;
+  padding: .35rem .55rem;
+  overflow: hidden;
+}
+
+.pastoral-editor-v4 .pastoral-panel-content {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Inicio de una presentación: plantilla, tema o imagen, en tres cintas. */
+.pastoral-editor-v4 .pastoral-start-panel {
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: .18rem;
+}
+
+.pastoral-editor-v4 .pastoral-compact-row {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: .3rem;
+  overflow: hidden;
+  border-bottom: 1px solid #e8eaec;
+}
+
+.pastoral-editor-v4 .pastoral-compact-row:last-child { border-bottom: 0; }
+.pastoral-editor-v4 .pastoral-compact-row .pastoral-panel-label {
+  margin: 0;
+  color: #667085;
+  font-size: .58rem;
+  font-weight: 760;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+
+.pastoral-editor-v4 .pastoral-template-grid,
+.pastoral-editor-v4 .pastoral-theme-grid,
+.pastoral-editor-v4 .pastoral-start-backgrounds,
+.pastoral-editor-v4 .pastoral-background-images,
+.pastoral-editor-v4 .pastoral-font-strip,
+.pastoral-editor-v4 .pastoral-inline-toolbar {
+  min-width: 0;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-inline: .35rem;
+}
+
+.pastoral-editor-v4 .pastoral-template-grid::-webkit-scrollbar,
+.pastoral-editor-v4 .pastoral-theme-grid::-webkit-scrollbar,
+.pastoral-editor-v4 .pastoral-start-backgrounds::-webkit-scrollbar,
+.pastoral-editor-v4 .pastoral-background-images::-webkit-scrollbar,
+.pastoral-editor-v4 .pastoral-font-strip::-webkit-scrollbar,
+.pastoral-editor-v4 .pastoral-inline-toolbar::-webkit-scrollbar,
+.pastoral-editor-v4 .pastoral-tool-dock::-webkit-scrollbar { display: none; }
+
+.pastoral-editor-v4 .pastoral-template-grid {
+  display: flex !important;
+  gap: .4rem !important;
+  padding: .1rem .65rem .1rem .05rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-template-grid::after,
+.pastoral-editor-v4 .pastoral-theme-grid::after,
+.pastoral-editor-v4 .pastoral-background-images::after { content: ''; flex: 0 0 .3rem; }
+
+.pastoral-editor-v4 .pastoral-template-option {
+  display: grid !important;
+  width: 96px !important;
+  min-width: 96px !important;
+  max-width: 96px !important;
+  grid-template-rows: 38px auto;
+  gap: .12rem;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  color: #344054;
+  font-size: .54rem !important;
+  font-weight: 650;
+  text-align: left;
+}
+
+.pastoral-editor-v4 .pastoral-template-preview {
+  display: block;
+  width: 96px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,.28);
+  border-radius: .28rem !important;
+  padding: .28rem .32rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-template-option > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pastoral-editor-v4 .pastoral-theme-grid {
+  display: flex !important;
+  gap: .35rem !important;
+  padding: .1rem .65rem .1rem .05rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-theme-option {
+  width: 72px !important;
+  min-width: 72px !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  flex: 0 0 72px !important;
+  border-radius: .28rem !important;
+  padding: .28rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-theme-option > span:last-child { font-size: .48rem !important; }
+.pastoral-editor-v4 .pastoral-theme-swatches i { width: 9px !important; height: 9px !important; }
+
+.pastoral-editor-v4 .pastoral-start-backgrounds,
+.pastoral-editor-v4 .pastoral-background-images {
+  display: flex !important;
+  align-items: center;
+  gap: .35rem !important;
+  padding: .1rem .65rem .1rem .05rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-start-backgrounds > button,
+.pastoral-editor-v4 .pastoral-background-images > button,
+.pastoral-editor-v4 .pastoral-upload-tile {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  flex: 0 0 42px !important;
+  overflow: hidden;
+  border: 1px solid #d9dde1 !important;
+  border-radius: .28rem !important;
+  background: #fff;
+}
+
+.pastoral-editor-v4 .pastoral-upload-tile {
+  display: grid;
+  place-items: center;
+  color: #667085;
+}
+.pastoral-editor-v4 .pastoral-upload-tile svg { width: 15px; height: 15px; }
+.pastoral-editor-v4 .pastoral-background-images img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Texto: tres líneas compactas y escalables horizontalmente. */
+.pastoral-editor-v4 .pastoral-text-three-rows {
+  display: grid;
+  grid-template-rows: 34px 34px 38px;
+  align-content: center;
+  gap: .2rem;
+}
+
+.pastoral-editor-v4 .pastoral-text-presets {
+  display: flex !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 0 !important;
+  border-bottom: 1px solid #e4e7ec !important;
+  scrollbar-width: none;
+}
+
+.pastoral-editor-v4 .pastoral-text-presets button {
+  min-width: 72px !important;
+  height: 33px !important;
+  flex: 0 0 auto;
+  border: 0 !important;
+  border-right: 1px solid #eceef0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 .5rem !important;
+  font-size: .62rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-text-presets button.is-active {
+  color: #C0392B !important;
+  background: rgba(192,57,43,.04) !important;
+}
+
+.pastoral-editor-v4 .pastoral-font-strip {
+  display: flex !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  align-items: center;
+  gap: .12rem !important;
+  border: 0 !important;
+  border-bottom: 1px solid #e4e7ec !important;
+  padding: 0 .2rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-font-strip button {
+  min-height: 31px !important;
+  height: 31px !important;
+  padding: 0 .42rem !important;
+  font-size: .6rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-font-strip button:disabled,
+.pastoral-editor-v4 .pastoral-inline-toolbar button:disabled,
+.pastoral-editor-v4 .pastoral-inline-toolbar input:disabled { opacity: .34; }
+
+.pastoral-editor-v4 .pastoral-text-tools-row {
+  display: flex !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  align-items: center;
+  gap: .15rem !important;
+  padding: 0 .15rem !important;
+}
+
+.pastoral-editor-v4 .pastoral-inline-icon {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  border-radius: .28rem !important;
+}
+.pastoral-editor-v4 .pastoral-inline-icon svg { width: 14px !important; height: 14px !important; }
+
+.pastoral-editor-v4 .pastoral-font-size,
+.pastoral-editor-v4 .pastoral-line-height {
+  display: inline-flex;
+  height: 30px;
+  min-width: 74px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .15rem;
+  border-left: 1px solid #e4e7ec;
+  padding-left: .4rem;
+  color: #667085;
+  font-size: .52rem;
+  font-weight: 650;
+}
+
+.pastoral-editor-v4 .pastoral-font-size input,
+.pastoral-editor-v4 .pastoral-line-height input {
+  width: 34px;
+  border: 0;
+  background: transparent;
+  color: #344054;
+  font-size: .6rem;
+  font-weight: 750;
+  outline: none;
+}
+
+.pastoral-editor-v4 .pastoral-color-strip {
+  display: flex !important;
+  height: 30px !important;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .22rem !important;
+  overflow: visible !important;
+}
+
+.pastoral-editor-v4 .pastoral-color-strip button {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  border-width: 1px !important;
+}
+.pastoral-editor-v4 .pastoral-color-strip button.is-active { outline-width: 1.5px !important; outline-offset: 1px !important; }
+
+/* Elementos: dos filas; solo aparece desplazamiento horizontal si ya no caben. */
+.pastoral-editor-v4 .pastoral-elements-panel {
+  display: grid;
+  grid-template-rows: 32px minmax(0,1fr) 24px;
+  gap: .25rem;
+}
+.pastoral-editor-v4 .pastoral-elements-top { display: flex; height: 32px; gap: .35rem; }
+.pastoral-editor-v4 .pastoral-elements-top input { min-width: 0; flex: 1; height: 30px; border: 0; border-bottom: 1px solid #dfe3e7; background: transparent; font-size: .62rem; outline: none; }
+.pastoral-editor-v4 .pastoral-minimal-action { min-height: 30px !important; height: 30px !important; border-radius: .28rem !important; font-size: .58rem !important; }
+.pastoral-editor-v4 .pastoral-elements-grid {
+  display: grid !important;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, 48px) !important;
+  grid-auto-columns: 58px;
+  gap: .3rem !important;
+  align-content: center;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+}
+.pastoral-editor-v4 .pastoral-elements-grid button { width: 58px !important; height: 48px !important; overflow: hidden; border: 1px solid #e1e4e8; border-radius: .3rem; }
+.pastoral-editor-v4 .pastoral-elements-grid img { width:100%; height:100%; object-fit:cover; }
+.pastoral-editor-v4 .pastoral-external-banks { display:flex; align-items:center; gap:.6rem; overflow-x:auto; font-size:.52rem; }
+
+/* Biblia: una sola línea de controles; los versículos ocupan todo lo demás. */
+.pastoral-editor-v4 .pastoral-verse-picker.is-embedded {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: 34px minmax(0,1fr);
+  overflow: hidden;
+  background: transparent;
+}
+
+.pastoral-editor-v4 .pastoral-verse-toolbar {
+  display: flex;
+  min-width: 0;
+  height: 34px;
+  align-items: center;
+  gap: .25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid #dfe3e7;
+  padding: 0 .05rem .25rem;
+  scrollbar-width: none;
+}
+.pastoral-editor-v4 .pastoral-verse-toolbar::-webkit-scrollbar { display:none; }
+.pastoral-editor-v4 .pastoral-verse-toolbar select {
+  height: 29px;
+  min-width: 64px;
+  max-width: 106px;
+  flex: 0 0 auto;
+  border: 0;
+  border-right: 1px solid #e1e4e8;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 .25rem;
+  color: #344054;
+  font-size: .57rem;
+  font-weight: 700;
+  outline: none;
+}
+.pastoral-editor-v4 .pastoral-verse-search {
+  display: flex;
+  width: 112px;
+  height: 29px;
+  min-width: 92px;
+  flex: 1 0 92px;
+  align-items: center;
+  gap: .22rem;
+  border-bottom: 1px solid #d0d5dd;
+}
+.pastoral-editor-v4 .pastoral-verse-search svg { width: 12px; height: 12px; color:#98a2b3; }
+.pastoral-editor-v4 .pastoral-verse-search input { width:100%; border:0; background:transparent; font-size:.58rem; outline:none; }
+.pastoral-editor-v4 .pastoral-insert-selected {
+  height: 28px;
+  min-width: 68px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: .28rem;
+  background: #C0392B;
+  padding: 0 .42rem;
+  color: #fff;
+  font-size: .55rem;
+  font-weight: 750;
+}
+.pastoral-editor-v4 .pastoral-verse-icon { display:grid; width:28px; height:28px; min-width:28px; place-items:center; border:0; background:transparent; color:#667085; }
+.pastoral-editor-v4 .pastoral-verse-icon svg { width:13px; height:13px; }
+.pastoral-editor-v4 .pastoral-concordance-title { font-size:.6rem; font-weight:750; color:#475467; }
+.pastoral-editor-v4 .pastoral-verse-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.pastoral-editor-v4 .pastoral-verse-row {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: .25rem;
+  border-bottom: 1px solid #e7e9ec;
+  padding: .28rem 0;
+}
+.pastoral-editor-v4 .pastoral-verse-main { display:flex; min-width:0; align-items:flex-start; gap:.35rem; border:0; background:transparent; padding:0; text-align:left; }
+.pastoral-editor-v4 .pastoral-verse-main > span:last-child { min-width:0; }
+.pastoral-editor-v4 .pastoral-verse-main strong { display:block; color:#C0392B; font-size:.55rem; line-height:1.2; }
+.pastoral-editor-v4 .pastoral-verse-main em { display:block; margin-top:.08rem; color:#344054; font-size:.66rem; font-style:normal; line-height:1.35; }
+.pastoral-editor-v4 .pastoral-verse-check,
+.pastoral-editor-v4 .pastoral-verse-add { display:grid; width:20px; height:20px; min-width:20px; place-items:center; border:1px solid #d0d5dd; border-radius:999px; color:#667085; }
+.pastoral-editor-v4 .pastoral-verse-check.is-active { border-color:#C0392B; background:#C0392B; color:#fff; }
+.pastoral-editor-v4 .pastoral-verse-check svg,
+.pastoral-editor-v4 .pastoral-verse-add svg { width:11px; height:11px; }
+.pastoral-editor-v4 .pastoral-verse-row-actions { display:flex; gap:.05rem; }
+.pastoral-editor-v4 .pastoral-verse-mini { display:grid; width:27px; height:27px; min-width:27px; place-items:center; border:0; background:transparent; color:#667085; }
+.pastoral-editor-v4 .pastoral-verse-mini:first-child { color:#C0392B; }
+.pastoral-editor-v4 .pastoral-verse-mini svg { width:12px; height:12px; }
+.pastoral-editor-v4 .pastoral-verse-loading,
+.pastoral-editor-v4 .pastoral-verse-empty { display:grid; min-height:90px; place-items:center; color:#667085; font-size:.62rem; }
+.pastoral-editor-v4 .pastoral-verse-loading svg { width:16px; height:16px; animation:spin 1s linear infinite; }
+
+/* Fondo dedicado sigue siendo compacto; los temas también están en Plantillas. */
+.pastoral-editor-v4 .pastoral-background-panel { display:grid; grid-template-rows:32px 48px minmax(0,1fr); gap:.25rem; }
+.pastoral-editor-v4 .pastoral-background-actions { height:32px; padding:0 !important; border-bottom:1px solid #e4e7ec; }
+.pastoral-editor-v4 .pastoral-background-panel .pastoral-theme-grid { display:flex !important; align-items:center; }
+
+/* Capas permanece contextual, sin card externa. */
+.pastoral-editor-v4 .pastoral-layers-panel { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.7fr); gap:.55rem; }
+.pastoral-editor-v4 .pastoral-layer-list { max-height:none !important; height:100%; }
+
+@media (max-width: 1023px) {
+  .pastoral-editor-v4 .pastoral-editor-shell,
+  .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
+    display: grid !important;
+    grid-template-areas: 'stage' 'panel' 'dock' !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) 188px 48px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-editor-v4 .pastoral-stage {
+    grid-area: stage !important;
+    display: grid !important;
+    grid-template-areas: 'canvas' 'pages' !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) 34px !important;
+    min-height: 0 !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    padding: .28rem .45rem 0 !important;
+  }
+
+  .pastoral-editor-v4 .pastoral-canvas-wrap {
+    grid-area: canvas !important;
+    display: flex !important;
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: .15rem 0 !important;
+  }
+  .pastoral-editor-v4 .pastoral-canvas-wrap > div { width:100% !important; height:auto !important; min-height:0 !important; align-items:flex-start !important; overflow:hidden !important; }
+  .pastoral-editor-v4 .pastoral-visual-canvas { max-height:100% !important; }
+
+  .pastoral-editor-v4 .pastoral-pages-strip {
+    grid-area: pages !important;
+    display: flex !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    align-items:center;
+    justify-content:center;
+    gap:.1rem !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    border-top:1px solid #e2e5e8;
+    padding:0 !important;
+  }
+  .pastoral-editor-v4 .pastoral-page-chip > button:first-child,
+  .pastoral-editor-v4 .pastoral-pages-strip > button[aria-label='Nueva página'] { min-height:33px !important; height:33px !important; min-width:34px !important; padding:0 .4rem !important; }
+  .pastoral-editor-v4 .pastoral-page-chip > button:first-child span { display:none !important; }
+
+  .pastoral-editor-v4 .pastoral-tool-panel,
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas,
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia {
+    position: relative !important;
+    z-index: 2 !important;
+    grid-area: panel !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 188px !important;
+    max-height: 188px !important;
+    min-height: 188px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    transform: none !important;
+  }
+
+  .pastoral-editor-v4 .pastoral-tool-panel-scroll {
+    height: 100% !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    padding: .35rem .55rem !important;
+  }
+
+  .pastoral-editor-v4 .pastoral-tool-dock {
+    position: relative !important;
+    z-index: 3 !important;
+    grid-area: dock !important;
+    display: flex !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-top: 1px solid #dfe3e7 !important;
+    background: #fff !important;
+    padding: 0 .15rem !important;
+    scrollbar-width: none;
+  }
+
+  .pastoral-editor-v4 .pastoral-tool-dock > button,
+  .pastoral-editor-v4 .pastoral-tool-button {
+    display: flex !important;
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+    height: 47px !important;
+    min-height: 47px !important;
+    flex: 0 0 70px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .08rem !important;
+    border: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    background: transparent !important;
+    padding: .12rem .25rem !important;
+    color: #667085 !important;
+    font-size: .52rem !important;
+    font-weight: 650 !important;
+    line-height: 1 !important;
+  }
+  .pastoral-editor-v4 .pastoral-tool-button svg { width:15px !important; height:15px !important; }
+  .pastoral-editor-v4 .pastoral-tool-button.is-active { border-bottom-color:#C0392B !important; color:#C0392B !important; }
+
+  .pastoral-editor-v4 .pastoral-layers-panel { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; gap:.25rem; }
+  .pastoral-editor-v4 .pastoral-layer-actions { grid-template-columns:repeat(4,minmax(0,1fr)) !important; }
+}
+
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  .pastoral-editor-v4 .pastoral-editor-shell,
+  .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
+    grid-template-areas:'stage' 'panel' 'dock' !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-rows:minmax(0,1fr) 118px 42px !important;
+  }
+  .pastoral-editor-v4 .pastoral-tool-panel,
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia,
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas { height:118px !important; min-height:118px !important; max-height:118px !important; }
+  .pastoral-editor-v4 .pastoral-tool-dock { height:42px !important; min-height:42px !important; }
+  .pastoral-editor-v4 .pastoral-tool-dock > button,
+  .pastoral-editor-v4 .pastoral-tool-button { height:41px !important; min-height:41px !important; width:64px !important; min-width:64px !important; flex-basis:64px !important; }
+  .pastoral-editor-v4 .pastoral-start-panel { grid-template-rows:repeat(3,minmax(0,1fr)); }
+  .pastoral-editor-v4 .pastoral-template-preview { height:28px !important; min-height:28px !important; }
+  .pastoral-editor-v4 .pastoral-template-option { grid-template-rows:28px auto; }
+  .pastoral-editor-v4 .pastoral-theme-option { height:32px !important; min-height:32px !important; }
+  .pastoral-editor-v4 .pastoral-start-backgrounds > button,
+  .pastoral-editor-v4 .pastoral-background-images > button,
+  .pastoral-editor-v4 .pastoral-upload-tile { width:32px !important; height:32px !important; min-width:32px !important; flex-basis:32px !important; }
+  .pastoral-editor-v4 .pastoral-text-three-rows { grid-template-rows:30px 30px 34px; }
+  .pastoral-editor-v4 .pastoral-text-presets,
+  .pastoral-editor-v4 .pastoral-font-strip { min-height:30px !important; height:30px !important; }
+  .pastoral-editor-v4 .pastoral-text-tools-row { min-height:34px !important; height:34px !important; }
+}
