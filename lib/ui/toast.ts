@@ -9,6 +9,7 @@ export function mostrarToast(mensaje?: string | null, tipo: ToastTipo = 'ok') {
   if (typeof document === 'undefined' || !mensaje) return
 
   document.getElementById(TOAST_ID)?.remove()
+  if (tipo === 'ok' && /^Plantilla “.+” aplicada$/.test(mensaje)) return
 
   const toast = document.createElement('div')
   toast.id = TOAST_ID
