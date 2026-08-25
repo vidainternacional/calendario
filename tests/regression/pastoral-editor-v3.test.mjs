@@ -2,67 +2,77 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import test from 'node:test'
 
-const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV3.tsx', 'utf8')
+const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 const wrapper = fs.readFileSync('components/pastoral/ProyectoContenidoWorkspace.tsx', 'utf8')
-const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-v3.css', 'utf8')
-const resetCss = fs.readFileSync('app/(app)/pastoral/pastoral-editor-v3-reset.css', 'utf8')
+const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-capcut-v2.css', 'utf8')
 const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const canvas = fs.readFileSync('components/pastoral/PastoralVisualCanvas.tsx', 'utf8')
+const picker = fs.readFileSync('components/pastoral/PastoralVersePicker.tsx', 'utf8')
+const presets = fs.readFileSync('components/pastoral/pastoral-editor-presets.ts', 'utf8')
 
-test('workspace activo usa la version v3 y carga sus capas visuales al final', () => {
-  assert.match(wrapper, /PastoralVisualWorkspaceV3/)
-  assert.match(layout, /pastoral-editor-fixed-workspace\.css'[\s\S]*pastoral-editor-v3\.css'[\s\S]*pastoral-editor-v3-reset\.css'/)
+test('workspace activo usa v4 y carga la capa CapCut v2 al final', () => {
+  assert.match(wrapper, /PastoralVisualWorkspaceV4/)
+  assert.match(layout, /pastoral-editor-capcut\.css'[\s\S]*pastoral-editor-capcut-v2\.css'/)
 })
 
-test('dock principal deja parrafo dentro de texto y agrega capas', () => {
+test('dock mantiene herramientas principales y párrafo vive dentro de Texto', () => {
   const bloque = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  assert.match(bloque, /label: 'Plantillas'/)
-  assert.match(bloque, /label: 'Elementos'/)
-  assert.match(bloque, /label: 'Texto'/)
-  assert.match(bloque, /label: 'Biblia'/)
-  assert.match(bloque, /label: 'Fondo'/)
-  assert.match(bloque, /label: 'Diseño'/)
-  assert.match(bloque, /label: 'Capas'/)
+  for (const label of ['Plantillas', 'Elementos', 'Texto', 'Biblia', 'Fondo', 'Diseño', 'Capas']) assert.match(bloque, new RegExp(`label: '${label}'`))
   assert.doesNotMatch(bloque, /label: 'Párrafo'/)
   assert.match(workspace, /panel === 'texto'[\s\S]*AlignLeft[\s\S]*ListOrdered[\s\S]*Interlineado/)
+  assert.match(css, /pastoral-text-three-rows[\s\S]*grid-template-rows: 34px 34px 38px/)
 })
 
-test('diseño contiene relación de aspecto y capas concentra organización', () => {
-  assert.match(workspace, /panel === 'diseno'[\s\S]*Relación de aspecto[\s\S]*FORMATOS_LIENZO/)
-  assert.match(workspace, /panel === 'capas'[\s\S]*Duplicar[\s\S]*Adelante[\s\S]*Atrás[\s\S]*Eliminar elemento/)
+test('Biblia entra directamente en el panel y prioriza la lista de versículos', () => {
+  assert.match(workspace, /panel === 'biblia'[\s\S]*PastoralVersePicker open embedded/)
+  assert.doesNotMatch(workspace, />Abrir</)
+  assert.match(picker, /embedded\?: boolean/)
+  assert.match(picker, /pastoral-verse-toolbar/)
+  assert.match(picker, /pastoral-verse-list/)
+  assert.match(css, /grid-template-rows: 34px minmax\(0,1fr\)/)
+  assert.match(css, /pastoral-insert-selected[\s\S]*height: 28px/)
 })
 
-test('fondos ofrece al menos treinta paletas completas con tipografias', () => {
-  const bloque = workspace.match(/const PALETAS_PRESENTACION:[\s\S]*?\n\]/)?.[0] ?? ''
-  const cantidad = (bloque.match(/fuenteTitulo:/g) ?? []).length
+test('plantillas integra temas y fondos como punto de inicio de una presentación', () => {
+  const parte = workspace.slice(workspace.indexOf("panel === 'plantillas'"), workspace.indexOf("panel === 'recursos'"))
+  assert.match(parte, /Plantillas/)
+  assert.match(parte, /Temas/)
+  assert.match(parte, /Fondos/)
+  assert.match(parte, /PLANTILLAS_VISUALES/)
+  assert.match(parte, /PALETAS_PRESENTACION/)
+  assert.match(parte, /aplicarFondoImagen/)
+})
+
+test('fondos conserva al menos treinta paletas completas con tipografías', () => {
+  const cantidad = (presets.match(/fuenteTitulo:/g) ?? []).length
   assert.ok(cantidad >= 30, `se esperaban 30 paletas y hay ${cantidad}`)
-  assert.match(bloque, /fuenteCuerpo:/)
+  assert.match(presets, /fuenteCuerpo:/)
   assert.match(workspace, /aplicarPaleta[\s\S]*fuenteTitulo[\s\S]*fuenteCuerpo/)
 })
 
-test('dock movil ocupa todo el ancho sin scroll lateral ni orden heredado', () => {
-  assert.match(css, /grid-template-columns: repeat\(7,minmax\(0,1fr\)\) !important/)
-  assert.match(css, /\.pastoral-tool-dock[\s\S]*overflow: hidden !important/)
-  assert.match(css, /\.pastoral-tool-button[\s\S]*min-width: 0 !important/)
-  assert.match(resetCss, /order: initial !important/)
-  assert.match(resetCss, /margin: 0 !important/)
-  assert.match(resetCss, /border-left: 0 !important/)
-  assert.match(resetCss, /display: flex !important/)
+test('guardado automático usa la acción existente sin refrescar la página', () => {
+  assert.match(workspace, /autosaveReadyRef/)
+  assert.match(workspace, /guardarAutomatico/)
+  assert.match(workspace, /editarPaquetePastoral\(paquete\.id, construirFormulario\(\)\)/)
+  assert.match(workspace, /setTimeout\(\(\) => \{ void guardarAutomatico\(\) \}, 650\)/)
+  const bloque = workspace.slice(workspace.indexOf('const guardarAutomatico'), workspace.indexOf('const cambiarVista'))
+  assert.doesNotMatch(bloque, /router\.refresh/)
 })
 
-test('selector biblico se integra visualmente a la bandeja movil', () => {
-  assert.match(css, /aria-label='Seleccionar versículo'/)
-  assert.match(css, /height: min\(44dvh, 390px\) !important/)
-  assert.match(css, /background: transparent !important[\s\S]*backdrop-filter: none !important/)
+test('cursiva se sintetiza de forma visible y controles no cubren la caja', () => {
+  assert.match(canvas, /fontStyle: elemento\.cursiva \? 'oblique 12deg' : 'normal'/)
+  assert.match(canvas, /fontSynthesis: 'style weight'/)
+  assert.match(canvas, /-top-7 left-0[\s\S]*h-6 w-6/)
+  assert.match(canvas, /-top-7 right-0[\s\S]*h-6 w-6/)
 })
 
-test('tipografia del lienzo escala con el ancho real del canvas', () => {
+test('tipografía del lienzo escala con el ancho real del canvas', () => {
   assert.match(canvas, /containerType: 'inline-size'/)
   assert.match(canvas, /fontSize: `min\(\$\{pixeles\}px, \$\{escalaLienzo\}cqw\)`/)
   assert.match(canvas, /baseWidth = pagina\.formato === '9:16'/)
 })
 
-test('compartir prioriza congregacion y deja utilidades despues', () => {
+test('compartir prioriza congregación y deja utilidades después', () => {
   const inicio = workspace.indexOf("vista === 'publicar'")
   const parte = workspace.slice(inicio)
   assert.ok(parte.indexOf('PackageDistributionControls') < parte.indexOf('pastoral-share-actions'))
