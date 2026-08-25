@@ -17,6 +17,7 @@ import './pastoral-editor-accessible-v5-authority.css'
 import './pastoral-editor-notes-language-v6.css'
 import './pastoral-editor-plantillas-v7.css'
 import './pastoral-editor-workbench-v10.css'
+import './pastoral-editor-surface-white.css'
 
 export default function PastoralLayout({ children }: { children: React.ReactNode }) {
   return <div className="pastoral-visual-system">{children}</div>
