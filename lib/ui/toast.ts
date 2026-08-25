@@ -7,9 +7,10 @@ const TOAST_ID = 'vida-app-toast'
 /** Notificación accesible dentro de la app para resultados de acciones. */
 export function mostrarToast(mensaje?: string | null, tipo: ToastTipo = 'ok') {
   if (typeof document === 'undefined' || !mensaje) return
+  const mensajeLimpio = mensaje.trim()
+  if (tipo === 'ok' && /^(Plantilla|Tema)\b.*\baplicad[oa]$/i.test(mensajeLimpio)) return
 
   document.getElementById(TOAST_ID)?.remove()
-  if (tipo === 'ok' && /^Plantilla “.+” aplicada$/.test(mensaje)) return
 
   const toast = document.createElement('div')
   toast.id = TOAST_ID
