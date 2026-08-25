@@ -6,7 +6,7 @@ import {
   AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, BookOpen, Check,
   ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, Image as ImageIcon, Italic,
   Layers, LayoutTemplate, Link2, List, ListOrdered, Loader2, Maximize2, Minimize2,
-  Monitor, Palette, Plus, Redo2, Save, Share2, Smartphone, Square, Strikethrough,
+  Monitor, Plus, Redo2, Save, Share2, Smartphone, Square, Strikethrough,
   Trash2, Type, Underline, Undo2, Upload,
 } from 'lucide-react'
 import { editarPaquetePastoral } from '@/app/actions/pastoral-paquetes'
@@ -32,15 +32,14 @@ type Paquete = {
 }
 type Snapshot = { titulo: string; paginas: DiapositivaCanvas[]; indice: number }
 type DestinoSubida = 'elemento' | 'fondo'
-type Herramienta = 'plantillas' | 'recursos' | 'texto' | 'biblia' | 'fondo' | 'diseno' | 'capas'
+type Herramienta = 'plantillas' | 'recursos' | 'texto' | 'biblia' | 'diseno' | 'capas'
 
 const MAX_HISTORIAL = 80
-const HERRAMIENTAS: Array<{ id: Herramienta; label: string; icon: typeof Palette }> = [
+const HERRAMIENTAS: Array<{ id: Herramienta; label: string; icon: typeof LayoutTemplate }> = [
   { id: 'plantillas', label: 'Plantillas', icon: LayoutTemplate },
   { id: 'recursos', label: 'Elementos', icon: ImageIcon },
   { id: 'texto', label: 'Texto', icon: Type },
   { id: 'biblia', label: 'Biblia', icon: BookOpen },
-  { id: 'fondo', label: 'Fondo', icon: Palette },
   { id: 'diseno', label: 'Diseño', icon: Monitor },
   { id: 'capas', label: 'Capas', icon: Layers },
 ]
@@ -85,7 +84,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [guardandoAuto, setGuardandoAuto] = useState(false)
   const [busquedaRecursos, setBusquedaRecursos] = useState('')
   const [isPending, startTransition] = useTransition()
-  const [subiendoImagen, startSubida] = useTransition()
+  const [, startSubida] = useTransition()
   const [destinoSubida, setDestinoSubida] = useState<DestinoSubida>('elemento')
   const [recursoPendiente, setRecursoPendiente] = useState<{ id: string; destino: DestinoSubida } | null>(null)
   const [versionHistorial, setVersionHistorial] = useState(0)
@@ -137,7 +136,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
   const agregarImagen = (recurso: RecursoPastoral) => agregarElemento({ tipo: 'imagen', recurso_id: recurso.id, x: 12, y: 18, w: 56, h: 48, ajuste: 'cover', radio: 14 })
   const aplicarFondoImagen = (recurso: RecursoPastoral) => actualizarPagina({ fondo_modo: 'imagen', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
-  const quitarFondoImagen = () => actualizarPagina({ fondo_modo: 'color', fondo_recurso_id: null, recurso_id: null })
   const eliminarElemento = (id: string) => { registrarHistorial(); patchPaginaSinHistorial({ elementos: (pagina.elementos ?? []).filter((el) => el.id !== id) }); setSeleccion(null) }
   const duplicarElemento = (id: string) => { const original = pagina.elementos?.find((el) => el.id === id); if (!original) return; agregarElemento({ ...clonar(original), id: undefined, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 }) }
   const moverCapa = (id: string, delta: number) => { const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return; actualizarElemento(id, { z: Math.max(0, Math.min(200, elemento.z + delta)) }) }
@@ -150,7 +148,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       fuente: elemento.rol === 'titulo' ? paleta.fuenteTitulo : paleta.fuenteCuerpo,
     })
     patchPaginaSinHistorial({ fondo_modo: 'color', fondo: paleta.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: paleta.texto, elementos })
-    mostrarToast(`Tema “${paleta.label}” aplicado`)
   }
 
   const aplicarPlantilla = (plantilla: PlantillaVisual) => {
@@ -168,7 +165,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     ]
     patchPaginaSinHistorial({ plantilla: 'limpia', fondo_modo: 'color', fondo: plantilla.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: plantilla.colorTexto, elementos: siguientes })
     setSeleccion(null)
-    mostrarToast(`Plantilla “${plantilla.nombre}” aplicada`)
   }
 
   const nuevaPagina = () => { registrarHistorial(); setPaginas((actuales) => [...actuales, nuevaPaginaCanvas()]); setIndice(paginas.length); setSeleccion(null) }
@@ -248,12 +244,23 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const copiarEnlaceActual = async () => { try { await navigator.clipboard.writeText(window.location.href); mostrarToast('Enlace del proyecto copiado') } catch { mostrarToast('No se pudo copiar el enlace') } }
   const compartirInterno = async () => { try { if (navigator.share) await navigator.share({ title: titulo, text: 'Proyecto de Centro Pastoral', url: window.location.href }); else await copiarEnlaceActual() } catch {} }
   const alinear = (alineacion: Alineacion) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { alineacion })
+  const ajustarTamano = (delta: number) => {
+    if (!textoSeleccionado) return
+    const actual = Math.round(textoSeleccionado.tamano_fuente ?? 24)
+    actualizarElemento(textoSeleccionado.id, { tamano_fuente: Math.min(160, Math.max(8, actual + delta)) })
+  }
+  const ajustarLinea = (delta: number) => {
+    if (!textoSeleccionado) return
+    const actual = textoSeleccionado.interlineado ?? 1.25
+    const siguiente = Math.round(Math.min(2, Math.max(.9, actual + delta)) * 100) / 100
+    actualizarElemento(textoSeleccionado.id, { interlineado: siguiente })
+  }
   void versionHistorial
 
   const panelContenido = pagina ? <>
     {panel === 'plantillas' && <div className="pastoral-panel-content pastoral-start-panel">
-      <section className="pastoral-compact-row"><p className="pastoral-panel-label">Plantillas</p><div className="pastoral-template-grid">{PLANTILLAS_VISUALES.map((plantilla) => <button key={plantilla.id} type="button" onClick={() => aplicarPlantilla(plantilla)} className="pastoral-template-option"><span className="pastoral-template-preview" style={{ background: plantilla.fondo, color: plantilla.colorTexto }}><i /><i /><i /></span><span>{plantilla.nombre}</span></button>)}</div></section>
-      <section className="pastoral-compact-row"><p className="pastoral-panel-label">Temas</p><div className="pastoral-theme-grid">{PALETAS_PRESENTACION.map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarPaleta(paleta)} className="pastoral-theme-option" style={{ backgroundColor: paleta.fondo, color: paleta.titulo }}><span className="pastoral-theme-swatches"><i style={{ backgroundColor: paleta.titulo }} /><i style={{ backgroundColor: paleta.texto }} /><i style={{ backgroundColor: paleta.acento }} /></span><span>{paleta.label}</span></button>)}</div></section>
+      <section className="pastoral-compact-row"><p className="pastoral-panel-label">Plantillas</p><div className="pastoral-template-grid"><button type="button" onClick={nuevaPagina} className="pastoral-template-option pastoral-template-blank-option" aria-label="Crear una página nueva en blanco"><span className="pastoral-template-preview pastoral-template-preview-blank"><i /><i /></span><span>En blanco</span></button>{PLANTILLAS_VISUALES.map((plantilla) => <button key={plantilla.id} type="button" onClick={() => aplicarPlantilla(plantilla)} className="pastoral-template-option"><span className="pastoral-template-preview" style={{ background: plantilla.fondo, color: plantilla.colorTexto }}><i /><i /><i /></span><span>{plantilla.nombre}</span></button>)}</div></section>
+      <section className="pastoral-compact-row"><p className="pastoral-panel-label">Temas</p><div className="pastoral-theme-grid">{PALETAS_PRESENTACION.map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarPaleta(paleta)} className="pastoral-theme-option"><span className="pastoral-theme-swatches" style={{ background: paleta.fondo, color: paleta.titulo }}><i /><i /></span><span>{paleta.label}</span></button>)}</div></section>
       <section className="pastoral-compact-row"><p className="pastoral-panel-label">Fondos</p><div className="pastoral-background-images pastoral-start-backgrounds"><button type="button" onClick={() => prepararSubida('fondo')} className="pastoral-upload-tile" aria-label="Subir fondo"><Upload /></button>{imagenes.slice(0, 18).map((recurso) => <button key={recurso.id} type="button" onClick={() => aplicarFondoImagen(recurso)}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} /></button>)}</div></section>
     </div>}
 
@@ -264,33 +271,25 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     </div>}
 
     {panel === 'texto' && <div className="pastoral-panel-content pastoral-text-three-rows">
-      <div className="pastoral-text-presets"><button type="button" onClick={() => agregarTexto('libre')}><Plus /> Caja</button>{ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" onClick={() => aplicarRolTexto(estilo.id)} className={textoSeleccionado?.rol === estilo.id ? 'is-active' : ''}>{estilo.label}</button>)}</div>
+      <div className="pastoral-text-presets"><button type="button" onClick={() => agregarTexto('libre')}>Caja</button>{ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" onClick={() => aplicarRolTexto(estilo.id)} className={textoSeleccionado?.rol === estilo.id ? 'is-active' : ''}>{estilo.label}</button>)}</div>
       <div className="pastoral-font-strip">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { fuente })} className={textoSeleccionado?.fuente === fuente ? 'is-active' : ''} style={{ fontFamily: fuente }}>{fuente}</button>)}</div>
       <div className="pastoral-inline-toolbar pastoral-text-tools-row">
-        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseBotonActivo(Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))}><Bold /></button>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseBotonActivo(Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))} aria-label="Negrita"><Bold /></button>
         <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { cursiva: !textoSeleccionado.cursiva })} className={claseBotonActivo(Boolean(textoSeleccionado?.cursiva))} aria-label="Cursiva"><Italic /></button>
-        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { subrayado: !textoSeleccionado.subrayado })} className={claseBotonActivo(Boolean(textoSeleccionado?.subrayado))}><Underline /></button>
-        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { tachado: !textoSeleccionado.tachado })} className={claseBotonActivo(Boolean(textoSeleccionado?.tachado))}><Strikethrough /></button>
-        <span className="pastoral-toolbar-divider" />
-        <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('izquierda')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'izquierda')}><AlignLeft /></button>
-        <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('centro')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'centro')}><AlignCenter /></button>
-        <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('derecha')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'derecha')}><AlignRight /></button>
-        <button type="button" disabled={!textoSeleccionado} onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className="pastoral-inline-icon"><List /></button>
-        <button type="button" disabled={!textoSeleccionado} onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className="pastoral-inline-icon"><ListOrdered /></button>
-        <label className="pastoral-font-size">Tamaño <input aria-label="Tamaño de letra en puntos" type="number" min="8" max="160" disabled={!textoSeleccionado} value={Math.round(textoSeleccionado?.tamano_fuente ?? 24)} onChange={(e) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { tamano_fuente: Math.min(160, Math.max(8, Number(e.target.value) || 8)) })} /><span>pt</span></label>
-        <label className="pastoral-line-height">Línea <input aria-label="Interlineado" type="number" min="0.9" max="2" step="0.05" disabled={!textoSeleccionado} value={textoSeleccionado?.interlineado ?? 1.25} onChange={(e) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { interlineado: Math.min(2, Math.max(.9, Number(e.target.value) || 1.25)) })} /></label>
-        <span className="pastoral-toolbar-divider" />
+        <div className="pastoral-font-size" aria-label="Tamaño de letra"><span>Tamaño</span><button type="button" className="pastoral-step-button" disabled={!textoSeleccionado} onClick={() => ajustarTamano(-1)} aria-label="Reducir tamaño de letra">−</button><input aria-label="Tamaño de letra en puntos" type="number" min="8" max="160" disabled={!textoSeleccionado} value={Math.round(textoSeleccionado?.tamano_fuente ?? 24)} onChange={(e) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { tamano_fuente: Math.min(160, Math.max(8, Number(e.target.value) || 8)) })} /><button type="button" className="pastoral-step-button" disabled={!textoSeleccionado} onClick={() => ajustarTamano(1)} aria-label="Aumentar tamaño de letra">+</button><span>pt</span></div>
+        <div className="pastoral-line-height" aria-label="Interlineado"><span>Línea</span><button type="button" className="pastoral-step-button" disabled={!textoSeleccionado} onClick={() => ajustarLinea(-0.05)} aria-label="Reducir interlineado">−</button><input aria-label="Interlineado" type="number" min="0.9" max="2" step="0.05" disabled={!textoSeleccionado} value={textoSeleccionado?.interlineado ?? 1.25} onChange={(e) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { interlineado: Math.min(2, Math.max(.9, Number(e.target.value) || 1.25)) })} /><button type="button" className="pastoral-step-button" disabled={!textoSeleccionado} onClick={() => ajustarLinea(0.05)} aria-label="Aumentar interlineado">+</button></div>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('izquierda')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'izquierda')} aria-label="Alinear a la izquierda"><AlignLeft /></button>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('centro')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'centro')} aria-label="Centrar"><AlignCenter /></button>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('derecha')} className={claseBotonActivo(textoSeleccionado?.alineacion === 'derecha')} aria-label="Alinear a la derecha"><AlignRight /></button>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { subrayado: !textoSeleccionado.subrayado })} className={claseBotonActivo(Boolean(textoSeleccionado?.subrayado))} aria-label="Subrayado"><Underline /></button>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { tachado: !textoSeleccionado.tachado })} className={claseBotonActivo(Boolean(textoSeleccionado?.tachado))} aria-label="Tachado"><Strikethrough /></button>
+        <button type="button" disabled={!textoSeleccionado} onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className="pastoral-inline-icon" aria-label="Lista con viñetas"><List /></button>
+        <button type="button" disabled={!textoSeleccionado} onMouseDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className="pastoral-inline-icon" aria-label="Lista numerada"><ListOrdered /></button>
         <div className="pastoral-color-strip">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { color })} className={textoSeleccionado?.color === color ? 'is-active' : ''} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>
       </div>
     </div>}
 
     {panel === 'biblia' && <PastoralVersePicker open embedded onClose={() => undefined} onInsert={agregarVersiculo} />}
-
-    {panel === 'fondo' && <div className="pastoral-panel-content pastoral-background-panel">
-      <div className="pastoral-background-actions"><button type="button" onClick={() => prepararSubida('fondo')} disabled={subiendoImagen} className="pastoral-minimal-action"><Upload /> Subir fondo</button>{pagina.fondo_modo === 'imagen' && <button type="button" onClick={quitarFondoImagen} className="pastoral-minimal-danger"><Trash2 /> Quitar</button>}</div>
-      <div className="pastoral-background-images">{imagenes.slice(0, 18).map((recurso) => <button key={recurso.id} type="button" onClick={() => aplicarFondoImagen(recurso)}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} /></button>)}</div>
-      <div className="pastoral-theme-grid">{PALETAS_PRESENTACION.map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarPaleta(paleta)} className="pastoral-theme-option" style={{ backgroundColor: paleta.fondo, color: paleta.titulo }}><span className="pastoral-theme-swatches"><i style={{ backgroundColor: paleta.titulo }} /><i style={{ backgroundColor: paleta.texto }} /><i style={{ backgroundColor: paleta.acento }} /></span><span>{paleta.label}</span></button>)}</div>
-    </div>}
 
     {panel === 'diseno' && <div className="pastoral-panel-content"><div className="pastoral-panel-heading"><h3>Relación de aspecto</h3><p>16:9 funciona mejor para cañón, pantallas y la mayoría de proyectores modernos.</p></div><div className="pastoral-aspect-control">{FORMATOS_LIENZO.map(({ id, label, detalle }) => { const Icon = id === '9:16' ? Smartphone : id === '1:1' ? Square : Monitor; return <button key={id} type="button" onClick={() => actualizarPagina({ formato: id })} className={pagina.formato === id ? 'is-active' : ''}><Icon /><span><strong>{detalle}</strong><small>{label}</small></span></button> })}</div></div>}
 
