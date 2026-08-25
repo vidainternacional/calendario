@@ -60,7 +60,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       color: elemento.color ?? '#0f172a',
       textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
       fontWeight: elemento.peso ?? 500,
-      fontStyle: elemento.cursiva ? 'oblique 12deg' : 'normal',
+      fontStyle: elemento.cursiva ? 'italic' : 'normal',
       fontSynthesis: 'style weight',
       textDecoration: decoracion,
       lineHeight: elemento.interlineado ?? 1.25,
@@ -134,10 +134,10 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             ) : <TextoCanvas elemento={elemento} editable={editable} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
             {activo && <>
               <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento)} data-canvas-floating-controls="true">
-                <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="grid h-7 w-7 touch-none place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm" aria-label="Mover elemento"><Move className="h-3.5 w-3.5" /></button>
-                <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="grid h-7 w-7 place-items-center rounded-full border border-rose-200 bg-white text-rose-600 shadow-sm" aria-label="Eliminar elemento"><Trash2 className="h-3.5 w-3.5" /></button>
+                <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
+                <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="pastoral-canvas-action is-danger" aria-label="Eliminar elemento"><Trash2 /></button>
               </div>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-3 -right-3 h-5 w-5 touch-none rounded-full border-[3px] border-white bg-[#C0392B] shadow-sm" aria-label="Redimensionar elemento" />
+              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />
             </>}
           </div>
         })}
