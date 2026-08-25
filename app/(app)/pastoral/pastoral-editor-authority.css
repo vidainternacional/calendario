@@ -1,0 +1,113 @@
+/* Autoridad final móvil/tablet para neutralizar reglas legacy más específicas.
+   No cambia lógica: garantiza que el banco de herramientas sea una fila real del workspace,
+   no un drawer absoluto, y que Fondo no reaparezca como herramienta separada. */
+
+@media (max-width: 1023px) {
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
+    display: grid !important;
+    grid-template-areas:
+      'stage'
+      'panel'
+      'dock' !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) auto 48px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-stage {
+    grid-area: stage !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-recursos,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-texto,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-diseno,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-capas {
+    position: relative !important;
+    inset: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    grid-area: panel !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #f3f4f5 !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia {
+    position: relative !important;
+    inset: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    grid-area: panel !important;
+    width: 100% !important;
+    height: clamp(202px, 27dvh, 236px) !important;
+    min-height: 202px !important;
+    max-height: 236px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    transform: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #f3f4f5 !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .panel-biblia .pastoral-tool-panel-scroll {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-dock {
+    position: relative !important;
+    grid-area: dock !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    transform: none !important;
+    background: #f3f4f5 !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(5) {
+    display: none !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
+    grid-template-rows: minmax(0, 1fr) auto 40px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia {
+    height: 118px !important;
+    min-height: 118px !important;
+    max-height: 118px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-dock {
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+}
