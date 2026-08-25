@@ -8,6 +8,7 @@ import './pastoral-editor-fixed-workspace.css'
 import './pastoral-editor-v3.css'
 import './pastoral-editor-v3-reset.css'
 import './pastoral-editor-capcut.css'
+import './pastoral-editor-capcut-v2.css'
 
 export default function PastoralLayout({ children }: { children: React.ReactNode }) {
   return <div className="pastoral-visual-system">{children}</div>
