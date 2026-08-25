@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, BookOpen, Check, ChevronRight, Copy, Loader2, Search, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, Copy, Loader2, Plus, Search, X } from 'lucide-react'
 import { mostrarToast } from '@/lib/ui/toast'
 
 const API = 'https://bible.helloao.org/api'
@@ -14,6 +14,7 @@ type ReferenciaRelacionada = { book: string; chapter: number; verse: number; end
 
 type Props = {
   open: boolean
+  embedded?: boolean
   onClose: () => void
   onInsert: (versiculo: { referencia: string; texto: string; traduccion: string }) => void
 }
@@ -23,7 +24,7 @@ function etiquetaTraduccion(t?: Traduccion) {
   return (t.shortName || t.name).toUpperCase()
 }
 
-export default function PastoralVersePicker({ open, onClose, onInsert }: Props) {
+export default function PastoralVersePicker({ open, embedded = false, onClose, onInsert }: Props) {
   const [traducciones, setTraducciones] = useState<Traduccion[]>([])
   const [trad, setTrad] = useState('')
   const [libros, setLibros] = useState<Libro[]>([])
@@ -121,8 +122,8 @@ export default function PastoralVersePicker({ open, onClose, onInsert }: Props) 
       const response = await fetch(`${API}/d/open-cross-ref/${versiculo.libroId}/${versiculo.capitulo}.json`)
       if (!response.ok) throw new Error('crossrefs')
       const d = await response.json()
-      const entradas: any[] = d.chapter?.content ?? []
-      const entrada = entradas.find((item: any) => Number(item.verse) === versiculo.verso)
+      const entradas: Array<{ verse?: number; references?: ReferenciaRelacionada[] }> = d.chapter?.content ?? []
+      const entrada = entradas.find((item) => Number(item.verse) === versiculo.verso)
       const refs: ReferenciaRelacionada[] = (entrada?.references ?? []).slice(0, 16)
       const resultados: Array<(VersiculoElegido & { score?: number }) | null> = await Promise.all(refs.map(async ref => {
         try {
@@ -169,76 +170,53 @@ export default function PastoralVersePicker({ open, onClose, onInsert }: Props) 
 
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-label="Seleccionar versículo">
-      <section className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-[#f8f9fc] shadow-2xl sm:rounded-[28px]">
-        <header className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
-          {concordanciaDe ? (
-            <button type="button" onClick={() => { setConcordanciaDe(null); setRelacionados([]) }} className="grid h-10 w-10 place-items-center rounded-full bg-slate-200/70" aria-label="Volver a versículos"><ArrowLeft className="h-4 w-4" /></button>
-          ) : <BookOpen className="h-5 w-5 text-violet-600" />}
-          <div className="min-w-0 flex-1">
-            <h2 className="font-bold">{concordanciaDe ? `Concordancias · ${concordanciaDe.referencia}` : 'Agregar versículo'}</h2>
-            <p className="text-xs text-slate-500">{concordanciaDe ? 'Toca una referencia para insertarla sin salir de esta ventana.' : 'Selecciona uno o varios y colócalos en la página actual.'}</p>
-          </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-slate-200/70" aria-label="Cerrar"><X className="h-4 w-4" /></button>
-        </header>
-
-        {!concordanciaDe && <>
-          <div className="grid grid-cols-3 gap-2 border-b border-slate-200 p-3">
-            <select value={trad} onChange={e => setTrad(e.target.value)} className="min-h-11 rounded-xl bg-white px-2 text-xs font-bold outline-none">
-              {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName || t.name}</option>)}
-            </select>
-            <select value={libro} onChange={e => { setLibro(e.target.value); setCapitulo(1) }} className="min-h-11 rounded-xl bg-white px-2 text-xs font-bold outline-none">
-              {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-            <select value={capitulo} onChange={e => setCapitulo(Number(e.target.value))} className="min-h-11 rounded-xl bg-white px-2 text-xs font-bold outline-none">
-              {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Cap. {n}</option>)}
-            </select>
-          </div>
-
-          <label className="mx-3 mt-3 flex min-h-11 items-center gap-2 rounded-xl bg-white px-3">
-            <Search className="h-4 w-4 text-slate-400" />
-            <input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar palabra en este capítulo" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
-          </label>
+  const contenido = (
+    <section className={`pastoral-verse-picker ${embedded ? 'is-embedded' : 'is-modal'}`} aria-label="Seleccionar versículo">
+      <div className="pastoral-verse-toolbar">
+        {concordanciaDe ? (
+          <button type="button" onClick={() => { setConcordanciaDe(null); setRelacionados([]) }} className="pastoral-verse-icon" aria-label="Volver a versículos"><ArrowLeft /></button>
+        ) : <>
+          <select aria-label="Traducción" value={trad} onChange={e => setTrad(e.target.value)}>
+            {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName || t.name}</option>)}
+          </select>
+          <select aria-label="Libro" value={libro} onChange={e => { setLibro(e.target.value); setCapitulo(1) }}>
+            {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+          <select aria-label="Capítulo" value={capitulo} onChange={e => setCapitulo(Number(e.target.value))}>
+            {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <label className="pastoral-verse-search"><Search /><input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar" /></label>
+          {!!seleccionados.length && <button type="button" onClick={agregarSeleccionados} className="pastoral-insert-selected">Insertar {seleccionados.length}</button>}
         </>}
+        {!embedded && <button type="button" onClick={onClose} className="pastoral-verse-icon" aria-label="Cerrar"><X /></button>}
+        {concordanciaDe && <span className="pastoral-concordance-title">{concordanciaDe.referencia}</span>}
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-          {concordanciaDe ? (
-            cargandoRelacionados ? <div className="grid min-h-48 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-violet-600" /></div> : relacionados.length ? (
-              <div className="divide-y divide-slate-200">
-                {relacionados.map(v => <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="py-3">
-                  <button type="button" onClick={() => agregarUno(v)} className="flex w-full items-start gap-3 text-left">
-                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-lg leading-none text-violet-700">+</span>
-                    <span className="min-w-0 flex-1"><strong className="text-xs text-violet-700">{v.referencia}</strong><span className="mt-1 block text-sm leading-6 text-slate-700">{v.texto}</span></span>
-                  </button>
-                  <div className="mt-2 flex justify-end"><button type="button" onClick={() => copiar(v)} className="inline-flex min-h-9 items-center gap-1.5 px-2 text-xs font-bold text-slate-500"><Copy className="h-3.5 w-3.5" /> Copiar</button></div>
-                </article>)}
-              </div>
-            ) : <div className="grid min-h-48 place-items-center text-center text-sm text-slate-500">No hay concordancias disponibles para este versículo.</div>
-          ) : cargando ? <div className="grid min-h-40 place-items-center"><Loader2 className="h-5 w-5 animate-spin text-violet-600" /></div> : (
-            <div className="divide-y divide-slate-200">
-              {visibles.map(v => {
-                const activo = seleccionados.includes(v.verso)
-                return <article key={v.verso} className="py-3">
-                  <button type="button" onClick={() => alternar(v.verso)} className="flex w-full items-start gap-3 text-left">
-                    <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border ${activo ? 'border-violet-600 bg-violet-600 text-white' : 'border-slate-300'}`}>{activo && <Check className="h-3.5 w-3.5" />}</span>
-                    <span className="min-w-0 flex-1"><strong className="text-xs text-violet-700">{v.referencia}</strong><span className="mt-1 block text-sm leading-6 text-slate-700">{v.texto}</span></span>
-                  </button>
-                  <div className="mt-2 flex justify-end gap-2">
-                    <button type="button" onClick={() => agregarUno(v)} className="inline-flex min-h-9 items-center gap-1.5 px-2 text-xs font-bold text-violet-700">Agregar</button>
-                    <button type="button" onClick={() => copiar(v)} className="inline-flex min-h-9 items-center gap-1.5 px-2 text-xs font-bold text-slate-500"><Copy className="h-3.5 w-3.5" /> Copiar</button>
-                    <button type="button" onClick={() => void cargarConcordancias(v)} className="inline-flex min-h-9 items-center gap-1.5 px-2 text-xs font-bold text-violet-700">Concordancias <ChevronRight className="h-3.5 w-3.5" /></button>
-                  </div>
-                </article>
-              })}
+      <div className="pastoral-verse-list">
+        {concordanciaDe ? (
+          cargandoRelacionados ? <div className="pastoral-verse-loading"><Loader2 /></div> : relacionados.length ? relacionados.map(v => <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
+            <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-main"><span className="pastoral-verse-add"><Plus /></span><span><strong>{v.referencia}</strong><em>{v.texto}</em></span></button>
+            <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`}><Copy /></button>
+          </article>) : <div className="pastoral-verse-empty">No hay concordancias disponibles.</div>
+        ) : cargando ? <div className="pastoral-verse-loading"><Loader2 /></div> : visibles.length ? visibles.map(v => {
+          const activo = seleccionados.includes(v.verso)
+          return <article key={v.verso} className="pastoral-verse-row">
+            <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
+              <span className={`pastoral-verse-check ${activo ? 'is-active' : ''}`}>{activo && <Check />}</span>
+              <span><strong>{v.referencia}</strong><em>{v.texto}</em></span>
+            </button>
+            <div className="pastoral-verse-row-actions">
+              <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Agregar ${v.referencia}`}><Plus /></button>
+              <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`}><Copy /></button>
+              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Concordancias de ${v.referencia}`}><ChevronRight /></button>
             </div>
-          )}
-        </div>
-
-        {!concordanciaDe && <footer className="border-t border-slate-200 bg-white/95 p-3 pb-[calc(.75rem+env(safe-area-inset-bottom))]">
-          <button type="button" onClick={agregarSeleccionados} disabled={!seleccionados.length} className="min-h-12 w-full rounded-2xl bg-violet-600 px-4 text-sm font-bold text-white disabled:opacity-35">Insertar {seleccionados.length ? `(${seleccionados.length})` : ''} en la página</button>
-        </footer>}
-      </section>
-    </div>
+          </article>
+        }) : <div className="pastoral-verse-empty">No hay versículos que coincidan.</div>}
+      </div>
+    </section>
   )
+
+  if (embedded) return contenido
+
+  return <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-label="Seleccionar versículo">{contenido}</div>
 }
