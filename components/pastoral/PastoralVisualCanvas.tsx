@@ -53,14 +53,15 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     spellCheck
     onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
     onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
-    className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-2xl bg-violet-500/[0.08] px-3 py-2' : ''}`}
+    className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
     style={{
       fontFamily: elemento.fuente ?? 'Inter',
       fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
       color: elemento.color ?? '#0f172a',
       textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
       fontWeight: elemento.peso ?? 500,
-      fontStyle: elemento.cursiva ? 'italic' : 'normal',
+      fontStyle: elemento.cursiva ? 'oblique 12deg' : 'normal',
+      fontSynthesis: 'style weight',
       textDecoration: decoracion,
       lineHeight: elemento.interlineado ?? 1.25,
       direction: 'ltr',
@@ -118,16 +119,16 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             key={elemento.id}
             data-canvas-element={elemento.tipo}
             onPointerDown={(event) => { event.stopPropagation(); editable && onSelect?.(elemento.id) }}
-            className={`absolute overflow-visible ${activo ? 'ring-2 ring-violet-500 ring-offset-1' : ''}`}
+            className={`absolute overflow-visible ${activo ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''}`}
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1 }}
           >
             {elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
             ) : <TextoCanvas elemento={elemento} editable={editable} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
             {activo && <>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="absolute -left-3 -top-3 grid h-9 w-9 touch-none place-items-center rounded-full bg-violet-600 text-white shadow-lg" aria-label="Mover elemento"><Move className="h-4 w-4" /></button>
-              <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="absolute -right-3 -top-3 grid h-9 w-9 place-items-center rounded-full bg-rose-600 text-white shadow-lg" aria-label="Eliminar elemento"><Trash2 className="h-4 w-4" /></button>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-3 -right-3 h-8 w-8 touch-none rounded-full border-4 border-white bg-violet-600 shadow-lg" aria-label="Redimensionar elemento" />
+              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="absolute -top-7 left-0 grid h-6 w-6 touch-none place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm" aria-label="Mover elemento"><Move className="h-3 w-3" /></button>
+              <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="absolute -top-7 right-0 grid h-6 w-6 place-items-center rounded-full border border-rose-200 bg-white text-rose-600 shadow-sm" aria-label="Eliminar elemento"><Trash2 className="h-3 w-3" /></button>
+              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-2 -right-2 h-5 w-5 touch-none rounded-full border-[3px] border-white bg-[#C0392B] shadow-sm" aria-label="Redimensionar elemento" />
             </>}
           </div>
         })}
