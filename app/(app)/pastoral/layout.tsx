@@ -12,6 +12,7 @@ import './pastoral-editor-capcut-v2.css'
 import './pastoral-editor-elegance-v4.css'
 import './pastoral-editor-elegance-v4-final.css'
 import './pastoral-editor-authority.css'
+import './pastoral-editor-accessible-v5.css'
 
 export default function PastoralLayout({ children }: { children: React.ReactNode }) {
   return <div className="pastoral-visual-system">{children}</div>
