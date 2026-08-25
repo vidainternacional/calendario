@@ -1,3 +1,4 @@
+import PastoralEditorRuntimeEnhancements from '@/components/pastoral/PastoralEditorRuntimeEnhancements'
 import './pastoral-visual-system.css'
 import './pastoral-workspace-v2.css'
 import './pastoral-editor-minimal.css'
@@ -20,7 +21,8 @@ import './pastoral-editor-workbench-v10.css'
 import './pastoral-editor-surface-white.css'
 import './pastoral-template-library.css'
 import './pastoral-template-library-v2.css'
+import './pastoral-editor-text-controls-v11.css'
 
 export default function PastoralLayout({ children }: { children: React.ReactNode }) {
-  return <div className="pastoral-visual-system">{children}</div>
+  return <div className="pastoral-visual-system"><PastoralEditorRuntimeEnhancements />{children}</div>
 }
