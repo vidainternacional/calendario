@@ -18,9 +18,9 @@ test('Caja Título Subtítulo y Cuerpo quedan en cuatro columnas iguales', () =>
 })
 
 test('Tamaño y Línea tienen steppers React táctiles y la cinta conserva scroll horizontal', () => {
-  assert.match(css, /pastoral-font-size[\s\S]*min-width: 218px !important/)
-  assert.match(css, /pastoral-line-height[\s\S]*min-width: 202px !important/)
-  assert.match(css, /pastoral-step-button[\s\S]*width: 40px !important/)
+  assert.match(css, /pastoral-font-size[\s\S]*min-width: 226px !important/)
+  assert.match(css, /pastoral-line-height[\s\S]*min-width: 210px !important/)
+  assert.match(css, /pastoral-step-button[\s\S]*width: 44px !important/)
   assert.match(css, /pastoral-text-tools-row[\s\S]*overflow-x: auto !important/)
   assert.match(workspace, /aria-label="Reducir tamaño de letra"/)
   assert.match(workspace, /aria-label="Aumentar interlineado"/)

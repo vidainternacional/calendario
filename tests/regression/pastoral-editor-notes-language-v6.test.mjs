@@ -19,5 +19,5 @@ test('seis herramientas visibles conservan lenguaje integrado', () => {
 
 test('acciones de formato mantienen tamaño táctil suficiente', () => {
   assert.match(css, /pastoral-inline-icon[\s\S]*46px/)
-  assert.match(css, /pastoral-step-button[\s\S]*40px/)
+  assert.match(css, /pastoral-step-button[\s\S]*44px/)
 })

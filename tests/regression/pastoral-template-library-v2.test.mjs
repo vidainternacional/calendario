@@ -25,5 +25,6 @@ test('controles del elemento seleccionado viven fuera y tienen hitbox estable', 
   assert.match(canvas, /estiloControlesFlotantes/)
   assert.match(canvas, /data-canvas-floating-controls="true"/)
   assert.match(canvas, /pastoral-canvas-resize-handle/)
-  assert.match(css, /pastoral-canvas-action[\s\S]*42px/)
+  assert.match(css, /pastoral-canvas-action[\s\S]*44px/)
+  assert.match(css, /pastoral-canvas-resize-handle[\s\S]*44px/)
 })

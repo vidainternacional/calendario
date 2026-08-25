@@ -34,8 +34,8 @@ test('cursiva es nativa y controles viven fuera de la caja con hitbox táctil', 
   assert.match(canvas, /fontStyle: elemento\.cursiva \? 'italic' : 'normal'/)
   assert.match(canvas, /data-canvas-floating-controls="true"/)
   assert.match(canvas, /pastoral-canvas-resize-handle/)
-  assert.match(css, /pastoral-canvas-action[\s\S]*width: 42px !important/)
-  assert.match(css, /pastoral-canvas-resize-handle[\s\S]*width: 38px !important/)
+  assert.match(css, /pastoral-canvas-action[\s\S]*width: 44px !important/)
+  assert.match(css, /pastoral-canvas-resize-handle[\s\S]*width: 44px !important/)
 })
 
 test('tipografía del lienzo escala con ancho real del canvas', () => {
