@@ -1,0 +1,56 @@
+/* Ajustes finales de la superficie V4: evita herencias antiguas y afina alturas reales. */
+
+.pastoral-editor-v4 .pastoral-tool-button.is-active::before {
+  display: none !important;
+  content: none !important;
+}
+
+.pastoral-editor-v4 .pastoral-panel-content,
+.pastoral-editor-v4 .pastoral-tool-panel-scroll {
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+}
+
+@media (max-width: 1023px) {
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-recursos) { --pastoral-panel-h: 148px; }
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-texto) { --pastoral-panel-h: 116px; }
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-diseno) { --pastoral-panel-h: 88px; }
+}
+
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-plantillas) { --pastoral-panel-h: 112px; }
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-recursos) { --pastoral-panel-h: 96px; }
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-texto) { --pastoral-panel-h: 104px; }
+  .pastoral-editor-v4 .pastoral-editor-shell:has(.panel-diseno) { --pastoral-panel-h: 66px; }
+
+  .pastoral-editor-v4 .pastoral-elements-panel {
+    grid-template-rows: 24px minmax(0, 1fr) 16px !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-top,
+  .pastoral-editor-v4 .pastoral-elements-top input,
+  .pastoral-editor-v4 .pastoral-minimal-action {
+    height: 24px !important;
+    min-height: 24px !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-grid {
+    grid-template-rows: 32px !important;
+    grid-auto-columns: 44px !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-grid button {
+    width: 44px !important;
+    height: 32px !important;
+  }
+
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-diseno .pastoral-panel-content {
+    grid-template-rows: 17px minmax(0, 1fr) !important;
+    gap: .12rem !important;
+  }
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-diseno .pastoral-panel-heading h3 {
+    font-size: .58rem !important;
+    line-height: 17px !important;
+  }
+  .pastoral-editor-v4 .pastoral-aspect-control button {
+    min-height: 38px !important;
+  }
+}
