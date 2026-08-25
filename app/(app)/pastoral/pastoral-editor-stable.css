@@ -1,8 +1,8 @@
 /* Centro Pastoral — autoridad visual estable del editor.
    Base estructural: pastoral-editor-v3.css.
    Este archivo reemplaza en runtime las capas históricas V4–V12.
-   Lenguaje VIDA + iOS: superficie blanca integrada, lienzo protagonista, seis herramientas,
-   tipografía de sistema, controles táctiles >= 44px y una sola autoridad responsive. */
+   Lenguaje VIDA + iOS: jerarquía visible, superficies integradas, controles táctiles >= 44px
+   y una sola autoridad responsive. */
 
 .pastoral-editor-v4 {
   --pastoral-stable-bg: #ffffff;
@@ -12,9 +12,9 @@
   --pastoral-stable-line: rgba(60, 60, 67, .18);
   --pastoral-stable-line-soft: rgba(60, 60, 67, .10);
   --pastoral-stable-surface: #f2f2f7;
-  --pastoral-stable-surface-pressed: #e5e5ea;
+  --pastoral-stable-surface-strong: #e5e5ea;
   --pastoral-stable-accent: #c0392b;
-  --pastoral-stable-accent-soft: rgba(192, 57, 43, .08);
+  --pastoral-stable-accent-soft: rgba(192,57,43,.10);
   --pastoral-stable-danger: #d92d20;
   --pastoral-stable-ease: cubic-bezier(.32,.72,0,1);
   background: var(--pastoral-stable-bg) !important;
@@ -28,30 +28,28 @@
 .pastoral-editor-v4 > header,
 .pastoral-editor-v4 .pastoral-editor-section,
 .pastoral-editor-v4 .pastoral-editor-shell,
-.pastoral-editor-v4 .pastoral-stage,
-.pastoral-editor-v4 .pastoral-canvas-wrap,
 .pastoral-editor-v4 .pastoral-pages-strip,
 .pastoral-editor-v4 .pastoral-tool-panel,
 .pastoral-editor-v4 .pastoral-tool-panel-scroll,
 .pastoral-editor-v4 .pastoral-panel-content,
 .pastoral-editor-v4 .pastoral-tool-dock {
   background: var(--pastoral-stable-bg) !important;
-  box-shadow: none !important;
 }
 
-/* Cabecera y navegación de modo — jerarquía tipo iOS, sin material permanente. */
+/* Header: iOS real y reconocible, sin blur permanente. */
 .pastoral-editor-v4 > header {
-  border-bottom: .5px solid var(--pastoral-stable-line-soft) !important;
+  border-bottom: .5px solid var(--pastoral-stable-line) !important;
   background: #fff !important;
+  box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 .pastoral-editor-v4 > header input {
   color: var(--pastoral-stable-ink) !important;
   font-size: 17px !important;
-  line-height: 1.25 !important;
+  line-height: 1.22 !important;
   font-weight: 600 !important;
-  letter-spacing: -.014em !important;
+  letter-spacing: -.015em !important;
 }
 .pastoral-editor-v4 > header button {
   color: #3a3a3c !important;
@@ -62,63 +60,71 @@
   height: 44px !important;
   min-width: 44px !important;
   min-height: 44px !important;
+  border: 0 !important;
   border-radius: 12px !important;
   background: transparent !important;
-  transition: color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
 .pastoral-editor-v4 > header > div > button:active {
   background: var(--pastoral-stable-surface) !important;
   transform: scale(.96) !important;
 }
 .pastoral-editor-v4 > header button[aria-label='Guardar proyecto'] { color: var(--pastoral-stable-accent) !important; }
+
+/* Editar / Presentar / Congregación / Compartir: segmented control iOS. */
 .pastoral-editor-v4 > header nav {
-  gap: 22px !important;
-  min-height: 44px !important;
-  margin-top: 2px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+  width: 100% !important;
+  min-height: 40px !important;
+  gap: 2px !important;
+  margin-top: 4px !important;
+  padding: 3px !important;
+  border-radius: 11px !important;
+  background: var(--pastoral-stable-surface) !important;
 }
 .pastoral-editor-v4 > header nav button {
   position: relative !important;
-  min-height: 44px !important;
-  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
   border: 0 !important;
+  border-radius: 8px !important;
   background: transparent !important;
-  padding: 4px 0 8px !important;
-  color: var(--pastoral-stable-soft) !important;
-  font-size: 13px !important;
+  padding: 0 5px !important;
+  color: var(--pastoral-stable-muted) !important;
+  font-size: 12.5px !important;
   font-weight: 550 !important;
   letter-spacing: -.006em !important;
-  transition: color 180ms var(--pastoral-stable-ease), font-weight 180ms var(--pastoral-stable-ease), opacity 180ms var(--pastoral-stable-ease) !important;
+  box-shadow: none !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), box-shadow 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 > header nav button::after {
-  position: absolute !important;
-  left: 50% !important;
-  bottom: 4px !important;
-  width: 0 !important;
-  height: 1.5px !important;
-  border-radius: 999px !important;
-  background: var(--pastoral-stable-accent) !important;
-  content: '' !important;
-  transform: translateX(-50%) !important;
-  transition: width 180ms var(--pastoral-stable-ease), opacity 180ms var(--pastoral-stable-ease) !important;
-  opacity: 0 !important;
-}
+.pastoral-editor-v4 > header nav button::after { display: none !important; content: none !important; }
 .pastoral-editor-v4 > header nav button[class*='text-[#C0392B]'] {
-  color: var(--pastoral-stable-accent) !important;
-  font-weight: 700 !important;
+  background: #fff !important;
+  color: var(--pastoral-stable-ink) !important;
+  font-weight: 650 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 .5px 1px rgba(0,0,0,.06) !important;
 }
-.pastoral-editor-v4 > header nav button[class*='text-[#C0392B]']::after {
-  width: 22px !important;
-  opacity: 1 !important;
-}
-.pastoral-editor-v4 > header nav button:active { opacity: .55 !important; }
+.pastoral-editor-v4 > header nav button:active { transform: scale(.98) !important; }
 
-/* Superficies integradas */
+/* Lienzo: protagonista, rodeado por system grouped background. */
+.pastoral-editor-v4 .pastoral-stage,
+.pastoral-editor-v4 .pastoral-canvas-wrap {
+  background: var(--pastoral-stable-surface) !important;
+}
+.pastoral-editor-v4 .pastoral-canvas-wrap .pastoral-visual-canvas {
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 .5px rgba(60,60,67,.20), 0 2px 10px rgba(0,0,0,.08) !important;
+}
+
+/* Superficies integradas: nada de cards externas. */
 .pastoral-editor-v4 .pastoral-tool-panel,
 .pastoral-editor-v4 .pastoral-tool-panel-scroll,
 .pastoral-editor-v4 .pastoral-panel-content {
   border: 0 !important;
   border-radius: 0 !important;
   outline: 0 !important;
+  box-shadow: none !important;
 }
 .pastoral-editor-v4 .pastoral-tool-panel {
   position: relative !important;
@@ -129,78 +135,33 @@
 }
 .pastoral-editor-v4 .pastoral-sheet-handle,
 .pastoral-editor-v4 .pastoral-tool-panel::before,
-.pastoral-editor-v4 .pastoral-tool-panel::after {
-  display: none !important;
-  content: none !important;
-}
+.pastoral-editor-v4 .pastoral-tool-panel::after { display: none !important; content: none !important; }
 .pastoral-editor-v4 .pastoral-tool-panel-scroll {
   min-height: 0 !important;
-  padding: 6px 14px 10px !important;
-  scrollbar-width: none;
+  padding: 8px 14px 10px !important;
+  scrollbar-width: none !important;
 }
-.pastoral-editor-v4 .pastoral-tool-panel-scroll::-webkit-scrollbar { display: none; }
-.pastoral-editor-v4 .pastoral-panel-content {
-  gap: 8px !important;
-  align-content: start !important;
-}
+.pastoral-editor-v4 .pastoral-tool-panel-scroll::-webkit-scrollbar { display: none !important; }
+.pastoral-editor-v4 .pastoral-panel-content { gap: 8px !important; align-content: start !important; }
 
-/* Dock: exactamente 6 herramientas, lenguaje tipo tab bar iOS pero integrado. */
-.pastoral-editor-v4 .pastoral-tool-dock {
-  display: grid !important;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  gap: 0 !important;
-  overflow: hidden !important;
-  border: 0 !important;
-  border-top: .5px solid var(--pastoral-stable-line-soft) !important;
-  padding: 0 !important;
-}
-.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button {
-  position: relative !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  color: var(--pastoral-stable-soft) !important;
-  box-shadow: none !important;
-  font-weight: 600 !important;
-  transition: color 180ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
-  touch-action: manipulation !important;
-}
-.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg {
-  color: currentColor !important;
-  stroke: currentColor !important;
-  filter: none !important;
-}
-.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active {
-  color: var(--pastoral-stable-accent) !important;
-  font-weight: 650 !important;
-}
-.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::before,
-.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::after { display: none !important; content: none !important; }
-.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active {
-  opacity: .58 !important;
-  transform: scale(.96) !important;
-}
-
-/* Páginas */
+/* Páginas: lectura tipo iOS, activa como superficie compacta. */
 .pastoral-editor-v4 .pastoral-pages-strip {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
   flex-wrap: nowrap !important;
-  gap: 8px !important;
+  gap: 6px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   margin: 0 !important;
-  padding: 4px 14px !important;
-  scroll-padding-inline: 14px !important;
+  padding: 4px 12px !important;
+  scroll-padding-inline: 12px !important;
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-x !important;
+  background: #fff !important;
+  border-top: .5px solid var(--pastoral-stable-line-soft) !important;
+  border-bottom: .5px solid var(--pastoral-stable-line-soft) !important;
 }
 .pastoral-editor-v4 .pastoral-pages-strip::-webkit-scrollbar { display: none !important; }
 .pastoral-editor-v4 .pastoral-page-chip,
@@ -209,53 +170,46 @@
   flex: 0 0 auto !important;
   align-items: center !important;
   border: 0 !important;
-  border-radius: 0 !important;
+  border-radius: 10px !important;
   background: transparent !important;
   box-shadow: none !important;
   color: #3a3a3c !important;
 }
 .pastoral-editor-v4 .pastoral-page-chip > button:first-child {
-  min-width: 68px !important;
+  min-width: 66px !important;
   min-height: 44px !important;
   border: 0 !important;
-  border-bottom: 1.5px solid transparent !important;
-  border-radius: 0 !important;
+  border-radius: 9px !important;
   background: transparent !important;
-  padding: 0 8px !important;
+  padding: 0 9px !important;
   color: inherit !important;
-  transition: color 180ms var(--pastoral-stable-ease), border-color 180ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease) !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 .pastoral-page-chip > button:first-child:active { opacity: .55 !important; }
 .pastoral-editor-v4 .pastoral-page-chip.is-active > button:first-child {
-  border-bottom-color: var(--pastoral-stable-accent) !important;
+  background: var(--pastoral-stable-accent-soft) !important;
   color: var(--pastoral-stable-accent) !important;
+  font-weight: 650 !important;
 }
+.pastoral-editor-v4 .pastoral-page-chip > button:first-child:active { transform: scale(.97) !important; }
 .pastoral-editor-v4 .pastoral-page-chip > button:first-child span {
   color: var(--pastoral-stable-soft) !important;
   font-size: .59rem !important;
   font-weight: 500 !important;
 }
-.pastoral-editor-v4 .pastoral-page-chip > button[aria-label^='Eliminar Página'] {
+.pastoral-editor-v4 .pastoral-page-chip > button[aria-label^='Eliminar Página'],
+.pastoral-editor-v4 .pastoral-pages-strip > button[aria-label='Nueva página'] {
   width: 44px !important;
   height: 44px !important;
   min-width: 44px !important;
   min-height: 44px !important;
+  flex: 0 0 44px !important;
   border: 0 !important;
-  border-radius: 10px !important;
-  background: transparent !important;
-}
-.pastoral-editor-v4 .pastoral-page-chip > button[aria-label^='Eliminar Página']:active { background: var(--pastoral-stable-surface) !important; }
-.pastoral-editor-v4 .pastoral-pages-strip > button[aria-label='Nueva página'] {
-  width: 46px !important;
-  min-width: 46px !important;
-  height: 44px !important;
-  flex: 0 0 46px !important;
-  border: 0 !important;
-  border-radius: 10px !important;
+  border-radius: 11px !important;
   background: transparent !important;
   box-shadow: none !important;
   color: #3a3a3c !important;
 }
+.pastoral-editor-v4 .pastoral-page-chip > button[aria-label^='Eliminar Página']:active,
 .pastoral-editor-v4 .pastoral-pages-strip > button[aria-label='Nueva página']:active { background: var(--pastoral-stable-surface) !important; }
 
 /* Plantillas / Temas / Fondos */
@@ -263,14 +217,14 @@
   display: grid !important;
   width: 100% !important;
   min-width: 0 !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 9px !important;
+  grid-template-columns: minmax(0,1fr) !important;
+  gap: 10px !important;
   align-content: start !important;
 }
 .pastoral-editor-v4 .pastoral-compact-row {
   display: grid !important;
   min-width: 0 !important;
-  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0,1fr) !important;
   grid-template-rows: 18px auto !important;
   gap: 6px !important;
   overflow: hidden !important;
@@ -316,7 +270,7 @@
   min-width: 132px !important;
   max-width: 132px !important;
   grid-template-rows: 60px 18px !important;
-  gap: 3px !important;
+  gap: 4px !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -335,9 +289,9 @@
   min-height: 60px !important;
   overflow: hidden !important;
   border: .5px solid var(--pastoral-stable-line) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
   box-sizing: border-box !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04) !important;
 }
 .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::before,
 .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::after,
@@ -358,19 +312,9 @@
   background: currentColor !important;
 }
 .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(1),
-.pastoral-editor-v4 .panel-plantillas .pastoral-theme-swatches > i:nth-child(1) {
-  top: 35% !important;
-  width: 68% !important;
-  height: 5px !important;
-  opacity: .92 !important;
-}
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-swatches > i:nth-child(1) { top: 35% !important; width: 68% !important; height: 5px !important; opacity: .92 !important; }
 .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(2),
-.pastoral-editor-v4 .panel-plantillas .pastoral-theme-swatches > i:nth-child(2) {
-  top: 61% !important;
-  width: 46% !important;
-  height: 3px !important;
-  opacity: .56 !important;
-}
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-swatches > i:nth-child(2) { top: 61% !important; width: 46% !important; height: 3px !important; opacity: .56 !important; }
 .pastoral-editor-v4 .panel-plantillas .pastoral-template-option > span:last-child,
 .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option > span:last-child {
   display: block !important;
@@ -384,10 +328,7 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
-.pastoral-editor-v4 .panel-plantillas .pastoral-template-preview-blank {
-  background: #fff !important;
-  color: #c7c7cc !important;
-}
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-preview-blank { background: #fff !important; color: #c7c7cc !important; }
 .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds > button,
 .pastoral-editor-v4 .panel-plantillas .pastoral-upload-tile {
   flex: 0 0 58px !important;
@@ -396,15 +337,15 @@
   height: 58px !important;
   min-height: 58px !important;
   overflow: hidden !important;
-  border: 0 !important;
-  border-radius: 12px !important;
+  border: .5px solid var(--pastoral-stable-line) !important;
+  border-radius: 14px !important;
   background: var(--pastoral-stable-surface) !important;
   box-shadow: none !important;
 }
 .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
 
 /* Elementos */
-.pastoral-editor-v4 .pastoral-elements-panel { display: grid !important; gap: 8px !important; }
+.pastoral-editor-v4 .pastoral-elements-panel { display: grid !important; gap: 9px !important; }
 .pastoral-editor-v4 .pastoral-elements-top { display: flex !important; min-height: 44px !important; gap: 8px !important; }
 .pastoral-editor-v4 .pastoral-minimal-action {
   min-height: 44px !important;
@@ -414,30 +355,23 @@
   background: var(--pastoral-stable-surface) !important;
   color: var(--pastoral-stable-accent) !important;
   box-shadow: none !important;
-  padding: 0 12px !important;
+  padding: 0 13px !important;
   font-weight: 600 !important;
-  transition: background-color 160ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
-}
-.pastoral-editor-v4 .pastoral-minimal-action:active {
-  background: var(--pastoral-stable-surface-pressed) !important;
-  transform: scale(.98) !important;
 }
 .pastoral-editor-v4 .pastoral-elements-top input {
   min-width: 0 !important;
   min-height: 44px !important;
   flex: 1 !important;
   border: 0 !important;
-  border-radius: 11px !important;
+  border-radius: 12px !important;
   background: var(--pastoral-stable-surface) !important;
   padding: 0 12px !important;
-  color: #1c1c1e !important;
   outline: none !important;
 }
-.pastoral-editor-v4 .pastoral-elements-top input:focus-visible { box-shadow: 0 0 0 2px var(--pastoral-stable-accent-soft) !important; }
 .pastoral-editor-v4 .pastoral-elements-grid {
   display: grid !important;
   grid-auto-flow: column !important;
-  grid-template-rows: repeat(2, 72px) !important;
+  grid-template-rows: repeat(2,72px) !important;
   grid-auto-columns: 72px !important;
   gap: 8px !important;
   max-height: none !important;
@@ -452,70 +386,62 @@
   width: 72px !important;
   height: 72px !important;
   overflow: hidden !important;
-  border: 0 !important;
-  border-radius: 12px !important;
+  border: .5px solid var(--pastoral-stable-line-soft) !important;
+  border-radius: 14px !important;
   background: var(--pastoral-stable-surface) !important;
 }
 .pastoral-editor-v4 .pastoral-elements-grid img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-.pastoral-editor-v4 .pastoral-external-banks {
-  display: flex !important;
-  gap: 14px !important;
-  overflow-x: auto !important;
-  border: 0 !important;
-  padding-top: 2px !important;
-  scrollbar-width: none !important;
-}
+.pastoral-editor-v4 .pastoral-external-banks { display: flex !important; gap: 14px !important; overflow-x: auto !important; border: 0 !important; padding-top: 2px !important; scrollbar-width: none !important; }
 
-/* Texto: tres cintas */
+/* Texto: tres líneas con controles iOS visibles. */
 .pastoral-editor-v4 .pastoral-text-three-rows {
   display: grid !important;
   width: 100% !important;
-  grid-template-rows: 46px 50px 58px !important;
+  grid-template-rows: 48px 50px 58px !important;
   gap: 6px !important;
   align-content: start !important;
 }
 .pastoral-editor-v4 .pastoral-text-presets {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(4,minmax(0,1fr)) !important;
   width: 100% !important;
-  height: 46px !important;
-  gap: 8px !important;
+  height: 48px !important;
+  gap: 2px !important;
   overflow: visible !important;
   border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  border-radius: 12px !important;
+  background: var(--pastoral-stable-surface) !important;
+  padding: 3px !important;
 }
 .pastoral-editor-v4 .pastoral-text-presets button {
   display: inline-flex !important;
   width: 100% !important;
   min-width: 0 !important;
-  height: 44px !important;
-  min-height: 44px !important;
+  height: 42px !important;
+  min-height: 42px !important;
   align-items: center !important;
   justify-content: center !important;
   border: 0 !important;
-  border-bottom: 1.5px solid transparent !important;
-  border-radius: 0 !important;
+  border-radius: 9px !important;
   background: transparent !important;
   padding: 0 4px !important;
   color: var(--pastoral-stable-muted) !important;
   font-size: .72rem !important;
   font-weight: 600 !important;
   white-space: nowrap !important;
-  transition: color 180ms var(--pastoral-stable-ease), border-color 180ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease) !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), box-shadow 180ms var(--pastoral-stable-ease) !important;
 }
 .pastoral-editor-v4 .pastoral-text-presets button.is-active {
-  border-bottom-color: rgba(192,57,43,.5) !important;
-  background: transparent !important;
-  color: var(--pastoral-stable-accent) !important;
+  background: #fff !important;
+  color: var(--pastoral-stable-ink) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 .5px 1px rgba(0,0,0,.05) !important;
 }
-.pastoral-editor-v4 .pastoral-text-presets button:active { opacity: .55 !important; }
 .pastoral-editor-v4 .pastoral-font-strip {
   display: flex !important;
   width: 100% !important;
   height: 50px !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 7px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   border: 0 !important;
@@ -530,21 +456,19 @@
   min-height: 44px !important;
   min-width: 104px !important;
   flex: 0 0 104px !important;
-  border: 0 !important;
-  border-bottom: 1.5px solid transparent !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  border: .5px solid transparent !important;
+  border-radius: 12px !important;
+  background: var(--pastoral-stable-surface) !important;
   box-shadow: none !important;
-  color: var(--pastoral-stable-muted) !important;
-  font-weight: 550 !important;
-  transition: color 180ms var(--pastoral-stable-ease), border-color 180ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease) !important;
+  color: #3a3a3c !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), border-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
 .pastoral-editor-v4 .pastoral-font-strip button.is-active {
-  border-bottom-color: var(--pastoral-stable-accent) !important;
-  background: transparent !important;
+  border-color: rgba(192,57,43,.20) !important;
+  background: var(--pastoral-stable-accent-soft) !important;
   color: var(--pastoral-stable-accent) !important;
 }
-.pastoral-editor-v4 .pastoral-font-strip button:active { opacity: .55 !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:active { transform: scale(.97) !important; }
 .pastoral-editor-v4 .pastoral-text-tools-row {
   display: flex !important;
   width: 100% !important;
@@ -553,10 +477,10 @@
   flex-wrap: nowrap !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  gap: 8px !important;
+  gap: 7px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  padding: 4px 0 6px !important;
+  padding: 5px 0 !important;
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-x !important;
@@ -571,22 +495,15 @@
   flex: 0 0 46px !important;
   place-items: center !important;
   border: 0 !important;
-  border-radius: 11px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--pastoral-stable-muted) !important;
-  transition: color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
-}
-.pastoral-editor-v4 .pastoral-inline-icon.is-active {
-  background: var(--pastoral-stable-accent-soft) !important;
-  color: var(--pastoral-stable-accent) !important;
-}
-.pastoral-editor-v4 .pastoral-inline-icon:active {
+  border-radius: 12px !important;
   background: var(--pastoral-stable-surface) !important;
-  transform: scale(.95) !important;
+  box-shadow: none !important;
+  color: #3a3a3c !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 .pastoral-inline-icon.is-active:active { background: rgba(192,57,43,.12) !important; }
-.pastoral-editor-v4 .pastoral-inline-icon svg { width: 20px !important; height: 20px !important; }
+.pastoral-editor-v4 .pastoral-inline-icon.is-active { background: var(--pastoral-stable-accent-soft) !important; color: var(--pastoral-stable-accent) !important; }
+.pastoral-editor-v4 .pastoral-inline-icon:active { background: var(--pastoral-stable-surface-strong) !important; transform: scale(.95) !important; }
+.pastoral-editor-v4 .pastoral-inline-icon svg { width: 19px !important; height: 19px !important; }
 .pastoral-editor-v4 .pastoral-toolbar-divider { display: none !important; }
 .pastoral-editor-v4 .pastoral-font-size,
 .pastoral-editor-v4 .pastoral-line-height {
@@ -595,18 +512,18 @@
   min-height: 46px !important;
   flex: 0 0 auto !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 2px !important;
   border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  padding: 0 2px !important;
+  border-radius: 12px !important;
+  background: var(--pastoral-stable-surface) !important;
+  padding: 1px 3px !important;
   color: var(--pastoral-stable-muted) !important;
   font-size: .68rem !important;
   font-weight: 600 !important;
   white-space: nowrap !important;
 }
-.pastoral-editor-v4 .pastoral-font-size { min-width: 226px !important; }
-.pastoral-editor-v4 .pastoral-line-height { min-width: 210px !important; }
+.pastoral-editor-v4 .pastoral-font-size { min-width: 220px !important; }
+.pastoral-editor-v4 .pastoral-line-height { min-width: 204px !important; }
 .pastoral-editor-v4 .pastoral-font-size input,
 .pastoral-editor-v4 .pastoral-line-height input {
   width: 44px !important;
@@ -616,7 +533,7 @@
   border: 0 !important;
   background: transparent !important;
   padding: 0 !important;
-  color: #1c1c1e !important;
+  color: var(--pastoral-stable-ink) !important;
   text-align: center !important;
   font-size: .82rem !important;
   font-weight: 650 !important;
@@ -635,27 +552,17 @@
   flex: 0 0 44px !important;
   place-items: center !important;
   border: 0 !important;
-  border-radius: 11px !important;
-  background: var(--pastoral-stable-surface) !important;
-  color: #3a3a3c !important;
-  font-size: 1.2rem !important;
-  font-weight: 600 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: var(--pastoral-stable-accent) !important;
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
   line-height: 1 !important;
-  transition: background-color 180ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
+  transition: background-color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 .pastoral-step-button:active {
-  background: var(--pastoral-stable-surface-pressed) !important;
-  transform: scale(.95) !important;
-}
-.pastoral-editor-v4 .pastoral-step-button:disabled { opacity: .35 !important; }
-.pastoral-editor-v4 .pastoral-color-strip {
-  display: flex !important;
-  height: 46px !important;
-  flex: 0 0 auto !important;
-  align-items: center !important;
-  gap: 8px !important;
-  overflow: visible !important;
-}
+.pastoral-editor-v4 .pastoral-step-button:active { background: var(--pastoral-stable-surface-strong) !important; transform: scale(.95) !important; }
+.pastoral-editor-v4 .pastoral-step-button:disabled { opacity: .30 !important; }
+.pastoral-editor-v4 .pastoral-color-strip { display: flex !important; height: 46px !important; flex: 0 0 auto !important; align-items: center !important; gap: 8px !important; overflow: visible !important; }
 /* El color real viene del style inline React. No se sobreescribe el background-color. */
 .pastoral-editor-v4 .pastoral-color-strip button {
   width: 44px !important;
@@ -664,22 +571,19 @@
   flex: 0 0 44px !important;
   border: 8px solid #fff !important;
   border-radius: 999px !important;
-  box-shadow: 0 0 0 .5px rgba(60,60,67,.30) !important;
+  box-shadow: 0 0 0 .5px rgba(60,60,67,.28) !important;
 }
 .pastoral-editor-v4 .pastoral-color-strip button::before,
 .pastoral-editor-v4 .pastoral-color-strip button::after { display: none !important; content: none !important; }
-.pastoral-editor-v4 .pastoral-color-strip button.is-active {
-  outline: 1.5px solid var(--pastoral-stable-accent) !important;
-  outline-offset: 2px !important;
-}
+.pastoral-editor-v4 .pastoral-color-strip button.is-active { outline: 2px solid var(--pastoral-stable-accent) !important; outline-offset: 1px !important; }
 
-/* Biblia: controles iOS refinados, lógica intacta. */
+/* Biblia: controles tipo iOS, lista sigue siendo protagonista. */
 .pastoral-editor-v4 .pastoral-verse-picker.is-embedded {
   display: grid !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
+  grid-template-rows: auto minmax(0,1fr) !important;
   gap: 7px !important;
   overflow: hidden !important;
   background: transparent !important;
@@ -691,8 +595,8 @@
   gap: 7px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  padding: 1px 0 5px !important;
-  border-bottom: 0 !important;
+  padding: 1px 0 6px !important;
+  border-bottom: .5px solid var(--pastoral-stable-line-soft) !important;
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-x !important;
@@ -702,70 +606,54 @@
   height: 44px !important;
   min-height: 44px !important;
   flex: 0 0 auto !important;
-  border: 1px solid transparent !important;
-  border-radius: 11px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
   background-color: var(--pastoral-stable-surface) !important;
-  padding: 0 11px !important;
-  color: #1c1c1e !important;
-  font-size: .74rem !important;
+  padding: 0 12px !important;
+  color: var(--pastoral-stable-ink) !important;
+  font-size: .76rem !important;
   font-weight: 600 !important;
   outline: none !important;
-  transition: border-color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), box-shadow 180ms var(--pastoral-stable-ease) !important;
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
 }
-.pastoral-editor-v4 .pastoral-verse-toolbar select:focus-visible {
-  border-color: rgba(192,57,43,.32) !important;
-  background-color: #fff !important;
-  box-shadow: 0 0 0 2px var(--pastoral-stable-accent-soft) !important;
-}
+.pastoral-editor-v4 .pastoral-verse-toolbar select:focus-visible { box-shadow: 0 0 0 2px rgba(192,57,43,.16) !important; }
 .pastoral-editor-v4 .pastoral-verse-search {
   display: flex !important;
   height: 44px !important;
   min-height: 44px !important;
-  min-width: 132px !important;
-  flex: 1 0 132px !important;
+  min-width: 138px !important;
+  flex: 1 0 138px !important;
   align-items: center !important;
-  gap: 6px !important;
-  border: 1px solid transparent !important;
-  border-radius: 11px !important;
-  background: var(--pastoral-stable-surface) !important;
-  padding: 0 11px !important;
-  transition: border-color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), box-shadow 180ms var(--pastoral-stable-ease) !important;
-}
-.pastoral-editor-v4 .pastoral-verse-search:focus-within {
-  border-color: rgba(192,57,43,.32) !important;
-  background: #fff !important;
-  box-shadow: 0 0 0 2px var(--pastoral-stable-accent-soft) !important;
-}
-.pastoral-editor-v4 .pastoral-verse-search svg { width: 15px !important; height: 15px !important; color: var(--pastoral-stable-soft) !important; }
-.pastoral-editor-v4 .pastoral-verse-search input {
-  min-width: 0 !important;
-  width: 100% !important;
+  gap: 7px !important;
   border: 0 !important;
-  background: transparent !important;
-  outline: none !important;
-  font-size: .74rem !important;
-  color: #1c1c1e !important;
+  border-radius: 12px !important;
+  background: var(--pastoral-stable-surface) !important;
+  padding: 0 12px !important;
 }
+.pastoral-editor-v4 .pastoral-verse-search:focus-within { box-shadow: 0 0 0 2px rgba(192,57,43,.16) !important; }
+.pastoral-editor-v4 .pastoral-verse-search svg { width: 15px !important; height: 15px !important; color: var(--pastoral-stable-soft) !important; }
+.pastoral-editor-v4 .pastoral-verse-search input { min-width: 0 !important; width: 100% !important; border: 0 !important; background: transparent !important; outline: none !important; font-size: .76rem !important; color: var(--pastoral-stable-ink) !important; }
 .pastoral-editor-v4 .pastoral-insert-selected {
   min-height: 44px !important;
   flex: 0 0 auto !important;
   border: 0 !important;
-  border-radius: 11px !important;
+  border-radius: 12px !important;
   background: var(--pastoral-stable-accent) !important;
-  padding: 0 13px !important;
+  padding: 0 14px !important;
   color: #fff !important;
-  font-size: .72rem !important;
+  font-size: .74rem !important;
   font-weight: 650 !important;
-  transition: opacity 160ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
+  box-shadow: none !important;
 }
-.pastoral-editor-v4 .pastoral-insert-selected:active { opacity: .72 !important; transform: scale(.98) !important; }
+.pastoral-editor-v4 .pastoral-insert-selected:active { transform: scale(.97) !important; }
 .pastoral-editor-v4 .pastoral-verse-list { min-height: 0 !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
 .pastoral-editor-v4 .pastoral-verse-row {
   display: flex !important;
   align-items: stretch !important;
   gap: 4px !important;
   border-bottom: .5px solid var(--pastoral-stable-line-soft) !important;
-  padding: 7px 0 !important;
+  padding: 6px 0 !important;
 }
 .pastoral-editor-v4 .pastoral-verse-main {
   display: flex !important;
@@ -777,52 +665,28 @@
   border: 0 !important;
   background: transparent !important;
   padding: 5px 0 !important;
-  color: #1c1c1e !important;
+  color: var(--pastoral-stable-ink) !important;
   text-align: left !important;
 }
 .pastoral-editor-v4 .pastoral-verse-main > span:last-child { min-width: 0 !important; }
-.pastoral-editor-v4 .pastoral-verse-main strong { display: block !important; color: #1c1c1e !important; font-size: .73rem !important; font-weight: 650 !important; }
-.pastoral-editor-v4 .pastoral-verse-main em { display: block !important; margin-top: 2px !important; color: #3a3a3c !important; font-size: .79rem !important; font-style: normal !important; line-height: 1.43 !important; }
+.pastoral-editor-v4 .pastoral-verse-main strong { display: block !important; color: #3a3a3c !important; font-size: .73rem !important; font-weight: 650 !important; }
+.pastoral-editor-v4 .pastoral-verse-main em { display: block !important; margin-top: 2px !important; color: #3a3a3c !important; font-size: .80rem !important; font-style: normal !important; line-height: 1.43 !important; }
 .pastoral-editor-v4 .pastoral-verse-check,
 .pastoral-editor-v4 .pastoral-verse-add {
-  position: relative !important;
   display: grid !important;
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
-  flex: 0 0 44px !important;
+  width: 30px !important;
+  height: 30px !important;
+  flex: 0 0 30px !important;
   place-items: center !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: transparent !important;
-  color: var(--pastoral-stable-accent) !important;
-  transition: transform 180ms var(--pastoral-stable-ease), opacity 180ms var(--pastoral-stable-ease) !important;
-}
-.pastoral-editor-v4 .pastoral-verse-check::before,
-.pastoral-editor-v4 .pastoral-verse-add::before {
-  position: absolute !important;
-  inset: 10px !important;
-  border: 1px solid rgba(60,60,67,.28) !important;
+  border: 1px solid #c7c7cc !important;
   border-radius: 999px !important;
   background: #fff !important;
-  content: '' !important;
-  transition: transform 180ms var(--pastoral-stable-ease), opacity 180ms var(--pastoral-stable-ease) !important;
+  color: var(--pastoral-stable-accent) !important;
+  transition: transform 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), border-color 180ms var(--pastoral-stable-ease), opacity 180ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 .pastoral-verse-check.is-active {
-  background: transparent !important;
-  color: #fff !important;
-  transform: none !important;
-}
-.pastoral-editor-v4 .pastoral-verse-check.is-active::before {
-  border-color: var(--pastoral-stable-accent) !important;
-  background: var(--pastoral-stable-accent) !important;
-  transform: scale(1.05) !important;
-}
-.pastoral-editor-v4 .pastoral-verse-check:active,
-.pastoral-editor-v4 .pastoral-verse-add:active { transform: scale(.94) !important; opacity: .72 !important; }
+.pastoral-editor-v4 .pastoral-verse-check.is-active { border-color: var(--pastoral-stable-accent) !important; background: var(--pastoral-stable-accent) !important; color: #fff !important; transform: scale(1.06) !important; }
 .pastoral-editor-v4 .pastoral-verse-check svg,
-.pastoral-editor-v4 .pastoral-verse-add svg { position: relative !important; z-index: 1 !important; width: 13px !important; height: 13px !important; }
+.pastoral-editor-v4 .pastoral-verse-add svg { width: 14px !important; height: 14px !important; }
 .pastoral-editor-v4 .pastoral-verse-row-actions { display: flex !important; align-items: center !important; gap: 0 !important; }
 .pastoral-editor-v4 .pastoral-verse-mini,
 .pastoral-editor-v4 .pastoral-verse-icon {
@@ -837,7 +701,6 @@
   border-radius: 11px !important;
   background: transparent !important;
   color: var(--pastoral-stable-muted) !important;
-  transition: color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
 .pastoral-editor-v4 .pastoral-verse-mini:active,
 .pastoral-editor-v4 .pastoral-verse-icon:active { background: var(--pastoral-stable-surface) !important; transform: scale(.95) !important; }
@@ -849,33 +712,31 @@
 .pastoral-editor-v4 .pastoral-concordance-title { color: #3a3a3c !important; font-size: .74rem !important; font-weight: 650 !important; white-space: nowrap !important; }
 
 /* Diseño */
-.pastoral-editor-v4 .panel-diseno .pastoral-panel-heading { margin: 0 0 6px !important; }
-.pastoral-editor-v4 .panel-diseno .pastoral-panel-heading h3 { margin: 0 !important; color: #3a3a3c !important; font-size: .74rem !important; font-weight: 650 !important; }
+.pastoral-editor-v4 .panel-diseno .pastoral-panel-heading { margin: 0 0 7px !important; }
+.pastoral-editor-v4 .panel-diseno .pastoral-panel-heading h3 { margin: 0 !important; color: #3a3a3c !important; font-size: .76rem !important; font-weight: 650 !important; }
 .pastoral-editor-v4 .panel-diseno .pastoral-panel-heading p { display: none !important; }
 .pastoral-editor-v4 .pastoral-aspect-control {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 6px !important;
+  grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+  gap: 2px !important;
   overflow: visible !important;
   border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  border-radius: 12px !important;
+  background: var(--pastoral-stable-surface) !important;
+  padding: 3px !important;
 }
 .pastoral-editor-v4 .pastoral-aspect-control button {
   min-width: 0 !important;
   min-height: 58px !important;
   border: 0 !important;
-  border-radius: 11px !important;
+  border-radius: 9px !important;
   background: transparent !important;
   color: var(--pastoral-stable-muted) !important;
   box-shadow: none !important;
-  transition: color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 .pastoral-aspect-control button.is-active { background: var(--pastoral-stable-accent-soft) !important; color: var(--pastoral-stable-accent) !important; }
-.pastoral-editor-v4 .pastoral-aspect-control button:active { background: var(--pastoral-stable-surface) !important; transform: scale(.98) !important; }
-.pastoral-editor-v4 .pastoral-aspect-control button.is-active:active { background: rgba(192,57,43,.12) !important; }
+.pastoral-editor-v4 .pastoral-aspect-control button.is-active { background: #fff !important; color: var(--pastoral-stable-accent) !important; box-shadow: 0 1px 3px rgba(0,0,0,.11) !important; }
 .pastoral-editor-v4 .pastoral-aspect-control svg { width: 18px !important; height: 18px !important; }
-.pastoral-editor-v4 .pastoral-aspect-control strong { display: block !important; font-size: .7rem !important; font-weight: 650 !important; }
+.pastoral-editor-v4 .pastoral-aspect-control strong { display: block !important; font-size: .7rem !important; }
 .pastoral-editor-v4 .pastoral-aspect-control small { display: block !important; font-size: .52rem !important; opacity: .72 !important; }
 
 /* Capas */
@@ -884,7 +745,7 @@
   display: flex !important;
   width: 100% !important;
   max-height: none !important;
-  gap: 6px !important;
+  gap: 7px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   border: 0 !important;
@@ -898,58 +759,43 @@
   min-width: 116px !important;
   height: 48px !important;
   flex: 0 0 116px !important;
-  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
   align-items: center !important;
   gap: 5px !important;
-  border: 0 !important;
-  border-radius: 11px !important;
+  border: .5px solid transparent !important;
+  border-radius: 12px !important;
   background: var(--pastoral-stable-surface) !important;
   color: #3a3a3c !important;
-  padding: 0 8px !important;
-  transition: background-color 180ms var(--pastoral-stable-ease), color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
+  padding: 0 9px !important;
 }
-.pastoral-editor-v4 .pastoral-layer-list button.is-active { background: var(--pastoral-stable-accent-soft) !important; color: var(--pastoral-stable-accent) !important; }
-.pastoral-editor-v4 .pastoral-layer-list button:active { transform: scale(.98) !important; }
-.pastoral-editor-v4 .pastoral-layer-actions {
-  display: flex !important;
-  width: 100% !important;
-  gap: 6px !important;
-  overflow-x: auto !important;
-  border: 0 !important;
-  background: transparent !important;
-  scrollbar-width: none !important;
-  touch-action: pan-x !important;
-}
+.pastoral-editor-v4 .pastoral-layer-list button.is-active { border-color: rgba(192,57,43,.18) !important; background: var(--pastoral-stable-accent-soft) !important; color: var(--pastoral-stable-accent) !important; }
+.pastoral-editor-v4 .pastoral-layer-actions { display: flex !important; width: 100% !important; gap: 7px !important; overflow-x: auto !important; border: 0 !important; background: transparent !important; scrollbar-width: none !important; touch-action: pan-x !important; }
 .pastoral-editor-v4 .pastoral-layer-actions > * { flex: 0 0 auto !important; }
 .pastoral-editor-v4 .pastoral-layer-actions > button,
 .pastoral-editor-v4 .pastoral-layer-actions > label {
   min-height: 44px !important;
   border: 0 !important;
-  border-radius: 11px !important;
+  border-radius: 12px !important;
   background: var(--pastoral-stable-surface) !important;
-  padding: 0 10px !important;
+  padding: 0 11px !important;
   color: #3a3a3c !important;
-  font-size: .68rem !important;
+  font-size: .69rem !important;
 }
 .pastoral-editor-v4 .pastoral-layer-actions label { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
 .pastoral-editor-v4 .pastoral-layer-actions label input { width: 96px !important; margin: 0 !important; }
-.pastoral-editor-v4 .pastoral-layer-actions .pastoral-delete-layer { background: rgba(255,59,48,.08) !important; color: #b42318 !important; }
+.pastoral-editor-v4 .pastoral-layer-actions .pastoral-delete-layer { background: rgba(217,45,32,.08) !important; color: var(--pastoral-stable-danger) !important; }
 
-/* Lienzo y selección */
-.pastoral-editor-v4 .pastoral-canvas-wrap .pastoral-visual-canvas {
-  border-radius: 2px !important;
-  box-shadow: 0 0 0 .5px rgba(60,60,67,.20) !important;
-}
+/* Selección: única zona con material translúcido. */
 .pastoral-editor-v4 [data-canvas-floating-controls='true'] {
   gap: 0 !important;
   overflow: hidden !important;
-  border: .5px solid rgba(60,60,67,.20) !important;
+  border: .5px solid rgba(60,60,67,.24) !important;
   border-radius: 14px !important;
-  background: rgba(255,255,255,.86) !important;
+  background: rgba(250,250,252,.84) !important;
   padding: 2px !important;
-  box-shadow: 0 4px 14px rgba(0,0,0,.10) !important;
-  backdrop-filter: saturate(180%) blur(12px) !important;
-  -webkit-backdrop-filter: saturate(180%) blur(12px) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.12) !important;
+  backdrop-filter: saturate(160%) blur(16px) !important;
+  -webkit-backdrop-filter: saturate(160%) blur(16px) !important;
   transition: opacity 180ms var(--pastoral-stable-ease), transform 180ms var(--pastoral-stable-ease) !important;
 }
 .pastoral-editor-v4 .pastoral-canvas-action {
@@ -962,19 +808,17 @@
   flex: 0 0 44px !important;
   place-items: center !important;
   border: 0 !important;
-  border-radius: 10px !important;
+  border-radius: 11px !important;
   background: transparent !important;
   box-shadow: none !important;
   color: #3a3a3c !important;
   touch-action: none !important;
-  transition: color 180ms var(--pastoral-stable-ease), background-color 180ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
 }
-.pastoral-editor-v4 .pastoral-canvas-action + .pastoral-canvas-action { border-left: .5px solid var(--pastoral-stable-line-soft) !important; }
 .pastoral-editor-v4 .pastoral-canvas-action::before { display: none !important; content: none !important; }
-.pastoral-editor-v4 .pastoral-canvas-action:active { background: rgba(118,118,128,.12) !important; transform: scale(.95) !important; }
+.pastoral-editor-v4 .pastoral-canvas-action:active { background: rgba(120,120,128,.14) !important; transform: scale(.95) !important; }
 .pastoral-editor-v4 .pastoral-canvas-action.is-danger { color: var(--pastoral-stable-danger) !important; }
 .pastoral-editor-v4 .pastoral-canvas-action.is-danger::before { display: none !important; }
-.pastoral-editor-v4 .pastoral-canvas-action svg { position: relative !important; z-index: 1 !important; width: 16px !important; height: 16px !important; }
+.pastoral-editor-v4 .pastoral-canvas-action svg { position: relative !important; z-index: 1 !important; width: 17px !important; height: 17px !important; }
 .pastoral-editor-v4 .pastoral-canvas-resize-handle {
   width: 44px !important;
   height: 44px !important;
@@ -993,17 +837,58 @@
   border: 3px solid #fff !important;
   border-radius: 999px !important;
   background: var(--pastoral-stable-accent) !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,.18) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.20) !important;
   content: '' !important;
 }
 
-/* Móvil / tablet: editor inmersivo */
-@media (max-width: 1023px) {
-  body:has(.pastoral-editor-v4 > .pastoral-editor-section) {
-    overflow: hidden !important;
-    overscroll-behavior: none !important;
-    background: #fff !important;
-  }
+/* Dock: tab bar iOS integrado. */
+.pastoral-editor-v4 .pastoral-tool-dock {
+  display: grid !important;
+  grid-template-columns: repeat(6,minmax(0,1fr)) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-top: .5px solid var(--pastoral-stable-line) !important;
+  padding: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button {
+  position: relative !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--pastoral-stable-soft) !important;
+  box-shadow: none !important;
+  font-weight: 550 !important;
+  transition: color 180ms var(--pastoral-stable-ease), opacity 160ms var(--pastoral-stable-ease), transform 160ms var(--pastoral-stable-ease) !important;
+  touch-action: manipulation !important;
+}
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg { position: relative !important; z-index: 1 !important; color: currentColor !important; stroke: currentColor !important; filter: none !important; }
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active { color: var(--pastoral-stable-accent) !important; font-weight: 650 !important; }
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::before {
+  position: absolute !important;
+  top: 5px !important;
+  left: 50% !important;
+  display: block !important;
+  width: 38px !important;
+  height: 30px !important;
+  border-radius: 10px !important;
+  background: var(--pastoral-stable-accent-soft) !important;
+  content: '' !important;
+  transform: translateX(-50%) !important;
+}
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::after { display: none !important; content: none !important; }
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active { opacity: .58 !important; transform: scale(.96) !important; }
+
+/* Móvil / tablet */
+@media (max-width:1023px) {
+  body:has(.pastoral-editor-v4 > .pastoral-editor-section) { overflow: hidden !important; overscroll-behavior: none !important; background: #fff !important; }
   body:has(.pastoral-editor-v4 > .pastoral-editor-section) .app-bottom-nav { display: none !important; }
   body:has(.pastoral-editor-v4 > .pastoral-editor-section) .flex-1.pb-16 { padding-bottom: 0 !important; }
   body:has(.pastoral-editor-v4 > .pastoral-editor-section) div[aria-hidden='true'][class~='shrink-0'][class*='safe-area-inset-bottom'] { display: none !important; height: 0 !important; min-height: 0 !important; }
@@ -1017,21 +902,8 @@
     overflow: hidden !important;
     background: #fff !important;
   }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) > header {
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    padding-top: max(.5rem, env(safe-area-inset-top)) !important;
-    padding-bottom: 3px !important;
-    padding-left: max(12px, env(safe-area-inset-left)) !important;
-    padding-right: max(12px, env(safe-area-inset-right)) !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) > .pastoral-editor-section {
-    display: flex !important;
-    min-height: 0 !important;
-    flex: 1 1 auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header { flex: 0 0 auto !important; margin: 0 !important; padding-top: max(.5rem,env(safe-area-inset-top)) !important; padding-bottom: 7px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > .pastoral-editor-section { display: flex !important; min-height: 0 !important; flex: 1 1 auto !important; margin: 0 !important; padding: 0 !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell,
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell.has-panel {
     display: grid !important;
@@ -1039,8 +911,8 @@
     height: 100% !important;
     min-height: 0 !important;
     grid-template-areas: 'stage' 'panel' 'dock' !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) auto 64px !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) auto 66px !important;
     gap: 0 !important;
     overflow: hidden !important;
     background: #fff !important;
@@ -1049,98 +921,49 @@
     grid-area: stage !important;
     display: grid !important;
     min-height: 0 !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) 52px !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) 52px !important;
     gap: 0 !important;
     overflow: hidden !important;
   }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-canvas-wrap {
-    min-height: 0 !important;
-    overflow: hidden !important;
-    padding: 10px 12px !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip {
-    height: 52px !important;
-    min-height: 52px !important;
-    max-height: 52px !important;
-  }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-canvas-wrap { min-height: 0 !important; overflow: hidden !important; padding: 12px 12px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip { height: 52px !important; min-height: 52px !important; max-height: 52px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel {
     grid-area: panel !important;
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
-    max-height: min(34dvh, 300px) !important;
+    max-height: min(34dvh,300px) !important;
     overflow: hidden !important;
-    border-top: .5px solid var(--pastoral-stable-line-soft) !important;
+    border-top: .5px solid var(--pastoral-stable-line) !important;
     transition: height 180ms var(--pastoral-stable-ease), max-height 180ms var(--pastoral-stable-ease) !important;
   }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel-scroll {
-    max-height: min(34dvh, 300px) !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-texto {
-    height: 172px !important;
-    min-height: 172px !important;
-    max-height: 172px !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-tool-panel-scroll {
-    height: 100% !important;
-    overflow: hidden !important;
-    padding: 4px 12px 6px !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-plantillas {
-    height: auto !important;
-    max-height: min(34dvh, 300px) !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-biblia {
-    height: clamp(230px, 34dvh, 300px) !important;
-    min-height: 230px !important;
-    max-height: 300px !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-biblia .pastoral-tool-panel-scroll {
-    height: 100% !important;
-    overflow: hidden !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock {
-    grid-area: dock !important;
-    height: 64px !important;
-    min-height: 64px !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
-    box-sizing: border-box !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button {
-    height: 64px !important;
-    min-height: 58px !important;
-    padding: 2px 1px calc(3px + env(safe-area-inset-bottom) / 2) !important;
-    font-size: .64rem !important;
-    line-height: 1.05 !important;
-    gap: 3px !important;
-  }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button svg { width: 21px !important; height: 21px !important; stroke-width: 1.8 !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel-scroll { max-height: min(34dvh,300px) !important; overflow-x: hidden !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-texto { height: 176px !important; min-height: 176px !important; max-height: 176px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-tool-panel-scroll { height: 100% !important; overflow: hidden !important; padding: 5px 12px 7px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-plantillas { height: auto !important; max-height: min(34dvh,300px) !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-biblia { height: clamp(230px,34dvh,300px) !important; min-height: 230px !important; max-height: 300px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-biblia .pastoral-tool-panel-scroll { height: 100% !important; overflow: hidden !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock { grid-area: dock !important; height: 66px !important; min-height: 66px !important; padding-bottom: env(safe-area-inset-bottom) !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button { height: 66px !important; min-height: 58px !important; padding: 4px 1px calc(3px + env(safe-area-inset-bottom)/2) !important; font-size: .63rem !important; line-height: 1.05 !important; gap: 3px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button svg { width: 21px !important; height: 21px !important; }
 }
 
-/* Móvil horizontal: mismo modelo, sin reducir hitboxes por debajo de 44px. */
-@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
-  .pastoral-editor-v4:has(> .pastoral-editor-section) > header {
-    padding-top: 4px !important;
-    padding-bottom: 2px !important;
-    padding-left: max(10px, env(safe-area-inset-left)) !important;
-    padding-right: max(10px, env(safe-area-inset-right)) !important;
-  }
+/* Móvil horizontal: no bajar hitboxes de 44px. */
+@media (orientation:landscape) and (max-height:620px) and (max-width:1023px) {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header { padding-top: 4px !important; padding-bottom: 4px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) > header > div > button { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell,
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell.has-panel { grid-template-rows: minmax(0, 1fr) auto 52px !important; }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-stage { grid-template-rows: minmax(0, 1fr) 44px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell.has-panel { grid-template-rows: minmax(0,1fr) auto 52px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-stage { grid-template-rows: minmax(0,1fr) 44px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip { height: 44px !important; min-height: 44px !important; max-height: 44px !important; }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-canvas-wrap { padding: 5px 10px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-canvas-wrap { padding: 6px 10px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel { max-height: 172px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel-scroll { max-height: 172px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-texto { height: 162px !important; min-height: 162px !important; max-height: 162px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-three-rows { grid-template-rows: 44px 44px 56px !important; gap: 4px !important; }
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-presets,
-  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-presets button { height: 44px !important; min-height: 44px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-presets { height: 44px !important; min-height: 44px !important; }
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-presets button { height: 38px !important; min-height: 38px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-strip { height: 44px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-strip button { height: 44px !important; min-height: 44px !important; }
   .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-tools-row { height: 56px !important; min-height: 56px !important; }
@@ -1152,14 +975,14 @@
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button svg { width: 18px !important; height: 18px !important; }
 }
 
-/* Desktop / iPad ancho: mismo modelo con inspector lateral. */
-@media (min-width: 1024px) {
+/* iPad ancho / desktop */
+@media (min-width:1024px) {
   .pastoral-editor-v4 .pastoral-editor-shell,
   .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
     display: grid !important;
     grid-template-areas: 'stage panel' 'dock dock' !important;
-    grid-template-columns: minmax(0, 1fr) 320px !important;
-    grid-template-rows: minmax(560px, calc(100dvh - 215px)) 62px !important;
+    grid-template-columns: minmax(0,1fr) 320px !important;
+    grid-template-rows: minmax(560px,calc(100dvh - 215px)) 64px !important;
     min-height: 0 !important;
     overflow: hidden !important;
   }
@@ -1167,12 +990,13 @@
     display: grid !important;
     grid-area: stage !important;
     grid-template-areas: 'pages canvas' !important;
-    grid-template-columns: 120px minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) !important;
+    grid-template-columns: 124px minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) !important;
     gap: 10px !important;
     padding: 12px !important;
+    background: var(--pastoral-stable-surface) !important;
   }
-  .pastoral-editor-v4 .pastoral-canvas-wrap { grid-area: canvas !important; min-height: 0 !important; overflow: hidden !important; }
+  .pastoral-editor-v4 .pastoral-canvas-wrap { grid-area: canvas !important; min-height: 0 !important; overflow: hidden !important; background: transparent !important; }
   .pastoral-editor-v4 .pastoral-pages-strip {
     grid-area: pages !important;
     flex-direction: column !important;
@@ -1180,30 +1004,25 @@
     justify-content: flex-start !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    padding: 4px 8px !important;
-    border-right: .5px solid var(--pastoral-stable-line-soft) !important;
+    padding: 8px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: rgba(255,255,255,.82) !important;
   }
   .pastoral-editor-v4 .pastoral-page-chip { width: 100% !important; }
   .pastoral-editor-v4 .pastoral-page-chip > button:first-child { width: 100% !important; justify-content: flex-start !important; }
-  .pastoral-editor-v4 .pastoral-tool-panel {
-    grid-area: panel !important;
-    width: 100% !important;
-    height: 100% !important;
-    max-height: none !important;
-    overflow: hidden !important;
-    border-left: .5px solid var(--pastoral-stable-line-soft) !important;
-  }
+  .pastoral-editor-v4 .pastoral-tool-panel { grid-area: panel !important; width: 100% !important; height: 100% !important; max-height: none !important; overflow: hidden !important; border-left: .5px solid var(--pastoral-stable-line) !important; }
   .pastoral-editor-v4 .pastoral-tool-panel-scroll { height: 100% !important; max-height: none !important; overflow-y: auto !important; padding: 16px !important; }
-  .pastoral-editor-v4 .pastoral-tool-dock { grid-area: dock !important; height: 62px !important; min-height: 62px !important; }
-  .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button { min-height: 62px !important; font-size: .7rem !important; }
-  .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg { width: 20px !important; height: 20px !important; stroke-width: 1.8 !important; }
+  .pastoral-editor-v4 .pastoral-tool-dock { grid-area: dock !important; height: 64px !important; min-height: 64px !important; }
+  .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button { min-height: 64px !important; font-size: .7rem !important; }
+  .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg { width: 20px !important; height: 20px !important; }
   .pastoral-editor-v4 .pastoral-tool-panel.panel-texto { height: 100% !important; max-height: none !important; }
   .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia { height: 100% !important; min-height: 0 !important; max-height: none !important; }
   .pastoral-editor-v4 .pastoral-start-panel { gap: 14px !important; }
   .pastoral-editor-v4 > header input { font-size: 18px !important; }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion:reduce) {
   .pastoral-editor-v4 *,
   .pastoral-editor-v4 *::before,
   .pastoral-editor-v4 *::after {
