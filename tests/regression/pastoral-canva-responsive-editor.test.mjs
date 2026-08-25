@@ -3,52 +3,47 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const wrapper = fs.readFileSync('components/pastoral/ProyectoContenidoWorkspace.tsx', 'utf8')
-const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV3.tsx', 'utf8')
-const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-v3.css', 'utf8')
+const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
+const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-capcut-v2.css', 'utf8')
+const presets = fs.readFileSync('components/pastoral/pastoral-editor-presets.ts', 'utf8')
 
-test('Centro Pastoral activa el shell responsive v3', () => {
-  assert.match(wrapper, /PastoralVisualWorkspaceV3/)
-  assert.match(workspace, /pastoral-editor-shell/)
+test('Centro Pastoral activa el workspace integrado v4', () => {
+  assert.match(wrapper, /PastoralVisualWorkspaceV4/)
+  assert.match(workspace, /pastoral-editor-shell has-panel/)
   assert.match(workspace, /pastoral-tool-dock/)
   assert.match(workspace, /pastoral-tool-panel/)
 })
 
-test('móvil vertical conserva lienzo y superpone bandeja desde abajo', () => {
-  assert.match(css, /orientation: portrait/)
-  assert.match(css, /max-width: 767px/)
-  assert.match(css, /grid-template-areas: 'stage' 'dock' !important/)
-  assert.match(css, /height: min\(42dvh, 360px\) !important/)
-  assert.match(workspace, /pastoral-sheet-handle/)
+test('móvil conserva lienzo panel permanente y cinta inferior sin sheet externa', () => {
+  assert.match(css, /grid-template-areas: 'stage' 'panel' 'dock' !important/)
+  assert.match(css, /grid-template-rows: minmax\(0,1fr\) 188px 48px !important/)
+  assert.match(css, /pastoral-tool-panel[\s\S]*position: relative !important/)
+  assert.doesNotMatch(workspace, /pastoral-sheet-handle/)
 })
 
-test('celular horizontal usa rail y panel overlay sin comprimir permanentemente el lienzo', () => {
+test('celular horizontal conserva la misma arquitectura inferior y no reintroduce rail lateral', () => {
   assert.match(css, /orientation: landscape/)
-  assert.match(css, /grid-template-areas:'dock stage' !important/)
-  assert.match(css, /grid-template-columns: 52px minmax\(0,1fr\) !important/)
-  assert.match(css, /width:min\(290px,45vw\) !important/)
+  assert.match(css, /grid-template-areas:'stage' 'panel' 'dock' !important/)
+  assert.match(css, /grid-template-rows:minmax\(0,1fr\) 118px 42px !important/)
+  assert.doesNotMatch(css, /grid-template-areas:'dock stage'/)
 })
 
-test('iPad y escritorio usan páginas lienzo inspector y dock inferior', () => {
-  assert.match(css, /min-width: 768px/)
-  assert.match(css, /grid-template-areas:'stage panel' 'dock dock' !important/)
-  assert.match(css, /grid-template-areas:'pages canvas' !important/)
-  assert.match(css, /grid-template-columns:minmax\(0,1fr\) 300px !important/)
-})
-
-test('dock principal incluye creación página y capas sin párrafo redundante', () => {
+test('dock principal conserva todas las herramientas en una cinta horizontal', () => {
   for (const label of ['Plantillas', 'Elementos', 'Texto', 'Biblia', 'Fondo', 'Diseño', 'Capas']) assert.match(workspace, new RegExp(`label: '${label}'`))
   assert.doesNotMatch(workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? '', /label: 'Párrafo'/)
+  assert.match(css, /pastoral-tool-dock[\s\S]*overflow-x: auto !important/)
+  assert.match(css, /flex: 0 0 70px !important/)
 })
 
-test('plantillas ofrecen familias cristianas minimalistas y generales sin depender de imágenes remotas', () => {
-  for (const categoria of ['Cristianas', 'Minimalistas', 'Generales']) assert.match(workspace, new RegExp(categoria))
-  for (const nombre of ['Predicación limpia', 'Versículo protagonista', 'Serie dominical', 'Oración serena', 'Minimal claro', 'Minimal oscuro', 'Mensaje central', 'Anuncio simple']) assert.match(workspace, new RegExp(nombre))
-  assert.match(workspace, /const aplicarPlantilla =/)
-  assert.match(workspace, /registrarHistorial\(\)/)
-  assert.match(workspace, /elementos: siguientes/)
+test('plantillas crecen y conservan familias cristianas minimalistas y generales', () => {
+  for (const categoria of ['Cristianas', 'Minimalistas', 'Generales']) assert.match(presets, new RegExp(categoria))
+  for (const nombre of ['Predicación limpia', 'Versículo protagonista', 'Texto bíblico', 'Puntos de prédica', 'Editorial', 'Minimal centrado', 'Conferencia', 'Agenda', 'Reflexión']) assert.match(presets, new RegExp(nombre))
+  const cantidad = (presets.match(/categoria: '(?:Cristianas|Minimalistas|Generales)'/g) ?? []).length
+  assert.ok(cantidad >= 18, `se esperaban al menos 18 plantillas y hay ${cantidad}`)
+  assert.match(css, /pastoral-template-grid::after/)
 })
 
-test('shell v3 conserva edición completa y reutiliza presentación congregación y compartir', () => {
+test('workspace v4 conserva edición completa presentación congregación y compartir', () => {
   assert.match(workspace, /onDeleteElement=\{eliminarElemento\}/)
   assert.match(workspace, /onPatchElement=\{patchElementoSinHistorial\}/)
   assert.match(workspace, /editarPaquetePastoral/)
