@@ -1,13 +1,32 @@
-/* Biblioteca visual de Plantillas.
-   Las primeras 24 opciones usan composiciones distintas en la miniatura para que
-   el usuario pueda reconocer el estilo antes de aplicarlo. No modifica el workspace. */
+/* Biblioteca visual profesional de Plantillas y Temas.
+   Canva se usa como referencia de variedad editorial, no como fuente de diseños copiados.
+   Las miniaturas usan un único lenguaje: tres barras de texto, sin iconos decorativos. */
+
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-option,
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
+  flex: 0 0 132px !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+}
+
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-option {
+  display: grid !important;
+  grid-template-rows: 60px 17px !important;
+  gap: 3px !important;
+}
 
 .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview {
   position: relative !important;
   isolation: isolate !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 0 0 1px rgba(15,23,42,.06) !important;
 }
 
-.pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option:nth-child(-n+12) .pastoral-template-preview > i {
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i {
   position: absolute !important;
   display: block !important;
   height: 3px !important;
@@ -15,139 +34,176 @@
   border: 0 !important;
   border-radius: 999px !important;
   background: currentColor !important;
-  opacity: .72 !important;
+  opacity: .62 !important;
   transform: none !important;
 }
 
-/* 1 Editorial marfil — columna editorial izquierda. */
-.pastoral-template-grid .pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 18%; width: 48%; height: 5px !important; opacity: .92 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 48%; width: 68%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(3) { left: 9%; top: 66%; width: 40%; opacity: .42 !important; }
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:first-child {
+  height: 5px !important;
+  opacity: .92 !important;
+}
 
-/* 2 Versículo luz — jerarquía centrada. */
-.pastoral-template-grid .pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(1) { left: 20%; top: 25%; width: 60%; height: 5px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(2) { left: 28%; top: 52%; width: 44%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(3) { left: 38%; top: 70%; width: 24%; opacity: .45 !important; }
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-option > span:last-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  padding-inline: 2px !important;
+  font-size: .71rem !important;
+  line-height: 17px !important;
+  color: #475569 !important;
+}
 
-/* 3 Serie horizonte — título a la derecha. */
-.pastoral-template-grid .pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(1) { right: 8%; top: 17%; width: 54%; height: 5px !important; opacity: .9 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(2) { right: 8%; top: 48%; width: 39%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(3) { right: 8%; top: 67%; width: 61%; opacity: .42 !important; }
+/* 24 composiciones; siempre las mismas tres barras, únicamente cambia la jerarquía. */
+.pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(1) { left:8%; top:17%; width:48%; }
+.pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(2) { left:8%; top:48%; width:69%; }
+.pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(3) { left:8%; top:67%; width:41%; }
 
-/* 4 Biblia papel — lectura clásica en bloque. */
-.pastoral-template-grid .pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(1) { left: 12%; top: 16%; width: 35%; height: 4px !important; opacity: .9 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(2) { left: 12%; top: 43%; width: 73%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(3) { left: 12%; top: 61%; width: 63%; }
+.pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(1) { left:20%; top:25%; width:60%; }
+.pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(2) { left:28%; top:53%; width:44%; }
+.pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(3) { left:36%; top:70%; width:28%; }
 
-/* 5 Conferencia nítida — bloque moderno superior. */
-.pastoral-template-grid .pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 14%; width: 70%; height: 6px !important; opacity: .95 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 52%; width: 43%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 70%; width: 28%; opacity: .45 !important; }
+.pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(1) { right:8%; top:17%; width:54%; }
+.pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(2) { right:8%; top:48%; width:39%; }
+.pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(3) { right:8%; top:67%; width:61%; }
 
-/* 6 Palabra central — una idea protagonista. */
-.pastoral-template-grid .pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(1) { left: 17%; top: 34%; width: 66%; height: 7px !important; opacity: .96 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(2) { left: 31%; top: 62%; width: 38%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
+.pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(1) { left:11%; top:16%; width:35%; }
+.pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(2) { left:11%; top:43%; width:73%; }
+.pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(3) { left:11%; top:62%; width:63%; }
 
-/* 7 Juventud suave — composición desplazada abajo. */
-.pastoral-template-grid .pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 49%; width: 61%; height: 5px !important; opacity: .92 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 69%; width: 43%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(3) { right: 8%; top: 17%; width: 18%; height: 18px !important; border-radius: 50% !important; opacity: .16 !important; }
+.pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(1) { left:8%; top:14%; width:70%; }
+.pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(2) { left:8%; top:52%; width:43%; }
+.pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(3) { left:8%; top:70%; width:28%; }
 
-/* 8 Noche elegante — columna fina derecha. */
-.pastoral-template-grid .pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(1) { right: 10%; top: 19%; width: 45%; height: 5px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(2) { right: 10%; top: 49%; width: 58%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(3) { right: 10%; top: 68%; width: 31%; opacity: .44 !important; }
+.pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(1) { left:17%; top:32%; width:66%; }
+.pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(2) { left:26%; top:58%; width:48%; }
+.pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(3) { left:36%; top:73%; width:28%; }
 
-/* 9 Clásico litúrgico — centrado sobrio. */
-.pastoral-template-grid .pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(1) { left: 24%; top: 18%; width: 52%; height: 4px !important; opacity: .9 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(2) { left: 18%; top: 48%; width: 64%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(3) { left: 33%; top: 68%; width: 34%; opacity: .44 !important; }
+.pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(1) { left:9%; top:47%; width:61%; }
+.pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(2) { left:9%; top:67%; width:43%; }
+.pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(3) { left:9%; top:80%; width:29%; }
 
-/* 10 Creativo pastel — composición diagonal/asimétrica. */
-.pastoral-template-grid .pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 18%; width: 45%; height: 6px !important; opacity: .93 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(2) { left: 25%; top: 49%; width: 61%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(3) { left: 46%; top: 68%; width: 38%; opacity: .45 !important; }
+.pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(1) { right:10%; top:19%; width:45%; }
+.pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(2) { right:10%; top:49%; width:58%; }
+.pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(3) { right:10%; top:68%; width:31%; }
 
-/* 11 Pizarra moderna — editorial técnica. */
-.pastoral-template-grid .pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 17%; width: 58%; height: 5px !important; opacity: .95 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 49%; width: 76%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 67%; width: 56%; opacity: .45 !important; }
+.pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(1) { left:24%; top:18%; width:52%; }
+.pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(2) { left:18%; top:48%; width:64%; }
+.pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(3) { left:33%; top:68%; width:34%; }
 
-/* 12 Amanecer minimal — título bajo y aire superior. */
-.pastoral-template-grid .pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(1) { left: 16%; top: 46%; width: 68%; height: 5px !important; opacity: .92 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(2) { left: 26%; top: 67%; width: 48%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
+.pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(1) { left:8%; top:18%; width:45%; }
+.pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(2) { left:25%; top:49%; width:61%; }
+.pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(3) { left:46%; top:68%; width:38%; }
 
-/* Segunda colección profesional: 13–24. */
-.pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option:nth-child(n+13):nth-child(-n+24) .pastoral-template-preview > i {
-  position: absolute !important;
+.pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(1) { left:8%; top:17%; width:58%; }
+.pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(2) { left:8%; top:49%; width:76%; }
+.pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(3) { left:8%; top:67%; width:56%; }
+
+.pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(1) { left:16%; top:44%; width:68%; }
+.pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(2) { left:26%; top:66%; width:48%; }
+.pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(3) { left:35%; top:79%; width:30%; }
+
+.pastoral-template-option:nth-child(13) .pastoral-template-preview > i:nth-child(1) { left:8%; top:18%; width:43%; }
+.pastoral-template-option:nth-child(13) .pastoral-template-preview > i:nth-child(2) { left:8%; top:51%; width:38%; }
+.pastoral-template-option:nth-child(13) .pastoral-template-preview > i:nth-child(3) { left:8%; top:69%; width:30%; }
+
+.pastoral-template-option:nth-child(14) .pastoral-template-preview > i:nth-child(1) { left:8%; top:15%; width:52%; }
+.pastoral-template-option:nth-child(14) .pastoral-template-preview > i:nth-child(2) { left:8%; top:42%; width:70%; }
+.pastoral-template-option:nth-child(14) .pastoral-template-preview > i:nth-child(3) { left:8%; top:61%; width:78%; }
+
+.pastoral-template-option:nth-child(15) .pastoral-template-preview > i:nth-child(1) { left:9%; top:20%; width:58%; }
+.pastoral-template-option:nth-child(15) .pastoral-template-preview > i:nth-child(2) { left:9%; top:52%; width:44%; }
+.pastoral-template-option:nth-child(15) .pastoral-template-preview > i:nth-child(3) { left:31%; top:70%; width:34%; }
+
+.pastoral-template-option:nth-child(16) .pastoral-template-preview > i:nth-child(1) { left:17%; top:27%; width:66%; }
+.pastoral-template-option:nth-child(16) .pastoral-template-preview > i:nth-child(2) { left:29%; top:60%; width:42%; }
+.pastoral-template-option:nth-child(16) .pastoral-template-preview > i:nth-child(3) { left:36%; top:75%; width:28%; }
+
+.pastoral-template-option:nth-child(17) .pastoral-template-preview > i:nth-child(1) { left:9%; top:22%; width:55%; }
+.pastoral-template-option:nth-child(17) .pastoral-template-preview > i:nth-child(2) { left:9%; top:54%; width:61%; }
+.pastoral-template-option:nth-child(17) .pastoral-template-preview > i:nth-child(3) { left:9%; top:71%; width:39%; }
+
+.pastoral-template-option:nth-child(18) .pastoral-template-preview > i:nth-child(1) { left:23%; top:37%; width:54%; }
+.pastoral-template-option:nth-child(18) .pastoral-template-preview > i:nth-child(2) { left:31%; top:62%; width:38%; }
+.pastoral-template-option:nth-child(18) .pastoral-template-preview > i:nth-child(3) { left:38%; top:76%; width:24%; }
+
+.pastoral-template-option:nth-child(19) .pastoral-template-preview > i:nth-child(1) { left:8%; top:16%; width:64%; }
+.pastoral-template-option:nth-child(19) .pastoral-template-preview > i:nth-child(2) { left:8%; top:53%; width:48%; }
+.pastoral-template-option:nth-child(19) .pastoral-template-preview > i:nth-child(3) { left:8%; top:70%; width:27%; }
+
+.pastoral-template-option:nth-child(20) .pastoral-template-preview > i:nth-child(1) { left:9%; top:45%; width:61%; }
+.pastoral-template-option:nth-child(20) .pastoral-template-preview > i:nth-child(2) { left:9%; top:68%; width:47%; }
+.pastoral-template-option:nth-child(20) .pastoral-template-preview > i:nth-child(3) { left:9%; top:81%; width:29%; }
+
+.pastoral-template-option:nth-child(21) .pastoral-template-preview > i:nth-child(1) { left:20%; top:28%; width:60%; }
+.pastoral-template-option:nth-child(21) .pastoral-template-preview > i:nth-child(2) { left:26%; top:59%; width:48%; }
+.pastoral-template-option:nth-child(21) .pastoral-template-preview > i:nth-child(3) { left:31%; top:73%; width:38%; }
+
+.pastoral-template-option:nth-child(22) .pastoral-template-preview > i:nth-child(1) { right:8%; top:20%; width:55%; }
+.pastoral-template-option:nth-child(22) .pastoral-template-preview > i:nth-child(2) { right:8%; top:52%; width:42%; }
+.pastoral-template-option:nth-child(22) .pastoral-template-preview > i:nth-child(3) { right:8%; top:70%; width:31%; }
+
+.pastoral-template-option:nth-child(23) .pastoral-template-preview > i:nth-child(1) { left:8%; top:17%; width:72%; }
+.pastoral-template-option:nth-child(23) .pastoral-template-preview > i:nth-child(2) { left:8%; top:50%; width:58%; }
+.pastoral-template-option:nth-child(23) .pastoral-template-preview > i:nth-child(3) { left:8%; top:69%; width:40%; }
+
+.pastoral-template-option:nth-child(24) .pastoral-template-preview > i:nth-child(1) { left:15%; top:22%; width:70%; }
+.pastoral-template-option:nth-child(24) .pastoral-template-preview > i:nth-child(2) { left:23%; top:54%; width:54%; }
+.pastoral-template-option:nth-child(24) .pastoral-template-preview > i:nth-child(3) { left:34%; top:71%; width:32%; }
+
+/* Temas: mismo ancho que Plantillas, pero lenguaje distinto.
+   El color/fondo vive en el propio botón; las tres muestras son título, texto y acento. */
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
+  position: relative !important;
   display: block !important;
-  height: 3px !important;
-  margin: 0 !important;
+  height: 80px !important;
+  min-height: 80px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
   border: 0 !important;
-  border-radius: 999px !important;
-  background: currentColor !important;
-  opacity: .72 !important;
-  transform: none !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 0 0 1px rgba(15,23,42,.07) !important;
 }
 
-/* 13 Sermón contraste — bloque claro con respiración lateral. */
-.pastoral-template-grid .pastoral-template-option:nth-child(13) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 18%; width: 43%; height: 6px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(13) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 51%; width: 38%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(13) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 69%; width: 30%; opacity: .44 !important; }
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-swatches {
+  position: absolute !important;
+  left: 10px !important;
+  top: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
 
-/* 14 Estudio profundo — jerarquía de lectura. */
-.pastoral-template-grid .pastoral-template-option:nth-child(14) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 15%; width: 52%; height: 4px !important; opacity: .92 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(14) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 42%; width: 70%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(14) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 61%; width: 78%; }
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-swatches > i {
+  display: block !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.28) !important;
+}
 
-/* 15 Serie geométrica — composición editorial izquierda. */
-.pastoral-template-grid .pastoral-template-option:nth-child(15) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 20%; width: 58%; height: 5px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(15) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 52%; width: 44%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(15) .pastoral-template-preview > i:nth-child(3) { right: 9%; top: 18%; width: 16%; height: 16px !important; opacity: .18 !important; }
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-option::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: auto 0 0 0 !important;
+  height: 23px !important;
+  background: rgba(255,255,255,.94) !important;
+  border-top: 1px solid rgba(15,23,42,.06) !important;
+  pointer-events: none !important;
+}
 
-/* 16 Versículo editorial — centro elegante. */
-.pastoral-template-grid .pastoral-template-option:nth-child(16) .pastoral-template-preview > i:nth-child(1) { left: 17%; top: 27%; width: 66%; height: 5px !important; opacity: .95 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(16) .pastoral-template-preview > i:nth-child(2) { left: 29%; top: 60%; width: 42%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(16) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
-
-/* 17 Comunidad cálida — bloque amigable. */
-.pastoral-template-grid .pastoral-template-option:nth-child(17) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 22%; width: 55%; height: 5px !important; opacity: .92 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(17) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 54%; width: 61%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(17) .pastoral-template-preview > i:nth-child(3) { left: 9%; top: 71%; width: 39%; opacity: .43 !important; }
-
-/* 18 Retiro contemplativo — centro y mucho aire. */
-.pastoral-template-grid .pastoral-template-option:nth-child(18) .pastoral-template-preview > i:nth-child(1) { left: 23%; top: 38%; width: 54%; height: 5px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(18) .pastoral-template-preview > i:nth-child(2) { left: 34%; top: 64%; width: 32%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(18) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
-
-/* 19 Congreso premium — encabezado fuerte. */
-.pastoral-template-grid .pastoral-template-option:nth-child(19) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 16%; width: 64%; height: 6px !important; opacity: .96 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(19) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 53%; width: 48%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(19) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 70%; width: 27%; opacity: .43 !important; }
-
-/* 20 Jóvenes energía — título desplazado abajo. */
-.pastoral-template-grid .pastoral-template-option:nth-child(20) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 46%; width: 61%; height: 6px !important; opacity: .95 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(20) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 70%; width: 47%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(20) .pastoral-template-preview > i:nth-child(3) { right: 9%; top: 16%; width: 19%; height: 19px !important; border-radius: 50% !important; opacity: .18 !important; }
-
-/* 21 Oración nocturna — lectura central sobria. */
-.pastoral-template-grid .pastoral-template-option:nth-child(21) .pastoral-template-preview > i:nth-child(1) { left: 20%; top: 28%; width: 60%; height: 5px !important; opacity: .93 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(21) .pastoral-template-preview > i:nth-child(2) { left: 26%; top: 59%; width: 48%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(21) .pastoral-template-preview > i:nth-child(3) { left: 31%; top: 73%; width: 38%; opacity: .42 !important; }
-
-/* 22 Enseñanza estructurada — columna de contenido. */
-.pastoral-template-grid .pastoral-template-option:nth-child(22) .pastoral-template-preview > i:nth-child(1) { left: 10%; top: 16%; width: 65%; height: 5px !important; opacity: .95 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(22) .pastoral-template-preview > i:nth-child(2) { left: 10%; top: 44%; width: 54%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(22) .pastoral-template-preview > i:nth-child(3) { left: 10%; top: 64%; width: 72%; }
-
-/* 23 Anuncio limpio — encabezado compacto. */
-.pastoral-template-grid .pastoral-template-option:nth-child(23) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 22%; width: 56%; height: 5px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(23) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 55%; width: 48%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(23) .pastoral-template-preview > i:nth-child(3) { right: 8%; top: 15%; width: 18%; height: 18px !important; opacity: .14 !important; }
-
-/* 24 Celebración dominical — protagonista centrado. */
-.pastoral-template-grid .pastoral-template-option:nth-child(24) .pastoral-template-preview > i:nth-child(1) { left: 18%; top: 36%; width: 64%; height: 5px !important; opacity: .94 !important; }
-.pastoral-template-grid .pastoral-template-option:nth-child(24) .pastoral-template-preview > i:nth-child(2) { left: 28%; top: 64%; width: 44%; }
-.pastoral-template-grid .pastoral-template-option:nth-child(24) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
+.pastoral-editor-v4 .panel-plantillas .pastoral-theme-option > span:last-child {
+  position: absolute !important;
+  z-index: 2 !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: 3px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #334155 !important;
+  font-size: .69rem !important;
+  font-weight: 700 !important;
+  line-height: 17px !important;
+  text-align: left !important;
+}
