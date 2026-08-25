@@ -61,11 +61,14 @@ test('guardado automático usa la acción existente sin refrescar la página', (
   assert.doesNotMatch(bloque, /router\.refresh/)
 })
 
-test('cursiva se sintetiza de forma visible y controles no cubren la caja', () => {
+test('cursiva se sintetiza de forma visible y controles quedan fuera de la caja', () => {
   assert.match(canvas, /fontStyle: elemento\.cursiva \? 'oblique 12deg' : 'normal'/)
   assert.match(canvas, /fontSynthesis: 'style weight'/)
-  assert.match(canvas, /-top-7 left-0[\s\S]*h-6 w-6/)
-  assert.match(canvas, /-top-7 right-0[\s\S]*h-6 w-6/)
+  assert.match(canvas, /function estiloControlesFlotantes/)
+  assert.match(canvas, /left: 'calc\(100% \+ 8px\)'/)
+  assert.match(canvas, /right: 'calc\(100% \+ 8px\)'/)
+  assert.match(canvas, /bottom: 'calc\(100% \+ 8px\)'/)
+  assert.match(canvas, /data-canvas-floating-controls="true"/)
 })
 
 test('tipografía del lienzo escala con el ancho real del canvas', () => {
