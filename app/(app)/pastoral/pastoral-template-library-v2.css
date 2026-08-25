@@ -12,24 +12,26 @@
   }
 
   /* TODAS las miniaturas de Plantillas usan únicamente dos líneas:
-     titular + cuerpo. Sin iconos, meta ni formas decorativas. */
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview {
+     titular + cuerpo. Sin iconos, meta ni formas decorativas.
+     La especificidad es deliberadamente mayor que la biblioteca anterior para que
+     ninguna composición histórica pueda volver a mover o mostrar una tercera forma. */
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview {
     position: relative !important;
     isolation: isolate !important;
   }
 
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::after,
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::before {
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview::after,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview::before {
     display: none !important;
     content: none !important;
   }
 
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i {
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview > i {
     display: none !important;
   }
 
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(1),
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(2) {
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview > i:nth-child(1),
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview > i:nth-child(2) {
     position: absolute !important;
     display: block !important;
     left: 10% !important;
@@ -41,7 +43,7 @@
     transform: none !important;
   }
 
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(1) {
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview > i:nth-child(1) {
     top: 35% !important;
     bottom: auto !important;
     width: 68% !important;
@@ -49,7 +51,7 @@
     opacity: .92 !important;
   }
 
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(2) {
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option .pastoral-template-preview > i:nth-child(2) {
     top: 61% !important;
     bottom: auto !important;
     width: 46% !important;
