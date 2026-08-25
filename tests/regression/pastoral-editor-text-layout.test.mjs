@@ -14,7 +14,7 @@ test('aplicar Plantilla o Tema no muestra toast de confirmación', () => {
 })
 
 test('Plantillas ofrece una entrada segura para empezar en blanco', () => {
-  assert.match(runtime, /data\.pastoralBlankTemplate/)
+  assert.match(runtime, /dataset\.pastoralBlankTemplate/)
   assert.match(runtime, /Empezar con una página en blanco/)
   assert.match(runtime, /aria-label="Nueva página"/)
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
