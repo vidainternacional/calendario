@@ -1,0 +1,38 @@
+/* Autoridad mínima V5: iguala la especificidad de la capa legacy y garantiza
+   que los tamaños accesibles ganen realmente en móvil y horizontal. */
+
+@media (max-width: 1023px) {
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
+    grid-template-rows: minmax(0, 1fr) auto 58px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia {
+    height: clamp(270px, 35dvh, 300px) !important;
+    min-height: 270px !important;
+    max-height: 300px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-dock {
+    height: 58px !important;
+    min-height: 58px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell,
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-editor-shell.has-panel {
+    grid-template-rows: minmax(0, 1fr) auto 48px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-panel.panel-biblia {
+    height: 150px !important;
+    min-height: 150px !important;
+    max-height: 150px !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-shell) .pastoral-editor-v4 .pastoral-tool-dock {
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+}
