@@ -1,7 +1,6 @@
 /* Centro Pastoral V10 — autoridad única del modo Editar móvil.
-   Regla visual: una sola superficie gris continua. Encima viven únicamente el lienzo
-   y los controles/contenidos necesarios. Sin panel blanco, sin dock blanco, sin líneas.
-   Alcance: entorno de edición + Plantillas. No modifica lógica ni otras herramientas. */
+   Regla: una sola mesa gris continua. Ningún wrapper estructural pinta blanco.
+   Encima viven únicamente el lienzo y los controles/contenidos necesarios. */
 
 .pastoral-editor-v4 {
   --pastoral-edit-desk: #626568;
@@ -11,19 +10,28 @@
 }
 
 @media (max-width: 1023px) {
-  /* ================================================================
-     1. UNA SOLA SUPERFICIE GRIS
-     ================================================================ */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section),
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-visual-system,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-editor-section,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-editor-shell,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-stage,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock {
+  /* El gris también cubre el área exterior del layout mientras Editar existe. */
+  body:has(.pastoral-editor-v4 > .pastoral-editor-section),
+  body:has(.pastoral-editor-v4 > .pastoral-editor-section) .pastoral-visual-system {
+    background: #626568 !important;
+    background-color: #626568 !important;
+    background-image: none !important;
+  }
+
+  /* Autoridad local: ya no depende del body para estilizar el propio workspace. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section),
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > .pastoral-editor-section,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-stage,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-canvas-wrap,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel-scroll,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-panel-content,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-start-panel,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-compact-row,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock {
     background: var(--pastoral-edit-desk) !important;
     background-color: var(--pastoral-edit-desk) !important;
     background-image: none !important;
@@ -32,73 +40,80 @@
     box-shadow: none !important;
   }
 
-  /* Los wrappers internos no pintan ninguna superficie propia. */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-canvas-wrap,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel-scroll,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-panel-content,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-start-panel,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-compact-row {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    border: 0 !important;
-    outline: 0 !important;
-    box-shadow: none !important;
+  .pastoral-editor-v4:has(> .pastoral-editor-section) {
+    color: var(--pastoral-edit-ink) !important;
   }
 
-  /* Elimina separadores/pseudoelementos heredados que generaban líneas blancas. */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-editor-section::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-editor-section::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-editor-shell::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-editor-shell::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-stage::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-stage::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel-scroll::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel-scroll::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-panel-content::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-panel-content::after,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock::after {
+  /* Ningún separador heredado puede reaparecer entre zonas. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-section::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-section::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-stage::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-stage::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel-scroll::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel-scroll::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-panel-content::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-panel-content::after,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock::after {
     display: none !important;
     content: none !important;
     border: 0 !important;
     box-shadow: none !important;
   }
 
-  /* ================================================================
-     2. CABECERA EN EL MISMO MODO DE EDICIÓN
-     ================================================================ */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header {
+  /* Cabecera: mismo gris, nada de la superficie clara heredada. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header input {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header input {
     color: #fff !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header button {
-    color: rgba(255,255,255,.76) !important;
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header button {
+    color: rgba(255,255,255,.78) !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header nav button {
-    color: rgba(255,255,255,.64) !important;
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header nav button {
+    color: rgba(255,255,255,.66) !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 > header nav button:first-child {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > header nav button:first-child {
     color: #fff !important;
   }
 
-  /* ================================================================
-     3. LIENZO + NAVEGACIÓN DE PÁGINAS, SIN BARRAS BLANCAS
-     ================================================================ */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-stage {
+  /* La sección no deja franjas de otro color alrededor del shell. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) > .pastoral-editor-section {
+    margin: 0 !important;
+    padding-top: 8px !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* Estructura real: lienzo, panel y dock; no overlays blancos. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell.has-panel {
+    display: grid !important;
+    grid-template-areas: 'stage' 'panel' 'dock' !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) auto 64px !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-stage {
+    grid-area: stage !important;
     display: grid !important;
     grid-template-columns: minmax(0,1fr) !important;
     grid-template-rows: minmax(0,1fr) 52px !important;
@@ -107,7 +122,7 @@
     overflow: hidden !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-canvas-wrap {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-canvas-wrap {
     grid-column: 1 !important;
     grid-row: 1 !important;
     min-height: 0 !important;
@@ -116,7 +131,8 @@
     overflow: hidden !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip {
+  /* Páginas: fila estable, integrada al mismo gris. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip {
     position: relative !important;
     z-index: 8 !important;
     grid-column: 1 !important;
@@ -142,11 +158,11 @@
     touch-action: pan-x !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip::-webkit-scrollbar {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip::-webkit-scrollbar {
     display: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-page-chip {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-page-chip {
     position: relative !important;
     top: auto !important;
     bottom: auto !important;
@@ -162,21 +178,21 @@
     border-radius: 999px !important;
     background: transparent !important;
     box-shadow: none !important;
-    color: rgba(255,255,255,.78) !important;
+    color: rgba(255,255,255,.82) !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-page-chip::before,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-page-chip::after {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-page-chip::before,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-page-chip::after {
     display: none !important;
     content: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-page-chip.is-active {
-    background: rgba(255,255,255,.10) !important;
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-page-chip.is-active {
+    background: rgba(255,255,255,.11) !important;
     color: #fff !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-page-chip > button:first-child {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-page-chip > button:first-child {
     position: static !important;
     display: inline-flex !important;
     width: auto !important;
@@ -197,16 +213,15 @@
     line-height: 1 !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-page-chip > button:first-child span {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-page-chip > button:first-child span {
     display: inline !important;
     margin-left: 4px !important;
-    opacity: 1 !important;
-    color: rgba(255,255,255,.64) !important;
+    color: rgba(255,255,255,.66) !important;
     font-size: .58rem !important;
     font-weight: 650 !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-pages-strip > button[aria-label='Nueva página'] {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-pages-strip > button[aria-label='Nueva página'] {
     position: static !important;
     width: 44px !important;
     min-width: 44px !important;
@@ -217,27 +232,23 @@
     transform: none !important;
     border: 0 !important;
     border-radius: 999px !important;
-    background: rgba(255,255,255,.08) !important;
+    background: rgba(255,255,255,.09) !important;
     color: #fff !important;
     box-shadow: none !important;
   }
 
-  /* ================================================================
-     4. PLANTILLAS: CONTENIDO DIRECTAMENTE SOBRE EL GRIS
-     ================================================================ */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas {
+  /* Plantillas: ninguna caja externa. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-plantillas {
     position: relative !important;
     inset: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: auto !important;
     grid-area: panel !important;
-    transform: none !important;
     z-index: 2 !important;
-    padding-top: 0 !important;
+    width: 100% !important;
+    transform: none !important;
+    overflow: hidden !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-tool-panel-scroll {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-tool-panel-scroll {
     width: 100% !important;
     height: 100% !important;
     min-height: 0 !important;
@@ -249,7 +260,7 @@
     touch-action: pan-y !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-panel {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-start-panel {
     width: 100% !important;
     min-width: 0 !important;
     height: auto !important;
@@ -257,10 +268,10 @@
     grid-template-rows: 100px 84px 84px !important;
     gap: 9px !important;
     align-content: start !important;
-    padding-bottom: 14px !important;
+    padding: 0 0 14px !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-compact-row {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-compact-row {
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
@@ -270,7 +281,7 @@
     overflow: hidden !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-panel-label {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-panel-label {
     margin: 0 !important;
     padding: 0 4px !important;
     color: #fff !important;
@@ -280,10 +291,10 @@
     font-weight: 800 !important;
   }
 
-  /* Scroll horizontal independiente de cada fila. */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-theme-grid,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds {
+  /* Cada fila se desplaza horizontalmente; el panel completo también puede subir/bajar. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-template-grid,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-theme-grid,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-start-backgrounds {
     position: relative !important;
     z-index: 3 !important;
     display: flex !important;
@@ -300,7 +311,7 @@
     overflow-y: hidden !important;
     overscroll-behavior-x: contain !important;
     -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-x !important;
+    touch-action: pan-x pan-y !important;
     scroll-snap-type: x proximity !important;
     scrollbar-width: none !important;
     user-select: none !important;
@@ -309,15 +320,14 @@
     padding: 2px 34px 7px 4px !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid::-webkit-scrollbar,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-theme-grid::-webkit-scrollbar,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds::-webkit-scrollbar {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-template-grid::-webkit-scrollbar,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-theme-grid::-webkit-scrollbar,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-start-backgrounds::-webkit-scrollbar {
     display: none !important;
   }
 
-  /* Plantillas y Temas comparten ancho. */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-option,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-template-option,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-theme-option {
     box-sizing: border-box !important;
     flex: 0 0 132px !important;
     width: 132px !important;
@@ -328,7 +338,7 @@
     scroll-snap-align: start !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-option {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-template-option {
     grid-template-rows: 60px 18px !important;
     gap: 3px !important;
     overflow: visible !important;
@@ -337,7 +347,7 @@
     box-shadow: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-template-preview {
     width: 132px !important;
     height: 60px !important;
     min-height: 60px !important;
@@ -345,7 +355,7 @@
     border-radius: 18px !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-template-option > span:last-child {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-template-option > span:last-child {
     box-sizing: border-box !important;
     width: 132px !important;
     margin: 0 !important;
@@ -362,15 +372,17 @@
     text-align: left !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-theme-option {
     height: 60px !important;
     min-height: 60px !important;
     overflow: hidden !important;
+    border: 0 !important;
     border-radius: 18px !important;
     padding: 8px 10px !important;
+    box-shadow: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option > span:last-child {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-theme-option > span:last-child {
     box-sizing: border-box !important;
     display: block !important;
     width: 100% !important;
@@ -386,13 +398,8 @@
     text-align: left !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds {
-    align-items: flex-start !important;
-    padding-bottom: 12px !important;
-  }
-
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds > button,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .panel-plantillas .pastoral-upload-tile {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-start-backgrounds > button,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-plantillas .pastoral-upload-tile {
     flex: 0 0 58px !important;
     width: 58px !important;
     min-width: 58px !important;
@@ -400,37 +407,54 @@
     height: 58px !important;
     min-height: 58px !important;
     margin: 0 !important;
+    border: 0 !important;
     border-radius: 18px !important;
     scroll-snap-align: start !important;
   }
 
-  /* ================================================================
-     5. DOCK: MISMO GRIS, ICONOS BLANCOS LEGIBLES, SIN CAJA
-     ================================================================ */
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock {
+  /* Dock: misma mesa gris. Sin base blanca y sin glow que borre los iconos. */
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock {
+    grid-area: dock !important;
     height: 64px !important;
     min-height: 64px !important;
+    width: 100% !important;
     gap: 0 !important;
     padding: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    scrollbar-width: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(1),
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(2),
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(3),
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(4),
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(6),
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(7) {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(5) {
+    display: none !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(1),
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(2),
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(3),
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(4),
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(6),
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:nth-child(7) {
+    flex: 0 0 calc(100% / 6) !important;
+    width: calc(100% / 6) !important;
+    min-width: 62px !important;
+    max-width: none !important;
     height: 64px !important;
     min-height: 64px !important;
     border: 0 !important;
     border-radius: 0 !important;
-    background: transparent !important;
+    background: var(--pastoral-edit-desk) !important;
+    background-color: var(--pastoral-edit-desk) !important;
     background-image: none !important;
     box-shadow: none !important;
-    color: rgba(255,255,255,.84) !important;
+    color: rgba(255,255,255,.88) !important;
     text-shadow: none !important;
     font-size: .67rem !important;
     font-weight: 680 !important;
@@ -440,34 +464,27 @@
     transition: transform 120ms cubic-bezier(.2,.75,.25,1), color 140ms ease, opacity 140ms ease !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button svg {
     width: 23px !important;
     height: 23px !important;
     color: #fff !important;
     stroke: #fff !important;
     stroke-width: 1.9 !important;
-    opacity: .92 !important;
-    filter: drop-shadow(0 0 1px rgba(255,255,255,.18)) !important;
+    opacity: .94 !important;
+    filter: drop-shadow(0 0 1px rgba(255,255,255,.16)) !important;
     transition: transform 120ms cubic-bezier(.2,.75,.25,1), filter 140ms ease, opacity 140ms ease !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(1).is-active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(2).is-active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(3).is-active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(4).is-active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(6).is-active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:nth-child(7).is-active {
-    background: transparent !important;
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button.is-active {
     color: #fff !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active svg {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button.is-active svg {
     opacity: 1 !important;
-    filter: drop-shadow(0 0 2px rgba(255,255,255,.34)) !important;
+    filter: drop-shadow(0 0 2px rgba(255,255,255,.30)) !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::after {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button.is-active::after {
     display: block !important;
     position: absolute !important;
     bottom: 2px !important;
@@ -476,40 +493,37 @@
     border-radius: 999px !important;
     background: var(--pastoral-edit-accent) !important;
     opacity: .95 !important;
-    box-shadow: 0 0 3px rgba(240,106,97,.24) !important;
+    box-shadow: 0 0 3px rgba(240,106,97,.22) !important;
     content: '' !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:active {
     transform: translateY(1px) scale(.95) !important;
-    background: transparent !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active svg {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:active svg {
     transform: scale(.90) !important;
-    filter: drop-shadow(0 0 2.5px rgba(255,255,255,.38)) !important;
   }
 }
 
 @media (orientation: portrait) and (max-width: 767px) {
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-plantillas {
     height: 300px !important;
     min-height: 300px !important;
     max-height: 300px !important;
-    overflow: hidden !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button svg {
     transition: none !important;
     animation: none !important;
   }
 
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active,
-  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button:active svg {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:active,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-dock > .pastoral-tool-button:active svg {
     transform: none !important;
   }
 }
