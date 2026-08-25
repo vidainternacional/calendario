@@ -1,0 +1,191 @@
+/* Centro Pastoral V7 — ajuste puntual de Plantillas y reemplazo del menu global.
+   Alcance: Plantillas + transicion del dock de edicion. No modifica logica ni otras herramientas. */
+
+@keyframes pastoral-editor-dock-rise {
+  from { transform: translateY(64px); opacity: .88; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 1023px) {
+  /* Fuera de Editar, la navegacion global vuelve a su estado normal. */
+  body:has(.pastoral-editor-v4) .app-bottom-nav {
+    display: block !important;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: transform .26s cubic-bezier(.22,.8,.22,1), opacity .18s ease !important;
+    will-change: transform, opacity;
+  }
+
+  body:has(.pastoral-editor-v4) .app-bottom-nav.hidden {
+    display: none !important;
+  }
+
+  body:has(.pastoral-editor-v4) .flex-1.pb-16 {
+    padding-bottom: 4rem !important;
+    transition: padding-bottom .26s cubic-bezier(.22,.8,.22,1) !important;
+  }
+
+  body:has(.pastoral-editor-v4) div[aria-hidden="true"][class~="shrink-0"][class*="safe-area-inset-bottom"] {
+    display: block !important;
+    height: calc(4rem + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: calc(4rem + env(safe-area-inset-bottom, 0px)) !important;
+    overflow: hidden !important;
+    transition: height .26s cubic-bezier(.22,.8,.22,1), min-height .26s cubic-bezier(.22,.8,.22,1) !important;
+  }
+
+  /* Al entrar a Editar, el menu de VIDA baja y el workspace ocupa exactamente ese lugar. */
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .app-bottom-nav {
+    display: block !important;
+    transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px))) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .flex-1.pb-16 {
+    padding-bottom: 0 !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) div[aria-hidden="true"][class~="shrink-0"][class*="safe-area-inset-bottom"] {
+    display: block !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section .pastoral-editor-shell) .pastoral-canva-workspace.pastoral-editor-v4 {
+    bottom: 0 !important;
+  }
+
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock {
+    height: 64px !important;
+    min-height: 64px !important;
+    animation: pastoral-editor-dock-rise .24s cubic-bezier(.22,.8,.22,1) both;
+  }
+
+  /* Scroll horizontal real: las tres cintas son tracks flexibles nativos de iOS. */
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-grid,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
+    overscroll-behavior-inline: contain !important;
+    scroll-snap-type: none !important;
+    scrollbar-width: none !important;
+    padding: 2px 14px 6px 2px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid::-webkit-scrollbar,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-grid::-webkit-scrollbar,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Conserva el ancho actual: ganamos altura y legibilidad, no tarjetas alargadas. */
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-option {
+    flex: 0 0 132px !important;
+    width: 132px !important;
+    min-width: 132px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
+    flex: 0 0 104px !important;
+    width: 104px !important;
+    min-width: 104px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds > button,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-upload-tile {
+    flex: 0 0 58px !important;
+    width: 58px !important;
+    min-width: 58px !important;
+  }
+}
+
+/* En vertical Plantillas usa el espacio recuperado del menu global para respirar mejor. */
+@media (orientation: portrait) and (max-width: 767px) {
+  .pastoral-editor-v4 .pastoral-tool-panel.panel-plantillas {
+    height: 316px !important;
+    min-height: 316px !important;
+    max-height: 316px !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-tool-panel-scroll {
+    height: 100% !important;
+    padding: 8px 14px !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-start-panel {
+    height: 300px !important;
+    grid-template-rows: 104px 88px 88px !important;
+    gap: 10px !important;
+    align-content: start !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-compact-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 18px minmax(0, 1fr) !important;
+    gap: 6px !important;
+    overflow: visible !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-panel-label {
+    font-size: .78rem !important;
+    line-height: 18px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-option {
+    grid-template-rows: 60px 17px !important;
+    gap: 3px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview {
+    height: 60px !important;
+    min-height: 60px !important;
+    border-radius: 18px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-option > span:last-child {
+    font-size: .71rem !important;
+    line-height: 17px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
+    height: 60px !important;
+    min-height: 60px !important;
+    border-radius: 18px !important;
+    padding: 8px !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option > span:last-child {
+    font-size: .68rem !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-start-backgrounds > button,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-upload-tile {
+    height: 60px !important;
+    min-height: 60px !important;
+    border-radius: 18px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.pastoral-editor-v4) .app-bottom-nav,
+  body:has(.pastoral-editor-v4) .flex-1.pb-16,
+  body:has(.pastoral-editor-v4) div[aria-hidden="true"][class~="shrink-0"][class*="safe-area-inset-bottom"],
+  body:has(.pastoral-editor-v4 .pastoral-editor-section) .pastoral-editor-v4 .pastoral-tool-dock {
+    transition: none !important;
+    animation: none !important;
+  }
+}
