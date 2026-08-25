@@ -7,19 +7,19 @@ const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 
 test('Texto estable usa tres cintas compactas sin reserva histórica V11/V12', () => {
-  assert.match(css, /pastoral-text-three-rows[\s\S]*grid-template-rows: 46px 50px 58px !important/)
+  assert.match(css, /pastoral-text-three-rows[\s\S]*grid-template-rows: 44px 48px 56px !important/)
   assert.match(css, /pastoral-tool-panel\.panel-texto[\s\S]*height: 172px !important/)
 })
 
-test('Caja Título Subtítulo y Cuerpo quedan en cuatro columnas iguales', () => {
+test('Caja Título Subtítulo y Cuerpo quedan en cuatro columnas iguales y táctiles', () => {
   assert.match(css, /pastoral-text-presets[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important/)
-  assert.match(css, /pastoral-text-presets button[\s\S]*width: 100% !important/)
+  assert.match(css, /pastoral-text-presets button[\s\S]*width: 100% !important[\s\S]*min-height: 44px !important/)
   assert.doesNotMatch(workspace, /<Plus \/> Caja/)
 })
 
 test('Tamaño y Línea tienen steppers React táctiles y la cinta conserva scroll horizontal', () => {
-  assert.match(css, /pastoral-font-size[\s\S]*min-width: 226px !important/)
-  assert.match(css, /pastoral-line-height[\s\S]*min-width: 210px !important/)
+  assert.match(css, /pastoral-font-size[\s\S]*min-width: 220px !important/)
+  assert.match(css, /pastoral-line-height[\s\S]*min-width: 204px !important/)
   assert.match(css, /pastoral-step-button[\s\S]*width: 44px !important/)
   assert.match(css, /pastoral-text-tools-row[\s\S]*overflow-x: auto !important/)
   assert.match(workspace, /aria-label="Reducir tamaño de letra"/)
