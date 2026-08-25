@@ -1,4 +1,4 @@
-/* Plantillas V2 — miniaturas consistentes + Temas con identidad visual real.
+/* Plantillas V2 — miniaturas minimalistas y consistentes.
    Esta capa NO modifica el workspace, el fondo blanco ni otras herramientas. */
 
 @media (max-width: 1023px) {
@@ -11,12 +11,29 @@
     max-width: 132px !important;
   }
 
-  /* Lenguaje único para TODAS las miniaturas destacadas: título + subtítulo + meta.
-     Se eliminan círculos, cuadrados y formas que parecían iconos distintos. */
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid
-  .pastoral-template-option:nth-child(-n+36) .pastoral-template-preview > i {
+  /* TODAS las miniaturas de Plantillas usan únicamente dos líneas:
+     titular + cuerpo. Sin iconos, meta ni formas decorativas. */
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview {
+    position: relative !important;
+    isolation: isolate !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::after,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i {
+    display: none !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(1),
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(2) {
     position: absolute !important;
     display: block !important;
+    left: 10% !important;
+    right: auto !important;
     margin: 0 !important;
     border: 0 !important;
     border-radius: 999px !important;
@@ -24,127 +41,123 @@
     transform: none !important;
   }
 
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-grid
-  .pastoral-template-option:nth-child(-n+36) .pastoral-template-preview > i:nth-child(3) {
-    display: block !important;
-    left: 9% !important;
-    right: auto !important;
-    top: auto !important;
-    bottom: 13% !important;
-    width: 28% !important;
-    height: 2px !important;
-    border-radius: 999px !important;
-    opacity: .38 !important;
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(1) {
+    top: 35% !important;
+    bottom: auto !important;
+    width: 68% !important;
+    height: 5px !important;
+    opacity: .92 !important;
   }
 
-  /* Un único icono de “diapositiva” para toda la biblioteca.
-     Es deliberadamente discreto: primero se entiende la composición, luego el icono. */
-  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview::after,
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option::after {
-    content: '' !important;
-    position: absolute !important;
-    top: 8px !important;
-    right: 8px !important;
-    width: 15px !important;
-    height: 11px !important;
-    border: 1.2px solid currentColor !important;
-    border-radius: 3px !important;
-    background:
-      linear-gradient(currentColor,currentColor) 3px 3px / 7px 1px no-repeat,
-      linear-gradient(currentColor,currentColor) 3px 6px / 5px 1px no-repeat !important;
-    opacity: .28 !important;
-    box-shadow: none !important;
-    pointer-events: none !important;
+  .pastoral-editor-v4 .panel-plantillas .pastoral-template-preview > i:nth-child(2) {
+    top: 61% !important;
+    bottom: auto !important;
+    width: 46% !important;
+    height: 3px !important;
+    opacity: .56 !important;
   }
 
-  /* Temas dejan de ser “tres bolitas de color”. Ahora se leen como una mini diapositiva
-     tipográfica: título, cuerpo, acento y nombre. */
+  /* Temas usan la misma lógica: preview arriba y nombre debajo. */
   .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option {
     position: relative !important;
     isolation: isolate !important;
-    height: 60px !important;
-    min-height: 60px !important;
-    overflow: hidden !important;
-    border: 1px solid rgba(71,84,103,.14) !important;
-    border-radius: 18px !important;
+    height: 81px !important;
+    min-height: 81px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
     box-shadow: none !important;
     text-align: left !important;
   }
 
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option::after,
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option::before {
+    display: none !important;
+    content: none !important;
+  }
+
   .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches {
     position: absolute !important;
-    inset: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
     display: block !important;
     width: 100% !important;
-    height: 100% !important;
+    height: 60px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(71,84,103,.14) !important;
+    border-radius: 18px !important;
+    box-sizing: border-box !important;
     pointer-events: none !important;
   }
 
   .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches > i {
+    display: none !important;
+  }
+
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches > i:nth-child(1),
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches > i:nth-child(2) {
     position: absolute !important;
     display: block !important;
+    left: 10% !important;
+    right: auto !important;
     margin: 0 !important;
     border: 0 !important;
     border-radius: 999px !important;
   }
 
   .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches > i:nth-child(1) {
-    left: 9px !important;
-    top: 11px !important;
-    width: 55% !important;
+    top: 35% !important;
+    width: 68% !important;
     height: 5px !important;
+    opacity: .94 !important;
   }
 
   .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches > i:nth-child(2) {
-    left: 9px !important;
-    top: 27px !important;
-    width: 39% !important;
+    top: 61% !important;
+    width: 46% !important;
     height: 3px !important;
-    opacity: .78 !important;
-  }
-
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option .pastoral-theme-swatches > i:nth-child(3) {
-    left: 9px !important;
-    top: 38px !important;
-    width: 22% !important;
-    height: 2px !important;
+    opacity: .62 !important;
   }
 
   .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option > span:last-child {
     position: absolute !important;
-    left: 9px !important;
-    right: 27px !important;
-    bottom: 4px !important;
+    left: 4px !important;
+    right: 4px !important;
+    top: 63px !important;
+    bottom: auto !important;
     overflow: hidden !important;
-    font-size: .62rem !important;
+    padding: 0 !important;
+    color: #344054 !important;
+    font-size: .71rem !important;
     font-weight: 760 !important;
-    line-height: 12px !important;
+    line-height: 16px !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    opacity: .88 !important;
+    opacity: 1 !important;
   }
 
-  /* La miniatura debe comunicar la identidad del tema aunque el inline antiguo solo
-     entienda backgroundColor. Estos fondos reflejan exactamente las familias actuales. */
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(1) { background: #FFFFFF !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(2) { background: linear-gradient(145deg,#FFFDF8 0%,#F2E8D8 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(3) { background: repeating-linear-gradient(0deg,rgba(92,69,54,.035) 0 1px,transparent 1px 5px),linear-gradient(#FBF7EE,#F2E7D4) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(4) { background: linear-gradient(135deg,#F7FAFF 0%,#DDEBFA 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(5) { background: linear-gradient(145deg,#121418 0%,#24201B 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(6) { background: radial-gradient(circle at 78% 18%,rgba(96,165,250,.25),transparent 28%),linear-gradient(145deg,#07111F,#172554) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(7) { background: linear-gradient(135deg,#FFF9F3 0%,#F8E7DD 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(8) { background: linear-gradient(145deg,#F5F8F1 0%,#DDE8D5 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(9) { background: linear-gradient(145deg,#10271E 0%,#1E4936 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(10) { background: linear-gradient(135deg,#312E81 0%,#6D28D9 55%,#A855F7 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(11) { background: radial-gradient(circle at 15% 20%,rgba(251,146,60,.28),transparent 28%),linear-gradient(145deg,#FFF8F4,#FBE4E7) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(12) { background: radial-gradient(circle at 80% 20%,rgba(163,230,53,.28),transparent 25%),linear-gradient(145deg,#071A18,#0D2B26) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(13) { background: #F8FAFC !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(14) { background: repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),linear-gradient(145deg,#20262F,#353D49) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(15) { background: radial-gradient(circle at 82% 16%,rgba(180,83,9,.12),transparent 26%),radial-gradient(circle at 18% 80%,rgba(120,53,15,.10),transparent 30%),linear-gradient(145deg,#FBF5E9,#EAD8BD) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(16) { background: linear-gradient(145deg,#0A1D38,#173A63) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(17) { background: linear-gradient(135deg,#E9FFFB 0%,#B9ECE6 48%,#4FB9AE 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(18) { background: linear-gradient(145deg,#FBF9FF 0%,#E8E0F5 100%) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(19) { background: linear-gradient(145deg,#3E101F,#6A2238) !important; }
-  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(20) { background: linear-gradient(135deg,#FFF6E8 0%,#FFD9C7 48%,#F3D5E8 100%) !important; }
+  /* Fondos de las 20 identidades actuales. */
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(1) .pastoral-theme-swatches { background: #FFFFFF !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(2) .pastoral-theme-swatches { background: linear-gradient(145deg,#FFFDF8 0%,#F2E8D8 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(3) .pastoral-theme-swatches { background: repeating-linear-gradient(0deg,rgba(92,69,54,.035) 0 1px,transparent 1px 5px),linear-gradient(#FBF7EE,#F2E7D4) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(4) .pastoral-theme-swatches { background: linear-gradient(135deg,#F7FAFF 0%,#DDEBFA 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(5) .pastoral-theme-swatches { background: linear-gradient(145deg,#121418 0%,#24201B 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(6) .pastoral-theme-swatches { background: radial-gradient(circle at 78% 18%,rgba(96,165,250,.25),transparent 28%),linear-gradient(145deg,#07111F,#172554) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(7) .pastoral-theme-swatches { background: linear-gradient(135deg,#FFF9F3 0%,#F8E7DD 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(8) .pastoral-theme-swatches { background: linear-gradient(145deg,#F5F8F1 0%,#DDE8D5 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(9) .pastoral-theme-swatches { background: linear-gradient(145deg,#10271E 0%,#1E4936 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(10) .pastoral-theme-swatches { background: linear-gradient(135deg,#312E81 0%,#6D28D9 55%,#A855F7 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(11) .pastoral-theme-swatches { background: radial-gradient(circle at 15% 20%,rgba(251,146,60,.28),transparent 28%),linear-gradient(145deg,#FFF8F4,#FBE4E7) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(12) .pastoral-theme-swatches { background: radial-gradient(circle at 80% 20%,rgba(163,230,53,.28),transparent 25%),linear-gradient(145deg,#071A18,#0D2B26) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(13) .pastoral-theme-swatches { background: #F8FAFC !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(14) .pastoral-theme-swatches { background: repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),linear-gradient(145deg,#20262F,#353D49) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(15) .pastoral-theme-swatches { background: radial-gradient(circle at 82% 16%,rgba(180,83,9,.12),transparent 26%),radial-gradient(circle at 18% 80%,rgba(120,53,15,.10),transparent 30%),linear-gradient(145deg,#FBF5E9,#EAD8BD) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(16) .pastoral-theme-swatches { background: linear-gradient(145deg,#0A1D38,#173A63) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(17) .pastoral-theme-swatches { background: linear-gradient(135deg,#E9FFFB 0%,#B9ECE6 48%,#4FB9AE 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(18) .pastoral-theme-swatches { background: linear-gradient(145deg,#FBF9FF 0%,#E8E0F5 100%) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(19) .pastoral-theme-swatches { background: linear-gradient(145deg,#3E101F,#6A2238) !important; }
+  .pastoral-editor-v4 .panel-plantillas .pastoral-theme-option:nth-child(20) .pastoral-theme-swatches { background: linear-gradient(135deg,#FFF6E8 0%,#FFD9C7 48%,#F3D5E8 100%) !important; }
 }

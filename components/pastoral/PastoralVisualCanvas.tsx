@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { Move, Trash2 } from 'lucide-react'
 import {
   TEMAS_LIENZO, aspectoLienzo, clamp, limpiarHtmlCanvas,
@@ -71,6 +71,13 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
   />
 }
 
+function estiloControlesFlotantes(elemento: ElementoCanvas): CSSProperties {
+  if (elemento.x + elemento.w <= 94) return { left: 'calc(100% + 8px)', top: 0, flexDirection: 'column' }
+  if (elemento.x >= 6) return { right: 'calc(100% + 8px)', top: 0, flexDirection: 'column' }
+  if (elemento.y >= 9) return { left: 0, bottom: 'calc(100% + 8px)' }
+  return { left: 0, top: 'calc(100% + 8px)' }
+}
+
 export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput, onDeleteElement }: Props) {
   const lienzoRef = useRef<HTMLDivElement | null>(null)
   const [gesto, setGesto] = useState<Gesto | null>(null)
@@ -126,9 +133,11 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
             ) : <TextoCanvas elemento={elemento} editable={editable} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
             {activo && <>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="absolute -top-7 left-0 grid h-6 w-6 touch-none place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm" aria-label="Mover elemento"><Move className="h-3 w-3" /></button>
-              <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="absolute -top-7 right-0 grid h-6 w-6 place-items-center rounded-full border border-rose-200 bg-white text-rose-600 shadow-sm" aria-label="Eliminar elemento"><Trash2 className="h-3 w-3" /></button>
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-2 -right-2 h-5 w-5 touch-none rounded-full border-[3px] border-white bg-[#C0392B] shadow-sm" aria-label="Redimensionar elemento" />
+              <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento)} data-canvas-floating-controls="true">
+                <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="grid h-7 w-7 touch-none place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm" aria-label="Mover elemento"><Move className="h-3.5 w-3.5" /></button>
+                <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="grid h-7 w-7 place-items-center rounded-full border border-rose-200 bg-white text-rose-600 shadow-sm" aria-label="Eliminar elemento"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="absolute -bottom-3 -right-3 h-5 w-5 touch-none rounded-full border-[3px] border-white bg-[#C0392B] shadow-sm" aria-label="Redimensionar elemento" />
             </>}
           </div>
         })}
