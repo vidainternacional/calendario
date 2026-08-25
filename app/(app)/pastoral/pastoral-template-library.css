@@ -1,0 +1,80 @@
+/* Biblioteca visual de Plantillas.
+   Las primeras 12 opciones usan composiciones distintas en la miniatura para que
+   el usuario pueda reconocer el estilo antes de aplicarlo. No modifica el workspace. */
+
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-preview {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+.pastoral-editor-v4 .panel-plantillas .pastoral-template-grid .pastoral-template-option:nth-child(-n+12) .pastoral-template-preview > i {
+  position: absolute !important;
+  display: block !important;
+  height: 3px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: currentColor !important;
+  opacity: .72 !important;
+  transform: none !important;
+}
+
+/* 1 Editorial marfil — columna editorial izquierda. */
+.pastoral-template-grid .pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 18%; width: 48%; height: 5px !important; opacity: .92 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 48%; width: 68%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(1) .pastoral-template-preview > i:nth-child(3) { left: 9%; top: 66%; width: 40%; opacity: .42 !important; }
+
+/* 2 Versículo luz — jerarquía centrada. */
+.pastoral-template-grid .pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(1) { left: 20%; top: 25%; width: 60%; height: 5px !important; opacity: .94 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(2) { left: 28%; top: 52%; width: 44%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(2) .pastoral-template-preview > i:nth-child(3) { left: 38%; top: 70%; width: 24%; opacity: .45 !important; }
+
+/* 3 Serie horizonte — título a la derecha. */
+.pastoral-template-grid .pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(1) { right: 8%; top: 17%; width: 54%; height: 5px !important; opacity: .9 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(2) { right: 8%; top: 48%; width: 39%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(3) .pastoral-template-preview > i:nth-child(3) { right: 8%; top: 67%; width: 61%; opacity: .42 !important; }
+
+/* 4 Biblia papel — lectura clásica en bloque. */
+.pastoral-template-grid .pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(1) { left: 12%; top: 16%; width: 35%; height: 4px !important; opacity: .9 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(2) { left: 12%; top: 43%; width: 73%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(4) .pastoral-template-preview > i:nth-child(3) { left: 12%; top: 61%; width: 63%; }
+
+/* 5 Conferencia nítida — bloque moderno superior. */
+.pastoral-template-grid .pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 14%; width: 70%; height: 6px !important; opacity: .95 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 52%; width: 43%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(5) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 70%; width: 28%; opacity: .45 !important; }
+
+/* 6 Palabra central — una idea protagonista. */
+.pastoral-template-grid .pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(1) { left: 17%; top: 34%; width: 66%; height: 7px !important; opacity: .96 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(2) { left: 31%; top: 62%; width: 38%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(6) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
+
+/* 7 Juventud suave — composición desplazada abajo. */
+.pastoral-template-grid .pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(1) { left: 9%; top: 49%; width: 61%; height: 5px !important; opacity: .92 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(2) { left: 9%; top: 69%; width: 43%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(7) .pastoral-template-preview > i:nth-child(3) { right: 8%; top: 17%; width: 18%; height: 18px !important; border-radius: 50% !important; opacity: .16 !important; }
+
+/* 8 Noche elegante — columna fina derecha. */
+.pastoral-template-grid .pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(1) { right: 10%; top: 19%; width: 45%; height: 5px !important; opacity: .94 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(2) { right: 10%; top: 49%; width: 58%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(8) .pastoral-template-preview > i:nth-child(3) { right: 10%; top: 68%; width: 31%; opacity: .44 !important; }
+
+/* 9 Clásico litúrgico — centrado sobrio. */
+.pastoral-template-grid .pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(1) { left: 24%; top: 18%; width: 52%; height: 4px !important; opacity: .9 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(2) { left: 18%; top: 48%; width: 64%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(9) .pastoral-template-preview > i:nth-child(3) { left: 33%; top: 68%; width: 34%; opacity: .44 !important; }
+
+/* 10 Creativo pastel — composición diagonal/asimétrica. */
+.pastoral-template-grid .pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 18%; width: 45%; height: 6px !important; opacity: .93 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(2) { left: 25%; top: 49%; width: 61%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(10) .pastoral-template-preview > i:nth-child(3) { left: 46%; top: 68%; width: 38%; opacity: .45 !important; }
+
+/* 11 Pizarra moderna — editorial técnica. */
+.pastoral-template-grid .pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(1) { left: 8%; top: 17%; width: 58%; height: 5px !important; opacity: .95 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(2) { left: 8%; top: 49%; width: 76%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(11) .pastoral-template-preview > i:nth-child(3) { left: 8%; top: 67%; width: 56%; opacity: .45 !important; }
+
+/* 12 Amanecer minimal — título bajo y aire superior. */
+.pastoral-template-grid .pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(1) { left: 16%; top: 46%; width: 68%; height: 5px !important; opacity: .92 !important; }
+.pastoral-template-grid .pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(2) { left: 26%; top: 67%; width: 48%; }
+.pastoral-template-grid .pastoral-template-option:nth-child(12) .pastoral-template-preview > i:nth-child(3) { display: none !important; }
