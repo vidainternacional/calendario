@@ -19,7 +19,7 @@ test('Plantillas ofrece En blanco nativo que crea una página nueva', () => {
 
 test('Texto conserva controles grandes y scroll horizontal', () => {
   assert.match(css, /pastoral-text-tools-row[\s\S]*overflow-x: auto !important/)
-  assert.match(css, /pastoral-inline-icon[\s\S]*width: 46px !important/)
+  assert.match(css, /panel-texto \.pastoral-inline-icon[\s\S]*width: 54px !important[\s\S]*height: 54px !important/)
 })
 
 test('Tamaño e interlineado tienen steppers táctiles React', () => {
@@ -39,7 +39,7 @@ test('página activa queda libre y primera página inicia a la izquierda', () =>
   assert.match(css, /pastoral-page-chip\.is-active[\s\S]*background: transparent/)
 })
 
-test('cursiva se aplica directamente como italic en el renderer', () => {
+test('cursiva usa variante real y evita síntesis tipográfica en el renderer', () => {
   assert.match(canvas, /fontStyle: elemento\.cursiva \? 'italic' : 'normal'/)
-  assert.match(canvas, /fontSynthesis: 'style weight'/)
+  assert.match(canvas, /fontSynthesis: 'none'/)
 })
