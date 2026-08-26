@@ -72,10 +72,19 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
 }
 
 function estiloControlesFlotantes(elemento: ElementoCanvas): CSSProperties {
-  if (elemento.x + elemento.w <= 94) return { left: 'calc(100% + 8px)', top: 0, flexDirection: 'column' }
-  if (elemento.x >= 6) return { right: 'calc(100% + 8px)', top: 0, flexDirection: 'column' }
-  if (elemento.y >= 9) return { left: 0, bottom: 'calc(100% + 8px)' }
-  return { left: 0, top: 'calc(100% + 8px)' }
+  const anclajeHorizontal = elemento.x + elemento.w <= 96 ? { left: 0 } : { right: 0 }
+  const espacioSuperior = elemento.y
+  const espacioInferior = 100 - (elemento.y + elemento.h)
+
+  if (espacioSuperior >= 12) {
+    return { ...anclajeHorizontal, bottom: 'calc(100% + 6px)', flexDirection: 'row' }
+  }
+
+  if (espacioInferior >= 12) {
+    return { ...anclajeHorizontal, top: 'calc(100% + 6px)', flexDirection: 'row' }
+  }
+
+  return { right: '4px', top: '4px', flexDirection: 'row' }
 }
 
 export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput, onDeleteElement }: Props) {
