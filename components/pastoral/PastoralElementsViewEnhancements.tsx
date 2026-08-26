@@ -2,17 +2,16 @@
 
 import { useEffect } from 'react'
 
-type VistaElementos = 'grande' | 'mosaico' | 'compacta'
+type VistaElementos = 'lista' | 'compacta'
 
 const VISTAS: Array<{ id: VistaElementos; label: string }> = [
-  { id: 'grande', label: 'Grande' },
-  { id: 'mosaico', label: 'Mosaico' },
-  { id: 'compacta', label: 'Compacta' },
+  { id: 'lista', label: 'Lista' },
+  { id: 'compacta', label: 'Miniaturas' },
 ]
 
 export default function PastoralElementsViewEnhancements() {
   useEffect(() => {
-    let vista: VistaElementos = 'mosaico'
+    let vista: VistaElementos = 'compacta'
     let frame = 0
 
     const sincronizar = () => {
@@ -24,13 +23,22 @@ export default function PastoralElementsViewEnhancements() {
 
         grid.dataset.view = vista
 
+        grid.querySelectorAll<HTMLButtonElement>(':scope > button').forEach((button) => {
+          if (button.querySelector('.pastoral-elements-list-label')) return
+          const img = button.querySelector<HTMLImageElement>('img')
+          const label = document.createElement('span')
+          label.className = 'pastoral-elements-list-label'
+          label.textContent = img?.alt?.trim() || 'Imagen'
+          button.appendChild(label)
+        })
+
         let controles = panel.querySelector<HTMLElement>('[data-pastoral-elements-view-toggle]')
         if (!controles) {
           controles = document.createElement('div')
           controles.dataset.pastoralElementsViewToggle = 'true'
           controles.className = 'pastoral-elements-view-toggle'
           controles.setAttribute('role', 'group')
-          controles.setAttribute('aria-label', 'Vista de miniaturas')
+          controles.setAttribute('aria-label', 'Vista de imágenes')
 
           for (const opcion of VISTAS) {
             const button = document.createElement('button')
