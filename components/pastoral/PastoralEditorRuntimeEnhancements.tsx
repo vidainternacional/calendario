@@ -83,6 +83,61 @@ function renombrarTextoLibre() {
   if (button && button.textContent?.trim() === 'Caja') button.textContent = 'Texto libre'
 }
 
+function posicionarControlesFlotantes() {
+  document.querySelectorAll<HTMLElement>('.pastoral-editor-v4 [data-canvas-floating-controls="true"]').forEach((toolbar) => {
+    const elemento = toolbar.closest<HTMLElement>('[data-canvas-element-id]')
+    const canvas = toolbar.closest<HTMLElement>('.pastoral-visual-canvas')
+    if (!elemento || !canvas) return
+
+    const elementoRect = elemento.getBoundingClientRect()
+    const canvasRect = canvas.getBoundingClientRect()
+    const espacioArriba = elementoRect.top - canvasRect.top
+    const espacioAbajo = canvasRect.bottom - elementoRect.bottom
+    const espacioDerecha = canvasRect.right - elementoRect.right
+    const espacioIzquierda = elementoRect.left - canvasRect.left
+    const gap = 6
+
+    toolbar.style.removeProperty('left')
+    toolbar.style.removeProperty('right')
+    toolbar.style.removeProperty('top')
+    toolbar.style.removeProperty('bottom')
+
+    if (espacioArriba >= 52) {
+      toolbar.style.right = '0'
+      toolbar.style.bottom = `calc(100% + ${gap}px)`
+      toolbar.style.flexDirection = 'row'
+      return
+    }
+
+    if (espacioAbajo >= 52) {
+      toolbar.style.right = '0'
+      toolbar.style.top = `calc(100% + ${gap}px)`
+      toolbar.style.flexDirection = 'row'
+      return
+    }
+
+    if (espacioDerecha >= 52) {
+      toolbar.style.left = `calc(100% + ${gap}px)`
+      toolbar.style.top = '0'
+      toolbar.style.flexDirection = 'column'
+      return
+    }
+
+    if (espacioIzquierda >= 52) {
+      toolbar.style.right = `calc(100% + ${gap}px)`
+      toolbar.style.top = '0'
+      toolbar.style.flexDirection = 'column'
+      return
+    }
+
+    /* Último recurso para elementos casi a pantalla completa: se coloca sobre el
+       borde inferior, nunca encima de las primeras líneas del texto. */
+    toolbar.style.right = '4px'
+    toolbar.style.top = `calc(100% + ${gap}px)`
+    toolbar.style.flexDirection = 'row'
+  })
+}
+
 export default function PastoralEditorRuntimeEnhancements() {
   useEffect(() => {
     let frame = 0
@@ -159,6 +214,7 @@ export default function PastoralEditorRuntimeEnhancements() {
         limpiarFondosDuplicados()
         renombrarTextoLibre()
         recordarTemaActual()
+        posicionarControlesFlotantes()
       })
     }
 
@@ -209,7 +265,9 @@ export default function PastoralEditorRuntimeEnhancements() {
     document.addEventListener('selectionchange', onSelectionChange)
     document.addEventListener('focusin', onFocusIn)
     document.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('pointerup', sincronizar, true)
     document.addEventListener('click', onClick, true)
+    window.addEventListener('resize', sincronizar)
 
     return () => {
       cancelAnimationFrame(frame)
@@ -217,7 +275,9 @@ export default function PastoralEditorRuntimeEnhancements() {
       document.removeEventListener('selectionchange', onSelectionChange)
       document.removeEventListener('focusin', onFocusIn)
       document.removeEventListener('pointerdown', onPointerDown, true)
+      document.removeEventListener('pointerup', sincronizar, true)
       document.removeEventListener('click', onClick, true)
+      window.removeEventListener('resize', sincronizar)
     }
   }, [])
 
