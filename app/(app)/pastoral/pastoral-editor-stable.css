@@ -721,6 +721,9 @@
   color: var(--pastoral-stable-muted) !important;
   touch-action: manipulation !important;
 }
+.pastoral-editor-v4 .pastoral-tool-button:active {
+  transform: scale(.96);
+}
 .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button > span { display: none !important; }
 .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button svg { position: relative !important; z-index: 1 !important; width: 24px !important; height: 24px !important; display: block !important; }
 .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active { color: var(--pastoral-stable-accent) !important; }
