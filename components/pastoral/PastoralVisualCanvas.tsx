@@ -61,7 +61,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
       fontWeight: elemento.peso ?? 500,
       fontStyle: elemento.cursiva ? 'italic' : 'normal',
-      fontSynthesis: 'style weight',
+      fontSynthesis: 'none',
       textDecoration: decoracion,
       lineHeight: elemento.interlineado ?? 1.25,
       direction: 'ltr',
