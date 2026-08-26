@@ -81,11 +81,13 @@ function estiloControlesFlotantes(elemento: ElementoCanvas): CSSProperties {
   const espacioSuperior = elemento.y
   const espacioInferior = 100 - (elemento.y + elemento.h)
 
-  if (espacioSuperior >= 12) {
+  // En lienzos panorámicos móviles, 44–48 px pueden equivaler a más del 20% de la altura.
+  // Usamos un margen porcentual conservador para que el menú nunca termine recortado por overflow-hidden.
+  if (espacioSuperior >= 26) {
     return { ...anclajeHorizontal, bottom: 'calc(100% + 6px)', flexDirection: 'row' }
   }
 
-  if (espacioInferior >= 12) {
+  if (espacioInferior >= 26) {
     return { ...anclajeHorizontal, top: 'calc(100% + 6px)', flexDirection: 'row' }
   }
 
@@ -139,6 +141,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
           return <div
             key={elemento.id}
             data-canvas-element={elemento.tipo}
+            data-canvas-element-id={elemento.id}
             onPointerDown={(event) => { event.stopPropagation(); editable && onSelect?.(elemento.id) }}
             className={`absolute overflow-visible ${activo ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''}`}
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1 }}
