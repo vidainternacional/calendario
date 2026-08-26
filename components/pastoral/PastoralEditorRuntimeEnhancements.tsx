@@ -95,7 +95,11 @@ export default function PastoralEditorRuntimeEnhancements() {
       if (!selection?.rangeCount) return
       const range = selection.getRangeAt(0)
       const node = range.commonAncestorContainer
-      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement
+      const element = node.nodeType === Node.ELEMENT_NODE
+        ? node as Element
+        : node.parentNode instanceof Element
+          ? node.parentNode
+          : null
       const editor = element?.closest<HTMLElement>('.pastoral-visual-canvas [contenteditable="true"]')
       if (!editor) return
       ultimoEditor = editor
