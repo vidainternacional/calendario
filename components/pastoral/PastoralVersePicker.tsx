@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Check, ChevronRight, Copy, Loader2, Plus, Search, X } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Link2, Loader2, Plus, Search, X } from 'lucide-react'
 import { mostrarToast } from '@/lib/ui/toast'
 
 const API = 'https://bible.helloao.org/api'
@@ -177,8 +177,8 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           <>
             <button type="button" onClick={() => { setConcordanciaDe(null); setRelacionados([]) }} className="pastoral-verse-icon" aria-label="Volver a versículos"><ArrowLeft /></button>
             <div className="min-w-0 flex-1">
-              <strong className="block truncate text-[15px] font-semibold leading-tight text-slate-900">Concordancias</strong>
-              <span className="mt-0.5 block truncate text-xs leading-tight text-slate-500">{concordanciaDe.referencia}</span>
+              <strong className="block truncate text-[15px] font-semibold leading-tight text-slate-900">Versículos relacionados</strong>
+              <span className="mt-0.5 block truncate text-xs leading-tight text-slate-500">Desde {concordanciaDe.referencia}</span>
             </div>
           </>
         ) : <>
@@ -191,18 +191,20 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           <select aria-label="Capítulo" value={capitulo} onChange={e => setCapitulo(Number(e.target.value))}>
             {Array.from({ length: libroActual?.numberOfChapters ?? 1 }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
           </select>
-          <label className="pastoral-verse-search"><Search /><input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar" /></label>
-          {!!seleccionados.length && <button type="button" onClick={agregarSeleccionados} className="pastoral-insert-selected">Insertar {seleccionados.length}</button>}
+          <label className="pastoral-verse-search"><Search /><input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar en este capítulo" /></label>
+          {!!seleccionados.length && <button type="button" onClick={agregarSeleccionados} className="pastoral-insert-selected">Insertar selección ({seleccionados.length})</button>}
         </>}
         {!embedded && <button type="button" onClick={onClose} className="pastoral-verse-icon" aria-label="Cerrar"><X /></button>}
       </div>
+
+      {!concordanciaDe && <p className="pastoral-verse-guide">Toca el círculo para seleccionar varios. Usa + para insertar uno y el enlace para ver versículos relacionados.</p>}
 
       <div className="pastoral-verse-list">
         {concordanciaDe ? (
           cargandoRelacionados ? <div className="pastoral-verse-loading"><Loader2 /></div> : relacionados.length ? relacionados.map(v => <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-main"><span className="pastoral-verse-add"><Plus /></span><span><strong>{v.referencia}</strong><em>{v.texto}</em></span></button>
-            <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`}><Copy /></button>
-          </article>) : <div className="pastoral-verse-empty">No hay concordancias disponibles.</div>
+            <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>
+          </article>) : <div className="pastoral-verse-empty">No hay versículos relacionados disponibles.</div>
         ) : cargando ? <div className="pastoral-verse-loading"><Loader2 /></div> : visibles.length ? visibles.map(v => {
           const activo = seleccionados.includes(v.verso)
           return <article key={v.verso} className="pastoral-verse-row">
@@ -211,9 +213,9 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
               <span><strong>{v.referencia}</strong><em>{v.texto}</em></span>
             </button>
             <div className="pastoral-verse-row-actions">
-              <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Agregar ${v.referencia}`}><Plus /></button>
-              <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`}><Copy /></button>
-              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Concordancias de ${v.referencia}`} title="Concordancias"><ChevronRight /></button>
+              <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
+              <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>
+              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Ver versículos relacionados con ${v.referencia}`} title="Relacionados"><Link2 /></button>
             </div>
           </article>
         }) : <div className="pastoral-verse-empty">No hay versículos que coincidan.</div>}
