@@ -57,7 +57,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     spellCheck
     onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
     onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
-    className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
+    className={`${elemento.rol === 'libre' ? 'min-h-full overflow-visible' : 'h-full overflow-auto'} w-full break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
     style={{
       fontFamily: familia,
       fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
@@ -77,21 +77,12 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
 }
 
 function estiloControlesFlotantes(elemento: ElementoCanvas): CSSProperties {
-  const anclajeHorizontal = elemento.x + elemento.w <= 96 ? { left: 0 } : { right: 0 }
-  const espacioSuperior = elemento.y
-  const espacioInferior = 100 - (elemento.y + elemento.h)
+  const cercaDelBordeInferior = elemento.y + elemento.h >= 82
+  const anclajeVertical = cercaDelBordeInferior ? { bottom: '4px' } : { top: '4px' }
 
-  // En lienzos panorámicos móviles, 44–48 px pueden equivaler a más del 20% de la altura.
-  // Usamos un margen porcentual conservador para que el menú nunca termine recortado por overflow-hidden.
-  if (espacioSuperior >= 26) {
-    return { ...anclajeHorizontal, bottom: 'calc(100% + 6px)', flexDirection: 'row' }
-  }
-
-  if (espacioInferior >= 26) {
-    return { ...anclajeHorizontal, top: 'calc(100% + 6px)', flexDirection: 'row' }
-  }
-
-  return { right: '4px', top: '4px', flexDirection: 'row' }
+  // Los controles viven dentro del elemento seleccionado. Así nunca salen del lienzo,
+  // incluso cuando el texto o la imagen están pegados a los bordes del canvas.
+  return { right: '4px', ...anclajeVertical, flexDirection: 'column' }
 }
 
 export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput, onDeleteElement }: Props) {
@@ -138,12 +129,14 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         {(pagina.elementos ?? []).slice().sort((a, b) => a.z - b.z).map((elemento) => {
           const activo = editable && seleccion === elemento.id
           const recurso = elemento.tipo === 'imagen' ? biblioteca.find((item) => item.id === elemento.recurso_id) : null
+          const seleccionLibre = activo && elemento.tipo === 'texto' && elemento.rol === 'libre'
           return <div
             key={elemento.id}
             data-canvas-element={elemento.tipo}
             data-canvas-element-id={elemento.id}
+            data-canvas-text-role={elemento.rol ?? undefined}
             onPointerDown={(event) => { event.stopPropagation(); editable && onSelect?.(elemento.id) }}
-            className={`absolute overflow-visible ${activo ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''}`}
+            className={`absolute overflow-visible ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1 }}
           >
             {elemento.tipo === 'imagen' ? (
@@ -161,6 +154,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
       </div>
       <style jsx global>{`
         .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; direction:ltr !important; unicode-bidi:plaintext !important; writing-mode:horizontal-tb !important; text-shadow:none !important; -webkit-text-stroke:0 transparent !important; }
+        .pastoral-visual-canvas [data-canvas-text-role='libre'] [contenteditable='true'] { background:transparent !important; box-shadow:none !important; }
         .pastoral-visual-canvas [contenteditable='true'] ul { list-style:disc; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] ol { list-style:decimal; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] blockquote { border-left:3px solid currentColor; margin:.5em 0; padding-left:.75em; opacity:.92; }
