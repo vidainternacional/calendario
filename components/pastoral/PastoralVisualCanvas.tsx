@@ -37,6 +37,10 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
   const puntos = elemento.tamano_fuente ?? 24
   const pixeles = (puntos * 4) / 3
   const escalaLienzo = (pixeles / baseWidth) * 100
+  const fuente = elemento.fuente ?? 'Inter'
+  const familia = fuente === 'Inter'
+    ? 'var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif'
+    : `${fuente}, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`
 
   useEffect(() => {
     const editor = textoRef.current
@@ -55,7 +59,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
     className={`h-full w-full overflow-auto break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
     style={{
-      fontFamily: elemento.fuente ?? 'Inter',
+      fontFamily: familia,
       fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
       color: elemento.color ?? '#0f172a',
       textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
@@ -63,6 +67,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       fontStyle: elemento.cursiva ? 'italic' : 'normal',
       fontSynthesis: 'none',
       textDecoration: decoracion,
+      textShadow: 'none',
       lineHeight: elemento.interlineado ?? 1.25,
       direction: 'ltr',
       unicodeBidi: 'plaintext',
@@ -152,10 +157,14 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         })}
       </div>
       <style jsx global>{`
-        .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; direction:ltr !important; unicode-bidi:plaintext !important; writing-mode:horizontal-tb !important; }
+        .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; direction:ltr !important; unicode-bidi:plaintext !important; writing-mode:horizontal-tb !important; text-shadow:none !important; -webkit-text-stroke:0 transparent !important; }
         .pastoral-visual-canvas [contenteditable='true'] ul { list-style:disc; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] ol { list-style:decimal; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] blockquote { border-left:3px solid currentColor; margin:.5em 0; padding-left:.75em; opacity:.92; }
+        .pastoral-editor-v4 .pastoral-tool-button { display:grid !important; place-items:center !important; padding:0 !important; position:relative !important; isolation:isolate !important; }
+        .pastoral-editor-v4 .pastoral-tool-button::before { top:50% !important; left:50% !important; width:44px !important; height:44px !important; transform:translate(-50%,-50%) scale(.9) !important; z-index:0 !important; }
+        .pastoral-editor-v4 .pastoral-tool-button.is-active::before { transform:translate(-50%,-50%) scale(1) !important; }
+        .pastoral-editor-v4 .pastoral-tool-button > svg { position:relative !important; z-index:1 !important; margin:0 !important; }
       `}</style>
     </div>
   )
