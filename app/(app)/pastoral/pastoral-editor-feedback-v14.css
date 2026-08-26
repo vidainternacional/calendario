@@ -93,8 +93,8 @@
 }
 
 .pastoral-editor-v4 .pastoral-elements-view-toggle > button.is-active {
-  background: rgba(192, 57, 43, .07) !important;
-  color: #c0392b !important;
+  background: rgba(79, 70, 229, .08) !important;
+  color: #4f46e5 !important;
 }
 
 /* Las imágenes siempre crecen en vertical. Solo cambia su densidad. */
@@ -136,8 +136,8 @@
 
 /* Puntos 1–3 de refinamiento aprobado: un solo lenguaje visual, sin tocar geometría. */
 .pastoral-editor-v4 {
-  --pastoral-stable-accent: #c0392b !important;
-  --pastoral-stable-accent-soft: rgba(192, 57, 43, .07) !important;
+  --pastoral-stable-accent: #4f46e5 !important;
+  --pastoral-stable-accent-soft: rgba(79, 70, 229, .08) !important;
 }
 
 /* 1. El dock conserva exactamente su ancho, alto y posición; solo adopta el
@@ -147,21 +147,20 @@
 }
 
 .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active {
-  color: #c0392b !important;
-  background: rgba(192, 57, 43, .07) !important;
+  color: #4f46e5 !important;
+  background: rgba(79, 70, 229, .08) !important;
 }
 
 .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::after {
   box-shadow: none !important;
 }
 
-/* 2. VIDA rojo queda como único acento del editor; no se crean superficies rojas
-   grandes ni se cambia la estructura de los controles. */
+/* 2. Se conserva el morado propio del Centro Pastoral como acento del editor. */
 .pastoral-editor-v4 .pastoral-text-presets button.is-active,
 .pastoral-editor-v4 .pastoral-elements-view-toggle > button.is-active,
 .pastoral-editor-v4 .pastoral-theme-option.is-active,
 .pastoral-editor-v4 .pastoral-template-option.is-active {
-  color: #c0392b !important;
+  color: #4f46e5 !important;
 }
 
 /* 3. Acciones secundarias se integran a la superficie continua. Se conservan
@@ -177,3 +176,42 @@
   background: transparent !important;
   border-color: rgba(71, 84, 103, .14) !important;
 }
+
+/* Feedback de validación: selección y acción de mover usan el mismo morado pastoral;
+   eliminar conserva rojo por ser una acción destructiva. */
+.pastoral-editor-v4 [data-canvas-element-id]:has([data-canvas-floating-controls='true']) {
+  --tw-ring-color: #4f46e5 !important;
+}
+
+.pastoral-editor-v4 .pastoral-canvas-action:not(.is-danger) {
+  color: #4f46e5 !important;
+}
+
+/* Línea debe permanecer completamente contenida dentro de su propio control. */
+.pastoral-editor-v4 .pastoral-line-height {
+  overflow: hidden !important;
+}
+
+.pastoral-editor-v4 .pastoral-line-height > span:first-child {
+  display: grid !important;
+  min-width: 0 !important;
+  max-width: 42px !important;
+  height: 100% !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  padding: 0 2px !important;
+  line-height: 1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* El selector tipográfico muestra opciones visualmente diferenciadas sin cambiar
+   la altura ni el ancho de la cinta. */
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(1) { font-family: var(--font-inter), Inter, sans-serif !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(2) { font-family: 'Avenir Next', Avenir, 'Helvetica Neue', Arial, sans-serif !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(3) { font-family: Futura, 'Trebuchet MS', Arial, sans-serif !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(4) { font-family: Didot, 'Bodoni 72', 'Times New Roman', serif !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(5) { font-family: Baskerville, 'Times New Roman', serif !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(6) { font-family: Georgia, 'Times New Roman', serif !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(7) { font-family: 'Courier New', Courier, monospace !important; }
+.pastoral-editor-v4 .pastoral-font-strip button:nth-child(8) { font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif !important; }
