@@ -174,7 +174,13 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
     <section className={`pastoral-verse-picker ${embedded ? 'is-embedded' : 'is-modal'}`} aria-label="Seleccionar versículo">
       <div className="pastoral-verse-toolbar">
         {concordanciaDe ? (
-          <button type="button" onClick={() => { setConcordanciaDe(null); setRelacionados([]) }} className="pastoral-verse-icon" aria-label="Volver a versículos"><ArrowLeft /></button>
+          <>
+            <button type="button" onClick={() => { setConcordanciaDe(null); setRelacionados([]) }} className="pastoral-verse-icon" aria-label="Volver a versículos"><ArrowLeft /></button>
+            <div className="min-w-0 flex-1">
+              <strong className="block truncate text-[15px] font-semibold leading-tight text-slate-900">Concordancias</strong>
+              <span className="mt-0.5 block truncate text-xs leading-tight text-slate-500">{concordanciaDe.referencia}</span>
+            </div>
+          </>
         ) : <>
           <select aria-label="Traducción" value={trad} onChange={e => setTrad(e.target.value)}>
             {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName || t.name}</option>)}
@@ -189,7 +195,6 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           {!!seleccionados.length && <button type="button" onClick={agregarSeleccionados} className="pastoral-insert-selected">Insertar {seleccionados.length}</button>}
         </>}
         {!embedded && <button type="button" onClick={onClose} className="pastoral-verse-icon" aria-label="Cerrar"><X /></button>}
-        {concordanciaDe && <span className="pastoral-concordance-title">{concordanciaDe.referencia}</span>}
       </div>
 
       <div className="pastoral-verse-list">
@@ -208,7 +213,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Agregar ${v.referencia}`}><Plus /></button>
               <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`}><Copy /></button>
-              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Concordancias de ${v.referencia}`}><ChevronRight /></button>
+              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Concordancias de ${v.referencia}`} title="Concordancias"><ChevronRight /></button>
             </div>
           </article>
         }) : <div className="pastoral-verse-empty">No hay versículos que coincidan.</div>}
