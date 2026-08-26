@@ -62,11 +62,18 @@ export type RecursoPastoral = {
   nombre_archivo?: string | null
 }
 
+/* Selector visible del editor: pocas familias, deliberadamente distintas entre sí.
+   Se conservan las fuentes históricas en compatibilidad para no alterar proyectos ya guardados. */
 export const FUENTES_PASTORALES = [
-  'Inter', 'Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS',
-  'Georgia', 'Times New Roman', 'Palatino Linotype', 'Garamond',
-  'Courier New', 'Lucida Console', 'Impact', 'Arial Black',
+  'Inter', 'Avenir Next', 'Futura', 'Didot',
+  'Baskerville', 'Georgia', 'Courier New', 'Impact',
 ] as const
+
+const FUENTES_PASTORALES_COMPATIBLES = new Set<string>([
+  ...FUENTES_PASTORALES,
+  'Arial', 'Helvetica', 'Helvetica Neue', 'Verdana', 'Tahoma', 'Trebuchet MS',
+  'Times New Roman', 'Palatino Linotype', 'Garamond', 'Lucida Console', 'Arial Black',
+])
 
 export const ESTILOS_TEXTO: Array<{ id: RolTexto; label: string; pt: number; peso: number }> = [
   { id: 'titulo', label: 'Título', pt: 54, peso: 800 },
@@ -123,6 +130,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
   const tipo: TipoElemento = item.tipo === 'imagen' || item.tipo === 'versiculo' ? item.tipo : 'texto'
   const rol = rolTextoValido(item.rol)
   const estilo = ESTILOS_TEXTO.find((opcion) => opcion.id === rol) ?? ESTILOS_TEXTO[3]
+  const fuenteGuardada = String(item.fuente ?? '')
   return {
     id: String(item.id || nuevoIdCanvas()), tipo,
     x: clamp(Number(item.x ?? 8), 0, 97), y: clamp(Number(item.y ?? 8), 0, 97),
@@ -130,7 +138,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     z: clamp(Number(item.z ?? index + 1), 0, 200),
     contenido: tipo === 'imagen' ? undefined : limpiarHtmlCanvas(String(item.contenido ?? '')),
     recurso_id: tipo === 'imagen' ? item.recurso_id ?? null : undefined,
-    rol, fuente: FUENTES_PASTORALES.includes(item.fuente as never) ? item.fuente : 'Inter',
+    rol, fuente: FUENTES_PASTORALES_COMPATIBLES.has(fuenteGuardada) ? fuenteGuardada : 'Inter',
     tamano_fuente: clamp(Number(item.tamano_fuente ?? (tipo === 'versiculo' ? 30 : estilo.pt)), 8, 160),
     color: /^#[0-9a-f]{6}$/i.test(String(item.color ?? '')) ? item.color : '#0f172a',
     alineacion: item.alineacion === 'centro' || item.alineacion === 'derecha' ? item.alineacion : 'izquierda',
