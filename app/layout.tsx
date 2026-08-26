@@ -9,6 +9,7 @@ import './cuaderno-fase-g.css'
 
 const inter = Inter({
   subsets: ['latin'],
+  style: ['normal', 'italic'],
   variable: '--font-inter',
   display: 'swap',
 })
