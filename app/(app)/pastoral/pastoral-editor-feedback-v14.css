@@ -93,8 +93,8 @@
 }
 
 .pastoral-editor-v4 .pastoral-elements-view-toggle > button.is-active {
-  background: #eef2ff !important;
-  color: var(--pastoral-stable-accent) !important;
+  background: rgba(192, 57, 43, .07) !important;
+  color: #c0392b !important;
 }
 
 /* Las imágenes siempre crecen en vertical. Solo cambia su densidad. */
@@ -132,4 +132,48 @@
   .pastoral-editor-v4 .pastoral-elements-grid[data-view='compacta'] {
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   }
+}
+
+/* Puntos 1–3 de refinamiento aprobado: un solo lenguaje visual, sin tocar geometría. */
+.pastoral-editor-v4 {
+  --pastoral-stable-accent: #c0392b !important;
+  --pastoral-stable-accent-soft: rgba(192, 57, 43, .07) !important;
+}
+
+/* 1. El dock conserva exactamente su ancho, alto y posición; solo adopta el
+   lenguaje suave de píldora usado en VIDA para comunicar selección. */
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button {
+  border-radius: 12px !important;
+}
+
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active {
+  color: #c0392b !important;
+  background: rgba(192, 57, 43, .07) !important;
+}
+
+.pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button.is-active::after {
+  box-shadow: none !important;
+}
+
+/* 2. VIDA rojo queda como único acento del editor; no se crean superficies rojas
+   grandes ni se cambia la estructura de los controles. */
+.pastoral-editor-v4 .pastoral-text-presets button.is-active,
+.pastoral-editor-v4 .pastoral-elements-view-toggle > button.is-active,
+.pastoral-editor-v4 .pastoral-theme-option.is-active,
+.pastoral-editor-v4 .pastoral-template-option.is-active {
+  color: #c0392b !important;
+}
+
+/* 3. Acciones secundarias se integran a la superficie continua. Se conservan
+   dimensiones, posiciones y áreas táctiles ya existentes. */
+.pastoral-editor-v4 .pastoral-minimal-action,
+.pastoral-editor-v4 .pastoral-external-banks button,
+.pastoral-editor-v4 .pastoral-layer-actions button {
+  box-shadow: none !important;
+}
+
+.pastoral-editor-v4 .pastoral-external-banks button,
+.pastoral-editor-v4 .pastoral-layer-actions button {
+  background: transparent !important;
+  border-color: rgba(71, 84, 103, .14) !important;
 }
