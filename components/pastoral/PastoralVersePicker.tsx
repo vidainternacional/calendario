@@ -151,11 +151,38 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   }
 
   const agregarSeleccionados = () => {
-    const elegidos = versos.filter(v => seleccionados.includes(v.verso))
+    const elegidos = versos
+      .filter(v => seleccionados.includes(v.verso))
+      .sort((a, b) => a.verso - b.verso)
     if (!elegidos.length) return
-    elegidos.forEach(v => onInsert({ referencia: v.referencia, texto: v.texto, traduccion: v.traduccion }))
+
+    const grupos: VersiculoElegido[][] = []
+    for (const versiculo of elegidos) {
+      const ultimoGrupo = grupos[grupos.length - 1]
+      const ultimo = ultimoGrupo?.[ultimoGrupo.length - 1]
+      if (ultimo && ultimo.libroId === versiculo.libroId && ultimo.capitulo === versiculo.capitulo && versiculo.verso === ultimo.verso + 1) {
+        ultimoGrupo.push(versiculo)
+      } else {
+        grupos.push([versiculo])
+      }
+    }
+
+    grupos.forEach(grupo => {
+      const primero = grupo[0]
+      const ultimo = grupo[grupo.length - 1]
+      const referencia = grupo.length === 1
+        ? primero.referencia
+        : `${libroActual?.name ?? libro} ${primero.capitulo}:${primero.verso}-${ultimo.verso}`
+      onInsert({
+        referencia,
+        texto: grupo.map(v => v.texto).filter(Boolean).join(' '),
+        traduccion: primero.traduccion,
+      })
+    })
+
     setSeleccionados([])
-    mostrarToast(`${elegidos.length} versículo${elegidos.length === 1 ? '' : 's'} insertado${elegidos.length === 1 ? '' : 's'}`)
+    const bloques = grupos.length
+    mostrarToast(`${elegidos.length} versículo${elegidos.length === 1 ? '' : 's'} insertado${elegidos.length === 1 ? '' : 's'} en ${bloques} bloque${bloques === 1 ? '' : 's'}`)
   }
 
   const agregarUno = (v: VersiculoElegido) => {
@@ -177,7 +204,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           <>
             <button type="button" onClick={() => { setConcordanciaDe(null); setRelacionados([]) }} className="pastoral-verse-icon" aria-label="Volver a versículos"><ArrowLeft /></button>
             <div className="min-w-0 flex-1">
-              <strong className="block truncate text-[15px] font-semibold leading-tight text-slate-900">Versículos relacionados</strong>
+              <strong className="block truncate text-[15px] font-semibold leading-tight text-slate-900">Concordancias</strong>
               <span className="mt-0.5 block truncate text-xs leading-tight text-slate-500">Desde {concordanciaDe.referencia}</span>
             </div>
           </>
@@ -197,14 +224,14 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
         {!embedded && <button type="button" onClick={onClose} className="pastoral-verse-icon" aria-label="Cerrar"><X /></button>}
       </div>
 
-      {!concordanciaDe && <p className="pastoral-verse-guide">Toca el círculo para seleccionar varios. Usa + para insertar uno y el enlace para ver versículos relacionados.</p>}
+      {!concordanciaDe && <p className="pastoral-verse-guide">Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.</p>}
 
       <div className="pastoral-verse-list">
         {concordanciaDe ? (
           cargandoRelacionados ? <div className="pastoral-verse-loading"><Loader2 /></div> : relacionados.length ? relacionados.map(v => <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-main"><span className="pastoral-verse-add"><Plus /></span><span><strong>{v.referencia}</strong><em>{v.texto}</em></span></button>
             <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>
-          </article>) : <div className="pastoral-verse-empty">No hay versículos relacionados disponibles.</div>
+          </article>) : <div className="pastoral-verse-empty">No hay concordancias disponibles para este versículo.</div>
         ) : cargando ? <div className="pastoral-verse-loading"><Loader2 /></div> : visibles.length ? visibles.map(v => {
           const activo = seleccionados.includes(v.verso)
           return <article key={v.verso} className="pastoral-verse-row">
@@ -215,7 +242,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
               <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>
-              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Ver versículos relacionados con ${v.referencia}`} title="Relacionados"><Link2 /></button>
+              <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Ver concordancias de ${v.referencia}`} title="Concordancias"><Link2 /></button>
             </div>
           </article>
         }) : <div className="pastoral-verse-empty">No hay versículos que coincidan.</div>}
