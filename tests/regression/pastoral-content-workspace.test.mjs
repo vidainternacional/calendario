@@ -92,11 +92,14 @@ test('Recursos ofrece biblioteca propia y bancos externos con recordatorio de de
   assert.match(workspace, /derechos de personas, marcas u obras visibles/)
 })
 
-test('Biblia inserta versículos como elementos independientes y selector conserva multiselección y concordancias', () => {
+test('Biblia inserta versículos como elementos independientes y agrupa consecutivos sin perder multiselección ni concordancias', () => {
   assert.match(workspace, /tipo: 'versiculo'/)
   assert.match(workspace, /PastoralVersePicker/)
   assert.match(picker, /const \[seleccionados, setSeleccionados\]/)
-  assert.match(picker, /elegidos\.forEach\(v => onInsert/)
+  assert.match(picker, /const grupos: VersiculoElegido\[\]\[\] = \[\]/)
+  assert.match(picker, /versiculo\.verso === ultimo\.verso \+ 1/)
+  assert.match(picker, /grupos\.forEach\(grupo =>/)
+  assert.match(picker, /`\$\{libroActual\?\.name \?\? libro\} \$\{primero\.capitulo\}:\$\{primero\.verso\}-\$\{ultimo\.verso\}`/)
   assert.match(picker, /setConcordanciaDe\(versiculo\)/)
   assert.match(picker, /aria-label="Volver a versículos"/)
 })
