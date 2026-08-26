@@ -4,7 +4,8 @@
 .pastoral-editor-v4 .pastoral-editor-shell,
 .pastoral-editor-v4 .pastoral-stage,
 .pastoral-editor-v4 .pastoral-canvas-wrap {
-  overscroll-behavior: none;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
 }
 
 .pastoral-editor-v4 .pastoral-tool-panel,
@@ -14,14 +15,16 @@
   max-width: 100%;
 }
 
+/* El scroll vertical pertenece a la página. Evitamos una segunda superficie vertical
+   dentro del panel porque en iPhone genera bloqueos y saltos al cambiar de herramienta. */
 .pastoral-editor-v4 .pastoral-tool-panel-scroll {
   overflow-x: hidden !important;
-  overflow-y: auto !important;
+  overflow-y: visible !important;
   overscroll-behavior-x: none !important;
-  overscroll-behavior-y: contain !important;
+  overscroll-behavior-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important;
-  scrollbar-gutter: stable;
+  touch-action: pan-y pinch-zoom !important;
+  scrollbar-gutter: auto;
 }
 
 .pastoral-editor-v4 .pastoral-template-grid,
@@ -62,13 +65,13 @@
   min-width: 92px !important;
 }
 
-/* Biblia: jerarquía legible y acciones reconocibles sin saturar la fila. */
+/* Biblia: lectura primero, controles después. La superficie completa usa el scroll
+   de la página y las acciones dejan de depender únicamente del significado del icono. */
 .pastoral-editor-v4 .pastoral-verse-picker.is-embedded {
   min-height: 0 !important;
-  height: 100% !important;
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr) !important;
-  overflow: hidden !important;
+  height: auto !important;
+  display: block !important;
+  overflow: visible !important;
 }
 
 .pastoral-editor-v4 .pastoral-verse-toolbar {
@@ -85,51 +88,82 @@
 
 .pastoral-editor-v4 .pastoral-verse-toolbar .pastoral-insert-selected {
   grid-column: 1 / -1 !important;
-  justify-self: start !important;
+  justify-self: stretch !important;
+  min-height: 42px !important;
+}
+
+.pastoral-editor-v4 .pastoral-verse-guide {
+  margin: 2px 0 10px !important;
+  color: #64748b !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
 }
 
 .pastoral-editor-v4 .pastoral-verse-list {
   min-height: 0 !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overscroll-behavior-y: contain !important;
-  -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overscroll-behavior-y: auto !important;
+  touch-action: pan-y pinch-zoom !important;
 }
 
 .pastoral-editor-v4 .pastoral-verse-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 7px !important;
   align-items: stretch !important;
+  padding: 10px 0 !important;
 }
 
 .pastoral-editor-v4 .pastoral-verse-main {
   min-width: 0 !important;
+  width: 100% !important;
+  align-items: flex-start !important;
 }
 
 .pastoral-editor-v4 .pastoral-verse-row-actions {
   display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
   flex: 0 0 auto !important;
   align-items: center !important;
-  gap: 4px !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
 }
 
 .pastoral-editor-v4 .pastoral-verse-mini {
-  width: 42px !important;
-  min-width: 42px !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  display: grid !important;
-  place-items: center !important;
-  border-radius: 12px !important;
+  width: auto !important;
+  min-width: 68px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  border-radius: 11px !important;
+  padding: 0 9px !important;
+  color: #475569 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.pastoral-editor-v4 .pastoral-verse-mini::after {
+  content: attr(title);
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .pastoral-editor-v4 .pastoral-verse-mini svg,
 .pastoral-editor-v4 .pastoral-verse-icon svg {
-  width: 18px !important;
-  height: 18px !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
 }
 
 @media (max-width: 640px) {
   .pastoral-editor-v4 .pastoral-tool-panel-scroll {
+    overflow-y: visible !important;
     scrollbar-gutter: auto;
   }
 
@@ -138,13 +172,23 @@
   }
 
   .pastoral-editor-v4 .pastoral-verse-row-actions {
-    gap: 2px !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none !important;
+    touch-action: pan-x !important;
+  }
+
+  .pastoral-editor-v4 .pastoral-verse-row-actions::-webkit-scrollbar {
+    display: none !important;
   }
 
   .pastoral-editor-v4 .pastoral-verse-mini {
-    width: 38px !important;
-    min-width: 38px !important;
-    height: 40px !important;
-    min-height: 40px !important;
+    min-width: 66px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    flex: 0 0 auto !important;
   }
 }
