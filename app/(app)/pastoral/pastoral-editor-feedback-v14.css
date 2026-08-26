@@ -1,0 +1,135 @@
+/* Centro Pastoral V14 — cierre puntual de biblioteca y superficies de herramientas. */
+
+/* La caja externa deja de ser una superficie visible. Las herramientas conservan
+   su área funcional, pero se perciben como controles flotantes sobre el workspace. */
+.pastoral-editor-v4 .pastoral-tool-panel,
+.pastoral-editor-v4 .pastoral-tool-panel-scroll,
+.pastoral-editor-v4 .pastoral-panel-content {
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+@media (max-width: 1023px) {
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-texto,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-plantillas,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-recursos,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-biblia,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-diseno,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-tool-panel.panel-capas {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pastoral-editor-v4 .pastoral-tool-panel {
+    border: 0 !important;
+    border-left: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+}
+
+/* Plantillas queda dedicada a Plantillas + Temas. La biblioteca de imágenes existe
+   una sola vez, dentro de Elementos. */
+.pastoral-editor-v4 .panel-plantillas .pastoral-compact-row:has(.pastoral-start-backgrounds) {
+  display: none !important;
+}
+
+/* Alineación óptica y geométrica del botón de subir imagen. */
+.pastoral-editor-v4 .pastoral-elements-top .pastoral-minimal-action {
+  display: inline-flex !important;
+  min-height: 48px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding-block: 0 !important;
+  line-height: 1 !important;
+}
+
+.pastoral-editor-v4 .pastoral-elements-top .pastoral-minimal-action > svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+  align-self: center !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* Selector de densidad para bibliotecas grandes. */
+.pastoral-editor-v4 .pastoral-elements-view-toggle {
+  display: flex !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 0 1px 1px !important;
+  scrollbar-width: none !important;
+}
+
+.pastoral-editor-v4 .pastoral-elements-view-toggle::-webkit-scrollbar {
+  display: none !important;
+}
+
+.pastoral-editor-v4 .pastoral-elements-view-toggle > button {
+  min-height: 38px !important;
+  flex: 0 0 auto !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: transparent !important;
+  padding: 0 11px !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+}
+
+.pastoral-editor-v4 .pastoral-elements-view-toggle > button.is-active {
+  background: #eef2ff !important;
+  color: var(--pastoral-stable-accent) !important;
+}
+
+/* Las imágenes siempre crecen en vertical. Solo cambia su densidad. */
+.pastoral-editor-v4 .pastoral-elements-grid[data-view='grande'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.pastoral-editor-v4 .pastoral-elements-grid[data-view='mosaico'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.pastoral-editor-v4 .pastoral-elements-grid[data-view='compacta'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+@media (min-width: 700px) {
+  .pastoral-editor-v4 .pastoral-elements-grid[data-view='grande'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-grid[data-view='mosaico'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-grid[data-view='compacta'] {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1100px) {
+  .pastoral-editor-v4 .pastoral-elements-grid[data-view='grande'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-grid[data-view='mosaico'] {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+  .pastoral-editor-v4 .pastoral-elements-grid[data-view='compacta'] {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+}
