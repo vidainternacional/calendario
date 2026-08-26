@@ -1,8 +1,10 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-23
+Última actualización: 2026-08-26
 
-Fase / prioridad activa: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL**
+Fase / prioridad activa: **PRIORIDAD ACTUAL — CENTRO PASTORAL · REORGANIZACIÓN Y CIERRE DEL EDITOR VISUAL**
+
+Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
 Este archivo es el control oficial y versionado del proyecto. Antes de trabajar debe leerse este estado y continuar únicamente con la fase o prioridad marcada como activa.
 
@@ -30,6 +32,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 10. **Principio visual global:** priorizar superficies integradas, jerarquía por espaciado, tipografía, color y separadores; evitar contenedores o tarjetas anidadas tipo “cuadro dentro de cuadro” cuando no exista una necesidad funcional clara. En móvil, conservar la mayor superficie útil posible sin reducir las áreas táctiles a tamaños incómodos.
 11. **Navegación móvil global:** la barra principal pertenece al layout de la aplicación y no a cada módulo. La aparición del teclado no debe levantarla ni hacerla flotar sobre el contenido de trabajo; en iOS debe permanecer en el borde inferior del layout y quedar cubierta por el teclado cuando corresponda.
 12. **Historial reversible:** cuando una superficie exponga Deshacer/Rehacer, toda acción que modifique contenido o metadatos creados por el usuario debe entrar en el mismo historial reversible; no limitar el historial únicamente al texto visible.
+13. **Repriorización obligatoriamente documentada:** cualquier decisión de repriorización tomada en un PR debe reflejarse en este documento maestro antes de continuar trabajando; no basta con que quede mencionada solo en el PR.
 
 ## Estado de fases
 
@@ -43,7 +46,7 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 | FASE F | Evolución correlativa de Biblia → Notas | **COMPLETADA — 2026-08-17** |
 | FASE G | Validación integral y cierre de deudas transversales | **COMPLETADA — 2026-08-18** |
 | FASE H | Centro de Hebreo Bíblico | **COMPLETADA Y APROBADA — 2026-08-23** |
-| FASE I | Guía interactiva y ayuda contextual por rol | **ACTIVA — 2026-08-23** |
+| FASE I | Guía interactiva y ayuda contextual por rol | **DIFERIDA HASTA EL CIERRE FINAL DE LA APP — 2026-08-26** |
 
 # PRIORIDADES RECIENTES CERRADAS
 
@@ -441,9 +444,13 @@ Nombre de trabajo de la herramienta: **Hebreo Bíblico**. Subtítulo orientativo
 
 Los cuatro bloques de FASE H quedan **COMPLETADOS Y APROBADOS**. El Centro de Hebreo Bíblico conserva la arquitectura didáctica, cobertura léxica española completa, búsqueda inteligente, traductor práctico, lectura bíblica, gramática progresiva, Repaso, teclado hebreo, práctica adaptativa, progreso privado y checkpoint oral validados. FASE H no debe reabrirse salvo bug comprobable o una prioridad futura explícitamente documentada.
 
-# FASE I — ACTIVA — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL — 2026-08-23
+# FASE I — DIFERIDA HASTA EL CIERRE FINAL — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL
 
-FASE I comienza formalmente después del cierre documentado de FASE H.
+FASE I se realizará al final del desarrollo de VIDA Internacional, cuando la aplicación y sus herramientas hayan quedado terminadas y aprobadas.
+
+La razón de esta decisión es funcional: la guía debe enseñar la versión definitiva de la aplicación. No debe desarrollarse mientras todavía se reorganizan, pulen o completan herramientas, porque eso obligaría a rehacer recorridos y explicaciones posteriormente.
+
+El alcance ya definido para FASE I se conserva íntegramente y no se elimina. Queda simplemente diferido hasta el cierre final de la aplicación.
 
 ## Objetivo
 
@@ -461,4 +468,4 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 
 # Siguiente punto autorizado
 
-**Iniciar exclusivamente FASE I — Guía interactiva y ayuda contextual por rol. Primero auditar las superficies actuales de ayuda/onboarding y los permisos reales por rol; definir un recorrido mínimo reutilizando la interfaz existente y sin reactivar telemetría del Piloto. No reabrir FASE H salvo bug comprobable.**
+**Continuar exclusivamente con la prioridad actual del Centro Pastoral, incluyendo la reorganización y pulido del editor visual del PR #287. Preservar todas las decisiones visuales y funcionales ya aprobadas; no modificar geometría, límites, tamaños o comportamientos validados salvo instrucción explícita o bug reproducible. FASE I permanece diferida hasta que la aplicación quede terminada.**
