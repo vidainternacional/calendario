@@ -69,10 +69,10 @@ test('dock mantiene las seis herramientas como navegación pastoral integrada', 
   assert.match(css, /pastoral-tool-button\.is-active::before[\s\S]*background: #eef2ff !important/)
 })
 
-test('landscape conserva hitboxes de 44px en Texto', () => {
+test('landscape conserva hitboxes mayores al mínimo de 44px en Texto', () => {
   const landscape = css.slice(css.indexOf('@media (orientation: landscape)'))
   assert.ok(landscape.length > 0)
-  assert.match(landscape, /pastoral-text-presets button[\s\S]*min-height: 44px !important/)
-  assert.match(landscape, /pastoral-inline-icon[\s\S]*min-width: 44px !important[\s\S]*min-height: 44px !important/)
-  assert.match(landscape, /pastoral-step-button[\s\S]*min-width: 44px !important[\s\S]*min-height: 44px !important/)
+  assert.match(landscape, /pastoral-text-presets button[\s\S]*min-height: 46px !important/)
+  assert.match(landscape, /pastoral-inline-icon[\s\S]*min-width: 48px !important[\s\S]*min-height: 48px !important/)
+  assert.match(landscape, /pastoral-step-button[\s\S]*min-width: 48px !important[\s\S]*min-height: 48px !important/)
 })
