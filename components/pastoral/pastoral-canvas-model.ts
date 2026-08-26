@@ -62,17 +62,17 @@ export type RecursoPastoral = {
   nombre_archivo?: string | null
 }
 
-/* Selector visible del editor: pocas familias, deliberadamente distintas entre sí.
+/* Selector visible del editor: familias deliberadamente distintas entre sí.
    Se conservan las fuentes históricas en compatibilidad para no alterar proyectos ya guardados. */
 export const FUENTES_PASTORALES = [
-  'Inter', 'Avenir Next', 'Futura', 'Didot',
-  'Baskerville', 'Georgia', 'Courier New', 'Impact',
+  'Inter', 'Avenir Next', 'Futura', 'Helvetica Neue', 'Trebuchet MS', 'Arial Black',
+  'Didot', 'Baskerville', 'Georgia', 'Palatino Linotype', 'Garamond', 'Times New Roman',
+  'Courier New', 'Lucida Console', 'Impact',
 ] as const
 
 const FUENTES_PASTORALES_COMPATIBLES = new Set<string>([
   ...FUENTES_PASTORALES,
-  'Arial', 'Helvetica', 'Helvetica Neue', 'Verdana', 'Tahoma', 'Trebuchet MS',
-  'Times New Roman', 'Palatino Linotype', 'Garamond', 'Lucida Console', 'Arial Black',
+  'Arial', 'Helvetica', 'Verdana', 'Tahoma',
 ])
 
 export const ESTILOS_TEXTO: Array<{ id: RolTexto; label: string; pt: number; peso: number }> = [
