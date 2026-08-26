@@ -89,6 +89,7 @@ export default function PastoralEditorRuntimeEnhancements() {
     let ultimoEditor: HTMLElement | null = null
     let ultimoRango: Range | null = null
     let ultimoTema: HTMLButtonElement | null = null
+    let heredandoTema = false
 
     const guardarSeleccion = () => {
       const selection = window.getSelection()
@@ -107,23 +108,46 @@ export default function PastoralEditorRuntimeEnhancements() {
     }
 
     const restaurarSeleccion = () => {
-      if (!ultimoEditor?.isConnected) return
+      if (!ultimoEditor?.isConnected) return false
       ultimoEditor.focus({ preventScroll: true })
-      if (!ultimoRango) return
-      const selection = window.getSelection()
-      selection?.removeAllRanges()
-      selection?.addRange(ultimoRango)
+      if (ultimoRango) {
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(ultimoRango)
+      }
+      return true
     }
 
     const recordarTemaActual = () => {
-      if (ultimoTema?.isConnected) return
       const canvas = document.querySelector<HTMLElement>('.pastoral-editor-v4 .pastoral-visual-canvas')
       if (!canvas) return
       const fondoCanvas = getComputedStyle(canvas).backgroundColor
+      let encontrado: HTMLButtonElement | null = null
       document.querySelectorAll<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-theme-option').forEach((button) => {
         const muestra = button.querySelector<HTMLElement>('.pastoral-theme-swatches')
-        if (muestra && getComputedStyle(muestra).backgroundColor === fondoCanvas) ultimoTema = button
+        if (muestra && getComputedStyle(muestra).backgroundColor === fondoCanvas) encontrado = button
       })
+      if (encontrado) ultimoTema = encontrado
+    }
+
+    const aplicarListaEnCursor = (button: HTMLButtonElement) => {
+      if (!restaurarSeleccion() || !ultimoEditor) return false
+      const command = button.getAttribute('aria-label') === 'Lista numerada' ? 'insertOrderedList' : 'insertUnorderedList'
+      document.execCommand(command)
+      ultimoEditor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: command === 'insertOrderedList' ? 'insertOrderedList' : 'insertUnorderedList' }))
+      guardarSeleccion()
+      return true
+    }
+
+    const heredarTemaEnNuevaPagina = () => {
+      recordarTemaActual()
+      const tema = ultimoTema
+      if (!tema?.isConnected || heredandoTema) return
+      heredandoTema = true
+      window.setTimeout(() => {
+        if (tema.isConnected) tema.click()
+        heredandoTema = false
+      }, 80)
     }
 
     const sincronizar = () => {
@@ -160,11 +184,23 @@ export default function PastoralEditorRuntimeEnhancements() {
     }
     const onClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null
+      const lista = target?.closest<HTMLButtonElement>('button[aria-label="Lista con viñetas"], button[aria-label="Lista numerada"]')
+      if (lista) {
+        event.preventDefault()
+        event.stopPropagation()
+        event.stopImmediatePropagation()
+        aplicarListaEnCursor(lista)
+        return
+      }
+
       const nuevaPagina = target?.closest<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-pages-strip > button[aria-label="Nueva página"]')
-      if (!nuevaPagina) return
-      const tema = ultimoTema
-      if (!tema?.isConnected) return
-      window.setTimeout(() => tema.click(), 60)
+      if (nuevaPagina) {
+        heredarTemaEnNuevaPagina()
+        return
+      }
+
+      const blancoNativo = target?.closest<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-template-blank-option:not([data-pastoral-blank-template])')
+      if (blancoNativo) heredarTemaEnNuevaPagina()
     }
 
     sincronizar()
