@@ -15,14 +15,14 @@ test('Centro Pastoral activa el workspace integrado v4 estable', () => {
 
 test('móvil conserva lienzo panel y cinta inferior sin sheet externa', () => {
   assert.match(css, /grid-template-areas: 'stage' 'panel' 'dock' !important/)
-  assert.match(css, /grid-template-rows: minmax\(0, 1fr\) auto 64px !important/)
+  assert.match(css, /grid-template-rows: minmax\(0, 1fr\) 220px 70px !important/)
   assert.match(css, /pastoral-tool-panel[\s\S]*position: relative !important/)
   assert.doesNotMatch(workspace, /pastoral-sheet-handle/)
 })
 
 test('celular horizontal conserva la misma arquitectura inferior', () => {
   const horizontal = css.slice(css.indexOf('@media (orientation: landscape)'))
-  assert.match(horizontal, /grid-template-rows: minmax\(0, 1fr\) auto 52px !important/)
+  assert.match(horizontal, /grid-template-rows: minmax\(0, 1fr\) 174px 54px !important/)
   assert.doesNotMatch(horizontal, /grid-template-areas:\s*'dock stage'/)
 })
 
