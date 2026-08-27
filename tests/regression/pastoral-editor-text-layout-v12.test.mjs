@@ -19,8 +19,8 @@ test('Caja Título Subtítulo y Cuerpo quedan en cuatro columnas iguales y táct
 })
 
 test('Tamaño y Línea tienen steppers React táctiles y la cinta conserva scroll horizontal', () => {
-  assert.match(css, /pastoral-font-size[\s\S]*min-width: 220px !important/)
-  assert.match(css, /pastoral-line-height[\s\S]*min-width: 204px !important/)
+  assert.match(css, /pastoral-font-size[\s\S]*min-width: 252px !important/)
+  assert.match(css, /pastoral-line-height[\s\S]*min-width: 244px !important/)
   assert.match(css, /panel-texto \.pastoral-step-button[\s\S]*width: 54px !important/)
   assert.match(css, /pastoral-text-tools-row[\s\S]*overflow-x: auto !important/)
   assert.match(workspace, /aria-label="Reducir tamaño de letra"/)
@@ -32,11 +32,12 @@ test('la primera página inicia a la izquierda y sigue sin cápsula', () => {
   assert.match(css, /pastoral-page-chip\.is-active[\s\S]*background: transparent !important/)
 })
 
-test('el layout carga una sola autoridad visual después de la base V3', () => {
+test('el layout conserva stable después de V3 y los realces funcionales actuales', () => {
   const v3 = layout.indexOf("./pastoral-editor-v3.css")
   const stable = layout.indexOf("./pastoral-editor-stable.css")
   assert.ok(v3 >= 0 && stable > v3)
-  assert.doesNotMatch(layout, /pastoral-editor-workbench-v10|pastoral-editor-surface-white|pastoral-editor-text-controls-v11|pastoral-editor-text-controls-v12|PastoralEditorRuntimeEnhancements/)
+  assert.doesNotMatch(layout, /pastoral-editor-workbench-v10|pastoral-editor-surface-white|pastoral-editor-text-controls-v11|pastoral-editor-text-controls-v12/)
+  assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
 test('la arquitectura real del dock contiene solo las seis herramientas aprobadas', () => {
