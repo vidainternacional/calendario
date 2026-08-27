@@ -270,8 +270,19 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       <div className="pastoral-external-banks">{BANCOS_EXTERNOS.map((banco) => <a key={banco.label} href={banco.href} target="_blank" rel="noreferrer">{banco.label}<ExternalLink /></a>)}</div>
     </div>}
 
-    {panel === 'texto' && <div className="pastoral-panel-content pastoral-text-three-rows">
-      <div className="pastoral-text-presets"><button type="button" onClick={() => agregarTexto('libre')}>Caja</button>{ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" onClick={() => aplicarRolTexto(estilo.id)} className={textoSeleccionado?.rol === estilo.id ? 'is-active' : ''}>{estilo.label}</button>)}</div>
+    {panel === 'texto' && <div className="pastoral-panel-content grid w-full content-start gap-2.5">
+      <div className="flex w-full items-start gap-2">
+        <details className="group min-w-0 flex-1">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
+            <span>Tipo de texto</span><span className="text-slate-400 transition-transform group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="mt-2 flex w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Opciones de tipo de texto">
+            <button type="button" onClick={() => agregarTexto('libre')} className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-bold ${textoSeleccionado?.rol === 'libre' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}>Caja</button>
+            {ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" onClick={() => aplicarRolTexto(estilo.id)} className={`min-h-11 shrink-0 rounded-full border px-4 text-xs font-bold ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}>{estilo.label}</button>)}
+          </div>
+        </details>
+        <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && eliminarElemento(textoSeleccionado.id)} className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-rose-200 bg-white px-3.5 text-xs font-bold text-rose-600 disabled:opacity-30" aria-label="Eliminar texto seleccionado" title="Eliminar texto"><Trash2 className="h-[18px] w-[18px]" /><span>Eliminar</span></button>
+      </div>
       <div className="pastoral-font-strip">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { fuente })} className={textoSeleccionado?.fuente === fuente ? 'is-active' : ''} style={{ fontFamily: fuente }}>{fuente}</button>)}</div>
       <div className="pastoral-inline-toolbar pastoral-text-tools-row">
         <div className="flex shrink-0 items-center gap-1" role="group" aria-label="Estilo de texto">
@@ -279,10 +290,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { cursiva: !textoSeleccionado.cursiva })} className={claseBotonActivo(Boolean(textoSeleccionado?.cursiva))} aria-label="Cursiva"><Italic /></button>
           <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { subrayado: !textoSeleccionado.subrayado })} className={claseBotonActivo(Boolean(textoSeleccionado?.subrayado))} aria-label="Subrayado"><Underline /></button>
           <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { tachado: !textoSeleccionado.tachado })} className={claseBotonActivo(Boolean(textoSeleccionado?.tachado))} aria-label="Tachado"><Strikethrough /></button>
-        </div>
-        <span className="pastoral-text-divider" aria-hidden="true" />
-        <div className="flex shrink-0 items-center" role="group" aria-label="Eliminar texto">
-          <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && eliminarElemento(textoSeleccionado.id)} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-rose-200 bg-white text-rose-600 disabled:opacity-30" aria-label="Eliminar texto seleccionado" title="Eliminar texto"><Trash2 className="h-[19px] w-[19px]" /></button>
         </div>
         <span className="pastoral-text-divider" aria-hidden="true" />
         <div className="flex shrink-0 items-center gap-1" role="group" aria-label="Tamaño y espaciado">
