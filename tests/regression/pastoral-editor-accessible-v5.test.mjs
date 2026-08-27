@@ -24,6 +24,6 @@ test('dock y texto conservan áreas táctiles legibles', () => {
 
 test('elementos y Biblia mantienen tamaños útiles', () => {
   assert.match(css, /pastoral-elements-grid[\s\S]*repeat\(2, 72px\)/)
-  assert.match(css, /panel-biblia[\s\S]*height: clamp\(230px, 34dvh, 300px\)/)
+  assert.match(css, /panel-biblia[\s\S]*height: 220px !important/)
   assert.match(css, /pastoral-aspect-control button[\s\S]*min-height: 58px !important/)
 })
