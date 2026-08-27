@@ -14,7 +14,7 @@ test('aplicar Plantilla o Tema no solicita toast de confirmación', () => {
 test('Plantillas ofrece En blanco nativo que crea una página nueva', () => {
   assert.match(workspace, /Crear una página nueva en blanco/)
   assert.match(workspace, /onClick=\{nuevaPagina\}/)
-  assert.doesNotMatch(layout, /PastoralEditorRuntimeEnhancements/)
+  assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
 test('Texto conserva controles grandes y scroll horizontal', () => {
