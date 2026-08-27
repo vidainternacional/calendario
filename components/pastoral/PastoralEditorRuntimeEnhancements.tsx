@@ -177,14 +177,14 @@ export default function PastoralEditorRuntimeEnhancements() {
         return
       }
 
+      const blancoNativo = target?.closest<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-template-blank-option:not([data-pastoral-blank-template])')
+      if (blancoNativo) return
+
       const nuevaPagina = target?.closest<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-pages-strip > button[aria-label="Nueva página"]')
       if (nuevaPagina) {
         heredarTemaEnNuevaPagina()
         return
       }
-
-      const blancoNativo = target?.closest<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-template-blank-option:not([data-pastoral-blank-template])')
-      if (blancoNativo) heredarTemaEnNuevaPagina()
     }
 
     sincronizar()
