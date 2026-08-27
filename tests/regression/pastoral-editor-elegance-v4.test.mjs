@@ -23,16 +23,16 @@ test('Fondo vive únicamente dentro de Plantillas', () => {
 })
 
 test('Texto conserva tres líneas compactas y cuatro controles iguales', () => {
-  assert.match(css, /pastoral-text-three-rows[\s\S]*grid-template-rows: 46px 50px 58px/)
+  assert.match(css, /pastoral-text-three-rows[\s\S]*grid-template-rows: 44px 48px 56px/)
   assert.match(css, /pastoral-text-presets[\s\S]*repeat\(4, minmax\(0, 1fr\)\)/)
 })
 
-test('Biblia conserva una excepción de altura y Diseño permanece simple', () => {
-  assert.match(css, /panel-biblia[\s\S]*clamp\(230px, 34dvh, 300px\)/)
+test('Biblia conserva superficie protagonista y Diseño permanece simple', () => {
+  assert.match(css, /panel-biblia[\s\S]*height: 220px !important/)
   assert.match(css, /pastoral-aspect-control[\s\S]*repeat\(4, minmax\(0, 1fr\)\)/)
 })
 
 test('microinteracciones respetan movimiento reducido', () => {
-  assert.match(css, /pastoral-tool-button\.is-active::after/)
+  assert.match(css, /pastoral-tool-button\.is-active::before/)
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/)
 })
