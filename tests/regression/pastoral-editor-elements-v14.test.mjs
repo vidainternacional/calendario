@@ -9,16 +9,16 @@ const picker = fs.readFileSync('components/pastoral/PastoralVersePicker.tsx', 'u
 
 test('versículos consecutivos se agrupan en un solo bloque', () => {
   assert.match(picker, /const grupos: VersiculoElegido\[\]\[\] = \[\]/)
-  assert.match(picker, /referencia\.verso === ultimaReferencia\.verso \+ 1/)
-  assert.match(picker, /grupo\.map\(\(v\) => v\.texto\)\.filter\(Boolean\)\.join\(' '\)/)
-  assert.match(picker, /\$\{primeraRef\.verso\}-\$\{ultimaRef\.verso\}/)
+  assert.match(picker, /versiculo\.verso === ultimo\.verso \+ 1/)
+  assert.match(picker, /grupo\.map\(v => v\.texto\)\.filter\(Boolean\)\.join\(' '\)/)
+  assert.match(picker, /\$\{primero\.verso\}-\$\{ultimo\.verso\}/)
 })
 
-test('Elementos ofrece vistas de miniaturas y mantiene scroll vertical', () => {
+test('Elementos ofrece vistas de lista y miniaturas y mantiene densidad adaptable', () => {
   assert.match(layout, /PastoralElementsViewEnhancements/)
-  for (const vista of ['grande', 'mosaico', 'compacta']) assert.match(enhancer, new RegExp(`id: '${vista}'`))
+  for (const vista of ['lista', 'compacta']) assert.match(enhancer, new RegExp(`id: '${vista}'`))
   assert.match(enhancer, /grid\.dataset\.view = vista/)
-  assert.match(css, /pastoral-elements-grid\[data-view='grande'\]/)
+  assert.match(css, /pastoral-elements-view-toggle/)
   assert.match(css, /pastoral-elements-grid\[data-view='compacta'\]/)
 })
 
