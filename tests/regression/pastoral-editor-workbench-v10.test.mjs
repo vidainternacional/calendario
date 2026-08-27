@@ -10,8 +10,8 @@ test('V10 deja de ser autoridad runtime y stable asume su responsabilidad', () =
   assert.doesNotMatch(layout, /pastoral-editor-workbench-v10/)
 })
 
-test('modo Editar usa una sola superficie blanca', () => {
-  assert.match(css, /--pastoral-stable-bg: #ffffff/)
+test('modo Editar usa la superficie integrada vigente', () => {
+  assert.match(css, /--pastoral-stable-bg: #f4f5f9/)
   assert.doesNotMatch(css, /--pastoral-edit-desk: #626568/)
 })
 
