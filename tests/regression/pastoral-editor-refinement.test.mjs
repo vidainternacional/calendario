@@ -28,7 +28,7 @@ test('cabecera y navegación integrada conservan targets de 44px', () => {
   assert.match(css, /pastoral-editor-v4 > header > div > button[\s\S]*min-width: 44px !important[\s\S]*min-height: 44px !important/)
   assert.match(css, /pastoral-editor-v4 > header nav[\s\S]*background: transparent !important/)
   assert.match(css, /pastoral-editor-v4 > header nav button[\s\S]*min-height: 44px !important/)
-  assert.match(css, /button\[class\*='text\[#C0392B\]'\][\s\S]*color: var\(--pastoral-stable-accent\) !important/)
+  assert.match(css, /button\[class\*='text-\[#C0392B\]'\][\s\S]*color: var\(--pastoral-stable-accent\) !important/)
 })
 
 test('controles táctiles principales no bajan de 44px', () => {
