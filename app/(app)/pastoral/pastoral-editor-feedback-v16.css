@@ -137,12 +137,78 @@
 
   .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-strip {
     height: 58px !important;
+    gap: 6px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-strip button {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 0 calc((100% - 18px) / 4) !important;
+    overflow: hidden !important;
+    padding-inline: 6px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 
   .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-text-tools-row {
     height: 82px !important;
     min-height: 82px !important;
     padding: 12px 0 !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto [role='group'][aria-label='Tamaño y espaciado'] {
+    display: grid !important;
+    width: 100% !important;
+    min-width: min(340px, calc(100vw - 24px)) !important;
+    max-width: min(340px, calc(100vw - 24px)) !important;
+    flex: 0 0 min(340px, calc(100vw - 24px)) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-size,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-line-height {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    column-gap: 2px !important;
+    padding-inline: 4px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-size {
+    grid-template-columns: minmax(34px, 1fr) 32px 38px 32px 18px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-line-height {
+    grid-template-columns: minmax(34px, 1fr) 32px 42px 32px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-size > span:first-child,
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-line-height > span:first-child {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-step-button {
+    width: 32px !important;
+    height: 44px !important;
+    min-width: 32px !important;
+    min-height: 44px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-font-size input {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .pastoral-editor-v4:has(> .pastoral-editor-section) .panel-texto .pastoral-line-height input {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 44px !important;
+    min-height: 44px !important;
   }
 
   .pastoral-editor-v4:has(> .pastoral-editor-section) .pastoral-editor-shell.has-panel:has(.panel-biblia) {
