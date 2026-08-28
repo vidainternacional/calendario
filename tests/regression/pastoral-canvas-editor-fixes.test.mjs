@@ -12,7 +12,7 @@ test('texto editable mantiene DOM estable y dirección LTR mientras se escribe',
   assert.match(canvas, /function TextoCanvas/)
   assert.match(canvas, /document\.activeElement !== editor/)
   assert.match(canvas, /editor\.innerHTML !== contenidoSeguro/)
-  assert.match(canvas, /aplicarAtributosInlineVida\(editor, baseWidth\)/)
+  assert.match(canvas, /aplicarAtributosInlineVida\(editor, baseWidth, limitarInline \? tamano : undefined\)/)
   assert.match(canvas, /dir="ltr"/)
   assert.match(canvas, /direction: 'ltr'/)
   assert.match(canvas, /unicodeBidi: 'plaintext'/)
