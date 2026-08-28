@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import test from 'node:test'
 
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspace.tsx', 'utf8')
+const workspaceV4 = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 const canvas = fs.readFileSync('components/pastoral/PastoralVisualCanvas.tsx', 'utf8')
 const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'utf8')
 const actions = fs.readFileSync('app/actions/pastoral-paquetes.ts', 'utf8')
@@ -21,11 +22,13 @@ test('texto editable mantiene DOM estable y dirección LTR mientras se escribe',
   assert.doesNotMatch(canvas.slice(textoDesde, textoHasta), /dangerouslySetInnerHTML/)
 })
 
-test('texto e imagen se pueden eliminar directamente desde el lienzo y la faja', () => {
-  assert.match(canvas, /aria-label="Eliminar elemento"/)
-  assert.match(canvas, /onDeleteElement\?\.\(elemento\.id\)/)
-  assert.match(workspace, /onDeleteElement=\{eliminarElemento\}/)
-  assert.match(workspace, /const eliminarElemento =/)
+test('el lienzo deja solo Mover como acción flotante y conserva Borrar global y redimensionado', () => {
+  assert.match(canvas, /aria-label="Mover elemento"/)
+  assert.match(canvas, /aria-label="Redimensionar elemento"/)
+  assert.doesNotMatch(canvas, /aria-label="Eliminar elemento"/)
+  assert.doesNotMatch(canvas, /aria-label="Ajustar caja al texto"/)
+  assert.match(workspaceV4, /aria-label="Borrar elemento seleccionado"/)
+  assert.match(workspaceV4, /const eliminarElemento =/)
   assert.match(workspace, /> Borrar<\/button>/)
   assert.match(workspace, /Quitar fondo/)
 })
