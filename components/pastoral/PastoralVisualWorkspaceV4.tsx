@@ -438,7 +438,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       const sinMuestras = actuales.filter((item) => item.tipo === 'imagen' || !esTextoMuestraPlantilla(item))
       const elementos = sinMuestras.map((elemento) => {
         if (elemento.tipo === 'imagen') return elemento
-        const layout = elemento.rol === 'titulo' ? plantilla.titulo : elemento.rol === 'subtitulo' ? plantilla.subtitulo : elemento.rol === 'cuerpo' ? plantilla.cuerpo : null
+        const layout = elemento.rol === 'titulo' ? plantilla.titulo : elemento.rol === 'subtitulo' ? plantilla.subtitulo : elemento.rol === 'cuerpo' ? plantilla.cuerpo : elemento.rol === 'libre' ? (plantilla.cuerpo ?? plantilla.subtitulo ?? plantilla.titulo) : null
         return layout ? { ...elemento, fuente: layout.fuente } : elemento
       })
       patchPaginaSinHistorial({ elementos })
