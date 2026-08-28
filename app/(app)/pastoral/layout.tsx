@@ -1,6 +1,7 @@
 import { Bebas_Neue, EB_Garamond, Montserrat, Playfair_Display } from 'next/font/google'
 import PastoralEditorRuntimeEnhancements from '@/components/pastoral/PastoralEditorRuntimeEnhancements'
 import PastoralElementsViewEnhancements from '@/components/pastoral/PastoralElementsViewEnhancements'
+import PastoralEditorBehaviorGuard from '@/components/pastoral/PastoralEditorBehaviorGuard'
 import './pastoral-visual-system.css'
 import './pastoral-workspace-v2.css'
 import './pastoral-editor-v3.css'
@@ -41,14 +42,6 @@ export default function PastoralLayout({ children }: { children: React.ReactNode
     {children}
     <PastoralEditorRuntimeEnhancements />
     <PastoralElementsViewEnhancements />
-    <style>{`
-      .pastoral-visual-canvas [data-canvas-element='texto'],
-      .pastoral-visual-canvas [data-canvas-element='versiculo'] {
-        overflow: hidden;
-        max-width: 100%;
-        max-height: 100%;
-        contain: paint;
-      }
-    `}</style>
+    <PastoralEditorBehaviorGuard />
   </div>
 }

@@ -84,6 +84,13 @@ export const ESTILOS_TEXTO: Array<{ id: RolTexto; label: string; pt: number; pes
   { id: 'libre', label: 'Libre', pt: 28, peso: 500 },
 ]
 
+const INTERLINEADO_BASE_POR_ROL: Record<RolTexto, number> = {
+  titulo: 1.05,
+  subtitulo: 1.12,
+  cuerpo: 1.2,
+  libre: 1.25,
+}
+
 export const FORMATOS_LIENZO: Array<{ id: FormatoLienzo; label: string; detalle: string }> = [
   { id: '16:9', label: 'Horizontal', detalle: '16:9' },
   { id: '9:16', label: 'Vertical', detalle: '9:16' },
@@ -169,10 +176,16 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
   const rol = rolTextoValido(item.rol)
   const estilo = ESTILOS_TEXTO.find((opcion) => opcion.id === rol) ?? ESTILOS_TEXTO[3]
   const fuenteGuardada = String(item.fuente ?? '')
+  const limitaAlCanvas = tipo !== 'imagen'
+  const x = clamp(Number(item.x ?? 8), 0, limitaAlCanvas ? 95 : 97)
+  const y = clamp(Number(item.y ?? 8), 0, limitaAlCanvas ? 95 : 97)
+  const anchoSolicitado = Number(item.w ?? 84)
+  const altoSolicitado = Number(item.h ?? (tipo === 'imagen' ? 48 : 20))
+  const w = limitaAlCanvas ? clamp(anchoSolicitado, 5, 100 - x) : clamp(anchoSolicitado, 5, 100)
+  const h = limitaAlCanvas ? clamp(altoSolicitado, 5, 100 - y) : clamp(altoSolicitado, 5, 100)
   return {
     id: String(item.id || nuevoIdCanvas()), tipo,
-    x: clamp(Number(item.x ?? 8), 0, 97), y: clamp(Number(item.y ?? 8), 0, 97),
-    w: clamp(Number(item.w ?? 84), 5, 100), h: clamp(Number(item.h ?? (tipo === 'imagen' ? 48 : 20)), 5, 100),
+    x, y, w, h,
     z: clamp(Number(item.z ?? index + 1), 0, 200),
     contenido: tipo === 'imagen' ? undefined : limpiarHtmlCanvas(String(item.contenido ?? '')),
     recurso_id: tipo === 'imagen' ? item.recurso_id ?? null : undefined,
@@ -182,7 +195,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     alineacion: item.alineacion === 'centro' || item.alineacion === 'derecha' || item.alineacion === 'justificado' ? item.alineacion : 'izquierda',
     peso: clamp(Number(item.peso ?? estilo.peso), 300, 900),
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
-    interlineado: clamp(Number(item.interlineado ?? 1.25), .8, 3), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
+    interlineado: clamp(Number(item.interlineado ?? INTERLINEADO_BASE_POR_ROL[rol]), .8, 3), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
     oculto: Boolean(item.oculto), fondo_visual: fondoVisualSeguro(item.fondo_visual),
   }
