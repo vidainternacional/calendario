@@ -81,6 +81,22 @@ function nombreCapa(elemento: ElementoCanvas) {
   return 'Texto'
 }
 
+function textoMuestraPlantilla(plantilla: PlantillaVisual, rol: RolTexto) {
+  if (rol === 'titulo') return plantilla.nombre
+  if (rol === 'subtitulo') return `Estilo ${plantilla.categoria.toLowerCase()}`
+  return `Composición ${plantilla.nombre.toLowerCase()}`
+}
+
+function esTextoMuestraPlantilla(elemento: ElementoCanvas) {
+  if (elemento.tipo === 'imagen') return false
+  const contenido = textoPlano(elemento.contenido ?? '')
+  if (!contenido) return true
+  return PLANTILLAS_VISUALES.some((plantilla) =>
+    contenido === textoMuestraPlantilla(plantilla, 'titulo') ||
+    contenido === textoMuestraPlantilla(plantilla, 'subtitulo') ||
+    contenido === textoMuestraPlantilla(plantilla, 'cuerpo'))
+}
+
 export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paquete: Paquete; coleccion: unknown; biblioteca: RecursoPastoral[] }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -147,7 +163,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     return agregarElemento({ tipo: 'texto', rol, contenido: rol === 'titulo' ? 'Título' : rol === 'subtitulo' ? 'Subtítulo' : rol === 'cuerpo' ? 'Escribe el contenido' : 'Escribe aquí', x: 10, y: rol === 'titulo' ? 12 : rol === 'subtitulo' ? 30 : 40, w: 80, h: rol === 'cuerpo' ? 34 : 22, tamano_fuente: estilo.pt, peso: estilo.peso, fuente: 'Inter', color: pagina.color_texto ?? '#0f172a' })
   }
   const aplicarRolTexto = (rol: RolTexto) => {
-    if (!textoSeleccionado) return agregarTexto(rol)
+    if (!textoSeleccionado) return
+    if (textoSeleccionado.rol === rol) return actualizarElemento(textoSeleccionado.id, { rol: 'libre' })
     const estilo = ESTILOS_TEXTO.find((item) => item.id === rol) ?? ESTILOS_TEXTO[3]
     actualizarElemento(textoSeleccionado.id, { rol, tamano_fuente: estilo.pt, peso: estilo.peso })
   }
@@ -162,7 +179,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const elementos = (pagina.elementos ?? []).map((elemento) => elemento.tipo === 'imagen' ? elemento : {
       ...elemento,
       color: elemento.rol === 'titulo' ? paleta.titulo : paleta.texto,
-      fuente: elemento.rol === 'titulo' ? paleta.fuenteTitulo : paleta.fuenteCuerpo,
     })
     patchPaginaSinHistorial({ fondo_modo: 'color', fondo: paleta.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: paleta.texto, elementos })
   }
@@ -170,15 +186,33 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const aplicarPlantilla = (plantilla: PlantillaVisual) => {
     registrarHistorial()
     const actuales = pagina.elementos ?? []
-    const porRol = (rol: RolTexto) => actuales.find((item) => item.tipo !== 'imagen' && item.rol === rol)
-    const otros = actuales.filter((item) => item.tipo === 'imagen' || !['titulo', 'subtitulo', 'cuerpo'].includes(item.rol ?? ''))
-    const crearTexto = (rol: RolTexto, layout: PlantillaVisual['titulo'], contenido: string) => normalizarElementoCanvas({ tipo: 'texto', rol, contenido, x: layout.x, y: layout.y, w: layout.w, h: layout.h, tamano_fuente: layout.pt, alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto, peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500, z: Math.max(1, ...actuales.map((item) => item.z)) + (rol === 'titulo' ? 3 : rol === 'subtitulo' ? 2 : 1) })
-    const adaptar = (existente: ElementoCanvas | undefined, rol: RolTexto, layout: PlantillaVisual['titulo'], placeholder: string) => existente ? { ...existente, rol, x: layout.x, y: layout.y, w: layout.w, h: layout.h, tamano_fuente: layout.pt, alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto } : crearTexto(rol, layout, placeholder)
+    const textos = actuales.filter((item) => item.tipo !== 'imagen')
+    const tieneTextoUsuario = textos.some((item) => !esTextoMuestraPlantilla(item))
+
+    if (tieneTextoUsuario) {
+      const sinMuestras = actuales.filter((item) => item.tipo === 'imagen' || !esTextoMuestraPlantilla(item))
+      const elementos = sinMuestras.map((elemento) => {
+        if (elemento.tipo === 'imagen') return elemento
+        const layout = elemento.rol === 'titulo' ? plantilla.titulo : elemento.rol === 'subtitulo' ? plantilla.subtitulo : elemento.rol === 'cuerpo' ? plantilla.cuerpo : null
+        return layout ? { ...elemento, fuente: layout.fuente } : elemento
+      })
+      patchPaginaSinHistorial({ elementos })
+      setSeleccion(null)
+      return
+    }
+
+    const imagenesActuales = actuales.filter((item) => item.tipo === 'imagen')
+    const zBase = Math.max(1, ...actuales.map((item) => item.z))
+    const crearMuestra = (rol: RolTexto, layout: PlantillaVisual['titulo']) => normalizarElementoCanvas({
+      tipo: 'texto', rol, contenido: textoMuestraPlantilla(plantilla, rol), x: layout.x, y: layout.y, w: layout.w, h: layout.h,
+      tamano_fuente: layout.pt, alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto,
+      peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500, z: zBase + (rol === 'titulo' ? 3 : rol === 'subtitulo' ? 2 : 1),
+    })
     const siguientes: ElementoCanvas[] = [
-      ...otros,
-      adaptar(porRol('titulo'), 'titulo', plantilla.titulo, 'Título del mensaje'),
-      ...(plantilla.subtitulo ? [adaptar(porRol('subtitulo'), 'subtitulo', plantilla.subtitulo, 'Subtítulo o referencia')] : porRol('subtitulo') ? [porRol('subtitulo')!] : []),
-      ...(plantilla.cuerpo ? [adaptar(porRol('cuerpo'), 'cuerpo', plantilla.cuerpo, 'Escribe aquí el contenido principal')] : porRol('cuerpo') ? [porRol('cuerpo')!] : []),
+      ...imagenesActuales,
+      crearMuestra('titulo', plantilla.titulo),
+      ...(plantilla.subtitulo ? [crearMuestra('subtitulo', plantilla.subtitulo)] : []),
+      ...(plantilla.cuerpo ? [crearMuestra('cuerpo', plantilla.cuerpo)] : []),
     ]
     patchPaginaSinHistorial({ plantilla: 'limpia', fondo_modo: 'color', fondo: plantilla.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: plantilla.colorTexto, elementos: siguientes })
     setSeleccion(null)
@@ -278,7 +312,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     setPanel(PANEL_INICIAL[grupo])
   }
   const alternarSubpanel = (siguiente: PanelEditor) => setPanel((actual) => actual === siguiente ? null : siguiente)
-  const etiquetaRolTexto = textoSeleccionado?.rol === 'titulo' ? 'Título' : textoSeleccionado?.rol === 'subtitulo' ? 'Subtítulo' : textoSeleccionado?.rol === 'cuerpo' ? 'Cuerpo' : textoSeleccionado?.rol === 'libre' ? 'Caja' : 'Tipo'
+  const etiquetaRolTexto = textoSeleccionado?.rol === 'titulo' ? 'Título' : textoSeleccionado?.rol === 'subtitulo' ? 'Subtítulo' : textoSeleccionado?.rol === 'cuerpo' ? 'Cuerpo' : textoSeleccionado?.rol === 'libre' ? 'Texto' : 'Selecciona texto'
   const fuenteTextoActual = textoSeleccionado?.fuente ?? 'Fuente'
   const clasePanel = grupoPrincipal === 'plantillas' ? 'panel-plantillas' : panel ? `panel-${panel}` : `panel-${grupoPrincipal ?? 'vacio'}`
   void versionHistorial
@@ -301,8 +335,11 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
     {panel === 'texto' && <div className="pastoral-panel-content grid h-full w-full content-start gap-3 overflow-y-auto pr-1">
       <section className="grid gap-2 border-b border-slate-200 pb-3">
-        <div className="px-1 text-[11px] font-black text-slate-500">Tipo · {etiquetaRolTexto}</div>
-        <div className="grid grid-cols-4 items-end gap-1" aria-label="Opciones de tipo de texto"><button type="button" onClick={() => agregarTexto('libre')} className={`min-h-12 border-b-2 px-1 pb-2 pt-1 text-xs font-semibold before:mr-1 before:text-base before:font-black before:content-['A'] after:ml-0.5 after:text-[10px] after:content-['+'] ${textoSeleccionado?.rol === 'libre' ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>Caja</button>{ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" onClick={() => aplicarRolTexto(estilo.id)} className={`min-h-12 border-b-2 px-1 pb-2 pt-1 ${estilo.id === 'titulo' ? "text-sm font-black before:mr-1 before:text-lg before:content-['A']" : estilo.id === 'subtitulo' ? "text-xs font-bold before:mr-1 before:text-base before:content-['A']" : "text-[11px] font-medium before:mr-1 before:text-sm before:content-['A']"} ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>{estilo.label}</button>)}</div>
+        <div className="px-1 text-[11px] font-black text-slate-500">Estilo · {etiquetaRolTexto}</div>
+        <div className="grid grid-cols-[56px_repeat(3,minmax(0,1fr))] items-end gap-1" aria-label="Opciones de estilo de texto">
+          <button type="button" onClick={() => agregarTexto('libre')} className="flex min-h-12 items-center justify-center gap-0.5 border-b-2 border-transparent px-1 pb-2 pt-1 text-slate-700" aria-label="Agregar texto" title="Agregar texto"><span className="text-base font-black">A</span><span className="text-sm font-black">+</span></button>
+          {ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" disabled={!textoSeleccionado} onClick={() => aplicarRolTexto(estilo.id)} aria-pressed={textoSeleccionado?.rol === estilo.id} className={`min-h-12 min-w-0 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-center disabled:opacity-30 ${estilo.id === 'titulo' ? 'text-[15px] font-extrabold' : estilo.id === 'subtitulo' ? 'text-[13px] font-semibold' : 'text-[11px] font-normal'} ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>{estilo.label}</button>)}
+        </div>
       </section>
 
       <section className="grid gap-2 border-b border-slate-200 pb-3">
