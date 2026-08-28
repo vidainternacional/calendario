@@ -106,17 +106,45 @@ export function escaparHtmlCanvas(valor: string) {
   return valor.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;')
 }
 
+function atributosInlineVidaSeguros(elemento: Pick<HTMLElement, 'getAttribute'>) {
+  const atributos: Array<[string, string]> = []
+  const size = Number(elemento.getAttribute('data-vida-size'))
+  const line = Number(elemento.getAttribute('data-vida-line-height'))
+  const color = String(elemento.getAttribute('data-vida-color') ?? '')
+  if (Number.isFinite(size) && size >= 8 && size <= 160) atributos.push(['data-vida-size', String(size)])
+  if (Number.isFinite(line) && line >= .8 && line <= 3) atributos.push(['data-vida-line-height', String(line)])
+  if (/^#[0-9a-f]{6}$/i.test(color)) atributos.push(['data-vida-color', color])
+  return atributos
+}
+
 export function limpiarHtmlCanvas(html: string) {
   const basico = String(html ?? '').replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
-  if (typeof window === 'undefined') return basico.replace(/<(?!\/?(?:p|br|div|strong|b|em|i|u|s|strike|ul|ol|li|blockquote|h[1-3])\b)[^>]*>/gi, '')
-  const permitidos = new Set(['P', 'BR', 'DIV', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3'])
+  const permitidosRegex = 'p|br|div|strong|b|em|i|u|s|strike|ul|ol|li|blockquote|h[1-3]|span'
+  const soloPermitidos = basico.replace(new RegExp(`<(?!\\/?(?:${permitidosRegex})\\b)[^>]*>`, 'gi'), '')
+  if (typeof window === 'undefined') {
+    return soloPermitidos.replace(/<([a-z0-9]+)([^>]*)>/gi, (completo, nombre: string, atributos: string) => {
+      if (nombre.toLowerCase() !== 'span') return `<${nombre}>`
+      const leer = (atributo: string) => atributos.match(new RegExp(`\\b${atributo}\\s*=\\s*["']([^"']+)["']`, 'i'))?.[1] ?? ''
+      const size = Number(leer('data-vida-size'))
+      const line = Number(leer('data-vida-line-height'))
+      const color = leer('data-vida-color')
+      const seguros: string[] = []
+      if (Number.isFinite(size) && size >= 8 && size <= 160) seguros.push(`data-vida-size="${size}"`)
+      if (Number.isFinite(line) && line >= .8 && line <= 3) seguros.push(`data-vida-line-height="${line}"`)
+      if (/^#[0-9a-f]{6}$/i.test(color)) seguros.push(`data-vida-color="${color}"`)
+      return `<span${seguros.length ? ` ${seguros.join(' ')}` : ''}>`
+    })
+  }
+  const permitidos = new Set(['P', 'BR', 'DIV', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'SPAN'])
   const contenedor = document.createElement('div')
-  contenedor.innerHTML = basico
+  contenedor.innerHTML = soloPermitidos
   const recorrer = (nodo: Node) => Array.from(nodo.childNodes).forEach((hijo) => {
     if (hijo.nodeType !== Node.ELEMENT_NODE) return
     const elemento = hijo as HTMLElement
     if (!permitidos.has(elemento.tagName)) { elemento.replaceWith(...Array.from(elemento.childNodes)); return }
+    const atributosVida = elemento.tagName === 'SPAN' ? atributosInlineVidaSeguros(elemento) : []
     Array.from(elemento.attributes).forEach((atributo) => elemento.removeAttribute(atributo.name))
+    atributosVida.forEach(([nombre, valor]) => elemento.setAttribute(nombre, valor))
     recorrer(elemento)
   })
   recorrer(contenedor)
@@ -145,7 +173,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     alineacion: item.alineacion === 'centro' || item.alineacion === 'derecha' || item.alineacion === 'justificado' ? item.alineacion : 'izquierda',
     peso: clamp(Number(item.peso ?? estilo.peso), 300, 900),
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
-    interlineado: clamp(Number(item.interlineado ?? 1.25), .9, 2), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
+    interlineado: clamp(Number(item.interlineado ?? 1.25), .8, 3), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
     oculto: Boolean(item.oculto),
   }
