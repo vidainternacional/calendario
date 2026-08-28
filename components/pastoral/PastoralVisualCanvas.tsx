@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { Move, Trash2 } from 'lucide-react'
+import { Minimize2, Move, Trash2 } from 'lucide-react'
 import {
   TEMAS_LIENZO, aspectoLienzo, clamp, limpiarHtmlCanvas,
   type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
@@ -77,12 +77,22 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
 }
 
 function estiloControlesFlotantes(elemento: ElementoCanvas): CSSProperties {
-  const cercaDelBordeInferior = elemento.y + elemento.h >= 82
-  const anclajeVertical = cercaDelBordeInferior ? { bottom: '4px' } : { top: '4px' }
+  const arriba = elemento.y
+  const abajo = 100 - (elemento.y + elemento.h)
+  const izquierda = elemento.x
+  const derecha = 100 - (elemento.x + elemento.w)
+  const anclarDerecha = elemento.x + (elemento.w / 2) > 50
+  const horizontal = anclarDerecha ? { right: '0' } : { left: '0' }
 
-  // Los controles viven dentro del elemento seleccionado. Así nunca salen del lienzo,
-  // incluso cuando el texto o la imagen están pegados a los bordes del canvas.
-  return { right: '4px', ...anclajeVertical, flexDirection: 'column' }
+  // Primero intenta vivir fuera de la caja seleccionada para no tapar el texto.
+  // Si la caja está pegada a un borde, cambia automáticamente al lado que conserva espacio dentro del lienzo.
+  if (arriba >= 12) return { ...horizontal, bottom: 'calc(100% + 6px)', flexDirection: 'row' }
+  if (abajo >= 12) return { ...horizontal, top: 'calc(100% + 6px)', flexDirection: 'row' }
+  if (derecha >= 11) return { left: 'calc(100% + 6px)', top: '0', flexDirection: 'column' }
+  if (izquierda >= 11) return { right: 'calc(100% + 6px)', top: '0', flexDirection: 'column' }
+
+  const vertical = elemento.y + (elemento.h / 2) > 50 ? { bottom: '4px' } : { top: '4px' }
+  return { ...(anclarDerecha ? { right: '4px' } : { left: '4px' }), ...vertical, flexDirection: 'row' }
 }
 
 export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput, onDeleteElement }: Props) {
@@ -112,6 +122,29 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
     else onPatchElement(gesto.id, { w: clamp(gesto.w + dx, 5, 100 - gesto.x), h: clamp(gesto.h + dy, 5, 100 - gesto.y) })
   }
 
+  const ajustarTextoAlContenido = (elemento: ElementoCanvas) => {
+    if (!editable || !onPatchElement || !lienzoRef.current || elemento.tipo === 'imagen') return
+    const contenedor = Array.from(lienzoRef.current.querySelectorAll<HTMLElement>('[data-canvas-element-id]')).find((item) => item.dataset.canvasElementId === elemento.id)
+    const editor = contenedor?.querySelector<HTMLElement>('[contenteditable]')
+    if (!editor) return
+
+    const canvasRect = lienzoRef.current.getBoundingClientRect()
+    const rango = document.createRange()
+    rango.selectNodeContents(editor)
+    const contenidoRect = rango.getBoundingClientRect()
+    const estilo = window.getComputedStyle(editor)
+    const linea = Number.parseFloat(estilo.lineHeight) || Number.parseFloat(estilo.fontSize) * 1.25 || 20
+    const anchoPx = Math.max(contenidoRect.width, Number.parseFloat(estilo.fontSize) || 24) + 14
+    const altoPx = Math.max(contenidoRect.height, linea) + 10
+    const w = clamp((anchoPx / canvasRect.width) * 100, 5, 100)
+    const h = clamp((altoPx / canvasRect.height) * 100, 5, 100)
+    const x = clamp(elemento.x, 0, 100 - w)
+    const y = clamp(elemento.y, 0, 100 - h)
+
+    onBeginChange?.()
+    onPatchElement(elemento.id, { x, y, w, h })
+  }
+
   return (
     <div className="mx-auto flex w-full items-center justify-center overflow-auto">
       <div
@@ -137,7 +170,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             data-canvas-text-role={elemento.rol ?? undefined}
             onPointerDown={(event) => { event.stopPropagation(); editable && onSelect?.(elemento.id) }}
             className={`absolute overflow-visible ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
-            style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1 }}
+            style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, display: elemento.oculto ? 'none' : undefined }}
           >
             {elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
@@ -145,6 +178,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             {activo && <>
               <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento)} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
+                {elemento.tipo !== 'imagen' && <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); ajustarTextoAlContenido(elemento) }} className="pastoral-canvas-action" aria-label="Ajustar caja al texto" title="Ajustar caja al texto"><Minimize2 /></button>}
                 <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="pastoral-canvas-action is-danger" aria-label="Eliminar elemento"><Trash2 /></button>
               </div>
               <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />
