@@ -38,8 +38,8 @@ type ComandoEfectoTexto = 'bold' | 'italic' | 'underline' | 'strikeThrough'
 type ComandoListaTexto = 'insertUnorderedList' | 'insertOrderedList'
 type AtributoInlineVida = 'data-vida-size' | 'data-vida-line-height' | 'data-vida-color'
 type ElementoCanvasEditor = ElementoCanvas & { bloqueado?: boolean; sombreado?: boolean }
-type SwipeCapa = { id: string; x: number; y: number }
-type ArrastreCapa = { id: string; y: number; historial: boolean }
+type SwipeCapa = { id: string; x: number; y: number; desde: number }
+type ArrastreCapa = { id: string; y: number; fila: HTMLElement | null }
 type EstadoFormatoSeleccion = {
   seleccionActiva: boolean
   bold: boolean
@@ -60,6 +60,7 @@ const ESTADO_FORMATO_VACIO: EstadoFormatoSeleccion = {
   orderedList: false,
 }
 const MAX_HISTORIAL = 80
+const DESPLAZAMIENTO_ACCIONES_CAPA = 150
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
   { id: 'plantillas', label: 'Plantillas', icon: LayoutTemplate },
   { id: 'texto', label: 'Texto', icon: Type },
@@ -248,7 +249,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     actualizarElemento(textoSeleccionado.id, { rol, tamano_fuente: estilo.pt, peso: estilo.peso })
   }
   const agregarImagen = (recurso: RecursoPastoral) => agregarElemento({ tipo: 'imagen', recurso_id: recurso.id, x: 12, y: 18, w: 56, h: 48, ajuste: 'cover', radio: 14 })
-  const aplicarFondoImagen = (recurso: RecursoPastoral) => actualizarPagina({ fondo_modo: 'imagen', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
+  const aplicarFondoImagen = (recurso: RecursoPastoral) => actualizarPagina({ fondo_modo: 'imagen', fondo: '#ffffff', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
   const eliminarElemento = (id: string) => { registrarHistorial(); patchPaginaSinHistorial({ elementos: (pagina.elementos ?? []).filter((el) => el.id !== id) }); setSeleccion(null); setCapaAccionesAbiertas(null) }
   const duplicarElemento = (id: string) => { const original = pagina.elementos?.find((el) => el.id === id) as ElementoCanvasEditor | undefined; if (!original) return; agregarElemento({ ...clonar(original), id: undefined, bloqueado: false, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 }) }
   const alternarVisibilidadCapa = (id: string) => { const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return; actualizarElemento(id, { oculto: !elemento.oculto }) }
@@ -274,6 +275,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       }
     }))
   }
+  const limpiarEstiloArrastre = (fila: HTMLElement | null) => {
+    if (!fila) return
+    fila.style.removeProperty('transform')
+    fila.style.removeProperty('z-index')
+    fila.style.removeProperty('box-shadow')
+    fila.style.removeProperty('transition')
+  }
   const iniciarArrastreCapa = (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
     const elemento = pagina.elementos?.find((item) => item.id === id) as ElementoCanvasEditor | undefined
     if (!elemento || elemento.bloqueado) return
@@ -281,23 +289,53 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     event.stopPropagation()
     setSeleccion(id)
     setCapaAccionesAbiertas(null)
-    capaDragRef.current = { id, y: event.clientY, historial: false }
+    const fila = event.currentTarget.closest<HTMLElement>('[data-pastoral-layer-content="true"]')
+    if (fila) fila.style.transition = 'none'
+    capaDragRef.current = { id, y: event.clientY, fila }
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
   const moverArrastreCapa = (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
     const arrastre = capaDragRef.current
     if (!arrastre || arrastre.id !== id) return
     const delta = event.clientY - arrastre.y
-    if (Math.abs(delta) < 28) return
-    if (!arrastre.historial) { registrarHistorial(); arrastre.historial = true }
-    reordenarCapaSinHistorial(id, delta < 0 ? -1 : 1)
-    arrastre.y = event.clientY
+    if (arrastre.fila) {
+      arrastre.fila.style.transform = `translateY(${delta}px)`
+      arrastre.fila.style.zIndex = '30'
+      arrastre.fila.style.boxShadow = '0 8px 20px rgba(15,23,42,.12)'
+    }
   }
-  const terminarArrastreCapa = () => { capaDragRef.current = null }
+  const terminarArrastreCapa = (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+    const arrastre = capaDragRef.current
+    capaDragRef.current = null
+    if (!arrastre || arrastre.id !== id) return
+    const delta = event.clientY - arrastre.y
+    limpiarEstiloArrastre(arrastre.fila)
+    if (Math.abs(delta) < 24) return
+    registrarHistorial()
+    const maximo = Math.max(1, (pagina.elementos?.length ?? 1) - 1)
+    const pasos = Math.min(maximo, Math.max(1, Math.round(Math.abs(delta) / 56)))
+    const direccion: -1 | 1 = delta < 0 ? -1 : 1
+    for (let paso = 0; paso < pasos; paso += 1) reordenarCapaSinHistorial(id, direccion)
+  }
+  const cancelarArrastreCapa = () => {
+    const arrastre = capaDragRef.current
+    capaDragRef.current = null
+    limpiarEstiloArrastre(arrastre?.fila ?? null)
+  }
   const iniciarSwipeCapa = (event: React.TouchEvent<HTMLDivElement>, id: string) => {
     const toque = event.touches[0]
     if (!toque) return
-    capaSwipeRef.current = { id, x: toque.clientX, y: toque.clientY }
+    capaSwipeRef.current = { id, x: toque.clientX, y: toque.clientY, desde: capaAccionesAbiertas === id ? -DESPLAZAMIENTO_ACCIONES_CAPA : 0 }
+  }
+  const moverSwipeCapa = (event: React.TouchEvent<HTMLDivElement>, id: string) => {
+    const inicio = capaSwipeRef.current
+    const toque = event.touches[0]
+    if (!inicio || inicio.id !== id || !toque) return
+    const dx = toque.clientX - inicio.x
+    const dy = toque.clientY - inicio.y
+    if (Math.abs(dx) <= Math.abs(dy)) return
+    const desplazamiento = Math.max(-DESPLAZAMIENTO_ACCIONES_CAPA, Math.min(0, inicio.desde + dx))
+    event.currentTarget.style.transform = `translateX(${desplazamiento}px)`
   }
   const terminarSwipeCapa = (event: React.TouchEvent<HTMLDivElement>, id: string) => {
     const inicio = capaSwipeRef.current
@@ -306,9 +344,10 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     if (!inicio || inicio.id !== id || !toque) return
     const dx = toque.clientX - inicio.x
     const dy = toque.clientY - inicio.y
+    event.currentTarget.style.removeProperty('transform')
     if (Math.abs(dx) <= Math.abs(dy)) return
-    if (dx < -34) setCapaAccionesAbiertas(id)
-    if (dx > 26) setCapaAccionesAbiertas(null)
+    if (inicio.desde === 0 && dx < -34) setCapaAccionesAbiertas(id)
+    else if (inicio.desde < 0 && dx > 26) setCapaAccionesAbiertas(null)
   }
   const convertirImagenEnFondo = (id: string) => {
     const elemento = pagina.elementos?.find((item) => item.id === id) as ElementoCanvasEditor | undefined
@@ -324,9 +363,10 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     if (pagina.fondo_modo !== 'imagen' || !recursoId) return
     registrarHistorial()
     const elementosAjustados = (pagina.elementos ?? []).map((elemento) => ({ ...elemento, z: Math.min(200, elemento.z + 1) }))
-    const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'cover', radio: 0, opacidad: .85 }, 0), bloqueado: false } as ElementoCanvasEditor
-    patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#000000', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
+    const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'contain', radio: 0, opacidad: 1 }, 0), bloqueado: false } as ElementoCanvasEditor
+    patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
     setSeleccion(fondo.id)
+    setCapaAccionesAbiertas(null)
     setDestinoSubida('elemento')
   }
 
@@ -509,7 +549,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
   const agregarVersiculo = (versiculo: { referencia: string; texto: string; traduccion: string }) => {
     const contenido = `<strong>${versiculo.referencia}${versiculo.traduccion ? ` · ${versiculo.traduccion}` : ''}</strong><br>${versiculo.texto}`
-    agregarElemento({ tipo: 'versiculo', rol: 'cuerpo', contenido, x: 10, y: 20 + Math.min((pagina.elementos?.length ?? 0) * 3, 35), w: 80, h: 28, tamano_fuente: 26, fuente: 'Georgia', alineacion: 'centro', peso: 500, color: pagina.color_texto ?? '#0f172a', sombreado: false })
+    agregarElemento({ tipo: 'versiculo', rol: 'cuerpo', contenido, x: 10, y: 20 + Math.min((pagina.elementos?.length ?? 0) * 3, 35), w: 80, h: 28, tamano_fuente: 18, fuente: 'Inter', alineacion: 'izquierda', peso: 500, interlineado: 1.35, color: pagina.color_texto ?? '#0f172a', sombreado: false })
   }
 
   const prepararSubida = (destino: DestinoSubida) => { setDestinoSubida(destino); fileInputRef.current?.click() }
@@ -623,7 +663,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     </div>}
 
     {panel === 'recursos' && <div className="pastoral-panel-content pastoral-elements-panel">
-      <div className="flex flex-wrap items-center justify-center gap-2"><button type="button" onClick={() => setDestinoSubida('elemento')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'elemento' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'elemento'}>Imagen</button><button type="button" onClick={() => elementoSeleccionado?.tipo === 'imagen' ? convertirImagenEnFondo(elementoSeleccionado.id) : setDestinoSubida('fondo')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'fondo' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'fondo'} title={elementoSeleccionado?.tipo === 'imagen' ? 'Convertir la imagen seleccionada en fondo' : 'Elegir imágenes como fondo'}>Como fondo</button></div>
+      <div className="flex flex-wrap items-center justify-center gap-2"><button type="button" onClick={() => pagina.fondo_modo === 'imagen' && (pagina.fondo_recurso_id ?? pagina.recurso_id) ? desbloquearFondo() : setDestinoSubida('elemento')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'elemento' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'elemento'} title={pagina.fondo_modo === 'imagen' ? 'Volver la imagen de fondo a una imagen editable' : 'Elegir imágenes para el lienzo'}>Imagen</button><button type="button" onClick={() => elementoSeleccionado?.tipo === 'imagen' ? convertirImagenEnFondo(elementoSeleccionado.id) : setDestinoSubida('fondo')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'fondo' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'fondo'} title={elementoSeleccionado?.tipo === 'imagen' ? 'Convertir la imagen seleccionada en fondo' : 'Elegir imágenes como fondo'}>Como fondo</button></div>
       <div className="pastoral-elements-top"><button type="button" onClick={() => prepararSubida(destinoSubida)} className="pastoral-minimal-action"><Upload /> Subir</button><input value={busquedaRecursos} onChange={(e) => setBusquedaRecursos(e.target.value)} placeholder="Buscar en biblioteca" /></div>
       {recursosFiltrados.length ? <div className="pastoral-elements-grid">{recursosFiltrados.slice(0, 30).map((recurso) => <button key={recurso.id} type="button" onClick={() => destinoSubida === 'fondo' ? aplicarFondoImagen(recurso) : agregarImagen(recurso)}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} /></button>)}</div> : <p className="pastoral-empty-panel">No hay imágenes en tu biblioteca todavía.</p>}
       <div className="pastoral-external-banks">{BANCOS_EXTERNOS.map((banco) => <a key={banco.label} href={banco.href} target="_blank" rel="noreferrer">{banco.label}<ExternalLink /></a>)}</div>
@@ -686,18 +726,18 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           const resumen = elemento.tipo === 'imagen' ? recursoCapa?.titulo ?? 'Imagen' : textoPlano(elemento.contenido ?? '') || nombreCapa(elemento)
           const accionesAbiertas = capaAccionesAbiertas === elemento.id
           return <div key={elemento.id} className="relative overflow-hidden border-b border-slate-100 last:border-b-0">
-            <div className="absolute inset-y-0 right-2 flex items-center gap-1" aria-hidden={!accionesAbiertas}>
-              <button type="button" onClick={() => { setSeleccion(elemento.id); duplicarElemento(elemento.id); setCapaAccionesAbiertas(null) }} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600" aria-label={`Duplicar ${nombreCapa(elemento)}`}><Copy className="h-4 w-4" /></button>
-              <button type="button" onClick={() => { setSeleccion(elemento.id); alternarBloqueoCapa(elemento.id) }} className={`grid h-10 w-10 place-items-center rounded-full border bg-white ${elemento.bloqueado ? 'border-indigo-200 text-indigo-600' : 'border-slate-200 text-slate-600'}`} aria-label={elemento.bloqueado ? `Desbloquear ${nombreCapa(elemento)}` : `Bloquear ${nombreCapa(elemento)}`}>{elemento.bloqueado ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}</button>
-              <button type="button" onClick={() => { setSeleccion(elemento.id); eliminarElemento(elemento.id) }} className="grid h-10 w-10 place-items-center rounded-full border border-rose-200 bg-white text-rose-600" aria-label={`Eliminar ${nombreCapa(elemento)}`}><Trash2 className="h-4 w-4" /></button>
+            <div className={`absolute inset-y-0 right-2 flex items-center gap-2 transition-opacity duration-150 ${accionesAbiertas ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`} aria-hidden={!accionesAbiertas}>
+              <button type="button" tabIndex={accionesAbiertas ? 0 : -1} onClick={() => { setSeleccion(elemento.id); duplicarElemento(elemento.id); setCapaAccionesAbiertas(null) }} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600" aria-label={`Duplicar ${nombreCapa(elemento)}`}><Copy className="h-4 w-4" /></button>
+              <button type="button" tabIndex={accionesAbiertas ? 0 : -1} onClick={() => { setSeleccion(elemento.id); alternarBloqueoCapa(elemento.id) }} className={`grid h-10 w-10 place-items-center rounded-full border bg-white ${elemento.bloqueado ? 'border-indigo-200 text-indigo-600' : 'border-slate-200 text-slate-600'}`} aria-label={elemento.bloqueado ? `Desbloquear ${nombreCapa(elemento)}` : `Bloquear ${nombreCapa(elemento)}`}>{elemento.bloqueado ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}</button>
+              <button type="button" tabIndex={accionesAbiertas ? 0 : -1} onClick={() => { setSeleccion(elemento.id); eliminarElemento(elemento.id) }} className="grid h-10 w-10 place-items-center rounded-full border border-rose-200 bg-white text-rose-600" aria-label={`Eliminar ${nombreCapa(elemento)}`}><Trash2 className="h-4 w-4" /></button>
             </div>
-            <div onTouchStart={(event) => iniciarSwipeCapa(event, elemento.id)} onTouchEnd={(event) => terminarSwipeCapa(event, elemento.id)} className={`relative flex min-h-14 items-center transition-transform duration-150 ${seleccion === elemento.id ? 'bg-indigo-50/80' : 'bg-white'}`} style={{ transform: accionesAbiertas ? 'translateX(-132px)' : 'translateX(0)' }}>
+            <div data-pastoral-layer-content="true" onTouchStart={(event) => iniciarSwipeCapa(event, elemento.id)} onTouchMove={(event) => moverSwipeCapa(event, elemento.id)} onTouchEnd={(event) => terminarSwipeCapa(event, elemento.id)} className={`relative flex min-h-14 items-center transition-[transform,background-color] duration-200 ${seleccion === elemento.id ? 'bg-indigo-50' : 'bg-white'}`} style={{ transform: accionesAbiertas ? `translateX(-${DESPLAZAMIENTO_ACCIONES_CAPA}px)` : 'translateX(0)' }}>
               <button type="button" onClick={() => alternarVisibilidadCapa(elemento.id)} className="grid h-11 w-11 shrink-0 place-items-center text-slate-500" aria-label={elemento.oculto ? `Mostrar ${nombreCapa(elemento)}` : `Ocultar ${nombreCapa(elemento)}`} aria-pressed={!elemento.oculto}>{elemento.oculto ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
               <button type="button" onClick={() => { setSeleccion(elemento.id); setCapaAccionesAbiertas(null) }} className="flex min-w-0 flex-1 items-center gap-3 px-1 py-2 text-left">
                 <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500">{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.tipo === 'versiculo' ? <BookOpen className="h-4 w-4" /> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Type className="h-4 w-4" />}</span>
                 <span className="min-w-0 flex-1"><strong className="flex items-center gap-1 truncate text-xs font-bold text-slate-700">{nombreCapa(elemento)}{elemento.bloqueado && <Lock className="h-3 w-3 shrink-0 text-slate-400" />}</strong><small className="block truncate text-[10px] text-slate-400">{resumen}</small></span>
               </button>
-              <button type="button" disabled={elemento.bloqueado} onPointerDown={(event) => iniciarArrastreCapa(event, elemento.id)} onPointerMove={(event) => moverArrastreCapa(event, elemento.id)} onPointerUp={terminarArrastreCapa} onPointerCancel={terminarArrastreCapa} className="grid h-12 w-10 shrink-0 touch-none place-items-center text-slate-400 disabled:opacity-25" aria-label={`Mover capa ${nombreCapa(elemento)}`} title="Arrastra para subir o bajar"><GripVertical className="h-5 w-5" /></button>
+              <button type="button" disabled={elemento.bloqueado} onPointerDown={(event) => iniciarArrastreCapa(event, elemento.id)} onPointerMove={(event) => moverArrastreCapa(event, elemento.id)} onPointerUp={(event) => terminarArrastreCapa(event, elemento.id)} onPointerCancel={cancelarArrastreCapa} className="grid h-12 w-10 shrink-0 touch-none place-items-center text-slate-400 disabled:opacity-25" aria-label={`Mover capa ${nombreCapa(elemento)}`} title="Arrastra para subir o bajar"><GripVertical className="h-5 w-5" /></button>
             </div>
           </div>
         })}
