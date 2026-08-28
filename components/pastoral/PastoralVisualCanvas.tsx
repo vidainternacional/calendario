@@ -7,6 +7,7 @@ import {
   type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
 } from '@/components/pastoral/pastoral-canvas-model'
 
+type ElementoCanvasEditor = ElementoCanvas & { bloqueado?: boolean; sombreado?: boolean }
 type Gesto = { id: string; tipo: 'mover' | 'redimensionar'; startX: number; startY: number; x: number; y: number; w: number; h: number; rect: DOMRect }
 type CajaPorcentaje = { x: number; y: number; w: number; h: number }
 type CandidatoControles = { caja: CajaPorcentaje; vertical: boolean }
@@ -24,7 +25,7 @@ type Props = {
 }
 
 type TextoProps = {
-  elemento: ElementoCanvas
+  elemento: ElementoCanvasEditor
   editable: boolean
   baseWidth: number
   onSelect?: (id: string | null) => void
@@ -77,7 +78,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     spellCheck
     onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
     onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
-    className={`${elemento.rol === 'libre' ? 'min-h-full overflow-visible' : 'h-full overflow-auto'} w-full break-words outline-none ${elemento.tipo === 'versiculo' ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
+    className={`${elemento.rol === 'libre' ? 'min-h-full overflow-visible' : 'h-full overflow-auto'} w-full break-words outline-none ${elemento.tipo === 'versiculo' && elemento.sombreado ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
     style={{
       fontFamily: familia,
       fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
@@ -129,8 +130,6 @@ function estiloControlesFlotantes(elemento: ElementoCanvas, elementos: ElementoC
   const dentroDelLienzo = (candidato: CandidatoControles) => candidato.caja.x >= 0 && candidato.caja.y >= 0 && candidato.caja.x + candidato.caja.w <= 100 && candidato.caja.y + candidato.caja.h <= 100
   const cruces = (candidato: CandidatoControles) => textosOcupados.filter((ocupado) => cajasSeCruzan(candidato.caja, ocupado)).length
 
-  // Prioriza un lado del elemento que quepa en el lienzo y no cruce ninguna otra caja de texto.
-  // Si el lienzo está completamente saturado, usa el lado válido con menos cruces en vez de tapar el texto seleccionado.
   const validos = candidatos.filter(dentroDelLienzo)
   const elegido = validos.find((candidato) => cruces(candidato) === 0) ?? validos.sort((a, b) => cruces(a) - cruces(b))[0]
 
@@ -152,8 +151,8 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   const background = pagina.fondo_modo === 'tema' ? tema.css : pagina.fondo ?? '#ffffff'
   const baseWidth = pagina.formato === '9:16' ? 430 : pagina.formato === '1:1' ? 720 : pagina.formato === '4:3' ? 960 : 1100
 
-  const iniciarGesto = (event: ReactPointerEvent, elemento: ElementoCanvas, tipo: Gesto['tipo']) => {
-    if (!editable || !lienzoRef.current) return
+  const iniciarGesto = (event: ReactPointerEvent, elemento: ElementoCanvasEditor, tipo: Gesto['tipo']) => {
+    if (!editable || elemento.bloqueado || !lienzoRef.current) return
     event.preventDefault()
     event.stopPropagation()
     onSelect?.(elemento.id)
@@ -185,8 +184,10 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
       >
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <div className="pointer-events-none absolute inset-0 bg-black/15" />}
-        {(pagina.elementos ?? []).slice().sort((a, b) => a.z - b.z).map((elemento) => {
+        {(pagina.elementos ?? []).slice().sort((a, b) => a.z - b.z).map((elementoBase) => {
+          const elemento = elementoBase as ElementoCanvasEditor
           const activo = editable && seleccion === elemento.id
+          const bloqueado = Boolean(elemento.bloqueado)
           const recurso = elemento.tipo === 'imagen' ? biblioteca.find((item) => item.id === elemento.recurso_id) : null
           const seleccionLibre = activo && elemento.tipo === 'texto' && elemento.rol === 'libre'
           return <div
@@ -194,14 +195,15 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             data-canvas-element={elemento.tipo}
             data-canvas-element-id={elemento.id}
             data-canvas-text-role={elemento.rol ?? undefined}
+            data-canvas-locked={bloqueado ? 'true' : 'false'}
             onPointerDown={(event) => { event.stopPropagation(); editable && onSelect?.(elemento.id) }}
             className={`absolute overflow-visible ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, display: elemento.oculto ? 'none' : undefined }}
           >
             {elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
-            ) : <TextoCanvas elemento={elemento} editable={editable} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
-            {activo && <>
+            ) : <TextoCanvas elemento={elemento} editable={editable && !bloqueado} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
+            {activo && !bloqueado && <>
               <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
               </div>
