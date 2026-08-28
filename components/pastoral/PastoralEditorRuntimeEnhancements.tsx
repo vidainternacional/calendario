@@ -150,7 +150,7 @@ function unificarMenuPresentacion() {
     summary.style.fontSize = '12.5px'
     summary.style.fontWeight = '650'
     summary.style.color = '#64748b'
-    summary.style.webkitTapHighlightColor = 'transparent'
+    summary.style.setProperty('-webkit-tap-highlight-color', 'transparent')
 
     const opciones = document.createElement('div')
     opciones.style.position = 'absolute'
