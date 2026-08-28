@@ -49,7 +49,10 @@ export const PALETAS_PRESENTACION: PaletaPresentacion[] = [
 ]
 
 export const PLANTILLAS_VISUALES: PlantillaVisual[] = [
-  /* Colección curada: las primeras 12 opciones representan estilos completos, no simples cambios de color. */
+  /* La familia Litúrgico V2 aparece primero para revisión y uso inmediato. */
+  ...PLANTILLAS_PROFESIONALES,
+
+  /* Colección curada existente conservada después de la familia V2. */
   { id: 'editorial-marfil', nombre: 'Editorial marfil', categoria: 'Minimalistas', fondo: 'linear-gradient(145deg,#fffdf8 0%,#f4eee3 100%)', colorTexto: '#2F2924', titulo: { x: 8, y: 12, w: 58, h: 31, pt: 46, alineacion: 'izquierda', fuente: 'Georgia' }, subtitulo: { x: 8, y: 51, w: 72, h: 14, pt: 19, alineacion: 'izquierda', fuente: 'Inter' }, cuerpo: { x: 8, y: 70, w: 68, h: 16, pt: 16, alineacion: 'izquierda', fuente: 'Inter' } },
   { id: 'versiculo-luz', nombre: 'Versículo luz', categoria: 'Cristianas', fondo: 'radial-gradient(circle at 72% 22%,rgba(96,165,250,.28),transparent 34%),linear-gradient(145deg,#07111f 0%,#172554 100%)', colorTexto: '#F8FAFC', titulo: { x: 16, y: 19, w: 68, h: 37, pt: 42, alineacion: 'centro', fuente: 'Garamond' }, subtitulo: { x: 28, y: 64, w: 44, h: 13, pt: 18, alineacion: 'centro', fuente: 'Inter' } },
   { id: 'serie-horizonte', nombre: 'Serie horizonte', categoria: 'Generales', fondo: 'linear-gradient(120deg,#f7f9fc 0%,#edf3f8 52%,#dce8f3 100%)', colorTexto: '#183247', titulo: { x: 39, y: 13, w: 53, h: 31, pt: 42, alineacion: 'derecha', fuente: 'Helvetica' }, subtitulo: { x: 47, y: 52, w: 45, h: 14, pt: 19, alineacion: 'derecha', fuente: 'Inter' }, cuerpo: { x: 31, y: 72, w: 61, h: 14, pt: 16, alineacion: 'derecha', fuente: 'Inter' } },
@@ -62,8 +65,6 @@ export const PLANTILLAS_VISUALES: PlantillaVisual[] = [
   { id: 'creativo-pastel', nombre: 'Creativo pastel', categoria: 'Generales', fondo: 'radial-gradient(circle at 16% 20%,rgba(251,191,36,.30),transparent 24%),radial-gradient(circle at 84% 72%,rgba(244,114,182,.22),transparent 25%),linear-gradient(135deg,#fff9f1,#f3f5ff)', colorTexto: '#2E3147', titulo: { x: 7, y: 12, w: 50, h: 29, pt: 39, alineacion: 'izquierda', fuente: 'Arial Black' }, subtitulo: { x: 23, y: 52, w: 63, h: 14, pt: 18, alineacion: 'izquierda', fuente: 'Trebuchet MS' }, cuerpo: { x: 47, y: 72, w: 39, h: 13, pt: 16, alineacion: 'izquierda', fuente: 'Inter' } },
   { id: 'pizarra-moderna', nombre: 'Pizarra moderna', categoria: 'Minimalistas', fondo: 'repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),linear-gradient(145deg,#20262f,#303844)', colorTexto: '#F8FAFC', titulo: { x: 7, y: 13, w: 62, h: 30, pt: 42, alineacion: 'izquierda', fuente: 'Helvetica' }, subtitulo: { x: 7, y: 52, w: 77, h: 14, pt: 18, alineacion: 'izquierda', fuente: 'Inter' }, cuerpo: { x: 7, y: 71, w: 58, h: 14, pt: 16, alineacion: 'izquierda', fuente: 'Inter' } },
   { id: 'amanecer-minimal', nombre: 'Amanecer minimal', categoria: 'Minimalistas', fondo: 'linear-gradient(145deg,#fff9ed 0%,#fee8d7 48%,#f8dce4 100%)', colorTexto: '#4C302B', titulo: { x: 15, y: 43, w: 70, h: 29, pt: 40, alineacion: 'centro', fuente: 'Garamond' }, subtitulo: { x: 26, y: 74, w: 48, h: 12, pt: 17, alineacion: 'centro', fuente: 'Inter' } },
-
-  ...PLANTILLAS_PROFESIONALES,
 
   /* Biblioteca existente conservada para no perder opciones ya disponibles. */
   { id: 'predicacion-limpia', nombre: 'Predicación limpia', categoria: 'Cristianas', fondo: '#FFFFFF', colorTexto: '#0F172A', titulo: { x: 9, y: 11, w: 82, h: 30, pt: 42, alineacion: 'izquierda', fuente: 'Georgia' }, subtitulo: { x: 9, y: 45, w: 78, h: 17, pt: 23, alineacion: 'izquierda', fuente: 'Inter' }, cuerpo: { x: 9, y: 67, w: 78, h: 22, pt: 18, alineacion: 'izquierda', fuente: 'Inter' } },
