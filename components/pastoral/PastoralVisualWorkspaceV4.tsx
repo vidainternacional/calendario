@@ -100,6 +100,7 @@ const COLORES_TEXTO = ['#0f172a', '#ffffff', '#334155', '#7f1d1d', '#14532d', '#
 const FUENTE_MUESTRA = FUENTES_PASTORALES.find((fuente) => fuente !== 'Inter') ?? FUENTES_PASTORALES[0] ?? 'Georgia'
 const claseBotonActivo = (activo: boolean) => `pastoral-inline-icon ${activo ? 'is-active' : ''}`
 const claseControlTexto = (activo = false) => `grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border text-slate-700 disabled:opacity-30 ${activo ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white'}`
+const tamanoPlantillaCanvas = (pt: number) => Math.max(10, Math.round(pt * .75))
 
 function textoPlano(html: string) {
   if (typeof window !== 'undefined') { const div = document.createElement('div'); div.innerHTML = limpiarHtmlCanvas(html); return div.innerText.trim() }
@@ -350,8 +351,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       return
     }
     registrarHistorial()
+    limpiarEstiloArrastre(arrastre)
     fijarOrdenCapaSinHistorial(id, arrastre.indiceDestino)
-    window.requestAnimationFrame(() => window.requestAnimationFrame(() => limpiarEstiloArrastre(arrastre)))
     event.currentTarget.releasePointerCapture?.(event.pointerId)
   }
   const cancelarArrastreCapa = () => {
@@ -485,7 +486,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         const { rol, layout } = destino
         return {
           ...elemento,
-          tamano_fuente: layout.pt,
+          tamano_fuente: tamanoPlantillaCanvas(layout.pt),
           alineacion: layout.alineacion,
           fuente: layout.fuente,
           color: plantilla.colorTexto,
@@ -504,7 +505,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       const y = clamp(layout.y, 0, 95)
       return normalizarElementoCanvas({
         tipo: 'texto', rol, contenido: textoMuestraPlantilla(plantilla, rol), x, y, w: clamp(layout.w, 5, 100 - x), h: clamp(layout.h, 5, 100 - y),
-        tamano_fuente: layout.pt, alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto,
+        tamano_fuente: tamanoPlantillaCanvas(layout.pt), alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto,
         peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500, z: zBase + (rol === 'titulo' ? 3 : rol === 'subtitulo' ? 2 : 1),
       })
     }
@@ -713,7 +714,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista(siguiente) }
   const moverPresentacion = (delta: number) => setIndice((actual) => Math.min(Math.max(actual + delta, 0), paginas.length - 1))
   const abrirPantallaCompleta = async () => { setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
-  const abrirPresentacionDesdeCompartir = async () => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista('presentacion'); setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
   const cerrarPantallaCompleta = async () => { setModoPresentacion(false); try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch {} }
   const copiarEnlaceActual = async () => { try { await navigator.clipboard.writeText(window.location.href); mostrarToast('Enlace del proyecto copiado') } catch { mostrarToast('No se pudo copiar el enlace') } }
   const compartirInterno = async () => { try { if (navigator.share) await navigator.share({ title: titulo, text: 'Proyecto de Centro Pastoral', url: window.location.href }); else await copiarEnlaceActual() } catch {} }
@@ -879,7 +879,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
     {vista === 'congregacion' && pagina && <section className="pb-10 pt-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">Exactamente la misma composición que se proyectará.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} />{modoPresentacion && <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black"><button type="button" onClick={cerrarPantallaCompleta} className="absolute right-3 top-3 z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white"><Minimize2 className="h-5 w-5" /></button><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport /></div>}</section>}
 
-    {vista === 'publicar' && <section className="pastoral-share-view space-y-4 pb-10 pt-5">{pagina && <div className="grid gap-3"><div className="flex items-center justify-between gap-3"><div><strong className="block text-sm">Vista de presentación</strong><span className="text-[11px] text-slate-500">Así se verá en el proyector con el formato actual.</span></div><button type="button" onClick={abrirPresentacionDesdeCompartir} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700"><Maximize2 className="h-4 w-4" /> Presentación</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} /></div>}<PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /><div className="pastoral-share-actions"><button type="button" onClick={() => window.print()}><FileDown /><span>PDF</span></button><button type="button" onClick={compartirInterno}><Share2 /><span>Compartir</span></button><button type="button" onClick={copiarEnlaceActual}><Link2 /><span>Copiar enlace</span></button></div><p className="text-[11px] leading-5 text-slate-500">El enlace actual conserva el acceso de VIDA. Un enlace público para redes/WhatsApp y el control remoto OBS/proyector requieren una capa segura de publicación y emparejamiento; no se exponen anónimamente todavía.</p></section>}
+    {vista === 'publicar' && <section className="pastoral-share-view space-y-4 pb-10 pt-5"><PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /><div className="pastoral-share-actions"><button type="button" onClick={() => window.print()}><FileDown /><span>PDF</span></button><button type="button" onClick={compartirInterno}><Share2 /><span>Compartir</span></button><button type="button" onClick={copiarEnlaceActual}><Link2 /><span>Copiar enlace</span></button></div><p className="text-[11px] leading-5 text-slate-500">El enlace actual conserva el acceso de VIDA. Un enlace público para redes/WhatsApp y el control remoto OBS/proyector requieren una capa segura de publicación y emparejamiento; no se exponen anónimamente todavía.</p></section>}
 
     <div className="pastoral-print-deck hidden print:block">{paginas.map((item, i) => <section key={i} className="pastoral-print-page"><PastoralVisualCanvas pagina={item} biblioteca={biblioteca} /></section>)}</div>
   </div>
