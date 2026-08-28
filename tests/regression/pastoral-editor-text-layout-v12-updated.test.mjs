@@ -36,18 +36,19 @@ test('A+ crea texto y Título Subtítulo Cuerpo solo cambian el texto selecciona
   assert.doesNotMatch(workspace, /if \(!textoSeleccionado\) return agregarTexto\(rol\)/)
 })
 
-test('Plantillas aplican estilo sin alterar geometría aprobada y Temas no cambian su fuente', () => {
+test('Plantillas aplican estilo con escala inicial segura sin alterar geometría aprobada y Temas no cambian su fuente', () => {
   const plantilla = workspace.slice(workspace.indexOf('const aplicarPlantilla'), workspace.indexOf('const nuevaPagina'))
   const rama = plantilla.slice(plantilla.indexOf('if (tieneTextoUsuario)'), plantilla.indexOf('const imagenesActuales'))
   const paleta = workspace.slice(workspace.indexOf('const aplicarPaleta'), workspace.indexOf('const aplicarPlantilla'))
   assert.match(plantilla, /const tieneTextoUsuario = textos\.some/)
   assert.match(rama, /if \(elemento\.tipo === 'imagen'\) return elemento/)
   assert.doesNotMatch(rama, /x: layout\.x|y: layout\.y|w: layout\.w|h: layout\.h/)
-  assert.match(rama, /tamano_fuente: layout\.pt/)
+  assert.match(rama, /tamano_fuente: tamanoPlantillaCanvas\(layout\.pt\)/)
   assert.match(rama, /alineacion: layout\.alineacion/)
   assert.match(rama, /fuente: layout\.fuente/)
   assert.match(rama, /fondo: plantilla\.fondo/)
   assert.match(plantilla, /textoMuestraPlantilla\(plantilla, rol\)/)
+  assert.match(plantilla, /tamano_fuente: tamanoPlantillaCanvas\(layout\.pt\)/)
   assert.doesNotMatch(paleta, /fuente:/)
 })
 
@@ -107,6 +108,9 @@ test('Capas usa pipeline por arrastre y swipe con visibilidad, bloqueo y accione
   assert.match(model, /oculto\?: boolean/)
   assert.match(model, /oculto: Boolean\(item\.oculto\)/)
   assert.match(canvas, /display: elemento\.oculto \? 'none' : undefined/)
+  const terminar = workspace.slice(workspace.indexOf('const terminarArrastreCapa ='), workspace.indexOf('const cancelarArrastreCapa ='))
+  assert.ok(terminar.indexOf('limpiarEstiloArrastre(arrastre)') < terminar.indexOf('fijarOrdenCapaSinHistorial(id, arrastre.indiceDestino)'))
+  assert.doesNotMatch(terminar, /requestAnimationFrame/)
 })
 
 test('bloqueo de capa impide editar mover y redimensionar sin cambiar el modelo global', () => {
@@ -149,16 +153,17 @@ test('la navegación de páginas queda en la cabecera con retorno al Centro Past
   assert.doesNotMatch(workspace, /pastoral-pages-strip/)
 })
 
-test('Compartir conserva acciones y abre la presentación real a pantalla completa', () => {
+test('Compartir conserva solo distribución PDF compartir y enlace; la vista final vive en Presentar', () => {
   const compartir = workspace.slice(workspace.indexOf("vista === 'publicar'"), workspace.indexOf('pastoral-print-deck'))
-  assert.match(compartir, /Vista de presentación/)
-  assert.match(compartir, /abrirPresentacionDesdeCompartir/)
   assert.match(compartir, /PackageDistributionControls/)
   assert.match(compartir, /<FileDown/)
   assert.match(compartir, /<Share2/)
   assert.match(compartir, /<Link2/)
-  assert.match(workspace, /setVista\('presentacion'\); setModoPresentacion\(true\)/)
-  assert.match(workspace, /fitViewport=\{modoPresentacion\}/)
+  assert.doesNotMatch(compartir, /Vista de presentación|<PastoralVisualCanvas|Presentación/)
+  assert.doesNotMatch(workspace, /abrirPresentacionDesdeCompartir/)
+  const presentar = workspace.slice(workspace.indexOf("vista === 'presentacion'"), workspace.indexOf("vista === 'congregacion'"))
+  assert.match(presentar, /Pantalla completa/)
+  assert.match(presentar, /fitViewport=\{modoPresentacion\}/)
 })
 
 test('el layout conserva stable después de V3 y los realces funcionales actuales', () => {
