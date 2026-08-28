@@ -9,7 +9,7 @@ test('formato aplica efectos a palabras seleccionadas y usa la caja completa cua
   assert.match(workspace, /const haySeleccionDePalabras =/)
   assert.match(workspace, /if \(editor && haySeleccionDePalabras\(editor\)\)/)
   assert.match(workspace, /document\.execCommand\(comando\)/)
-  assert.match(workspace, /patchElementoSinHistorial\(textoSeleccionado\.id, \{ contenido: limpiarHtmlCanvas\(editor\.innerHTML\) \}\)/)
+  assert.match(workspace, /persistirInline\(editor\)/)
   assert.match(workspace, /actualizarElemento\(textoSeleccionado\.id, patchCaja\)/)
   for (const comando of ['bold', 'italic', 'underline', 'strikeThrough']) assert.ok(workspace.includes(`aplicarEfectoTexto('${comando}'`))
 })
@@ -27,6 +27,30 @@ test('estilos y controles no roban la selección y la cinta de formato solo desp
   assert.match(workspace, /touch-pan-x[\s\S]*overflow-x-auto overflow-y-hidden overscroll-x-contain/)
   assert.match(workspace, /aria-label="Color de texto" aria-expanded=\{paletaTextoAbierta\}/)
   assert.match(workspace, /role="group" aria-label="Colores de texto"/)
+})
+
+test('la paleta de color permanece abierta al probar colores y solo el botón Color la alterna', () => {
+  const inicio = workspace.indexOf('const aplicarColorTexto =')
+  const fin = workspace.indexOf('const comandoParrafo =', inicio)
+  const aplicarColor = workspace.slice(inicio, fin)
+  assert.ok(inicio >= 0 && fin > inicio)
+  assert.doesNotMatch(aplicarColor, /setPaletaTextoAbierta\(false\)/)
+  assert.match(workspace, /onClick=\{\(\) => setPaletaTextoAbierta\(\(actual\) => !actual\)\}/)
+  assert.match(workspace, /className=\{claseControlTexto\(paletaTextoAbierta\)\}/)
+  assert.match(workspace, /aria-pressed=\{paletaTextoAbierta\}/)
+})
+
+test('los botones reflejan el formato real de la selección y las listas muestran su estado activo', () => {
+  assert.match(workspace, /const leerEstadoFormatoSeleccion =/)
+  assert.match(workspace, /document\.queryCommandState\(comando\)/)
+  assert.match(workspace, /document\.addEventListener\('selectionchange', actualizar\)/)
+  for (const comando of ['bold', 'italic', 'underline', 'strikeThrough']) {
+    assert.match(workspace, new RegExp(`formatoActivo\\('${comando}'`))
+  }
+  assert.match(workspace, /claseControlTexto\(estadoFormatoSeleccion\.unorderedList\)/)
+  assert.match(workspace, /claseControlTexto\(estadoFormatoSeleccion\.orderedList\)/)
+  assert.match(workspace, /aria-pressed=\{estadoFormatoSeleccion\.unorderedList\}/)
+  assert.match(workspace, /aria-pressed=\{estadoFormatoSeleccion\.orderedList\}/)
 })
 
 test('título y subtítulo parten de tamaños más proporcionados al lienzo', () => {
