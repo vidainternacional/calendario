@@ -13,8 +13,10 @@ test('aplicar Plantilla o Tema no solicita toast de confirmación', () => {
 })
 
 test('En blanco modifica la página actual y solo el control superior crea página', () => {
-  const inicio = workspace.indexOf('pastoral-template-blank-option')
-  const blanco = workspace.slice(Math.max(0, inicio - 420), inicio + 260)
+  const marcador = 'aria-label="Aplicar plantilla en blanco a la página actual"'
+  const inicio = workspace.indexOf(marcador)
+  const blanco = workspace.slice(Math.max(0, inicio - 700), inicio + marcador.length + 80)
+  assert.ok(inicio >= 0)
   assert.match(blanco, /actualizarPagina/)
   assert.doesNotMatch(blanco, /nuevaPagina/)
   assert.match(workspace, /Aplicar plantilla en blanco a la página actual/)
@@ -29,11 +31,13 @@ test('Texto conserva controles grandes y scroll de su superficie', () => {
   assert.match(texto, /min-h-11/)
 })
 
-test('Tamaño e interlineado tienen steppers táctiles React', () => {
-  assert.match(workspace, /aria-label="Reducir tamaño de letra"/)
-  assert.match(workspace, /aria-label="Aumentar tamaño de letra"/)
-  assert.match(workspace, /aria-label="Reducir interlineado"/)
-  assert.match(workspace, /aria-label="Aumentar interlineado"/)
+test('Tamaño e interlineado tienen controles táctiles React en la cinta horizontal', () => {
+  const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
+  assert.match(texto, /aria-label="Reducir tamaño de letra"/)
+  assert.match(texto, /aria-label="Aumentar tamaño de letra"/)
+  assert.match(texto, /aria-label="Reducir interlineado"/)
+  assert.match(texto, /aria-label="Aumentar interlineado"/)
+  assert.match(texto, /role="toolbar" aria-label="Formato listas tamaño interlineado y alineación"/)
 })
 
 test('A+ queda disponible y Título Subtítulo Cuerpo son atributos del texto seleccionado', () => {
