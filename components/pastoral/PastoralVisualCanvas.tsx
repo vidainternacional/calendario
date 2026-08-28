@@ -80,7 +80,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     if (document.activeElement !== editor && editor.innerHTML !== contenidoSeguro) editor.innerHTML = contenidoSeguro
 
     const contenedor = editor.parentElement
-    const debeEncajar = elemento.rol !== 'libre'
+    const debeEncajar = true
     let frame = 0
     let observer: ResizeObserver | null = null
     let cancelado = false
@@ -138,7 +138,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     spellCheck
     onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
     onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
-    className={`${elemento.rol === 'libre' ? 'min-h-full overflow-visible' : 'h-full overflow-auto'} w-full break-words outline-none ${elemento.tipo === 'versiculo' && elemento.sombreado ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
+    className={`h-full w-full overflow-hidden break-words outline-none ${elemento.tipo === 'versiculo' && elemento.sombreado ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
     style={{
       fontFamily: familia,
       fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
