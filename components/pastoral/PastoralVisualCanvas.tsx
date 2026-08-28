@@ -32,6 +32,23 @@ type TextoProps = {
   onTextInput?: (id: string, html: string) => void
 }
 
+function aplicarAtributosInlineVida(editor: HTMLElement, baseWidth: number) {
+  editor.querySelectorAll<HTMLElement>('span[data-vida-size], span[data-vida-line-height], span[data-vida-color]').forEach((span) => {
+    const size = Number(span.getAttribute('data-vida-size'))
+    const line = Number(span.getAttribute('data-vida-line-height'))
+    const color = String(span.getAttribute('data-vida-color') ?? '')
+    if (Number.isFinite(size) && size >= 8 && size <= 160) {
+      const pixeles = (size * 4) / 3
+      const escalaLienzo = (pixeles / baseWidth) * 100
+      span.style.fontSize = `min(${pixeles}px, ${escalaLienzo}cqw)`
+    } else span.style.removeProperty('font-size')
+    if (Number.isFinite(line) && line >= .8 && line <= 3) span.style.lineHeight = String(line)
+    else span.style.removeProperty('line-height')
+    if (/^#[0-9a-f]{6}$/i.test(color)) span.style.color = color
+    else span.style.removeProperty('color')
+  })
+}
+
 function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, onTextInput }: TextoProps) {
   const textoRef = useRef<HTMLDivElement | null>(null)
   const contenidoSeguro = limpiarHtmlCanvas(elemento.contenido ?? '')
@@ -46,9 +63,10 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
 
   useEffect(() => {
     const editor = textoRef.current
-    if (!editor || document.activeElement === editor) return
-    if (editor.innerHTML !== contenidoSeguro) editor.innerHTML = contenidoSeguro
-  }, [contenidoSeguro])
+    if (!editor) return
+    if (document.activeElement !== editor && editor.innerHTML !== contenidoSeguro) editor.innerHTML = contenidoSeguro
+    aplicarAtributosInlineVida(editor, baseWidth)
+  }, [contenidoSeguro, baseWidth, elemento.tamano_fuente])
 
   return <div
     ref={textoRef}
