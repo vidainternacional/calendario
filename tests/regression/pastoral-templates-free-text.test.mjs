@@ -4,7 +4,7 @@ import test from 'node:test'
 
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 
-test('las plantillas aplican composición completa al texto existente sin reemplazar contenido ni imágenes', () => {
+test('las plantillas aplican estilo al texto existente sin reemplazar contenido imágenes ni geometría', () => {
   const inicioFuncion = workspace.indexOf('const aplicarPlantilla =')
   const inicio = workspace.indexOf('if (tieneTextoUsuario) {', inicioFuncion)
   const fin = workspace.indexOf('const imagenesActuales =', inicio)
@@ -14,10 +14,10 @@ test('las plantillas aplican composición completa al texto existente sin reempl
   assert.match(bloqueFuncion, /registrarHistorial\(\)/)
   assert.match(ramaTextoUsuario, /const sinMuestras = actuales\.filter\(\(item\) => item\.tipo === 'imagen' \|\| !esTextoMuestraPlantilla\(item\)\)/)
   assert.match(ramaTextoUsuario, /if \(elemento\.tipo === 'imagen'\) return elemento/)
-  assert.match(ramaTextoUsuario, /x: layout\.x/)
-  assert.match(ramaTextoUsuario, /y: layout\.y/)
-  assert.match(ramaTextoUsuario, /w: layout\.w/)
-  assert.match(ramaTextoUsuario, /h: layout\.h/)
+  assert.doesNotMatch(ramaTextoUsuario, /x: layout\.x/)
+  assert.doesNotMatch(ramaTextoUsuario, /y: layout\.y/)
+  assert.doesNotMatch(ramaTextoUsuario, /w: layout\.w/)
+  assert.doesNotMatch(ramaTextoUsuario, /h: layout\.h/)
   assert.match(ramaTextoUsuario, /tamano_fuente: layout\.pt/)
   assert.match(ramaTextoUsuario, /alineacion: layout\.alineacion/)
   assert.match(ramaTextoUsuario, /fuente: layout\.fuente/)
