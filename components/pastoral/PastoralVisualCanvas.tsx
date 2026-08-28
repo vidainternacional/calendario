@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { Minimize2, Move, Trash2 } from 'lucide-react'
+import { Move } from 'lucide-react'
 import {
   TEMAS_LIENZO, aspectoLienzo, clamp, limpiarHtmlCanvas,
   type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
@@ -85,7 +85,7 @@ function cajasSeCruzan(a: CajaPorcentaje, b: CajaPorcentaje) {
 function estiloControlesFlotantes(elemento: ElementoCanvas, elementos: ElementoCanvas[], canvasRect?: DOMRect): CSSProperties {
   const anchoCanvas = Math.max(1, canvasRect?.width ?? 360)
   const altoCanvas = Math.max(1, canvasRect?.height ?? 203)
-  const cantidadBotones = elemento.tipo === 'imagen' ? 2 : 3
+  const cantidadBotones = 1
   const espacioPx = 4
   const botonPx = 44
   const gapX = (6 / anchoCanvas) * 100
@@ -126,7 +126,7 @@ function estiloControlesFlotantes(elemento: ElementoCanvas, elementos: ElementoC
   return { ...(anclarDerecha ? { right: '4px' } : { left: '4px' }), ...vertical, flexDirection: 'row' }
 }
 
-export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput, onDeleteElement }: Props) {
+export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput }: Props) {
   const lienzoRef = useRef<HTMLDivElement | null>(null)
   const [gesto, setGesto] = useState<Gesto | null>(null)
   const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
@@ -151,29 +151,6 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
     const dy = ((event.clientY - gesto.startY) / gesto.rect.height) * 100
     if (gesto.tipo === 'mover') onPatchElement(gesto.id, { x: clamp(gesto.x + dx, 0, 100 - gesto.w), y: clamp(gesto.y + dy, 0, 100 - gesto.h) })
     else onPatchElement(gesto.id, { w: clamp(gesto.w + dx, 5, 100 - gesto.x), h: clamp(gesto.h + dy, 5, 100 - gesto.y) })
-  }
-
-  const ajustarTextoAlContenido = (elemento: ElementoCanvas) => {
-    if (!editable || !onPatchElement || !lienzoRef.current || elemento.tipo === 'imagen') return
-    const contenedor = Array.from(lienzoRef.current.querySelectorAll<HTMLElement>('[data-canvas-element-id]')).find((item) => item.dataset.canvasElementId === elemento.id)
-    const editor = contenedor?.querySelector<HTMLElement>('[contenteditable]')
-    if (!editor) return
-
-    const canvasRect = lienzoRef.current.getBoundingClientRect()
-    const rango = document.createRange()
-    rango.selectNodeContents(editor)
-    const contenidoRect = rango.getBoundingClientRect()
-    const estilo = window.getComputedStyle(editor)
-    const linea = Number.parseFloat(estilo.lineHeight) || Number.parseFloat(estilo.fontSize) * 1.25 || 20
-    const anchoPx = Math.max(contenidoRect.width, Number.parseFloat(estilo.fontSize) || 24) + 14
-    const altoPx = Math.max(contenidoRect.height, linea) + 10
-    const w = clamp((anchoPx / canvasRect.width) * 100, 5, 100)
-    const h = clamp((altoPx / canvasRect.height) * 100, 5, 100)
-    const x = clamp(elemento.x, 0, 100 - w)
-    const y = clamp(elemento.y, 0, 100 - h)
-
-    onBeginChange?.()
-    onPatchElement(elemento.id, { x, y, w, h })
   }
 
   return (
@@ -209,8 +186,6 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             {activo && <>
               <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
-                {elemento.tipo !== 'imagen' && <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); ajustarTextoAlContenido(elemento) }} className="pastoral-canvas-action" aria-label="Ajustar caja al texto" title="Ajustar caja al texto"><Minimize2 /></button>}
-                <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="pastoral-canvas-action is-danger" aria-label="Eliminar elemento"><Trash2 /></button>
               </div>
               <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />
             </>}
@@ -227,6 +202,8 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         .pastoral-editor-v4 .pastoral-tool-button::before { top:50% !important; left:50% !important; width:44px !important; height:44px !important; transform:translate(-50%,-50%) scale(.9) !important; z-index:0 !important; }
         .pastoral-editor-v4 .pastoral-tool-button.is-active::before { transform:translate(-50%,-50%) scale(1) !important; }
         .pastoral-editor-v4 .pastoral-tool-button > svg { position:relative !important; z-index:1 !important; margin:0 !important; }
+        .pastoral-editor-v4 [aria-label='Tamaño de letra actual'],
+        .pastoral-editor-v4 [aria-label='Interlineado actual'] { color:#4f46e5 !important; opacity:1 !important; }
       `}</style>
     </div>
   )
