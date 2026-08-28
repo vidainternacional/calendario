@@ -17,7 +17,7 @@ import PastoralVersePicker from '@/components/pastoral/PastoralVersePicker'
 import PastoralVisualCanvas from '@/components/pastoral/PastoralVisualCanvas'
 import { PALETAS_PRESENTACION, PLANTILLAS_VISUALES, type PaletaPresentacion, type PlantillaVisual } from '@/components/pastoral/pastoral-editor-presets'
 import {
-  ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, clonar, limpiarHtmlCanvas,
+  ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clamp, clonar, limpiarHtmlCanvas,
   nuevaPaginaCanvas, nuevoIdCanvas, normalizarElementoCanvas, normalizarPaginaCanvas,
   type Alineacion, type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
   type RolTexto, type VistaLienzo,
@@ -107,6 +107,7 @@ function textoPlano(html: string) {
 }
 
 function nombreCapa(elemento: ElementoCanvas) {
+  if (elemento.fondo_visual) return 'Fondo'
   if (elemento.tipo === 'imagen') return 'Imagen'
   if (elemento.tipo === 'versiculo') return 'Versículo'
   if (elemento.rol === 'titulo') return 'Título'
@@ -122,7 +123,7 @@ function textoMuestraPlantilla(plantilla: PlantillaVisual, rol: RolTexto) {
 }
 
 function esTextoMuestraPlantilla(elemento: ElementoCanvas) {
-  if (elemento.tipo === 'imagen') return false
+  if (elemento.tipo === 'imagen' || elemento.fondo_visual) return false
   const contenido = textoPlano(elemento.contenido ?? '')
   if (!contenido) return true
   return PLANTILLAS_VISUALES.some((plantilla) =>
@@ -176,7 +177,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [versionHistorial, setVersionHistorial] = useState(0)
   const pagina = paginas[indice] ?? paginas[0]
   const elementoSeleccionado = (pagina?.elementos?.find((item) => item.id === seleccion) ?? null) as ElementoCanvasEditor | null
-  const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' ? elementoSeleccionado : null
+  const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && !elementoSeleccionado.fondo_visual ? elementoSeleccionado : null
+  const fondoVisualDesbloqueado = Boolean(pagina?.elementos?.some((item) => item.fondo_visual))
   const imagenes = useMemo(() => biblioteca.filter((item) => item.mime_type?.startsWith('image/') && item.acceso_url), [biblioteca])
   const recursosFiltrados = useMemo(() => {
     const q = busquedaRecursos.trim().toLowerCase()
@@ -409,19 +411,26 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
   const desbloquearFondo = () => {
     const recursoId = pagina.fondo_recurso_id ?? pagina.recurso_id
-    if (pagina.fondo_modo !== 'imagen' || !recursoId) return
     registrarHistorial()
     const elementosAjustados = (pagina.elementos ?? []).map((elemento) => ({ ...elemento, z: Math.min(200, elemento.z + 1) }))
-    const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'contain', radio: 0, opacidad: 1 }, 0), bloqueado: false } as ElementoCanvasEditor
-    patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
-    setSeleccion(fondo.id)
+    if (pagina.fondo_modo === 'imagen' && recursoId) {
+      const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'contain', radio: 0, opacidad: 1 }, 0), bloqueado: false } as ElementoCanvasEditor
+      patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
+      setSeleccion(fondo.id)
+    } else {
+      const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
+      const fondoVisual = pagina.fondo_modo === 'tema' ? tema.css : pagina.fondo ?? '#ffffff'
+      const fondo = { ...normalizarElementoCanvas({ tipo: 'texto', rol: 'libre', contenido: '', x: 0, y: 0, w: 100, h: 100, z: 0, fondo_visual: fondoVisual }, 0), bloqueado: false } as ElementoCanvasEditor
+      patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
+      setSeleccion(fondo.id)
+    }
     setCapaAccionesAbiertas(null)
     setDestinoSubida('elemento')
   }
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
     registrarHistorial()
-    const elementos = (pagina.elementos ?? []).map((elemento) => elemento.tipo === 'imagen' ? elemento : {
+    const elementos = (pagina.elementos ?? []).filter((elemento) => !elemento.fondo_visual).map((elemento) => elemento.tipo === 'imagen' ? elemento : {
       ...elemento,
       color: elemento.rol === 'titulo' ? paleta.titulo : paleta.texto,
     })
@@ -430,7 +439,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const aplicarPlantilla = (plantilla: PlantillaVisual) => {
     registrarHistorial()
-    const actuales = pagina.elementos ?? []
+    const actuales = (pagina.elementos ?? []).filter((item) => !item.fondo_visual)
     const textos = actuales.filter((item) => item.tipo !== 'imagen')
     const tieneTextoUsuario = textos.some((item) => !esTextoMuestraPlantilla(item))
 
@@ -476,10 +485,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         const { rol, layout } = destino
         return {
           ...elemento,
-          x: layout.x,
-          y: layout.y,
-          w: layout.w,
-          h: layout.h,
           tamano_fuente: layout.pt,
           alineacion: layout.alineacion,
           fuente: layout.fuente,
@@ -494,11 +499,15 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
     const imagenesActuales = actuales.filter((item) => item.tipo === 'imagen')
     const zBase = Math.max(1, ...actuales.map((item) => item.z))
-    const crearMuestra = (rol: RolTexto, layout: PlantillaVisual['titulo']) => normalizarElementoCanvas({
-      tipo: 'texto', rol, contenido: textoMuestraPlantilla(plantilla, rol), x: layout.x, y: layout.y, w: layout.w, h: layout.h,
-      tamano_fuente: layout.pt, alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto,
-      peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500, z: zBase + (rol === 'titulo' ? 3 : rol === 'subtitulo' ? 2 : 1),
-    })
+    const crearMuestra = (rol: RolTexto, layout: PlantillaVisual['titulo']) => {
+      const x = clamp(layout.x, 0, 95)
+      const y = clamp(layout.y, 0, 95)
+      return normalizarElementoCanvas({
+        tipo: 'texto', rol, contenido: textoMuestraPlantilla(plantilla, rol), x, y, w: clamp(layout.w, 5, 100 - x), h: clamp(layout.h, 5, 100 - y),
+        tamano_fuente: layout.pt, alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto,
+        peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500, z: zBase + (rol === 'titulo' ? 3 : rol === 'subtitulo' ? 2 : 1),
+      })
+    }
     const siguientes: ElementoCanvas[] = [
       ...imagenesActuales,
       crearMuestra('titulo', plantilla.titulo),
@@ -673,7 +682,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     recursosUsados().forEach((id) => data.append('recurso_ids', id))
     paginas.forEach((item) => {
       const tituloLegado = textoPlano(item.elementos?.find((el) => el.rol === 'titulo')?.contenido ?? item.titulo ?? '').slice(0, 160)
-      const contenidoLegado = (item.elementos ?? []).filter((el) => el.tipo !== 'imagen' && el.rol !== 'titulo').map((el) => limpiarHtmlCanvas(el.contenido ?? '')).join('<br>').slice(0, 12000)
+      const contenidoLegado = (item.elementos ?? []).filter((el) => el.tipo !== 'imagen' && !el.fondo_visual && el.rol !== 'titulo').map((el) => limpiarHtmlCanvas(el.contenido ?? '')).join('<br>').slice(0, 12000)
       data.append('diapositiva_titulo', tituloLegado); data.append('diapositiva_contenido', contenidoLegado); data.append('diapositiva_recurso_id', item.recurso_id ?? ''); data.append('diapositiva_plantilla', item.plantilla ?? 'limpia'); data.append('diapositiva_fondo', item.fondo ?? '#ffffff'); data.append('diapositiva_color_texto', item.color_texto ?? '#0f172a'); data.append('diapositiva_alineacion', item.alineacion ?? 'izquierda'); data.append('diapositiva_tamano', item.tamano ?? 'normal'); data.append('diapositiva_formato', item.formato ?? '16:9'); data.append('diapositiva_fondo_modo', item.fondo_modo ?? 'color'); data.append('diapositiva_fondo_tema', item.fondo_tema ?? 'claro'); data.append('diapositiva_fondo_recurso_id', item.fondo_recurso_id ?? ''); data.append('diapositiva_elementos', JSON.stringify(item.elementos ?? []))
     })
     return data
@@ -704,6 +713,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista(siguiente) }
   const moverPresentacion = (delta: number) => setIndice((actual) => Math.min(Math.max(actual + delta, 0), paginas.length - 1))
   const abrirPantallaCompleta = async () => { setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
+  const abrirPresentacionDesdeCompartir = async () => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista('presentacion'); setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
   const cerrarPantallaCompleta = async () => { setModoPresentacion(false); try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch {} }
   const copiarEnlaceActual = async () => { try { await navigator.clipboard.writeText(window.location.href); mostrarToast('Enlace del proyecto copiado') } catch { mostrarToast('No se pudo copiar el enlace') } }
   const compartirInterno = async () => { try { if (navigator.share) await navigator.share({ title: titulo, text: 'Proyecto de Centro Pastoral', url: window.location.href }); else await copiarEnlaceActual() } catch {} }
@@ -818,7 +828,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         {(pagina.elementos ?? []).slice().sort((a, b) => b.z - a.z).map((elementoBase) => {
           const elemento = elementoBase as ElementoCanvasEditor
           const recursoCapa = elemento.tipo === 'imagen' ? biblioteca.find((item) => item.id === elemento.recurso_id) : null
-          const resumen = elemento.tipo === 'imagen' ? recursoCapa?.titulo ?? 'Imagen' : textoPlano(elemento.contenido ?? '') || nombreCapa(elemento)
+          const resumen = elemento.fondo_visual ? 'Fondo editable' : elemento.tipo === 'imagen' ? recursoCapa?.titulo ?? 'Imagen' : textoPlano(elemento.contenido ?? '') || nombreCapa(elemento)
           const accionesAbiertas = capaAccionesAbiertas === elemento.id
           return <div key={elemento.id} data-pastoral-layer-row="true" data-pastoral-layer-id={elemento.id} className="relative overflow-hidden border-b border-slate-100 last:border-b-0">
             <div className={`absolute inset-y-0 right-2 flex items-center gap-2 transition-opacity duration-150 ${accionesAbiertas ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`} aria-hidden={!accionesAbiertas}>
@@ -829,14 +839,14 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
             <div data-pastoral-layer-content="true" onTouchStart={(event) => iniciarSwipeCapa(event, elemento.id)} onTouchMove={(event) => moverSwipeCapa(event, elemento.id)} onTouchEnd={(event) => terminarSwipeCapa(event, elemento.id)} className={`relative flex min-h-14 items-center transition-[transform,background-color] duration-200 ${seleccion === elemento.id ? 'bg-indigo-50' : 'bg-white'}`} style={{ transform: accionesAbiertas ? `translateX(-${DESPLAZAMIENTO_ACCIONES_CAPA}px)` : 'translateX(0)' }}>
               <button type="button" onClick={() => alternarVisibilidadCapa(elemento.id)} className="grid h-11 w-11 shrink-0 place-items-center text-slate-500" aria-label={elemento.oculto ? `Mostrar ${nombreCapa(elemento)}` : `Ocultar ${nombreCapa(elemento)}`} aria-pressed={!elemento.oculto}>{elemento.oculto ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
               <button type="button" onClick={() => { setSeleccion(elemento.id); setCapaAccionesAbiertas(null) }} className="flex min-w-0 flex-1 items-center gap-3 px-1 py-2 text-left">
-                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500">{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.tipo === 'versiculo' ? <BookOpen className="h-4 w-4" /> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Type className="h-4 w-4" />}</span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500">{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.fondo_visual ? <Square className="h-4 w-4" /> : elemento.tipo === 'versiculo' ? <BookOpen className="h-4 w-4" /> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Type className="h-4 w-4" />}</span>
                 <span className="min-w-0 flex-1"><strong className="flex items-center gap-1 truncate text-xs font-bold text-slate-700">{nombreCapa(elemento)}{elemento.bloqueado && <Lock className="h-3 w-3 shrink-0 text-slate-400" />}</strong><small className="block truncate text-[10px] text-slate-400">{resumen}</small></span>
               </button>
               <button type="button" data-pastoral-layer-drag-handle="true" disabled={elemento.bloqueado} onPointerDown={(event) => iniciarArrastreCapa(event, elemento.id)} onPointerMove={(event) => moverArrastreCapa(event, elemento.id)} onPointerUp={(event) => terminarArrastreCapa(event, elemento.id)} onPointerCancel={cancelarArrastreCapa} className="grid h-12 w-10 shrink-0 touch-none place-items-center text-slate-400 disabled:opacity-25" aria-label={`Mover capa ${nombreCapa(elemento)}`} title="Arrastra para subir o bajar"><GripVertical className="h-5 w-5" /></button>
             </div>
           </div>
         })}
-        <div className="flex min-h-14 items-center bg-slate-50/70 px-3 text-slate-500"><span className="grid h-10 w-10 place-items-center"><Lock className="h-4 w-4" /></span><span className="ml-2 min-w-0 flex-1"><strong className="block text-xs font-bold">Fondo de página</strong><small className="block truncate text-[10px] text-slate-400">{pagina.fondo_modo === 'imagen' ? 'Imagen de fondo · bloqueada' : 'Base fija del lienzo'}</small></span>{pagina.fondo_modo === 'imagen' && (pagina.fondo_recurso_id ?? pagina.recurso_id) && <button type="button" onClick={desbloquearFondo} className="grid h-10 w-10 place-items-center rounded-full text-indigo-600" aria-label="Desbloquear fondo" title="Convertir el fondo en una capa editable"><Unlock className="h-4 w-4" /></button>}</div>
+        <div className="flex min-h-14 items-center bg-slate-50/70 px-3 text-slate-500"><span className="grid h-10 w-10 place-items-center"><Lock className="h-4 w-4" /></span><span className="ml-2 min-w-0 flex-1"><strong className="block text-xs font-bold">Fondo de página</strong><small className="block truncate text-[10px] text-slate-400">{fondoVisualDesbloqueado ? 'Fondo editable en capas' : pagina.fondo_modo === 'imagen' ? 'Imagen de fondo · bloqueada' : 'Tema o plantilla · bloqueado'}</small></span>{!fondoVisualDesbloqueado && <button type="button" onClick={desbloquearFondo} className="grid h-10 w-10 place-items-center rounded-full text-indigo-600" aria-label="Desbloquear fondo" title="Convertir el fondo en una capa editable"><Unlock className="h-4 w-4" /></button>}</div>
       </div>
       <p className="px-1 text-[10px] leading-4 text-slate-400">Arrastra ⋮ para cambiar el orden. Desliza una capa a la izquierda para duplicar, bloquear o eliminar.</p>
     </div>}
@@ -849,7 +859,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   return <div className="pastoral-content-workspace pastoral-canva-workspace pastoral-editor-v3 pastoral-editor-v4 text-slate-900">
     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { subirImagen(event.target.files?.[0]); event.currentTarget.value = '' }} />
     <header className="sticky top-0 z-50 -mx-4 bg-[#f8f8f6]/96 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-      <div className="flex items-center gap-2"><input dir="ltr" value={titulo} onFocus={registrarHistorial} onChange={(event) => setTitulo(event.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none sm:text-lg" /><button type="button" onClick={deshacer} disabled={!undoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Deshacer"><Undo2 className="h-4 w-4" /></button><button type="button" onClick={rehacer} disabled={!redoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Rehacer"><Redo2 className="h-4 w-4" /></button>{guardandoAuto ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" aria-label="Guardando automáticamente" /> : guardado ? <Check className="h-4 w-4 text-emerald-600" /> : null}<button type="button" onClick={guardar} disabled={isPending} className="grid h-10 w-10 place-items-center rounded-full text-[#C0392B] disabled:opacity-60" aria-label="Guardar proyecto">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}</button></div>
+      <div className="flex items-center gap-2"><button type="button" onClick={() => router.back()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-600" aria-label="Volver al Centro Pastoral" title="Atrás"><ChevronLeft className="h-5 w-5" /></button><input dir="ltr" value={titulo} onFocus={registrarHistorial} onChange={(event) => setTitulo(event.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none sm:text-lg" /><button type="button" onClick={deshacer} disabled={!undoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Deshacer"><Undo2 className="h-4 w-4" /></button><button type="button" onClick={rehacer} disabled={!redoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Rehacer"><Redo2 className="h-4 w-4" /></button>{guardandoAuto ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" aria-label="Guardando automáticamente" /> : guardado ? <Check className="h-4 w-4 text-emerald-600" /> : null}<button type="button" onClick={guardar} disabled={isPending} className="grid h-10 w-10 place-items-center rounded-full text-[#C0392B] disabled:opacity-60" aria-label="Guardar proyecto">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}</button></div>
       <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><button type="button" onClick={() => cambiarVista('congregacion')} className={vista === 'congregacion' ? 'text-[#C0392B]' : ''}>Congregación</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><select value={indice} onChange={(event) => { setIndice(Number(event.target.value)); setSeleccion(null); setCapaAccionesAbiertas(null) }} aria-label={`Página ${indice + 1} de ${paginas.length}`} className="h-9 min-w-[48px] rounded-full border border-slate-200 bg-white px-1 text-center text-[10px] font-black text-slate-600 outline-none">{paginas.map((_, i) => <option key={i} value={i}>{i + 1}/{paginas.length}</option>)}</select><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
     </header>
 
@@ -865,11 +875,11 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       </div>
     </section>}
 
-    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black' : 'relative pb-10 pt-5'}>{!modoPresentacion && <div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Mismo lienzo y formato, sin reconstruir diapositivas.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>}{modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}<div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} /></div><button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronRight className="h-5 w-5" /></button></section>}
+    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black' : 'relative pb-10 pt-5'}>{!modoPresentacion && <div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Mismo lienzo y formato, sin reconstruir diapositivas.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>}{modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}<div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport={modoPresentacion} /></div><button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronRight className="h-5 w-5" /></button></section>}
 
-    {vista === 'congregacion' && pagina && <section className="pb-10 pt-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">Exactamente la misma composición que se proyectará.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} />{modoPresentacion && <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black"><button type="button" onClick={cerrarPantallaCompleta} className="absolute right-3 top-3 z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white"><Minimize2 className="h-5 w-5" /></button><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} /></div>}</section>}
+    {vista === 'congregacion' && pagina && <section className="pb-10 pt-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">Exactamente la misma composición que se proyectará.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} />{modoPresentacion && <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black"><button type="button" onClick={cerrarPantallaCompleta} className="absolute right-3 top-3 z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white"><Minimize2 className="h-5 w-5" /></button><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport /></div>}</section>}
 
-    {vista === 'publicar' && <section className="pastoral-share-view space-y-4 pb-10 pt-5"><PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /><div className="pastoral-share-actions"><button type="button" onClick={() => window.print()}><FileDown /><span>PDF</span></button><button type="button" onClick={compartirInterno}><Share2 /><span>Compartir</span></button><button type="button" onClick={copiarEnlaceActual}><Link2 /><span>Copiar enlace</span></button></div><p className="text-[11px] leading-5 text-slate-500">El enlace actual conserva el acceso de VIDA. Un enlace público para redes/WhatsApp y el control remoto OBS/proyector requieren una capa segura de publicación y emparejamiento; no se exponen anónimamente todavía.</p></section>}
+    {vista === 'publicar' && <section className="pastoral-share-view space-y-4 pb-10 pt-5">{pagina && <div className="grid gap-3"><div className="flex items-center justify-between gap-3"><div><strong className="block text-sm">Vista de presentación</strong><span className="text-[11px] text-slate-500">Así se verá en el proyector con el formato actual.</span></div><button type="button" onClick={abrirPresentacionDesdeCompartir} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700"><Maximize2 className="h-4 w-4" /> Presentación</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} /></div>}<PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /><div className="pastoral-share-actions"><button type="button" onClick={() => window.print()}><FileDown /><span>PDF</span></button><button type="button" onClick={compartirInterno}><Share2 /><span>Compartir</span></button><button type="button" onClick={copiarEnlaceActual}><Link2 /><span>Copiar enlace</span></button></div><p className="text-[11px] leading-5 text-slate-500">El enlace actual conserva el acceso de VIDA. Un enlace público para redes/WhatsApp y el control remoto OBS/proyector requieren una capa segura de publicación y emparejamiento; no se exponen anónimamente todavía.</p></section>}
 
     <div className="pastoral-print-deck hidden print:block">{paginas.map((item, i) => <section key={i} className="pastoral-print-page"><PastoralVisualCanvas pagina={item} biblioteca={biblioteca} /></section>)}</div>
   </div>
