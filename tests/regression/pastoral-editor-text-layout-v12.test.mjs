@@ -23,12 +23,12 @@ test('Herramientas de Texto prioriza estilo, barra horizontal y Fuente desplegab
   assert.doesNotMatch(workspace, /grupoTextoAbierto|alternarGrupoTexto/)
 })
 
-test('A+ crea texto y Título Subtítulo Cuerpo solo cambian el texto seleccionado', () => {
+test('A+ crea texto y Título Subtítulo Cuerpo solo cambian el texto seleccionado desbloqueado', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
   assert.match(texto, /aria-label="Agregar texto"/)
   assert.match(texto, /<span className="text-base font-black">A<\/span><span className="text-sm font-black">\+<\/span>/)
   assert.match(texto, /ESTILOS_TEXTO\.filter\(\(item\) => item\.id !== 'libre'\)\.map/)
-  assert.match(texto, /disabled=\{!textoSeleccionado\}[\s\S]*onClick=\{\(\) => aplicarRolTexto\(estilo\.id\)\}/)
+  assert.match(texto, /disabled=\{!textoSeleccionado \|\| textoSeleccionado\.bloqueado\}[\s\S]*onClick=\{\(\) => aplicarRolTexto\(estilo\.id\)\}/)
   for (const entrada of [
     "{ id: 'titulo', label: 'Título'",
     "{ id: 'subtitulo', label: 'Subtítulo'",
@@ -36,7 +36,7 @@ test('A+ crea texto y Título Subtítulo Cuerpo solo cambian el texto selecciona
   ]) assert.ok(model.includes(entrada))
   assert.match(texto, /min-h-12/)
   assert.doesNotMatch(texto, /Opciones de estilo de texto[\s\S]{0,1000}rounded-full/)
-  assert.match(workspace, /if \(!textoSeleccionado\) return\n    if \(textoSeleccionado\.rol === rol\) return actualizarElemento\(textoSeleccionado\.id, \{ rol: 'libre' \}\)/)
+  assert.match(workspace, /if \(!textoSeleccionado \|\| textoSeleccionado\.bloqueado\) return\n    if \(textoSeleccionado\.rol === rol\) return actualizarElemento\(textoSeleccionado\.id, \{ rol: 'libre' \}\)/)
   assert.doesNotMatch(workspace, /if \(!textoSeleccionado\) return agregarTexto\(rol\)/)
 })
 
@@ -95,18 +95,52 @@ test('la caja usa el tirador de esquina para redimensionar sin un segundo botón
   assert.doesNotMatch(canvas, /const ajustarTextoAlContenido/)
 })
 
-test('Capas usa lista vertical con visibilidad persistente y conserva acciones existentes', () => {
+test('Capas usa pipeline por arrastre y swipe con visibilidad, bloqueo y acciones circulares', () => {
   const capas = workspace.slice(workspace.indexOf("panel === 'capas'"), workspace.indexOf("panel === 'ajustes'"))
   assert.match(capas, /aria-label="Lista vertical de capas"/)
   assert.match(capas, /alternarVisibilidadCapa\(elemento\.id\)/)
   assert.match(capas, /<EyeOff className=/)
   assert.match(capas, /<Eye className=/)
   assert.match(capas, /Fondo de página/)
-  for (const accion of ['Duplicar', 'Adelante', 'Atrás', 'Eliminar']) assert.ok(capas.includes(accion))
+  assert.match(capas, /<GripVertical className=/)
+  assert.match(capas, /iniciarArrastreCapa\(event, elemento\.id\)/)
+  assert.match(capas, /moverArrastreCapa\(event, elemento\.id\)/)
+  assert.match(capas, /translateX\(-132px\)/)
+  assert.match(capas, /duplicarElemento\(elemento\.id\)/)
+  assert.match(capas, /alternarBloqueoCapa\(elemento\.id\)/)
+  assert.match(capas, /eliminarElemento\(elemento\.id\)/)
+  assert.doesNotMatch(capas, />Adelante</)
+  assert.doesNotMatch(capas, />Atrás</)
+  assert.doesNotMatch(capas, /\{elemento\.z\}<\/small>/)
   assert.match(model, /oculto\?: boolean/)
   assert.match(model, /oculto: Boolean\(item\.oculto\)/)
   assert.match(canvas, /display: elemento\.oculto \? 'none' : undefined/)
   assert.match(workspace, /actualizarElemento\(id, \{ oculto: !elemento\.oculto \}\)/)
+})
+
+test('bloqueo de capa impide editar mover y redimensionar sin cambiar el modelo global', () => {
+  assert.match(workspace, /type ElementoCanvasEditor = ElementoCanvas & \{ bloqueado\?: boolean; sombreado\?: boolean \}/)
+  assert.match(workspace, /const alternarBloqueoCapa/)
+  assert.match(canvas, /if \(!editable \|\| elemento\.bloqueado \|\| !lienzoRef\.current\) return/)
+  assert.match(canvas, /editable=\{editable && !bloqueado\}/)
+  assert.match(canvas, /\{activo && !bloqueado && <>/)
+  assert.doesNotMatch(model, /bloqueado\?: boolean/)
+})
+
+test('una imagen colocada puede pasar a fondo y el fondo puede volver a capa editable', () => {
+  assert.match(workspace, /const convertirImagenEnFondo/)
+  assert.match(workspace, /fondo_modo: 'imagen'/)
+  assert.match(workspace, /elementos: \(pagina\.elementos \?\? \[]\)\.filter\(\(item\) => item\.id !== id\)/)
+  assert.match(workspace, /const desbloquearFondo/)
+  assert.match(workspace, /aria-label="Desbloquear fondo"/)
+  assert.match(workspace, /tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0/)
+  assert.match(workspace, /onClick=\{\(\) => elementoSeleccionado\?\.tipo === 'imagen' \? convertirImagenEnFondo\(elementoSeleccionado\.id\) : setDestinoSubida\('fondo'\)\}/)
+})
+
+test('versículos nuevos no fuerzan sombreado y Ajustes permite alternarlo', () => {
+  assert.match(workspace, /tipo: 'versiculo'[\s\S]*sombreado: false/)
+  assert.match(workspace, /Sombreado: \{elementoSeleccionado\.sombreado \? 'Activado' : 'Desactivado'\}/)
+  assert.match(canvas, /elemento\.tipo === 'versiculo' && elemento\.sombreado/)
 })
 
 test('Justificado se representa y persiste sin degradarse a izquierda', () => {
