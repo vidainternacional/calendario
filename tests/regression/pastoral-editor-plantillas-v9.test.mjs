@@ -15,7 +15,8 @@ test('carruseles de Plantillas admiten gesto horizontal', () => {
   assert.match(css, /-webkit-overflow-scrolling: touch !important/)
 })
 
-test('dock usa seis columnas sin ocultamientos por nth-child', () => {
-  assert.match(css, /repeat\(6, minmax\(0, 1fr\)\)/)
+test('dock usa tres píldoras centradas sin ocultamientos por nth-child', () => {
+  assert.match(css, /pastoral-tool-dock[\s\S]*display: flex !important[\s\S]*justify-content: center !important/)
+  assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*border-radius: 999px !important/)
   assert.doesNotMatch(css, /tool-button:nth-child\(5\)[\s\S]*display: none/)
 })
