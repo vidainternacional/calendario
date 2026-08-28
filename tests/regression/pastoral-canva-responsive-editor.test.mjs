@@ -7,9 +7,19 @@ const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4
 const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-stable.css', 'utf8')
 const presets = fs.readFileSync('components/pastoral/pastoral-editor-presets.ts', 'utf8')
 
-test('Centro Pastoral activa el workspace integrado v4 estable', () => {
+test('Centro Pastoral fija el lienzo y desplaza únicamente las herramientas inferiores', () => {
   assert.match(wrapper, /PastoralVisualWorkspaceV4/)
-  assert.match(workspace, /pastoral-editor-shell has-panel/)
+  assert.match(workspace, /pastoral-editor-shell-flow/)
+  assert.match(workspace, /pastoral-stage-flow/)
+  assert.match(workspace, /pastoral-editor-controls-scroll/)
+  const editar = workspace.slice(workspace.indexOf('pastoral-editor-shell-flow'), workspace.indexOf("vista === 'presentacion'"))
+  const lienzo = editar.indexOf('pastoral-stage-flow')
+  const scroll = editar.indexOf('pastoral-editor-controls-scroll')
+  const grupos = editar.indexOf('pastoral-tool-dock')
+  const submenus = editar.indexOf('pastoral-tool-panel-flow')
+  const paginas = editar.indexOf('pastoral-pages-strip')
+  assert.ok(lienzo >= 0 && scroll > lienzo)
+  assert.ok(grupos > scroll && submenus > grupos && paginas > submenus)
   assert.match(css, /autoridad visual estable del editor/)
 })
 
