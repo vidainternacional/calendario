@@ -130,19 +130,21 @@ function unificarVistaPresentacion() {
   congregacion.hidden = true
   congregacion.style.display = 'none'
 
-  nav.style.display = 'grid'
-  nav.style.gridTemplateColumns = 'minmax(54px, .9fr) minmax(68px, 1fr) auto'
-  nav.style.alignItems = 'center'
-  nav.style.justifyContent = 'stretch'
-  nav.style.gap = '0'
-  nav.style.overflow = 'visible'
-  nav.style.width = '100%'
+  // La hoja visual estable define 4 columnas con !important. Esta geometría inline
+  // es la autoridad móvil actual y reserva una tercera columna real para Compartir + páginas.
+  nav.style.setProperty('display', 'grid', 'important')
+  nav.style.setProperty('grid-template-columns', '50px 72px minmax(0, 1fr)', 'important')
+  nav.style.setProperty('align-items', 'center', 'important')
+  nav.style.setProperty('justify-content', 'stretch', 'important')
+  nav.style.setProperty('gap', '0', 'important')
+  nav.style.setProperty('overflow', 'visible', 'important')
+  nav.style.setProperty('width', '100%', 'important')
 
   ;[editar, presentar].forEach((button) => {
     button.style.width = '100%'
     button.style.minWidth = '0'
     button.style.minHeight = '44px'
-    button.style.padding = '0 2px'
+    button.style.padding = '0 1px'
     button.style.textAlign = 'center'
   })
 
@@ -154,23 +156,24 @@ function unificarVistaPresentacion() {
   grupo.style.justifyContent = 'flex-end'
   grupo.style.minWidth = '0'
   grupo.style.gap = '0'
-  grupo.style.marginLeft = '2px'
+  grupo.style.marginLeft = '0'
+  grupo.style.overflow = 'visible'
 
   const compartir = Array.from(grupo.querySelectorAll<HTMLButtonElement>(':scope > button')).find((button) => button.textContent?.trim() === 'Compartir')
   if (compartir) {
-    compartir.style.width = '74px'
-    compartir.style.minWidth = '74px'
+    compartir.style.width = '66px'
+    compartir.style.minWidth = '66px'
     compartir.style.minHeight = '44px'
-    compartir.style.padding = '0 4px'
-    compartir.style.flex = '0 0 74px'
+    compartir.style.padding = '0 2px'
+    compartir.style.flex = '0 0 66px'
     compartir.style.textAlign = 'center'
   }
 
   const selectorPagina = grupo.querySelector<HTMLSelectElement>('select[aria-label^="Página "]')
   if (!selectorPagina) return
 
-  selectorPagina.style.width = '34px'
-  selectorPagina.style.minWidth = '34px'
+  selectorPagina.style.width = '30px'
+  selectorPagina.style.minWidth = '30px'
   selectorPagina.style.height = '44px'
   selectorPagina.style.padding = '0'
   selectorPagina.style.border = '0'
@@ -181,7 +184,7 @@ function unificarVistaPresentacion() {
   selectorPagina.style.fontSize = '12px'
   selectorPagina.style.fontWeight = '800'
   selectorPagina.style.textAlign = 'center'
-  selectorPagina.style.flex = '0 0 34px'
+  selectorPagina.style.flex = '0 0 30px'
   selectorPagina.style.setProperty('appearance', 'none')
   selectorPagina.style.setProperty('-webkit-appearance', 'none')
 
@@ -191,17 +194,17 @@ function unificarVistaPresentacion() {
     button.dataset.pastoralPageStep = String(delta)
     button.setAttribute('aria-label', label)
     button.textContent = simbolo
-    button.style.width = '30px'
-    button.style.minWidth = '30px'
+    button.style.width = '28px'
+    button.style.minWidth = '28px'
     button.style.height = '44px'
     button.style.padding = '0'
     button.style.border = '0'
     button.style.background = 'transparent'
     button.style.color = '#64748b'
-    button.style.fontSize = '23px'
+    button.style.fontSize = '22px'
     button.style.fontWeight = '400'
     button.style.lineHeight = '1'
-    button.style.flex = '0 0 30px'
+    button.style.flex = '0 0 28px'
     button.addEventListener('click', () => {
       const actual = Number(selectorPagina.value)
       const maximo = Math.max(0, selectorPagina.options.length - 1)
@@ -232,11 +235,11 @@ function unificarVistaPresentacion() {
   siguiente.style.opacity = siguiente.disabled ? '.24' : '1'
 
   grupo.querySelectorAll<HTMLButtonElement>(':scope > button[aria-label="Nueva página"], :scope > button[aria-label^="Eliminar Página "]').forEach((button) => {
-    button.style.width = '34px'
-    button.style.minWidth = '34px'
+    button.style.width = '32px'
+    button.style.minWidth = '32px'
     button.style.height = '44px'
     button.style.padding = '0'
-    button.style.flex = '0 0 34px'
+    button.style.flex = '0 0 32px'
   })
 }
 
