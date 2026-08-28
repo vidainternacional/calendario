@@ -25,10 +25,11 @@ test('En blanco modifica la página actual y solo el control superior crea pági
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
-test('Texto conserva controles grandes y scroll de su superficie', () => {
+test('Texto conserva controles grandes y usa el único scroll inferior del editor', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  assert.match(texto, /overflow-y-auto/)
+  assert.match(texto, /overflow-visible/)
   assert.match(texto, /min-h-11/)
+  assert.match(workspace, /pastoral-editor-controls-scroll min-h-0 flex-1 overflow-y-auto/)
 })
 
 test('Tamaño e interlineado tienen controles táctiles React en la cinta horizontal', () => {
