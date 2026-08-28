@@ -40,9 +40,12 @@ test('el layout conserva stable después de V3 y los realces funcionales actuale
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
-test('la arquitectura real del dock contiene solo las seis herramientas aprobadas', () => {
-  assert.match(workspace, /type Herramienta = 'plantillas' \| 'recursos' \| 'texto' \| 'biblia' \| 'diseno' \| 'capas'/)
-  assert.doesNotMatch(workspace, /id: 'fondo', label: 'Fondo'/)
+test('la arquitectura real del dock contiene solo los tres grupos principales aprobados', () => {
+  assert.match(workspace, /type GrupoPrincipal = 'plantillas' \| 'texto' \| 'capas'/)
+  const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
+  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  assert.doesNotMatch(dock, /Elementos|Biblia|Diseño|Fondo|Párrafo|Borrar/)
+  assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
   assert.match(workspace, /Crear una página nueva en blanco/)
   assert.doesNotMatch(workspace, /Tema .* aplicado|Plantilla .* aplicada/)
 })
