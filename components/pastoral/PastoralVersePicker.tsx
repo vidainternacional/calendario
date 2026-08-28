@@ -209,9 +209,12 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
             </div>
           </>
         ) : <>
-          <select aria-label="Traducción" value={trad} onChange={e => setTrad(e.target.value)}>
-            {traducciones.map(t => <option key={t.id} value={t.id}>{t.shortName || t.name}</option>)}
-          </select>
+          <label className="relative inline-flex min-h-10 min-w-[92px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700" title={traduccionActual?.name ?? 'Biblia'}>
+            <span className="pointer-events-none block max-w-[92px] truncate">{etiquetaTraduccion(traduccionActual)}</span>
+            <select aria-label="Traducción" value={trad} onChange={e => setTrad(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0">
+              {traducciones.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
           <select aria-label="Libro" value={libro} onChange={e => { setLibro(e.target.value); setCapitulo(1) }}>
             {libros.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
@@ -236,8 +239,8 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           const activo = seleccionados.includes(v.verso)
           return <article key={v.verso} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
-              <span className={`pastoral-verse-check ${activo ? 'is-active' : ''}`}>{activo && <Check />}</span>
-              <span><strong>{v.referencia}</strong><em>{v.texto}</em></span>
+              <span className="min-w-0 flex-1"><strong>{v.referencia}</strong><em>{v.texto}</em></span>
+              <span className={`pastoral-verse-check ml-auto shrink-0 ${activo ? 'is-active' : ''}`} style={activo ? { backgroundColor: '#16a34a', borderColor: '#16a34a', color: '#ffffff' } : undefined}>{activo && <Check />}</span>
             </button>
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
