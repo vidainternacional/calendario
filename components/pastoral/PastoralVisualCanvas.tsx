@@ -182,8 +182,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         className={`pastoral-visual-canvas relative w-full overflow-hidden bg-white shadow-sm ${editable ? 'touch-pan-y ring-1 ring-slate-200' : ''}`}
         style={{ aspectRatio: aspectoLienzo(pagina.formato), maxWidth: `${baseWidth}px`, background, color: pagina.color_texto, containerType: 'inline-size' }}
       >
-        {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />}
-        {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <div className="pointer-events-none absolute inset-0 bg-black/15" />}
+        {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />}
         {(pagina.elementos ?? []).slice().sort((a, b) => a.z - b.z).map((elementoBase) => {
           const elemento = elementoBase as ElementoCanvasEditor
           const activo = editable && seleccion === elemento.id
