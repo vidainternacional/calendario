@@ -11,15 +11,21 @@ test('aplicar Plantilla o Tema no solicita toast de confirmación', () => {
   assert.doesNotMatch(workspace, /Tema “\$\{paleta\.label\}” aplicado|Plantilla “\$\{plantilla\.nombre\}” aplicada/)
 })
 
-test('Plantillas ofrece En blanco nativo que crea una página nueva', () => {
-  assert.match(workspace, /Crear una página nueva en blanco/)
-  assert.match(workspace, /onClick=\{nuevaPagina\}/)
+test('En blanco modifica la página actual y solo el control superior crea página', () => {
+  const inicio = workspace.indexOf('pastoral-template-blank-option')
+  const blanco = workspace.slice(Math.max(0, inicio - 420), inicio + 260)
+  assert.match(blanco, /actualizarPagina/)
+  assert.doesNotMatch(blanco, /nuevaPagina/)
+  assert.match(workspace, /Aplicar plantilla en blanco a la página actual/)
+  assert.equal((workspace.match(/onClick=\{nuevaPagina\}/g) ?? []).length, 1)
+  assert.match(workspace, /aria-label="Nueva página"/)
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
-test('Texto conserva controles grandes y scroll horizontal', () => {
-  assert.match(css, /pastoral-text-tools-row[\s\S]*overflow-x: auto !important/)
-  assert.match(css, /panel-texto \.pastoral-inline-icon[\s\S]*width: 54px !important[\s\S]*height: 54px !important/)
+test('Texto conserva controles grandes y scroll de su superficie', () => {
+  const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
+  assert.match(texto, /overflow-y-auto/)
+  assert.match(texto, /min-h-11/)
 })
 
 test('Tamaño e interlineado tienen steppers táctiles React', () => {
@@ -29,14 +35,17 @@ test('Tamaño e interlineado tienen steppers táctiles React', () => {
   assert.match(workspace, /aria-label="Aumentar interlineado"/)
 })
 
-test('Caja queda alineada con Título Subtítulo y Cuerpo', () => {
-  assert.match(css, /pastoral-text-presets[\s\S]*repeat\(4, minmax\(0, 1fr\)\)/)
+test('Caja queda disponible junto a Título Subtítulo y Cuerpo', () => {
+  const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
+  for (const label of ['Caja', 'Título', 'Subtítulo', 'Cuerpo']) assert.match(texto, new RegExp(label))
   assert.doesNotMatch(workspace, /<Plus \/> Caja/)
 })
 
-test('página activa queda libre y primera página inicia a la izquierda', () => {
-  assert.match(css, /pastoral-pages-strip[\s\S]*justify-content: flex-start/)
-  assert.match(css, /pastoral-page-chip\.is-active[\s\S]*background: transparent/)
+test('página activa se elige arriba y ya no existe la faja inferior', () => {
+  assert.match(workspace, /<select value=\{indice\}/)
+  assert.match(workspace, /\{i \+ 1\}\/\{paginas\.length\}/)
+  assert.doesNotMatch(workspace, /pastoral-pages-strip/)
+  assert.match(css, /pastoral-pages-strip/)
 })
 
 test('cursiva usa variante real y evita síntesis tipográfica en el renderer', () => {
