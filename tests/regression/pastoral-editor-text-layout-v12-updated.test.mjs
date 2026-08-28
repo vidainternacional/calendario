@@ -36,13 +36,19 @@ test('A+ crea texto y Título Subtítulo Cuerpo solo cambian el texto selecciona
   assert.doesNotMatch(workspace, /if \(!textoSeleccionado\) return agregarTexto\(rol\)/)
 })
 
-test('Plantillas aplican estilo con escala inicial segura sin alterar geometría aprobada y Temas no cambian su fuente', () => {
+test('Plantillas aplican composición real con escala inicial moderada y límites seguros', () => {
   const plantilla = workspace.slice(workspace.indexOf('const aplicarPlantilla'), workspace.indexOf('const nuevaPagina'))
   const rama = plantilla.slice(plantilla.indexOf('if (tieneTextoUsuario)'), plantilla.indexOf('const imagenesActuales'))
   const paleta = workspace.slice(workspace.indexOf('const aplicarPaleta'), workspace.indexOf('const aplicarPlantilla'))
+  assert.match(workspace, /const tamanoPlantillaCanvas = \(pt: number\) => Math\.max\(9, Math\.round\(pt \* \.56\)\)/)
   assert.match(plantilla, /const tieneTextoUsuario = textos\.some/)
   assert.match(rama, /if \(elemento\.tipo === 'imagen'\) return elemento/)
-  assert.doesNotMatch(rama, /x: layout\.x|y: layout\.y|w: layout\.w|h: layout\.h/)
+  assert.match(rama, /const x = clamp\(layout\.x, 0, 95\)/)
+  assert.match(rama, /const y = clamp\(layout\.y, 0, 95\)/)
+  assert.match(rama, /\n          rol,\n          x,\n          y,/)
+  assert.match(rama, /w: clamp\(layout\.w, 5, 100 - x\)/)
+  assert.match(rama, /h: clamp\(layout\.h, 5, 100 - y\)/)
+  assert.doesNotMatch(rama, /\?\? layoutsDisponibles\[layoutsDisponibles\.length - 1\]/)
   assert.match(rama, /tamano_fuente: tamanoPlantillaCanvas\(layout\.pt\)/)
   assert.match(rama, /alineacion: layout\.alineacion/)
   assert.match(rama, /fuente: layout\.fuente/)
@@ -88,7 +94,7 @@ test('la caja usa el tirador de esquina para redimensionar sin un segundo botón
   assert.doesNotMatch(canvas, /aria-label="Ajustar caja al texto"|const ajustarTextoAlContenido/)
 })
 
-test('Capas usa pipeline por arrastre y swipe con visibilidad, bloqueo y acciones circulares', () => {
+test('Capas usa pipeline por arrastre acotado y swipe con visibilidad bloqueo y acciones circulares', () => {
   const capas = workspace.slice(workspace.indexOf("panel === 'capas'"), workspace.indexOf("panel === 'ajustes'"))
   assert.match(capas, /aria-label="Lista vertical de capas"/)
   assert.match(capas, /alternarVisibilidadCapa\(elemento\.id\)/)
@@ -108,6 +114,10 @@ test('Capas usa pipeline por arrastre y swipe con visibilidad, bloqueo y accione
   assert.match(model, /oculto\?: boolean/)
   assert.match(model, /oculto: Boolean\(item\.oculto\)/)
   assert.match(canvas, /display: elemento\.oculto \? 'none' : undefined/)
+  const mover = workspace.slice(workspace.indexOf('const moverArrastreCapa ='), workspace.indexOf('const terminarArrastreCapa ='))
+  assert.match(mover, /const deltaMinimo = -arrastre\.indiceOrigen \* arrastre\.altoFila/)
+  assert.match(mover, /const deltaMaximo = \(arrastre\.ordenIds\.length - 1 - arrastre\.indiceOrigen\) \* arrastre\.altoFila/)
+  assert.match(mover, /const delta = Math\.max\(deltaMinimo, Math\.min\(deltaMaximo, deltaLibre\)\)/)
   const terminar = workspace.slice(workspace.indexOf('const terminarArrastreCapa ='), workspace.indexOf('const cancelarArrastreCapa ='))
   assert.ok(terminar.indexOf('limpiarEstiloArrastre(arrastre)') < terminar.indexOf('fijarOrdenCapaSinHistorial(id, arrastre.indiceDestino)'))
   assert.doesNotMatch(terminar, /requestAnimationFrame/)
@@ -153,7 +163,7 @@ test('la navegación de páginas queda en la cabecera con retorno al Centro Past
   assert.doesNotMatch(workspace, /pastoral-pages-strip/)
 })
 
-test('Compartir conserva solo distribución PDF compartir y enlace; la vista final vive en Presentar', () => {
+test('Compartir conserva solo distribución PDF compartir y enlace; Presentar adapta horizontalmente 16:9 y 4:3', () => {
   const inicioCompartir = workspace.indexOf("{vista === 'publicar' && <section")
   const compartir = workspace.slice(inicioCompartir, workspace.indexOf('pastoral-print-deck', inicioCompartir))
   assert.match(compartir, /PackageDistributionControls/)
@@ -162,10 +172,14 @@ test('Compartir conserva solo distribución PDF compartir y enlace; la vista fin
   assert.match(compartir, /<Link2/)
   assert.doesNotMatch(compartir, /Vista de presentación|<PastoralVisualCanvas|Presentación/)
   assert.doesNotMatch(workspace, /abrirPresentacionDesdeCompartir/)
+  assert.match(workspace, /const \[viewportVertical, setViewportVertical\] = useState\(false\)/)
+  assert.match(workspace, /pagina\?\.formato === '16:9' \|\| pagina\?\.formato === '4:3'/)
+  assert.match(workspace, /transform: 'rotate\(90deg\)'/)
   const inicioPresentar = workspace.indexOf("{vista === 'presentacion' && pagina")
   const presentar = workspace.slice(inicioPresentar, workspace.indexOf("{vista === 'congregacion'", inicioPresentar))
   assert.match(presentar, /Pantalla completa/)
-  assert.match(presentar, /fitViewport=\{modoPresentacion\}/)
+  assert.match(presentar, /presentarHorizontalGirado/)
+  assert.match(presentar, /fitViewport=\{modoPresentacion && !presentarHorizontalGirado\}/)
 })
 
 test('el layout conserva stable después de V3 y los realces funcionales actuales', () => {
