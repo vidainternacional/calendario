@@ -130,18 +130,19 @@ function unificarVistaPresentacion() {
   congregacion.hidden = true
   congregacion.style.display = 'none'
 
-  nav.style.display = 'flex'
+  nav.style.display = 'grid'
+  nav.style.gridTemplateColumns = 'minmax(54px, .9fr) minmax(68px, 1fr) auto'
   nav.style.alignItems = 'center'
-  nav.style.justifyContent = 'space-between'
+  nav.style.justifyContent = 'stretch'
   nav.style.gap = '0'
   nav.style.overflow = 'visible'
   nav.style.width = '100%'
-  nav.style.removeProperty('grid-template-columns')
 
   ;[editar, presentar].forEach((button) => {
-    button.style.flex = '1 1 0'
+    button.style.width = '100%'
     button.style.minWidth = '0'
     button.style.minHeight = '44px'
+    button.style.padding = '0 2px'
     button.style.textAlign = 'center'
   })
 
@@ -150,43 +151,92 @@ function unificarVistaPresentacion() {
 
   grupo.style.display = 'flex'
   grupo.style.alignItems = 'center'
-  grupo.style.justifyContent = 'space-between'
-  grupo.style.flex = '2.35 1 0'
+  grupo.style.justifyContent = 'flex-end'
   grupo.style.minWidth = '0'
   grupo.style.gap = '0'
+  grupo.style.marginLeft = '2px'
 
   const compartir = Array.from(grupo.querySelectorAll<HTMLButtonElement>(':scope > button')).find((button) => button.textContent?.trim() === 'Compartir')
   if (compartir) {
-    compartir.style.flex = '1 1 0'
-    compartir.style.minWidth = '0'
+    compartir.style.width = '74px'
+    compartir.style.minWidth = '74px'
     compartir.style.minHeight = '44px'
+    compartir.style.padding = '0 4px'
+    compartir.style.flex = '0 0 74px'
     compartir.style.textAlign = 'center'
   }
 
   const selectorPagina = grupo.querySelector<HTMLSelectElement>('select[aria-label^="Página "]')
-  if (selectorPagina) {
-    selectorPagina.style.width = '44px'
-    selectorPagina.style.minWidth = '44px'
-    selectorPagina.style.height = '44px'
-    selectorPagina.style.padding = '0'
-    selectorPagina.style.border = '0'
-    selectorPagina.style.borderRadius = '0'
-    selectorPagina.style.background = 'transparent'
-    selectorPagina.style.boxShadow = 'none'
-    selectorPagina.style.color = '#475569'
-    selectorPagina.style.fontSize = '12px'
-    selectorPagina.style.fontWeight = '800'
-    selectorPagina.style.textAlign = 'center'
-    selectorPagina.style.setProperty('appearance', 'none')
-    selectorPagina.style.setProperty('-webkit-appearance', 'none')
-  }
+  if (!selectorPagina) return
 
-  grupo.querySelectorAll<HTMLButtonElement>(':scope > button[aria-label="Nueva página"], :scope > button[aria-label^="Eliminar Página "]').forEach((button) => {
-    button.style.width = '44px'
-    button.style.minWidth = '44px'
+  selectorPagina.style.width = '34px'
+  selectorPagina.style.minWidth = '34px'
+  selectorPagina.style.height = '44px'
+  selectorPagina.style.padding = '0'
+  selectorPagina.style.border = '0'
+  selectorPagina.style.borderRadius = '0'
+  selectorPagina.style.background = 'transparent'
+  selectorPagina.style.boxShadow = 'none'
+  selectorPagina.style.color = '#475569'
+  selectorPagina.style.fontSize = '12px'
+  selectorPagina.style.fontWeight = '800'
+  selectorPagina.style.textAlign = 'center'
+  selectorPagina.style.flex = '0 0 34px'
+  selectorPagina.style.setProperty('appearance', 'none')
+  selectorPagina.style.setProperty('-webkit-appearance', 'none')
+
+  const crearNavegadorPagina = (delta: -1 | 1, label: string, simbolo: string) => {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.dataset.pastoralPageStep = String(delta)
+    button.setAttribute('aria-label', label)
+    button.textContent = simbolo
+    button.style.width = '30px'
+    button.style.minWidth = '30px'
     button.style.height = '44px'
     button.style.padding = '0'
-    button.style.flex = '0 0 44px'
+    button.style.border = '0'
+    button.style.background = 'transparent'
+    button.style.color = '#64748b'
+    button.style.fontSize = '23px'
+    button.style.fontWeight = '400'
+    button.style.lineHeight = '1'
+    button.style.flex = '0 0 30px'
+    button.addEventListener('click', () => {
+      const actual = Number(selectorPagina.value)
+      const maximo = Math.max(0, selectorPagina.options.length - 1)
+      const siguiente = Math.min(maximo, Math.max(0, actual + delta))
+      if (siguiente === actual) return
+      selectorPagina.value = String(siguiente)
+      selectorPagina.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    return button
+  }
+
+  let anterior = grupo.querySelector<HTMLButtonElement>('button[data-pastoral-page-step="-1"]')
+  let siguiente = grupo.querySelector<HTMLButtonElement>('button[data-pastoral-page-step="1"]')
+  if (!anterior) {
+    anterior = crearNavegadorPagina(-1, 'Página anterior', '‹')
+    grupo.insertBefore(anterior, selectorPagina)
+  }
+  if (!siguiente) {
+    siguiente = crearNavegadorPagina(1, 'Página siguiente', '›')
+    grupo.insertBefore(siguiente, selectorPagina.nextSibling)
+  }
+
+  const indice = Number(selectorPagina.value)
+  const maximo = Math.max(0, selectorPagina.options.length - 1)
+  anterior.disabled = indice <= 0
+  siguiente.disabled = indice >= maximo
+  anterior.style.opacity = anterior.disabled ? '.24' : '1'
+  siguiente.style.opacity = siguiente.disabled ? '.24' : '1'
+
+  grupo.querySelectorAll<HTMLButtonElement>(':scope > button[aria-label="Nueva página"], :scope > button[aria-label^="Eliminar Página "]').forEach((button) => {
+    button.style.width = '34px'
+    button.style.minWidth = '34px'
+    button.style.height = '44px'
+    button.style.padding = '0'
+    button.style.flex = '0 0 34px'
   })
 }
 
