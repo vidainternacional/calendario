@@ -13,10 +13,11 @@ test('workspace activo usa V4 con base V3 y autoridad stable', () => {
   assert.doesNotMatch(layout, /pastoral-editor-capcut/)
 })
 
-test('dock mantiene solo herramientas principales aprobadas', () => {
+test('dock mantiene solo los tres grupos principales aprobados', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Plantillas', 'Elementos', 'Texto', 'Biblia', 'Diseño', 'Capas']) assert.match(dock, new RegExp(label))
-  assert.doesNotMatch(dock, /Fondo|Párrafo|Borrar/)
+  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(label))
+  assert.doesNotMatch(dock, /Elementos|Biblia|Diseño|Fondo|Párrafo|Borrar/)
+  assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
 })
 
 test('Biblia entra directamente en panel y Plantillas integra Fondos', () => {
