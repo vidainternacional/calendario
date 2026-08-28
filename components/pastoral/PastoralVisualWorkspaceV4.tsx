@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, BookOpen, Check,
-  ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, EyeOff, FileDown, Image as ImageIcon, Italic,
+  AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, BookOpen, Check,
+  ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, EyeOff, FileDown, GripVertical, Image as ImageIcon, Italic,
   Layers, LayoutTemplate, Link2, List, ListOrdered, Loader2, Lock, Maximize2, Minimize2,
   Monitor, Plus, Redo2, Save, Share2, Smartphone, Square, Strikethrough,
-  Trash2, Type, Underline, Undo2, Upload,
+  Trash2, Type, Underline, Undo2, Unlock, Upload,
 } from 'lucide-react'
 import { editarPaquetePastoral } from '@/app/actions/pastoral-paquetes'
 import { subirArchivoBibliotecaPastoral } from '@/app/actions/pastoral-biblioteca'
@@ -37,6 +37,9 @@ type PanelEditor = 'plantillas' | 'temas' | 'fondos' | 'recursos' | 'texto' | 'b
 type ComandoEfectoTexto = 'bold' | 'italic' | 'underline' | 'strikeThrough'
 type ComandoListaTexto = 'insertUnorderedList' | 'insertOrderedList'
 type AtributoInlineVida = 'data-vida-size' | 'data-vida-line-height' | 'data-vida-color'
+type ElementoCanvasEditor = ElementoCanvas & { bloqueado?: boolean; sombreado?: boolean }
+type SwipeCapa = { id: string; x: number; y: number }
+type ArrastreCapa = { id: string; y: number; historial: boolean }
 type EstadoFormatoSeleccion = {
   seleccionActiva: boolean
   bold: boolean
@@ -119,6 +122,18 @@ function esTextoMuestraPlantilla(elemento: ElementoCanvas) {
     contenido === textoMuestraPlantilla(plantilla, 'cuerpo'))
 }
 
+function normalizarPaginaEditor(item: DiapositivaCanvas) {
+  const normal = normalizarPaginaCanvas(item)
+  const originales = new Map((item.elementos ?? []).map((elemento) => [elemento.id, elemento as ElementoCanvasEditor]))
+  return {
+    ...normal,
+    elementos: (normal.elementos ?? []).map((elemento) => {
+      const original = originales.get(elemento.id)
+      return { ...elemento, bloqueado: Boolean(original?.bloqueado), sombreado: Boolean(original?.sombreado) } as ElementoCanvasEditor
+    }),
+  }
+}
+
 export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paquete: Paquete; coleccion: unknown; biblioteca: RecursoPastoral[] }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -127,11 +142,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const touchStart = useRef(0)
   const autosaveReadyRef = useRef(false)
   const autosaveSerialRef = useRef(0)
+  const capaSwipeRef = useRef<SwipeCapa | null>(null)
+  const capaDragRef = useRef<ArrastreCapa | null>(null)
   const [vista, setVista] = useState<VistaLienzo>('contenido')
   const [grupoPrincipal, setGrupoPrincipal] = useState<GrupoPrincipal | null>('plantillas')
   const [panel, setPanel] = useState<PanelEditor | null>('plantillas')
   const [titulo, setTitulo] = useState(paquete.titulo)
-  const [paginas, setPaginas] = useState<DiapositivaCanvas[]>(paquete.presentacion_diapositivas?.length ? paquete.presentacion_diapositivas.map(normalizarPaginaCanvas) : [nuevaPaginaCanvas()])
+  const [paginas, setPaginas] = useState<DiapositivaCanvas[]>(paquete.presentacion_diapositivas?.length ? paquete.presentacion_diapositivas.map(normalizarPaginaEditor) : [nuevaPaginaCanvas()])
   const [indice, setIndice] = useState(0)
   const [seleccion, setSeleccion] = useState<string | null>(null)
   const [modoPresentacion, setModoPresentacion] = useState(false)
@@ -142,13 +159,14 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [estadoFormatoSeleccion, setEstadoFormatoSeleccion] = useState<EstadoFormatoSeleccion>(ESTADO_FORMATO_VACIO)
   const [tecladoAbierto, setTecladoAbierto] = useState(false)
   const [tecladoInset, setTecladoInset] = useState(0)
+  const [capaAccionesAbiertas, setCapaAccionesAbiertas] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [, startSubida] = useTransition()
   const [destinoSubida, setDestinoSubida] = useState<DestinoSubida>('elemento')
   const [recursoPendiente, setRecursoPendiente] = useState<{ id: string; destino: DestinoSubida } | null>(null)
   const [versionHistorial, setVersionHistorial] = useState(0)
   const pagina = paginas[indice] ?? paginas[0]
-  const elementoSeleccionado = pagina?.elementos?.find((item) => item.id === seleccion) ?? null
+  const elementoSeleccionado = (pagina?.elementos?.find((item) => item.id === seleccion) ?? null) as ElementoCanvasEditor | null
   const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' ? elementoSeleccionado : null
   const imagenes = useMemo(() => biblioteca.filter((item) => item.mime_type?.startsWith('image/') && item.acceso_url), [biblioteca])
   const recursosFiltrados = useMemo(() => {
@@ -192,7 +210,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const snapshot = (): Snapshot => ({ titulo, paginas: clonar(paginas), indice })
   const registrarHistorial = () => { undoRef.current = [...undoRef.current.slice(-(MAX_HISTORIAL - 1)), snapshot()]; redoRef.current = []; setVersionHistorial((v) => v + 1) }
-  const restaurar = (s: Snapshot) => { setTitulo(s.titulo); setPaginas(clonar(s.paginas)); setIndice(Math.min(s.indice, s.paginas.length - 1)); setSeleccion(null) }
+  const restaurar = (s: Snapshot) => { setTitulo(s.titulo); setPaginas(clonar(s.paginas)); setIndice(Math.min(s.indice, s.paginas.length - 1)); setSeleccion(null); setCapaAccionesAbiertas(null) }
   const deshacer = () => { const anterior = undoRef.current.pop(); if (!anterior) return; redoRef.current.push(snapshot()); restaurar(anterior); setVersionHistorial((v) => v + 1) }
   const rehacer = () => { const siguiente = redoRef.current.pop(); if (!siguiente) return; undoRef.current.push(snapshot()); restaurar(siguiente); setVersionHistorial((v) => v + 1) }
 
@@ -208,12 +226,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const patchPaginaSinHistorial = (patch: Partial<DiapositivaCanvas>) => setPaginas((actuales) => actuales.map((item, i) => i === indice ? { ...item, ...patch } : item))
   const actualizarPagina = (patch: Partial<DiapositivaCanvas>) => { registrarHistorial(); patchPaginaSinHistorial(patch) }
-  const patchElementoSinHistorial = (id: string, patch: Partial<ElementoCanvas>) => setPaginas((actuales) => actuales.map((item, i) => i === indice ? { ...item, elementos: (item.elementos ?? []).map((el) => el.id === id ? { ...el, ...patch } : el) } : item))
-  const actualizarElemento = (id: string, patch: Partial<ElementoCanvas>) => { registrarHistorial(); patchElementoSinHistorial(id, patch) }
+  const patchElementoSinHistorial = (id: string, patch: Partial<ElementoCanvasEditor>) => setPaginas((actuales) => actuales.map((item, i) => i === indice ? { ...item, elementos: (item.elementos ?? []).map((el) => el.id === id ? { ...el, ...patch } : el) } : item))
+  const actualizarElemento = (id: string, patch: Partial<ElementoCanvasEditor>) => { registrarHistorial(); patchElementoSinHistorial(id, patch) }
 
-  const agregarElemento = (elemento: Partial<ElementoCanvas>) => {
+  const agregarElemento = (elemento: Partial<ElementoCanvasEditor>) => {
     registrarHistorial()
-    const nuevo = normalizarElementoCanvas({ ...elemento, id: nuevoIdCanvas(), z: Math.max(0, ...(pagina.elementos ?? []).map((el) => el.z)) + 1 }, (pagina.elementos ?? []).length)
+    const normalizado = normalizarElementoCanvas({ ...elemento, id: nuevoIdCanvas(), z: Math.max(0, ...(pagina.elementos ?? []).map((el) => el.z)) + 1 }, (pagina.elementos ?? []).length)
+    const nuevo = { ...normalizado, bloqueado: Boolean(elemento.bloqueado), sombreado: Boolean(elemento.sombreado) } as ElementoCanvasEditor
     patchPaginaSinHistorial({ elementos: [...(pagina.elementos ?? []), nuevo] })
     setSeleccion(nuevo.id)
     return nuevo.id
@@ -223,17 +242,93 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     return agregarElemento({ tipo: 'texto', rol, contenido: rol === 'titulo' ? 'Título' : rol === 'subtitulo' ? 'Subtítulo' : rol === 'cuerpo' ? 'Escribe el contenido' : 'Escribe aquí', x: 10, y: rol === 'titulo' ? 12 : rol === 'subtitulo' ? 30 : 40, w: 80, h: rol === 'cuerpo' ? 34 : 22, tamano_fuente: estilo.pt, peso: estilo.peso, fuente: 'Inter', color: pagina.color_texto ?? '#0f172a' })
   }
   const aplicarRolTexto = (rol: RolTexto) => {
-    if (!textoSeleccionado) return
+    if (!textoSeleccionado || textoSeleccionado.bloqueado) return
     if (textoSeleccionado.rol === rol) return actualizarElemento(textoSeleccionado.id, { rol: 'libre' })
     const estilo = ESTILOS_TEXTO.find((item) => item.id === rol) ?? ESTILOS_TEXTO[3]
     actualizarElemento(textoSeleccionado.id, { rol, tamano_fuente: estilo.pt, peso: estilo.peso })
   }
   const agregarImagen = (recurso: RecursoPastoral) => agregarElemento({ tipo: 'imagen', recurso_id: recurso.id, x: 12, y: 18, w: 56, h: 48, ajuste: 'cover', radio: 14 })
   const aplicarFondoImagen = (recurso: RecursoPastoral) => actualizarPagina({ fondo_modo: 'imagen', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
-  const eliminarElemento = (id: string) => { registrarHistorial(); patchPaginaSinHistorial({ elementos: (pagina.elementos ?? []).filter((el) => el.id !== id) }); setSeleccion(null) }
-  const duplicarElemento = (id: string) => { const original = pagina.elementos?.find((el) => el.id === id); if (!original) return; agregarElemento({ ...clonar(original), id: undefined, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 }) }
-  const moverCapa = (id: string, delta: number) => { const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return; actualizarElemento(id, { z: Math.max(0, Math.min(200, elemento.z + delta)) }) }
+  const eliminarElemento = (id: string) => { registrarHistorial(); patchPaginaSinHistorial({ elementos: (pagina.elementos ?? []).filter((el) => el.id !== id) }); setSeleccion(null); setCapaAccionesAbiertas(null) }
+  const duplicarElemento = (id: string) => { const original = pagina.elementos?.find((el) => el.id === id) as ElementoCanvasEditor | undefined; if (!original) return; agregarElemento({ ...clonar(original), id: undefined, bloqueado: false, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 }) }
   const alternarVisibilidadCapa = (id: string) => { const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return; actualizarElemento(id, { oculto: !elemento.oculto }) }
+  const alternarBloqueoCapa = (id: string) => {
+    const elemento = pagina.elementos?.find((el) => el.id === id) as ElementoCanvasEditor | undefined
+    if (!elemento) return
+    actualizarElemento(id, { bloqueado: !elemento.bloqueado })
+    setCapaAccionesAbiertas(null)
+  }
+  const reordenarCapaSinHistorial = (id: string, direccion: -1 | 1) => {
+    setPaginas((actuales) => actuales.map((item, i) => {
+      if (i !== indice) return item
+      const elementos = item.elementos ?? []
+      const orden = elementos.slice().sort((a, b) => b.z - a.z)
+      const actual = orden.findIndex((elemento) => elemento.id === id)
+      const destino = actual + direccion
+      if (actual < 0 || destino < 0 || destino >= orden.length) return item
+      const origen = orden[actual]
+      const receptor = orden[destino]
+      return {
+        ...item,
+        elementos: elementos.map((elemento) => elemento.id === origen.id ? { ...elemento, z: receptor.z } : elemento.id === receptor.id ? { ...elemento, z: origen.z } : elemento),
+      }
+    }))
+  }
+  const iniciarArrastreCapa = (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+    const elemento = pagina.elementos?.find((item) => item.id === id) as ElementoCanvasEditor | undefined
+    if (!elemento || elemento.bloqueado) return
+    event.preventDefault()
+    event.stopPropagation()
+    setSeleccion(id)
+    setCapaAccionesAbiertas(null)
+    capaDragRef.current = { id, y: event.clientY, historial: false }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+  const moverArrastreCapa = (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+    const arrastre = capaDragRef.current
+    if (!arrastre || arrastre.id !== id) return
+    const delta = event.clientY - arrastre.y
+    if (Math.abs(delta) < 28) return
+    if (!arrastre.historial) { registrarHistorial(); arrastre.historial = true }
+    reordenarCapaSinHistorial(id, delta < 0 ? -1 : 1)
+    arrastre.y = event.clientY
+  }
+  const terminarArrastreCapa = () => { capaDragRef.current = null }
+  const iniciarSwipeCapa = (event: React.TouchEvent<HTMLDivElement>, id: string) => {
+    const toque = event.touches[0]
+    if (!toque) return
+    capaSwipeRef.current = { id, x: toque.clientX, y: toque.clientY }
+  }
+  const terminarSwipeCapa = (event: React.TouchEvent<HTMLDivElement>, id: string) => {
+    const inicio = capaSwipeRef.current
+    const toque = event.changedTouches[0]
+    capaSwipeRef.current = null
+    if (!inicio || inicio.id !== id || !toque) return
+    const dx = toque.clientX - inicio.x
+    const dy = toque.clientY - inicio.y
+    if (Math.abs(dx) <= Math.abs(dy)) return
+    if (dx < -34) setCapaAccionesAbiertas(id)
+    if (dx > 26) setCapaAccionesAbiertas(null)
+  }
+  const convertirImagenEnFondo = (id: string) => {
+    const elemento = pagina.elementos?.find((item) => item.id === id) as ElementoCanvasEditor | undefined
+    if (!elemento || elemento.tipo !== 'imagen' || !elemento.recurso_id || elemento.bloqueado) return
+    registrarHistorial()
+    patchPaginaSinHistorial({ fondo_modo: 'imagen', fondo: '#ffffff', fondo_recurso_id: elemento.recurso_id, recurso_id: elemento.recurso_id, elementos: (pagina.elementos ?? []).filter((item) => item.id !== id) })
+    setSeleccion(null)
+    setCapaAccionesAbiertas(null)
+    setDestinoSubida('fondo')
+  }
+  const desbloquearFondo = () => {
+    const recursoId = pagina.fondo_recurso_id ?? pagina.recurso_id
+    if (pagina.fondo_modo !== 'imagen' || !recursoId) return
+    registrarHistorial()
+    const elementosAjustados = (pagina.elementos ?? []).map((elemento) => ({ ...elemento, z: Math.min(200, elemento.z + 1) }))
+    const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'cover', radio: 0, opacidad: .85 }, 0), bloqueado: false } as ElementoCanvasEditor
+    patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#000000', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
+    setSeleccion(fondo.id)
+    setDestinoSubida('elemento')
+  }
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
     registrarHistorial()
@@ -373,8 +468,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     return true
   }
   const persistirInline = (editor: HTMLElement) => textoSeleccionado && patchElementoSinHistorial(textoSeleccionado.id, { contenido: limpiarHtmlCanvas(editor.innerHTML) })
-  const aplicarEfectoTexto = (comando: ComandoEfectoTexto, patchCaja: Partial<ElementoCanvas>) => {
-    if (!textoSeleccionado) return
+  const aplicarEfectoTexto = (comando: ComandoEfectoTexto, patchCaja: Partial<ElementoCanvasEditor>) => {
+    if (!textoSeleccionado || textoSeleccionado.bloqueado) return
     const editor = editorTextoActual()
     if (editor && haySeleccionDePalabras(editor)) {
       registrarHistorial()
@@ -386,7 +481,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     actualizarElemento(textoSeleccionado.id, patchCaja)
   }
   const aplicarColorTexto = (color: string) => {
-    if (!textoSeleccionado) return
+    if (!textoSeleccionado || textoSeleccionado.bloqueado) return
     const editor = editorTextoActual()
     if (editor && haySeleccionDePalabras(editor) && !seleccionCubreTodo(editor)) {
       registrarHistorial()
@@ -394,7 +489,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     } else actualizarElemento(textoSeleccionado.id, { color })
   }
   const comandoParrafo = (comando: ComandoListaTexto) => {
-    if (!textoSeleccionado) return
+    if (!textoSeleccionado || textoSeleccionado.bloqueado) return
     const editor = editorTextoActual()
     if (!editor) return
     const seleccionVentana = window.getSelection()
@@ -414,7 +509,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
   const agregarVersiculo = (versiculo: { referencia: string; texto: string; traduccion: string }) => {
     const contenido = `<strong>${versiculo.referencia}${versiculo.traduccion ? ` · ${versiculo.traduccion}` : ''}</strong><br>${versiculo.texto}`
-    agregarElemento({ tipo: 'versiculo', rol: 'cuerpo', contenido, x: 10, y: 20 + Math.min((pagina.elementos?.length ?? 0) * 3, 35), w: 80, h: 28, tamano_fuente: 26, fuente: 'Georgia', alineacion: 'centro', peso: 500, color: pagina.color_texto ?? '#0f172a' })
+    agregarElemento({ tipo: 'versiculo', rol: 'cuerpo', contenido, x: 10, y: 20 + Math.min((pagina.elementos?.length ?? 0) * 3, 35), w: 80, h: 28, tamano_fuente: 26, fuente: 'Georgia', alineacion: 'centro', peso: 500, color: pagina.color_texto ?? '#0f172a', sombreado: false })
   }
 
   const prepararSubida = (destino: DestinoSubida) => { setDestinoSubida(destino); fileInputRef.current?.click() }
@@ -471,15 +566,15 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [titulo, paginas])
 
-  const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setVista(siguiente) }
+  const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista(siguiente) }
   const moverPresentacion = (delta: number) => setIndice((actual) => Math.min(Math.max(actual + delta, 0), paginas.length - 1))
   const abrirPantallaCompleta = async () => { setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
   const cerrarPantallaCompleta = async () => { setModoPresentacion(false); try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch {} }
   const copiarEnlaceActual = async () => { try { await navigator.clipboard.writeText(window.location.href); mostrarToast('Enlace del proyecto copiado') } catch { mostrarToast('No se pudo copiar el enlace') } }
   const compartirInterno = async () => { try { if (navigator.share) await navigator.share({ title: titulo, text: 'Proyecto de Centro Pastoral', url: window.location.href }); else await copiarEnlaceActual() } catch {} }
-  const alinear = (alineacion: Alineacion) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { alineacion })
+  const alinear = (alineacion: Alineacion) => textoSeleccionado && !textoSeleccionado.bloqueado && actualizarElemento(textoSeleccionado.id, { alineacion })
   const ajustarTamano = (delta: number) => {
-    if (!textoSeleccionado) return
+    if (!textoSeleccionado || textoSeleccionado.bloqueado) return
     const editor = editorTextoActual()
     if (editor && haySeleccionDePalabras(editor) && !seleccionCubreTodo(editor)) {
       const actual = valorInlineActual(editor, 'data-vida-size', Math.round(textoSeleccionado.tamano_fuente ?? 24))
@@ -492,7 +587,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     actualizarElemento(textoSeleccionado.id, { tamano_fuente: Math.min(160, Math.max(8, actual + delta)) })
   }
   const ajustarLinea = (delta: number) => {
-    if (!textoSeleccionado) return
+    if (!textoSeleccionado || textoSeleccionado.bloqueado) return
     const editor = editorTextoActual()
     if (editor && haySeleccionDePalabras(editor) && !seleccionCubreTodo(editor)) {
       const actual = valorInlineActual(editor, 'data-vida-line-height', textoSeleccionado.interlineado ?? 1.25)
@@ -528,7 +623,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     </div>}
 
     {panel === 'recursos' && <div className="pastoral-panel-content pastoral-elements-panel">
-      <div className="flex flex-wrap items-center justify-center gap-2"><button type="button" onClick={() => setDestinoSubida('elemento')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'elemento' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'elemento'}>Imagen</button><button type="button" onClick={() => setDestinoSubida('fondo')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'fondo' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'fondo'}>Como fondo</button></div>
+      <div className="flex flex-wrap items-center justify-center gap-2"><button type="button" onClick={() => setDestinoSubida('elemento')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'elemento' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'elemento'}>Imagen</button><button type="button" onClick={() => elementoSeleccionado?.tipo === 'imagen' ? convertirImagenEnFondo(elementoSeleccionado.id) : setDestinoSubida('fondo')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'fondo' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'fondo'} title={elementoSeleccionado?.tipo === 'imagen' ? 'Convertir la imagen seleccionada en fondo' : 'Elegir imágenes como fondo'}>Como fondo</button></div>
       <div className="pastoral-elements-top"><button type="button" onClick={() => prepararSubida(destinoSubida)} className="pastoral-minimal-action"><Upload /> Subir</button><input value={busquedaRecursos} onChange={(e) => setBusquedaRecursos(e.target.value)} placeholder="Buscar en biblioteca" /></div>
       {recursosFiltrados.length ? <div className="pastoral-elements-grid">{recursosFiltrados.slice(0, 30).map((recurso) => <button key={recurso.id} type="button" onClick={() => destinoSubida === 'fondo' ? aplicarFondoImagen(recurso) : agregarImagen(recurso)}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} /></button>)}</div> : <p className="pastoral-empty-panel">No hay imágenes en tu biblioteca todavía.</p>}
       <div className="pastoral-external-banks">{BANCOS_EXTERNOS.map((banco) => <a key={banco.label} href={banco.href} target="_blank" rel="noreferrer">{banco.label}<ExternalLink /></a>)}</div>
@@ -539,41 +634,41 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         <div className="px-1 text-[11px] font-black text-slate-500">Estilo · {etiquetaRolTexto}</div>
         <div className="grid grid-cols-[56px_repeat(3,minmax(0,1fr))] items-end gap-1" aria-label="Opciones de estilo de texto">
           <button type="button" onClick={() => agregarTexto('libre')} className="flex min-h-12 items-center justify-center gap-0.5 border-b-2 border-transparent px-1 pb-2 pt-1 text-slate-700" aria-label="Agregar texto" title="Agregar texto"><span className="text-base font-black">A</span><span className="text-sm font-black">+</span></button>
-          {ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => aplicarRolTexto(estilo.id)} aria-pressed={textoSeleccionado?.rol === estilo.id} className={`min-h-12 min-w-0 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-center disabled:opacity-30 ${estilo.id === 'titulo' ? 'text-[15px] font-extrabold' : estilo.id === 'subtitulo' ? 'text-[13px] font-semibold' : 'text-[11px] font-normal'} ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>{estilo.label}</button>)}
+          {ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => aplicarRolTexto(estilo.id)} aria-pressed={textoSeleccionado?.rol === estilo.id} className={`min-h-12 min-w-0 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-center disabled:opacity-30 ${estilo.id === 'titulo' ? 'text-[15px] font-extrabold' : estilo.id === 'subtitulo' ? 'text-[13px] font-semibold' : 'text-[11px] font-normal'} ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>{estilo.label}</button>)}
         </div>
       </section>
 
       <section data-pastoral-format-section="true" className={`grid gap-2 border-b border-slate-200 pb-3 ${tecladoAbierto ? 'sticky top-0 z-30 bg-[#f4f5f9] pt-1' : ''}`}>
         <div className="px-1 text-[11px] font-black text-slate-500">Formato · listas · tamaño · alineación</div>
         <div className="flex w-full touch-pan-x items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="toolbar" aria-label="Formato listas tamaño interlineado y alineación">
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('bold', { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(formatoActivo('bold', Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700)))} aria-label="Negrita" aria-pressed={formatoActivo('bold', Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))}><Bold className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('italic', { cursiva: !textoSeleccionado.cursiva })} className={claseControlTexto(formatoActivo('italic', Boolean(textoSeleccionado?.cursiva)))} aria-label="Cursiva" aria-pressed={formatoActivo('italic', Boolean(textoSeleccionado?.cursiva))}><Italic className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('underline', { subrayado: !textoSeleccionado.subrayado })} className={claseControlTexto(formatoActivo('underline', Boolean(textoSeleccionado?.subrayado)))} aria-label="Subrayado" aria-pressed={formatoActivo('underline', Boolean(textoSeleccionado?.subrayado))}><Underline className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('strikeThrough', { tachado: !textoSeleccionado.tachado })} className={claseControlTexto(formatoActivo('strikeThrough', Boolean(textoSeleccionado?.tachado)))} aria-label="Tachado" aria-pressed={formatoActivo('strikeThrough', Boolean(textoSeleccionado?.tachado))}><Strikethrough className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => setPaletaTextoAbierta((actual) => !actual)} className={claseControlTexto(paletaTextoAbierta)} aria-label="Color de texto" aria-expanded={paletaTextoAbierta} aria-pressed={paletaTextoAbierta}><span className="h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: textoSeleccionado?.color ?? '#0f172a' }} /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('bold', { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(formatoActivo('bold', Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700)))} aria-label="Negrita" aria-pressed={formatoActivo('bold', Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))}><Bold className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('italic', { cursiva: !textoSeleccionado.cursiva })} className={claseControlTexto(formatoActivo('italic', Boolean(textoSeleccionado?.cursiva)))} aria-label="Cursiva" aria-pressed={formatoActivo('italic', Boolean(textoSeleccionado?.cursiva))}><Italic className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('underline', { subrayado: !textoSeleccionado.subrayado })} className={claseControlTexto(formatoActivo('underline', Boolean(textoSeleccionado?.subrayado)))} aria-label="Subrayado" aria-pressed={formatoActivo('underline', Boolean(textoSeleccionado?.subrayado))}><Underline className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('strikeThrough', { tachado: !textoSeleccionado.tachado })} className={claseControlTexto(formatoActivo('strikeThrough', Boolean(textoSeleccionado?.tachado)))} aria-label="Tachado" aria-pressed={formatoActivo('strikeThrough', Boolean(textoSeleccionado?.tachado))}><Strikethrough className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => setPaletaTextoAbierta((actual) => !actual)} className={claseControlTexto(paletaTextoAbierta)} aria-label="Color de texto" aria-expanded={paletaTextoAbierta} aria-pressed={paletaTextoAbierta}><span className="h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: textoSeleccionado?.color ?? '#0f172a' }} /></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className={claseControlTexto(estadoFormatoSeleccion.unorderedList)} aria-label="Lista con viñetas" aria-pressed={estadoFormatoSeleccion.unorderedList}><List className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className={claseControlTexto(estadoFormatoSeleccion.orderedList)} aria-label="Lista numerada" aria-pressed={estadoFormatoSeleccion.orderedList}><ListOrdered className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className={claseControlTexto(estadoFormatoSeleccion.unorderedList)} aria-label="Lista con viñetas" aria-pressed={estadoFormatoSeleccion.unorderedList}><List className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className={claseControlTexto(estadoFormatoSeleccion.orderedList)} aria-label="Lista numerada" aria-pressed={estadoFormatoSeleccion.orderedList}><ListOrdered className="h-4 w-4" /></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(-1)} className={claseControlTexto(false)} aria-label="Reducir tamaño de letra"><span className="text-xs font-black">A−</span></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(-1)} className={claseControlTexto(false)} aria-label="Reducir tamaño de letra"><span className="text-xs font-black">A−</span></button>
           <button type="button" disabled className={`${claseControlTexto(false)} text-[11px] font-black text-slate-500 opacity-100`} aria-label="Tamaño de letra actual">{Math.round(textoSeleccionado?.tamano_fuente ?? 24)}</button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(1)} className={claseControlTexto(false)} aria-label="Aumentar tamaño de letra"><span className="text-xs font-black">A+</span></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarLinea(-0.05)} className={claseControlTexto(false)} aria-label="Reducir interlineado"><span className="text-xs font-black">↕−</span></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(1)} className={claseControlTexto(false)} aria-label="Aumentar tamaño de letra"><span className="text-xs font-black">A+</span></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarLinea(-0.05)} className={claseControlTexto(false)} aria-label="Reducir interlineado"><span className="text-xs font-black">↕−</span></button>
           <button type="button" disabled className={`${claseControlTexto(false)} text-[10px] font-black text-slate-500 opacity-100`} aria-label="Interlineado actual">{(textoSeleccionado?.interlineado ?? 1.25).toFixed(2)}</button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarLinea(0.05)} className={claseControlTexto(false)} aria-label="Aumentar interlineado"><span className="text-xs font-black">↕+</span></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarLinea(0.05)} className={claseControlTexto(false)} aria-label="Aumentar interlineado"><span className="text-xs font-black">↕+</span></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('izquierda')} className={claseControlTexto(textoSeleccionado?.alineacion === 'izquierda')} aria-label="Alinear a la izquierda"><AlignLeft className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('centro')} className={claseControlTexto(textoSeleccionado?.alineacion === 'centro')} aria-label="Centrar"><AlignCenter className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('derecha')} className={claseControlTexto(textoSeleccionado?.alineacion === 'derecha')} aria-label="Alinear a la derecha"><AlignRight className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('justificado')} className={claseControlTexto(textoSeleccionado?.alineacion === 'justificado')} aria-label="Justificar"><AlignJustify className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('izquierda')} className={claseControlTexto(textoSeleccionado?.alineacion === 'izquierda')} aria-label="Alinear a la izquierda"><AlignLeft className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('centro')} className={claseControlTexto(textoSeleccionado?.alineacion === 'centro')} aria-label="Centrar"><AlignCenter className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('derecha')} className={claseControlTexto(textoSeleccionado?.alineacion === 'derecha')} aria-label="Alinear a la derecha"><AlignRight className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('justificado')} className={claseControlTexto(textoSeleccionado?.alineacion === 'justificado')} aria-label="Justificar"><AlignJustify className="h-4 w-4" /></button>
         </div>
-        {paletaTextoAbierta && <div className="flex w-full touch-pan-x gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Colores de texto">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => aplicarColorTexto(color)} className={`h-10 w-10 shrink-0 rounded-full border-2 ${textoSeleccionado?.color === color ? 'border-indigo-500' : 'border-slate-200'}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>}
+        {paletaTextoAbierta && <div className="flex w-full touch-pan-x gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Colores de texto">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => aplicarColorTexto(color)} className={`h-10 w-10 shrink-0 rounded-full border-2 ${textoSeleccionado?.color === color ? 'border-indigo-500' : 'border-slate-200'}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>}
       </section>
 
       <section className="grid gap-2 pb-2">
         <details className="group">
           <summary onPointerDown={(e) => e.preventDefault()} className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 [&::-webkit-details-marker]:hidden" aria-label="Elegir fuente"><span className="min-w-0 truncate">Fuente · {fuenteTextoActual}</span><span className="flex shrink-0 items-center gap-2"><span className="text-lg font-bold text-slate-600" style={{ fontFamily: textoSeleccionado?.fuente ?? FUENTE_MUESTRA }}>Aa</span><span className="text-slate-400 transition-transform group-open:rotate-180">⌄</span></span></summary>
-          <div className="mt-2 grid grid-cols-2 gap-2" aria-label="Fuentes disponibles">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { fuente })} className={`min-h-11 min-w-0 rounded-full border px-3 text-xs font-bold ${textoSeleccionado?.fuente === fuente ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} style={{ fontFamily: fuente }}><span className="block truncate">{fuente}</span></button>)}</div>
+          <div className="mt-2 grid grid-cols-2 gap-2" aria-label="Fuentes disponibles">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" disabled={!textoSeleccionado || textoSeleccionado.bloqueado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { fuente })} className={`min-h-11 min-w-0 rounded-full border px-3 text-xs font-bold ${textoSeleccionado?.fuente === fuente ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} style={{ fontFamily: fuente }}><span className="block truncate">{fuente}</span></button>)}</div>
         </details>
       </section>
     </div>}
@@ -583,27 +678,36 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     {panel === 'diseno' && <div className="pastoral-panel-content"><div className="pastoral-panel-heading"><h3>Relación de aspecto</h3><p>16:9 funciona mejor para cañón, pantallas y la mayoría de proyectores modernos.</p></div><div className="pastoral-aspect-control">{FORMATOS_LIENZO.map(({ id, label, detalle }) => { const Icon = id === '9:16' ? Smartphone : id === '1:1' ? Square : Monitor; return <button key={id} type="button" onClick={() => actualizarPagina({ formato: id })} className={pagina.formato === id ? 'is-active' : ''}><Icon /><span><strong>{detalle}</strong><small>{label}</small></span></button> })}</div></div>}
 
     {panel === 'capas' && <div className="pastoral-panel-content grid gap-3">
-      {elementoSeleccionado && <div className="flex items-center gap-3 border-b border-slate-200 px-1 pb-3"><span className="text-[11px] font-black text-slate-500">Opacidad</span><input type="range" min="0.1" max="1" step="0.05" value={elementoSeleccionado.opacidad ?? 1} onPointerDown={registrarHistorial} onChange={(e) => patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.target.value) })} className="min-w-0 flex-1" aria-label="Opacidad de la capa seleccionada" /><span className="w-10 text-right text-[11px] font-bold text-slate-500">{Math.round((elementoSeleccionado.opacidad ?? 1) * 100)}%</span></div>}
+      {elementoSeleccionado && <div className="flex items-center gap-3 border-b border-slate-200 px-1 pb-3"><span className="text-[11px] font-black text-slate-500">Opacidad</span><input type="range" min="0.1" max="1" step="0.05" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.opacidad ?? 1} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.target.value) })} className="min-w-0 flex-1 disabled:opacity-30" aria-label="Opacidad de la capa seleccionada" /><span className="w-10 text-right text-[11px] font-bold text-slate-500">{Math.round((elementoSeleccionado.opacidad ?? 1) * 100)}%</span></div>}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-label="Lista vertical de capas">
-        {(pagina.elementos ?? []).slice().sort((a, b) => b.z - a.z).map((elemento) => {
+        {(pagina.elementos ?? []).slice().sort((a, b) => b.z - a.z).map((elementoBase) => {
+          const elemento = elementoBase as ElementoCanvasEditor
           const recursoCapa = elemento.tipo === 'imagen' ? biblioteca.find((item) => item.id === elemento.recurso_id) : null
           const resumen = elemento.tipo === 'imagen' ? recursoCapa?.titulo ?? 'Imagen' : textoPlano(elemento.contenido ?? '') || nombreCapa(elemento)
-          return <div key={elemento.id} className={`flex min-h-14 items-center border-b border-slate-100 last:border-b-0 ${seleccion === elemento.id ? 'bg-indigo-50/80' : 'bg-white'}`}>
-            <button type="button" onClick={() => alternarVisibilidadCapa(elemento.id)} className="grid h-11 w-11 shrink-0 place-items-center text-slate-500" aria-label={elemento.oculto ? `Mostrar ${nombreCapa(elemento)}` : `Ocultar ${nombreCapa(elemento)}`} aria-pressed={!elemento.oculto}>{elemento.oculto ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
-            <button type="button" onClick={() => setSeleccion(elemento.id)} className="flex min-w-0 flex-1 items-center gap-3 px-1 py-2 text-left">
-              <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500">{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.tipo === 'versiculo' ? <BookOpen className="h-4 w-4" /> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Type className="h-4 w-4" />}</span>
-              <span className="min-w-0 flex-1"><strong className="block truncate text-xs font-bold text-slate-700">{nombreCapa(elemento)}</strong><small className="block truncate text-[10px] text-slate-400">{resumen}</small></span>
-              <small className="shrink-0 pr-3 text-[10px] font-bold text-slate-400">{elemento.z}</small>
-            </button>
+          const accionesAbiertas = capaAccionesAbiertas === elemento.id
+          return <div key={elemento.id} className="relative overflow-hidden border-b border-slate-100 last:border-b-0">
+            <div className="absolute inset-y-0 right-2 flex items-center gap-1" aria-hidden={!accionesAbiertas}>
+              <button type="button" onClick={() => { setSeleccion(elemento.id); duplicarElemento(elemento.id); setCapaAccionesAbiertas(null) }} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600" aria-label={`Duplicar ${nombreCapa(elemento)}`}><Copy className="h-4 w-4" /></button>
+              <button type="button" onClick={() => { setSeleccion(elemento.id); alternarBloqueoCapa(elemento.id) }} className={`grid h-10 w-10 place-items-center rounded-full border bg-white ${elemento.bloqueado ? 'border-indigo-200 text-indigo-600' : 'border-slate-200 text-slate-600'}`} aria-label={elemento.bloqueado ? `Desbloquear ${nombreCapa(elemento)}` : `Bloquear ${nombreCapa(elemento)}`}>{elemento.bloqueado ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}</button>
+              <button type="button" onClick={() => { setSeleccion(elemento.id); eliminarElemento(elemento.id) }} className="grid h-10 w-10 place-items-center rounded-full border border-rose-200 bg-white text-rose-600" aria-label={`Eliminar ${nombreCapa(elemento)}`}><Trash2 className="h-4 w-4" /></button>
+            </div>
+            <div onTouchStart={(event) => iniciarSwipeCapa(event, elemento.id)} onTouchEnd={(event) => terminarSwipeCapa(event, elemento.id)} className={`relative flex min-h-14 items-center transition-transform duration-150 ${seleccion === elemento.id ? 'bg-indigo-50/80' : 'bg-white'}`} style={{ transform: accionesAbiertas ? 'translateX(-132px)' : 'translateX(0)' }}>
+              <button type="button" onClick={() => alternarVisibilidadCapa(elemento.id)} className="grid h-11 w-11 shrink-0 place-items-center text-slate-500" aria-label={elemento.oculto ? `Mostrar ${nombreCapa(elemento)}` : `Ocultar ${nombreCapa(elemento)}`} aria-pressed={!elemento.oculto}>{elemento.oculto ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+              <button type="button" onClick={() => { setSeleccion(elemento.id); setCapaAccionesAbiertas(null) }} className="flex min-w-0 flex-1 items-center gap-3 px-1 py-2 text-left">
+                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500">{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.tipo === 'versiculo' ? <BookOpen className="h-4 w-4" /> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Type className="h-4 w-4" />}</span>
+                <span className="min-w-0 flex-1"><strong className="flex items-center gap-1 truncate text-xs font-bold text-slate-700">{nombreCapa(elemento)}{elemento.bloqueado && <Lock className="h-3 w-3 shrink-0 text-slate-400" />}</strong><small className="block truncate text-[10px] text-slate-400">{resumen}</small></span>
+              </button>
+              <button type="button" disabled={elemento.bloqueado} onPointerDown={(event) => iniciarArrastreCapa(event, elemento.id)} onPointerMove={(event) => moverArrastreCapa(event, elemento.id)} onPointerUp={terminarArrastreCapa} onPointerCancel={terminarArrastreCapa} className="grid h-12 w-10 shrink-0 touch-none place-items-center text-slate-400 disabled:opacity-25" aria-label={`Mover capa ${nombreCapa(elemento)}`} title="Arrastra para subir o bajar"><GripVertical className="h-5 w-5" /></button>
+            </div>
           </div>
         })}
-        <div className="flex min-h-14 items-center bg-slate-50/70 px-3 text-slate-500"><span className="grid h-10 w-10 place-items-center"><Lock className="h-4 w-4" /></span><span className="ml-2 min-w-0 flex-1"><strong className="block text-xs font-bold">Fondo de página</strong><small className="block truncate text-[10px] text-slate-400">Base fija del lienzo</small></span></div>
+        <div className="flex min-h-14 items-center bg-slate-50/70 px-3 text-slate-500"><span className="grid h-10 w-10 place-items-center"><Lock className="h-4 w-4" /></span><span className="ml-2 min-w-0 flex-1"><strong className="block text-xs font-bold">Fondo de página</strong><small className="block truncate text-[10px] text-slate-400">{pagina.fondo_modo === 'imagen' ? 'Imagen de fondo · bloqueada' : 'Base fija del lienzo'}</small></span>{pagina.fondo_modo === 'imagen' && pagina.fondo_recurso_id && <button type="button" onClick={desbloquearFondo} className="grid h-10 w-10 place-items-center rounded-full text-indigo-600" aria-label="Desbloquear fondo" title="Convertir el fondo en una capa editable"><Unlock className="h-4 w-4" /></button>}</div>
       </div>
-      {elementoSeleccionado ? <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"><button type="button" onClick={() => duplicarElemento(elementoSeleccionado.id)} className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700"><Copy className="h-4 w-4" />Duplicar</button><button type="button" onClick={() => moverCapa(elementoSeleccionado.id, 1)} className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700"><ArrowUp className="h-4 w-4" />Adelante</button><button type="button" onClick={() => moverCapa(elementoSeleccionado.id, -1)} className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700"><ArrowDown className="h-4 w-4" />Atrás</button><button type="button" onClick={() => eliminarElemento(elementoSeleccionado.id)} className="flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-rose-200 bg-white px-4 text-xs font-bold text-rose-600"><Trash2 className="h-4 w-4" />Eliminar</button></div> : <p className="pastoral-empty-panel">Selecciona una capa para organizarla.</p>}
+      <p className="px-1 text-[10px] leading-4 text-slate-400">Arrastra ⋮ para cambiar el orden. Desliza una capa a la izquierda para duplicar, bloquear o eliminar.</p>
     </div>}
 
     {panel === 'ajustes' && <div className="pastoral-panel-content pastoral-layers-panel">
-      {elementoSeleccionado?.tipo === 'imagen' ? <div className="pastoral-layer-actions"><button type="button" onClick={() => actualizarElemento(elementoSeleccionado.id, { ajuste: elementoSeleccionado.ajuste === 'contain' ? 'cover' : 'contain' })}>Ajuste: {elementoSeleccionado.ajuste === 'contain' ? 'Contener' : 'Cubrir'}</button><label>Opacidad <input type="range" min="0.1" max="1" step="0.05" value={elementoSeleccionado.opacidad ?? 1} onChange={(e) => actualizarElemento(elementoSeleccionado.id, { opacidad: Number(e.target.value) })} /></label><label>Esquinas <input type="range" min="0" max="40" value={elementoSeleccionado.radio ?? 14} onChange={(e) => actualizarElemento(elementoSeleccionado.id, { radio: Number(e.target.value) })} /></label></div> : <p className="pastoral-empty-panel">Selecciona una imagen para ajustar su apariencia.</p>}
+      {elementoSeleccionado?.tipo === 'imagen' ? <div className="pastoral-layer-actions"><button type="button" disabled={elementoSeleccionado.bloqueado} onClick={() => actualizarElemento(elementoSeleccionado.id, { ajuste: elementoSeleccionado.ajuste === 'contain' ? 'cover' : 'contain' })}>Ajuste: {elementoSeleccionado.ajuste === 'contain' ? 'Contener' : 'Cubrir'}</button><button type="button" disabled={elementoSeleccionado.bloqueado} onClick={() => convertirImagenEnFondo(elementoSeleccionado.id)}>Como fondo</button><label>Opacidad <input type="range" min="0.1" max="1" step="0.05" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.opacidad ?? 1} onChange={(e) => actualizarElemento(elementoSeleccionado.id, { opacidad: Number(e.target.value) })} /></label><label>Esquinas <input type="range" min="0" max="40" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.radio ?? 14} onChange={(e) => actualizarElemento(elementoSeleccionado.id, { radio: Number(e.target.value) })} /></label></div> : elementoSeleccionado?.tipo === 'versiculo' ? <div className="pastoral-layer-actions"><button type="button" disabled={elementoSeleccionado.bloqueado} onClick={() => actualizarElemento(elementoSeleccionado.id, { sombreado: !elementoSeleccionado.sombreado })}>Sombreado: {elementoSeleccionado.sombreado ? 'Activado' : 'Desactivado'}</button></div> : <p className="pastoral-empty-panel">Selecciona una imagen o versículo para ajustar su apariencia.</p>}
     </div>}
   </> : null
 
@@ -611,7 +715,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { subirImagen(event.target.files?.[0]); event.currentTarget.value = '' }} />
     <header className="sticky top-0 z-50 -mx-4 bg-[#f8f8f6]/96 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="flex items-center gap-2"><input dir="ltr" value={titulo} onFocus={registrarHistorial} onChange={(event) => setTitulo(event.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none sm:text-lg" /><button type="button" onClick={deshacer} disabled={!undoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Deshacer"><Undo2 className="h-4 w-4" /></button><button type="button" onClick={rehacer} disabled={!redoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Rehacer"><Redo2 className="h-4 w-4" /></button>{guardandoAuto ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" aria-label="Guardando automáticamente" /> : guardado ? <Check className="h-4 w-4 text-emerald-600" /> : null}<button type="button" onClick={guardar} disabled={isPending} className="grid h-10 w-10 place-items-center rounded-full text-[#C0392B] disabled:opacity-60" aria-label="Guardar proyecto">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}</button></div>
-      <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><button type="button" onClick={() => cambiarVista('congregacion')} className={vista === 'congregacion' ? 'text-[#C0392B]' : ''}>Congregación</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><select value={indice} onChange={(event) => { setIndice(Number(event.target.value)); setSeleccion(null) }} aria-label={`Página ${indice + 1} de ${paginas.length}`} className="h-9 min-w-[48px] rounded-full border border-slate-200 bg-white px-1 text-center text-[10px] font-black text-slate-600 outline-none">{paginas.map((_, i) => <option key={i} value={i}>{i + 1}/{paginas.length}</option>)}</select><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
+      <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><button type="button" onClick={() => cambiarVista('congregacion')} className={vista === 'congregacion' ? 'text-[#C0392B]' : ''}>Congregación</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><select value={indice} onChange={(event) => { setIndice(Number(event.target.value)); setSeleccion(null); setCapaAccionesAbiertas(null) }} aria-label={`Página ${indice + 1} de ${paginas.length}`} className="h-9 min-w-[48px] rounded-full border border-slate-200 bg-white px-1 text-center text-[10px] font-black text-slate-600 outline-none">{paginas.map((_, i) => <option key={i} value={i}>{i + 1}/{paginas.length}</option>)}</select><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
     </header>
 
     {vista === 'contenido' && pagina && <section className="pastoral-editor-section pb-4 pt-2">
@@ -620,7 +724,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           <div className="pastoral-canvas-wrap w-full"><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} onDeleteElement={eliminarElemento} /></div>
         </div>
         <div className="pastoral-editor-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={tecladoAbierto ? { paddingBottom: `${Math.max(160, tecladoInset + 32)}px`, scrollPaddingBottom: `${Math.max(160, tecladoInset + 32)}px` } : undefined}>
-          <div className="pastoral-tool-dock" aria-label="Herramientas del lienzo">{HERRAMIENTAS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => alternarGrupoPrincipal(id)} className={`pastoral-tool-button col-span-2 ${grupoPrincipal === id ? 'is-active' : ''}`} aria-pressed={grupoPrincipal === id} aria-expanded={grupoPrincipal === id} aria-label={label} title={label}><Icon /><small className="relative z-[1] text-[10px] font-bold">{label}</small></button>)}<button type="button" disabled={!elementoSeleccionado} onClick={() => elementoSeleccionado && eliminarElemento(elementoSeleccionado.id)} className="grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border border-rose-200 bg-white disabled:opacity-30" aria-label="Borrar elemento seleccionado" title="Borrar"><Trash2 className="h-[18px] w-[18px] text-rose-600" /></button></div>
+          <div className="pastoral-tool-dock" aria-label="Herramientas del lienzo">{HERRAMIENTAS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => alternarGrupoPrincipal(id)} className={`pastoral-tool-button col-span-2 ${grupoPrincipal === id ? 'is-active' : ''}`} aria-pressed={grupoPrincipal === id} aria-expanded={grupoPrincipal === id} aria-label={label} title={label}><Icon /><small className="relative z-[1] text-[10px] font-bold">{label}</small></button>)}<button type="button" disabled={!elementoSeleccionado || elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado && eliminarElemento(elementoSeleccionado.id)} className="grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border border-rose-200 bg-white disabled:opacity-30" aria-label="Borrar elemento seleccionado" title="Borrar"><Trash2 className="h-[18px] w-[18px] text-rose-600" /></button></div>
           {grupoPrincipal && <aside className={`pastoral-tool-panel-flow ${clasePanel}`} aria-label={`Panel ${grupoPrincipal}`}><div className="pastoral-tool-panel-flow-scroll px-3 pb-3 pt-2"><div className="flex flex-col"><div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`Opciones de ${grupoPrincipal}`}>{SUBMENUS[grupoPrincipal].map((item) => <button key={item.id} type="button" onClick={() => alternarSubpanel(item.id)} className={`min-h-10 shrink-0 rounded-full px-3 text-xs font-bold ${panel === item.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={panel === item.id}>{item.label}</button>)}</div><div className="min-h-0 flex-1 pt-2">{panelContenido}</div></div></div></aside>}
         </div>
       </div>
