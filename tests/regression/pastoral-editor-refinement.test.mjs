@@ -62,11 +62,11 @@ test('swatches de texto conservan el backgroundColor React real', () => {
   assert.match(bloque, /width: 44px !important/)
 })
 
-test('dock mantiene las seis herramientas como navegación pastoral integrada', () => {
-  assert.match(css, /pastoral-tool-dock[\s\S]*grid-template-columns: repeat\(6, minmax\(0, 1fr\)\) !important/)
-  assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*border-radius: 0 !important[\s\S]*background: transparent !important/)
-  assert.match(css, /pastoral-tool-button\.is-active[\s\S]*color: var\(--pastoral-stable-accent\) !important/)
-  assert.match(css, /pastoral-tool-button\.is-active::before[\s\S]*background: #eef2ff !important/)
+test('dock mantiene tres píldoras como navegación pastoral integrada', () => {
+  assert.match(css, /pastoral-tool-dock[\s\S]*display: flex !important[\s\S]*justify-content: center !important/)
+  assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*border-radius: 999px !important[\s\S]*background: #ffffff !important/)
+  assert.match(css, /pastoral-tool-button\.is-active[\s\S]*background: #eef2ff !important[\s\S]*color: var\(--pastoral-stable-accent\) !important/)
+  assert.match(css, /pastoral-tool-button\.is-active::before[\s\S]*display: none !important/)
 })
 
 test('landscape conserva hitboxes mayores al mínimo de 44px en Texto', () => {
