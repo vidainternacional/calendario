@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, BookOpen, Check,
@@ -36,6 +36,7 @@ type GrupoPrincipal = 'plantillas' | 'texto' | 'capas'
 type PanelEditor = 'plantillas' | 'temas' | 'fondos' | 'recursos' | 'texto' | 'biblia' | 'capas' | 'diseno' | 'ajustes'
 type ComandoEfectoTexto = 'bold' | 'italic' | 'underline' | 'strikeThrough'
 type ComandoListaTexto = 'insertUnorderedList' | 'insertOrderedList'
+type AtributoInlineVida = 'data-vida-size' | 'data-vida-line-height' | 'data-vida-color'
 
 const MAX_HISTORIAL = 80
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
@@ -120,6 +121,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [guardandoAuto, setGuardandoAuto] = useState(false)
   const [busquedaRecursos, setBusquedaRecursos] = useState('')
   const [paletaTextoAbierta, setPaletaTextoAbierta] = useState(false)
+  const [tecladoAbierto, setTecladoAbierto] = useState(false)
+  const [tecladoInset, setTecladoInset] = useState(0)
   const [isPending, startTransition] = useTransition()
   const [, startSubida] = useTransition()
   const [destinoSubida, setDestinoSubida] = useState<DestinoSubida>('elemento')
@@ -133,6 +136,40 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const q = busquedaRecursos.trim().toLowerCase()
     return q ? imagenes.filter((item) => `${item.titulo} ${item.descripcion} ${item.categoria}`.toLowerCase().includes(q)) : imagenes
   }, [imagenes, busquedaRecursos])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    let frame = 0
+    const actualizarTeclado = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const activo = document.activeElement instanceof HTMLElement && document.activeElement.isContentEditable
+        const inset = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop))
+        const abierto = activo && inset > 100
+        setTecladoAbierto(abierto)
+        setTecladoInset(abierto ? inset : 0)
+      })
+    }
+    actualizarTeclado()
+    viewport.addEventListener('resize', actualizarTeclado)
+    viewport.addEventListener('scroll', actualizarTeclado)
+    window.addEventListener('focusin', actualizarTeclado)
+    window.addEventListener('focusout', actualizarTeclado)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      viewport.removeEventListener('resize', actualizarTeclado)
+      viewport.removeEventListener('scroll', actualizarTeclado)
+      window.removeEventListener('focusin', actualizarTeclado)
+      window.removeEventListener('focusout', actualizarTeclado)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!tecladoAbierto) return
+    const frame = window.requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-pastoral-format-section="true"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
+    return () => window.cancelAnimationFrame(frame)
+  }, [tecladoAbierto])
 
   const snapshot = (): Snapshot => ({ titulo, paginas: clonar(paginas), indice })
   const registrarHistorial = () => { undoRef.current = [...undoRef.current.slice(-(MAX_HISTORIAL - 1)), snapshot()]; redoRef.current = []; setVersionHistorial((v) => v + 1) }
@@ -234,28 +271,89 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const contenedor = Array.from(document.querySelectorAll<HTMLElement>('[data-canvas-element-id]')).find((item) => item.dataset.canvasElementId === textoSeleccionado.id)
     return contenedor?.querySelector<HTMLElement>('[contenteditable="true"]') ?? null
   }
-  const haySeleccionDePalabras = (editor: HTMLElement) => {
+  const rangoSeleccionTexto = (editor: HTMLElement) => {
     const seleccionVentana = window.getSelection()
-    if (!seleccionVentana || seleccionVentana.rangeCount === 0 || seleccionVentana.isCollapsed) return false
-    return editor.contains(seleccionVentana.getRangeAt(0).commonAncestorContainer)
+    if (!seleccionVentana || seleccionVentana.rangeCount === 0 || seleccionVentana.isCollapsed) return null
+    const rango = seleccionVentana.getRangeAt(0)
+    return editor.contains(rango.commonAncestorContainer) ? rango : null
   }
+  const haySeleccionDePalabras = (editor: HTMLElement) => Boolean(rangoSeleccionTexto(editor))
+  const seleccionCubreTodo = (editor: HTMLElement) => {
+    const seleccionVentana = window.getSelection()
+    if (!rangoSeleccionTexto(editor) || !seleccionVentana) return false
+    const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim()
+    return Boolean(normalizar(editor.innerText)) && normalizar(seleccionVentana.toString()) === normalizar(editor.innerText)
+  }
+  const valorInlineActual = (editor: HTMLElement, atributo: AtributoInlineVida, fallback: number) => {
+    const seleccionVentana = window.getSelection()
+    const nodo = seleccionVentana?.anchorNode
+    const elemento = nodo instanceof HTMLElement ? nodo : nodo?.parentElement
+    const span = elemento?.closest<HTMLElement>(`span[${atributo}]`)
+    if (!span || !editor.contains(span)) return fallback
+    const valor = Number(span.getAttribute(atributo))
+    return Number.isFinite(valor) ? valor : fallback
+  }
+  const aplicarAtributoSeleccion = (editor: HTMLElement, atributo: AtributoInlineVida, valor: string) => {
+    const rango = rangoSeleccionTexto(editor)
+    const seleccionVentana = window.getSelection()
+    if (!rango || !seleccionVentana) return false
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT)
+    const nodos: Text[] = []
+    let actual = walker.nextNode()
+    while (actual) {
+      if (actual.textContent && rango.intersectsNode(actual)) nodos.push(actual as Text)
+      actual = walker.nextNode()
+    }
+    const creados: HTMLElement[] = []
+    nodos.reverse().forEach((nodo) => {
+      const longitud = nodo.data.length
+      const inicio = nodo === rango.startContainer ? rango.startOffset : 0
+      const fin = nodo === rango.endContainer ? rango.endOffset : longitud
+      if (fin <= inicio) return
+      const parcial = document.createRange()
+      parcial.setStart(nodo, Math.max(0, Math.min(inicio, longitud)))
+      parcial.setEnd(nodo, Math.max(0, Math.min(fin, longitud)))
+      const span = document.createElement('span')
+      span.setAttribute(atributo, valor)
+      parcial.surroundContents(span)
+      creados.push(span)
+    })
+    if (!creados.length) return false
+    const ordenados = creados.sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)
+    const nuevoRango = document.createRange()
+    nuevoRango.setStartBefore(ordenados[0])
+    nuevoRango.setEndAfter(ordenados[ordenados.length - 1])
+    seleccionVentana.removeAllRanges()
+    seleccionVentana.addRange(nuevoRango)
+    return true
+  }
+  const persistirInline = (editor: HTMLElement) => textoSeleccionado && patchElementoSinHistorial(textoSeleccionado.id, { contenido: limpiarHtmlCanvas(editor.innerHTML) })
   const aplicarEfectoTexto = (comando: ComandoEfectoTexto, patchCaja: Partial<ElementoCanvas>) => {
     if (!textoSeleccionado) return
     const editor = editorTextoActual()
     if (editor && haySeleccionDePalabras(editor)) {
       registrarHistorial()
       document.execCommand(comando)
-      patchElementoSinHistorial(textoSeleccionado.id, { contenido: limpiarHtmlCanvas(editor.innerHTML) })
+      persistirInline(editor)
       return
     }
     actualizarElemento(textoSeleccionado.id, patchCaja)
+  }
+  const aplicarColorTexto = (color: string) => {
+    if (!textoSeleccionado) return
+    const editor = editorTextoActual()
+    if (editor && haySeleccionDePalabras(editor) && !seleccionCubreTodo(editor)) {
+      registrarHistorial()
+      if (aplicarAtributoSeleccion(editor, 'data-vida-color', color)) persistirInline(editor)
+    } else actualizarElemento(textoSeleccionado.id, { color })
+    setPaletaTextoAbierta(false)
   }
   const comandoParrafo = (comando: ComandoListaTexto) => {
     if (!textoSeleccionado) return
     const editor = editorTextoActual()
     if (!editor) return
     const seleccionVentana = window.getSelection()
-    const habiaSeleccion = Boolean(seleccionVentana && seleccionVentana.rangeCount > 0 && !seleccionVentana.isCollapsed && editor.contains(seleccionVentana.getRangeAt(0).commonAncestorContainer))
+    const habiaSeleccion = Boolean(rangoSeleccionTexto(editor))
     registrarHistorial()
     if (!habiaSeleccion && seleccionVentana) {
       editor.focus({ preventScroll: true })
@@ -336,13 +434,29 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const alinear = (alineacion: Alineacion) => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { alineacion })
   const ajustarTamano = (delta: number) => {
     if (!textoSeleccionado) return
+    const editor = editorTextoActual()
+    if (editor && haySeleccionDePalabras(editor) && !seleccionCubreTodo(editor)) {
+      const actual = valorInlineActual(editor, 'data-vida-size', Math.round(textoSeleccionado.tamano_fuente ?? 24))
+      const siguiente = Math.min(160, Math.max(8, actual + delta))
+      registrarHistorial()
+      if (aplicarAtributoSeleccion(editor, 'data-vida-size', String(siguiente))) persistirInline(editor)
+      return
+    }
     const actual = Math.round(textoSeleccionado.tamano_fuente ?? 24)
     actualizarElemento(textoSeleccionado.id, { tamano_fuente: Math.min(160, Math.max(8, actual + delta)) })
   }
   const ajustarLinea = (delta: number) => {
     if (!textoSeleccionado) return
+    const editor = editorTextoActual()
+    if (editor && haySeleccionDePalabras(editor) && !seleccionCubreTodo(editor)) {
+      const actual = valorInlineActual(editor, 'data-vida-line-height', textoSeleccionado.interlineado ?? 1.25)
+      const siguiente = Math.round(Math.min(3, Math.max(.8, actual + delta)) * 100) / 100
+      registrarHistorial()
+      if (aplicarAtributoSeleccion(editor, 'data-vida-line-height', String(siguiente))) persistirInline(editor)
+      return
+    }
     const actual = textoSeleccionado.interlineado ?? 1.25
-    const siguiente = Math.round(Math.min(2, Math.max(.9, actual + delta)) * 100) / 100
+    const siguiente = Math.round(Math.min(3, Math.max(.8, actual + delta)) * 100) / 100
     actualizarElemento(textoSeleccionado.id, { interlineado: siguiente })
   }
   const alternarGrupoPrincipal = (grupo: GrupoPrincipal) => {
@@ -354,6 +468,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const etiquetaRolTexto = textoSeleccionado?.rol === 'titulo' ? 'Título' : textoSeleccionado?.rol === 'subtitulo' ? 'Subtítulo' : textoSeleccionado?.rol === 'cuerpo' ? 'Cuerpo' : textoSeleccionado?.rol === 'libre' ? 'Texto' : 'Selecciona texto'
   const fuenteTextoActual = textoSeleccionado?.fuente ?? 'Fuente'
   const clasePanel = grupoPrincipal === 'plantillas' ? 'panel-plantillas' : panel ? `panel-${panel}` : `panel-${grupoPrincipal ?? 'vacio'}`
+  const estiloStage = { '--pastoral-stage-mobile-height': tecladoAbierto ? 'clamp(118px, 20dvh, 168px)' : 'clamp(210px, 32dvh, 300px)', height: 'clamp(250px, 52dvh, 640px)' } as CSSProperties
   void versionHistorial
   void claseBotonActivo
 
@@ -373,7 +488,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       <div className="pastoral-external-banks">{BANCOS_EXTERNOS.map((banco) => <a key={banco.label} href={banco.href} target="_blank" rel="noreferrer">{banco.label}<ExternalLink /></a>)}</div>
     </div>}
 
-    {panel === 'texto' && <div className="pastoral-panel-content grid h-full w-full content-start gap-3 overflow-y-auto pr-1">
+    {panel === 'texto' && <div className="pastoral-panel-content grid h-full w-full content-start gap-3 overflow-visible pr-1">
       <section className="grid gap-2 border-b border-slate-200 pb-3">
         <div className="px-1 text-[11px] font-black text-slate-500">Estilo · {etiquetaRolTexto}</div>
         <div className="grid grid-cols-[56px_repeat(3,minmax(0,1fr))] items-end gap-1" aria-label="Opciones de estilo de texto">
@@ -382,7 +497,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         </div>
       </section>
 
-      <section className="grid gap-2 border-b border-slate-200 pb-3">
+      <section data-pastoral-format-section="true" className={`grid gap-2 border-b border-slate-200 pb-3 ${tecladoAbierto ? 'sticky top-0 z-30 bg-[#f4f5f9] pt-1' : ''}`}>
         <div className="px-1 text-[11px] font-black text-slate-500">Formato · listas · tamaño · alineación</div>
         <div className="flex w-full touch-pan-x items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="toolbar" aria-label="Formato listas tamaño interlineado y alineación">
           <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('bold', { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))} aria-label="Negrita"><Bold className="h-4 w-4" /></button>
@@ -406,7 +521,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('derecha')} className={claseControlTexto(textoSeleccionado?.alineacion === 'derecha')} aria-label="Alinear a la derecha"><AlignRight className="h-4 w-4" /></button>
           <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('justificado')} className={claseControlTexto(textoSeleccionado?.alineacion === 'justificado')} aria-label="Justificar"><AlignJustify className="h-4 w-4" /></button>
         </div>
-        {paletaTextoAbierta && <div className="flex w-full touch-pan-x gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Colores de texto">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => { if (!textoSeleccionado) return; actualizarElemento(textoSeleccionado.id, { color }); setPaletaTextoAbierta(false) }} className={`h-10 w-10 shrink-0 rounded-full border-2 ${textoSeleccionado?.color === color ? 'border-indigo-500' : 'border-slate-200'}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>}
+        {paletaTextoAbierta && <div className="flex w-full touch-pan-x gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Colores de texto">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => aplicarColorTexto(color)} className={`h-10 w-10 shrink-0 rounded-full border-2 ${textoSeleccionado?.color === color ? 'border-indigo-500' : 'border-slate-200'}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>}
       </section>
 
       <section className="grid gap-2 pb-2">
@@ -455,10 +570,10 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
     {vista === 'contenido' && pagina && <section className="pastoral-editor-section pb-4 pt-2">
       <div className="pastoral-editor-shell-flow flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#f4f5f9]">
-        <div className="pastoral-stage-flow flex w-full shrink-0 items-stretch" style={{ height: 'clamp(250px, 52dvh, 640px)' }}>
+        <div className="pastoral-stage-flow flex w-full shrink-0 items-stretch" style={estiloStage}>
           <div className="pastoral-canvas-wrap w-full"><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} onDeleteElement={eliminarElemento} /></div>
         </div>
-        <div className="pastoral-editor-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="pastoral-editor-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={tecladoAbierto ? { paddingBottom: `${Math.max(160, tecladoInset + 32)}px`, scrollPaddingBottom: `${Math.max(160, tecladoInset + 32)}px` } : undefined}>
           <div className="pastoral-tool-dock" aria-label="Herramientas del lienzo">{HERRAMIENTAS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => alternarGrupoPrincipal(id)} className={`pastoral-tool-button col-span-2 ${grupoPrincipal === id ? 'is-active' : ''}`} aria-pressed={grupoPrincipal === id} aria-expanded={grupoPrincipal === id} aria-label={label} title={label}><Icon /><small className="relative z-[1] text-[10px] font-bold">{label}</small></button>)}<button type="button" disabled={!elementoSeleccionado} onClick={() => elementoSeleccionado && eliminarElemento(elementoSeleccionado.id)} className="grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border border-rose-200 bg-white disabled:opacity-30" aria-label="Borrar elemento seleccionado" title="Borrar"><Trash2 className="h-[18px] w-[18px] text-rose-600" /></button></div>
           {grupoPrincipal && <aside className={`pastoral-tool-panel-flow ${clasePanel}`} aria-label={`Panel ${grupoPrincipal}`}><div className="pastoral-tool-panel-flow-scroll px-3 pb-3 pt-2"><div className="flex flex-col"><div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`Opciones de ${grupoPrincipal}`}>{SUBMENUS[grupoPrincipal].map((item) => <button key={item.id} type="button" onClick={() => alternarSubpanel(item.id)} className={`min-h-10 shrink-0 rounded-full px-3 text-xs font-bold ${panel === item.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={panel === item.id}>{item.label}</button>)}</div><div className="min-h-0 flex-1 pt-2">{panelContenido}</div></div></div></aside>}
         </div>
