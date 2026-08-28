@@ -34,6 +34,7 @@ type TextoProps = {
   baseWidth: number
   onSelect?: (id: string | null) => void
   onBeginChange?: () => void
+  onPatchElement?: (id: string, patch: Partial<ElementoCanvas>) => void
   onTextInput?: (id: string, html: string) => void
 }
 
@@ -62,8 +63,11 @@ function aplicarTamanoTexto(editor: HTMLElement, puntos: number, baseWidth: numb
   editor.style.fontSize = `min(${pixeles}px, ${escalaLienzo}cqw)`
 }
 
-function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, onTextInput }: TextoProps) {
+const TEXTOS_INICIALES_AJUSTABLES = new Set(['Título', 'Subtítulo', 'Escribe el contenido', 'Escribe aquí'])
+
+function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, onPatchElement, onTextInput }: TextoProps) {
   const textoRef = useRef<HTMLDivElement | null>(null)
+  const cajaInicialAjustadaRef = useRef(false)
   const contenidoSeguro = limpiarHtmlCanvas(elemento.contenido ?? '')
   const decoracion = [elemento.subrayado ? 'underline' : '', elemento.tachado ? 'line-through' : ''].filter(Boolean).join(' ') || 'none'
   const puntos = elemento.tamano_fuente ?? 24
@@ -90,12 +94,48 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       aplicarAtributosInlineVida(editor, baseWidth, limitarInline ? tamano : undefined)
     }
 
+    const ajustarCajaInicial = () => {
+      if (cancelado || cajaInicialAjustadaRef.current || !editable || !onPatchElement) return
+      const textoPlano = (editor.textContent ?? '').replace(/\s+/g, ' ').trim()
+      const esCajaInicial = elemento.id.startsWith('plantilla-admin-') || TEXTOS_INICIALES_AJUSTABLES.has(textoPlano)
+      if (!esCajaInicial) return
+
+      const lienzo = editor.closest<HTMLElement>('[data-pastoral-canvas="true"]')
+      const rectLienzo = lienzo?.getBoundingClientRect()
+      if (!rectLienzo || rectLienzo.width <= 0 || rectLienzo.height <= 0) return
+
+      const rango = document.createRange()
+      rango.selectNodeContents(editor)
+      const fragmentos = Array.from(rango.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0)
+      if (!fragmentos.length) return
+
+      const anchoTexto = Math.max(...fragmentos.map((rect) => rect.width))
+      const arriba = Math.min(...fragmentos.map((rect) => rect.top))
+      const abajo = Math.max(...fragmentos.map((rect) => rect.bottom))
+      const altoTexto = Math.max(1, abajo - arriba)
+      const anchoNecesario = clamp(((anchoTexto + 12) / rectLienzo.width) * 100, 5, 100 - elemento.x)
+      const altoNecesario = clamp(((altoTexto + 8) / rectLienzo.height) * 100, 5, 100 - elemento.y)
+      const w = Math.min(elemento.w, Math.ceil(anchoNecesario * 10) / 10)
+      const h = Math.min(elemento.h, Math.ceil(altoNecesario * 10) / 10)
+
+      cajaInicialAjustadaRef.current = true
+      if (Math.abs(w - elemento.w) < .4 && Math.abs(h - elemento.h) < .4) return
+
+      const x = elemento.alineacion === 'derecha'
+        ? clamp(elemento.x + elemento.w - w, 0, 100 - w)
+        : elemento.alineacion === 'centro'
+          ? clamp(elemento.x + (elemento.w - w) / 2, 0, 100 - w)
+          : clamp(elemento.x, 0, 100 - w)
+      onPatchElement(elemento.id, { x, w, h })
+    }
+
     const encajar = () => {
       if (cancelado) return
       const caja = editor.parentElement
       const preferido = clamp(puntos, 8, 160)
       if (!debeEncajar || !caja || caja.clientWidth <= 0 || caja.clientHeight <= 0) {
         aplicar(preferido)
+        ajustarCajaInicial()
         return
       }
 
@@ -108,6 +148,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
         if (cabeAncho && cabeAlto) break
       }
       aplicar(elegido, true)
+      ajustarCajaInicial()
     }
 
     const programarEncaje = () => {
@@ -127,7 +168,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       window.cancelAnimationFrame(frame)
       observer?.disconnect()
     }
-  }, [contenidoSeguro, baseWidth, puntos, elemento.rol, elemento.interlineado, elemento.peso, fuente])
+  }, [contenidoSeguro, baseWidth, puntos, elemento.rol, elemento.interlineado, elemento.peso, fuente, editable, onPatchElement, elemento.id, elemento.x, elemento.y, elemento.alineacion])
 
   return <div
     ref={textoRef}
@@ -388,7 +429,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
           >
             {esFondoVisual ? <div className="h-full w-full" style={{ background: elemento.fondo_visual }} /> : elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
-            ) : <TextoCanvas elemento={elemento} editable={editable && !bloqueado} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
+            ) : <TextoCanvas elemento={elemento} editable={editable && !bloqueado} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onPatchElement={onPatchElement} onTextInput={onTextInput} />}
             {activo && !bloqueado && <>
               {elemento.tipo !== 'imagen' && <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
