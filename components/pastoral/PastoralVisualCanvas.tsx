@@ -37,13 +37,15 @@ type TextoProps = {
   onTextInput?: (id: string, html: string) => void
 }
 
-function aplicarAtributosInlineVida(editor: HTMLElement, baseWidth: number) {
+function aplicarAtributosInlineVida(editor: HTMLElement, baseWidth: number, maxPuntos?: number) {
   editor.querySelectorAll<HTMLElement>('span[data-vida-size], span[data-vida-line-height], span[data-vida-color]').forEach((span) => {
     const size = Number(span.getAttribute('data-vida-size'))
     const line = Number(span.getAttribute('data-vida-line-height'))
     const color = String(span.getAttribute('data-vida-color') ?? '')
     if (Number.isFinite(size) && size >= 8 && size <= 160) {
-      const pixeles = (size * 4) / 3
+      const limite = typeof maxPuntos === 'number' && Number.isFinite(maxPuntos) ? maxPuntos : size
+      const sizeAplicado = Math.min(size, limite)
+      const pixeles = (sizeAplicado * 4) / 3
       const escalaLienzo = (pixeles / baseWidth) * 100
       span.style.fontSize = `min(${pixeles}px, ${escalaLienzo}cqw)`
     } else span.style.removeProperty('font-size')
@@ -52,6 +54,12 @@ function aplicarAtributosInlineVida(editor: HTMLElement, baseWidth: number) {
     if (/^#[0-9a-f]{6}$/i.test(color)) span.style.color = color
     else span.style.removeProperty('color')
   })
+}
+
+function aplicarTamanoTexto(editor: HTMLElement, puntos: number, baseWidth: number) {
+  const pixeles = (puntos * 4) / 3
+  const escalaLienzo = (pixeles / baseWidth) * 100
+  editor.style.fontSize = `min(${pixeles}px, ${escalaLienzo}cqw)`
 }
 
 function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, onTextInput }: TextoProps) {
@@ -70,8 +78,56 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     const editor = textoRef.current
     if (!editor) return
     if (document.activeElement !== editor && editor.innerHTML !== contenidoSeguro) editor.innerHTML = contenidoSeguro
-    aplicarAtributosInlineVida(editor, baseWidth)
-  }, [contenidoSeguro, baseWidth, elemento.tamano_fuente])
+
+    const contenedor = editor.parentElement
+    const debeEncajar = elemento.rol !== 'libre'
+    let frame = 0
+    let observer: ResizeObserver | null = null
+    let cancelado = false
+
+    const aplicar = (tamano: number, limitarInline = false) => {
+      aplicarTamanoTexto(editor, tamano, baseWidth)
+      aplicarAtributosInlineVida(editor, baseWidth, limitarInline ? tamano : undefined)
+    }
+
+    const encajar = () => {
+      if (cancelado) return
+      const caja = editor.parentElement
+      const preferido = clamp(puntos, 8, 160)
+      if (!debeEncajar || !caja || caja.clientWidth <= 0 || caja.clientHeight <= 0) {
+        aplicar(preferido)
+        return
+      }
+
+      let elegido = preferido
+      for (let candidato = preferido; candidato >= 8; candidato -= 1) {
+        aplicar(candidato, true)
+        elegido = candidato
+        const cabeAncho = editor.scrollWidth <= caja.clientWidth + 1
+        const cabeAlto = editor.scrollHeight <= caja.clientHeight + 1
+        if (cabeAncho && cabeAlto) break
+      }
+      aplicar(elegido, true)
+    }
+
+    const programarEncaje = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(encajar)
+    }
+
+    programarEncaje()
+    if (contenedor && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(programarEncaje)
+      observer.observe(contenedor)
+    }
+    document.fonts?.ready.then(() => { if (!cancelado) programarEncaje() }).catch(() => {})
+
+    return () => {
+      cancelado = true
+      window.cancelAnimationFrame(frame)
+      observer?.disconnect()
+    }
+  }, [contenidoSeguro, baseWidth, puntos, elemento.rol, elemento.interlineado, elemento.peso, fuente])
 
   return <div
     ref={textoRef}
