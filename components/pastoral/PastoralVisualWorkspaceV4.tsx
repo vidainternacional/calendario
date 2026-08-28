@@ -34,6 +34,8 @@ type Snapshot = { titulo: string; paginas: DiapositivaCanvas[]; indice: number }
 type DestinoSubida = 'elemento' | 'fondo'
 type GrupoPrincipal = 'plantillas' | 'texto' | 'capas'
 type PanelEditor = 'plantillas' | 'temas' | 'fondos' | 'recursos' | 'texto' | 'biblia' | 'capas' | 'diseno' | 'ajustes'
+type ComandoEfectoTexto = 'bold' | 'italic' | 'underline' | 'strikeThrough'
+type ComandoListaTexto = 'insertUnorderedList' | 'insertOrderedList'
 
 const MAX_HISTORIAL = 80
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
@@ -117,6 +119,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [guardado, setGuardado] = useState(false)
   const [guardandoAuto, setGuardandoAuto] = useState(false)
   const [busquedaRecursos, setBusquedaRecursos] = useState('')
+  const [paletaTextoAbierta, setPaletaTextoAbierta] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [, startSubida] = useTransition()
   const [destinoSubida, setDestinoSubida] = useState<DestinoSubida>('elemento')
@@ -226,10 +229,44 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     if (!window.confirm(`¿Eliminar Página ${i + 1}? Puedes recuperarla con Deshacer mientras no recargues.`)) return
     registrarHistorial(); const siguientes = paginas.filter((_, p) => p !== i); setPaginas(siguientes); setIndice(Math.min(i, siguientes.length - 1)); setSeleccion(null)
   }
-  const comandoParrafo = (comando: string) => {
-    const activo = document.activeElement
-    if (!(activo instanceof HTMLElement) || !activo.isContentEditable) return mostrarToast('Toca primero una caja de texto')
-    registrarHistorial(); document.execCommand(comando); if (seleccion) patchElementoSinHistorial(seleccion, { contenido: limpiarHtmlCanvas(activo.innerHTML) })
+  const editorTextoActual = () => {
+    if (!textoSeleccionado) return null
+    const contenedor = Array.from(document.querySelectorAll<HTMLElement>('[data-canvas-element-id]')).find((item) => item.dataset.canvasElementId === textoSeleccionado.id)
+    return contenedor?.querySelector<HTMLElement>('[contenteditable="true"]') ?? null
+  }
+  const haySeleccionDePalabras = (editor: HTMLElement) => {
+    const seleccionVentana = window.getSelection()
+    if (!seleccionVentana || seleccionVentana.rangeCount === 0 || seleccionVentana.isCollapsed) return false
+    return editor.contains(seleccionVentana.getRangeAt(0).commonAncestorContainer)
+  }
+  const aplicarEfectoTexto = (comando: ComandoEfectoTexto, patchCaja: Partial<ElementoCanvas>) => {
+    if (!textoSeleccionado) return
+    const editor = editorTextoActual()
+    if (editor && haySeleccionDePalabras(editor)) {
+      registrarHistorial()
+      document.execCommand(comando)
+      patchElementoSinHistorial(textoSeleccionado.id, { contenido: limpiarHtmlCanvas(editor.innerHTML) })
+      return
+    }
+    actualizarElemento(textoSeleccionado.id, patchCaja)
+  }
+  const comandoParrafo = (comando: ComandoListaTexto) => {
+    if (!textoSeleccionado) return
+    const editor = editorTextoActual()
+    if (!editor) return
+    const seleccionVentana = window.getSelection()
+    const habiaSeleccion = Boolean(seleccionVentana && seleccionVentana.rangeCount > 0 && !seleccionVentana.isCollapsed && editor.contains(seleccionVentana.getRangeAt(0).commonAncestorContainer))
+    registrarHistorial()
+    if (!habiaSeleccion && seleccionVentana) {
+      editor.focus({ preventScroll: true })
+      const rangoCompleto = document.createRange()
+      rangoCompleto.selectNodeContents(editor)
+      seleccionVentana.removeAllRanges()
+      seleccionVentana.addRange(rangoCompleto)
+    }
+    document.execCommand(comando)
+    patchElementoSinHistorial(textoSeleccionado.id, { contenido: limpiarHtmlCanvas(editor.innerHTML) })
+    if (!habiaSeleccion) seleccionVentana?.collapseToEnd()
   }
   const agregarVersiculo = (versiculo: { referencia: string; texto: string; traduccion: string }) => {
     const contenido = `<strong>${versiculo.referencia}${versiculo.traduccion ? ` · ${versiculo.traduccion}` : ''}</strong><br>${versiculo.texto}`
@@ -341,40 +378,41 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         <div className="px-1 text-[11px] font-black text-slate-500">Estilo · {etiquetaRolTexto}</div>
         <div className="grid grid-cols-[56px_repeat(3,minmax(0,1fr))] items-end gap-1" aria-label="Opciones de estilo de texto">
           <button type="button" onClick={() => agregarTexto('libre')} className="flex min-h-12 items-center justify-center gap-0.5 border-b-2 border-transparent px-1 pb-2 pt-1 text-slate-700" aria-label="Agregar texto" title="Agregar texto"><span className="text-base font-black">A</span><span className="text-sm font-black">+</span></button>
-          {ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" disabled={!textoSeleccionado} onClick={() => aplicarRolTexto(estilo.id)} aria-pressed={textoSeleccionado?.rol === estilo.id} className={`min-h-12 min-w-0 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-center disabled:opacity-30 ${estilo.id === 'titulo' ? 'text-[15px] font-extrabold' : estilo.id === 'subtitulo' ? 'text-[13px] font-semibold' : 'text-[11px] font-normal'} ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>{estilo.label}</button>)}
+          {ESTILOS_TEXTO.filter((item) => item.id !== 'libre').map((estilo) => <button key={estilo.id} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => aplicarRolTexto(estilo.id)} aria-pressed={textoSeleccionado?.rol === estilo.id} className={`min-h-12 min-w-0 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-center disabled:opacity-30 ${estilo.id === 'titulo' ? 'text-[15px] font-extrabold' : estilo.id === 'subtitulo' ? 'text-[13px] font-semibold' : 'text-[11px] font-normal'} ${textoSeleccionado?.rol === estilo.id ? 'border-indigo-500 text-indigo-700' : 'border-transparent text-slate-600'}`}>{estilo.label}</button>)}
         </div>
       </section>
 
       <section className="grid gap-2 border-b border-slate-200 pb-3">
         <div className="px-1 text-[11px] font-black text-slate-500">Formato · listas · tamaño · alineación</div>
-        <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="toolbar" aria-label="Formato listas tamaño interlineado y alineación">
-          <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))} aria-label="Negrita"><Bold className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { cursiva: !textoSeleccionado.cursiva })} className={claseControlTexto(Boolean(textoSeleccionado?.cursiva))} aria-label="Cursiva"><Italic className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { subrayado: !textoSeleccionado.subrayado })} className={claseControlTexto(Boolean(textoSeleccionado?.subrayado))} aria-label="Subrayado"><Underline className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { tachado: !textoSeleccionado.tachado })} className={claseControlTexto(Boolean(textoSeleccionado?.tachado))} aria-label="Tachado"><Strikethrough className="h-4 w-4" /></button>
-          <details className="relative shrink-0"><summary className={`${claseControlTexto(false)} cursor-pointer list-none [&::-webkit-details-marker]:hidden`} aria-label="Color de texto"><span className="h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: textoSeleccionado?.color ?? '#0f172a' }} /></summary><div className="absolute left-0 top-full z-30 mt-2 flex w-[220px] flex-wrap gap-2 rounded-2xl bg-[#f4f5f9] p-2 shadow-sm" role="group" aria-label="Colores de texto">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { color })} className={`h-9 w-9 rounded-full border-2 ${textoSeleccionado?.color === color ? 'border-indigo-500' : 'border-slate-200'}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div></details>
+        <div className="flex w-full touch-pan-x items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="toolbar" aria-label="Formato listas tamaño interlineado y alineación">
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('bold', { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))} aria-label="Negrita"><Bold className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('italic', { cursiva: !textoSeleccionado.cursiva })} className={claseControlTexto(Boolean(textoSeleccionado?.cursiva))} aria-label="Cursiva"><Italic className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('underline', { subrayado: !textoSeleccionado.subrayado })} className={claseControlTexto(Boolean(textoSeleccionado?.subrayado))} aria-label="Subrayado"><Underline className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('strikeThrough', { tachado: !textoSeleccionado.tachado })} className={claseControlTexto(Boolean(textoSeleccionado?.tachado))} aria-label="Tachado"><Strikethrough className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => setPaletaTextoAbierta((actual) => !actual)} className={claseControlTexto(false)} aria-label="Color de texto" aria-expanded={paletaTextoAbierta}><span className="h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: textoSeleccionado?.color ?? '#0f172a' }} /></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
           <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className={claseControlTexto(false)} aria-label="Lista con viñetas"><List className="h-4 w-4" /></button>
           <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className={claseControlTexto(false)} aria-label="Lista numerada"><ListOrdered className="h-4 w-4" /></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-          <button type="button" disabled={!textoSeleccionado} onClick={() => ajustarTamano(-1)} className={claseControlTexto(false)} aria-label="Reducir tamaño de letra"><span className="text-xs font-black">A−</span></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(-1)} className={claseControlTexto(false)} aria-label="Reducir tamaño de letra"><span className="text-xs font-black">A−</span></button>
           <button type="button" disabled className={`${claseControlTexto(false)} text-[11px] font-black text-slate-500 opacity-100`} aria-label="Tamaño de letra actual">{Math.round(textoSeleccionado?.tamano_fuente ?? 24)}</button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => ajustarTamano(1)} className={claseControlTexto(false)} aria-label="Aumentar tamaño de letra"><span className="text-xs font-black">A+</span></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => ajustarLinea(-0.05)} className={claseControlTexto(false)} aria-label="Reducir interlineado"><span className="text-xs font-black">↕−</span></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(1)} className={claseControlTexto(false)} aria-label="Aumentar tamaño de letra"><span className="text-xs font-black">A+</span></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarLinea(-0.05)} className={claseControlTexto(false)} aria-label="Reducir interlineado"><span className="text-xs font-black">↕−</span></button>
           <button type="button" disabled className={`${claseControlTexto(false)} text-[10px] font-black text-slate-500 opacity-100`} aria-label="Interlineado actual">{(textoSeleccionado?.interlineado ?? 1.25).toFixed(2)}</button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => ajustarLinea(0.05)} className={claseControlTexto(false)} aria-label="Aumentar interlineado"><span className="text-xs font-black">↕+</span></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarLinea(0.05)} className={claseControlTexto(false)} aria-label="Aumentar interlineado"><span className="text-xs font-black">↕+</span></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-          <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('izquierda')} className={claseControlTexto(textoSeleccionado?.alineacion === 'izquierda')} aria-label="Alinear a la izquierda"><AlignLeft className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('centro')} className={claseControlTexto(textoSeleccionado?.alineacion === 'centro')} aria-label="Centrar"><AlignCenter className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('derecha')} className={claseControlTexto(textoSeleccionado?.alineacion === 'derecha')} aria-label="Alinear a la derecha"><AlignRight className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onClick={() => alinear('justificado')} className={claseControlTexto(textoSeleccionado?.alineacion === 'justificado')} aria-label="Justificar"><AlignJustify className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('izquierda')} className={claseControlTexto(textoSeleccionado?.alineacion === 'izquierda')} aria-label="Alinear a la izquierda"><AlignLeft className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('centro')} className={claseControlTexto(textoSeleccionado?.alineacion === 'centro')} aria-label="Centrar"><AlignCenter className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('derecha')} className={claseControlTexto(textoSeleccionado?.alineacion === 'derecha')} aria-label="Alinear a la derecha"><AlignRight className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => alinear('justificado')} className={claseControlTexto(textoSeleccionado?.alineacion === 'justificado')} aria-label="Justificar"><AlignJustify className="h-4 w-4" /></button>
         </div>
+        {paletaTextoAbierta && <div className="flex w-full touch-pan-x gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Colores de texto">{COLORES_TEXTO.map((color) => <button key={color} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => { if (!textoSeleccionado) return; actualizarElemento(textoSeleccionado.id, { color }); setPaletaTextoAbierta(false) }} className={`h-10 w-10 shrink-0 rounded-full border-2 ${textoSeleccionado?.color === color ? 'border-indigo-500' : 'border-slate-200'}`} style={{ backgroundColor: color }} aria-label={`Color de texto ${color}`} />)}</div>}
       </section>
 
       <section className="grid gap-2 pb-2">
         <details className="group">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 [&::-webkit-details-marker]:hidden" aria-label="Elegir fuente"><span className="min-w-0 truncate">Fuente · {fuenteTextoActual}</span><span className="flex shrink-0 items-center gap-2"><span className="text-lg font-bold text-slate-600" style={{ fontFamily: textoSeleccionado?.fuente ?? FUENTE_MUESTRA }}>Aa</span><span className="text-slate-400 transition-transform group-open:rotate-180">⌄</span></span></summary>
-          <div className="mt-2 grid grid-cols-2 gap-2" aria-label="Fuentes disponibles">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" disabled={!textoSeleccionado} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { fuente })} className={`min-h-11 min-w-0 rounded-full border px-3 text-xs font-bold ${textoSeleccionado?.fuente === fuente ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} style={{ fontFamily: fuente }}><span className="block truncate">{fuente}</span></button>)}</div>
+          <summary onPointerDown={(e) => e.preventDefault()} className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 [&::-webkit-details-marker]:hidden" aria-label="Elegir fuente"><span className="min-w-0 truncate">Fuente · {fuenteTextoActual}</span><span className="flex shrink-0 items-center gap-2"><span className="text-lg font-bold text-slate-600" style={{ fontFamily: textoSeleccionado?.fuente ?? FUENTE_MUESTRA }}>Aa</span><span className="text-slate-400 transition-transform group-open:rotate-180">⌄</span></span></summary>
+          <div className="mt-2 grid grid-cols-2 gap-2" aria-label="Fuentes disponibles">{FUENTES_PASTORALES.map((fuente) => <button key={fuente} type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && actualizarElemento(textoSeleccionado.id, { fuente })} className={`min-h-11 min-w-0 rounded-full border px-3 text-xs font-bold ${textoSeleccionado?.fuente === fuente ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} style={{ fontFamily: fuente }}><span className="block truncate">{fuente}</span></button>)}</div>
         </details>
       </section>
     </div>}
