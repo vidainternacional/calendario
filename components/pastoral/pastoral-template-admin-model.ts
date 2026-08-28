@@ -29,6 +29,12 @@ export type PlantillaAdministrada = {
 }
 
 const ESCALA_EDITOR_PLANTILLA = 0.56
+const MARGEN_SEGURO_CANVAS = 4
+const MAX_PT_POR_ROL: Record<RolPlantillaAdministrada, number> = {
+  titulo: 42,
+  subtitulo: 28,
+  cuerpo: 22,
+}
 const FUENTES_EXTRA = new Set([
   'var(--font-pastoral-eb-garamond)',
   'var(--font-pastoral-montserrat)',
@@ -56,15 +62,18 @@ const fondoSeguro = (valor: unknown, fallback: string) => {
 const alineacionSegura = (valor: unknown): Alineacion => valor === 'izquierda' || valor === 'derecha' || valor === 'justificado' ? valor : 'centro'
 const fuenteSegura = (valor: unknown, fallback = 'Inter') => FUENTES_VALIDAS.has(String(valor ?? '')) ? String(valor) : fallback
 
-function cajaSegura(valor: any, fallback: CajaPlantillaAdministrada): CajaPlantillaAdministrada {
-  const x = clamp(Number(valor?.x ?? fallback.x), 0, 94)
-  const y = clamp(Number(valor?.y ?? fallback.y), 0, 94)
+function cajaSegura(valor: any, fallback: CajaPlantillaAdministrada, rol: RolPlantillaAdministrada): CajaPlantillaAdministrada {
+  const limitePosicion = 100 - MARGEN_SEGURO_CANVAS - 6
+  const x = clamp(Number(valor?.x ?? fallback.x), MARGEN_SEGURO_CANVAS, limitePosicion)
+  const y = clamp(Number(valor?.y ?? fallback.y), MARGEN_SEGURO_CANVAS, limitePosicion)
+  const limiteDerecho = 100 - MARGEN_SEGURO_CANVAS - x
+  const limiteInferior = 100 - MARGEN_SEGURO_CANVAS - y
   return {
     x,
     y,
-    w: clamp(Number(valor?.w ?? fallback.w), 6, 100 - x),
-    h: clamp(Number(valor?.h ?? fallback.h), 6, 100 - y),
-    pt: clamp(Number(valor?.pt ?? fallback.pt), 8, 72),
+    w: clamp(Number(valor?.w ?? fallback.w), 6, limiteDerecho),
+    h: clamp(Number(valor?.h ?? fallback.h), 6, limiteInferior),
+    pt: clamp(Number(valor?.pt ?? fallback.pt), 8, MAX_PT_POR_ROL[rol]),
     alineacion: alineacionSegura(valor?.alineacion ?? fallback.alineacion),
     fuente: fuenteSegura(valor?.fuente, fallback.fuente),
     interlineado: Math.round(clamp(Number(valor?.interlineado ?? fallback.interlineado), .8, 2) * 100) / 100,
@@ -133,9 +142,9 @@ function normalizarUna(valor: any, fallback?: PlantillaAdministrada, indice = 0)
       subtitulo: textoSeguro(valor?.muestras?.subtitulo, 220, base.muestras.subtitulo),
       cuerpo: textoSeguro(valor?.muestras?.cuerpo, 700, base.muestras.cuerpo),
     },
-    titulo: cajaSegura(valor?.titulo, base.titulo),
-    subtitulo: cajaSegura(valor?.subtitulo, base.subtitulo),
-    cuerpo: cajaSegura(valor?.cuerpo, base.cuerpo),
+    titulo: cajaSegura(valor?.titulo, base.titulo, 'titulo'),
+    subtitulo: cajaSegura(valor?.subtitulo, base.subtitulo, 'subtitulo'),
+    cuerpo: cajaSegura(valor?.cuerpo, base.cuerpo, 'cuerpo'),
   }
 }
 
