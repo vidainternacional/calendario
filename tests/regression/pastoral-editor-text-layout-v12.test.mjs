@@ -5,6 +5,7 @@ import test from 'node:test'
 const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-stable.css', 'utf8')
 const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
+const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'utf8')
 
 test('Herramientas de Texto abre todo el contenido en el mismo orden', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
@@ -21,7 +22,14 @@ test('Herramientas de Texto abre todo el contenido en el mismo orden', () => {
 
 test('Caja Título Subtítulo y Cuerpo siguen disponibles y táctiles', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  for (const label of ['Caja', 'Título', 'Subtítulo', 'Cuerpo']) assert.match(texto, new RegExp(label))
+  assert.match(texto, />Caja<\/button>/)
+  assert.match(texto, /ESTILOS_TEXTO\.filter\(\(item\) => item\.id !== 'libre'\)\.map/)
+  assert.match(texto, /\{estilo\.label\}/)
+  for (const entrada of [
+    "{ id: 'titulo', label: 'Título'",
+    "{ id: 'subtitulo', label: 'Subtítulo'",
+    "{ id: 'cuerpo', label: 'Cuerpo'",
+  ]) assert.ok(model.includes(entrada))
   assert.match(texto, /min-h-11/)
   assert.doesNotMatch(workspace, /<Plus \/> Caja/)
 })
