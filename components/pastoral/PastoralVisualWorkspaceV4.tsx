@@ -436,12 +436,58 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
     if (tieneTextoUsuario) {
       const sinMuestras = actuales.filter((item) => item.tipo === 'imagen' || !esTextoMuestraPlantilla(item))
+      const textosUsuario = sinMuestras
+        .filter((item) => item.tipo !== 'imagen')
+        .slice()
+        .sort((a, b) => (a.y - b.y) || (a.x - b.x))
+      const layoutsDisponibles: Array<{ rol: RolTexto; layout: PlantillaVisual['titulo'] }> = [
+        { rol: 'titulo', layout: plantilla.titulo },
+        ...(plantilla.subtitulo ? [{ rol: 'subtitulo' as RolTexto, layout: plantilla.subtitulo }] : []),
+        ...(plantilla.cuerpo ? [{ rol: 'cuerpo' as RolTexto, layout: plantilla.cuerpo }] : []),
+      ]
+      const usados = new Set<RolTexto>()
+      const layoutPorId = new Map<string, { rol: RolTexto; layout: PlantillaVisual['titulo'] }>()
+      const buscarLayoutRol = (rol: RolTexto | undefined) => {
+        if (rol === 'titulo') return layoutsDisponibles.find((item) => item.rol === 'titulo') ?? null
+        if (rol === 'subtitulo') return layoutsDisponibles.find((item) => item.rol === 'subtitulo') ?? null
+        if (rol === 'cuerpo') return layoutsDisponibles.find((item) => item.rol === 'cuerpo') ?? null
+        return null
+      }
+
+      textosUsuario.forEach((elemento) => {
+        if (elemento.rol === 'libre' || (elemento.rol && usados.has(elemento.rol))) return
+        const candidato = buscarLayoutRol(elemento.rol)
+        if (!candidato) return
+        layoutPorId.set(elemento.id, candidato)
+        usados.add(candidato.rol)
+      })
+      textosUsuario.forEach((elemento) => {
+        if (layoutPorId.has(elemento.id)) return
+        const disponible = layoutsDisponibles.find((item) => !usados.has(item.rol)) ?? layoutsDisponibles[layoutsDisponibles.length - 1]
+        if (!disponible) return
+        layoutPorId.set(elemento.id, disponible)
+        usados.add(disponible.rol)
+      })
+
       const elementos = sinMuestras.map((elemento) => {
         if (elemento.tipo === 'imagen') return elemento
-        const layout = elemento.rol === 'titulo' ? plantilla.titulo : elemento.rol === 'subtitulo' ? plantilla.subtitulo : elemento.rol === 'cuerpo' ? plantilla.cuerpo : elemento.rol === 'libre' ? (plantilla.cuerpo ?? plantilla.subtitulo ?? plantilla.titulo) : null
-        return layout ? { ...elemento, fuente: layout.fuente } : elemento
+        const destino = layoutPorId.get(elemento.id)
+        if (!destino) return { ...elemento, color: plantilla.colorTexto }
+        const { rol, layout } = destino
+        return {
+          ...elemento,
+          x: layout.x,
+          y: layout.y,
+          w: layout.w,
+          h: layout.h,
+          tamano_fuente: layout.pt,
+          alineacion: layout.alineacion,
+          fuente: layout.fuente,
+          color: plantilla.colorTexto,
+          peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500,
+        }
       })
-      patchPaginaSinHistorial({ elementos })
+      patchPaginaSinHistorial({ plantilla: 'limpia', fondo_modo: 'color', fondo: plantilla.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: plantilla.colorTexto, elementos })
       setSeleccion(null)
       return
     }
