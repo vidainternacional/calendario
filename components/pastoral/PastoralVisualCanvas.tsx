@@ -8,6 +8,8 @@ import {
 } from '@/components/pastoral/pastoral-canvas-model'
 
 type Gesto = { id: string; tipo: 'mover' | 'redimensionar'; startX: number; startY: number; x: number; y: number; w: number; h: number; rect: DOMRect }
+type CajaPorcentaje = { x: number; y: number; w: number; h: number }
+type CandidatoControles = { caja: CajaPorcentaje; vertical: boolean }
 
 type Props = {
   pagina: DiapositivaCanvas
@@ -76,20 +78,49 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
   />
 }
 
-function estiloControlesFlotantes(elemento: ElementoCanvas): CSSProperties {
-  const arriba = elemento.y
-  const abajo = 100 - (elemento.y + elemento.h)
-  const izquierda = elemento.x
-  const derecha = 100 - (elemento.x + elemento.w)
-  const anclarDerecha = elemento.x + (elemento.w / 2) > 50
-  const horizontal = anclarDerecha ? { right: '0' } : { left: '0' }
+function cajasSeCruzan(a: CajaPorcentaje, b: CajaPorcentaje) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+}
 
-  // Primero intenta vivir fuera de la caja seleccionada para no tapar el texto.
-  // Si la caja está pegada a un borde, cambia automáticamente al lado que conserva espacio dentro del lienzo.
-  if (arriba >= 12) return { ...horizontal, bottom: 'calc(100% + 6px)', flexDirection: 'row' }
-  if (abajo >= 12) return { ...horizontal, top: 'calc(100% + 6px)', flexDirection: 'row' }
-  if (derecha >= 11) return { left: 'calc(100% + 6px)', top: '0', flexDirection: 'column' }
-  if (izquierda >= 11) return { right: 'calc(100% + 6px)', top: '0', flexDirection: 'column' }
+function estiloControlesFlotantes(elemento: ElementoCanvas, elementos: ElementoCanvas[], canvasRect?: DOMRect): CSSProperties {
+  const anchoCanvas = Math.max(1, canvasRect?.width ?? 360)
+  const altoCanvas = Math.max(1, canvasRect?.height ?? 203)
+  const cantidadBotones = elemento.tipo === 'imagen' ? 2 : 3
+  const espacioPx = 4
+  const botonPx = 44
+  const gapX = (6 / anchoCanvas) * 100
+  const gapY = (6 / altoCanvas) * 100
+  const horizontalW = ((cantidadBotones * botonPx + (cantidadBotones - 1) * espacioPx) / anchoCanvas) * 100
+  const horizontalH = (botonPx / altoCanvas) * 100
+  const verticalW = (botonPx / anchoCanvas) * 100
+  const verticalH = ((cantidadBotones * botonPx + (cantidadBotones - 1) * espacioPx) / altoCanvas) * 100
+  const anclarDerecha = elemento.x + (elemento.w / 2) > 50
+  const xHorizontal = clamp(anclarDerecha ? elemento.x + elemento.w - horizontalW : elemento.x, 0, Math.max(0, 100 - horizontalW))
+  const yVertical = clamp(elemento.y, 0, Math.max(0, 100 - verticalH))
+
+  const candidatos: CandidatoControles[] = [
+    { caja: { x: xHorizontal, y: elemento.y - horizontalH - gapY, w: horizontalW, h: horizontalH }, vertical: false },
+    { caja: { x: xHorizontal, y: elemento.y + elemento.h + gapY, w: horizontalW, h: horizontalH }, vertical: false },
+    { caja: { x: elemento.x + elemento.w + gapX, y: yVertical, w: verticalW, h: verticalH }, vertical: true },
+    { caja: { x: elemento.x - verticalW - gapX, y: yVertical, w: verticalW, h: verticalH }, vertical: true },
+  ]
+
+  const textosOcupados = elementos
+    .filter((otro) => otro.id !== elemento.id && otro.tipo !== 'imagen' && !otro.oculto)
+    .map((otro) => ({ x: otro.x, y: otro.y, w: otro.w, h: otro.h }))
+  const dentroDelLienzo = (candidato: CandidatoControles) => candidato.caja.x >= 0 && candidato.caja.y >= 0 && candidato.caja.x + candidato.caja.w <= 100 && candidato.caja.y + candidato.caja.h <= 100
+  const cruces = (candidato: CandidatoControles) => textosOcupados.filter((ocupado) => cajasSeCruzan(candidato.caja, ocupado)).length
+
+  // Prioriza un lado del elemento que quepa en el lienzo y no cruce ninguna otra caja de texto.
+  // Si el lienzo está completamente saturado, usa el lado válido con menos cruces en vez de tapar el texto seleccionado.
+  const validos = candidatos.filter(dentroDelLienzo)
+  const elegido = validos.find((candidato) => cruces(candidato) === 0) ?? validos.sort((a, b) => cruces(a) - cruces(b))[0]
+
+  if (elegido) {
+    const left = ((elegido.caja.x - elemento.x) / Math.max(elemento.w, .01)) * 100
+    const top = ((elegido.caja.y - elemento.y) / Math.max(elemento.h, .01)) * 100
+    return { left: `${left}%`, top: `${top}%`, flexDirection: elegido.vertical ? 'column' : 'row' }
+  }
 
   const vertical = elemento.y + (elemento.h / 2) > 50 ? { bottom: '4px' } : { top: '4px' }
   return { ...(anclarDerecha ? { right: '4px' } : { left: '4px' }), ...vertical, flexDirection: 'row' }
@@ -176,7 +207,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
             ) : <TextoCanvas elemento={elemento} editable={editable} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onTextInput={onTextInput} />}
             {activo && <>
-              <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento)} data-canvas-floating-controls="true">
+              <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
                 {elemento.tipo !== 'imagen' && <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); ajustarTextoAlContenido(elemento) }} className="pastoral-canvas-action" aria-label="Ajustar caja al texto" title="Ajustar caja al texto"><Minimize2 /></button>}
                 <button type="button" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); onDeleteElement?.(elemento.id) }} className="pastoral-canvas-action is-danger" aria-label="Eliminar elemento"><Trash2 /></button>
