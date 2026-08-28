@@ -159,12 +159,15 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   const arrastreImagenPendienteRef = useRef<ArrastreImagenPendiente | null>(null)
   const punterosImagenRef = useRef<Map<number, PunteroImagen>>(new Map())
   const pellizcoImagenRef = useRef<PellizcoImagen | null>(null)
+  const toqueLienzoImagenRef = useRef<number | null>(null)
   const [gesto, setGesto] = useState<Gesto | null>(null)
   const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
   const fondoRecurso = biblioteca.find((item) => item.id === pagina.fondo_recurso_id)
   const background = pagina.fondo_modo === 'tema' ? tema.css : pagina.fondo ?? '#ffffff'
   const baseWidth = pagina.formato === '9:16' ? 430 : pagina.formato === '1:1' ? 720 : pagina.formato === '4:3' ? 960 : 1100
   const ratio = ratioFormato(pagina.formato)
+  const imagenSeleccionada = (pagina.elementos ?? []).find((item) => item.id === seleccion && item.tipo === 'imagen') as ElementoCanvasEditor | undefined
+  const imagenSeleccionadaEditable = Boolean(editable && imagenSeleccionada && !imagenSeleccionada.bloqueado)
 
   const iniciarGesto = (event: ReactPointerEvent, elemento: ElementoCanvasEditor, tipo: Gesto['tipo']) => {
     if (!editable || elemento.bloqueado || !lienzoRef.current) return
@@ -177,6 +180,30 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
+  const activarPellizcoImagen = (elemento: ElementoCanvasEditor) => {
+    const punteros = Array.from(punterosImagenRef.current.entries()).filter(([, punto]) => punto.id === elemento.id)
+    if (punteros.length < 2) return false
+    const [[pointerA, a], [pointerB, b]] = punteros.slice(-2)
+    const distancia = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y))
+    arrastreImagenPendienteRef.current = null
+    toqueLienzoImagenRef.current = null
+    if (!pellizcoImagenRef.current) onBeginChange?.()
+    setGesto(null)
+    pellizcoImagenRef.current = {
+      id: elemento.id,
+      pointerA,
+      pointerB,
+      distancia,
+      x: elemento.x,
+      y: elemento.y,
+      w: elemento.w,
+      h: elemento.h,
+      centroX: elemento.x + elemento.w / 2,
+      centroY: elemento.y + elemento.h / 2,
+    }
+    return true
+  }
+
   const iniciarInteraccionImagen = (event: ReactPointerEvent, elemento: ElementoCanvasEditor) => {
     if (!editable || elemento.bloqueado || elemento.tipo !== 'imagen' || !lienzoRef.current) return
     event.preventDefault()
@@ -184,27 +211,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
     onSelect?.(elemento.id)
     event.currentTarget.setPointerCapture?.(event.pointerId)
     punterosImagenRef.current.set(event.pointerId, { id: elemento.id, x: event.clientX, y: event.clientY })
-    const punteros = Array.from(punterosImagenRef.current.entries()).filter(([, punto]) => punto.id === elemento.id)
-    if (punteros.length >= 2) {
-      const [[pointerA, a], [pointerB, b]] = punteros.slice(-2)
-      const distancia = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y))
-      arrastreImagenPendienteRef.current = null
-      if (!gesto || gesto.id !== elemento.id) onBeginChange?.()
-      setGesto(null)
-      pellizcoImagenRef.current = {
-        id: elemento.id,
-        pointerA,
-        pointerB,
-        distancia,
-        x: elemento.x,
-        y: elemento.y,
-        w: elemento.w,
-        h: elemento.h,
-        centroX: elemento.x + elemento.w / 2,
-        centroY: elemento.y + elemento.h / 2,
-      }
-      return
-    }
+    if (activarPellizcoImagen(elemento)) return
     arrastreImagenPendienteRef.current = {
       id: elemento.id,
       pointerId: event.pointerId,
@@ -216,6 +223,20 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
       h: elemento.h,
       rect: lienzoRef.current.getBoundingClientRect(),
     }
+  }
+
+  const iniciarInteraccionLienzo = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!editable) return
+    const elemento = imagenSeleccionada
+    if (!elemento || elemento.bloqueado || !lienzoRef.current) {
+      onSelect?.(null)
+      return
+    }
+    event.preventDefault()
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    punterosImagenRef.current.set(event.pointerId, { id: elemento.id, x: event.clientX, y: event.clientY })
+    if (activarPellizcoImagen(elemento)) return
+    toqueLienzoImagenRef.current = event.pointerId
   }
 
   const moverGesto = (event: ReactPointerEvent) => {
@@ -258,10 +279,16 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   }
 
   const terminarGesto = (event: ReactPointerEvent) => {
-    punterosImagenRef.current.delete(event.pointerId)
     const pellizco = pellizcoImagenRef.current
-    if (pellizco && (pellizco.pointerA === event.pointerId || pellizco.pointerB === event.pointerId)) pellizcoImagenRef.current = null
+    const eraPellizco = Boolean(pellizco && (pellizco.pointerA === event.pointerId || pellizco.pointerB === event.pointerId))
+    const eraToqueLienzo = toqueLienzoImagenRef.current === event.pointerId
+    punterosImagenRef.current.delete(event.pointerId)
+    if (eraPellizco) pellizcoImagenRef.current = null
     if (arrastreImagenPendienteRef.current?.pointerId === event.pointerId) arrastreImagenPendienteRef.current = null
+    if (eraToqueLienzo && !eraPellizco) {
+      toqueLienzoImagenRef.current = null
+      onSelect?.(null)
+    }
     setGesto(null)
   }
 
@@ -277,8 +304,8 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         onPointerMove={moverGesto}
         onPointerUp={terminarGesto}
         onPointerCancel={terminarGesto}
-        onPointerDown={() => editable && onSelect?.(null)}
-        className={`pastoral-visual-canvas relative w-full overflow-hidden bg-white shadow-sm ${editable ? 'touch-pan-y ring-1 ring-slate-200' : ''}`}
+        onPointerDown={iniciarInteraccionLienzo}
+        className={`pastoral-visual-canvas relative w-full overflow-hidden bg-white shadow-sm ${editable ? `${imagenSeleccionadaEditable ? 'touch-none' : 'touch-pan-y'} ring-1 ring-slate-200` : ''}`}
         style={estiloLienzo}
       >
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />}
