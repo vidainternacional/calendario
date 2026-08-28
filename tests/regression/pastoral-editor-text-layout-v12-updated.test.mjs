@@ -154,14 +154,16 @@ test('la navegación de páginas queda en la cabecera con retorno al Centro Past
 })
 
 test('Compartir conserva solo distribución PDF compartir y enlace; la vista final vive en Presentar', () => {
-  const compartir = workspace.slice(workspace.indexOf("vista === 'publicar'"), workspace.indexOf('pastoral-print-deck'))
+  const inicioCompartir = workspace.indexOf("{vista === 'publicar' && <section")
+  const compartir = workspace.slice(inicioCompartir, workspace.indexOf('pastoral-print-deck', inicioCompartir))
   assert.match(compartir, /PackageDistributionControls/)
   assert.match(compartir, /<FileDown/)
   assert.match(compartir, /<Share2/)
   assert.match(compartir, /<Link2/)
   assert.doesNotMatch(compartir, /Vista de presentación|<PastoralVisualCanvas|Presentación/)
   assert.doesNotMatch(workspace, /abrirPresentacionDesdeCompartir/)
-  const presentar = workspace.slice(workspace.indexOf("vista === 'presentacion'"), workspace.indexOf("vista === 'congregacion'"))
+  const inicioPresentar = workspace.indexOf("{vista === 'presentacion' && pagina")
+  const presentar = workspace.slice(inicioPresentar, workspace.indexOf("{vista === 'congregacion'", inicioPresentar))
   assert.match(presentar, /Pantalla completa/)
   assert.match(presentar, /fitViewport=\{modoPresentacion\}/)
 })
