@@ -9,6 +9,7 @@ import {
 
 type ElementoCanvasEditor = ElementoCanvas & { bloqueado?: boolean; sombreado?: boolean }
 type Gesto = { id: string; tipo: 'mover' | 'redimensionar'; startX: number; startY: number; x: number; y: number; w: number; h: number; rect: DOMRect }
+type ArrastreImagenPendiente = { id: string; pointerId: number; startX: number; startY: number; x: number; y: number; w: number; h: number; rect: DOMRect }
 type CajaPorcentaje = { x: number; y: number; w: number; h: number }
 type CandidatoControles = { caja: CajaPorcentaje; vertical: boolean }
 
@@ -145,6 +146,7 @@ function estiloControlesFlotantes(elemento: ElementoCanvas, elementos: ElementoC
 
 export default function PastoralVisualCanvas({ pagina, biblioteca, editable = false, seleccion, onSelect, onBeginChange, onPatchElement, onTextInput }: Props) {
   const lienzoRef = useRef<HTMLDivElement | null>(null)
+  const arrastreImagenPendienteRef = useRef<ArrastreImagenPendiente | null>(null)
   const [gesto, setGesto] = useState<Gesto | null>(null)
   const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
   const fondoRecurso = biblioteca.find((item) => item.id === pagina.fondo_recurso_id)
@@ -162,12 +164,49 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
+  const prepararArrastreImagen = (event: ReactPointerEvent, elemento: ElementoCanvasEditor) => {
+    if (!editable || elemento.bloqueado || elemento.tipo !== 'imagen' || !lienzoRef.current) return
+    event.preventDefault()
+    event.stopPropagation()
+    onSelect?.(elemento.id)
+    arrastreImagenPendienteRef.current = {
+      id: elemento.id,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: elemento.x,
+      y: elemento.y,
+      w: elemento.w,
+      h: elemento.h,
+      rect: lienzoRef.current.getBoundingClientRect(),
+    }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
   const moverGesto = (event: ReactPointerEvent) => {
+    const pendiente = arrastreImagenPendienteRef.current
+    if (!gesto && pendiente && onPatchElement) {
+      const distancia = Math.hypot(event.clientX - pendiente.startX, event.clientY - pendiente.startY)
+      if (distancia < 4) return
+      arrastreImagenPendienteRef.current = null
+      onBeginChange?.()
+      const siguiente: Gesto = { ...pendiente, tipo: 'mover' }
+      setGesto(siguiente)
+      const dx = ((event.clientX - siguiente.startX) / siguiente.rect.width) * 100
+      const dy = ((event.clientY - siguiente.startY) / siguiente.rect.height) * 100
+      onPatchElement(siguiente.id, { x: clamp(siguiente.x + dx, 0, 100 - siguiente.w), y: clamp(siguiente.y + dy, 0, 100 - siguiente.h) })
+      return
+    }
     if (!gesto || !onPatchElement) return
     const dx = ((event.clientX - gesto.startX) / gesto.rect.width) * 100
     const dy = ((event.clientY - gesto.startY) / gesto.rect.height) * 100
     if (gesto.tipo === 'mover') onPatchElement(gesto.id, { x: clamp(gesto.x + dx, 0, 100 - gesto.w), y: clamp(gesto.y + dy, 0, 100 - gesto.h) })
     else onPatchElement(gesto.id, { w: clamp(gesto.w + dx, 5, 100 - gesto.x), h: clamp(gesto.h + dy, 5, 100 - gesto.y) })
+  }
+
+  const terminarGesto = () => {
+    arrastreImagenPendienteRef.current = null
+    setGesto(null)
   }
 
   return (
@@ -176,8 +215,8 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         ref={lienzoRef}
         data-pastoral-canvas="true"
         onPointerMove={moverGesto}
-        onPointerUp={() => setGesto(null)}
-        onPointerCancel={() => setGesto(null)}
+        onPointerUp={terminarGesto}
+        onPointerCancel={terminarGesto}
         onPointerDown={() => editable && onSelect?.(null)}
         className={`pastoral-visual-canvas relative w-full overflow-hidden bg-white shadow-sm ${editable ? 'touch-pan-y ring-1 ring-slate-200' : ''}`}
         style={{ aspectRatio: aspectoLienzo(pagina.formato), maxWidth: `${baseWidth}px`, background, color: pagina.color_texto, containerType: 'inline-size' }}
@@ -195,8 +234,12 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             data-canvas-element-id={elemento.id}
             data-canvas-text-role={elemento.rol ?? undefined}
             data-canvas-locked={bloqueado ? 'true' : 'false'}
-            onPointerDown={(event) => { event.stopPropagation(); editable && onSelect?.(elemento.id) }}
-            className={`absolute overflow-visible ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
+            onPointerDown={(event) => {
+              if (elemento.tipo === 'imagen' && editable && !bloqueado) { prepararArrastreImagen(event, elemento); return }
+              event.stopPropagation()
+              editable && onSelect?.(elemento.id)
+            }}
+            className={`absolute overflow-visible ${editable && elemento.tipo === 'imagen' && !bloqueado ? 'touch-none' : ''} ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, display: elemento.oculto ? 'none' : undefined }}
           >
             {elemento.tipo === 'imagen' ? (
