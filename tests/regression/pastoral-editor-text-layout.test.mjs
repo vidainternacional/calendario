@@ -6,6 +6,7 @@ const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-stable.css', 'ut
 const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 const canvas = fs.readFileSync('components/pastoral/PastoralVisualCanvas.tsx', 'utf8')
+const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'utf8')
 
 test('aplicar Plantilla o Tema no solicita toast de confirmación', () => {
   assert.doesNotMatch(workspace, /Tema “\$\{paleta\.label\}” aplicado|Plantilla “\$\{plantilla\.nombre\}” aplicada/)
@@ -37,7 +38,14 @@ test('Tamaño e interlineado tienen steppers táctiles React', () => {
 
 test('Caja queda disponible junto a Título Subtítulo y Cuerpo', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  for (const label of ['Caja', 'Título', 'Subtítulo', 'Cuerpo']) assert.match(texto, new RegExp(label))
+  assert.match(texto, />Caja<\/button>/)
+  assert.match(texto, /ESTILOS_TEXTO\.filter\(\(item\) => item\.id !== 'libre'\)\.map/)
+  assert.match(texto, /\{estilo\.label\}/)
+  for (const entrada of [
+    "{ id: 'titulo', label: 'Título'",
+    "{ id: 'subtitulo', label: 'Subtítulo'",
+    "{ id: 'cuerpo', label: 'Cuerpo'",
+  ]) assert.ok(model.includes(entrada))
   assert.doesNotMatch(workspace, /<Plus \/> Caja/)
 })
 
