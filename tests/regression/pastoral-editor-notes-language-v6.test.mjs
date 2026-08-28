@@ -11,13 +11,14 @@ test('lenguaje histórico de Notas queda absorbido por autoridad estable', () =>
   assert.doesNotMatch(layout, /pastoral-editor-notes-language-v6/)
 })
 
-test('seis herramientas visibles conservan lenguaje integrado', () => {
+test('tres herramientas visibles conservan lenguaje integrado', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  assert.doesNotMatch(dock, /Fondo|Párrafo|Borrar/)
-  assert.match(css, /pastoral-tool-button[\s\S]*background: transparent !important/)
+  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  assert.doesNotMatch(dock, /Fondo|Párrafo|Borrar|Elementos|Biblia|Diseño/)
+  assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*background: #ffffff !important[\s\S]*border-radius: 999px !important/)
 })
 
 test('acciones de formato mantienen tamaño táctil suficiente', () => {
-  assert.match(css, /pastoral-inline-icon[\s\S]*46px/)
+  assert.match(css, /pastoral-inline-icon[\s\S]*width: 44px !important[\s\S]*height: 44px !important/)
   assert.match(css, /pastoral-step-button[\s\S]*44px/)
 })
