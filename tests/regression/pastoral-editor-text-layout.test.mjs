@@ -36,9 +36,10 @@ test('Tamaño e interlineado tienen steppers táctiles React', () => {
   assert.match(workspace, /aria-label="Aumentar interlineado"/)
 })
 
-test('Caja queda disponible junto a Título Subtítulo y Cuerpo', () => {
+test('A+ queda disponible y Título Subtítulo Cuerpo son atributos del texto seleccionado', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  assert.match(texto, />Caja<\/button>/)
+  assert.match(texto, /aria-label="Agregar texto"/)
+  assert.match(texto, /<span className="text-base font-black">A<\/span><span className="text-sm font-black">\+<\/span>/)
   assert.match(texto, /ESTILOS_TEXTO\.filter\(\(item\) => item\.id !== 'libre'\)\.map/)
   assert.match(texto, /\{estilo\.label\}/)
   for (const entrada of [
@@ -46,7 +47,7 @@ test('Caja queda disponible junto a Título Subtítulo y Cuerpo', () => {
     "{ id: 'subtitulo', label: 'Subtítulo'",
     "{ id: 'cuerpo', label: 'Cuerpo'",
   ]) assert.ok(model.includes(entrada))
-  assert.doesNotMatch(workspace, /<Plus \/> Caja/)
+  assert.doesNotMatch(workspace, /if \(!textoSeleccionado\) return agregarTexto\(rol\)/)
 })
 
 test('página activa se elige arriba y ya no existe la faja inferior', () => {
