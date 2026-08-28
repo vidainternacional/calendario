@@ -33,6 +33,7 @@ export type ElementoCanvas = {
   opacidad?: number
   ajuste?: AjusteImagen
   radio?: number
+  oculto?: boolean
 }
 
 export type DiapositivaCanvas = {
@@ -146,6 +147,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
     interlineado: clamp(Number(item.interlineado ?? 1.25), .9, 2), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
+    oculto: Boolean(item.oculto),
   }
 }
 
