@@ -4,8 +4,19 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Check, Smartphone, Sparkles } from 'lucide-react'
 import { updateEstudioPrompt, updateIconVariant } from '@/app/actions/admin'
+import PastoralTemplateAdminBuilder from '@/components/admin/PastoralTemplateAdminBuilder'
 
-export default function ConfiguracionAdminClient({ activeIconVariant, initialEstudioPrompt }: { activeIconVariant: string; initialEstudioPrompt: string }) {
+export default function ConfiguracionAdminClient({
+  activeIconVariant,
+  initialEstudioPrompt,
+  isAdministrator,
+  initialPastoralTemplates,
+}: {
+  activeIconVariant: string
+  initialEstudioPrompt: string
+  isAdministrator: boolean
+  initialPastoralTemplates: unknown
+}) {
   const [selectedIcon, setSelectedIcon] = useState<'dorado' | 'blanco' | 'rojo'>((activeIconVariant as any) || 'dorado')
   const [iconSaving, setIconSaving] = useState(false)
   const [prompt, setPrompt] = useState(initialEstudioPrompt || '')
@@ -48,6 +59,8 @@ export default function ConfiguracionAdminClient({ activeIconVariant, initialEst
         <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="mt-4 min-h-64 w-full resize-y rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 outline-none ring-1 ring-slate-100 focus:ring-indigo-300" />
         <button type="button" onClick={() => void savePrompt()} disabled={promptSaving || !prompt.trim()} className="mt-3 min-h-12 w-full rounded-2xl bg-indigo-600 px-4 text-sm font-bold text-white disabled:opacity-50">{promptSaving ? 'Guardando…' : 'Guardar prompt'}</button>
       </section>
+
+      {isAdministrator && <PastoralTemplateAdminBuilder initialCatalog={initialPastoralTemplates} />}
     </div>
   )
 }

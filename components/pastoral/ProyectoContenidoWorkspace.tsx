@@ -1,3 +1,14 @@
 'use client'
 
-export { default } from '@/components/pastoral/PastoralVisualWorkspaceV4'
+import PastoralVisualWorkspaceV4 from '@/components/pastoral/PastoralVisualWorkspaceV4'
+import PastoralTemplateSampleRuntime from '@/components/pastoral/PastoralTemplateSampleRuntime'
+import { aplicarCatalogoAdministrado } from '@/components/pastoral/pastoral-template-admin-model'
+
+export default function ProyectoContenidoWorkspace(props: any) {
+  const { plantillasAdministradas, ...workspaceProps } = props
+  const catalogo = aplicarCatalogoAdministrado(plantillasAdministradas)
+  return <>
+    <PastoralVisualWorkspaceV4 {...workspaceProps} />
+    <PastoralTemplateSampleRuntime catalogo={catalogo} />
+  </>
+}

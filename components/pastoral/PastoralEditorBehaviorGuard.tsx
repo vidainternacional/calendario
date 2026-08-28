@@ -6,8 +6,8 @@ import { PLANTILLAS_VISUALES } from '@/components/pastoral/pastoral-editor-prese
 /*
  * Compatibilidad temporal con el conversor de tamaño que ya usa el editor al
  * aplicar una plantilla. La salida visible queda anclada a la escala aprobada
- * de Texto: Título 42 · Subtítulo 28 · Cuerpo 22. Cuando consolidemos el editor,
- * esta traducción se absorbe en una única fuente de verdad.
+ * de Texto: Título 42 · Subtítulo 28 · Cuerpo 22. Las plantillas administradas
+ * ya llegan convertidas desde su única fuente de verdad y no deben reescribirse aquí.
  */
 const PUNTOS_ENTRADA_POR_ROL = {
   titulo: 75,    // 75 × .56 = 42
@@ -16,10 +16,13 @@ const PUNTOS_ENTRADA_POR_ROL = {
 } as const
 
 PLANTILLAS_VISUALES.forEach((plantilla) => {
+  if ((plantilla as PlantillaConMarca).__vidaAdministrada) return
   plantilla.titulo.pt = PUNTOS_ENTRADA_POR_ROL.titulo
   if (plantilla.subtitulo) plantilla.subtitulo.pt = PUNTOS_ENTRADA_POR_ROL.subtitulo
   if (plantilla.cuerpo) plantilla.cuerpo.pt = PUNTOS_ENTRADA_POR_ROL.cuerpo
 })
+
+type PlantillaConMarca = (typeof PLANTILLAS_VISUALES)[number] & { __vidaAdministrada?: boolean }
 
 type SwipeActivo = {
   canvas: HTMLElement

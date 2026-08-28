@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import ProyectoContenidoWorkspace from '@/components/pastoral/ProyectoContenidoWorkspace'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
@@ -58,6 +58,13 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
     coleccion = { ...coleccionBase, versiculos: versiculos ?? [] }
   }
 
+  const admin = createAdminClient()
+  const { data: templateSetting } = await (admin as any)
+    .from('app_settings')
+    .select('valor')
+    .eq('clave', 'pastoral_templates')
+    .maybeSingle()
+
   return (
     <main className="pastoral-package-page mx-auto min-h-screen w-full max-w-none bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
       <div className="mb-2 print:hidden">
@@ -66,7 +73,7 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
         </Link>
       </div>
 
-      <ProyectoContenidoWorkspace paquete={paquete as any} coleccion={coleccion as any} biblioteca={biblioteca as any} />
+      <ProyectoContenidoWorkspace paquete={paquete as any} coleccion={coleccion as any} biblioteca={biblioteca as any} plantillasAdministradas={templateSetting?.valor ?? []} />
     </main>
   )
 }
