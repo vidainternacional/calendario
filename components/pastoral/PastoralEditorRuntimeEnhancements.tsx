@@ -113,6 +113,93 @@ function prepararCarrilColores() {
   carril.style.boxShadow = '0 8px 24px rgba(15, 23, 42, 0.14)'
 }
 
+function unificarMenuPresentacion() {
+  const nav = document.querySelector<HTMLElement>('.pastoral-editor-v4 > header nav')
+  if (!nav) return
+
+  const botonesDirectos = Array.from(nav.querySelectorAll<HTMLButtonElement>(':scope > button'))
+  const presentar = botonesDirectos.find((button) => button.textContent?.trim() === 'Presentar')
+  const congregacion = botonesDirectos.find((button) => button.textContent?.trim() === 'Congregación')
+  if (!presentar || !congregacion) return
+
+  presentar.hidden = true
+  congregacion.hidden = true
+  presentar.style.display = 'none'
+  congregacion.style.display = 'none'
+  nav.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))'
+  nav.style.overflow = 'visible'
+
+  let menu = nav.querySelector<HTMLDetailsElement>('details[data-pastoral-view-menu="true"]')
+  if (!menu) {
+    menu = document.createElement('details')
+    menu.dataset.pastoralViewMenu = 'true'
+    menu.style.position = 'relative'
+    menu.style.minWidth = '0'
+    menu.style.minHeight = '44px'
+
+    const summary = document.createElement('summary')
+    summary.textContent = 'Vista ⌄'
+    summary.setAttribute('aria-label', 'Elegir vista de presentación')
+    summary.style.display = 'flex'
+    summary.style.minHeight = '44px'
+    summary.style.cursor = 'pointer'
+    summary.style.listStyle = 'none'
+    summary.style.alignItems = 'center'
+    summary.style.justifyContent = 'center'
+    summary.style.padding = '0 4px 3px'
+    summary.style.fontSize = '12.5px'
+    summary.style.fontWeight = '650'
+    summary.style.color = '#64748b'
+    summary.style.webkitTapHighlightColor = 'transparent'
+
+    const opciones = document.createElement('div')
+    opciones.style.position = 'absolute'
+    opciones.style.left = '50%'
+    opciones.style.top = 'calc(100% + 4px)'
+    opciones.style.zIndex = '180'
+    opciones.style.display = 'grid'
+    opciones.style.minWidth = '156px'
+    opciones.style.transform = 'translateX(-50%)'
+    opciones.style.overflow = 'hidden'
+    opciones.style.border = '1px solid #e2e8f0'
+    opciones.style.borderRadius = '14px'
+    opciones.style.background = '#ffffff'
+    opciones.style.boxShadow = '0 10px 30px rgba(15, 23, 42, 0.14)'
+
+    const crearOpcion = (label: string) => {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.textContent = label
+      button.dataset.pastoralViewOption = label
+      button.style.minHeight = '44px'
+      button.style.border = '0'
+      button.style.background = '#ffffff'
+      button.style.padding = '0 14px'
+      button.style.textAlign = 'left'
+      button.style.color = '#334155'
+      button.style.fontSize = '12px'
+      button.style.fontWeight = '700'
+      button.addEventListener('click', () => {
+        const candidatos = Array.from(nav.querySelectorAll<HTMLButtonElement>(':scope > button'))
+        candidatos.find((item) => item.textContent?.trim() === label)?.click()
+        menu?.removeAttribute('open')
+      })
+      return button
+    }
+
+    opciones.append(crearOpcion('Presentar'), crearOpcion('Congregación'))
+    menu.append(summary, opciones)
+    nav.insertBefore(menu, congregacion.nextSibling)
+  }
+
+  const summary = menu.querySelector<HTMLElement>('summary')
+  const activo = presentar.className.includes('text-[#C0392B]') || congregacion.className.includes('text-[#C0392B]')
+  if (summary) {
+    summary.style.color = activo ? '#4f46e5' : '#64748b'
+    summary.style.fontWeight = activo ? '750' : '650'
+  }
+}
+
 const SELECTOR_CONTROL_TEXTO = [
   '.pastoral-editor-v4 .panel-texto button',
   '.pastoral-editor-v4 .panel-texto summary',
@@ -207,6 +294,7 @@ export default function PastoralEditorRuntimeEnhancements() {
         recordarTemaActual()
         posicionarControlesFlotantes()
         prepararCarrilColores()
+        unificarMenuPresentacion()
       })
     }
 
