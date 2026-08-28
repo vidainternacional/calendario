@@ -69,15 +69,48 @@ function posicionarControlesFlotantes() {
   })
 }
 
+const PROPIEDADES_CARRIL_FLOTANTE = [
+  'position', 'left', 'top', 'right', 'bottom', 'width', 'z-index',
+  'background', 'padding', 'border', 'border-radius', 'box-shadow',
+] as const
+
 function prepararCarrilColores() {
   const carril = document.querySelector<HTMLElement>('.pastoral-editor-v4 .panel-texto [aria-label="Colores de texto"]')
   if (!carril) return
+
   carril.style.overflowX = 'auto'
   carril.style.overflowY = 'hidden'
   carril.style.touchAction = 'pan-x'
   carril.style.paddingInlineEnd = '7rem'
   carril.style.scrollPaddingInlineEnd = '7rem'
   carril.style.setProperty('-webkit-overflow-scrolling', 'touch')
+
+  const viewport = window.visualViewport
+  const insetTeclado = viewport ? Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop)) : 0
+  const tecladoVisible = Boolean(viewport && insetTeclado > 100)
+
+  if (!tecladoVisible || !viewport) {
+    PROPIEDADES_CARRIL_FLOTANTE.forEach((propiedad) => carril.style.removeProperty(propiedad))
+    return
+  }
+
+  const alto = Math.max(48, Math.round(carril.getBoundingClientRect().height || 48))
+  const izquierda = Math.max(8, Math.round(viewport.offsetLeft + 12))
+  const arriba = Math.max(Math.round(viewport.offsetTop + 8), Math.round(viewport.offsetTop + viewport.height - alto - 12))
+  const ancho = Math.max(180, Math.round(viewport.width - 24))
+
+  carril.style.position = 'fixed'
+  carril.style.left = `${izquierda}px`
+  carril.style.top = `${arriba}px`
+  carril.style.right = 'auto'
+  carril.style.bottom = 'auto'
+  carril.style.width = `${ancho}px`
+  carril.style.zIndex = '190'
+  carril.style.background = '#f4f5f9'
+  carril.style.padding = '8px 10px'
+  carril.style.border = '1px solid #e2e8f0'
+  carril.style.borderRadius = '999px'
+  carril.style.boxShadow = '0 8px 24px rgba(15, 23, 42, 0.14)'
 }
 
 const SELECTOR_CONTROL_TEXTO = [
@@ -236,6 +269,8 @@ export default function PastoralEditorRuntimeEnhancements() {
     document.addEventListener('pointerup', sincronizar, true)
     document.addEventListener('click', onClick, true)
     window.addEventListener('resize', sincronizar)
+    window.visualViewport?.addEventListener('resize', sincronizar)
+    window.visualViewport?.addEventListener('scroll', sincronizar)
 
     return () => {
       cancelAnimationFrame(frame)
@@ -246,6 +281,8 @@ export default function PastoralEditorRuntimeEnhancements() {
       document.removeEventListener('pointerup', sincronizar, true)
       document.removeEventListener('click', onClick, true)
       window.removeEventListener('resize', sincronizar)
+      window.visualViewport?.removeEventListener('resize', sincronizar)
+      window.visualViewport?.removeEventListener('scroll', sincronizar)
     }
   }, [])
 
