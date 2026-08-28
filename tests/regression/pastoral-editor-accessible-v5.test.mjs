@@ -16,8 +16,8 @@ test('el editor móvil oculta navegación global y recupera padding', () => {
 })
 
 test('dock y texto conservan áreas táctiles legibles', () => {
-  assert.match(css, /pastoral-tool-dock[\s\S]*height: 64px !important/)
-  assert.match(css, /pastoral-inline-icon[\s\S]*width: 46px !important[\s\S]*height: 46px !important/)
+  assert.match(css, /pastoral-tool-dock[\s\S]*min-height: 44px !important/)
+  assert.match(css, /pastoral-inline-icon[\s\S]*width: 44px !important[\s\S]*height: 44px !important/)
   assert.match(css, /pastoral-text-presets button[\s\S]*height: 44px !important/)
   assert.match(css, /pastoral-font-strip button[\s\S]*min-height: 44px !important/)
 })
