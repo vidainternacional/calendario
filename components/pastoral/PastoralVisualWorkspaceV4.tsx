@@ -100,7 +100,7 @@ const COLORES_TEXTO = ['#0f172a', '#ffffff', '#334155', '#7f1d1d', '#14532d', '#
 const FUENTE_MUESTRA = FUENTES_PASTORALES.find((fuente) => fuente !== 'Inter') ?? FUENTES_PASTORALES[0] ?? 'Georgia'
 const claseBotonActivo = (activo: boolean) => `pastoral-inline-icon ${activo ? 'is-active' : ''}`
 const claseControlTexto = (activo = false) => `grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border text-slate-700 disabled:opacity-30 ${activo ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white'}`
-const tamanoPlantillaCanvas = (pt: number) => Math.max(10, Math.round(pt * .75))
+const tamanoPlantillaCanvas = (pt: number) => Math.max(9, Math.round(pt * .56))
 
 function textoPlano(html: string) {
   if (typeof window !== 'undefined') { const div = document.createElement('div'); div.innerHTML = limpiarHtmlCanvas(html); return div.innerText.trim() }
@@ -163,6 +163,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [indice, setIndice] = useState(0)
   const [seleccion, setSeleccion] = useState<string | null>(null)
   const [modoPresentacion, setModoPresentacion] = useState(false)
+  const [viewportVertical, setViewportVertical] = useState(false)
   const [guardado, setGuardado] = useState(false)
   const [guardandoAuto, setGuardandoAuto] = useState(false)
   const [busquedaRecursos, setBusquedaRecursos] = useState('')
@@ -211,6 +212,17 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       viewport.removeEventListener('scroll', actualizarTeclado)
       window.removeEventListener('focusin', actualizarTeclado)
       window.removeEventListener('focusout', actualizarTeclado)
+    }
+  }, [])
+
+  useEffect(() => {
+    const actualizarOrientacion = () => setViewportVertical(window.innerHeight >= window.innerWidth)
+    actualizarOrientacion()
+    window.addEventListener('resize', actualizarOrientacion)
+    window.visualViewport?.addEventListener('resize', actualizarOrientacion)
+    return () => {
+      window.removeEventListener('resize', actualizarOrientacion)
+      window.visualViewport?.removeEventListener('resize', actualizarOrientacion)
     }
   }, [])
 
@@ -321,7 +333,10 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const arrastre = capaDragRef.current
     if (!arrastre || arrastre.id !== id) return
     event.preventDefault()
-    const delta = event.clientY - arrastre.y
+    const deltaLibre = event.clientY - arrastre.y
+    const deltaMinimo = -arrastre.indiceOrigen * arrastre.altoFila
+    const deltaMaximo = (arrastre.ordenIds.length - 1 - arrastre.indiceOrigen) * arrastre.altoFila
+    const delta = Math.max(deltaMinimo, Math.min(deltaMaximo, deltaLibre))
     const desplazamientoFilas = Math.round(delta / arrastre.altoFila)
     const destino = Math.max(0, Math.min(arrastre.ordenIds.length - 1, arrastre.indiceOrigen + desplazamientoFilas))
     arrastre.indiceDestino = destino
@@ -473,7 +488,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       })
       textosUsuario.forEach((elemento) => {
         if (layoutPorId.has(elemento.id)) return
-        const disponible = layoutsDisponibles.find((item) => !usados.has(item.rol)) ?? layoutsDisponibles[layoutsDisponibles.length - 1]
+        const disponible = layoutsDisponibles.find((item) => !usados.has(item.rol))
         if (!disponible) return
         layoutPorId.set(elemento.id, disponible)
         usados.add(disponible.rol)
@@ -484,8 +499,15 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         const destino = layoutPorId.get(elemento.id)
         if (!destino) return { ...elemento, color: plantilla.colorTexto }
         const { rol, layout } = destino
+        const x = clamp(layout.x, 0, 95)
+        const y = clamp(layout.y, 0, 95)
         return {
           ...elemento,
+          rol,
+          x,
+          y,
+          w: clamp(layout.w, 5, 100 - x),
+          h: clamp(layout.h, 5, 100 - y),
           tamano_fuente: tamanoPlantillaCanvas(layout.pt),
           alineacion: layout.alineacion,
           fuente: layout.fuente,
@@ -755,6 +777,14 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const fuenteTextoActual = textoSeleccionado?.fuente ?? 'Fuente'
   const clasePanel = grupoPrincipal === 'plantillas' ? 'panel-plantillas' : panel ? `panel-${panel}` : `panel-${grupoPrincipal ?? 'vacio'}`
   const estiloStage = { '--pastoral-stage-mobile-height': tecladoAbierto ? 'clamp(118px, 20dvh, 168px)' : 'clamp(210px, 32dvh, 300px)', height: 'clamp(250px, 52dvh, 640px)' } as CSSProperties
+  const ratioPresentacion = pagina?.formato === '9:16' ? 9 / 16 : pagina?.formato === '4:3' ? 4 / 3 : pagina?.formato === '1:1' ? 1 : 16 / 9
+  const presentarHorizontalGirado = Boolean(modoPresentacion && viewportVertical && (pagina?.formato === '16:9' || pagina?.formato === '4:3'))
+  const estiloPresentacionHorizontal = presentarHorizontalGirado ? {
+    width: `min(100dvh, calc(100dvw * ${ratioPresentacion}))`,
+    aspectRatio: String(ratioPresentacion),
+    transform: 'rotate(90deg)',
+    transformOrigin: 'center',
+  } as CSSProperties : undefined
   void versionHistorial
   void claseBotonActivo
 
@@ -875,7 +905,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       </div>
     </section>}
 
-    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black' : 'relative pb-10 pt-5'}>{!modoPresentacion && <div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Mismo lienzo y formato, sin reconstruir diapositivas.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>}{modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}<div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport={modoPresentacion} /></div><button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronRight className="h-5 w-5" /></button></section>}
+    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black' : 'relative pb-10 pt-5'}>{!modoPresentacion && <div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Mismo lienzo y formato, sin reconstruir diapositivas.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>}{modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}<div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}><div className={presentarHorizontalGirado ? 'flex items-center justify-center' : 'w-full'} style={estiloPresentacionHorizontal}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport={modoPresentacion && !presentarHorizontalGirado} /></div></div><button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronRight className="h-5 w-5" /></button></section>}
 
     {vista === 'congregacion' && pagina && <section className="pb-10 pt-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">Exactamente la misma composición que se proyectará.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} />{modoPresentacion && <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black"><button type="button" onClick={cerrarPantallaCompleta} className="absolute right-3 top-3 z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white"><Minimize2 className="h-5 w-5" /></button><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport /></div>}</section>}
 
