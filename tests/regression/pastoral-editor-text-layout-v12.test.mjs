@@ -77,12 +77,17 @@ test('Formato listas tamaño interlineado y alineación comparten una sola cinta
   assert.match(texto, /aria-label="Justificar"/)
 })
 
-test('mover y autoajustar texto evita tapar su propia caja y respeta los bordes del lienzo', () => {
-  assert.match(canvas, /function estiloControlesFlotantes/)
-  assert.match(canvas, /bottom: 'calc\(100% \+ 6px\)'/)
-  assert.match(canvas, /top: 'calc\(100% \+ 6px\)'/)
-  assert.match(canvas, /left: 'calc\(100% \+ 6px\)'/)
-  assert.match(canvas, /right: 'calc\(100% \+ 6px\)'/)
+test('controles flotantes buscan espacio libre, evitan otros textos y respetan bordes', () => {
+  assert.match(canvas, /function cajasSeCruzan/)
+  assert.match(canvas, /function estiloControlesFlotantes\(elemento: ElementoCanvas, elementos: ElementoCanvas\[], canvasRect\?: DOMRect\)/)
+  assert.match(canvas, /otro\.id !== elemento\.id && otro\.tipo !== 'imagen' && !otro\.oculto/)
+  assert.match(canvas, /const dentroDelLienzo/)
+  assert.match(canvas, /validos\.find\(\(candidato\) => cruces\(candidato\) === 0\)/)
+  assert.match(canvas, /validos\.sort\(\(a, b\) => cruces\(a\) - cruces\(b\)\)\[0\]/)
+  assert.match(canvas, /estiloControlesFlotantes\(elemento, pagina\.elementos \?\? \[], lienzoRef\.current\?\.getBoundingClientRect\(\)\)/)
+})
+
+test('autoajuste mide el texto y registra historial antes de cambiar la geometría', () => {
   assert.match(canvas, /aria-label="Ajustar caja al texto"/)
   assert.match(canvas, /document\.createRange\(\)/)
   assert.match(canvas, /const x = clamp\(elemento\.x, 0, 100 - w\)/)
