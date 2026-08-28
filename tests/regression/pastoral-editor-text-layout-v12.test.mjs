@@ -6,30 +6,37 @@ const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-stable.css', 'ut
 const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 
-test('Texto mantiene tres cintas y amplía su superficie táctil móvil', () => {
-  assert.match(css, /pastoral-text-three-rows[\s\S]*grid-template-rows: 44px 48px 56px !important/)
-  assert.match(css, /pastoral-tool-panel\.panel-texto[\s\S]*height: 220px !important/)
-  assert.match(css, /panel-texto \.pastoral-text-three-rows[\s\S]*grid-template-rows: 54px 54px 72px !important/)
+test('Herramientas de Texto abre todo el contenido en el mismo orden', () => {
+  const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
+  const fuente = texto.indexOf('Fuente ·')
+  const tipo = texto.indexOf('Tipo ·')
+  const formato = texto.indexOf('>Formato<')
+  const tamano = texto.indexOf('Tamaño e interlineado')
+  const alineacion = texto.indexOf('>Alineación<')
+  const listas = texto.indexOf('>Listas<')
+  assert.ok(fuente >= 0 && tipo > fuente && formato > tipo && tamano > formato && alineacion > tamano && listas > alineacion)
+  assert.doesNotMatch(workspace, /grupoTextoAbierto|alternarGrupoTexto/)
+  assert.match(texto, /FUENTE_MUESTRA[\s\S]*>Aa</)
 })
 
-test('Caja Título Subtítulo y Cuerpo quedan en cuatro columnas iguales y táctiles', () => {
-  assert.match(css, /pastoral-text-presets[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important/)
-  assert.match(css, /pastoral-text-presets button[\s\S]*width: 100% !important[\s\S]*min-height: 44px !important/)
+test('Caja Título Subtítulo y Cuerpo siguen disponibles y táctiles', () => {
+  const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
+  for (const label of ['Caja', 'Título', 'Subtítulo', 'Cuerpo']) assert.match(texto, new RegExp(label))
+  assert.match(texto, /min-h-11/)
   assert.doesNotMatch(workspace, /<Plus \/> Caja/)
 })
 
-test('Tamaño y Línea tienen steppers React táctiles y la cinta conserva scroll horizontal', () => {
-  assert.match(css, /pastoral-font-size[\s\S]*min-width: 252px !important/)
-  assert.match(css, /pastoral-line-height[\s\S]*min-width: 244px !important/)
-  assert.match(css, /panel-texto \.pastoral-step-button[\s\S]*width: 54px !important/)
-  assert.match(css, /pastoral-text-tools-row[\s\S]*overflow-x: auto !important/)
+test('Tamaño y Línea mantienen steppers React táctiles', () => {
   assert.match(workspace, /aria-label="Reducir tamaño de letra"/)
+  assert.match(workspace, /aria-label="Aumentar tamaño de letra"/)
+  assert.match(workspace, /aria-label="Reducir interlineado"/)
   assert.match(workspace, /aria-label="Aumentar interlineado"/)
 })
 
-test('la primera página inicia a la izquierda y sigue sin cápsula', () => {
-  assert.match(css, /pastoral-pages-strip[\s\S]*justify-content: flex-start !important/)
-  assert.match(css, /pastoral-page-chip\.is-active[\s\S]*background: transparent !important/)
+test('la navegación de páginas queda en la cabecera y desaparece la faja inferior', () => {
+  assert.match(workspace, /Página \$\{indice \+ 1\} de \$\{paginas\.length\}/)
+  assert.match(workspace, /aria-label="Nueva página"/)
+  assert.doesNotMatch(workspace, /pastoral-pages-strip/)
 })
 
 test('el layout conserva stable después de V3 y los realces funcionales actuales', () => {
@@ -40,12 +47,15 @@ test('el layout conserva stable después de V3 y los realces funcionales actuale
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
-test('la arquitectura real del dock contiene solo los tres grupos principales aprobados', () => {
+test('la arquitectura real mantiene tres grupos y las nuevas acciones aprobadas', () => {
   assert.match(workspace, /type GrupoPrincipal = 'plantillas' \| 'texto' \| 'capas'/)
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
   for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
   assert.doesNotMatch(dock, /Elementos|Biblia|Diseño|Fondo|Párrafo|Borrar/)
   assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
-  assert.match(workspace, /Crear una página nueva en blanco/)
+  assert.doesNotMatch(workspace.match(/plantillas:\s*\[[\s\S]*?\],/)?.[0] ?? '', /label: 'Fondo'/)
+  assert.match(workspace, /Aplicar plantilla en blanco a la página actual/)
+  assert.match(workspace, /aria-label="Borrar elemento seleccionado"/)
   assert.doesNotMatch(workspace, /Tema .* aplicado|Plantilla .* aplicada/)
+  assert.match(css, /pastoral-tool-dock/)
 })
