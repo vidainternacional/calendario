@@ -58,32 +58,120 @@ jobs:
         env:
           CI: 'true'
 
-      - name: Medir presupuesto tipográfico pastoral
+      - name: Medir paquete tipográfico pastoral
+        id: medir_fuentes
+        continue-on-error: true
         run: |
           node <<'NODE'
           const fs = require('node:fs')
           const path = require('node:path')
-          const mediaDir = path.join('.next', 'static', 'media')
+
           const limite = 350 * 1024
-          const archivos = fs.existsSync(mediaDir)
-            ? fs.readdirSync(mediaDir).filter((nombre) => /\.woff2$/i.test(nombre)).sort()
-            : []
-          const detalle = archivos.map((nombre) => ({
-            nombre,
-            bytes: fs.statSync(path.join(mediaDir, nombre)).size,
-          }))
-          const total = detalle.reduce((suma, item) => suma + item.bytes, 0)
-          for (const item of detalle) console.log(`${item.nombre}\t${item.bytes} bytes\t${(item.bytes / 1024).toFixed(2)} KB`)
-          console.log(`PASTORAL_FONT_BUDGET_FILES=${detalle.length}`)
+          const mediaDir = path.join('.next', 'static', 'media')
+          const variables = [
+            { nombre: 'Inter', variable: '--font-inter', nueva: false },
+            { nombre: 'EB Garamond', variable: '--font-pastoral-eb-garamond', nueva: true },
+            { nombre: 'Montserrat', variable: '--font-pastoral-montserrat', nueva: true },
+            { nombre: 'Playfair Display', variable: '--font-pastoral-playfair-display', nueva: true },
+            { nombre: 'Bebas Neue', variable: '--font-pastoral-bebas-neue', nueva: true },
+          ]
+
+          function recorrer(dir, encontrados = []) {
+            if (!fs.existsSync(dir)) return encontrados
+            for (const entrada of fs.readdirSync(dir, { withFileTypes: true })) {
+              const absoluto = path.join(dir, entrada.name)
+              if (entrada.isDirectory()) recorrer(absoluto, encontrados)
+              else if (entrada.name.endsWith('.css')) encontrados.push(absoluto)
+            }
+            return encontrados
+          }
+
+          const cssFiles = recorrer(path.join('.next', 'static', 'css'))
+          const css = cssFiles.map((archivo) => fs.readFileSync(archivo, 'utf8')).join('\n')
+          if (!css) throw new Error('No se encontró CSS compilado para medir las fuentes.')
+          if (!fs.existsSync(mediaDir)) throw new Error('No se encontró .next/static/media.')
+
+          const fontFaces = Array.from(css.matchAll(/@font-face\s*\{([^}]*)\}/g)).map((match) => match[1])
+          const detalle = []
+          const todosArchivos = new Set()
+
+          for (const fuente of variables) {
+            const variableEscapada = fuente.variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const declaracion = css.match(new RegExp(`${variableEscapada}\\s*:\\s*([^;}]+)`))?.[1]?.trim()
+            if (!declaracion) throw new Error(`No se encontró la variable compilada ${fuente.variable}.`)
+
+            const familia = declaracion.match(/["']([^"']+)["']/)?.[1]
+              ?? declaracion.split(',')[0]?.trim().replace(/^['"]|['"]$/g, '')
+            if (!familia) throw new Error(`No se pudo resolver la familia interna de ${fuente.nombre}.`)
+
+            const bloques = fontFaces.filter((bloque) => {
+              const declarada = bloque.match(/font-family\s*:\s*([^;]+)/)?.[1]?.trim().replace(/^['"]|['"]$/g, '')
+              return declarada === familia
+            })
+            if (!bloques.length) throw new Error(`No se encontraron @font-face para ${fuente.nombre} (${familia}).`)
+
+            const archivos = new Set()
+            for (const bloque of bloques) {
+              for (const match of bloque.matchAll(/url\(([^)]+\.woff2[^)]*)\)/gi)) {
+                const raw = match[1].trim().replace(/^['"]|['"]$/g, '').split('?')[0]
+                archivos.add(path.basename(raw))
+              }
+            }
+            if (!archivos.size) throw new Error(`No se encontraron WOFF2 para ${fuente.nombre}.`)
+
+            let bytes = 0
+            for (const archivo of archivos) {
+              const absoluto = path.join(mediaDir, archivo)
+              if (!fs.existsSync(absoluto)) throw new Error(`Falta el archivo generado ${archivo} de ${fuente.nombre}.`)
+              bytes += fs.statSync(absoluto).size
+              todosArchivos.add(archivo)
+            }
+            detalle.push({ ...fuente, familia, archivos: Array.from(archivos).sort(), bytes })
+          }
+
+          let total = 0
+          for (const archivo of todosArchivos) total += fs.statSync(path.join(mediaDir, archivo)).size
+          const nuevas = detalle.filter((item) => item.nueva).reduce((suma, item) => suma + item.bytes, 0)
+          const inter = detalle.find((item) => item.nombre === 'Inter')?.bytes ?? 0
+          const ok = total <= limite
+
+          const lineas = [
+            'Paquete tipográfico Centro Pastoral — medición del build',
+            `Límite aprobado: 350.00 KB (${limite} bytes)`,
+            '',
+            ...detalle.flatMap((item) => [
+              `${item.nombre}: ${(item.bytes / 1024).toFixed(2)} KB (${item.bytes} bytes)`,
+              `  variable: ${item.variable}`,
+              `  familia compilada: ${item.familia}`,
+              `  archivos: ${item.archivos.join(', ')}`,
+            ]),
+            '',
+            `Inter existente: ${(inter / 1024).toFixed(2)} KB (${inter} bytes)`,
+            `Incremento 4 fuentes nuevas: ${(nuevas / 1024).toFixed(2)} KB (${nuevas} bytes)`,
+            `TOTAL paquete 5 familias: ${(total / 1024).toFixed(2)} KB (${total} bytes)`,
+            `Resultado: ${ok ? 'DENTRO DEL PRESUPUESTO' : 'SUPERA EL PRESUPUESTO'}`,
+          ]
+          fs.writeFileSync('pastoral-font-budget.txt', `${lineas.join('\n')}\n`)
+          console.log(lineas.join('\n'))
           console.log(`PASTORAL_FONT_BUDGET_BYTES=${total}`)
           console.log(`PASTORAL_FONT_BUDGET_KB=${(total / 1024).toFixed(2)}`)
+          console.log(`PASTORAL_FONT_NEW_INCREMENT_KB=${(nuevas / 1024).toFixed(2)}`)
           console.log(`PASTORAL_FONT_BUDGET_LIMIT_KB=350.00`)
-          if (!detalle.length) {
-            console.error('No se encontraron archivos WOFF2 generados por next/font.')
-            process.exit(1)
-          }
-          if (total > limite) {
-            console.error(`El paquete tipográfico supera el límite: ${(total / 1024).toFixed(2)} KB > 350.00 KB`)
-            process.exit(1)
-          }
+          fs.writeFileSync('pastoral-font-budget-status.txt', ok ? 'ok\n' : 'over\n')
           NODE
+
+      - name: Guardar reporte de peso tipográfico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pastoral-font-budget
+          path: |
+            pastoral-font-budget.txt
+            pastoral-font-budget-status.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Exigir presupuesto tipográfico pastoral
+        run: |
+          test -f pastoral-font-budget-status.txt
+          test "$(tr -d '\n\r ' < pastoral-font-budget-status.txt)" = "ok"
