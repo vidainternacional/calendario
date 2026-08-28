@@ -14,59 +14,6 @@ function renombrarTextoLibre() {
   if (button && button.textContent?.trim() === 'Caja') button.textContent = 'Texto libre'
 }
 
-function posicionarControlesFlotantes() {
-  document.querySelectorAll<HTMLElement>('.pastoral-editor-v4 [data-canvas-floating-controls="true"]').forEach((toolbar) => {
-    const elemento = toolbar.closest<HTMLElement>('[data-canvas-element-id]')
-    const canvas = toolbar.closest<HTMLElement>('.pastoral-visual-canvas')
-    if (!elemento || !canvas) return
-
-    const elementoRect = elemento.getBoundingClientRect()
-    const canvasRect = canvas.getBoundingClientRect()
-    const espacioArriba = elementoRect.top - canvasRect.top
-    const espacioAbajo = canvasRect.bottom - elementoRect.bottom
-    const espacioDerecha = canvasRect.right - elementoRect.right
-    const espacioIzquierda = elementoRect.left - canvasRect.left
-    const gap = 6
-
-    toolbar.style.removeProperty('left')
-    toolbar.style.removeProperty('right')
-    toolbar.style.removeProperty('top')
-    toolbar.style.removeProperty('bottom')
-
-    if (espacioArriba >= 52) {
-      toolbar.style.right = '0'
-      toolbar.style.bottom = `calc(100% + ${gap}px)`
-      toolbar.style.flexDirection = 'row'
-      return
-    }
-
-    if (espacioAbajo >= 52) {
-      toolbar.style.right = '0'
-      toolbar.style.top = `calc(100% + ${gap}px)`
-      toolbar.style.flexDirection = 'row'
-      return
-    }
-
-    if (espacioDerecha >= 52) {
-      toolbar.style.left = `calc(100% + ${gap}px)`
-      toolbar.style.top = '0'
-      toolbar.style.flexDirection = 'column'
-      return
-    }
-
-    if (espacioIzquierda >= 52) {
-      toolbar.style.right = `calc(100% + ${gap}px)`
-      toolbar.style.top = '0'
-      toolbar.style.flexDirection = 'column'
-      return
-    }
-
-    toolbar.style.right = '4px'
-    toolbar.style.top = `calc(100% + ${gap}px)`
-    toolbar.style.flexDirection = 'row'
-  })
-}
-
 const PROPIEDADES_PANEL_FORMATO_MOVIL = [
   'position', 'left', 'top', 'right', 'bottom', 'width', 'z-index',
   'background', 'padding', 'border', 'border-radius', 'box-shadow',
@@ -130,10 +77,10 @@ function unificarVistaPresentacion() {
   congregacion.hidden = true
   congregacion.style.display = 'none'
 
-  // La hoja visual estable define 4 columnas con !important. Esta geometría inline
-  // es la autoridad móvil actual y reserva una tercera columna real para Compartir + páginas.
+  // Conserva la autoridad existente del editor, pero elimina el espacio elástico
+  // que separaba Presentar de Compartir en móvil.
   nav.style.setProperty('display', 'grid', 'important')
-  nav.style.setProperty('grid-template-columns', '50px 72px minmax(0, 1fr)', 'important')
+  nav.style.setProperty('grid-template-columns', '54px 80px minmax(0, 1fr)', 'important')
   nav.style.setProperty('align-items', 'center', 'important')
   nav.style.setProperty('justify-content', 'stretch', 'important')
   nav.style.setProperty('gap', '0', 'important')
@@ -153,10 +100,11 @@ function unificarVistaPresentacion() {
 
   grupo.style.display = 'flex'
   grupo.style.alignItems = 'center'
-  grupo.style.justifyContent = 'flex-end'
+  grupo.style.justifyContent = 'space-between'
   grupo.style.minWidth = '0'
   grupo.style.gap = '0'
   grupo.style.marginLeft = '0'
+  grupo.style.paddingInline = '0'
   grupo.style.overflow = 'visible'
 
   const compartir = Array.from(grupo.querySelectorAll<HTMLButtonElement>(':scope > button')).find((button) => button.textContent?.trim() === 'Compartir')
@@ -335,7 +283,6 @@ export default function PastoralEditorRuntimeEnhancements() {
         limpiarFondosDuplicados()
         renombrarTextoLibre()
         recordarTemaActual()
-        posicionarControlesFlotantes()
         prepararFormatoSobreTeclado()
         unificarVistaPresentacion()
       })
