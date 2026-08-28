@@ -87,13 +87,12 @@ test('controles flotantes buscan espacio libre, evitan otros textos y respetan b
   assert.match(canvas, /estiloControlesFlotantes\(elemento, pagina\.elementos \?\? \[], lienzoRef\.current\?\.getBoundingClientRect\(\)\)/)
 })
 
-test('autoajuste mide el texto y registra historial antes de cambiar la geometría', () => {
-  assert.match(canvas, /aria-label="Ajustar caja al texto"/)
-  assert.match(canvas, /document\.createRange\(\)/)
-  assert.match(canvas, /const x = clamp\(elemento\.x, 0, 100 - w\)/)
-  assert.match(canvas, /const y = clamp\(elemento\.y, 0, 100 - h\)/)
-  const ajuste = canvas.slice(canvas.indexOf('const ajustarTextoAlContenido'), canvas.indexOf('return ('))
-  assert.ok(ajuste.indexOf('onBeginChange?.()') >= 0 && ajuste.indexOf('onPatchElement(elemento.id') > ajuste.indexOf('onBeginChange?.()'))
+test('la caja usa el tirador de esquina para redimensionar sin un segundo botón flotante', () => {
+  assert.match(canvas, /aria-label="Mover elemento"/)
+  assert.match(canvas, /aria-label="Redimensionar elemento"/)
+  assert.match(canvas, /iniciarGesto\(event, elemento, 'redimensionar'\)/)
+  assert.doesNotMatch(canvas, /aria-label="Ajustar caja al texto"/)
+  assert.doesNotMatch(canvas, /const ajustarTextoAlContenido/)
 })
 
 test('Capas usa lista vertical con visibilidad persistente y conserva acciones existentes', () => {
