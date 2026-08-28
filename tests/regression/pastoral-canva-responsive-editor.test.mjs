@@ -7,16 +7,20 @@ const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4
 const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-stable.css', 'utf8')
 const presets = fs.readFileSync('components/pastoral/pastoral-editor-presets.ts', 'utf8')
 
-test('Centro Pastoral fija el lienzo y desplaza únicamente las herramientas inferiores', () => {
+test('Centro Pastoral fija el lienzo y deja páginas arriba junto a Compartir', () => {
   assert.match(wrapper, /PastoralVisualWorkspaceV4/)
-  const shell = workspace.indexOf('pastoral-editor-shell-flow')
+  const header = workspace.indexOf('<header')
+  const compartir = workspace.indexOf('>Compartir<', header)
+  const selectorPagina = workspace.indexOf('Página ${indice + 1} de ${paginas.length}', compartir)
+  const nuevaPagina = workspace.indexOf('aria-label="Nueva página"', selectorPagina)
+  const shell = workspace.indexOf('pastoral-editor-shell-flow', nuevaPagina)
   const lienzo = workspace.indexOf('pastoral-stage-flow', shell)
   const scroll = workspace.indexOf('pastoral-editor-controls-scroll', lienzo)
   const grupos = workspace.indexOf('pastoral-tool-dock', scroll)
   const submenus = workspace.indexOf('pastoral-tool-panel-flow', grupos)
-  const paginas = workspace.indexOf('pastoral-pages-strip', submenus)
-  assert.ok(shell >= 0 && lienzo > shell && scroll > lienzo)
-  assert.ok(grupos > scroll && submenus > grupos && paginas > submenus)
+  assert.ok(header >= 0 && compartir > header && selectorPagina > compartir && nuevaPagina > selectorPagina)
+  assert.ok(shell > nuevaPagina && lienzo > shell && scroll > lienzo && grupos > scroll && submenus > grupos)
+  assert.doesNotMatch(workspace, /pastoral-pages-strip/)
   assert.match(css, /autoridad visual estable del editor/)
 })
 
@@ -47,14 +51,15 @@ test('celular horizontal conserva la misma arquitectura inferior', () => {
   assert.doesNotMatch(horizontal, /grid-template-areas:\s*'dock stage'/)
 })
 
-test('dock principal contiene exactamente los tres grupos aprobados y conserva las funciones en submenús', () => {
+test('dock principal mantiene tres grupos y suma Borrar para cualquier selección', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
   for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
   for (const label of ['Elementos', 'Biblia', 'Diseño', 'Fondo', 'Párrafo', 'Borrar']) assert.doesNotMatch(dock, new RegExp(`label: '${label}'`))
-  assert.match(workspace, /plantillas:[\s\S]*label: 'Plantillas'[\s\S]*label: 'Temas'[\s\S]*label: 'Fondo'[\s\S]*label: 'Imágenes'/)
+  assert.match(workspace, /plantillas:[\s\S]*label: 'Plantillas'[\s\S]*label: 'Temas'[\s\S]*label: 'Imágenes'/)
+  assert.doesNotMatch(workspace.match(/plantillas:[\s\S]*?\],/)?.[0] ?? '', /label: 'Fondo'/)
   assert.match(workspace, /texto:[\s\S]*label: 'Herramientas'[\s\S]*label: 'Biblia'/)
   assert.match(workspace, /capas:[\s\S]*label: 'Capas'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
-  assert.match(workspace, /pastoral-tool-button col-span-2/)
+  assert.match(workspace, /aria-label="Borrar elemento seleccionado"[\s\S]*eliminarElemento\(elementoSeleccionado\.id\)/)
 })
 
 test('plantillas conservan familias visuales amplias', () => {
