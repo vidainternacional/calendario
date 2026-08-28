@@ -11,10 +11,12 @@ test('CapCut histórico queda fuera del runtime y lo sustituye la autoridad esta
   assert.doesNotMatch(layout, /pastoral-editor-capcut/)
 })
 
-test('herramientas viven en una sola cinta inferior de seis opciones', () => {
-  assert.match(css, /pastoral-tool-dock[\s\S]*grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/)
+test('herramientas viven en una sola cinta centrada de tres opciones', () => {
+  assert.match(css, /pastoral-tool-dock[\s\S]*display: flex !important[\s\S]*justify-content: center !important/)
+  assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*border-radius: 999px !important/)
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  assert.doesNotMatch(dock, /Fondo|Párrafo/)
+  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  assert.doesNotMatch(dock, /Fondo|Párrafo|Borrar|Elementos|Biblia|Diseño/)
 })
 
 test('panel contextual ya no es un sheet flotante', () => {
