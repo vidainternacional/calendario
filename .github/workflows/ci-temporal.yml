@@ -57,3 +57,33 @@ jobs:
         run: npm run build
         env:
           CI: 'true'
+
+      - name: Medir presupuesto tipográfico pastoral
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const path = require('node:path')
+          const mediaDir = path.join('.next', 'static', 'media')
+          const limite = 350 * 1024
+          const archivos = fs.existsSync(mediaDir)
+            ? fs.readdirSync(mediaDir).filter((nombre) => /\.woff2$/i.test(nombre)).sort()
+            : []
+          const detalle = archivos.map((nombre) => ({
+            nombre,
+            bytes: fs.statSync(path.join(mediaDir, nombre)).size,
+          }))
+          const total = detalle.reduce((suma, item) => suma + item.bytes, 0)
+          for (const item of detalle) console.log(`${item.nombre}\t${item.bytes} bytes\t${(item.bytes / 1024).toFixed(2)} KB`)
+          console.log(`PASTORAL_FONT_BUDGET_FILES=${detalle.length}`)
+          console.log(`PASTORAL_FONT_BUDGET_BYTES=${total}`)
+          console.log(`PASTORAL_FONT_BUDGET_KB=${(total / 1024).toFixed(2)}`)
+          console.log(`PASTORAL_FONT_BUDGET_LIMIT_KB=350.00`)
+          if (!detalle.length) {
+            console.error('No se encontraron archivos WOFF2 generados por next/font.')
+            process.exit(1)
+          }
+          if (total > limite) {
+            console.error(`El paquete tipográfico supera el límite: ${(total / 1024).toFixed(2)} KB > 350.00 KB`)
+            process.exit(1)
+          }
+          NODE
