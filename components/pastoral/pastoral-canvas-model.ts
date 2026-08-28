@@ -34,6 +34,7 @@ export type ElementoCanvas = {
   ajuste?: AjusteImagen
   radio?: number
   oculto?: boolean
+  fondo_visual?: string
 }
 
 export type DiapositivaCanvas = {
@@ -155,6 +156,14 @@ function rolTextoValido(rol: unknown): RolTexto {
   return rol === 'titulo' || rol === 'subtitulo' || rol === 'cuerpo' ? rol : 'libre'
 }
 
+function fondoVisualSeguro(valor: unknown) {
+  const fondo = String(valor ?? '').trim()
+  if (!fondo || /url\s*\(/i.test(fondo) || /[;{}]/.test(fondo)) return undefined
+  if (/^#[0-9a-f]{3,8}$/i.test(fondo)) return fondo
+  if (/^(?:linear-gradient|radial-gradient|repeating-linear-gradient)\(.+\)$/i.test(fondo)) return fondo
+  return undefined
+}
+
 export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 0): ElementoCanvas {
   const tipo: TipoElemento = item.tipo === 'imagen' || item.tipo === 'versiculo' ? item.tipo : 'texto'
   const rol = rolTextoValido(item.rol)
@@ -175,7 +184,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
     interlineado: clamp(Number(item.interlineado ?? 1.25), .8, 3), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
-    oculto: Boolean(item.oculto),
+    oculto: Boolean(item.oculto), fondo_visual: fondoVisualSeguro(item.fondo_visual),
   }
 }
 
