@@ -12,14 +12,16 @@ test('la autoridad estable neutraliza cajas externas sin capas V4 históricas', 
   assert.match(css, /pastoral-tool-panel,[\s\S]*border: 0 !important/)
 })
 
-test('Fondo vive únicamente dentro de Plantillas', () => {
+test('Fondo deja de ser submenú y se conserva como modo dentro de Imágenes', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
+  const plantillas = workspace.match(/plantillas:\s*\[[\s\S]*?\],/)?.[0] ?? ''
+  const imagenes = workspace.slice(workspace.indexOf("panel === 'recursos'"), workspace.indexOf("panel === 'texto'"))
   assert.doesNotMatch(dock, /Fondo/)
-  const plantillas = workspace.slice(workspace.indexOf("panel === 'plantillas'"), workspace.indexOf("panel === 'recursos'"))
-  assert.match(plantillas, /Plantillas/)
-  assert.match(plantillas, /Temas/)
-  assert.match(plantillas, /Fondos/)
-  assert.match(plantillas, /aplicarFondoImagen/)
+  assert.doesNotMatch(plantillas, /label: 'Fondo'/)
+  assert.match(plantillas, /label: 'Imágenes'/)
+  assert.match(imagenes, /Como fondo/)
+  assert.match(imagenes, /aplicarFondoImagen/)
+  assert.match(imagenes, /prepararSubida\(destinoSubida\)/)
 })
 
 test('Texto conserva tres líneas compactas y cuatro controles iguales', () => {
