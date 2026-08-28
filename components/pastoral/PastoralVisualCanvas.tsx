@@ -203,7 +203,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         .pastoral-editor-v4 .pastoral-tool-button.is-active::before { transform:translate(-50%,-50%) scale(1) !important; }
         .pastoral-editor-v4 .pastoral-tool-button > svg { position:relative !important; z-index:1 !important; margin:0 !important; }
         .pastoral-editor-v4 [aria-label='Tamaño de letra actual'],
-        .pastoral-editor-v4 [aria-label='Interlineado actual'] { color:#4f46e5 !important; opacity:1 !important; }
+        .pastoral-editor-v4 [aria-label='Interlineado actual'] { color:#4f46e5; opacity:1; }
       `}</style>
     </div>
   )
