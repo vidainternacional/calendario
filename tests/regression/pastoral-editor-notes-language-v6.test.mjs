@@ -13,9 +13,11 @@ test('lenguaje histórico de Notas queda absorbido por autoridad estable', () =>
 
 test('tres herramientas visibles conservan lenguaje integrado', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
+  const reglaPildora = css.match(/\.pastoral-editor-v4 \.pastoral-tool-dock > \.pastoral-tool-button \{([\s\S]*?)\}/)?.[1] ?? ''
   for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
   assert.doesNotMatch(dock, /Fondo|Párrafo|Borrar|Elementos|Biblia|Diseño/)
-  assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*background: #ffffff !important[\s\S]*border-radius: 999px !important/)
+  assert.match(reglaPildora, /background: #ffffff !important/)
+  assert.match(reglaPildora, /border-radius: 999px !important/)
 })
 
 test('acciones de formato mantienen tamaño táctil suficiente', () => {
