@@ -5,26 +5,33 @@ import test from 'node:test'
 const runtime = fs.readFileSync('components/pastoral/PastoralEditorRuntimeEnhancements.tsx', 'utf8')
 const picker = fs.readFileSync('components/pastoral/PastoralVersePicker.tsx', 'utf8')
 
-test('la paleta de colores se fija dentro del visual viewport cuando aparece el teclado', () => {
+test('formato y colores permanecen juntos sobre el teclado con colores debajo de las herramientas', () => {
   assert.match(runtime, /const viewport = window\.visualViewport/)
   assert.match(runtime, /const tecladoVisible = Boolean\(viewport && insetTeclado > 100\)/)
-  assert.match(runtime, /carril\.style\.position = 'fixed'/)
-  assert.match(runtime, /viewport\.offsetTop \+ viewport\.height - alto - 12/)
+  assert.match(runtime, /const seccion = document\.querySelector<HTMLElement>\('\.pastoral-editor-v4 \.panel-texto \[data-pastoral-format-section="true"\]'\)/)
+  assert.match(runtime, /seccion\.style\.position = 'fixed'/)
+  assert.match(runtime, /viewport\.offsetTop \+ viewport\.height - alto - 6/)
   assert.match(runtime, /carril\.style\.overflowX = 'auto'/)
   assert.match(runtime, /carril\.style\.overflowY = 'hidden'/)
+  assert.doesNotMatch(runtime, /carril\.style\.position = 'fixed'/)
   assert.match(runtime, /window\.visualViewport\?\.addEventListener\('resize', sincronizar\)/)
   assert.match(runtime, /window\.visualViewport\?\.addEventListener\('scroll', sincronizar\)/)
 })
 
-test('Presentar y Congregación quedan unificados bajo Vista sin perder sus acciones reales', () => {
-  assert.match(runtime, /function unificarMenuPresentacion\(\)/)
-  assert.match(runtime, /presentar\.hidden = true/)
+test('Presentar queda como una sola vista visible y Congregación deja de ocupar otra página', () => {
+  assert.match(runtime, /function unificarVistaPresentacion\(\)/)
   assert.match(runtime, /congregacion\.hidden = true/)
-  assert.match(runtime, /summary\.textContent = 'Vista ⌄'/)
-  assert.match(runtime, /crearOpcion\('Presentar'\)/)
-  assert.match(runtime, /crearOpcion\('Congregación'\)/)
-  assert.match(runtime, /candidatos\.find\(\(item\) => item\.textContent\?\.trim\(\) === label\)\?\.click\(\)/)
-  assert.match(runtime, /nav\.style\.gridTemplateColumns = 'repeat\(3, minmax\(0, 1fr\)\)'/)
+  assert.match(runtime, /congregacion\.style\.display = 'none'/)
+  assert.doesNotMatch(runtime, /summary\.textContent = 'Vista ⌄'/)
+  assert.doesNotMatch(runtime, /crearOpcion\('Congregación'\)/)
+})
+
+test('el número de página queda interactivo pero sin píldora visual', () => {
+  assert.match(runtime, /select\[aria-label\^="Página "\]/)
+  assert.match(runtime, /selectorPagina\.style\.border = '0'/)
+  assert.match(runtime, /selectorPagina\.style\.background = 'transparent'/)
+  assert.match(runtime, /selectorPagina\.style\.setProperty\('-webkit-appearance', 'none'\)/)
+  assert.match(runtime, /button\[aria-label="Nueva página"\]/)
 })
 
 test('el selector bíblico mantiene abreviatura cerrada y muestra nombres completos en el menú nativo', () => {
