@@ -61,143 +61,133 @@ function posicionarControlesFlotantes() {
       return
     }
 
-    /* Último recurso para elementos casi a pantalla completa: se coloca sobre el
-       borde inferior, nunca encima de las primeras líneas del texto. */
     toolbar.style.right = '4px'
     toolbar.style.top = `calc(100% + ${gap}px)`
     toolbar.style.flexDirection = 'row'
   })
 }
 
-const PROPIEDADES_CARRIL_FLOTANTE = [
+const PROPIEDADES_PANEL_FORMATO_MOVIL = [
   'position', 'left', 'top', 'right', 'bottom', 'width', 'z-index',
   'background', 'padding', 'border', 'border-radius', 'box-shadow',
 ] as const
 
-function prepararCarrilColores() {
+function prepararFormatoSobreTeclado() {
   const carril = document.querySelector<HTMLElement>('.pastoral-editor-v4 .panel-texto [aria-label="Colores de texto"]')
-  if (!carril) return
+  const seccion = document.querySelector<HTMLElement>('.pastoral-editor-v4 .panel-texto [data-pastoral-format-section="true"]')
 
-  carril.style.overflowX = 'auto'
-  carril.style.overflowY = 'hidden'
-  carril.style.touchAction = 'pan-x'
-  carril.style.paddingInlineEnd = '7rem'
-  carril.style.scrollPaddingInlineEnd = '7rem'
-  carril.style.setProperty('-webkit-overflow-scrolling', 'touch')
+  if (carril) {
+    carril.style.overflowX = 'auto'
+    carril.style.overflowY = 'hidden'
+    carril.style.touchAction = 'pan-x'
+    carril.style.paddingInlineEnd = '7rem'
+    carril.style.scrollPaddingInlineEnd = '7rem'
+    carril.style.setProperty('-webkit-overflow-scrolling', 'touch')
+  }
+
+  if (!seccion) return
 
   const viewport = window.visualViewport
   const insetTeclado = viewport ? Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop)) : 0
   const tecladoVisible = Boolean(viewport && insetTeclado > 100)
 
   if (!tecladoVisible || !viewport) {
-    PROPIEDADES_CARRIL_FLOTANTE.forEach((propiedad) => carril.style.removeProperty(propiedad))
+    PROPIEDADES_PANEL_FORMATO_MOVIL.forEach((propiedad) => seccion.style.removeProperty(propiedad))
     return
   }
 
-  const alto = Math.max(48, Math.round(carril.getBoundingClientRect().height || 48))
+  const alto = Math.max(64, Math.round(seccion.getBoundingClientRect().height || 64))
   const izquierda = Math.max(8, Math.round(viewport.offsetLeft + 12))
-  const arriba = Math.max(Math.round(viewport.offsetTop + 8), Math.round(viewport.offsetTop + viewport.height - alto - 12))
+  const arriba = Math.max(Math.round(viewport.offsetTop + 6), Math.round(viewport.offsetTop + viewport.height - alto - 6))
   const ancho = Math.max(180, Math.round(viewport.width - 24))
 
-  carril.style.position = 'fixed'
-  carril.style.left = `${izquierda}px`
-  carril.style.top = `${arriba}px`
-  carril.style.right = 'auto'
-  carril.style.bottom = 'auto'
-  carril.style.width = `${ancho}px`
-  carril.style.zIndex = '190'
-  carril.style.background = '#f4f5f9'
-  carril.style.padding = '8px 10px'
-  carril.style.border = '1px solid #e2e8f0'
-  carril.style.borderRadius = '999px'
-  carril.style.boxShadow = '0 8px 24px rgba(15, 23, 42, 0.14)'
+  seccion.style.position = 'fixed'
+  seccion.style.left = `${izquierda}px`
+  seccion.style.top = `${arriba}px`
+  seccion.style.right = 'auto'
+  seccion.style.bottom = 'auto'
+  seccion.style.width = `${ancho}px`
+  seccion.style.zIndex = '190'
+  seccion.style.background = '#f4f5f9'
+  seccion.style.padding = '4px 0 6px'
+  seccion.style.border = '0'
+  seccion.style.borderRadius = '0'
+  seccion.style.boxShadow = 'none'
 }
 
-function unificarMenuPresentacion() {
+function unificarVistaPresentacion() {
   const nav = document.querySelector<HTMLElement>('.pastoral-editor-v4 > header nav')
   if (!nav) return
 
+  nav.querySelector('details[data-pastoral-view-menu="true"]')?.remove()
+
   const botonesDirectos = Array.from(nav.querySelectorAll<HTMLButtonElement>(':scope > button'))
+  const editar = botonesDirectos.find((button) => button.textContent?.trim() === 'Editar')
   const presentar = botonesDirectos.find((button) => button.textContent?.trim() === 'Presentar')
   const congregacion = botonesDirectos.find((button) => button.textContent?.trim() === 'Congregación')
-  if (!presentar || !congregacion) return
+  if (!editar || !presentar || !congregacion) return
 
-  presentar.hidden = true
   congregacion.hidden = true
-  presentar.style.display = 'none'
   congregacion.style.display = 'none'
-  nav.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))'
+
+  nav.style.display = 'flex'
+  nav.style.alignItems = 'center'
+  nav.style.justifyContent = 'space-between'
+  nav.style.gap = '0'
   nav.style.overflow = 'visible'
+  nav.style.width = '100%'
+  nav.style.removeProperty('grid-template-columns')
 
-  let menu = nav.querySelector<HTMLDetailsElement>('details[data-pastoral-view-menu="true"]')
-  if (!menu) {
-    menu = document.createElement('details')
-    menu.dataset.pastoralViewMenu = 'true'
-    menu.style.position = 'relative'
-    menu.style.minWidth = '0'
-    menu.style.minHeight = '44px'
+  ;[editar, presentar].forEach((button) => {
+    button.style.flex = '1 1 0'
+    button.style.minWidth = '0'
+    button.style.minHeight = '44px'
+    button.style.textAlign = 'center'
+  })
 
-    const summary = document.createElement('summary')
-    summary.textContent = 'Vista ⌄'
-    summary.setAttribute('aria-label', 'Elegir vista de presentación')
-    summary.style.display = 'flex'
-    summary.style.minHeight = '44px'
-    summary.style.cursor = 'pointer'
-    summary.style.listStyle = 'none'
-    summary.style.alignItems = 'center'
-    summary.style.justifyContent = 'center'
-    summary.style.padding = '0 4px 3px'
-    summary.style.fontSize = '12.5px'
-    summary.style.fontWeight = '650'
-    summary.style.color = '#64748b'
-    summary.style.setProperty('-webkit-tap-highlight-color', 'transparent')
+  const grupo = Array.from(nav.children).find((elemento) => elemento.tagName === 'DIV') as HTMLElement | undefined
+  if (!grupo) return
 
-    const opciones = document.createElement('div')
-    opciones.style.position = 'absolute'
-    opciones.style.left = '50%'
-    opciones.style.top = 'calc(100% + 4px)'
-    opciones.style.zIndex = '180'
-    opciones.style.display = 'grid'
-    opciones.style.minWidth = '156px'
-    opciones.style.transform = 'translateX(-50%)'
-    opciones.style.overflow = 'hidden'
-    opciones.style.border = '1px solid #e2e8f0'
-    opciones.style.borderRadius = '14px'
-    opciones.style.background = '#ffffff'
-    opciones.style.boxShadow = '0 10px 30px rgba(15, 23, 42, 0.14)'
+  grupo.style.display = 'flex'
+  grupo.style.alignItems = 'center'
+  grupo.style.justifyContent = 'space-between'
+  grupo.style.flex = '2.35 1 0'
+  grupo.style.minWidth = '0'
+  grupo.style.gap = '0'
 
-    const crearOpcion = (label: string) => {
-      const button = document.createElement('button')
-      button.type = 'button'
-      button.textContent = label
-      button.dataset.pastoralViewOption = label
-      button.style.minHeight = '44px'
-      button.style.border = '0'
-      button.style.background = '#ffffff'
-      button.style.padding = '0 14px'
-      button.style.textAlign = 'left'
-      button.style.color = '#334155'
-      button.style.fontSize = '12px'
-      button.style.fontWeight = '700'
-      button.addEventListener('click', () => {
-        const candidatos = Array.from(nav.querySelectorAll<HTMLButtonElement>(':scope > button'))
-        candidatos.find((item) => item.textContent?.trim() === label)?.click()
-        menu?.removeAttribute('open')
-      })
-      return button
-    }
-
-    opciones.append(crearOpcion('Presentar'), crearOpcion('Congregación'))
-    menu.append(summary, opciones)
-    nav.insertBefore(menu, congregacion.nextSibling)
+  const compartir = Array.from(grupo.querySelectorAll<HTMLButtonElement>(':scope > button')).find((button) => button.textContent?.trim() === 'Compartir')
+  if (compartir) {
+    compartir.style.flex = '1 1 0'
+    compartir.style.minWidth = '0'
+    compartir.style.minHeight = '44px'
+    compartir.style.textAlign = 'center'
   }
 
-  const summary = menu.querySelector<HTMLElement>('summary')
-  const activo = presentar.className.includes('text-[#C0392B]') || congregacion.className.includes('text-[#C0392B]')
-  if (summary) {
-    summary.style.color = activo ? '#4f46e5' : '#64748b'
-    summary.style.fontWeight = activo ? '750' : '650'
+  const selectorPagina = grupo.querySelector<HTMLSelectElement>('select[aria-label^="Página "]')
+  if (selectorPagina) {
+    selectorPagina.style.width = '44px'
+    selectorPagina.style.minWidth = '44px'
+    selectorPagina.style.height = '44px'
+    selectorPagina.style.padding = '0'
+    selectorPagina.style.border = '0'
+    selectorPagina.style.borderRadius = '0'
+    selectorPagina.style.background = 'transparent'
+    selectorPagina.style.boxShadow = 'none'
+    selectorPagina.style.color = '#475569'
+    selectorPagina.style.fontSize = '12px'
+    selectorPagina.style.fontWeight = '800'
+    selectorPagina.style.textAlign = 'center'
+    selectorPagina.style.setProperty('appearance', 'none')
+    selectorPagina.style.setProperty('-webkit-appearance', 'none')
   }
+
+  grupo.querySelectorAll<HTMLButtonElement>(':scope > button[aria-label="Nueva página"], :scope > button[aria-label^="Eliminar Página "]').forEach((button) => {
+    button.style.width = '44px'
+    button.style.minWidth = '44px'
+    button.style.height = '44px'
+    button.style.padding = '0'
+    button.style.flex = '0 0 44px'
+  })
 }
 
 const SELECTOR_CONTROL_TEXTO = [
@@ -293,8 +283,8 @@ export default function PastoralEditorRuntimeEnhancements() {
         renombrarTextoLibre()
         recordarTemaActual()
         posicionarControlesFlotantes()
-        prepararCarrilColores()
-        unificarMenuPresentacion()
+        prepararFormatoSobreTeclado()
+        unificarVistaPresentacion()
       })
     }
 
