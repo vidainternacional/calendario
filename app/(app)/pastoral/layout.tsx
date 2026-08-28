@@ -37,5 +37,18 @@ const bebasNeue = Bebas_Neue({
 
 export default function PastoralLayout({ children }: { children: React.ReactNode }) {
   const fuentesPastorales = `${ebGaramond.variable} ${montserrat.variable} ${playfairDisplay.variable} ${bebasNeue.variable}`
-  return <div className={`pastoral-visual-system ${fuentesPastorales}`}>{children}<PastoralEditorRuntimeEnhancements /><PastoralElementsViewEnhancements /></div>
+  return <div className={`pastoral-visual-system ${fuentesPastorales}`}>
+    {children}
+    <PastoralEditorRuntimeEnhancements />
+    <PastoralElementsViewEnhancements />
+    <style>{`
+      .pastoral-visual-canvas [data-canvas-element='texto'],
+      .pastoral-visual-canvas [data-canvas-element='versiculo'] {
+        overflow: hidden;
+        max-width: 100%;
+        max-height: 100%;
+        contain: paint;
+      }
+    `}</style>
+  </div>
 }
