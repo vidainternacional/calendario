@@ -11,31 +11,45 @@ const actions = fs.readFileSync('app/actions/pastoral-paquetes.ts', 'utf8')
 
 test('Herramientas de Texto abre todo el contenido en el orden aprobado', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  const tipo = texto.indexOf('Tipo ·')
+  const estilo = texto.indexOf('Estilo ·')
   const fuente = texto.indexOf('Fuente ·')
   const formato = texto.indexOf('>Formato<')
   const tamano = texto.indexOf('Tamaño e interlineado')
   const alineacion = texto.indexOf('>Alineación<')
   const listas = texto.indexOf('>Listas<')
-  assert.ok(tipo >= 0 && fuente > tipo && formato > fuente && tamano > formato && alineacion > tamano && listas > alineacion)
+  assert.ok(estilo >= 0 && fuente > estilo && formato > fuente && tamano > formato && alineacion > tamano && listas > alineacion)
   assert.doesNotMatch(workspace, /grupoTextoAbierto|alternarGrupoTexto/)
   assert.match(texto, /FUENTE_MUESTRA[\s\S]*>Aa</)
   assert.match(texto, /<details[\s\S]*aria-label="Color de texto"[\s\S]*aria-label="Colores de texto"/)
 })
 
-test('Caja Título Subtítulo y Cuerpo siguen disponibles y táctiles sin píldoras propias', () => {
+test('A+ crea texto y Título Subtítulo Cuerpo solo cambian el texto seleccionado', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  assert.match(texto, />Caja<\/button>/)
+  assert.match(texto, /aria-label="Agregar texto"/)
+  assert.match(texto, /<span className="text-base font-black">A<\/span><span className="text-sm font-black">\+<\/span>/)
   assert.match(texto, /ESTILOS_TEXTO\.filter\(\(item\) => item\.id !== 'libre'\)\.map/)
-  assert.match(texto, /\{estilo\.label\}/)
+  assert.match(texto, /disabled=\{!textoSeleccionado\}[\s\S]*onClick=\{\(\) => aplicarRolTexto\(estilo\.id\)\}/)
   for (const entrada of [
     "{ id: 'titulo', label: 'Título'",
     "{ id: 'subtitulo', label: 'Subtítulo'",
     "{ id: 'cuerpo', label: 'Cuerpo'",
   ]) assert.ok(model.includes(entrada))
   assert.match(texto, /min-h-12/)
-  assert.doesNotMatch(texto, /Opciones de tipo de texto[\s\S]{0,900}rounded-full/)
-  assert.doesNotMatch(workspace, /<Plus \/> Caja/)
+  assert.doesNotMatch(texto, /Opciones de estilo de texto[\s\S]{0,1000}rounded-full/)
+  assert.match(workspace, /if \(!textoSeleccionado\) return\n    if \(textoSeleccionado\.rol === rol\) return actualizarElemento\(textoSeleccionado\.id, \{ rol: 'libre' \}\)/)
+  assert.doesNotMatch(workspace, /if \(!textoSeleccionado\) return agregarTexto\(rol\)/)
+})
+
+test('Plantillas no crean ni mueven texto del usuario y Temas no cambian su fuente', () => {
+  const plantilla = workspace.slice(workspace.indexOf('const aplicarPlantilla'), workspace.indexOf('const nuevaPagina'))
+  const paleta = workspace.slice(workspace.indexOf('const aplicarPaleta'), workspace.indexOf('const aplicarPlantilla'))
+  assert.match(plantilla, /const tieneTextoUsuario = textos\.some/)
+  assert.match(plantilla, /if \(tieneTextoUsuario\)/)
+  assert.match(plantilla, /return layout \? \{ \.\.\.elemento, fuente: layout\.fuente \} : elemento/)
+  assert.doesNotMatch(plantilla.slice(plantilla.indexOf('if (tieneTextoUsuario)'), plantilla.indexOf('const imagenesActuales')), /\bx:|\by:|\bw:|\bh:|crearMuestra/)
+  assert.doesNotMatch(plantilla, /Título del mensaje|Subtítulo o referencia|Escribe aquí el contenido principal/)
+  assert.match(plantilla, /textoMuestraPlantilla\(plantilla, rol\)/)
+  assert.doesNotMatch(paleta, /fuente:/)
 })
 
 test('Tamaño y Línea mantienen steppers táctiles y comparten fila con alineación 2 por 2', () => {
