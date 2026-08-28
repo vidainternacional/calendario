@@ -26,11 +26,14 @@ test('celular horizontal conserva la misma arquitectura inferior', () => {
   assert.doesNotMatch(horizontal, /grid-template-areas:\s*'dock stage'/)
 })
 
-test('dock principal contiene exactamente las seis herramientas aprobadas', () => {
+test('dock principal contiene exactamente los tres grupos aprobados y conserva las funciones en submenús', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Plantillas', 'Elementos', 'Texto', 'Biblia', 'Diseño', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
-  assert.doesNotMatch(dock, /label: 'Fondo'|label: 'Párrafo'|label: 'Borrar'/)
-  assert.match(css, /grid-template-columns: repeat\(6, minmax\(0, 1fr\)\) !important/)
+  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  for (const label of ['Elementos', 'Biblia', 'Diseño', 'Fondo', 'Párrafo', 'Borrar']) assert.doesNotMatch(dock, new RegExp(`label: '${label}'`))
+  assert.match(workspace, /plantillas:[\s\S]*label: 'Plantillas'[\s\S]*label: 'Temas'[\s\S]*label: 'Fondo'[\s\S]*label: 'Imágenes'/)
+  assert.match(workspace, /texto:[\s\S]*label: 'Herramientas'[\s\S]*label: 'Biblia'/)
+  assert.match(workspace, /capas:[\s\S]*label: 'Capas'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
+  assert.match(workspace, /pastoral-tool-button col-span-2/)
 })
 
 test('plantillas conservan familias visuales amplias', () => {
