@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 type Plantilla = 'limpia' | 'titulo' | 'imagen' | 'versiculo'
-type Alineacion = 'izquierda' | 'centro' | 'derecha'
+type Alineacion = 'izquierda' | 'centro' | 'derecha' | 'justificado'
 type Tamano = 'compacto' | 'normal' | 'grande'
 type FormatoLienzo = '16:9' | '9:16' | '4:3' | '1:1'
 type FondoModo = 'color' | 'tema' | 'imagen'
@@ -75,7 +75,7 @@ function texto(formData: FormData, campo: string, maximo: number) { return Strin
 function uuidOpcional(valor: FormDataEntryValue | null) { const value = String(valor ?? '').trim(); return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null }
 function estadoValido(valor: string) { return ['borrador', 'listo', 'compartido'].includes(valor) ? valor : 'borrador' }
 function plantillaValida(valor: FormDataEntryValue | undefined): Plantilla { const value = String(valor ?? '').trim(); return ['limpia', 'titulo', 'imagen', 'versiculo'].includes(value) ? value as Plantilla : 'limpia' }
-function alineacionValida(valor: unknown): Alineacion { const value = String(valor ?? '').trim(); return ['izquierda', 'centro', 'derecha'].includes(value) ? value as Alineacion : 'izquierda' }
+function alineacionValida(valor: unknown): Alineacion { const value = String(valor ?? '').trim(); return ['izquierda', 'centro', 'derecha', 'justificado'].includes(value) ? value as Alineacion : 'izquierda' }
 function tamanoValido(valor: FormDataEntryValue | undefined): Tamano { const value = String(valor ?? '').trim(); return ['compacto', 'normal', 'grande'].includes(value) ? value as Tamano : 'normal' }
 function formatoValido(valor: FormDataEntryValue | undefined): FormatoLienzo { const value = String(valor ?? '').trim(); return ['16:9', '9:16', '4:3', '1:1'].includes(value) ? value as FormatoLienzo : '16:9' }
 function fondoModoValido(valor: FormDataEntryValue | undefined): FondoModo { const value = String(valor ?? '').trim(); return ['color', 'tema', 'imagen'].includes(value) ? value as FondoModo : 'color' }

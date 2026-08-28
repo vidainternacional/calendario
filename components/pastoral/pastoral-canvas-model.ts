@@ -1,5 +1,5 @@
 export type Plantilla = 'limpia' | 'titulo' | 'imagen' | 'versiculo'
-export type Alineacion = 'izquierda' | 'centro' | 'derecha'
+export type Alineacion = 'izquierda' | 'centro' | 'derecha' | 'justificado'
 export type Tamano = 'compacto' | 'normal' | 'grande'
 export type FormatoLienzo = '16:9' | '9:16' | '4:3' | '1:1'
 export type FondoModo = 'color' | 'tema' | 'imagen'
@@ -141,7 +141,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     rol, fuente: FUENTES_PASTORALES_COMPATIBLES.has(fuenteGuardada) ? fuenteGuardada : 'Inter',
     tamano_fuente: clamp(Number(item.tamano_fuente ?? (tipo === 'versiculo' ? 30 : estilo.pt)), 8, 160),
     color: /^#[0-9a-f]{6}$/i.test(String(item.color ?? '')) ? item.color : '#0f172a',
-    alineacion: item.alineacion === 'centro' || item.alineacion === 'derecha' ? item.alineacion : 'izquierda',
+    alineacion: item.alineacion === 'centro' || item.alineacion === 'derecha' || item.alineacion === 'justificado' ? item.alineacion : 'izquierda',
     peso: clamp(Number(item.peso ?? estilo.peso), 300, 900),
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
     interlineado: clamp(Number(item.interlineado ?? 1.25), .9, 2), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),

@@ -62,7 +62,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       fontFamily: familia,
       fontSize: `min(${pixeles}px, ${escalaLienzo}cqw)`,
       color: elemento.color ?? '#0f172a',
-      textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : 'left',
+      textAlign: elemento.alineacion === 'centro' ? 'center' : elemento.alineacion === 'derecha' ? 'right' : elemento.alineacion === 'justificado' ? 'justify' : 'left',
       fontWeight: elemento.peso ?? 500,
       fontStyle: elemento.cursiva ? 'italic' : 'normal',
       fontSynthesis: 'none',

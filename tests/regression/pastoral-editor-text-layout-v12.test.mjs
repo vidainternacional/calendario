@@ -6,21 +6,24 @@ const css = fs.readFileSync('app/(app)/pastoral/pastoral-editor-stable.css', 'ut
 const layout = fs.readFileSync('app/(app)/pastoral/layout.tsx', 'utf8')
 const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4.tsx', 'utf8')
 const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'utf8')
+const canvas = fs.readFileSync('components/pastoral/PastoralVisualCanvas.tsx', 'utf8')
+const actions = fs.readFileSync('app/actions/pastoral-paquetes.ts', 'utf8')
 
-test('Herramientas de Texto abre todo el contenido en el mismo orden', () => {
+test('Herramientas de Texto abre todo el contenido en el orden aprobado', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
-  const fuente = texto.indexOf('Fuente ·')
   const tipo = texto.indexOf('Tipo ·')
+  const fuente = texto.indexOf('Fuente ·')
   const formato = texto.indexOf('>Formato<')
   const tamano = texto.indexOf('Tamaño e interlineado')
   const alineacion = texto.indexOf('>Alineación<')
   const listas = texto.indexOf('>Listas<')
-  assert.ok(fuente >= 0 && tipo > fuente && formato > tipo && tamano > formato && alineacion > tamano && listas > alineacion)
+  assert.ok(tipo >= 0 && fuente > tipo && formato > fuente && tamano > formato && alineacion > tamano && listas > alineacion)
   assert.doesNotMatch(workspace, /grupoTextoAbierto|alternarGrupoTexto/)
   assert.match(texto, /FUENTE_MUESTRA[\s\S]*>Aa</)
+  assert.match(texto, /<details[\s\S]*aria-label="Color de texto"[\s\S]*aria-label="Colores de texto"/)
 })
 
-test('Caja Título Subtítulo y Cuerpo siguen disponibles y táctiles', () => {
+test('Caja Título Subtítulo y Cuerpo siguen disponibles y táctiles sin píldoras propias', () => {
   const texto = workspace.slice(workspace.indexOf("panel === 'texto'"), workspace.indexOf("panel === 'biblia'"))
   assert.match(texto, />Caja<\/button>/)
   assert.match(texto, /ESTILOS_TEXTO\.filter\(\(item\) => item\.id !== 'libre'\)\.map/)
@@ -30,15 +33,25 @@ test('Caja Título Subtítulo y Cuerpo siguen disponibles y táctiles', () => {
     "{ id: 'subtitulo', label: 'Subtítulo'",
     "{ id: 'cuerpo', label: 'Cuerpo'",
   ]) assert.ok(model.includes(entrada))
-  assert.match(texto, /min-h-11/)
+  assert.match(texto, /min-h-12/)
+  assert.doesNotMatch(texto, /Opciones de tipo de texto[\s\S]{0,900}rounded-full/)
   assert.doesNotMatch(workspace, /<Plus \/> Caja/)
 })
 
-test('Tamaño y Línea mantienen steppers React táctiles', () => {
+test('Tamaño y Línea mantienen steppers táctiles y comparten fila con alineación 2 por 2', () => {
   assert.match(workspace, /aria-label="Reducir tamaño de letra"/)
   assert.match(workspace, /aria-label="Aumentar tamaño de letra"/)
   assert.match(workspace, /aria-label="Reducir interlineado"/)
   assert.match(workspace, /aria-label="Aumentar interlineado"/)
+  assert.match(workspace, /grid-cols-\[minmax\(0,1\.35fr\)_minmax\(104px,\.65fr\)\]/)
+  assert.match(workspace, /aria-label="Justificar"/)
+})
+
+test('Justificado se representa y persiste sin degradarse a izquierda', () => {
+  assert.match(model, /Alineacion = 'izquierda' \| 'centro' \| 'derecha' \| 'justificado'/)
+  assert.match(model, /item\.alineacion === 'justificado'/)
+  assert.match(canvas, /elemento\.alineacion === 'justificado' \? 'justify'/)
+  assert.match(actions, /'izquierda', 'centro', 'derecha', 'justificado'/)
 })
 
 test('la navegación de páginas queda en la cabecera y desaparece la faja inferior', () => {
