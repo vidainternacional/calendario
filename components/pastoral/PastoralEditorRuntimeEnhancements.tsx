@@ -69,6 +69,22 @@ function posicionarControlesFlotantes() {
   })
 }
 
+function prepararCarrilColores() {
+  const carril = document.querySelector<HTMLElement>('.pastoral-editor-v4 .panel-texto [aria-label="Colores de texto"]')
+  if (!carril) return
+  carril.style.overflowX = 'auto'
+  carril.style.overflowY = 'hidden'
+  carril.style.touchAction = 'pan-x'
+  carril.style.paddingInlineEnd = '7rem'
+  carril.style.scrollPaddingInlineEnd = '7rem'
+  carril.style.setProperty('-webkit-overflow-scrolling', 'touch')
+}
+
+const SELECTOR_CONTROL_TEXTO = [
+  '.pastoral-editor-v4 .panel-texto button',
+  '.pastoral-editor-v4 .panel-texto summary',
+].join(', ')
+
 export default function PastoralEditorRuntimeEnhancements() {
   useEffect(() => {
     let frame = 0
@@ -77,10 +93,19 @@ export default function PastoralEditorRuntimeEnhancements() {
     let ultimoTema: HTMLButtonElement | null = null
     let heredandoTema = false
 
+    const rangoPerteneceAlEditor = (range: Range, editor: HTMLElement) => {
+      try {
+        return range.startContainer.isConnected && range.endContainer.isConnected && editor.contains(range.commonAncestorContainer)
+      } catch {
+        return false
+      }
+    }
+
     const guardarSeleccion = () => {
       const selection = window.getSelection()
-      if (!selection?.rangeCount) return
+      if (!selection?.rangeCount) return false
       const range = selection.getRangeAt(0)
+      if (range.collapsed) return false
       const node = range.commonAncestorContainer
       const element = node.nodeType === Node.ELEMENT_NODE
         ? node as Element
@@ -88,20 +113,34 @@ export default function PastoralEditorRuntimeEnhancements() {
           ? node.parentNode
           : null
       const editor = element?.closest<HTMLElement>('.pastoral-visual-canvas [contenteditable="true"]')
-      if (!editor) return
+      if (!editor) return false
       ultimoEditor = editor
       ultimoRango = range.cloneRange()
+      return true
     }
 
     const restaurarSeleccion = () => {
       if (!ultimoEditor?.isConnected) return false
       ultimoEditor.focus({ preventScroll: true })
-      if (ultimoRango) {
-        const selection = window.getSelection()
-        selection?.removeAllRanges()
-        selection?.addRange(ultimoRango)
-      }
+      if (!ultimoRango || !rangoPerteneceAlEditor(ultimoRango, ultimoEditor)) return true
+      const selection = window.getSelection()
+      selection?.removeAllRanges()
+      selection?.addRange(ultimoRango.cloneRange())
       return true
+    }
+
+    const mantenerSeleccionTrasControl = () => {
+      window.requestAnimationFrame(() => {
+        if (guardarSeleccion()) return
+        restaurarSeleccion()
+      })
+    }
+
+    const cerrarColorAlSalirDelTexto = () => {
+      window.setTimeout(() => {
+        const botonColor = document.querySelector<HTMLButtonElement>('.pastoral-editor-v4 .panel-texto button[aria-label="Color de texto"][aria-expanded="true"]')
+        botonColor?.click()
+      }, 0)
     }
 
     const recordarTemaActual = () => {
@@ -114,15 +153,6 @@ export default function PastoralEditorRuntimeEnhancements() {
         if (muestra && getComputedStyle(muestra).backgroundColor === fondoCanvas) encontrado = button
       })
       if (encontrado) ultimoTema = encontrado
-    }
-
-    const aplicarListaEnCursor = (button: HTMLButtonElement) => {
-      if (!restaurarSeleccion() || !ultimoEditor) return false
-      const command = button.getAttribute('aria-label') === 'Lista numerada' ? 'insertOrderedList' : 'insertUnorderedList'
-      document.execCommand(command)
-      ultimoEditor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: command === 'insertOrderedList' ? 'insertOrderedList' : 'insertUnorderedList' }))
-      guardarSeleccion()
-      return true
     }
 
     const heredarTemaEnNuevaPagina = () => {
@@ -143,6 +173,7 @@ export default function PastoralEditorRuntimeEnhancements() {
         renombrarTextoLibre()
         recordarTemaActual()
         posicionarControlesFlotantes()
+        prepararCarrilColores()
       })
     }
 
@@ -150,17 +181,27 @@ export default function PastoralEditorRuntimeEnhancements() {
     const onFocusIn = (event: FocusEvent) => {
       const target = event.target
       if (target instanceof HTMLElement && target.matches('.pastoral-visual-canvas [contenteditable="true"]')) {
+        if (target !== ultimoEditor) ultimoRango = null
         ultimoEditor = target
         guardarSeleccion()
       }
     }
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target instanceof Element ? event.target : null
-      const lista = target?.closest<HTMLButtonElement>('button[aria-label="Lista con viñetas"], button[aria-label="Lista numerada"]')
-      if (lista) {
+      const controlTexto = target?.closest<HTMLElement>(SELECTOR_CONTROL_TEXTO)
+      if (controlTexto) {
+        guardarSeleccion()
         event.preventDefault()
         restaurarSeleccion()
         return
+      }
+
+      const dentroTexto = target?.closest<HTMLElement>('.pastoral-visual-canvas [contenteditable="true"]')
+      const dentroHerramientasTexto = target?.closest<HTMLElement>('.pastoral-editor-v4 .panel-texto')
+      if (!dentroTexto && !dentroHerramientasTexto) {
+        ultimoEditor = null
+        ultimoRango = null
+        cerrarColorAlSalirDelTexto()
       }
 
       const tema = target?.closest<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-theme-option')
@@ -168,12 +209,11 @@ export default function PastoralEditorRuntimeEnhancements() {
     }
     const onClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null
-      const lista = target?.closest<HTMLButtonElement>('button[aria-label="Lista con viñetas"], button[aria-label="Lista numerada"]')
-      if (lista) {
-        event.preventDefault()
-        event.stopPropagation()
-        event.stopImmediatePropagation()
-        aplicarListaEnCursor(lista)
+      const controlTexto = target?.closest<HTMLElement>(SELECTOR_CONTROL_TEXTO)
+      if (controlTexto) {
+        restaurarSeleccion()
+        mantenerSeleccionTrasControl()
+        sincronizar()
         return
       }
 
