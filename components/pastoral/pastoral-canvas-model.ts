@@ -77,8 +77,8 @@ const FUENTES_PASTORALES_COMPATIBLES = new Set<string>([
 ])
 
 export const ESTILOS_TEXTO: Array<{ id: RolTexto; label: string; pt: number; peso: number }> = [
-  { id: 'titulo', label: 'Título', pt: 54, peso: 800 },
-  { id: 'subtitulo', label: 'Subtítulo', pt: 34, peso: 700 },
+  { id: 'titulo', label: 'Título', pt: 42, peso: 800 },
+  { id: 'subtitulo', label: 'Subtítulo', pt: 28, peso: 700 },
   { id: 'cuerpo', label: 'Cuerpo', pt: 22, peso: 500 },
   { id: 'libre', label: 'Libre', pt: 28, peso: 500 },
 ]
@@ -108,8 +108,8 @@ export function escaparHtmlCanvas(valor: string) {
 
 export function limpiarHtmlCanvas(html: string) {
   const basico = String(html ?? '').replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
-  if (typeof window === 'undefined') return basico.replace(/<(?!\/?(?:p|br|div|strong|b|em|i|u|s|ul|ol|li|blockquote|h[1-3])\b)[^>]*>/gi, '')
-  const permitidos = new Set(['P', 'BR', 'DIV', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3'])
+  if (typeof window === 'undefined') return basico.replace(/<(?!\/?(?:p|br|div|strong|b|em|i|u|s|strike|ul|ol|li|blockquote|h[1-3])\b)[^>]*>/gi, '')
+  const permitidos = new Set(['P', 'BR', 'DIV', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3'])
   const contenedor = document.createElement('div')
   contenedor.innerHTML = basico
   const recorrer = (nodo: Node) => Array.from(nodo.childNodes).forEach((hijo) => {
@@ -153,7 +153,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
 
 export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
   const elementos = Array.isArray(item.elementos) ? item.elementos.map((el, i) => normalizarElementoCanvas(el, i)) : []
-  if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 54, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
+  if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 42, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
   if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
   else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
   return { ...item, formato: item.formato ?? '16:9', fondo_modo: item.fondo_modo ?? (item.fondo_recurso_id || item.recurso_id ? 'imagen' : 'color'), fondo_tema: item.fondo_tema ?? 'claro', fondo_recurso_id: item.fondo_recurso_id ?? item.recurso_id ?? null, fondo: item.fondo ?? '#ffffff', color_texto: item.color_texto ?? '#0f172a', plantilla: item.plantilla ?? 'limpia', alineacion: item.alineacion ?? 'izquierda', tamano: item.tamano ?? 'normal', elementos }
