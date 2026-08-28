@@ -20,10 +20,14 @@ test('dock mantiene solo los tres grupos principales aprobados', () => {
   assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
 })
 
-test('Biblia entra directamente en panel y Plantillas integra Fondos', () => {
+test('Biblia entra directamente en panel e Imágenes absorbe la opción de fondo', () => {
   assert.match(workspace, /panel === 'biblia'[\s\S]*PastoralVersePicker/)
-  const plantillas = workspace.slice(workspace.indexOf("panel === 'plantillas'"), workspace.indexOf("panel === 'recursos'"))
-  assert.match(plantillas, /Fondos/)
+  const plantillas = workspace.match(/plantillas:\s*\[[\s\S]*?\],/)?.[0] ?? ''
+  const imagenes = workspace.slice(workspace.indexOf("panel === 'recursos'"), workspace.indexOf("panel === 'texto'"))
+  assert.doesNotMatch(plantillas, /label: 'Fondo'/)
+  assert.match(plantillas, /label: 'Imágenes'/)
+  assert.match(imagenes, /Como fondo/)
+  assert.match(imagenes, /aplicarFondoImagen/)
 })
 
 test('guardado automático usa acción existente', () => {
