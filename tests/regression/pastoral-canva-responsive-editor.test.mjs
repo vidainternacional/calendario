@@ -59,7 +59,8 @@ test('dock principal mantiene tres grupos y suma Borrar para cualquier selecció
   assert.doesNotMatch(workspace.match(/plantillas:[\s\S]*?\],/)?.[0] ?? '', /label: 'Fondo'/)
   assert.match(workspace, /texto:[\s\S]*label: 'Herramientas'[\s\S]*label: 'Biblia'/)
   assert.match(workspace, /capas:[\s\S]*label: 'Capas'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
-  assert.match(workspace, /aria-label="Borrar elemento seleccionado"[\s\S]*eliminarElemento\(elementoSeleccionado\.id\)/)
+  assert.match(workspace, /aria-label="Borrar elemento seleccionado"/)
+  assert.match(workspace, /onClick=\{\(\) => elementoSeleccionado && eliminarElemento\(elementoSeleccionado\.id\)\}/)
 })
 
 test('plantillas conservan familias visuales amplias', () => {
