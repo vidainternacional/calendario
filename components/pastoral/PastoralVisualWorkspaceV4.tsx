@@ -37,7 +37,25 @@ type PanelEditor = 'plantillas' | 'temas' | 'fondos' | 'recursos' | 'texto' | 'b
 type ComandoEfectoTexto = 'bold' | 'italic' | 'underline' | 'strikeThrough'
 type ComandoListaTexto = 'insertUnorderedList' | 'insertOrderedList'
 type AtributoInlineVida = 'data-vida-size' | 'data-vida-line-height' | 'data-vida-color'
+type EstadoFormatoSeleccion = {
+  seleccionActiva: boolean
+  bold: boolean
+  italic: boolean
+  underline: boolean
+  strikeThrough: boolean
+  unorderedList: boolean
+  orderedList: boolean
+}
 
+const ESTADO_FORMATO_VACIO: EstadoFormatoSeleccion = {
+  seleccionActiva: false,
+  bold: false,
+  italic: false,
+  underline: false,
+  strikeThrough: false,
+  unorderedList: false,
+  orderedList: false,
+}
 const MAX_HISTORIAL = 80
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
   { id: 'plantillas', label: 'Plantillas', icon: LayoutTemplate },
@@ -121,6 +139,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [guardandoAuto, setGuardandoAuto] = useState(false)
   const [busquedaRecursos, setBusquedaRecursos] = useState('')
   const [paletaTextoAbierta, setPaletaTextoAbierta] = useState(false)
+  const [estadoFormatoSeleccion, setEstadoFormatoSeleccion] = useState<EstadoFormatoSeleccion>(ESTADO_FORMATO_VACIO)
   const [tecladoAbierto, setTecladoAbierto] = useState(false)
   const [tecladoInset, setTecladoInset] = useState(0)
   const [isPending, startTransition] = useTransition()
@@ -284,6 +303,32 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim()
     return Boolean(normalizar(editor.innerText)) && normalizar(seleccionVentana.toString()) === normalizar(editor.innerText)
   }
+  const leerEstadoFormatoSeleccion = () => {
+    const editor = editorTextoActual()
+    if (!editor) { setEstadoFormatoSeleccion(ESTADO_FORMATO_VACIO); return }
+    const seleccionActiva = haySeleccionDePalabras(editor)
+    const consultar = (comando: string) => {
+      if (!seleccionActiva) return false
+      try { return document.queryCommandState(comando) } catch { return false }
+    }
+    setEstadoFormatoSeleccion({
+      seleccionActiva,
+      bold: consultar('bold'),
+      italic: consultar('italic'),
+      underline: consultar('underline'),
+      strikeThrough: consultar('strikeThrough'),
+      unorderedList: seleccionActiva ? consultar('insertUnorderedList') : Boolean(editor.querySelector('ul')),
+      orderedList: seleccionActiva ? consultar('insertOrderedList') : Boolean(editor.querySelector('ol')),
+    })
+  }
+  useEffect(() => {
+    const actualizar = () => leerEstadoFormatoSeleccion()
+    document.addEventListener('selectionchange', actualizar)
+    actualizar()
+    return () => document.removeEventListener('selectionchange', actualizar)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seleccion, textoSeleccionado?.contenido])
+  const formatoActivo = (comando: keyof Pick<EstadoFormatoSeleccion, 'bold' | 'italic' | 'underline' | 'strikeThrough'>, fallback: boolean) => estadoFormatoSeleccion.seleccionActiva ? estadoFormatoSeleccion[comando] : fallback
   const valorInlineActual = (editor: HTMLElement, atributo: AtributoInlineVida, fallback: number) => {
     const seleccionVentana = window.getSelection()
     const nodo = seleccionVentana?.anchorNode
@@ -335,6 +380,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       registrarHistorial()
       document.execCommand(comando)
       persistirInline(editor)
+      leerEstadoFormatoSeleccion()
       return
     }
     actualizarElemento(textoSeleccionado.id, patchCaja)
@@ -346,7 +392,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       registrarHistorial()
       if (aplicarAtributoSeleccion(editor, 'data-vida-color', color)) persistirInline(editor)
     } else actualizarElemento(textoSeleccionado.id, { color })
-    setPaletaTextoAbierta(false)
   }
   const comandoParrafo = (comando: ComandoListaTexto) => {
     if (!textoSeleccionado) return
@@ -364,6 +409,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     }
     document.execCommand(comando)
     patchElementoSinHistorial(textoSeleccionado.id, { contenido: limpiarHtmlCanvas(editor.innerHTML) })
+    leerEstadoFormatoSeleccion()
     if (!habiaSeleccion) seleccionVentana?.collapseToEnd()
   }
   const agregarVersiculo = (versiculo: { referencia: string; texto: string; traduccion: string }) => {
@@ -500,14 +546,14 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       <section data-pastoral-format-section="true" className={`grid gap-2 border-b border-slate-200 pb-3 ${tecladoAbierto ? 'sticky top-0 z-30 bg-[#f4f5f9] pt-1' : ''}`}>
         <div className="px-1 text-[11px] font-black text-slate-500">Formato · listas · tamaño · alineación</div>
         <div className="flex w-full touch-pan-x items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="toolbar" aria-label="Formato listas tamaño interlineado y alineación">
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('bold', { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))} aria-label="Negrita"><Bold className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('italic', { cursiva: !textoSeleccionado.cursiva })} className={claseControlTexto(Boolean(textoSeleccionado?.cursiva))} aria-label="Cursiva"><Italic className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('underline', { subrayado: !textoSeleccionado.subrayado })} className={claseControlTexto(Boolean(textoSeleccionado?.subrayado))} aria-label="Subrayado"><Underline className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('strikeThrough', { tachado: !textoSeleccionado.tachado })} className={claseControlTexto(Boolean(textoSeleccionado?.tachado))} aria-label="Tachado"><Strikethrough className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => setPaletaTextoAbierta((actual) => !actual)} className={claseControlTexto(false)} aria-label="Color de texto" aria-expanded={paletaTextoAbierta}><span className="h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: textoSeleccionado?.color ?? '#0f172a' }} /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('bold', { peso: (textoSeleccionado.peso ?? 500) >= 700 ? 500 : 800 })} className={claseControlTexto(formatoActivo('bold', Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700)))} aria-label="Negrita" aria-pressed={formatoActivo('bold', Boolean(textoSeleccionado && (textoSeleccionado.peso ?? 500) >= 700))}><Bold className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('italic', { cursiva: !textoSeleccionado.cursiva })} className={claseControlTexto(formatoActivo('italic', Boolean(textoSeleccionado?.cursiva)))} aria-label="Cursiva" aria-pressed={formatoActivo('italic', Boolean(textoSeleccionado?.cursiva))}><Italic className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('underline', { subrayado: !textoSeleccionado.subrayado })} className={claseControlTexto(formatoActivo('underline', Boolean(textoSeleccionado?.subrayado)))} aria-label="Subrayado" aria-pressed={formatoActivo('underline', Boolean(textoSeleccionado?.subrayado))}><Underline className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => textoSeleccionado && aplicarEfectoTexto('strikeThrough', { tachado: !textoSeleccionado.tachado })} className={claseControlTexto(formatoActivo('strikeThrough', Boolean(textoSeleccionado?.tachado)))} aria-label="Tachado" aria-pressed={formatoActivo('strikeThrough', Boolean(textoSeleccionado?.tachado))}><Strikethrough className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => setPaletaTextoAbierta((actual) => !actual)} className={claseControlTexto(paletaTextoAbierta)} aria-label="Color de texto" aria-expanded={paletaTextoAbierta} aria-pressed={paletaTextoAbierta}><span className="h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: textoSeleccionado?.color ?? '#0f172a' }} /></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className={claseControlTexto(false)} aria-label="Lista con viñetas"><List className="h-4 w-4" /></button>
-          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className={claseControlTexto(false)} aria-label="Lista numerada"><ListOrdered className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertUnorderedList')} className={claseControlTexto(estadoFormatoSeleccion.unorderedList)} aria-label="Lista con viñetas" aria-pressed={estadoFormatoSeleccion.unorderedList}><List className="h-4 w-4" /></button>
+          <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => comandoParrafo('insertOrderedList')} className={claseControlTexto(estadoFormatoSeleccion.orderedList)} aria-label="Lista numerada" aria-pressed={estadoFormatoSeleccion.orderedList}><ListOrdered className="h-4 w-4" /></button>
           <span className="h-7 w-px shrink-0 bg-slate-200" aria-hidden="true" />
           <button type="button" disabled={!textoSeleccionado} onPointerDown={(e) => e.preventDefault()} onClick={() => ajustarTamano(-1)} className={claseControlTexto(false)} aria-label="Reducir tamaño de letra"><span className="text-xs font-black">A−</span></button>
           <button type="button" disabled className={`${claseControlTexto(false)} text-[11px] font-black text-slate-500 opacity-100`} aria-label="Tamaño de letra actual">{Math.round(textoSeleccionado?.tamano_fuente ?? 24)}</button>
