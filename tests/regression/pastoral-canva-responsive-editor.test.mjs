@@ -27,6 +27,20 @@ test('móvil conserva lienzo panel y cinta inferior sin sheet externa', () => {
   assert.doesNotMatch(workspace, /pastoral-sheet-handle/)
 })
 
+test('controles principales y submenús quedan centrados en píldoras con lienzo móvil compacto', () => {
+  const dock = css.slice(css.indexOf('/* Dock */'), css.indexOf('/* Móvil / tablet'))
+  const movil = css.slice(css.indexOf('/* Móvil / tablet'), css.indexOf('/* Móvil horizontal */'))
+  const paneles = css.slice(css.indexOf('.pastoral-editor-v4 .pastoral-tool-panel-flow-scroll'), css.indexOf('/* Páginas */'))
+  assert.match(dock, /display: flex !important/)
+  assert.match(dock, /justify-content: center !important/)
+  assert.match(dock, /border-radius: 999px !important/)
+  assert.match(dock, /min-width: 94px !important/)
+  assert.match(paneles, /\[aria-label\^='Opciones de '\][\s\S]*justify-content: center !important/)
+  assert.match(paneles, /border-radius: 999px !important/)
+  assert.match(movil, /pastoral-stage-flow[\s\S]*height: clamp\(210px, 32dvh, 300px\) !important/)
+  assert.match(movil, /pastoral-canvas-wrap[\s\S]*padding: 5px 10px !important/)
+})
+
 test('celular horizontal conserva la misma arquitectura inferior', () => {
   const horizontal = css.slice(css.indexOf('@media (orientation: landscape)'))
   assert.match(horizontal, /grid-template-rows: minmax\(0, 1fr\) 174px 54px !important/)
