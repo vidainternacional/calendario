@@ -42,7 +42,7 @@ test('acciones de capa permanecen ocultas hasta deslizar y muestran los tres bot
   for (const accion of ['Duplicar', 'Bloquear', 'Eliminar']) assert.ok(workspace.includes(accion))
 })
 
-test('arrastre de capas sigue el dedo acomoda vecinas y fija el orden una vez al soltar', () => {
+test('arrastre de capas sigue el dedo acomoda vecinas y fija el orden una vez al soltar sin salto intermedio', () => {
   const mover = workspace.slice(workspace.indexOf('const moverArrastreCapa'), workspace.indexOf('const terminarArrastreCapa'))
   const terminar = workspace.slice(workspace.indexOf('const terminarArrastreCapa'), workspace.indexOf('const cancelarArrastreCapa'))
   assert.match(mover, /translateY\(\$\{delta\}px\)/)
@@ -50,8 +50,9 @@ test('arrastre de capas sigue el dedo acomoda vecinas y fija el orden una vez al
   assert.match(mover, /compensacion = arrastre\.altoFila/)
   assert.match(mover, /cubic-bezier\(\.32,\.72,0,1\)/)
   assert.doesNotMatch(mover, /fijarOrdenCapaSinHistorial/)
-  assert.match(terminar, /registrarHistorial\(\)[\s\S]*fijarOrdenCapaSinHistorial\(id, arrastre\.indiceDestino\)/)
-  assert.match(terminar, /requestAnimationFrame\(\(\) => window\.requestAnimationFrame/)
+  assert.match(terminar, /registrarHistorial\(\)/)
+  assert.ok(terminar.indexOf('limpiarEstiloArrastre(arrastre)') < terminar.indexOf('fijarOrdenCapaSinHistorial(id, arrastre.indiceDestino)'))
+  assert.doesNotMatch(terminar, /requestAnimationFrame/)
 })
 
 test('Mover del lienzo tiene una sola autoridad de posición', () => {
