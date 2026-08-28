@@ -101,6 +101,7 @@ const FUENTE_MUESTRA = FUENTES_PASTORALES.find((fuente) => fuente !== 'Inter') ?
 const claseBotonActivo = (activo: boolean) => `pastoral-inline-icon ${activo ? 'is-active' : ''}`
 const claseControlTexto = (activo = false) => `grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border text-slate-700 disabled:opacity-30 ${activo ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white'}`
 const tamanoPlantillaCanvas = (pt: number) => Math.max(9, Math.round(pt * .56))
+const TEXTOS_PLACEHOLDER_PLANTILLA = new Set(['Título', 'Subtítulo', 'Escribe el contenido', 'Escribe aquí'])
 
 function textoPlano(html: string) {
   if (typeof window !== 'undefined') { const div = document.createElement('div'); div.innerHTML = limpiarHtmlCanvas(html); return div.innerText.trim() }
@@ -126,7 +127,7 @@ function textoMuestraPlantilla(plantilla: PlantillaVisual, rol: RolTexto) {
 function esTextoMuestraPlantilla(elemento: ElementoCanvas) {
   if (elemento.tipo === 'imagen' || elemento.fondo_visual) return false
   const contenido = textoPlano(elemento.contenido ?? '')
-  if (!contenido) return true
+  if (!contenido || TEXTOS_PLACEHOLDER_PLANTILLA.has(contenido)) return true
   return PLANTILLAS_VISUALES.some((plantilla) =>
     contenido === textoMuestraPlantilla(plantilla, 'titulo') ||
     contenido === textoMuestraPlantilla(plantilla, 'subtitulo') ||

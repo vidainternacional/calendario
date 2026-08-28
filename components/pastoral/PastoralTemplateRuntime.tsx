@@ -84,23 +84,9 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       })
     }
 
-    const pintarMiniaturas = () => {
-      const grilla = document.querySelector<HTMLElement>('[aria-label="Plantillas en filas de tres"]')
-      if (!grilla) return
-      const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button')).slice(1)
-      botones.forEach((boton, indice) => {
-        const plantilla = catalogo[indice]
-        const preview = boton.firstElementChild as HTMLElement | null
-        if (!plantilla || !preview) return
-        pintarPreview(preview, plantilla)
-      })
-    }
-
-    let frame = 0
-    const programarMiniaturas = () => {
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(pintarMiniaturas)
-    }
+    // La miniatura permanece deliberadamente genérica. El catálogo administrado
+    // solo sincroniza el contenido real que se aplica al canvas.
+    void pintarPreview
 
     const alHacerClick = (event: MouseEvent) => {
       const objetivo = event.target instanceof Element ? event.target : null
@@ -114,16 +100,8 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       window.setTimeout(() => window.requestAnimationFrame(() => aplicarMuestras(plantilla)), 0)
     }
 
-    const observer = new MutationObserver(programarMiniaturas)
-    observer.observe(document.body, { childList: true, subtree: true })
     document.addEventListener('click', alHacerClick, true)
-    programarMiniaturas()
-
-    return () => {
-      window.cancelAnimationFrame(frame)
-      observer.disconnect()
-      document.removeEventListener('click', alHacerClick, true)
-    }
+    return () => document.removeEventListener('click', alHacerClick, true)
   }, [catalogo])
 
   return null
