@@ -71,6 +71,7 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
   const contenidoSeguro = limpiarHtmlCanvas(elemento.contenido ?? '')
   const decoracion = [elemento.subrayado ? 'underline' : '', elemento.tachado ? 'line-through' : ''].filter(Boolean).join(' ') || 'none'
   const puntos = elemento.tamano_fuente ?? 24
+  console.log('[TEMP PastoralVisualCanvas font]', { vista: elemento.id.startsWith('plantilla-admin-') ? 'Admin Preview' : 'Centro Pastoral', elemento: elemento.id, rol: elemento.rol, tamano_fuente: puntos })
   const pixeles = (puntos * 4) / 3
   const escalaLienzo = (pixeles / baseWidth) * 100
   const fuente = elemento.fuente ?? 'Inter'
