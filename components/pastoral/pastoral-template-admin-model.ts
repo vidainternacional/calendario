@@ -83,9 +83,21 @@ function cajaSegura(valor: any, fallback: CajaPlantillaAdministrada, rol: RolPla
 function cajaBase(rol: RolPlantillaAdministrada, plantilla: PlantillaVisual): CajaPlantillaAdministrada {
   const layout = rol === 'titulo' ? plantilla.titulo : rol === 'subtitulo' ? plantilla.subtitulo : plantilla.cuerpo
   const fuenteFallback = layout?.fuente ?? (rol === 'titulo' ? plantilla.titulo.fuente : 'Inter')
-  if (rol === 'titulo') return { x: 10, y: 12, w: 80, h: 18, pt: 42, alineacion: 'centro', fuente: fuenteFallback, interlineado: 1.05 }
-  if (rol === 'subtitulo') return { x: 12, y: 34, w: 76, h: 12, pt: 28, alineacion: 'centro', fuente: fuenteFallback, interlineado: 1.12 }
-  return { x: 14, y: 50, w: 72, h: 30, pt: 22, alineacion: 'centro', fuente: fuenteFallback, interlineado: 1.2 }
+  const interlineado = rol === 'titulo' ? 1.05 : rol === 'subtitulo' ? 1.12 : 1.2
+  if (!layout) {
+    if (rol === 'subtitulo') return { x: 12, y: 34, w: 76, h: 12, pt: 28, alineacion: 'centro', fuente: fuenteFallback, interlineado }
+    return { x: 14, y: 50, w: 72, h: 30, pt: 22, alineacion: 'centro', fuente: fuenteFallback, interlineado }
+  }
+  return {
+    x: layout.x,
+    y: layout.y,
+    w: layout.w,
+    h: layout.h,
+    pt: clamp(Math.round(layout.pt), 8, MAX_PT_POR_ROL[rol]),
+    alineacion: layout.alineacion,
+    fuente: fuenteFallback,
+    interlineado,
+  }
 }
 
 const PLANTILLAS_BASE: PlantillaAdministrada[] = PLANTILLAS_VISUALES.map((plantilla, orden) => ({
