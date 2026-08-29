@@ -8,9 +8,9 @@ const ROLES: RolPlantillaAdministrada[] = ['titulo', 'subtitulo', 'cuerpo']
 const BASE_WIDTH_16_9 = 1100
 const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim().toLowerCase()
 
-function htmlMuestra(texto: string, interlineado: number) {
+function htmlMuestra(texto: string, tamano: number, interlineado: number) {
   const seguro = escaparHtmlCanvas(texto).replace(/\n/g, '<br>')
-  return `<span data-vida-line-height="${interlineado}">${seguro}</span>`
+  return `<span data-vida-size="${tamano}" data-vida-line-height="${interlineado}">${seguro}</span>`
 }
 
 function alineacionCss(valor: string) {
@@ -79,7 +79,8 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         const contenedor = document.querySelector<HTMLElement>(`.pastoral-editor-v4 .pastoral-visual-canvas [data-canvas-text-role="${rol}"]`)
         const editor = contenedor?.querySelector<HTMLElement>('[contenteditable="true"]')
         if (!editor) return
-        editor.innerHTML = htmlMuestra(plantilla.muestras[rol], plantilla[rol].interlineado)
+        const caja = plantilla[rol]
+        editor.innerHTML = htmlMuestra(plantilla.muestras[rol], caja.pt, caja.interlineado)
         editor.dispatchEvent(new Event('input', { bubbles: true }))
       })
     }
@@ -97,6 +98,9 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       const indice = botones.indexOf(boton) - 1
       const plantilla = catalogo[indice]
       if (!plantilla || tieneTextoUsuario()) return
+      // PastoralVisualWorkspaceV4 aplica primero geometría/fuente en su onClick.
+      // Esta sincronización corre después, ya con el canvas actualizado, para
+      // copiar exactamente muestra, tamaño e interlineado definidos en Admin.
       window.setTimeout(() => window.requestAnimationFrame(() => aplicarMuestras(plantilla)), 0)
     }
 
