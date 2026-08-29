@@ -26,7 +26,7 @@ test('tamaño e interlineado distinguen selección parcial de caja completa', ()
 
 test('el interlineado admite un rango más amplio', () => {
   assert.match(workspace, /Math\.min\(3, Math\.max\(\.8, actual \+ delta\)\)/)
-  assert.match(model, /interlineado: clamp\(Number\(item\.interlineado \?\? 1\.25\), \.8, 3\)/)
+  assert.match(model, /interlineado: clamp\(Number\(item\.interlineado \?\? INTERLINEADO_BASE_POR_ROL\[rol\]\), \.8, 3\)/)
 })
 
 test('el formato parcial se guarda como atributos VIDA seguros y vuelve a renderizarse', () => {
