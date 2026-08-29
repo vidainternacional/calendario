@@ -98,7 +98,8 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     const ajustarCajaInicial = () => {
       if (cancelado || cajaInicialAjustadaRef.current || !editable || !onPatchElement) return
       const textoPlano = (editor.textContent ?? '').replace(/\s+/g, ' ').trim()
-      const esCajaInicial = elemento.id.startsWith('plantilla-admin-') || TEXTOS_INICIALES_AJUSTABLES.has(textoPlano)
+      const esMuestraPlantillaAdministrada = Boolean(editor.querySelector('span[data-vida-template-sample="true"]'))
+      const esCajaInicial = elemento.id.startsWith('plantilla-admin-') || esMuestraPlantillaAdministrada || TEXTOS_INICIALES_AJUSTABLES.has(textoPlano)
       if (!esCajaInicial) return
 
       const lienzo = editor.closest<HTMLElement>('[data-pastoral-canvas="true"]')

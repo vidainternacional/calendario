@@ -10,7 +10,7 @@ const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim().toLowerC
 
 function htmlMuestra(texto: string, tamano: number, interlineado: number) {
   const seguro = escaparHtmlCanvas(texto).replace(/\n/g, '<br>')
-  return `<span data-vida-size="${tamano}" data-vida-line-height="${interlineado}">${seguro}</span>`
+  return `<span data-vida-template-sample="true" data-vida-size="${tamano}" data-vida-line-height="${interlineado}">${seguro}</span>`
 }
 
 function alineacionCss(valor: string) {
