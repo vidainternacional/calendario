@@ -119,9 +119,11 @@ function atributosInlineVidaSeguros(elemento: Pick<HTMLElement, 'getAttribute'>)
   const size = Number(elemento.getAttribute('data-vida-size'))
   const line = Number(elemento.getAttribute('data-vida-line-height'))
   const color = String(elemento.getAttribute('data-vida-color') ?? '')
+  const muestraPlantilla = elemento.getAttribute('data-vida-template-sample') === 'true'
   if (Number.isFinite(size) && size >= 8 && size <= 160) atributos.push(['data-vida-size', String(size)])
   if (Number.isFinite(line) && line >= .8 && line <= 3) atributos.push(['data-vida-line-height', String(line)])
   if (/^#[0-9a-f]{6}$/i.test(color)) atributos.push(['data-vida-color', color])
+  if (muestraPlantilla) atributos.push(['data-vida-template-sample', 'true'])
   return atributos
 }
 
@@ -136,10 +138,12 @@ export function limpiarHtmlCanvas(html: string) {
       const size = Number(leer('data-vida-size'))
       const line = Number(leer('data-vida-line-height'))
       const color = leer('data-vida-color')
+      const muestraPlantilla = leer('data-vida-template-sample') === 'true'
       const seguros: string[] = []
       if (Number.isFinite(size) && size >= 8 && size <= 160) seguros.push(`data-vida-size="${size}"`)
       if (Number.isFinite(line) && line >= .8 && line <= 3) seguros.push(`data-vida-line-height="${line}"`)
       if (/^#[0-9a-f]{6}$/i.test(color)) seguros.push(`data-vida-color="${color}"`)
+      if (muestraPlantilla) seguros.push('data-vida-template-sample="true"')
       return `<span${seguros.length ? ` ${seguros.join(' ')}` : ''}>`
     })
   }
