@@ -17,7 +17,7 @@ import PastoralVersePicker from '@/components/pastoral/PastoralVersePicker'
 import PastoralVisualCanvas from '@/components/pastoral/PastoralVisualCanvas'
 import { PALETAS_PRESENTACION, PLANTILLAS_VISUALES, type PaletaPresentacion, type PlantillaVisual } from '@/components/pastoral/pastoral-editor-presets'
 import {
-  ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clamp, clonar, limpiarHtmlCanvas,
+  ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clonar, limpiarHtmlCanvas,
   nuevaPaginaCanvas, nuevoIdCanvas, normalizarElementoCanvas, normalizarPaginaCanvas,
   type Alineacion, type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
   type RolTexto, type VistaLienzo,
@@ -70,14 +70,13 @@ const ESTADO_FORMATO_VACIO: EstadoFormatoSeleccion = {
 const MAX_HISTORIAL = 80
 const DESPLAZAMIENTO_ACCIONES_CAPA = 150
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
-  { id: 'plantillas', label: 'Plantillas', icon: LayoutTemplate },
+  { id: 'plantillas', label: 'Fondos', icon: LayoutTemplate },
   { id: 'texto', label: 'Texto', icon: Type },
   { id: 'capas', label: 'Capas', icon: Layers },
 ]
 const SUBMENUS: Record<GrupoPrincipal, Array<{ id: PanelEditor; label: string }>> = {
   plantillas: [
-    { id: 'plantillas', label: 'Plantillas' },
-    { id: 'temas', label: 'Temas' },
+    { id: 'plantillas', label: 'Fondos' },
     { id: 'recursos', label: 'Imágenes' },
   ],
   texto: [
@@ -100,8 +99,6 @@ const COLORES_TEXTO = ['#0f172a', '#ffffff', '#334155', '#7f1d1d', '#14532d', '#
 const FUENTE_MUESTRA = FUENTES_PASTORALES.find((fuente) => fuente !== 'Inter') ?? FUENTES_PASTORALES[0] ?? 'Georgia'
 const claseBotonActivo = (activo: boolean) => `pastoral-inline-icon ${activo ? 'is-active' : ''}`
 const claseControlTexto = (activo = false) => `grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border text-slate-700 disabled:opacity-30 ${activo ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white'}`
-const tamanoPlantillaCanvas = (pt: number) => Math.max(9, Math.round(pt * .56))
-const TEXTOS_PLACEHOLDER_PLANTILLA = new Set(['Título', 'Subtítulo', 'Escribe el contenido', 'Escribe aquí'])
 
 function textoPlano(html: string) {
   if (typeof window !== 'undefined') { const div = document.createElement('div'); div.innerHTML = limpiarHtmlCanvas(html); return div.innerText.trim() }
@@ -116,22 +113,6 @@ function nombreCapa(elemento: ElementoCanvas) {
   if (elemento.rol === 'subtitulo') return 'Subtítulo'
   if (elemento.rol === 'cuerpo') return 'Cuerpo'
   return 'Texto'
-}
-
-function textoMuestraPlantilla(plantilla: PlantillaVisual, rol: RolTexto) {
-  if (rol === 'titulo') return plantilla.nombre
-  if (rol === 'subtitulo') return `Estilo ${plantilla.categoria.toLowerCase()}`
-  return `Composición ${plantilla.nombre.toLowerCase()}`
-}
-
-function esTextoMuestraPlantilla(elemento: ElementoCanvas) {
-  if (elemento.tipo === 'imagen' || elemento.fondo_visual) return false
-  const contenido = textoPlano(elemento.contenido ?? '')
-  if (!contenido || TEXTOS_PLACEHOLDER_PLANTILLA.has(contenido)) return true
-  return PLANTILLAS_VISUALES.some((plantilla) =>
-    contenido === textoMuestraPlantilla(plantilla, 'titulo') ||
-    contenido === textoMuestraPlantilla(plantilla, 'subtitulo') ||
-    contenido === textoMuestraPlantilla(plantilla, 'cuerpo'))
 }
 
 function normalizarPaginaEditor(item: DiapositivaCanvas) {
@@ -264,7 +245,12 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
   const agregarTexto = (rol: RolTexto = 'libre') => {
     const estilo = ESTILOS_TEXTO.find((item) => item.id === rol) ?? ESTILOS_TEXTO[3]
-    return agregarElemento({ tipo: 'texto', rol, contenido: rol === 'titulo' ? 'Título' : rol === 'subtitulo' ? 'Subtítulo' : rol === 'cuerpo' ? 'Escribe el contenido' : 'Escribe aquí', x: 10, y: rol === 'titulo' ? 12 : rol === 'subtitulo' ? 30 : 40, w: 80, h: rol === 'cuerpo' ? 34 : 22, tamano_fuente: estilo.pt, peso: estilo.peso, fuente: 'Inter', color: pagina.color_texto ?? '#0f172a' })
+    const id = agregarElemento({ tipo: 'texto', rol, contenido: rol === 'titulo' ? 'Título' : rol === 'subtitulo' ? 'Subtítulo' : rol === 'cuerpo' ? 'Escribe el contenido' : 'Escribe aquí', x: 10, y: rol === 'titulo' ? 12 : rol === 'subtitulo' ? 30 : 40, w: 80, h: rol === 'cuerpo' ? 34 : 22, tamano_fuente: estilo.pt, peso: estilo.peso, fuente: 'Inter', alineacion: 'centro', color: pagina.color_texto ?? '#0f172a' })
+    window.requestAnimationFrame(() => {
+      const contenedor = document.querySelector<HTMLElement>(`[data-canvas-element-id="${id}"]`)
+      contenedor?.querySelector<HTMLElement>('[contenteditable="true"]')?.focus({ preventScroll: true })
+    })
+    return id
   }
   const aplicarRolTexto = (rol: RolTexto) => {
     if (!textoSeleccionado || textoSeleccionado.bloqueado) return
@@ -456,89 +442,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const aplicarPlantilla = (plantilla: PlantillaVisual) => {
     registrarHistorial()
-    const actuales = (pagina.elementos ?? []).filter((item) => !item.fondo_visual)
-    const textos = actuales.filter((item) => item.tipo !== 'imagen')
-    const tieneTextoUsuario = textos.some((item) => !esTextoMuestraPlantilla(item))
-
-    if (tieneTextoUsuario) {
-      const sinMuestras = actuales.filter((item) => item.tipo === 'imagen' || !esTextoMuestraPlantilla(item))
-      const textosUsuario = sinMuestras
-        .filter((item) => item.tipo !== 'imagen')
-        .slice()
-        .sort((a, b) => (a.y - b.y) || (a.x - b.x))
-      const layoutsDisponibles: Array<{ rol: RolTexto; layout: PlantillaVisual['titulo'] }> = [
-        { rol: 'titulo', layout: plantilla.titulo },
-        ...(plantilla.subtitulo ? [{ rol: 'subtitulo' as RolTexto, layout: plantilla.subtitulo }] : []),
-        ...(plantilla.cuerpo ? [{ rol: 'cuerpo' as RolTexto, layout: plantilla.cuerpo }] : []),
-      ]
-      const usados = new Set<RolTexto>()
-      const layoutPorId = new Map<string, { rol: RolTexto; layout: PlantillaVisual['titulo'] }>()
-      const buscarLayoutRol = (rol: RolTexto | undefined) => {
-        if (rol === 'titulo') return layoutsDisponibles.find((item) => item.rol === 'titulo') ?? null
-        if (rol === 'subtitulo') return layoutsDisponibles.find((item) => item.rol === 'subtitulo') ?? null
-        if (rol === 'cuerpo') return layoutsDisponibles.find((item) => item.rol === 'cuerpo') ?? null
-        return null
-      }
-
-      textosUsuario.forEach((elemento) => {
-        if (elemento.rol === 'libre' || (elemento.rol && usados.has(elemento.rol))) return
-        const candidato = buscarLayoutRol(elemento.rol)
-        if (!candidato) return
-        layoutPorId.set(elemento.id, candidato)
-        usados.add(candidato.rol)
-      })
-      textosUsuario.forEach((elemento) => {
-        if (layoutPorId.has(elemento.id)) return
-        const disponible = layoutsDisponibles.find((item) => !usados.has(item.rol))
-        if (!disponible) return
-        layoutPorId.set(elemento.id, disponible)
-        usados.add(disponible.rol)
-      })
-
-      const elementos = sinMuestras.map((elemento) => {
-        if (elemento.tipo === 'imagen') return elemento
-        const destino = layoutPorId.get(elemento.id)
-        if (!destino) return { ...elemento, color: plantilla.colorTexto }
-        const { rol, layout } = destino
-        const x = clamp(layout.x, 0, 95)
-        const y = clamp(layout.y, 0, 95)
-        return {
-          ...elemento,
-          rol,
-          x,
-          y,
-          w: clamp(layout.w, 5, 100 - x),
-          h: clamp(layout.h, 5, 100 - y),
-          tamano_fuente: tamanoPlantillaCanvas(layout.pt),
-          alineacion: layout.alineacion,
-          fuente: layout.fuente,
-          color: plantilla.colorTexto,
-          peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500,
-        }
-      })
-      patchPaginaSinHistorial({ plantilla: 'limpia', fondo_modo: 'color', fondo: plantilla.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: plantilla.colorTexto, elementos })
-      setSeleccion(null)
-      return
-    }
-
-    const imagenesActuales = actuales.filter((item) => item.tipo === 'imagen')
-    const zBase = Math.max(1, ...actuales.map((item) => item.z))
-    const crearMuestra = (rol: RolTexto, layout: PlantillaVisual['titulo']) => {
-      const x = clamp(layout.x, 0, 95)
-      const y = clamp(layout.y, 0, 95)
-      return normalizarElementoCanvas({
-        tipo: 'texto', rol, contenido: textoMuestraPlantilla(plantilla, rol), x, y, w: clamp(layout.w, 5, 100 - x), h: clamp(layout.h, 5, 100 - y),
-        tamano_fuente: tamanoPlantillaCanvas(layout.pt), alineacion: layout.alineacion, fuente: layout.fuente, color: plantilla.colorTexto,
-        peso: rol === 'titulo' ? 800 : rol === 'subtitulo' ? 700 : 500, z: zBase + (rol === 'titulo' ? 3 : rol === 'subtitulo' ? 2 : 1),
-      })
-    }
-    const siguientes: ElementoCanvas[] = [
-      ...imagenesActuales,
-      crearMuestra('titulo', plantilla.titulo),
-      ...(plantilla.subtitulo ? [crearMuestra('subtitulo', plantilla.subtitulo)] : []),
-      ...(plantilla.cuerpo ? [crearMuestra('cuerpo', plantilla.cuerpo)] : []),
-    ]
-    patchPaginaSinHistorial({ plantilla: 'limpia', fondo_modo: 'color', fondo: plantilla.fondo, fondo_recurso_id: null, recurso_id: null, color_texto: plantilla.colorTexto, elementos: siguientes })
+    patchPaginaSinHistorial({ plantilla: 'limpia', fondo_modo: 'color', fondo: plantilla.fondo, fondo_recurso_id: null, recurso_id: null })
     setSeleccion(null)
   }
 
@@ -791,7 +695,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const panelContenido = pagina && panel ? <>
     {panel === 'plantillas' && <div className="pastoral-panel-content pastoral-start-panel">
-      <section className="grid gap-2"><p className="pastoral-panel-label">Plantillas</p><div className="grid grid-cols-3 gap-x-2 gap-y-3" aria-label="Plantillas en filas de tres"><button type="button" onClick={() => actualizarPagina({ plantilla: 'limpia', fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, color_texto: '#0f172a' })} className="grid min-w-0 gap-1 text-center" aria-label="Aplicar plantilla en blanco a la página actual"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200 bg-white"><i className="absolute left-[10%] top-[35%] h-[5px] w-[68%] rounded-full bg-slate-600" /><i className="absolute left-[10%] top-[61%] h-[3px] w-[46%] rounded-full bg-slate-400" /></span><span className="truncate px-1 text-[11px] font-semibold text-slate-700">En blanco</span></button>{PLANTILLAS_VISUALES.map((plantilla) => <button key={plantilla.id} type="button" onClick={() => aplicarPlantilla(plantilla)} className="grid min-w-0 gap-1 text-center"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200" style={{ background: plantilla.fondo, color: plantilla.colorTexto }}><i className="absolute left-[10%] top-[35%] h-[5px] w-[68%] rounded-full bg-current opacity-90" /><i className="absolute left-[10%] top-[61%] h-[3px] w-[46%] rounded-full bg-current opacity-55" /></span><span className="truncate px-1 text-[11px] font-semibold text-slate-700">{plantilla.nombre}</span></button>)}</div></section>
+      <section className="grid gap-2"><p className="pastoral-panel-label">Fondos</p><div className="grid grid-cols-3 gap-x-2 gap-y-3" aria-label="Fondos en filas de tres"><button type="button" onClick={() => actualizarPagina({ plantilla: 'limpia', fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null })} className="grid min-w-0 gap-1 text-center" aria-label="Aplicar fondo blanco a la página actual"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200 bg-white" /><span className="truncate px-1 text-[11px] font-semibold text-slate-700">En blanco</span></button>{PLANTILLAS_VISUALES.map((plantilla) => <button key={plantilla.id} type="button" onClick={() => aplicarPlantilla(plantilla)} className="grid min-w-0 gap-1 text-center"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200" style={{ background: plantilla.fondo }} /><span className="truncate px-1 text-[11px] font-semibold text-slate-700">{plantilla.nombre}</span></button>)}</div></section>
     </div>}
 
     {panel === 'temas' && <div className="pastoral-panel-content pastoral-start-panel">
@@ -877,7 +781,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
             </div>
           </div>
         })}
-        <div className="flex min-h-14 items-center bg-slate-50/70 px-3 text-slate-500"><span className="grid h-10 w-10 place-items-center"><Lock className="h-4 w-4" /></span><span className="ml-2 min-w-0 flex-1"><strong className="block text-xs font-bold">Fondo de página</strong><small className="block truncate text-[10px] text-slate-400">{fondoVisualDesbloqueado ? 'Fondo editable en capas' : pagina.fondo_modo === 'imagen' ? 'Imagen de fondo · bloqueada' : 'Tema o plantilla · bloqueado'}</small></span>{!fondoVisualDesbloqueado && <button type="button" onClick={desbloquearFondo} className="grid h-10 w-10 place-items-center rounded-full text-indigo-600" aria-label="Desbloquear fondo" title="Convertir el fondo en una capa editable"><Unlock className="h-4 w-4" /></button>}</div>
+        <div className="flex min-h-14 items-center bg-slate-50/70 px-3 text-slate-500"><span className="grid h-10 w-10 place-items-center"><Lock className="h-4 w-4" /></span><span className="ml-2 min-w-0 flex-1"><strong className="block text-xs font-bold">Fondo de página</strong><small className="block truncate text-[10px] text-slate-400">{fondoVisualDesbloqueado ? 'Fondo editable en capas' : pagina.fondo_modo === 'imagen' ? 'Imagen de fondo · bloqueada' : 'Fondo · bloqueado'}</small></span>{!fondoVisualDesbloqueado && <button type="button" onClick={desbloquearFondo} className="grid h-10 w-10 place-items-center rounded-full text-indigo-600" aria-label="Desbloquear fondo" title="Convertir el fondo en una capa editable"><Unlock className="h-4 w-4" /></button>}</div>
       </div>
       <p className="px-1 text-[10px] leading-4 text-slate-400">Arrastra ⋮ para cambiar el orden. Desliza una capa a la izquierda para duplicar, bloquear o eliminar.</p>
     </div>}
