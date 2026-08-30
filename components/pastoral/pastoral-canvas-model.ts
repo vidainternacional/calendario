@@ -75,6 +75,10 @@ export const FUENTES_PASTORALES = [
 const FUENTES_PASTORALES_COMPATIBLES = new Set<string>([
   ...FUENTES_PASTORALES,
   'Arial', 'Helvetica', 'Verdana', 'Tahoma',
+  'var(--font-pastoral-eb-garamond)',
+  'var(--font-pastoral-montserrat)',
+  'var(--font-pastoral-playfair-display)',
+  'var(--font-pastoral-bebas-neue)',
 ])
 
 export const ESTILOS_TEXTO: Array<{ id: RolTexto; label: string; pt: number; peso: number }> = [
