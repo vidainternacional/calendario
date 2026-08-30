@@ -70,6 +70,9 @@ function pintarPreview(preview: HTMLElement, plantilla: PlantillaAdministrada) {
 
 export default function PastoralTemplateRuntime({ catalogo }: { catalogo: PlantillaAdministrada[] }) {
   useEffect(() => {
+    let reproduciendoClick = false
+    let cancelado = false
+
     const conocidas = new Set<string>()
     TEXTOS_PLACEHOLDER.forEach((texto) => conocidas.add(normalizar(texto)))
     catalogo.forEach((plantilla) => {
@@ -86,6 +89,16 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button'))
       const indice = botones.indexOf(boton) - 1
       return catalogo[indice] ?? null
+    }
+
+    const buscarBotonPlantilla = (plantilla: PlantillaAdministrada) => {
+      const grilla = document.querySelector<HTMLElement>('.pastoral-editor-v4 [aria-label="Plantillas en filas de tres"]')
+      if (!grilla) return null
+      const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button')).slice(1)
+      return botones.find((boton) => {
+        const etiqueta = boton.querySelectorAll('span')[1]?.textContent ?? boton.textContent ?? ''
+        return normalizar(etiqueta) === normalizar(plantilla.nombre)
+      }) ?? null
     }
 
     const sincronizarMiniaturas = () => {
@@ -117,7 +130,7 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
     }
 
     const prepararMuestrasAntesDeAplicar = () => {
-      if (tieneTextoUsuario()) return
+      if (tieneTextoUsuario()) return false
       const editores = editoresPorRol()
       flushSync(() => {
         ROLES.forEach((rol) => {
@@ -129,6 +142,7 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
           editor.dispatchEvent(new Event('input', { bubbles: true }))
         })
       })
+      return true
     }
 
     const aplicarMuestras = (plantilla: PlantillaAdministrada) => {
@@ -140,6 +154,26 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         editor.innerHTML = htmlMuestra(plantilla.muestras[rol], caja.pt, caja.interlineado)
         editor.dispatchEvent(new Event('input', { bubbles: true }))
       })
+    }
+
+    const finalizarAplicacion = (plantilla: PlantillaAdministrada) => {
+      window.setTimeout(() => window.requestAnimationFrame(() => {
+        if (cancelado || tieneTextoUsuario()) return
+        aplicarMuestras(plantilla)
+        sincronizarMiniaturas()
+      }), 0)
+    }
+
+    const reaplicarTrasAsentarEstado = (plantilla: PlantillaAdministrada) => {
+      window.setTimeout(() => window.requestAnimationFrame(() => {
+        if (cancelado) return
+        const botonActual = buscarBotonPlantilla(plantilla)
+        if (!botonActual) return
+        reproduciendoClick = true
+        botonActual.click()
+        reproduciendoClick = false
+        finalizarAplicacion(plantilla)
+      }), 0)
     }
 
     const alHacerClick = (event: MouseEvent) => {
@@ -155,22 +189,30 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       const plantilla = buscarPlantillaPorBoton(boton, grilla)
       if (!plantilla) return
 
-      // Orden intencional: este listener corre en captura. Si el lienzo contiene solo
-      // muestras administradas, las convertimos sincrónicamente a placeholders que
-      // Workspace reconoce como muestras. Después el onClick de Workspace reconstruye
-      // Título/Subtítulo/Cuerpo desde la geometría de la plantilla guardada. Finalmente,
-      // tras el commit de React, persistimos el texto de muestra real del Administrador.
+      if (reproduciendoClick) return
+
+      // Si hay texto real, Workspace conserva ese contenido con su comportamiento actual.
+      // Si el lienzo contiene solo muestras, detenemos este primer clic: primero asentamos
+      // placeholders reconocibles en el estado de React y, en el siguiente frame, ejecutamos
+      // de nuevo el mismo botón. Así Workspace entra inequívocamente por la rama de página
+      // sin texto real y reconstruye Título/Subtítulo/Cuerpo desde la geometría guardada.
+      if (tieneTextoUsuario()) {
+        finalizarAplicacion(plantilla)
+        return
+      }
+
+      event.preventDefault()
+      event.stopImmediatePropagation()
       prepararMuestrasAntesDeAplicar()
-      window.setTimeout(() => window.requestAnimationFrame(() => {
-        if (tieneTextoUsuario()) return
-        aplicarMuestras(plantilla)
-        sincronizarMiniaturas()
-      }), 0)
+      reaplicarTrasAsentarEstado(plantilla)
     }
 
     programarMiniaturas()
     document.addEventListener('click', alHacerClick, true)
-    return () => document.removeEventListener('click', alHacerClick, true)
+    return () => {
+      cancelado = true
+      document.removeEventListener('click', alHacerClick, true)
+    }
   }, [catalogo])
 
   return null
