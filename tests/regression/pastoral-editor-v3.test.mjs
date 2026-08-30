@@ -15,17 +15,18 @@ test('workspace activo usa V4 con base V3 y autoridad stable', () => {
 
 test('dock mantiene solo los tres grupos principales aprobados', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(label))
-  assert.doesNotMatch(dock, /Elementos|Biblia|Diseño|Fondo|Párrafo|Borrar/)
-  assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
+  for (const label of ['Fondos', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  for (const label of ['Plantillas', 'Elementos', 'Biblia', 'Diseño', 'Párrafo', 'Borrar']) assert.doesNotMatch(dock, new RegExp(`label: '${label}'`))
+  assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Fondos'[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
 })
 
-test('Biblia entra directamente en panel e Imágenes absorbe la opción de fondo', () => {
+test('Biblia entra directamente en panel e Imágenes conserva la opción de fondo', () => {
   assert.match(workspace, /panel === 'biblia'[\s\S]*PastoralVersePicker/)
-  const plantillas = workspace.match(/plantillas:\s*\[[\s\S]*?\],/)?.[0] ?? ''
+  const fondos = workspace.match(/plantillas:\s*\[[\s\S]*?\],/)?.[0] ?? ''
   const imagenes = workspace.slice(workspace.indexOf("panel === 'recursos'"), workspace.indexOf("panel === 'texto'"))
-  assert.doesNotMatch(plantillas, /label: 'Fondo'/)
-  assert.match(plantillas, /label: 'Imágenes'/)
+  assert.match(fondos, /label: 'Fondos'/)
+  assert.match(fondos, /label: 'Imágenes'/)
+  assert.doesNotMatch(fondos, /label: 'Plantillas'|label: 'Temas'/)
   assert.match(imagenes, /Como fondo/)
   assert.match(imagenes, /aplicarFondoImagen/)
 })

@@ -11,9 +11,10 @@ test('Centro Pastoral carga base V3 y autoridad estable', () => {
   assert.doesNotMatch(layout, /pastoral-editor-structure\.css/)
 })
 
-test('Borrar y Fondo no compiten como herramientas principales', () => {
+test('Borrar y Párrafo no compiten como herramientas principales y Fondos ocupa el primer grupo', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  assert.doesNotMatch(dock, /Borrar|Fondo|Párrafo/)
+  assert.match(dock, /label: 'Fondos'/)
+  assert.doesNotMatch(dock, /label: 'Borrar'|label: 'Párrafo'/)
 })
 
 test('desktop separa páginas lienzo inspector y dock', () => {

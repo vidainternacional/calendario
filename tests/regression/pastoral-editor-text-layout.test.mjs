@@ -12,14 +12,14 @@ test('aplicar Plantilla o Tema no solicita toast de confirmación', () => {
   assert.doesNotMatch(workspace, /Tema “\$\{paleta\.label\}” aplicado|Plantilla “\$\{plantilla\.nombre\}” aplicada/)
 })
 
-test('En blanco modifica la página actual y solo el control superior crea página', () => {
-  const marcador = 'aria-label="Aplicar plantilla en blanco a la página actual"'
+test('En blanco modifica solo el fondo de la página actual y solo el control superior crea página', () => {
+  const marcador = 'aria-label="Aplicar fondo blanco a la página actual"'
   const inicio = workspace.indexOf(marcador)
   const blanco = workspace.slice(Math.max(0, inicio - 700), inicio + marcador.length + 80)
   assert.ok(inicio >= 0)
   assert.match(blanco, /actualizarPagina/)
   assert.doesNotMatch(blanco, /nuevaPagina/)
-  assert.match(workspace, /Aplicar plantilla en blanco a la página actual/)
+  assert.match(workspace, /Aplicar fondo blanco a la página actual/)
   assert.equal((workspace.match(/onClick=\{nuevaPagina\}/g) ?? []).length, 1)
   assert.match(workspace, /aria-label="Nueva página"/)
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
