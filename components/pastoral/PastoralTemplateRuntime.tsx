@@ -68,6 +68,28 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       ROLES.forEach((rol) => conocidas.add(normalizar(plantilla.muestras[rol])))
     })
 
+    const buscarPlantillaPorBoton = (boton: HTMLButtonElement, grilla: HTMLElement) => {
+      const etiqueta = boton.querySelectorAll('span')[1]?.textContent ?? boton.textContent ?? ''
+      const porNombre = catalogo.find((item) => normalizar(item.nombre) === normalizar(etiqueta))
+      if (porNombre) return porNombre
+      const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button'))
+      const indice = botones.indexOf(boton) - 1
+      return catalogo[indice] ?? null
+    }
+
+    const sincronizarMiniaturas = () => {
+      const grilla = document.querySelector<HTMLElement>('.pastoral-editor-v4 [aria-label="Plantillas en filas de tres"]')
+      if (!grilla) return
+      const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button')).slice(1)
+      botones.forEach((boton) => {
+        const plantilla = buscarPlantillaPorBoton(boton, grilla)
+        const preview = boton.querySelector<HTMLElement>('span')
+        if (plantilla && preview) pintarPreview(preview, plantilla)
+      })
+    }
+
+    const programarMiniaturas = () => window.setTimeout(() => window.requestAnimationFrame(sincronizarMiniaturas), 0)
+
     const tieneTextoUsuario = () => {
       const editores = Array.from(document.querySelectorAll<HTMLElement>('.pastoral-editor-v4 .pastoral-visual-canvas [data-canvas-text-role] [contenteditable="true"]'))
       return editores.some((editor) => {
@@ -87,28 +109,29 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       })
     }
 
-    // La miniatura permanece deliberadamente genérica. El catálogo administrado
-    // solo sincroniza el contenido real que se aplica al canvas.
-    void pintarPreview
-
     const alHacerClick = (event: MouseEvent) => {
       const objetivo = event.target instanceof Element ? event.target : null
       const boton = objetivo?.closest<HTMLButtonElement>('button')
       const grilla = boton?.closest<HTMLElement>('[aria-label="Plantillas en filas de tres"]')
-      if (!boton || !grilla) return
-      const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button'))
-      const indice = botones.indexOf(boton) - 1
-      const plantilla = catalogo[indice]
+
+      if (!boton || !grilla) {
+        programarMiniaturas()
+        return
+      }
+
+      const plantilla = buscarPlantillaPorBoton(boton, grilla)
       if (!plantilla) return
 
-      // El listener corre en captura: aquí el canvas todavía conserva el estado anterior.
-      // Revalidamos después del onClick de Workspace, cuando ya aplicó geometría/fuente.
+      // El listener corre en captura: esperamos a que Workspace aplique primero
+      // la geometría/tipografía al estado y luego sustituimos solo el texto de muestra.
       window.setTimeout(() => window.requestAnimationFrame(() => {
         if (tieneTextoUsuario()) return
         aplicarMuestras(plantilla)
+        sincronizarMiniaturas()
       }), 0)
     }
 
+    programarMiniaturas()
     document.addEventListener('click', alHacerClick, true)
     return () => document.removeEventListener('click', alHacerClick, true)
   }, [catalogo])
