@@ -7,7 +7,12 @@ import type { PlantillaAdministrada, RolPlantillaAdministrada } from '@/componen
 const ROLES: RolPlantillaAdministrada[] = ['titulo', 'subtitulo', 'cuerpo']
 const BASE_WIDTH_16_9 = 1100
 const TEXTOS_PLACEHOLDER = ['Título', 'Subtítulo', 'Escribe el contenido', 'Escribe aquí']
-const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim().toLowerCase()
+const normalizar = (valor: string) => valor
+  .replace(/[•◦▪●]/g, ' ')
+  .replace(/\.n\b/gi, '.')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .toLowerCase()
 
 function htmlMuestra(texto: string, tamano: number, interlineado: number) {
   const seguro = escaparHtmlCanvas(texto).replace(/\n/g, '<br>')
@@ -19,6 +24,22 @@ function alineacionCss(valor: string) {
   if (valor === 'derecha') return 'right'
   if (valor === 'justificado') return 'justify'
   return 'left'
+}
+
+function baseWidthDelCanvas(editor: HTMLElement) {
+  const lienzo = editor.closest<HTMLElement>('[data-pastoral-canvas="true"]')
+  const rect = lienzo?.getBoundingClientRect()
+  if (!rect || rect.width <= 0 || rect.height <= 0) return BASE_WIDTH_16_9
+  const ratio = rect.width / rect.height
+  if (ratio < .75) return 430
+  if (ratio < 1.15) return 720
+  if (ratio < 1.55) return 960
+  return BASE_WIDTH_16_9
+}
+
+function tamanoMuestraParaCanvas(editor: HTMLElement, pt16x9: number) {
+  const baseWidth = baseWidthDelCanvas(editor)
+  return Math.max(8, Math.round(pt16x9 * (baseWidth / BASE_WIDTH_16_9) * 100) / 100)
 }
 
 function pintarPreview(preview: HTMLElement, plantilla: PlantillaAdministrada) {
@@ -104,7 +125,8 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         const editor = contenedor?.querySelector<HTMLElement>('[contenteditable="true"]')
         if (!editor) return
         const caja = plantilla[rol]
-        editor.innerHTML = htmlMuestra(plantilla.muestras[rol], caja.pt, caja.interlineado)
+        const tamano = tamanoMuestraParaCanvas(editor, caja.pt)
+        editor.innerHTML = htmlMuestra(plantilla.muestras[rol], tamano, caja.interlineado)
         editor.dispatchEvent(new Event('input', { bubbles: true }))
       })
     }
@@ -122,8 +144,8 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       const plantilla = buscarPlantillaPorBoton(boton, grilla)
       if (!plantilla) return
 
-      // El listener corre en captura: esperamos a que Workspace aplique primero
-      // la geometría/tipografía al estado y luego sustituimos solo el texto de muestra.
+      // Workspace aplica primero la composición. Después sincronizamos únicamente
+      // las muestras administradas y adaptamos su escala al formato real del lienzo.
       window.setTimeout(() => window.requestAnimationFrame(() => {
         if (tieneTextoUsuario()) return
         aplicarMuestras(plantilla)
