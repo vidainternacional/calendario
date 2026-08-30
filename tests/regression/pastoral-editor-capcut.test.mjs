@@ -15,8 +15,8 @@ test('herramientas viven en una sola cinta centrada de tres opciones', () => {
   assert.match(css, /pastoral-tool-dock[\s\S]*display: flex !important[\s\S]*justify-content: center !important/)
   assert.match(css, /pastoral-tool-dock > \.pastoral-tool-button[\s\S]*border-radius: 999px !important/)
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Fondos', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
-  for (const label of ['Plantillas', 'Párrafo', 'Borrar', 'Elementos', 'Biblia', 'Diseño']) assert.doesNotMatch(dock, new RegExp(`label: '${label}'`))
+  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  assert.doesNotMatch(dock, /Fondo|Párrafo|Borrar|Elementos|Biblia|Diseño/)
 })
 
 test('panel contextual ya no es un sheet flotante', () => {
