@@ -6,6 +6,7 @@ import type { PlantillaAdministrada, RolPlantillaAdministrada } from '@/componen
 
 const ROLES: RolPlantillaAdministrada[] = ['titulo', 'subtitulo', 'cuerpo']
 const BASE_WIDTH_16_9 = 1100
+const TEXTOS_PLACEHOLDER = ['Título', 'Subtítulo', 'Escribe el contenido', 'Escribe aquí']
 const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim().toLowerCase()
 
 function htmlMuestra(texto: string, tamano: number, interlineado: number) {
@@ -59,6 +60,7 @@ function pintarPreview(preview: HTMLElement, plantilla: PlantillaAdministrada) {
 export default function PastoralTemplateRuntime({ catalogo }: { catalogo: PlantillaAdministrada[] }) {
   useEffect(() => {
     const conocidas = new Set<string>()
+    TEXTOS_PLACEHOLDER.forEach((texto) => conocidas.add(normalizar(texto)))
     catalogo.forEach((plantilla) => {
       conocidas.add(normalizar(plantilla.nombre))
       conocidas.add(normalizar(`Estilo ${plantilla.categoria.toLowerCase()}`))
@@ -97,11 +99,14 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       const botones = Array.from(grilla.querySelectorAll<HTMLButtonElement>(':scope > button'))
       const indice = botones.indexOf(boton) - 1
       const plantilla = catalogo[indice]
-      if (!plantilla || tieneTextoUsuario()) return
-      // PastoralVisualWorkspaceV4 aplica primero geometría/fuente en su onClick.
-      // Esta sincronización corre después, ya con el canvas actualizado, para
-      // copiar exactamente muestra, tamaño e interlineado definidos en Admin.
-      window.setTimeout(() => window.requestAnimationFrame(() => aplicarMuestras(plantilla)), 0)
+      if (!plantilla) return
+
+      // El listener corre en captura: aquí el canvas todavía conserva el estado anterior.
+      // Revalidamos después del onClick de Workspace, cuando ya aplicó geometría/fuente.
+      window.setTimeout(() => window.requestAnimationFrame(() => {
+        if (tieneTextoUsuario()) return
+        aplicarMuestras(plantilla)
+      }), 0)
     }
 
     document.addEventListener('click', alHacerClick, true)
