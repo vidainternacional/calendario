@@ -141,7 +141,7 @@ function elementosValidos(valor: FormDataEntryValue | undefined): ElementoCanvas
       cursiva: Boolean(item.cursiva),
       subrayado: Boolean(item.subrayado),
       tachado: Boolean(item.tachado),
-      interlineado: numeroAcotado(item.interlineado, 0.9, 2, 1.25),
+      interlineado: numeroAcotado(item.interlineado, 0.8, 3, 1.25),
       opacidad: numeroAcotado(item.opacidad, 0.1, 1, 1),
       ajuste,
       radio: numeroAcotado(item.radio, 0, 40, 14),
@@ -184,7 +184,7 @@ function diapositivasDesdeFormulario(formData: FormData): Diapositiva[] {
     fondo_tema: temaFondoValido(fondosTema[index]),
     fondo_recurso_id: uuidOpcional(fondosRecurso[index] ?? null),
     elementos: elementosValidos(elementos[index]),
-  })).filter((item) => item.titulo || item.contenido || item.recurso_id || item.fondo_recurso_id || item.elementos.length).slice(0, 50)
+  })).slice(0, 50)
 }
 
 export async function listarPaquetesPastoralesParaNotas() {

@@ -220,10 +220,13 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
 }
 
 export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
-  const elementos = Array.isArray(item.elementos) ? item.elementos.map((el, i) => normalizarElementoCanvas(el, i)) : []
-  if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 42, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
-  if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
-  else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
+  const tieneElementosModernos = Array.isArray(item.elementos)
+  const elementos = tieneElementosModernos ? item.elementos!.map((el, i) => normalizarElementoCanvas(el, i)) : []
+  if (!tieneElementosModernos) {
+    if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 42, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
+    if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
+    else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
+  }
   return { ...item, formato: item.formato ?? '16:9', fondo_modo: item.fondo_modo ?? (item.fondo_recurso_id || item.recurso_id ? 'imagen' : 'color'), fondo_tema: item.fondo_tema ?? 'claro', fondo_recurso_id: item.fondo_recurso_id ?? item.recurso_id ?? null, fondo: item.fondo ?? '#ffffff', color_texto: item.color_texto ?? '#0f172a', plantilla: item.plantilla ?? 'limpia', alineacion: item.alineacion ?? 'izquierda', tamano: item.tamano ?? 'normal', elementos }
 }
 

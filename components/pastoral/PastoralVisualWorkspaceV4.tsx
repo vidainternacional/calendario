@@ -191,6 +191,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const touchStart = useRef(0)
   const autosaveReadyRef = useRef(false)
   const autosaveSerialRef = useRef(0)
+  const revisionGuardadoRef = useRef(0)
   const saveInFlightRef = useRef<Promise<Awaited<ReturnType<typeof editarPaquetePastoral>>> | null>(null)
   const capaSwipeRef = useRef<SwipeCapa | null>(null)
   const capaDragRef = useRef<ArrastreCapa | null>(null)
@@ -869,26 +870,31 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
 
   const persistirFormulario = async (formData: FormData) => {
-    if (saveInFlightRef.current) await saveInFlightRef.current
-    const promesa = editarPaquetePastoral(paquete.id, formData)
-    saveInFlightRef.current = promesa
-    try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
-  }
+  const anterior = saveInFlightRef.current
+  const promesa = (async () => {
+    if (anterior) await anterior
+    return editarPaquetePastoral(paquete.id, formData)
+  })()
+  saveInFlightRef.current = promesa
+  try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
+}
 
   const guardar = () => startTransition(async () => {
-    const resultado = await persistirFormulario(construirFormulario())
-    if (!resultado.success) return mostrarToast(resultado.error)
-    setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)
-  })
+  const revision = revisionGuardadoRef.current
+  const resultado = await persistirFormulario(construirFormulario())
+  if (!resultado.success) return mostrarToast(resultado.error)
+  if (revision !== revisionGuardadoRef.current) return
+  setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)
+})
 
-  const guardarAutomatico = async () => {
-    const serial = ++autosaveSerialRef.current
-    setGuardandoAuto(true)
-    const resultado = await persistirFormulario(construirFormulario())
-    if (serial !== autosaveSerialRef.current) return
-    setGuardandoAuto(false)
-    if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
-  }
+const guardarAutomatico = async (revision: number) => {
+  const serial = ++autosaveSerialRef.current
+  setGuardandoAuto(true)
+  const resultado = await persistirFormulario(construirFormulario())
+  if (serial !== autosaveSerialRef.current || revision !== revisionGuardadoRef.current) return
+  setGuardandoAuto(false)
+  if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
+}
 
   useEffect(() => {
     if (!modoPresentacion) return
@@ -915,11 +921,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }, [modoPresentacion])
 
   useEffect(() => {
-    if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
-    const timer = window.setTimeout(() => { void guardarAutomatico() }, 650)
-    return () => window.clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [titulo, paginas])
+  if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
+  const revision = ++revisionGuardadoRef.current
+  setGuardado(false)
+  const timer = window.setTimeout(() => { void guardarAutomatico(revision) }, 650)
+  return () => window.clearTimeout(timer)
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [titulo, paginas])
 
   const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista(siguiente) }
   const irPagina = (siguiente: number) => {
