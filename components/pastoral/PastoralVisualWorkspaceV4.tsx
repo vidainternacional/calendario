@@ -174,6 +174,10 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [destinoSubida, setDestinoSubida] = useState<DestinoSubida>('elemento')
   const [recursoPendiente, setRecursoPendiente] = useState<{ id: string; destino: DestinoSubida } | null>(null)
   const [versionHistorial, setVersionHistorial] = useState(0)
+  const [selectorFondoAbierto, setSelectorFondoAbierto] = useState(false)
+  const [tonoFondoPersonalizado, setTonoFondoPersonalizado] = useState(260)
+  const [saturacionFondoPersonalizado, setSaturacionFondoPersonalizado] = useState(70)
+  const [luminosidadFondoPersonalizado, setLuminosidadFondoPersonalizado] = useState(52)
   const pagina = paginas[indice] ?? paginas[0]
   const elementoSeleccionado = (pagina?.elementos?.find((item) => item.id === seleccion) ?? null) as ElementoCanvasEditor | null
   const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && !elementoSeleccionado.fondo_visual ? elementoSeleccionado : null
@@ -183,9 +187,9 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const q = busquedaRecursos.trim().toLowerCase()
     return q ? imagenes.filter((item) => `${item.titulo} ${item.descripcion} ${item.categoria}`.toLowerCase().includes(q)) : imagenes
   }, [imagenes, busquedaRecursos])
-  const paletasColoresFlat = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => !paleta.fondo.toLowerCase().includes('gradient')), [])
-  const paletasDegradados = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => { const fondo = paleta.fondo.toLowerCase(); return fondo.includes('gradient') && !fondo.includes('repeating-') }), [])
-  const paletasTexturas = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => paleta.fondo.toLowerCase().includes('repeating-')), [])
+  const paletasColoresFlat = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => paleta.id.startsWith('fondo-flat-')).slice(0, 10), [])
+  const paletasDegradados = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => paleta.id.startsWith('fondo-gradient-')).slice(0, 20), [])
+  const paletasTexturas = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => paleta.id.startsWith('fondo-texture-')).slice(0, 20), [])
 
   useEffect(() => {
     const viewport = window.visualViewport
@@ -445,6 +449,12 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }
 
   const aplicarFondoVisual = (paleta: PaletaPresentacion) => actualizarPagina({ fondo_modo: 'color', fondo: paleta.fondo, fondo_recurso_id: null, recurso_id: null })
+
+  const tonoComplementario = (tonoFondoPersonalizado + 180) % 360
+  const fondoPersonalizadoPlano = `hsl(${tonoFondoPersonalizado}, ${saturacionFondoPersonalizado}%, ${luminosidadFondoPersonalizado}%)`
+  const fondoPersonalizadoDegradado = `linear-gradient(135deg,hsl(${tonoFondoPersonalizado}, ${saturacionFondoPersonalizado}%, ${luminosidadFondoPersonalizado}%) 0%,hsl(${tonoComplementario}, ${Math.max(35, saturacionFondoPersonalizado - 10)}%, ${Math.min(78, luminosidadFondoPersonalizado + 12)}%) 100%)`
+  const fondoPersonalizadoTextura = `repeating-linear-gradient(135deg,hsla(${tonoComplementario}, ${saturacionFondoPersonalizado}%, ${Math.max(22, luminosidadFondoPersonalizado - 12)}%, .16) 0 2px,transparent 2px 11px),linear-gradient(hsl(${tonoFondoPersonalizado}, ${Math.max(24, saturacionFondoPersonalizado - 22)}%, ${Math.min(90, luminosidadFondoPersonalizado + 22)}%),hsl(${tonoFondoPersonalizado}, ${Math.max(28, saturacionFondoPersonalizado - 12)}%, ${Math.max(18, luminosidadFondoPersonalizado - 8)}%))`
+  const aplicarFondoPersonalizado = (fondo: string) => actualizarPagina({ fondo_modo: 'color', fondo, fondo_recurso_id: null, recurso_id: null })
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
     registrarHistorial()
@@ -792,18 +802,32 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const panelContenido = pagina && panel ? <>
 
-    {panel === 'fondos' && <div className="pastoral-panel-content grid gap-5 pb-2 pt-1">
-      {[
-        { id: 'flat', label: 'Colores flat', opciones: paletasColoresFlat, tema: false },
-        { id: 'degradados', label: 'Degradados', opciones: paletasDegradados, tema: false },
-        { id: 'texturas', label: 'Texturas', opciones: paletasTexturas, tema: false },
-        { id: 'temas', label: 'Temas', opciones: PALETAS_PRESENTACION, tema: true },
-      ].map((seccion) => <section key={seccion.id} className="grid gap-2">
-        <p className="px-1 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">{seccion.label}</p>
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={seccion.label}>
-          {seccion.opciones.map((paleta) => <button key={`${seccion.id}-${paleta.id}`} type="button" onClick={() => seccion.tema ? aplicarPaleta(paleta) : aplicarFondoVisual(paleta)} className="grid w-[62px] shrink-0 gap-1.5 text-center" aria-label={`${seccion.tema ? 'Aplicar tema' : 'Aplicar fondo'} ${paleta.label}`} title={paleta.label}><span className="mx-auto block h-12 w-12 rounded-full border border-slate-200" style={{ background: paleta.fondo }} /><small className="block truncate text-[9px] font-semibold text-slate-500">{paleta.label}</small></button>)}
-        </div>
-      </section>)}
+    {panel === 'fondos' && <div className="pastoral-panel-content grid gap-3 pb-3 pt-1">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
+        <button type="button" onClick={() => setSelectorFondoAbierto((abierto) => !abierto)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left" aria-expanded={selectorFondoAbierto} aria-controls="pastoral-selector-fondo-libre">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white shadow-sm" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-4 w-4 rounded-full border-2 border-white" style={{ background: fondoPersonalizadoPlano }} /></span>
+          <span className="min-w-0 flex-1"><span className="block text-xs font-black text-slate-700">Rueda de color</span><small className="block truncate text-[10px] font-semibold text-slate-400">Crea una variante que no esté en la galería</small></span>
+          <span className="text-lg font-bold text-slate-400" aria-hidden="true">{selectorFondoAbierto ? '−' : '+'}</span>
+        </button>
+        {selectorFondoAbierto && <div id="pastoral-selector-fondo-libre" className="grid gap-3 border-t border-slate-100 px-3 py-3">
+          <div className="grid grid-cols-[64px_1fr] items-center gap-3">
+            <div className="grid h-16 w-16 place-items-center rounded-full border border-slate-200" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-7 w-7 rounded-full border-[3px] border-white shadow" style={{ background: fondoPersonalizadoPlano }} /></div>
+            <div className="grid gap-2">
+              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Tono · {tonoFondoPersonalizado}°<input type="range" min="0" max="359" value={tonoFondoPersonalizado} onChange={(event) => setTonoFondoPersonalizado(Number(event.target.value))} className="w-full accent-indigo-600" /></label>
+              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Saturación · {saturacionFondoPersonalizado}%<input type="range" min="0" max="100" value={saturacionFondoPersonalizado} onChange={(event) => setSaturacionFondoPersonalizado(Number(event.target.value))} className="w-full accent-indigo-600" /></label>
+              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Luminosidad · {luminosidadFondoPersonalizado}%<input type="range" min="8" max="92" value={luminosidadFondoPersonalizado} onChange={(event) => setLuminosidadFondoPersonalizado(Number(event.target.value))} className="w-full accent-indigo-600" /></label>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoPlano)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoPlano }} />Plano</button>
+            <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoDegradado)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoDegradado }} />Degradado</button>
+            <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoTextura)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoTextura }} />Textura</button>
+          </div>
+        </div>}
+      </section>
+      <div className="pastoral-background-grid" aria-label="Galería de fondos">
+        {[...paletasColoresFlat, ...paletasDegradados, ...paletasTexturas].map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarFondoVisual(paleta)} className="pastoral-background-swatch" aria-label={`Aplicar fondo ${paleta.label}`} title={paleta.label}><span style={{ background: paleta.fondo }} /></button>)}
+      </div>
     </div>}
 
     {panel === 'texto' && <div className="pastoral-panel-content grid h-full w-full content-start gap-3 overflow-visible pr-1">

@@ -367,34 +367,9 @@ body:has(.fixed.inset-0.z-\[120\].items-end) .app-bottom-nav {
   }
 }
 
-/* pastoral-background-gallery-30 */
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  gap: 10px 8px !important;
-  padding: 8px 4px 18px !important;
-  overflow-x: hidden !important;
-}
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:nth-of-type(4) { display: none !important; }
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)),
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)) > div { display: contents !important; }
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)) > p { display: none !important; }
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)) > div > button:nth-child(n + 11) { display: none !important; }
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)) > div > button {
-  display: flex !important;
-  width: auto !important;
-  min-width: 0 !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin: 0 !important;
-  gap: 0 !important;
-}
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)) > div > button small { display: none !important; }
-.pastoral-editor-v4 .panel-fondos .pastoral-panel-content > section:not(:nth-of-type(4)) > div > button > span {
-  width: 48px !important;
-  height: 48px !important;
-  flex: 0 0 48px !important;
-}
-@media (min-width: 540px) {
-  .pastoral-editor-v4 .panel-fondos .pastoral-panel-content { grid-template-columns: repeat(8, minmax(0, 1fr)) !important; }
-}
+/* pastoral-background-gallery-50 */
+.pastoral-editor-v4 .panel-fondos .pastoral-panel-content { overflow-x: hidden !important; }
+.pastoral-background-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 8px; padding: 2px 4px 18px; overflow-x: hidden; }
+.pastoral-background-swatch { display: grid; min-width: 0; place-items: center; border: 0; background: transparent; padding: 0; }
+.pastoral-background-swatch > span { display: block; width: 48px; height: 48px; max-width: 100%; border: 1px solid rgb(226 232 240); border-radius: 9999px; box-shadow: 0 1px 2px rgb(15 23 42 / 0.04); }
+@media (min-width: 540px) { .pastoral-background-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
