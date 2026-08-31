@@ -878,7 +878,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const guardar = () => startTransition(async () => {
     const resultado = await persistirFormulario(construirFormulario())
     if (!resultado.success) return mostrarToast(resultado.error)
-    setGuardado(true); window.setTimeout(() => setGuardado(false), 1500); mostrarToast('Proyecto guardado')
+    setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)
   })
 
   const guardarAutomatico = async () => {
