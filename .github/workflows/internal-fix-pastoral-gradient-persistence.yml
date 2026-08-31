@@ -1,0 +1,54 @@
+name: Fix pastoral gradient persistence
+
+on:
+  push:
+    branches:
+      - automation/pastoral-gradient-persistence
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Checkout active pastoral branch
+        run: git checkout agent/centro-pastoral-reorganizacion
+      - name: Preserve page gradients on save
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('app/actions/pastoral-paquetes.ts')
+          text = path.read_text()
+          old = "fondo: colorValido(fondos[index], '#ffffff'),"
+          new = "fondo: fondoVisualSeguro(fondos[index]) ?? '#ffffff',"
+          if old not in text:
+            raise SystemExit('gradient page background target not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate ephemeral VAPID keys
+        run: |
+          node -e "const w=require('web-push'); const k=w.generateVAPIDKeys(); require('fs').appendFileSync(process.env.GITHUB_ENV, 'NEXT_PUBLIC_VAPID_PUBLIC_KEY='+k.publicKey+'\nVAPID_PRIVATE_KEY='+k.privateKey+'\nVAPID_SUBJECT=mailto:test@example.com\n')"
+      - name: Verify focused diff
+        run: |
+          git diff --check
+          git diff -- app/actions/pastoral-paquetes.ts
+          grep -F "fondo: fondoVisualSeguro(fondos[index]) ?? '#ffffff'," app/actions/pastoral-paquetes.ts
+      - name: Build
+        run: npm run build
+      - name: Publish to active branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/actions/pastoral-paquetes.ts
+          git commit -m "fix(pastoral): persist page gradients"
+          git push origin HEAD:agent/centro-pastoral-reorganizacion
