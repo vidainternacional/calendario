@@ -107,6 +107,9 @@ function ExploradorPalabrasOriginales({
   const [seleccionada, setSeleccionada] = useState<string | null>(null)
   const [resultado, setResultado] = useState<ResultadoLexico | null>(null)
   const [cargandoLexico, setCargandoLexico] = useState(false)
+  const [significadoIa, setSignificadoIa] = useState<{ significado: string; transliteracion: string } | null>(null)
+  const [cargandoIa, setCargandoIa] = useState(false)
+  const [errorIa, setErrorIa] = useState(false)
 
   useEffect(() => {
     setSeleccionada(null)
@@ -127,6 +130,40 @@ function ExploradorPalabrasOriginales({
 
   const significado = seleccionada && esHebreo ? significadoDePalabra(seleccionada, resultado) : null
 
+  useEffect(() => {
+    setSignificadoIa(null)
+    setErrorIa(false)
+    if (!seleccionada || cargandoLexico || significado) {
+      setCargandoIa(false)
+      return
+    }
+    const controller = new AbortController()
+    setCargandoIa(true)
+    fetch('/api/pastoral/original-word', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ palabra: seleccionada, idioma: esHebreo ? 'hebrew' : 'greek', referencia: versiculo.referencia }),
+      signal: controller.signal,
+    }).then(async response => {
+      if (!response.ok) throw new Error('ai-gloss')
+      return response.json() as Promise<{ significado?: string; transliteracion?: string }>
+    }).then(data => {
+      const significado = String(data.significado ?? '').trim()
+      if (!significado) throw new Error('empty-ai-gloss')
+      setSignificadoIa({ significado, transliteracion: String(data.transliteracion ?? '').trim() })
+    }).catch(error => {
+      if ((error as Error)?.name !== 'AbortError') setErrorIa(true)
+    }).finally(() => setCargandoIa(false))
+    return () => controller.abort()
+  }, [seleccionada, cargandoLexico, significado, esHebreo, versiculo.referencia])
+
+  const significadoMostrado = significado ?? significadoIa?.significado ?? null
+  const textoParaInsertar = seleccionada ? [
+    seleccionada,
+    significadoIa?.transliteracion ? `(${significadoIa.transliteracion})` : '',
+    significadoMostrado ? `— ${significadoMostrado}` : '',
+  ].filter(Boolean).join(' ') : ''
+
   return <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-3">
     <div dir={esHebreo ? 'rtl' : 'ltr'} className="flex flex-wrap gap-1.5">
       {palabras.map((palabra, indicePalabra) => {
@@ -144,13 +181,14 @@ function ExploradorPalabrasOriginales({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <span lang={esHebreo ? 'he' : 'grc'} dir={esHebreo ? 'rtl' : 'ltr'} className="block text-xl font-black text-slate-900">{seleccionada}</span>
-          <p className={`mt-1.5 text-xs font-semibold leading-5 ${significado ? 'text-indigo-700' : 'text-slate-500'}`}>
-            {esHebreo
-              ? significado ?? (cargandoLexico ? 'Buscando significado…' : 'Significado verificado no disponible para esta forma.')
-              : 'Palabra original en griego. Puedes agregarla al lienzo.'}
+          <p className={`mt-1.5 text-xs font-semibold leading-5 ${significadoMostrado ? 'text-indigo-700' : 'text-slate-500'}`}>
+            {significadoMostrado ?? (cargandoLexico || cargandoIa ? 'Buscando significado…' : errorIa ? 'No se pudo obtener la explicación en este momento.' : 'Buscando explicación…')}
           </p>
+          {significado && <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-black text-emerald-700">Léxico VIDA</span>}
+          {!significado && significadoIa && <span className="mt-1 inline-flex rounded-full bg-violet-50 px-2 py-0.5 text-[9px] font-black text-violet-700">Explicación IA</span>}
+          {significadoIa?.transliteracion && <span className="ml-1 mt-1 inline-flex text-[10px] font-semibold text-slate-500">{significadoIa.transliteracion}</span>}
         </div>
-        <button type="button" onClick={() => onInsert(seleccionada)} className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full bg-indigo-600 px-3 text-[11px] font-black text-white">
+        <button type="button" disabled={!textoParaInsertar} onClick={() => textoParaInsertar && onInsert(textoParaInsertar)} className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full bg-indigo-600 px-3 text-[11px] font-black text-white disabled:opacity-40">
           <Plus className="h-3.5 w-3.5" /> Agregar
         </button>
       </div>
@@ -401,12 +439,10 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           <button type="button" onClick={() => { setModoOriginal(false); setPalabrasDe(null) }} className={`min-h-8 rounded-full px-3 ${!modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={!modoOriginal}>Español</button>
           <button type="button" disabled={!traduccionOriginal} onClick={() => setModoOriginal(true)} className={`min-h-8 rounded-full px-3 disabled:opacity-40 ${modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={modoOriginal}>Original · {idiomaOriginal}</button>
         </div>
-        {modoOriginal && libroHebreoActual && <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-          <div lang="he" dir="rtl" className="text-right text-[24px] font-bold leading-tight text-slate-900">{libroHebreoActual.hebreo}</div>
-          <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-2" dir="ltr">
-            <strong className="text-sm font-black text-indigo-700">{libroHebreoActual.transliteracion}</strong>
-            <span className="text-xs font-bold text-slate-500">{libroHebreoActual.transliteracion} {capitulo}</span>
-          </div>
+        {modoOriginal && libroHebreoActual && <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center">
+          <div lang="he" dir="rtl" className="text-[26px] font-bold leading-tight text-slate-900">{libroHebreoActual.hebreo}</div>
+          <strong className="mt-2 block text-lg font-black text-indigo-700">{libroHebreoActual.transliteracion}</strong>
+          <span className="mt-1 block text-xs font-bold text-slate-500">{libroActual?.name ?? 'Génesis'}</span>
         </div>}
         <p className="pastoral-verse-guide">{modoOriginal ? `El versículo se mantiene limpio en ${idiomaOriginal.toLowerCase()}. Usa Palabras en el versículo que quieras explorar o insertar por partes.` : 'Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.'}</p>
       </>}
@@ -420,13 +456,13 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
         ) : cargando ? <div className="pastoral-verse-loading"><Loader2 /></div> : visibles.length ? visibles.map(v => {
           const activo = seleccionados.includes(v.verso)
           const agregado = agregados.includes(claveVersiculo(v))
-          const referenciaVisible = modoOriginal && libroHebreoActual ? `${libroHebreoActual.transliteracion} ${v.capitulo}:${v.verso}` : v.referencia
+          const referenciaVisible = modoOriginal && libroHebreoActual ? `${v.capitulo}:${v.verso}` : v.referencia
           const palabrasAbiertas = palabrasDe ? claveVersiculo(palabrasDe) === claveVersiculo(v) : false
           return <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
               <span className="min-w-0 flex-1">
-                <strong dir="ltr" className={modoOriginal ? 'block pb-2' : undefined}>{referenciaVisible}</strong>
-                <em dir={modoOriginal && !esNuevoTestamento ? 'rtl' : 'ltr'} lang={modoOriginal ? (esNuevoTestamento ? 'grc' : 'he') : 'es'} className={modoOriginal ? 'block pt-1' : undefined}>{modoOriginal ? (cargandoOriginal ? 'Cargando original…' : originales[v.verso] || 'Original no disponible') : v.texto}</em>
+                <strong dir="ltr" className="block pb-2">{referenciaVisible}</strong>
+                <em dir={modoOriginal && !esNuevoTestamento ? 'rtl' : 'ltr'} lang={modoOriginal ? (esNuevoTestamento ? 'grc' : 'he') : 'es'} className="block pt-1 leading-relaxed">{modoOriginal ? (cargandoOriginal ? 'Cargando original…' : originales[v.verso] || 'Original no disponible') : v.texto}</em>
               </span>
               <span className={`ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors ${activo || agregado ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white text-transparent'}`} aria-label={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : 'Versículo no seleccionado'} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check className="h-4 w-4" strokeWidth={3} />}</span>
             </button>

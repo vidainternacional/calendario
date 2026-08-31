@@ -108,6 +108,29 @@ const MODOS_FUSION: Array<{ id: ModoFusion; label: string }> = [
   { id: 'color', label: 'Color' },
   { id: 'luminosity', label: 'Luminosidad' },
 ]
+type TipoTexturaFondo = 'diagonal' | 'puntos' | 'cuadricula' | 'lino' | 'rayas' | 'cruzada'
+const TIPOS_TEXTURA_FONDO: Array<{ id: TipoTexturaFondo; label: string }> = [
+  { id: 'diagonal', label: 'Diagonal' },
+  { id: 'puntos', label: 'Puntos' },
+  { id: 'cuadricula', label: 'Cuadrícula' },
+  { id: 'lino', label: 'Lino' },
+  { id: 'rayas', label: 'Rayas' },
+  { id: 'cruzada', label: 'Cruzada' },
+]
+
+function construirTexturaFondo(tipo: TipoTexturaFondo, tono: number, saturacion: number, luminosidad: number) {
+  const complementario = (tono + 180) % 360
+  const tinta = `hsla(${complementario}, ${saturacion}%, ${Math.max(20, luminosidad - 14)}%, .18)`
+  const tintaSuave = `hsla(${tono}, ${Math.max(20, saturacion - 18)}%, ${Math.max(16, luminosidad - 18)}%, .10)`
+  const base = `linear-gradient(hsl(${tono}, ${Math.max(24, saturacion - 22)}%, ${Math.min(90, luminosidad + 22)}%),hsl(${tono}, ${Math.max(28, saturacion - 12)}%, ${Math.max(18, luminosidad - 8)}%))`
+  if (tipo === 'puntos') return `radial-gradient(circle,${tinta} 0 1.5px,transparent 1.6px) 0 0 / 10px 10px,${base}`
+  if (tipo === 'cuadricula') return `repeating-linear-gradient(0deg,${tinta} 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,${tinta} 0 1px,transparent 1px 12px),${base}`
+  if (tipo === 'lino') return `repeating-linear-gradient(0deg,${tinta} 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,${tintaSuave} 0 1px,transparent 1px 6px),${base}`
+  if (tipo === 'rayas') return `repeating-linear-gradient(90deg,${tinta} 0 3px,transparent 3px 14px),${base}`
+  if (tipo === 'cruzada') return `repeating-linear-gradient(45deg,${tinta} 0 1px,transparent 1px 10px),repeating-linear-gradient(-45deg,${tintaSuave} 0 1px,transparent 1px 10px),${base}`
+  return `repeating-linear-gradient(135deg,${tinta} 0 2px,transparent 2px 11px),${base}`
+}
+
 const FUENTE_MUESTRA = FUENTES_PASTORALES.find((fuente) => fuente !== 'Inter') ?? FUENTES_PASTORALES[0] ?? 'Georgia'
 const claseBotonActivo = (activo: boolean) => `pastoral-inline-icon ${activo ? 'is-active' : ''}`
 const claseControlTexto = (activo = false) => `grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border text-slate-700 disabled:opacity-30 ${activo ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white'}`
@@ -195,6 +218,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [tonoFondoPersonalizado, setTonoFondoPersonalizado] = useState(260)
   const [saturacionFondoPersonalizado, setSaturacionFondoPersonalizado] = useState(70)
   const [luminosidadFondoPersonalizado, setLuminosidadFondoPersonalizado] = useState(52)
+  const [tipoTexturaFondoPersonalizado, setTipoTexturaFondoPersonalizado] = useState<TipoTexturaFondo>('diagonal')
   const pagina = paginas[indice] ?? paginas[0]
   const elementoSeleccionado = (pagina?.elementos?.find((item) => item.id === seleccion) ?? null) as ElementoCanvasEditor | null
   const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && !elementoSeleccionado.fondo_visual ? elementoSeleccionado : null
@@ -542,7 +566,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const tonoComplementario = (tonoFondoPersonalizado + 180) % 360
   const fondoPersonalizadoPlano = `hsl(${tonoFondoPersonalizado}, ${saturacionFondoPersonalizado}%, ${luminosidadFondoPersonalizado}%)`
   const fondoPersonalizadoDegradado = `linear-gradient(135deg,hsl(${tonoFondoPersonalizado}, ${saturacionFondoPersonalizado}%, ${luminosidadFondoPersonalizado}%) 0%,hsl(${tonoComplementario}, ${Math.max(35, saturacionFondoPersonalizado - 10)}%, ${Math.min(78, luminosidadFondoPersonalizado + 12)}%) 100%)`
-  const fondoPersonalizadoTextura = `repeating-linear-gradient(135deg,hsla(${tonoComplementario}, ${saturacionFondoPersonalizado}%, ${Math.max(22, luminosidadFondoPersonalizado - 12)}%, .16) 0 2px,transparent 2px 11px),linear-gradient(hsl(${tonoFondoPersonalizado}, ${Math.max(24, saturacionFondoPersonalizado - 22)}%, ${Math.min(90, luminosidadFondoPersonalizado + 22)}%),hsl(${tonoFondoPersonalizado}, ${Math.max(28, saturacionFondoPersonalizado - 12)}%, ${Math.max(18, luminosidadFondoPersonalizado - 8)}%))`
+  const fondoPersonalizadoTextura = construirTexturaFondo(tipoTexturaFondoPersonalizado, tonoFondoPersonalizado, saturacionFondoPersonalizado, luminosidadFondoPersonalizado)
   const aplicarFondoPersonalizado = (fondo: string) => aplicarFondoSeleccionado(fondo)
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
@@ -923,6 +947,16 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoPlano)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoPlano }} />Plano</button>
           <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoDegradado)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoDegradado }} />Degradado</button>
           <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoTextura)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoTextura }} />Textura</button>
+        </div>
+        <div className="grid gap-2">
+          <div className="px-1 text-[10px] font-black text-slate-500">Tipo de textura</div>
+          <div className="flex touch-pan-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Tipos de textura personalizados">
+            {TIPOS_TEXTURA_FONDO.map((tipo) => {
+              const fondoMuestra = construirTexturaFondo(tipo.id, tonoFondoPersonalizado, saturacionFondoPersonalizado, luminosidadFondoPersonalizado)
+              return <button key={tipo.id} type="button" onClick={() => setTipoTexturaFondoPersonalizado(tipo.id)} aria-pressed={tipoTexturaFondoPersonalizado === tipo.id} className={`grid min-w-[72px] shrink-0 gap-1 rounded-xl border p-2 text-[9px] font-bold ${tipoTexturaFondoPersonalizado === tipo.id ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}><span className="mx-auto h-8 w-12 rounded-lg border border-slate-200" style={{ background: fondoMuestra }} />{tipo.label}</button>
+            })}
+          </div>
+          <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoTextura)} className="min-h-10 rounded-full bg-indigo-600 px-4 text-xs font-black text-white">Aplicar textura · {TIPOS_TEXTURA_FONDO.find((tipo) => tipo.id === tipoTexturaFondoPersonalizado)?.label}</button>
         </div>
       </section>}
 
