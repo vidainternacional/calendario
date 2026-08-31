@@ -1,0 +1,88 @@
+name: Verify pastoral native backgrounds
+
+on:
+  push:
+    branches:
+      - agent/pastoral-native-refactor-verify
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout helper branch
+        uses: actions/checkout@v6
+        with:
+          path: helper
+
+      - name: Checkout target branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/centro-pastoral-reorganizacion
+          fetch-depth: 0
+          path: target
+
+      - name: Verify target head
+        run: test "$(git -C target rev-parse HEAD)" = "6ed6cca2aa7baffb32adb71a2e48e98e745a49a0"
+
+      - name: Apply native Fondos follow-up
+        run: |
+          python helper/scripts/apply_pastoral_native_followup.py target
+          git -C target diff --check
+          ! grep -q "limpiarFondosDuplicados" target/components/pastoral/PastoralEditorRuntimeEnhancements.tsx
+          test ! -e target/components/pastoral/PastoralTemplateRuntime.tsx
+          grep -q "Colores flat" target/components/pastoral/PastoralVisualWorkspaceV4.tsx
+          grep -q "Imágenes" target/components/pastoral/PastoralVisualWorkspaceV4.tsx
+          grep -q "text-violet-600" target/components/pastoral/PastoralVisualWorkspaceV4.tsx
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: target/package-lock.json
+
+      - name: Install dependencies
+        working-directory: target
+        run: npm ci
+
+      - name: Run regression suite
+        working-directory: target
+        run: npm run test:regression
+
+      - name: Generate ephemeral VAPID keys
+        working-directory: target
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const webpush = require('web-push')
+          const keys = webpush.generateVAPIDKeys()
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_SUBJECT=mailto:ci@example.invalid\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_PRIVATE_KEY=${keys.privateKey}\n`)
+          NODE
+
+      - name: Build application
+        working-directory: target
+        env:
+          CI: 'true'
+        run: npm run build
+
+      - name: Commit validated changes to target branch
+        working-directory: target
+        run: |
+          git config user.name "vida-refactor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add components/pastoral/PastoralVisualWorkspaceV4.tsx tests/regression/*.test.mjs
+          git commit -m "refactor(pastoral): finish native backgrounds editor"
+          git push origin HEAD:agent/centro-pastoral-reorganizacion
+
+      - name: Remove helper branches
+        if: success()
+        working-directory: target
+        run: |
+          git push origin --delete agent/pastoral-native-refactor-verify || true
+          git push origin --delete agent/pastoral-native-refactor-helper || true
