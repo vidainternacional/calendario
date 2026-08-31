@@ -2,13 +2,6 @@
 
 import { useEffect } from 'react'
 
-function limpiarFondosDuplicados() {
-  document.querySelectorAll<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-tool-button').forEach((button) => {
-    const label = (button.getAttribute('aria-label') || button.title || '').trim().toLowerCase()
-    if (label === 'fondo' || label === 'fondos') button.remove()
-  })
-}
-
 function renombrarTextoLibre() {
   const button = document.querySelector<HTMLButtonElement>('.pastoral-editor-v4 .panel-texto .pastoral-text-presets > button:first-child')
   if (button && button.textContent?.trim() === 'Caja') button.textContent = 'Texto libre'
@@ -280,7 +273,6 @@ export default function PastoralEditorRuntimeEnhancements() {
     const sincronizar = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        limpiarFondosDuplicados()
         renombrarTextoLibre()
         recordarTemaActual()
         prepararFormatoSobreTeclado()

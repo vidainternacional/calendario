@@ -6,7 +6,7 @@ import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, BookOpen, Check,
   ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, EyeOff, FileDown, GripVertical, Image as ImageIcon, Italic,
   Layers, LayoutTemplate, Link2, List, ListOrdered, Loader2, Lock, Maximize2, Minimize2,
-  Monitor, Plus, Redo2, Save, Share2, Smartphone, Square, Strikethrough,
+  Monitor, Palette, Plus, Redo2, Save, Share2, Smartphone, Square, Strikethrough,
   Trash2, Type, Underline, Undo2, Unlock, Upload,
 } from 'lucide-react'
 import { editarPaquetePastoral } from '@/app/actions/pastoral-paquetes'
@@ -32,7 +32,7 @@ type Paquete = {
 }
 type Snapshot = { titulo: string; paginas: DiapositivaCanvas[]; indice: number }
 type DestinoSubida = 'elemento' | 'fondo'
-type GrupoPrincipal = 'plantillas' | 'texto' | 'capas'
+type GrupoPrincipal = 'fondos' | 'texto' | 'capas'
 type PanelEditor = 'plantillas' | 'temas' | 'fondos' | 'recursos' | 'texto' | 'biblia' | 'capas' | 'diseno' | 'ajustes'
 type ComandoEfectoTexto = 'bold' | 'italic' | 'underline' | 'strikeThrough'
 type ComandoListaTexto = 'insertUnorderedList' | 'insertOrderedList'
@@ -70,16 +70,12 @@ const ESTADO_FORMATO_VACIO: EstadoFormatoSeleccion = {
 const MAX_HISTORIAL = 80
 const DESPLAZAMIENTO_ACCIONES_CAPA = 150
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
-  { id: 'plantillas', label: 'Plantillas', icon: LayoutTemplate },
+  { id: 'fondos', label: 'Fondos', icon: Palette },
   { id: 'texto', label: 'Texto', icon: Type },
   { id: 'capas', label: 'Capas', icon: Layers },
 ]
 const SUBMENUS: Record<GrupoPrincipal, Array<{ id: PanelEditor; label: string }>> = {
-  plantillas: [
-    { id: 'plantillas', label: 'Plantillas' },
-    { id: 'temas', label: 'Temas' },
-    { id: 'recursos', label: 'Imágenes' },
-  ],
+  fondos: [],
   texto: [
     { id: 'texto', label: 'Herramientas' },
     { id: 'biblia', label: 'Biblia' },
@@ -90,7 +86,7 @@ const SUBMENUS: Record<GrupoPrincipal, Array<{ id: PanelEditor; label: string }>
     { id: 'ajustes', label: 'Ajustes' },
   ],
 }
-const PANEL_INICIAL: Record<GrupoPrincipal, PanelEditor> = { plantillas: 'plantillas', texto: 'texto', capas: 'capas' }
+const PANEL_INICIAL: Record<GrupoPrincipal, PanelEditor> = { fondos: 'fondos', texto: 'texto', capas: 'capas' }
 const BANCOS_EXTERNOS = [
   { label: 'Unsplash', href: 'https://unsplash.com/' },
   { label: 'Pexels', href: 'https://www.pexels.com/' },
@@ -157,8 +153,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const capaSwipeRef = useRef<SwipeCapa | null>(null)
   const capaDragRef = useRef<ArrastreCapa | null>(null)
   const [vista, setVista] = useState<VistaLienzo>('contenido')
-  const [grupoPrincipal, setGrupoPrincipal] = useState<GrupoPrincipal | null>('plantillas')
-  const [panel, setPanel] = useState<PanelEditor | null>('plantillas')
+  const [grupoPrincipal, setGrupoPrincipal] = useState<GrupoPrincipal | null>('fondos')
+  const [panel, setPanel] = useState<PanelEditor | null>('fondos')
   const [titulo, setTitulo] = useState(paquete.titulo)
   const [paginas, setPaginas] = useState<DiapositivaCanvas[]>(paquete.presentacion_diapositivas?.length ? paquete.presentacion_diapositivas.map(normalizarPaginaEditor) : [nuevaPaginaCanvas()])
   const [indice, setIndice] = useState(0)
@@ -187,6 +183,9 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const q = busquedaRecursos.trim().toLowerCase()
     return q ? imagenes.filter((item) => `${item.titulo} ${item.descripcion} ${item.categoria}`.toLowerCase().includes(q)) : imagenes
   }, [imagenes, busquedaRecursos])
+  const paletasColoresFlat = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => !paleta.fondo.toLowerCase().includes('gradient')), [])
+  const paletasDegradados = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => { const fondo = paleta.fondo.toLowerCase(); return fondo.includes('gradient') && !fondo.includes('repeating-') }), [])
+  const paletasTexturas = useMemo(() => PALETAS_PRESENTACION.filter((paleta) => paleta.fondo.toLowerCase().includes('repeating-')), [])
 
   useEffect(() => {
     const viewport = window.visualViewport
@@ -444,6 +443,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     setCapaAccionesAbiertas(null)
     setDestinoSubida('elemento')
   }
+
+  const aplicarFondoVisual = (paleta: PaletaPresentacion) => actualizarPagina({ fondo_modo: 'color', fondo: paleta.fondo, fondo_recurso_id: null, recurso_id: null })
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
     registrarHistorial()
@@ -776,7 +777,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const alternarSubpanel = (siguiente: PanelEditor) => setPanel((actual) => actual === siguiente ? null : siguiente)
   const etiquetaRolTexto = textoSeleccionado?.rol === 'titulo' ? 'Título' : textoSeleccionado?.rol === 'subtitulo' ? 'Subtítulo' : textoSeleccionado?.rol === 'cuerpo' ? 'Cuerpo' : textoSeleccionado?.rol === 'libre' ? 'Texto' : 'Selecciona texto'
   const fuenteTextoActual = textoSeleccionado?.fuente ?? 'Fuente'
-  const clasePanel = grupoPrincipal === 'plantillas' ? 'panel-plantillas' : panel ? `panel-${panel}` : `panel-${grupoPrincipal ?? 'vacio'}`
+  const clasePanel = panel ? `panel-${panel}` : `panel-${grupoPrincipal ?? 'vacio'}`
   const estiloStage = { '--pastoral-stage-mobile-height': tecladoAbierto ? 'clamp(118px, 20dvh, 168px)' : 'clamp(210px, 32dvh, 300px)', height: 'clamp(250px, 52dvh, 640px)' } as CSSProperties
   const ratioPresentacion = pagina?.formato === '9:16' ? 9 / 16 : pagina?.formato === '4:3' ? 4 / 3 : pagina?.formato === '1:1' ? 1 : 16 / 9
   const presentarHorizontalGirado = Boolean(modoPresentacion && viewportVertical && (pagina?.formato === '16:9' || pagina?.formato === '4:3'))
@@ -790,19 +791,19 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   void claseBotonActivo
 
   const panelContenido = pagina && panel ? <>
-    {panel === 'plantillas' && <div className="pastoral-panel-content pastoral-start-panel">
-      <section className="grid gap-2"><p className="pastoral-panel-label">Plantillas</p><div className="grid grid-cols-3 gap-x-2 gap-y-3" aria-label="Plantillas en filas de tres"><button type="button" onClick={() => actualizarPagina({ plantilla: 'limpia', fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, color_texto: '#0f172a' })} className="grid min-w-0 gap-1 text-center" aria-label="Aplicar plantilla en blanco a la página actual"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200 bg-white"><i className="absolute left-[10%] top-[35%] h-[5px] w-[68%] rounded-full bg-slate-600" /><i className="absolute left-[10%] top-[61%] h-[3px] w-[46%] rounded-full bg-slate-400" /></span><span className="truncate px-1 text-[11px] font-semibold text-slate-700">En blanco</span></button>{PLANTILLAS_VISUALES.map((plantilla) => <button key={plantilla.id} type="button" onClick={() => aplicarPlantilla(plantilla)} className="grid min-w-0 gap-1 text-center"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200" style={{ background: plantilla.fondo, color: plantilla.colorTexto }}><i className="absolute left-[10%] top-[35%] h-[5px] w-[68%] rounded-full bg-current opacity-90" /><i className="absolute left-[10%] top-[61%] h-[3px] w-[46%] rounded-full bg-current opacity-55" /></span><span className="truncate px-1 text-[11px] font-semibold text-slate-700">{plantilla.nombre}</span></button>)}</div></section>
-    </div>}
 
-    {panel === 'temas' && <div className="pastoral-panel-content pastoral-start-panel">
-      <section className="grid gap-2"><p className="pastoral-panel-label">Temas</p><div className="grid grid-cols-3 gap-x-2 gap-y-3" aria-label="Temas en filas de tres">{PALETAS_PRESENTACION.map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarPaleta(paleta)} className="grid min-w-0 gap-1 text-center"><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200" style={{ background: paleta.fondo, color: paleta.titulo }}><i className="absolute left-[10%] top-[35%] h-[5px] w-[68%] rounded-full bg-current opacity-90" /><i className="absolute left-[10%] top-[61%] h-[3px] w-[46%] rounded-full bg-current opacity-55" /></span><span className="truncate px-1 text-[11px] font-semibold text-slate-700">{paleta.label}</span></button>)}</div></section>
-    </div>}
-
-    {panel === 'recursos' && <div className="pastoral-panel-content pastoral-elements-panel">
-      <div className="flex flex-wrap items-center justify-center gap-2"><button type="button" onClick={() => pagina.fondo_modo === 'imagen' && (pagina.fondo_recurso_id ?? pagina.recurso_id) ? restaurarFondoComoImagen() : setDestinoSubida('elemento')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'elemento' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'elemento'} title={pagina.fondo_modo === 'imagen' ? 'Volver el fondo a una imagen normal editable' : 'Elegir imágenes para el lienzo'}>Imagen</button><button type="button" onClick={() => elementoSeleccionado?.tipo === 'imagen' ? convertirImagenEnFondo(elementoSeleccionado.id) : setDestinoSubida('fondo')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${destinoSubida === 'fondo' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`} aria-pressed={destinoSubida === 'fondo'} title={elementoSeleccionado?.tipo === 'imagen' ? 'Convertir la imagen seleccionada en fondo' : 'Elegir imágenes como fondo'}>Como fondo</button></div>
-      <div className="pastoral-elements-top"><button type="button" onClick={() => prepararSubida(destinoSubida)} className="pastoral-minimal-action"><Upload /> Subir</button><input value={busquedaRecursos} onChange={(e) => setBusquedaRecursos(e.target.value)} placeholder="Buscar en biblioteca" /></div>
-      {recursosFiltrados.length ? <div className="pastoral-elements-grid">{recursosFiltrados.slice(0, 30).map((recurso) => <button key={recurso.id} type="button" onClick={() => destinoSubida === 'fondo' ? aplicarFondoImagen(recurso) : agregarImagen(recurso)}><img src={recurso.acceso_url ?? ''} alt={recurso.titulo} /></button>)}</div> : <p className="pastoral-empty-panel">No hay imágenes en tu biblioteca todavía.</p>}
-      <div className="pastoral-external-banks">{BANCOS_EXTERNOS.map((banco) => <a key={banco.label} href={banco.href} target="_blank" rel="noreferrer">{banco.label}<ExternalLink /></a>)}</div>
+    {panel === 'fondos' && <div className="pastoral-panel-content grid gap-5 pb-2 pt-1">
+      {[
+        { id: 'flat', label: 'Colores flat', opciones: paletasColoresFlat, tema: false },
+        { id: 'degradados', label: 'Degradados', opciones: paletasDegradados, tema: false },
+        { id: 'texturas', label: 'Texturas', opciones: paletasTexturas, tema: false },
+        { id: 'temas', label: 'Temas', opciones: PALETAS_PRESENTACION, tema: true },
+      ].map((seccion) => <section key={seccion.id} className="grid gap-2">
+        <p className="px-1 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">{seccion.label}</p>
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={seccion.label}>
+          {seccion.opciones.map((paleta) => <button key={`${seccion.id}-${paleta.id}`} type="button" onClick={() => seccion.tema ? aplicarPaleta(paleta) : aplicarFondoVisual(paleta)} className="grid w-[62px] shrink-0 gap-1.5 text-center" aria-label={`${seccion.tema ? 'Aplicar tema' : 'Aplicar fondo'} ${paleta.label}`} title={paleta.label}><span className="mx-auto block h-12 w-12 rounded-full border border-slate-200" style={{ background: paleta.fondo }} /><small className="block truncate text-[9px] font-semibold text-slate-500">{paleta.label}</small></button>)}
+        </div>
+      </section>)}
     </div>}
 
     {panel === 'texto' && <div className="pastoral-panel-content grid h-full w-full content-start gap-3 overflow-visible pr-1">
@@ -900,8 +901,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           <div className="pastoral-canvas-wrap w-full"><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} onDeleteElement={eliminarElemento} /></div>
         </div>
         <div className="pastoral-editor-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={tecladoAbierto ? { paddingBottom: `${Math.max(160, tecladoInset + 32)}px`, scrollPaddingBottom: `${Math.max(160, tecladoInset + 32)}px` } : undefined}>
-          <div className="pastoral-tool-dock" aria-label="Herramientas del lienzo">{HERRAMIENTAS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => alternarGrupoPrincipal(id)} className={`pastoral-tool-button col-span-2 ${grupoPrincipal === id ? 'is-active' : ''}`} aria-pressed={grupoPrincipal === id} aria-expanded={grupoPrincipal === id} aria-label={label} title={label}><Icon /><small className="relative z-[1] text-[10px] font-bold">{label}</small></button>)}<button type="button" disabled={!elementoSeleccionado || elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado && eliminarElemento(elementoSeleccionado.id)} className="grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border border-rose-200 bg-white disabled:opacity-30" aria-label="Borrar elemento seleccionado" title="Borrar"><Trash2 className="h-[18px] w-[18px] text-rose-600" /></button></div>
-          {grupoPrincipal && <aside className={`pastoral-tool-panel-flow ${clasePanel}`} aria-label={`Panel ${grupoPrincipal}`}><div className="pastoral-tool-panel-flow-scroll px-3 pb-3 pt-2"><div className="flex flex-col"><div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`Opciones de ${grupoPrincipal}`}>{SUBMENUS[grupoPrincipal].map((item) => <button key={item.id} type="button" onClick={() => alternarSubpanel(item.id)} className={`min-h-10 shrink-0 rounded-full px-3 text-xs font-bold ${panel === item.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={panel === item.id}>{item.label}</button>)}</div><div className="min-h-0 flex-1 pt-2">{panelContenido}</div></div></div></aside>}
+          <div className="pastoral-tool-dock flex w-full items-center gap-2 px-2 py-2" aria-label="Herramientas del lienzo"><div className="flex min-w-0 flex-1 items-stretch gap-1 rounded-full border border-slate-200 bg-white p-1">{HERRAMIENTAS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => alternarGrupoPrincipal(id)} className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full bg-transparent px-2 py-1 text-slate-600 shadow-none" aria-pressed={grupoPrincipal === id} aria-expanded={grupoPrincipal === id} aria-label={label} title={label}><Icon className={`h-[18px] w-[18px] ${grupoPrincipal === id ? 'text-indigo-600' : 'text-slate-500'}`} /><small className="text-[10px] font-bold text-slate-700">{label}</small></button>)}</div><button type="button" disabled={!elementoSeleccionado || elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado && eliminarElemento(elementoSeleccionado.id)} className="grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 disabled:opacity-30" aria-label="Borrar elemento seleccionado" title="Borrar"><Trash2 className="h-[18px] w-[18px]" /></button></div>
+          {grupoPrincipal && <aside className={`pastoral-tool-panel-flow ${clasePanel}`} aria-label={`Panel ${grupoPrincipal}`}><div className="pastoral-tool-panel-flow-scroll px-3 pb-3 pt-2"><div className="flex flex-col">{SUBMENUS[grupoPrincipal].length > 0 && <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`Opciones de ${grupoPrincipal}`}>{SUBMENUS[grupoPrincipal].map((item) => <button key={item.id} type="button" onClick={() => alternarSubpanel(item.id)} className={`min-h-10 shrink-0 rounded-full px-3 text-xs font-bold ${panel === item.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={panel === item.id}>{item.label}</button>)}</div>}<div className={`min-h-0 flex-1 ${SUBMENUS[grupoPrincipal].length > 0 ? 'pt-2' : ''}`}>{panelContenido}</div></div></div></aside>}
         </div>
       </div>
     </section>}

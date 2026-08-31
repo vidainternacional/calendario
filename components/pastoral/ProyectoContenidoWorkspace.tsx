@@ -1,7 +1,6 @@
 'use client'
 
 import PastoralVisualWorkspaceV4 from '@/components/pastoral/PastoralVisualWorkspaceV4'
-import PastoralTemplateRuntime from '@/components/pastoral/PastoralTemplateRuntime'
 import {
   aplicarCatalogoAdministrado,
   type PlantillaAdministrada,
@@ -90,6 +89,5 @@ export default function ProyectoContenidoWorkspace(props: any) {
 
   return <>
     <PastoralVisualWorkspaceV4 {...workspaceProps} paquete={paquete} />
-    <PastoralTemplateRuntime catalogo={catalogo} />
   </>
 }
