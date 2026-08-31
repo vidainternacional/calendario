@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Check, Copy, Link2, Loader2, Plus, Search, X } from 'lucide-react'
 import { cargarPalabrasBiblicasVerificadas } from '@/app/actions/lexico-biblico'
 import { mostrarToast } from '@/lib/ui/toast'
@@ -8,7 +8,6 @@ import { mostrarToast } from '@/lib/ui/toast'
 const API = 'https://bible.helloao.org/api'
 
 type Traduccion = { id: string; name: string; language: string; shortName?: string }
-
 type NombreHebreoLibro = { hebreo: string; transliteracion: string }
 
 const LIBROS_NT = new Set(['MAT','MRK','LUK','JHN','ACT','ROM','1CO','2CO','GAL','EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB','JAS','1PE','2PE','1JN','2JN','3JN','JUD','REV'])
@@ -79,85 +78,83 @@ function normalizarHebreo(value: string | null | undefined) {
     .replace(/[^\u05D0-\u05EA]/g, '')
 }
 
-function significadoDePalabra(
-  palabra: string,
-  resultado: ResultadoLexico | null,
-  usados: Set<number>,
-) {
+function significadoDePalabra(palabra: string, resultado: ResultadoLexico | null) {
   if (!resultado || resultado.status !== 'available') return null
   const objetivo = normalizarHebreo(palabra)
   if (!objetivo) return null
-
-  const indice = resultado.occurrences.findIndex((item, posicion) => {
-    if (usados.has(posicion)) return false
+  const occurrence = resultado.occurrences.find((item) => {
     const formas = [item.surfaceForm, item.normalizedForm, item.entry.lemma]
       .map(normalizarHebreo)
       .filter(Boolean)
     return formas.some((forma) => forma === objetivo || forma.includes(objetivo) || objetivo.includes(forma))
   })
-  if (indice < 0) return null
-  usados.add(indice)
-  const occurrence = resultado.occurrences[indice]
+  if (!occurrence) return null
   return occurrence.entry.displayGlossEs || occurrence.entry.sourceGloss || occurrence.entry.definition || null
 }
 
-function PalabrasHebreasConSignificado({
+function ExploradorPalabrasOriginales({
   versiculo,
   original,
+  esHebreo,
   onInsert,
 }: {
   versiculo: VersiculoElegido
   original: string
+  esHebreo: boolean
   onInsert: (palabra: string) => void
 }) {
-  const contenedorRef = useRef<HTMLDivElement | null>(null)
-  const [debeCargar, setDebeCargar] = useState(false)
+  const palabras = useMemo(() => original.split(/\s+/).filter(Boolean), [original])
+  const [seleccionada, setSeleccionada] = useState<string | null>(null)
   const [resultado, setResultado] = useState<ResultadoLexico | null>(null)
+  const [cargandoLexico, setCargandoLexico] = useState(false)
 
   useEffect(() => {
-    const nodo = contenedorRef.current
-    if (!nodo || debeCargar) return
-    if (typeof IntersectionObserver === 'undefined') {
-      setDebeCargar(true)
+    setSeleccionada(null)
+    if (!esHebreo) {
+      setResultado(null)
+      setCargandoLexico(false)
       return
     }
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return
-      setDebeCargar(true)
-      observer.disconnect()
-    }, { rootMargin: '240px 0px' })
-    observer.observe(nodo)
-    return () => observer.disconnect()
-  }, [debeCargar])
-
-  useEffect(() => {
-    if (!debeCargar) return
     let activo = true
     setResultado(null)
+    setCargandoLexico(true)
     cargarPalabrasBiblicasVerificadas(versiculo.referencia)
       .then((data) => { if (activo) setResultado(data) })
       .catch(() => { if (activo) setResultado(null) })
+      .finally(() => { if (activo) setCargandoLexico(false) })
     return () => { activo = false }
-  }, [debeCargar, versiculo.referencia])
+  }, [esHebreo, versiculo.referencia])
 
-  const palabras = original.split(/\s+/).filter(Boolean)
-  const usados = new Set<number>()
+  const significado = seleccionada && esHebreo ? significadoDePalabra(seleccionada, resultado) : null
 
-  return <div ref={contenedorRef} dir="rtl" className="flex flex-wrap gap-1.5 border-t border-slate-100 px-3 py-3">
-    {palabras.map((palabra, indicePalabra) => {
-      const significado = significadoDePalabra(palabra, resultado, usados)
-      const etiqueta = significado ?? (debeCargar && resultado ? 'Significado no disponible' : 'Cargando significado…')
-      return <button
-        key={`${versiculo.verso}-${indicePalabra}`}
-        type="button"
-        onClick={() => onInsert(palabra)}
-        className="min-w-[82px] rounded-2xl border border-slate-200 bg-white px-2.5 py-2 text-center text-slate-700"
-        title={`Insertar ${palabra}`}
-      >
-        <span lang="he" dir="rtl" className="block text-[15px] font-bold leading-none">{palabra}</span>
-        <span dir="ltr" className={`mt-1.5 block text-[9px] font-bold leading-3 ${significado ? 'text-indigo-600' : 'text-slate-400'}`}>{etiqueta}</span>
-      </button>
-    })}
+  return <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-3">
+    <div dir={esHebreo ? 'rtl' : 'ltr'} className="flex flex-wrap gap-1.5">
+      {palabras.map((palabra, indicePalabra) => {
+        const activa = seleccionada === palabra
+        return <button
+          key={`${versiculo.verso}-${indicePalabra}-${palabra}`}
+          type="button"
+          onClick={() => setSeleccionada(palabra)}
+          className={`rounded-full border px-2.5 py-1.5 text-[13px] font-bold transition-colors ${activa ? 'border-indigo-300 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-700'}`}
+          aria-pressed={activa}
+        >{palabra}</button>
+      })}
+    </div>
+    {seleccionada && <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3" dir="ltr">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span lang={esHebreo ? 'he' : 'grc'} dir={esHebreo ? 'rtl' : 'ltr'} className="block text-xl font-black text-slate-900">{seleccionada}</span>
+          <p className={`mt-1.5 text-xs font-semibold leading-5 ${significado ? 'text-indigo-700' : 'text-slate-500'}`}>
+            {esHebreo
+              ? significado ?? (cargandoLexico ? 'Buscando significado…' : 'Significado verificado no disponible para esta forma.')
+              : 'Palabra original en griego. Puedes agregarla al lienzo.'}
+          </p>
+        </div>
+        <button type="button" onClick={() => onInsert(seleccionada)} className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full bg-indigo-600 px-3 text-[11px] font-black text-white">
+          <Plus className="h-3.5 w-3.5" /> Agregar
+        </button>
+      </div>
+    </div>}
   </div>
 }
 
@@ -173,6 +170,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   const [seleccionados, setSeleccionados] = useState<number[]>([])
   const [agregados, setAgregados] = useState<string[]>([])
   const [concordanciaDe, setConcordanciaDe] = useState<VersiculoElegido | null>(null)
+  const [palabrasDe, setPalabrasDe] = useState<VersiculoElegido | null>(null)
   const [relacionados, setRelacionados] = useState<Array<VersiculoElegido & { score?: number }>>([])
   const [cargando, setCargando] = useState(false)
   const [cargandoRelacionados, setCargandoRelacionados] = useState(false)
@@ -230,6 +228,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
     setVersos([])
     setSeleccionados([])
     setConcordanciaDe(null)
+    setPalabrasDe(null)
     setRelacionados([])
     fetch(`${API}/${trad}/${libro}/${capitulo}.simple.json`).then(r => {
       if (!r.ok) throw new Error('chapter')
@@ -248,7 +247,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   }, [open, trad, libro, capitulo, libroActual?.name, traduccionActual?.id])
 
   useEffect(() => {
-    if (!open || !modoOriginal || !traduccionOriginal || !libro) { setOriginales({}); return }
+    if (!open || !modoOriginal || !traduccionOriginal || !libro) { setOriginales({}); setPalabrasDe(null); return }
     setCargandoOriginal(true)
     fetch(`${API}/${traduccionOriginal.id}/${libro}/${capitulo}.simple.json`).then(r => {
       if (!r.ok) throw new Error('original')
@@ -290,6 +289,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   }
 
   const cargarConcordancias = async (versiculo: VersiculoElegido) => {
+    setPalabrasDe(null)
     setConcordanciaDe(versiculo)
     setCargandoRelacionados(true)
     setRelacionados([])
@@ -326,35 +326,21 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   }
 
   const agregarSeleccionados = () => {
-    const elegidos = versos
-      .filter(v => seleccionados.includes(v.verso))
-      .sort((a, b) => a.verso - b.verso)
+    const elegidos = versos.filter(v => seleccionados.includes(v.verso)).sort((a, b) => a.verso - b.verso)
     if (!elegidos.length) return
-
     const grupos: VersiculoElegido[][] = []
     for (const versiculo of elegidos) {
       const ultimoGrupo = grupos[grupos.length - 1]
       const ultimo = ultimoGrupo?.[ultimoGrupo.length - 1]
-      if (ultimo && ultimo.libroId === versiculo.libroId && ultimo.capitulo === versiculo.capitulo && versiculo.verso === ultimo.verso + 1) {
-        ultimoGrupo.push(versiculo)
-      } else {
-        grupos.push([versiculo])
-      }
+      if (ultimo && ultimo.libroId === versiculo.libroId && ultimo.capitulo === versiculo.capitulo && versiculo.verso === ultimo.verso + 1) ultimoGrupo.push(versiculo)
+      else grupos.push([versiculo])
     }
-
     grupos.forEach(grupo => {
       const primero = grupo[0]
       const ultimo = grupo[grupo.length - 1]
-      const referencia = grupo.length === 1
-        ? primero.referencia
-        : `${libroActual?.name ?? libro} ${primero.capitulo}:${primero.verso}-${ultimo.verso}`
-      onInsert({
-        referencia,
-        texto: grupo.map(v => textoVersiculoActual(v)).filter(Boolean).join(' '),
-        traduccion: traduccionVersiculoActual(primero),
-      })
+      const referencia = grupo.length === 1 ? primero.referencia : `${libroActual?.name ?? libro} ${primero.capitulo}:${primero.verso}-${ultimo.verso}`
+      onInsert({ referencia, texto: grupo.map(v => textoVersiculoActual(v)).filter(Boolean).join(' '), traduccion: traduccionVersiculoActual(primero) })
     })
-
     setAgregados(actuales => Array.from(new Set([...actuales, ...elegidos.map(claveVersiculo)])))
     setSeleccionados([])
     const bloques = grupos.length
@@ -412,7 +398,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
 
       {!concordanciaDe && <>
         <div className="mx-3 mt-2 inline-flex w-fit items-center rounded-full border border-slate-200 bg-white p-1 text-[10px] font-black" aria-label="Idioma del texto bíblico">
-          <button type="button" onClick={() => setModoOriginal(false)} className={`min-h-8 rounded-full px-3 ${!modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={!modoOriginal}>Español</button>
+          <button type="button" onClick={() => { setModoOriginal(false); setPalabrasDe(null) }} className={`min-h-8 rounded-full px-3 ${!modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={!modoOriginal}>Español</button>
           <button type="button" disabled={!traduccionOriginal} onClick={() => setModoOriginal(true)} className={`min-h-8 rounded-full px-3 disabled:opacity-40 ${modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={modoOriginal}>Original · {idiomaOriginal}</button>
         </div>
         {modoOriginal && libroHebreoActual && <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -422,7 +408,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
             <span className="text-xs font-bold text-slate-500">{libroHebreoActual.transliteracion} {capitulo}</span>
           </div>
         </div>}
-        <p className="pastoral-verse-guide">{modoOriginal ? (esNuevoTestamento ? 'Selecciona versículos o toca una palabra en griego para insertarla sola.' : 'Cada palabra hebrea muestra su significado breve en español antes de insertarla. Tócala cuando quieras agregarla sola.') : 'Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.'}</p>
+        <p className="pastoral-verse-guide">{modoOriginal ? `El versículo se mantiene limpio en ${idiomaOriginal.toLowerCase()}. Usa Palabras en el versículo que quieras explorar o insertar por partes.` : 'Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.'}</p>
       </>}
 
       <div className="pastoral-verse-list">
@@ -435,6 +421,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           const activo = seleccionados.includes(v.verso)
           const agregado = agregados.includes(claveVersiculo(v))
           const referenciaVisible = modoOriginal && libroHebreoActual ? `${libroHebreoActual.transliteracion} ${v.capitulo}:${v.verso}` : v.referencia
+          const palabrasAbiertas = palabrasDe ? claveVersiculo(palabrasDe) === claveVersiculo(v) : false
           return <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
               <span className="min-w-0 flex-1">
@@ -443,12 +430,13 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
               </span>
               <span className={`ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors ${activo || agregado ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white text-transparent'}`} aria-label={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : 'Versículo no seleccionado'} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check className="h-4 w-4" strokeWidth={3} />}</span>
             </button>
-            {modoOriginal && originales[v.verso] && (esNuevoTestamento ? <div dir="ltr" className="flex flex-wrap gap-1 border-t border-slate-100 px-3 py-2">{originales[v.verso].split(/\s+/).filter(Boolean).map((palabra, indicePalabra) => <button key={`${v.verso}-${indicePalabra}`} type="button" onClick={() => insertarPalabraOriginal(v, palabra)} className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700" title={`Insertar ${palabra}`}>{palabra}</button>)}</div> : <PalabrasHebreasConSignificado versiculo={v} original={originales[v.verso]} onInsert={(palabra) => insertarPalabraOriginal(v, palabra)} />)}
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
               <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>
               <button type="button" onClick={() => void cargarConcordancias(v)} className="pastoral-verse-mini" aria-label={`Ver concordancias de ${v.referencia}`} title="Concordancias"><Link2 /></button>
+              {modoOriginal && originales[v.verso] && <button type="button" onClick={() => setPalabrasDe(palabrasAbiertas ? null : v)} className={`min-h-8 rounded-full border px-2.5 text-[10px] font-black ${palabrasAbiertas ? 'border-indigo-300 bg-indigo-600 text-white' : 'border-slate-200 bg-white text-slate-600'}`} aria-expanded={palabrasAbiertas}>Palabras</button>}
             </div>
+            {modoOriginal && palabrasAbiertas && originales[v.verso] && <ExploradorPalabrasOriginales versiculo={v} original={originales[v.verso]} esHebreo={!esNuevoTestamento} onInsert={(palabra) => insertarPalabraOriginal(v, palabra)} />}
           </article>
         }) : <div className="pastoral-verse-empty">No hay versículos que coincidan.</div>}
       </div>
@@ -456,6 +444,5 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   )
 
   if (embedded) return contenido
-
   return <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-label="Seleccionar versículo">{contenido}</div>
 }
