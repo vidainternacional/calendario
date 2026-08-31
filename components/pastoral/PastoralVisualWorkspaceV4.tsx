@@ -82,8 +82,6 @@ const SUBMENUS: Record<GrupoPrincipal, Array<{ id: PanelEditor; label: string }>
   ],
   capas: [
     { id: 'capas', label: 'Capas' },
-    { id: 'diseno', label: 'Relación' },
-    { id: 'ajustes', label: 'Ajustes' },
   ],
 }
 const PANEL_INICIAL: Record<GrupoPrincipal, PanelEditor> = { fondos: 'fondos', texto: 'texto', capas: 'capas' }
@@ -859,7 +857,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const panelContenido = pagina && panel ? <>
 
     {panel === 'fondos' && <div className="pastoral-panel-content grid gap-3 pb-3 pt-1">
-      <div className="grid grid-cols-3 gap-2" aria-label="Acciones de fondo">
+      <div className="grid grid-cols-2 gap-2" aria-label="Acciones de fondo">
         <button type="button" onClick={() => { setSelectorFondoAbierto((abierto) => !abierto); setSelectorImagenesAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorFondoAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorFondoAbierto} aria-controls="pastoral-selector-fondo-libre">
           <span className="grid h-9 w-9 place-items-center rounded-full border border-white shadow-sm" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: fondoPersonalizadoPlano }} /></span>
           <span className="text-[10px] font-black text-slate-700">Rueda de color</span>
@@ -867,10 +865,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         <button type="button" onClick={() => { setSelectorImagenesAbierto((abierto) => !abierto); setSelectorFondoAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorImagenesAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorImagenesAbierto} aria-controls="pastoral-selector-imagenes">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-600"><ImageIcon className="h-4 w-4" /></span>
           <span className="text-[10px] font-black text-slate-700">Imágenes</span>
-        </button>
-        <button type="button" onClick={crearCapaFondo} className="grid min-h-[74px] place-items-center gap-1 rounded-2xl border border-slate-200 bg-white px-2 py-2 text-center" aria-label="Crear nueva capa para fondo">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-indigo-50 text-indigo-600"><Plus className="h-4 w-4" /></span>
-          <span className="text-[10px] font-black text-slate-700">Nueva capa</span>
         </button>
       </div>
 
@@ -891,11 +885,18 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       </section>}
 
       {selectorImagenesAbierto && <section id="pastoral-selector-imagenes" className="grid gap-3 rounded-2xl border border-slate-200 bg-white/80 px-3 py-3">
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => prepararSubida('fondo')} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Upload className="h-4 w-4" /> Subir imagen</button>
-          <label className="min-w-0 flex-1"><span className="sr-only">Buscar imágenes</span><input value={busquedaRecursos} onChange={(event) => setBusquedaRecursos(event.target.value)} placeholder="Buscar" className="min-h-10 w-full rounded-full border border-slate-200 bg-white px-3 text-xs outline-none" /></label>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => prepararSubida('elemento')} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Upload className="h-4 w-4" /> Subir imagen</button>
+          <button type="button" onClick={() => prepararSubida('fondo')} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Upload className="h-4 w-4" /> Subir como fondo</button>
         </div>
-        {recursosFiltrados.length ? <div className="grid grid-cols-4 gap-2">{recursosFiltrados.map((recurso) => <button key={recurso.id} type="button" onClick={() => aplicarFondoImagen(recurso)} className="aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-50" aria-label={`Usar ${recurso.titulo} como fondo`} title={recurso.titulo}><img src={recurso.acceso_url ?? ''} alt="" className="h-full w-full object-cover" /></button>)}</div> : <p className="text-[10px] text-slate-400">No hay imágenes disponibles todavía.</p>}
+        <label><span className="sr-only">Buscar imágenes</span><input value={busquedaRecursos} onChange={(event) => setBusquedaRecursos(event.target.value)} placeholder="Buscar imágenes" className="min-h-10 w-full rounded-full border border-slate-200 bg-white px-3 text-xs outline-none" /></label>
+        {recursosFiltrados.length ? <div className="grid grid-cols-3 gap-2">{recursosFiltrados.map((recurso) => <article key={recurso.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <img src={recurso.acceso_url ?? ''} alt="" className="aspect-square w-full object-cover" />
+          <div className="grid grid-cols-2 border-t border-slate-100">
+            <button type="button" onClick={() => agregarImagen(recurso)} className="min-h-9 border-r border-slate-100 px-1 text-[10px] font-black text-slate-600" aria-label={`Agregar ${recurso.titulo} como imagen`}>Imagen</button>
+            <button type="button" onClick={() => aplicarFondoImagen(recurso)} className="min-h-9 px-1 text-[10px] font-black text-indigo-600" aria-label={`Usar ${recurso.titulo} como fondo`}>Fondo</button>
+          </div>
+        </article>)}</div> : <p className="text-[10px] text-slate-400">No hay imágenes disponibles todavía.</p>}
       </section>}
 
       <div className="pastoral-background-grid" aria-label="Galería de fondos">
@@ -953,6 +954,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     {panel === 'diseno' && <div className="pastoral-panel-content"><div className="pastoral-panel-heading"><h3>Relación de aspecto</h3><p>Formato único para proyector y visualización horizontal en celular.</p></div><div className="pastoral-aspect-control"><button type="button" onClick={() => pagina.formato !== '16:9' && actualizarPagina({ formato: '16:9' })} className="is-active"><Monitor /><span><strong>16:9</strong><small>Horizontal</small></span></button></div></div>}
 
     {panel === 'capas' && <div className="pastoral-panel-content grid gap-3">
+      <button type="button" onClick={crearCapaFondo} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 text-xs font-black text-indigo-700" aria-label="Crear nueva capa"><Plus className="h-4 w-4" /> Nueva capa</button>
       {elementoSeleccionado && <div className="grid gap-2 border-b border-slate-200 px-1 pb-3">
         <div className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Opacidad</span><input type="range" min="0.1" max="1" step="0.05" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.opacidad ?? 1} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onInput={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.currentTarget.value) })} onChange={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.currentTarget.value) })} className="min-w-0 flex-1 touch-none disabled:opacity-30" aria-label="Opacidad de la capa seleccionada" /><span className="w-10 text-right text-[11px] font-bold text-slate-500">{Math.round((elementoSeleccionado.opacidad ?? 1) * 100)}%</span></div>
         <label className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Fusión</span><select disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.modo_fusion ?? 'normal'} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(event) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { modo_fusion: event.target.value as ModoFusion })} className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none disabled:opacity-30" aria-label="Modo de fusión de la capa seleccionada">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select></label>

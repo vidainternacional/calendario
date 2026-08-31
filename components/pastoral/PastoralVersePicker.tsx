@@ -245,7 +245,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           return <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
               <span className="min-w-0 flex-1"><strong>{v.referencia}</strong><em>{v.texto}</em></span>
-              <span className={`pastoral-verse-check ml-auto shrink-0 ${activo || agregado ? 'is-active' : ''}`} style={activo || agregado ? { backgroundColor: '#16a34a', borderColor: '#16a34a', color: '#ffffff' } : undefined} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check />}</span>
+              <span className={`ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors ${activo || agregado ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white text-transparent'}`} aria-label={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : 'Versículo no seleccionado'} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check className="h-4 w-4" strokeWidth={3} />}</span>
             </button>
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>

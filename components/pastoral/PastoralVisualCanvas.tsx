@@ -436,7 +436,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
               {elemento.tipo !== 'imagen' && <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
               </div>}
-              <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />
+              {elemento.tipo !== 'imagen' && <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />}
             </>}
           </div>
         })}
