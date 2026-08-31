@@ -179,7 +179,7 @@ function fondoVisualSeguro(valor: unknown) {
   if (!fondo || /url\s*\(/i.test(fondo) || /[;{}]/.test(fondo)) return undefined
   if (/^#[0-9a-f]{3,8}$/i.test(fondo)) return fondo
   if (/^hsla?\([^)]+\)$/i.test(fondo)) return fondo
-  if (/^(?:linear-gradient|radial-gradient|repeating-linear-gradient)\(.+\)$/i.test(fondo)) return fondo
+  if (/^(?:linear-gradient|radial-gradient|conic-gradient|repeating-linear-gradient)\(.+\)$/i.test(fondo)) return fondo
   return undefined
 }
 
