@@ -191,6 +191,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const touchStart = useRef(0)
   const autosaveReadyRef = useRef(false)
   const autosaveSerialRef = useRef(0)
+  const saveInFlightRef = useRef<Promise<Awaited<ReturnType<typeof editarPaquetePastoral>>> | null>(null)
   const capaSwipeRef = useRef<SwipeCapa | null>(null)
   const capaDragRef = useRef<ArrastreCapa | null>(null)
   const [vista, setVista] = useState<VistaLienzo>('contenido')
@@ -867,8 +868,15 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     return data
   }
 
+  const persistirFormulario = async (formData: FormData) => {
+    if (saveInFlightRef.current) await saveInFlightRef.current
+    const promesa = editarPaquetePastoral(paquete.id, formData)
+    saveInFlightRef.current = promesa
+    try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
+  }
+
   const guardar = () => startTransition(async () => {
-    const resultado = await editarPaquetePastoral(paquete.id, construirFormulario())
+    const resultado = await persistirFormulario(construirFormulario())
     if (!resultado.success) return mostrarToast(resultado.error)
     setGuardado(true); window.setTimeout(() => setGuardado(false), 1500); mostrarToast('Proyecto guardado')
   })
@@ -876,11 +884,35 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const guardarAutomatico = async () => {
     const serial = ++autosaveSerialRef.current
     setGuardandoAuto(true)
-    const resultado = await editarPaquetePastoral(paquete.id, construirFormulario())
+    const resultado = await persistirFormulario(construirFormulario())
     if (serial !== autosaveSerialRef.current) return
     setGuardandoAuto(false)
     if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
   }
+
+  useEffect(() => {
+    if (!modoPresentacion) return
+    const html = document.documentElement
+    const body = document.body
+    const htmlOverflow = html.style.overflow
+    const bodyOverflow = body.style.overflow
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    const onFullscreenChange = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element | null }
+      if (!document.fullscreenElement && !doc.webkitFullscreenElement && modoPresentacion) {
+        // iPhone/Safari may not expose element fullscreen; keep the viewport overlay active instead.
+      }
+    }
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange as EventListener)
+    return () => {
+      html.style.overflow = htmlOverflow
+      body.style.overflow = bodyOverflow
+      document.removeEventListener('fullscreenchange', onFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', onFullscreenChange as EventListener)
+    }
+  }, [modoPresentacion])
 
   useEffect(() => {
     if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
@@ -898,8 +930,24 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     setCapaAccionesAbiertas(null)
   }
   const moverPresentacion = (delta: number) => setIndice((actual) => Math.min(Math.max(actual + delta, 0), paginas.length - 1))
-  const abrirPantallaCompleta = async () => { setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
-  const cerrarPantallaCompleta = async () => { setModoPresentacion(false); try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch {} }
+  const abrirPantallaCompleta = async () => {
+    setModoPresentacion(true)
+    try {
+      const raiz = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void }
+      if (raiz.requestFullscreen) await raiz.requestFullscreen({ navigationUI: 'hide' })
+      else await raiz.webkitRequestFullscreen?.()
+    } catch {}
+    try { await (screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> }).lock?.('landscape') } catch {}
+  }
+  const cerrarPantallaCompleta = async () => {
+    setModoPresentacion(false)
+    try {
+      const doc = document as Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => Promise<void> | void }
+      if (document.fullscreenElement) await document.exitFullscreen?.()
+      else if (doc.webkitFullscreenElement) await doc.webkitExitFullscreen?.()
+    } catch {}
+    try { (screen.orientation as ScreenOrientation & { unlock?: () => void }).unlock?.() } catch {}
+  }
   const copiarEnlaceActual = async () => { try { await navigator.clipboard.writeText(window.location.href); mostrarToast('Enlace del proyecto copiado') } catch { mostrarToast('No se pudo copiar el enlace') } }
   const compartirInterno = async () => { try { if (navigator.share) await navigator.share({ title: titulo, text: 'Proyecto de Centro Pastoral', url: window.location.href }); else await copiarEnlaceActual() } catch {} }
   const alinear = (alineacion: Alineacion) => textoSeleccionado && !textoSeleccionado.bloqueado && actualizarElemento(textoSeleccionado.id, { alineacion })
@@ -1142,9 +1190,9 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
       </div>
     </section>}
 
-    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex items-center justify-center overflow-hidden bg-black' : 'relative pb-10 pt-5'}>{!modoPresentacion && <div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Mismo lienzo y formato, sin reconstruir diapositivas.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>}{modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}<div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}><div className={presentarHorizontalGirado ? 'flex items-center justify-center' : 'w-full'} style={estiloPresentacionHorizontal}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport={modoPresentacion && !presentarHorizontalGirado} /></div></div><button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronRight className="h-5 w-5" /></button></section>}
+    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black overscroll-none' : 'relative pb-10 pt-5'}>{!modoPresentacion && <div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Presentación</h2><p className="text-xs text-slate-500">Mismo lienzo y formato, sin reconstruir diapositivas.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>}{modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}<div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}><div className={presentarHorizontalGirado ? 'flex items-center justify-center' : 'w-full'} style={estiloPresentacionHorizontal}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport={modoPresentacion && !presentarHorizontalGirado} /></div></div><button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`}><ChevronRight className="h-5 w-5" /></button></section>}
 
-    {vista === 'congregacion' && pagina && <section className="pb-10 pt-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">Exactamente la misma composición que se proyectará.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} />{modoPresentacion && <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black"><button type="button" onClick={cerrarPantallaCompleta} className="absolute right-3 top-3 z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white"><Minimize2 className="h-5 w-5" /></button><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport /></div>}</section>}
+    {vista === 'congregacion' && pagina && <section className="pb-10 pt-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">Exactamente la misma composición que se proyectará.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} />{modoPresentacion && <div className="fixed inset-0 z-[170] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black overscroll-none"><button type="button" onClick={cerrarPantallaCompleta} className="absolute right-3 top-3 z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white"><Minimize2 className="h-5 w-5" /></button><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport /></div>}</section>}
 
     {vista === 'publicar' && <section className="pastoral-share-view space-y-4 pb-10 pt-5"><PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /><div className="pastoral-share-actions"><button type="button" onClick={() => window.print()}><FileDown /><span>PDF</span></button><button type="button" onClick={compartirInterno}><Share2 /><span>Compartir</span></button><button type="button" onClick={copiarEnlaceActual}><Link2 /><span>Copiar enlace</span></button></div><p className="text-[11px] leading-5 text-slate-500">El enlace actual conserva el acceso de VIDA. Un enlace público para redes/WhatsApp y el control remoto OBS/proyector requieren una capa segura de publicación y emparejamiento; no se exponen anónimamente todavía.</p></section>}
 

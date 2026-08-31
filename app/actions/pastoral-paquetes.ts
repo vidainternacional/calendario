@@ -13,6 +13,7 @@ type TemaFondo = 'claro' | 'amanecer' | 'cielo' | 'bosque' | 'noche' | 'vino'
 type TipoElemento = 'texto' | 'imagen' | 'versiculo'
 type RolTexto = 'titulo' | 'subtitulo' | 'cuerpo' | 'libre'
 type AjusteImagen = 'cover' | 'contain'
+type ModoFusion = 'normal' | 'multiply' | 'screen' | 'overlay' | 'soft-light' | 'hard-light' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'difference' | 'hue' | 'saturation' | 'color' | 'luminosity'
 
 type ElementoCanvas = {
   id: string
@@ -37,6 +38,12 @@ type ElementoCanvas = {
   opacidad?: number
   ajuste?: AjusteImagen
   radio?: number
+  oculto?: boolean
+  fondo_visual?: string
+  es_capa_fondo?: boolean
+  modo_fusion?: ModoFusion
+  bloqueado?: boolean
+  sombreado?: boolean
 }
 
 type Diapositiva = {
@@ -59,6 +66,9 @@ const FUENTES = new Set([
   'Inter', 'Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS',
   'Georgia', 'Times New Roman', 'Palatino Linotype', 'Garamond',
   'Courier New', 'Lucida Console', 'Impact', 'Arial Black',
+  'Avenir Next', 'Futura', 'Helvetica Neue', 'Didot', 'Baskerville',
+  'var(--font-pastoral-eb-garamond)', 'var(--font-pastoral-montserrat)',
+  'var(--font-pastoral-playfair-display)', 'var(--font-pastoral-bebas-neue)',
 ])
 const TEMAS = new Set<TemaFondo>(['claro', 'amanecer', 'cielo', 'bosque', 'noche', 'vino'])
 
@@ -86,6 +96,16 @@ function recursosDesdeFormulario(formData: FormData) { return Array.from(new Set
 function rolTextoValido(valor: unknown): RolTexto { return valor === 'titulo' || valor === 'subtitulo' || valor === 'cuerpo' ? valor : 'libre' }
 function tamanoInicialRol(rol: RolTexto, tipo: TipoElemento) { if (tipo === 'versiculo') return 28; if (rol === 'titulo') return 54; if (rol === 'subtitulo') return 34; if (rol === 'cuerpo') return 22; return 28 }
 function pesoInicialRol(rol: RolTexto) { if (rol === 'titulo') return 800; if (rol === 'subtitulo') return 700; return 500 }
+
+const MODOS_FUSION_SEGUROS = new Set<ModoFusion>(['normal','multiply','screen','overlay','soft-light','hard-light','darken','lighten','color-dodge','color-burn','difference','hue','saturation','color','luminosity'])
+function modoFusionSeguro(valor: unknown): ModoFusion { const modo = String(valor ?? 'normal') as ModoFusion; return MODOS_FUSION_SEGUROS.has(modo) ? modo : 'normal' }
+function fondoVisualSeguro(valor: unknown) {
+  const fondo = String(valor ?? '').trim()
+  if (!fondo || /url\s*\(/i.test(fondo) || /[;{}]/.test(fondo)) return undefined
+  if (/^#[0-9a-f]{3,8}$/i.test(fondo) || /^hsla?\([^)]+\)$/i.test(fondo)) return fondo
+  if (/^(?:linear-gradient|radial-gradient|conic-gradient|repeating-linear-gradient)\(.+\)$/i.test(fondo)) return fondo
+  return undefined
+}
 
 function elementosValidos(valor: FormDataEntryValue | undefined): ElementoCanvas[] {
   let items: unknown = []
@@ -125,6 +145,12 @@ function elementosValidos(valor: FormDataEntryValue | undefined): ElementoCanvas
       opacidad: numeroAcotado(item.opacidad, 0.1, 1, 1),
       ajuste,
       radio: numeroAcotado(item.radio, 0, 40, 14),
+      oculto: Boolean(item.oculto),
+      fondo_visual: fondoVisualSeguro(item.fondo_visual),
+      es_capa_fondo: Boolean(item.es_capa_fondo),
+      modo_fusion: modoFusionSeguro(item.modo_fusion),
+      bloqueado: Boolean(item.bloqueado),
+      sombreado: Boolean(item.sombreado),
     } satisfies ElementoCanvas]
   })
 }
@@ -187,10 +213,10 @@ export async function editarPaquetePastoral(id: string, formData: FormData) {
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const titulo = texto(formData, 'titulo', 140)
   if (!titulo) return { success: false, error: 'El título es obligatorio.' }
-  const { error: updateError } = await (supabase as any).from('pastoral_paquetes').update({
+  const { data: updatedRows, error: updateError } = await (supabase as any).from('pastoral_paquetes').update({
     titulo, descripcion_publica: texto(formData, 'descripcion_publica', 2000), instrucciones: texto(formData, 'instrucciones', 3000), notas_privadas: texto(formData, 'notas_privadas', 12000), bosquejo_id: uuidOpcional(formData.get('bosquejo_id')), coleccion_id: uuidOpcional(formData.get('coleccion_id')), recurso_ids: recursosDesdeFormulario(formData), presentacion_diapositivas: diapositivasDesdeFormulario(formData), presentacion_pdf_recurso_id: uuidOpcional(formData.get('presentacion_pdf_recurso_id')), estado: estadoValido(texto(formData, 'estado', 20)), updated_at: new Date().toISOString(),
-  }).eq('id', id).eq('profile_id', user.id)
-  if (updateError) return { success: false, error: 'No se pudo guardar el proyecto pastoral.' }
+  }).eq('id', id).eq('profile_id', user.id).select('id')
+  if (updateError || !updatedRows?.length) return { success: false, error: 'No se pudo guardar el proyecto pastoral.' }
   revalidatePath('/pastoral'); revalidatePath('/pastoral/paquetes'); revalidatePath(`/pastoral/paquetes/${id}`)
   return { success: true }
 }
