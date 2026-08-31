@@ -1,0 +1,37 @@
+name: Pastoral textures Bible AI v2
+
+on:
+  push:
+    branches:
+      - automation/pastoral-textures-bible-ai
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/centro-pastoral-reorganizacion
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Fetch patch script from helper branch
+        run: git show origin/automation/pastoral-textures-bible-ai:scripts/apply-pastoral-textures-bible-ai.py > /tmp/apply-pastoral-textures-bible-ai.py
+      - name: Apply patch
+        run: python /tmp/apply-pastoral-textures-bible-ai.py
+      - name: Build
+        run: npm run build
+      - name: Publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/PastoralVersePicker.tsx app/api/pastoral/original-word/route.ts
+          git diff --cached --check
+          git commit -m "feat(pastoral): personalize textures and add Bible AI fallback"
+          git push origin HEAD:agent/centro-pastoral-reorganizacion
