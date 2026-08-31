@@ -1,0 +1,77 @@
+name: Fix pastoral saved-state loading
+
+on:
+  push:
+    branches:
+      - automation/pastoral-save-load-fix
+    paths:
+      - .github/workflows/internal-fix-pastoral-save-load.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Checkout active pastoral branch
+        run: |
+          git fetch origin agent/centro-pastoral-reorganizacion
+          git checkout -B agent/centro-pastoral-reorganizacion origin/agent/centro-pastoral-reorganizacion
+          test "$(git rev-parse HEAD)" = "1aee72b7f858ec980d2bb01b8de8d7298ce9d71a"
+
+      - name: Apply focused persistence fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          wrapper = Path('components/pastoral/ProyectoContenidoWorkspace.tsx')
+          wrapper.write_text("""'use client'\n\nimport PastoralVisualWorkspaceV4 from '@/components/pastoral/PastoralVisualWorkspaceV4'\n\nexport default function ProyectoContenidoWorkspace({ paquete, coleccion, biblioteca }: any) {\n  return <PastoralVisualWorkspaceV4 paquete={paquete} coleccion={coleccion} biblioteca={biblioteca} />\n}\n""", encoding='utf-8')
+
+          workspace = Path('components/pastoral/PastoralVisualWorkspaceV4.tsx')
+          text = workspace.read_text(encoding='utf-8')
+          old = "setGuardado(true); window.setTimeout(() => setGuardado(false), 1500); mostrarToast('Proyecto guardado')"
+          new = "setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one success-toast save marker, found {text.count(old)}')
+          workspace.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate ephemeral VAPID keys
+        run: |
+          node - <<'NODE'
+          const fs = require('fs')
+          const webpush = require('web-push')
+          const keys = webpush.generateVAPIDKeys()
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}\nVAPID_PRIVATE_KEY=${keys.privateKey}\nVAPID_SUBJECT=mailto:ci@vida.invalid\n`)
+          NODE
+
+      - name: Verify focused diff
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' 'components/pastoral/PastoralVisualWorkspaceV4.tsx' 'components/pastoral/ProyectoContenidoWorkspace.tsx' | sort)"
+          ! grep -q "Proyecto guardado" components/pastoral/PastoralVisualWorkspaceV4.tsx
+          ! grep -q "limpiarMuestrasLegadasRotas\|esPaginaConMuestraLegadaIncompleta" components/pastoral/ProyectoContenidoWorkspace.tsx
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to active branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/ProyectoContenidoWorkspace.tsx
+          git commit -m "fix(pastoral): preserve saved editor state"
+          git push origin HEAD:agent/centro-pastoral-reorganizacion
