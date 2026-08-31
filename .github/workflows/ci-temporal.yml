@@ -33,6 +33,17 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Generar VAPID efímero para compilación
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const webpush = require('web-push')
+          const keys = webpush.generateVAPIDKeys()
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_SUBJECT=mailto:ci@example.invalid\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_PRIVATE_KEY=${keys.privateKey}\n`)
+          NODE
+
       - name: Compilar
         run: npm run build
         env:
