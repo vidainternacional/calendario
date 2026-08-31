@@ -7,6 +7,7 @@ export type TemaFondo = 'claro' | 'amanecer' | 'cielo' | 'bosque' | 'noche' | 'v
 export type TipoElemento = 'texto' | 'imagen' | 'versiculo'
 export type RolTexto = 'titulo' | 'subtitulo' | 'cuerpo' | 'libre'
 export type AjusteImagen = 'cover' | 'contain'
+export type ModoFusion = 'normal' | 'multiply' | 'screen' | 'overlay' | 'soft-light' | 'hard-light' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'difference' | 'hue' | 'saturation' | 'color' | 'luminosity'
 export type PanelLienzo = 'fondo' | 'texto' | 'parrafo' | 'recursos' | 'biblia' | 'diseno' | null
 export type VistaLienzo = 'contenido' | 'presentacion' | 'congregacion' | 'publicar'
 
@@ -35,6 +36,7 @@ export type ElementoCanvas = {
   radio?: number
   oculto?: boolean
   fondo_visual?: string
+  modo_fusion?: ModoFusion
 }
 
 export type DiapositivaCanvas = {
@@ -175,8 +177,15 @@ function fondoVisualSeguro(valor: unknown) {
   const fondo = String(valor ?? '').trim()
   if (!fondo || /url\s*\(/i.test(fondo) || /[;{}]/.test(fondo)) return undefined
   if (/^#[0-9a-f]{3,8}$/i.test(fondo)) return fondo
+  if (/^hsla?\([^)]+\)$/i.test(fondo)) return fondo
   if (/^(?:linear-gradient|radial-gradient|repeating-linear-gradient)\(.+\)$/i.test(fondo)) return fondo
   return undefined
+}
+
+const MODOS_FUSION_SEGUROS = new Set<ModoFusion>(['normal','multiply','screen','overlay','soft-light','hard-light','darken','lighten','color-dodge','color-burn','difference','hue','saturation','color','luminosity'])
+function modoFusionSeguro(valor: unknown): ModoFusion {
+  const modo = String(valor ?? 'normal') as ModoFusion
+  return MODOS_FUSION_SEGUROS.has(modo) ? modo : 'normal'
 }
 
 export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 0): ElementoCanvas {
@@ -205,7 +214,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
     interlineado: clamp(Number(item.interlineado ?? INTERLINEADO_BASE_POR_ROL[rol]), .8, 3), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
-    oculto: Boolean(item.oculto), fondo_visual: fondoVisualSeguro(item.fondo_visual),
+    oculto: Boolean(item.oculto), fondo_visual: fondoVisualSeguro(item.fondo_visual), modo_fusion: modoFusionSeguro(item.modo_fusion),
   }
 }
 

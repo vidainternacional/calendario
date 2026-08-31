@@ -404,7 +404,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         onPointerUp={terminarGesto}
         onPointerCancel={terminarGesto}
         onPointerDown={iniciarInteraccionLienzo}
-        className={`pastoral-visual-canvas relative w-full overflow-hidden bg-white shadow-sm ${editable ? `${imagenSeleccionadaEditable ? 'touch-none' : 'touch-pan-y'} ring-1 ring-slate-200` : ''}`}
+        className={`pastoral-visual-canvas isolate relative w-full overflow-hidden bg-white shadow-sm ${editable ? `${imagenSeleccionadaEditable ? 'touch-none' : 'touch-pan-y'} ring-1 ring-slate-200` : ''}`}
         style={estiloLienzo}
       >
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />}
@@ -427,7 +427,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
               editable && onSelect?.(elemento.id)
             }}
             className={`absolute overflow-visible ${editable && elemento.tipo === 'imagen' && !bloqueado ? 'touch-none' : ''} ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
-            style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, display: elemento.oculto ? 'none' : undefined }}
+            style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, mixBlendMode: elemento.modo_fusion ?? 'normal', display: elemento.oculto ? 'none' : undefined }}
           >
             {esFondoVisual ? <div className="h-full w-full" style={{ background: elemento.fondo_visual }} /> : elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>

@@ -20,7 +20,7 @@ import {
   ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clamp, clonar, limpiarHtmlCanvas,
   nuevaPaginaCanvas, nuevoIdCanvas, normalizarElementoCanvas, normalizarPaginaCanvas,
   type Alineacion, type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
-  type RolTexto, type VistaLienzo,
+  type ModoFusion, type RolTexto, type VistaLienzo,
 } from '@/components/pastoral/pastoral-canvas-model'
 
 type Audiencia = 'iglesia' | 'lideres' | 'servidores' | 'publico'
@@ -93,6 +93,23 @@ const BANCOS_EXTERNOS = [
   { label: 'Pixabay', href: 'https://pixabay.com/' },
 ]
 const COLORES_TEXTO = ['#0f172a', '#ffffff', '#334155', '#7f1d1d', '#14532d', '#1e3a8a', '#5b2733', '#3a2144']
+const MODOS_FUSION: Array<{ id: ModoFusion; label: string }> = [
+  { id: 'normal', label: 'Normal' },
+  { id: 'multiply', label: 'Multiplicar' },
+  { id: 'screen', label: 'Trama' },
+  { id: 'overlay', label: 'Superponer' },
+  { id: 'soft-light', label: 'Luz suave' },
+  { id: 'hard-light', label: 'Luz fuerte' },
+  { id: 'darken', label: 'Oscurecer' },
+  { id: 'lighten', label: 'Aclarar' },
+  { id: 'color-dodge', label: 'Sobreexponer color' },
+  { id: 'color-burn', label: 'Subexponer color' },
+  { id: 'difference', label: 'Diferencia' },
+  { id: 'hue', label: 'Tono' },
+  { id: 'saturation', label: 'Saturación' },
+  { id: 'color', label: 'Color' },
+  { id: 'luminosity', label: 'Luminosidad' },
+]
 const FUENTE_MUESTRA = FUENTES_PASTORALES.find((fuente) => fuente !== 'Inter') ?? FUENTES_PASTORALES[0] ?? 'Georgia'
 const claseBotonActivo = (activo: boolean) => `pastoral-inline-icon ${activo ? 'is-active' : ''}`
 const claseControlTexto = (activo = false) => `grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border text-slate-700 disabled:opacity-30 ${activo ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white'}`
@@ -178,6 +195,9 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [tonoFondoPersonalizado, setTonoFondoPersonalizado] = useState(260)
   const [saturacionFondoPersonalizado, setSaturacionFondoPersonalizado] = useState(70)
   const [luminosidadFondoPersonalizado, setLuminosidadFondoPersonalizado] = useState(52)
+  const [modoAplicacionFondo, setModoAplicacionFondo] = useState<'base' | 'capa'>('base')
+  const [modoFusionFondoNuevo, setModoFusionFondoNuevo] = useState<ModoFusion>('overlay')
+  const [opacidadFondoNuevo, setOpacidadFondoNuevo] = useState(0.65)
   const pagina = paginas[indice] ?? paginas[0]
   const elementoSeleccionado = (pagina?.elementos?.find((item) => item.id === seleccion) ?? null) as ElementoCanvasEditor | null
   const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && !elementoSeleccionado.fondo_visual ? elementoSeleccionado : null
@@ -448,13 +468,27 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     setDestinoSubida('elemento')
   }
 
-  const aplicarFondoVisual = (paleta: PaletaPresentacion) => actualizarPagina({ fondo_modo: 'color', fondo: paleta.fondo, fondo_recurso_id: null, recurso_id: null })
+  const agregarFondoComoCapa = (fondo: string) => {
+    registrarHistorial()
+    const existentes = pagina.elementos ?? []
+    const cantidadFondos = existentes.filter((elemento) => Boolean(elemento.fondo_visual)).length
+    const z = Math.min(.99, .01 + cantidadFondos * .01)
+    const capa = normalizarElementoCanvas({ tipo: 'texto', rol: 'libre', contenido: '', x: 0, y: 0, w: 100, h: 100, z, fondo_visual: fondo, opacidad: opacidadFondoNuevo, modo_fusion: modoFusionFondoNuevo }, existentes.length)
+    patchPaginaSinHistorial({ elementos: [...existentes, capa] })
+    setSeleccion(null)
+    mostrarToast('Capa de fondo añadida')
+  }
+  const aplicarFondoSeleccionado = (fondo: string) => {
+    if (modoAplicacionFondo === 'capa') { agregarFondoComoCapa(fondo); return }
+    actualizarPagina({ fondo_modo: 'color', fondo, fondo_recurso_id: null, recurso_id: null })
+  }
+  const aplicarFondoVisual = (paleta: PaletaPresentacion) => aplicarFondoSeleccionado(paleta.fondo)
 
   const tonoComplementario = (tonoFondoPersonalizado + 180) % 360
   const fondoPersonalizadoPlano = `hsl(${tonoFondoPersonalizado}, ${saturacionFondoPersonalizado}%, ${luminosidadFondoPersonalizado}%)`
   const fondoPersonalizadoDegradado = `linear-gradient(135deg,hsl(${tonoFondoPersonalizado}, ${saturacionFondoPersonalizado}%, ${luminosidadFondoPersonalizado}%) 0%,hsl(${tonoComplementario}, ${Math.max(35, saturacionFondoPersonalizado - 10)}%, ${Math.min(78, luminosidadFondoPersonalizado + 12)}%) 100%)`
   const fondoPersonalizadoTextura = `repeating-linear-gradient(135deg,hsla(${tonoComplementario}, ${saturacionFondoPersonalizado}%, ${Math.max(22, luminosidadFondoPersonalizado - 12)}%, .16) 0 2px,transparent 2px 11px),linear-gradient(hsl(${tonoFondoPersonalizado}, ${Math.max(24, saturacionFondoPersonalizado - 22)}%, ${Math.min(90, luminosidadFondoPersonalizado + 22)}%),hsl(${tonoFondoPersonalizado}, ${Math.max(28, saturacionFondoPersonalizado - 12)}%, ${Math.max(18, luminosidadFondoPersonalizado - 8)}%))`
-  const aplicarFondoPersonalizado = (fondo: string) => actualizarPagina({ fondo_modo: 'color', fondo, fondo_recurso_id: null, recurso_id: null })
+  const aplicarFondoPersonalizado = (fondo: string) => aplicarFondoSeleccionado(fondo)
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
     registrarHistorial()
@@ -813,9 +847,9 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           <div className="grid grid-cols-[64px_1fr] items-center gap-3">
             <div className="grid h-16 w-16 place-items-center rounded-full border border-slate-200" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-7 w-7 rounded-full border-[3px] border-white shadow" style={{ background: fondoPersonalizadoPlano }} /></div>
             <div className="grid gap-2">
-              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Tono · {tonoFondoPersonalizado}°<input type="range" min="0" max="359" value={tonoFondoPersonalizado} onChange={(event) => setTonoFondoPersonalizado(Number(event.target.value))} className="w-full accent-indigo-600" /></label>
-              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Saturación · {saturacionFondoPersonalizado}%<input type="range" min="0" max="100" value={saturacionFondoPersonalizado} onChange={(event) => setSaturacionFondoPersonalizado(Number(event.target.value))} className="w-full accent-indigo-600" /></label>
-              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Luminosidad · {luminosidadFondoPersonalizado}%<input type="range" min="8" max="92" value={luminosidadFondoPersonalizado} onChange={(event) => setLuminosidadFondoPersonalizado(Number(event.target.value))} className="w-full accent-indigo-600" /></label>
+              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Tono · {tonoFondoPersonalizado}°<input type="range" min="0" max="359" value={tonoFondoPersonalizado} onInput={(event) => setTonoFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setTonoFondoPersonalizado(Number(event.currentTarget.value))} className="w-full touch-none accent-indigo-600" style={{ background: 'linear-gradient(90deg,#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }} /></label>
+              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Saturación · {saturacionFondoPersonalizado}%<input type="range" min="0" max="100" value={saturacionFondoPersonalizado} onInput={(event) => setSaturacionFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setSaturacionFondoPersonalizado(Number(event.currentTarget.value))} className="w-full touch-none accent-indigo-600" style={{ background: `linear-gradient(90deg,hsl(${tonoFondoPersonalizado},0%,${luminosidadFondoPersonalizado}%),hsl(${tonoFondoPersonalizado},100%,${luminosidadFondoPersonalizado}%))` }} /></label>
+              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Luminosidad · {luminosidadFondoPersonalizado}%<input type="range" min="8" max="92" value={luminosidadFondoPersonalizado} onInput={(event) => setLuminosidadFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setLuminosidadFondoPersonalizado(Number(event.currentTarget.value))} className="w-full touch-none accent-indigo-600" style={{ background: `linear-gradient(90deg,hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,8%),hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,50%),hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,92%))` }} /></label>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -823,6 +857,18 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
             <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoDegradado)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoDegradado }} />Degradado</button>
             <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoTextura)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoTextura }} />Textura</button>
           </div>
+        </div>}
+      </section>
+      <section className="grid gap-2 rounded-2xl border border-slate-200 bg-white/80 p-3">
+        <div className="flex items-center justify-between gap-3"><div><strong className="block text-xs font-black text-slate-700">Composición</strong><small className="text-[10px] font-semibold text-slate-400">Usa una base y añade todas las capas que quieras.</small></div><span className="text-[10px] font-black text-indigo-600">{(pagina.elementos ?? []).filter((elemento) => Boolean(elemento.fondo_visual)).length} capas</span></div>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setModoAplicacionFondo('base')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${modoAplicacionFondo === 'base' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}>Base</button>
+          <button type="button" onClick={() => setModoAplicacionFondo('capa')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${modoAplicacionFondo === 'capa' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}>+ Capa</button>
+        </div>
+        {modoAplicacionFondo === 'capa' && <div className="grid gap-2 border-t border-slate-100 pt-2">
+          <label className="grid grid-cols-[110px_1fr] items-center gap-2 text-[10px] font-bold text-slate-500"><span>Modo de fusión</span><select value={modoFusionFondoNuevo} onChange={(event) => setModoFusionFondoNuevo(event.target.value as ModoFusion)} className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select></label>
+          <label className="grid grid-cols-[110px_1fr_38px] items-center gap-2 text-[10px] font-bold text-slate-500"><span>Opacidad</span><input type="range" min="0.1" max="1" step="0.05" value={opacidadFondoNuevo} onInput={(event) => setOpacidadFondoNuevo(Number(event.currentTarget.value))} onChange={(event) => setOpacidadFondoNuevo(Number(event.currentTarget.value))} className="min-w-0 touch-none accent-indigo-600" /><span className="text-right">{Math.round(opacidadFondoNuevo * 100)}%</span></label>
+          <small className="leading-4 text-slate-400">Cada fondo que elijas se añadirá sobre los anteriores y se fusionará con las capas que tenga debajo.</small>
         </div>}
       </section>
       <div className="pastoral-background-grid" aria-label="Galería de fondos">
@@ -879,7 +925,11 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     {panel === 'diseno' && <div className="pastoral-panel-content"><div className="pastoral-panel-heading"><h3>Relación de aspecto</h3><p>16:9 funciona mejor para cañón, pantallas y la mayoría de proyectores modernos.</p></div><div className="pastoral-aspect-control">{FORMATOS_LIENZO.map(({ id, label, detalle }) => { const Icon = id === '9:16' ? Smartphone : id === '1:1' ? Square : Monitor; return <button key={id} type="button" onClick={() => actualizarPagina({ formato: id })} className={pagina.formato === id ? 'is-active' : ''}><Icon /><span><strong>{detalle}</strong><small>{label}</small></span></button> })}</div></div>}
 
     {panel === 'capas' && <div className="pastoral-panel-content grid gap-3">
-      {elementoSeleccionado && <div className="flex items-center gap-3 border-b border-slate-200 px-1 pb-3"><span className="text-[11px] font-black text-slate-500">Opacidad</span><input type="range" min="0.1" max="1" step="0.05" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.opacidad ?? 1} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.target.value) })} className="min-w-0 flex-1 disabled:opacity-30" aria-label="Opacidad de la capa seleccionada" /><span className="w-10 text-right text-[11px] font-bold text-slate-500">{Math.round((elementoSeleccionado.opacidad ?? 1) * 100)}%</span></div>}
+      {elementoSeleccionado && <div className="grid gap-2 border-b border-slate-200 px-1 pb-3">
+        <div className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Opacidad</span><input type="range" min="0.1" max="1" step="0.05" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.opacidad ?? 1} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onInput={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.currentTarget.value) })} onChange={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.currentTarget.value) })} className="min-w-0 flex-1 touch-none disabled:opacity-30" aria-label="Opacidad de la capa seleccionada" /><span className="w-10 text-right text-[11px] font-bold text-slate-500">{Math.round((elementoSeleccionado.opacidad ?? 1) * 100)}%</span></div>
+        <label className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Fusión</span><select disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.modo_fusion ?? 'normal'} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(event) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { modo_fusion: event.target.value as ModoFusion })} className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none disabled:opacity-30" aria-label="Modo de fusión de la capa seleccionada">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select></label>
+        <small className="pl-[90px] leading-4 text-slate-400">La capa seleccionada se fusiona visualmente con todas las capas que tenga debajo, sin destruir ninguna.</small>
+      </div>}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-label="Lista vertical de capas">
         {(pagina.elementos ?? []).slice().sort((a, b) => b.z - a.z).map((elementoBase) => {
           const elemento = elementoBase as ElementoCanvasEditor
