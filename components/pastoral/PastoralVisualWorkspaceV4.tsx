@@ -6,7 +6,7 @@ import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, BookOpen, Check,
   ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, EyeOff, FileDown, GripVertical, Image as ImageIcon, Italic,
   Layers, LayoutTemplate, Link2, List, ListOrdered, Loader2, Lock, Maximize2, Minimize2,
-  Monitor, Palette, Plus, Redo2, Save, Share2, Smartphone, Square, Strikethrough,
+  Monitor, Palette, Plus, Redo2, Save, Share2, Square, Strikethrough,
   Trash2, Type, Underline, Undo2, Unlock, Upload,
 } from 'lucide-react'
 import { editarPaquetePastoral } from '@/app/actions/pastoral-paquetes'
@@ -17,7 +17,7 @@ import PastoralVersePicker from '@/components/pastoral/PastoralVersePicker'
 import PastoralVisualCanvas from '@/components/pastoral/PastoralVisualCanvas'
 import { PALETAS_PRESENTACION, PLANTILLAS_VISUALES, type PaletaPresentacion, type PlantillaVisual } from '@/components/pastoral/pastoral-editor-presets'
 import {
-  ESTILOS_TEXTO, FORMATOS_LIENZO, FUENTES_PASTORALES, TEMAS_LIENZO, clamp, clonar, limpiarHtmlCanvas,
+  ESTILOS_TEXTO, FUENTES_PASTORALES, TEMAS_LIENZO, clamp, clonar, limpiarHtmlCanvas,
   nuevaPaginaCanvas, nuevoIdCanvas, normalizarElementoCanvas, normalizarPaginaCanvas,
   type Alineacion, type DiapositivaCanvas, type ElementoCanvas, type RecursoPastoral,
   type ModoFusion, type RolTexto, type VistaLienzo,
@@ -122,7 +122,7 @@ function textoPlano(html: string) {
 }
 
 function nombreCapa(elemento: ElementoCanvas) {
-  if (elemento.fondo_visual) return 'Fondo'
+  if (elemento.es_capa_fondo || elemento.fondo_visual) return 'Fondo'
   if (elemento.tipo === 'imagen') return 'Imagen'
   if (elemento.tipo === 'versiculo') return 'Versículo'
   if (elemento.rol === 'titulo') return 'Título'
@@ -152,6 +152,7 @@ function normalizarPaginaEditor(item: DiapositivaCanvas) {
   const originales = new Map((item.elementos ?? []).map((elemento) => [elemento.id, elemento as ElementoCanvasEditor]))
   return {
     ...normal,
+    formato: '16:9' as const,
     elementos: (normal.elementos ?? []).map((elemento) => {
       const original = originales.get(elemento.id)
       return { ...elemento, bloqueado: Boolean(original?.bloqueado), sombreado: Boolean(original?.sombreado) } as ElementoCanvasEditor
@@ -192,16 +193,14 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [recursoPendiente, setRecursoPendiente] = useState<{ id: string; destino: DestinoSubida } | null>(null)
   const [versionHistorial, setVersionHistorial] = useState(0)
   const [selectorFondoAbierto, setSelectorFondoAbierto] = useState(false)
+  const [selectorImagenesAbierto, setSelectorImagenesAbierto] = useState(false)
   const [tonoFondoPersonalizado, setTonoFondoPersonalizado] = useState(260)
   const [saturacionFondoPersonalizado, setSaturacionFondoPersonalizado] = useState(70)
   const [luminosidadFondoPersonalizado, setLuminosidadFondoPersonalizado] = useState(52)
-  const [modoAplicacionFondo, setModoAplicacionFondo] = useState<'base' | 'capa'>('base')
-  const [modoFusionFondoNuevo, setModoFusionFondoNuevo] = useState<ModoFusion>('overlay')
-  const [opacidadFondoNuevo, setOpacidadFondoNuevo] = useState(0.65)
   const pagina = paginas[indice] ?? paginas[0]
   const elementoSeleccionado = (pagina?.elementos?.find((item) => item.id === seleccion) ?? null) as ElementoCanvasEditor | null
   const textoSeleccionado = elementoSeleccionado && elementoSeleccionado.tipo !== 'imagen' && !elementoSeleccionado.fondo_visual ? elementoSeleccionado : null
-  const fondoVisualDesbloqueado = Boolean(pagina?.elementos?.some((item) => item.fondo_visual))
+  const fondoVisualDesbloqueado = Boolean(pagina?.elementos?.some((item) => item.es_capa_fondo || item.fondo_visual))
   const imagenes = useMemo(() => biblioteca.filter((item) => item.mime_type?.startsWith('image/') && item.acceso_url), [biblioteca])
   const recursosFiltrados = useMemo(() => {
     const q = busquedaRecursos.trim().toLowerCase()
@@ -296,7 +295,15 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     actualizarElemento(textoSeleccionado.id, { rol, tamano_fuente: estilo.pt, peso: estilo.peso })
   }
   const agregarImagen = (recurso: RecursoPastoral) => agregarElemento({ tipo: 'imagen', recurso_id: recurso.id, x: 12, y: 18, w: 56, h: 48, ajuste: 'cover', radio: 14 })
-  const aplicarFondoImagen = (recurso: RecursoPastoral) => actualizarPagina({ fondo_modo: 'imagen', fondo: '#ffffff', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
+  const aplicarFondoImagen = (recurso: RecursoPastoral) => {
+    const capaActiva = elementoSeleccionado as ElementoCanvasEditor | null
+    if (capaActiva?.es_capa_fondo) {
+      if (capaActiva.bloqueado) return mostrarToast('Desbloquea la capa antes de cambiar su fondo')
+      actualizarElemento(capaActiva.id, { tipo: 'imagen', recurso_id: recurso.id, contenido: undefined, fondo_visual: undefined, x: 0, y: 0, w: 100, h: 100, ajuste: 'cover', radio: 0, es_capa_fondo: true })
+      return
+    }
+    actualizarPagina({ fondo_modo: 'imagen', fondo: '#ffffff', fondo_recurso_id: recurso.id, recurso_id: recurso.id })
+  }
   const eliminarElemento = (id: string) => { registrarHistorial(); patchPaginaSinHistorial({ elementos: (pagina.elementos ?? []).filter((el) => el.id !== id) }); setSeleccion(null); setCapaAccionesAbiertas(null) }
   const duplicarElemento = (id: string) => { const original = pagina.elementos?.find((el) => el.id === id) as ElementoCanvasEditor | undefined; if (!original) return; agregarElemento({ ...clonar(original), id: undefined, bloqueado: false, x: Math.min(original.x + 4, 90), y: Math.min(original.y + 4, 90), z: original.z + 1 }) }
   const alternarVisibilidadCapa = (id: string) => { const elemento = pagina.elementos?.find((el) => el.id === id); if (!elemento) return; actualizarElemento(id, { oculto: !elemento.oculto }) }
@@ -454,13 +461,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     registrarHistorial()
     const elementosAjustados = (pagina.elementos ?? []).map((elemento) => ({ ...elemento, z: Math.min(200, elemento.z + 1) }))
     if (pagina.fondo_modo === 'imagen' && recursoId) {
-      const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'contain', radio: 0, opacidad: 1 }, 0), bloqueado: false } as ElementoCanvasEditor
+      const fondo = { ...normalizarElementoCanvas({ tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0, ajuste: 'cover', radio: 0, opacidad: 1, es_capa_fondo: true }, 0), bloqueado: false } as ElementoCanvasEditor
       patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
       setSeleccion(fondo.id)
     } else {
       const tema = TEMAS_LIENZO.find((item) => item.id === pagina.fondo_tema) ?? TEMAS_LIENZO[0]
       const fondoVisual = pagina.fondo_modo === 'tema' ? tema.css : pagina.fondo ?? '#ffffff'
-      const fondo = { ...normalizarElementoCanvas({ tipo: 'texto', rol: 'libre', contenido: '', x: 0, y: 0, w: 100, h: 100, z: 0, fondo_visual: fondoVisual }, 0), bloqueado: false } as ElementoCanvasEditor
+      const fondo = { ...normalizarElementoCanvas({ tipo: 'texto', rol: 'libre', contenido: '', x: 0, y: 0, w: 100, h: 100, z: 0, fondo_visual: fondoVisual, es_capa_fondo: true }, 0), bloqueado: false } as ElementoCanvasEditor
       patchPaginaSinHistorial({ fondo_modo: 'color', fondo: '#ffffff', fondo_recurso_id: null, recurso_id: null, elementos: [fondo, ...elementosAjustados] })
       setSeleccion(fondo.id)
     }
@@ -468,18 +475,26 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     setDestinoSubida('elemento')
   }
 
-  const agregarFondoComoCapa = (fondo: string) => {
+  const crearCapaFondo = () => {
     registrarHistorial()
     const existentes = pagina.elementos ?? []
-    const cantidadFondos = existentes.filter((elemento) => Boolean(elemento.fondo_visual)).length
-    const z = Math.min(.99, .01 + cantidadFondos * .01)
-    const capa = normalizarElementoCanvas({ tipo: 'texto', rol: 'libre', contenido: '', x: 0, y: 0, w: 100, h: 100, z, fondo_visual: fondo, opacidad: opacidadFondoNuevo, modo_fusion: modoFusionFondoNuevo }, existentes.length)
-    patchPaginaSinHistorial({ elementos: [...existentes, capa] })
-    setSeleccion(null)
-    mostrarToast('Capa de fondo añadida')
+    const fondos = existentes.filter((elemento) => Boolean(elemento.es_capa_fondo || elemento.fondo_visual)).slice().sort((a, b) => a.z - b.z)
+    const contenido = existentes.filter((elemento) => !elemento.es_capa_fondo && !elemento.fondo_visual).slice().sort((a, b) => a.z - b.z)
+    const fondosOrdenados = fondos.map((elemento, posicion) => ({ ...elemento, z: posicion + 1 }))
+    const capa = { ...normalizarElementoCanvas({ tipo: 'texto', rol: 'libre', contenido: '', x: 0, y: 0, w: 100, h: 100, z: fondosOrdenados.length + 1, fondo_visual: '#00000000', opacidad: 1, modo_fusion: 'normal', es_capa_fondo: true }, existentes.length), bloqueado: false } as ElementoCanvasEditor
+    const contenidoOrdenado = contenido.map((elemento, posicion) => ({ ...elemento, z: fondosOrdenados.length + 2 + posicion }))
+    patchPaginaSinHistorial({ elementos: [...fondosOrdenados, capa, ...contenidoOrdenado] })
+    setSeleccion(capa.id)
+    setCapaAccionesAbiertas(null)
+    mostrarToast('Nueva capa creada')
   }
   const aplicarFondoSeleccionado = (fondo: string) => {
-    if (modoAplicacionFondo === 'capa') { agregarFondoComoCapa(fondo); return }
+    const capaActiva = elementoSeleccionado as ElementoCanvasEditor | null
+    if (capaActiva?.es_capa_fondo) {
+      if (capaActiva.bloqueado) return mostrarToast('Desbloquea la capa antes de cambiar su fondo')
+      actualizarElemento(capaActiva.id, { tipo: 'texto', contenido: '', recurso_id: null, fondo_visual: fondo, x: 0, y: 0, w: 100, h: 100, es_capa_fondo: true })
+      return
+    }
     actualizarPagina({ fondo_modo: 'color', fondo, fondo_recurso_id: null, recurso_id: null })
   }
   const aplicarFondoVisual = (paleta: PaletaPresentacion) => aplicarFondoSeleccionado(paleta.fondo)
@@ -780,6 +795,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   }, [titulo, paginas])
 
   const cambiarVista = (siguiente: VistaLienzo) => { setSeleccion(null); setCapaAccionesAbiertas(null); setVista(siguiente) }
+  const irPagina = (siguiente: number) => {
+    const seguro = Math.min(Math.max(siguiente, 0), paginas.length - 1)
+    if (seguro === indice) return
+    setIndice(seguro)
+    setSeleccion(null)
+    setCapaAccionesAbiertas(null)
+  }
   const moverPresentacion = (delta: number) => setIndice((actual) => Math.min(Math.max(actual + delta, 0), paginas.length - 1))
   const abrirPantallaCompleta = async () => { setModoPresentacion(true); try { await document.documentElement.requestFullscreen?.() } catch {} }
   const cerrarPantallaCompleta = async () => { setModoPresentacion(false); try { if (document.fullscreenElement) await document.exitFullscreen?.() } catch {} }
@@ -837,43 +859,49 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const panelContenido = pagina && panel ? <>
 
     {panel === 'fondos' && <div className="pastoral-panel-content grid gap-3 pb-3 pt-1">
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white/80">
-        <button type="button" onClick={() => setSelectorFondoAbierto((abierto) => !abierto)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left" aria-expanded={selectorFondoAbierto} aria-controls="pastoral-selector-fondo-libre">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white shadow-sm" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-4 w-4 rounded-full border-2 border-white" style={{ background: fondoPersonalizadoPlano }} /></span>
-          <span className="min-w-0 flex-1"><span className="block text-xs font-black text-slate-700">Rueda de color</span><small className="block truncate text-[10px] font-semibold text-slate-400">Crea una variante que no esté en la galería</small></span>
-          <span className="text-lg font-bold text-slate-400" aria-hidden="true">{selectorFondoAbierto ? '−' : '+'}</span>
+      <div className="grid grid-cols-3 gap-2" aria-label="Acciones de fondo">
+        <button type="button" onClick={() => { setSelectorFondoAbierto((abierto) => !abierto); setSelectorImagenesAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorFondoAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorFondoAbierto} aria-controls="pastoral-selector-fondo-libre">
+          <span className="grid h-9 w-9 place-items-center rounded-full border border-white shadow-sm" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: fondoPersonalizadoPlano }} /></span>
+          <span className="text-[10px] font-black text-slate-700">Rueda de color</span>
         </button>
-        {selectorFondoAbierto && <div id="pastoral-selector-fondo-libre" className="grid gap-3 border-t border-slate-100 px-3 py-3">
-          <div className="grid grid-cols-[64px_1fr] items-center gap-3">
-            <div className="grid h-16 w-16 place-items-center rounded-full border border-slate-200" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-7 w-7 rounded-full border-[3px] border-white shadow" style={{ background: fondoPersonalizadoPlano }} /></div>
-            <div className="grid gap-2">
-              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Tono · {tonoFondoPersonalizado}°<input type="range" min="0" max="359" value={tonoFondoPersonalizado} onInput={(event) => setTonoFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setTonoFondoPersonalizado(Number(event.currentTarget.value))} className="w-full touch-none accent-indigo-600" style={{ background: 'linear-gradient(90deg,#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }} /></label>
-              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Saturación · {saturacionFondoPersonalizado}%<input type="range" min="0" max="100" value={saturacionFondoPersonalizado} onInput={(event) => setSaturacionFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setSaturacionFondoPersonalizado(Number(event.currentTarget.value))} className="w-full touch-none accent-indigo-600" style={{ background: `linear-gradient(90deg,hsl(${tonoFondoPersonalizado},0%,${luminosidadFondoPersonalizado}%),hsl(${tonoFondoPersonalizado},100%,${luminosidadFondoPersonalizado}%))` }} /></label>
-              <label className="grid gap-1 text-[10px] font-bold text-slate-500">Luminosidad · {luminosidadFondoPersonalizado}%<input type="range" min="8" max="92" value={luminosidadFondoPersonalizado} onInput={(event) => setLuminosidadFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setLuminosidadFondoPersonalizado(Number(event.currentTarget.value))} className="w-full touch-none accent-indigo-600" style={{ background: `linear-gradient(90deg,hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,8%),hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,50%),hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,92%))` }} /></label>
-            </div>
+        <button type="button" onClick={() => { setSelectorImagenesAbierto((abierto) => !abierto); setSelectorFondoAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorImagenesAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorImagenesAbierto} aria-controls="pastoral-selector-imagenes">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-600"><ImageIcon className="h-4 w-4" /></span>
+          <span className="text-[10px] font-black text-slate-700">Imágenes</span>
+        </button>
+        <button type="button" onClick={crearCapaFondo} className="grid min-h-[74px] place-items-center gap-1 rounded-2xl border border-slate-200 bg-white px-2 py-2 text-center" aria-label="Crear nueva capa para fondo">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-indigo-50 text-indigo-600"><Plus className="h-4 w-4" /></span>
+          <span className="text-[10px] font-black text-slate-700">Nueva capa</span>
+        </button>
+      </div>
+
+      {selectorFondoAbierto && <section id="pastoral-selector-fondo-libre" className="grid gap-3 rounded-2xl border border-slate-200 bg-white/80 px-3 py-3">
+        <div className="grid grid-cols-[64px_1fr] items-center gap-3">
+          <div className="grid h-16 w-16 place-items-center rounded-full border border-slate-200" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-7 w-7 rounded-full border-[3px] border-white shadow" style={{ background: fondoPersonalizadoPlano }} /></div>
+          <div className="grid gap-2">
+            <label className="grid gap-1 text-[10px] font-bold text-slate-500">Tono · {tonoFondoPersonalizado}°<input type="range" min="0" max="359" value={tonoFondoPersonalizado} onInput={(event) => setTonoFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setTonoFondoPersonalizado(Number(event.currentTarget.value))} className="w-full accent-indigo-600" style={{ background: 'linear-gradient(90deg,#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }} /></label>
+            <label className="grid gap-1 text-[10px] font-bold text-slate-500">Saturación · {saturacionFondoPersonalizado}%<input type="range" min="0" max="100" value={saturacionFondoPersonalizado} onInput={(event) => setSaturacionFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setSaturacionFondoPersonalizado(Number(event.currentTarget.value))} className="w-full accent-indigo-600" style={{ background: `linear-gradient(90deg,hsl(${tonoFondoPersonalizado},0%,${luminosidadFondoPersonalizado}%),hsl(${tonoFondoPersonalizado},100%,${luminosidadFondoPersonalizado}%))` }} /></label>
+            <label className="grid gap-1 text-[10px] font-bold text-slate-500">Luminosidad · {luminosidadFondoPersonalizado}%<input type="range" min="8" max="92" value={luminosidadFondoPersonalizado} onInput={(event) => setLuminosidadFondoPersonalizado(Number(event.currentTarget.value))} onChange={(event) => setLuminosidadFondoPersonalizado(Number(event.currentTarget.value))} className="w-full accent-indigo-600" style={{ background: `linear-gradient(90deg,hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,8%),hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,50%),hsl(${tonoFondoPersonalizado},${saturacionFondoPersonalizado}%,92%))` }} /></label>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoPlano)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoPlano }} />Plano</button>
-            <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoDegradado)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoDegradado }} />Degradado</button>
-            <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoTextura)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoTextura }} />Textura</button>
-          </div>
-        </div>}
-      </section>
-      <section className="grid gap-2 rounded-2xl border border-slate-200 bg-white/80 p-3">
-        <div className="flex items-center justify-between gap-3"><div><strong className="block text-xs font-black text-slate-700">Composición</strong><small className="text-[10px] font-semibold text-slate-400">Usa una base y añade todas las capas que quieras.</small></div><span className="text-[10px] font-black text-indigo-600">{(pagina.elementos ?? []).filter((elemento) => Boolean(elemento.fondo_visual)).length} capas</span></div>
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => setModoAplicacionFondo('base')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${modoAplicacionFondo === 'base' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}>Base</button>
-          <button type="button" onClick={() => setModoAplicacionFondo('capa')} className={`min-h-10 rounded-full border px-3 text-xs font-bold ${modoAplicacionFondo === 'capa' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}>+ Capa</button>
         </div>
-        {modoAplicacionFondo === 'capa' && <div className="grid gap-2 border-t border-slate-100 pt-2">
-          <label className="grid grid-cols-[110px_1fr] items-center gap-2 text-[10px] font-bold text-slate-500"><span>Modo de fusión</span><select value={modoFusionFondoNuevo} onChange={(event) => setModoFusionFondoNuevo(event.target.value as ModoFusion)} className="min-h-10 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select></label>
-          <label className="grid grid-cols-[110px_1fr_38px] items-center gap-2 text-[10px] font-bold text-slate-500"><span>Opacidad</span><input type="range" min="0.1" max="1" step="0.05" value={opacidadFondoNuevo} onInput={(event) => setOpacidadFondoNuevo(Number(event.currentTarget.value))} onChange={(event) => setOpacidadFondoNuevo(Number(event.currentTarget.value))} className="min-w-0 touch-none accent-indigo-600" /><span className="text-right">{Math.round(opacidadFondoNuevo * 100)}%</span></label>
-          <small className="leading-4 text-slate-400">Cada fondo que elijas se añadirá sobre los anteriores y se fusionará con las capas que tenga debajo.</small>
-        </div>}
-      </section>
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoPlano)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoPlano }} />Plano</button>
+          <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoDegradado)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoDegradado }} />Degradado</button>
+          <button type="button" onClick={() => aplicarFondoPersonalizado(fondoPersonalizadoTextura)} className="grid gap-1 rounded-xl border border-slate-200 bg-white p-2 text-[10px] font-bold text-slate-600"><span className="mx-auto h-8 w-8 rounded-full border border-slate-200" style={{ background: fondoPersonalizadoTextura }} />Textura</button>
+        </div>
+      </section>}
+
+      {selectorImagenesAbierto && <section id="pastoral-selector-imagenes" className="grid gap-3 rounded-2xl border border-slate-200 bg-white/80 px-3 py-3">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => prepararSubida('fondo')} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700"><Upload className="h-4 w-4" /> Subir imagen</button>
+          <label className="min-w-0 flex-1"><span className="sr-only">Buscar imágenes</span><input value={busquedaRecursos} onChange={(event) => setBusquedaRecursos(event.target.value)} placeholder="Buscar" className="min-h-10 w-full rounded-full border border-slate-200 bg-white px-3 text-xs outline-none" /></label>
+        </div>
+        {recursosFiltrados.length ? <div className="grid grid-cols-4 gap-2">{recursosFiltrados.map((recurso) => <button key={recurso.id} type="button" onClick={() => aplicarFondoImagen(recurso)} className="aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-50" aria-label={`Usar ${recurso.titulo} como fondo`} title={recurso.titulo}><img src={recurso.acceso_url ?? ''} alt="" className="h-full w-full object-cover" /></button>)}</div> : <p className="text-[10px] text-slate-400">No hay imágenes disponibles todavía.</p>}
+      </section>}
+
       <div className="pastoral-background-grid" aria-label="Galería de fondos">
         {[...paletasColoresFlat, ...paletasDegradados, ...paletasTexturas].map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarFondoVisual(paleta)} className="pastoral-background-swatch" aria-label={`Aplicar fondo ${paleta.label}`} title={paleta.label}><span style={{ background: paleta.fondo }} /></button>)}
       </div>
+      {elementoSeleccionado?.es_capa_fondo && <p className="px-1 text-[10px] font-semibold text-indigo-600">El fondo elegido se aplicará a la capa seleccionada. La fusión y opacidad se controlan únicamente desde Capas.</p>}
     </div>}
 
     {panel === 'texto' && <div className="pastoral-panel-content grid h-full w-full content-start gap-3 overflow-visible pr-1">
@@ -922,7 +950,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
     {panel === 'biblia' && <PastoralVersePicker open embedded onClose={() => undefined} onInsert={agregarVersiculo} />}
 
-    {panel === 'diseno' && <div className="pastoral-panel-content"><div className="pastoral-panel-heading"><h3>Relación de aspecto</h3><p>16:9 funciona mejor para cañón, pantallas y la mayoría de proyectores modernos.</p></div><div className="pastoral-aspect-control">{FORMATOS_LIENZO.map(({ id, label, detalle }) => { const Icon = id === '9:16' ? Smartphone : id === '1:1' ? Square : Monitor; return <button key={id} type="button" onClick={() => actualizarPagina({ formato: id })} className={pagina.formato === id ? 'is-active' : ''}><Icon /><span><strong>{detalle}</strong><small>{label}</small></span></button> })}</div></div>}
+    {panel === 'diseno' && <div className="pastoral-panel-content"><div className="pastoral-panel-heading"><h3>Relación de aspecto</h3><p>Formato único para proyector y visualización horizontal en celular.</p></div><div className="pastoral-aspect-control"><button type="button" onClick={() => pagina.formato !== '16:9' && actualizarPagina({ formato: '16:9' })} className="is-active"><Monitor /><span><strong>16:9</strong><small>Horizontal</small></span></button></div></div>}
 
     {panel === 'capas' && <div className="pastoral-panel-content grid gap-3">
       {elementoSeleccionado && <div className="grid gap-2 border-b border-slate-200 px-1 pb-3">
@@ -966,13 +994,13 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { subirImagen(event.target.files?.[0]); event.currentTarget.value = '' }} />
     <header className="sticky top-0 z-50 -mx-4 bg-[#f8f8f6]/96 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="flex items-center gap-2"><button type="button" onClick={() => router.back()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-600" aria-label="Volver al Centro Pastoral" title="Atrás"><ChevronLeft className="h-5 w-5" /></button><input dir="ltr" value={titulo} onFocus={registrarHistorial} onChange={(event) => setTitulo(event.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none sm:text-lg" /><button type="button" onClick={deshacer} disabled={!undoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Deshacer"><Undo2 className="h-4 w-4" /></button><button type="button" onClick={rehacer} disabled={!redoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Rehacer"><Redo2 className="h-4 w-4" /></button>{guardandoAuto ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" aria-label="Guardando automáticamente" /> : guardado ? <Check className="h-4 w-4 text-emerald-600" /> : null}<button type="button" onClick={guardar} disabled={isPending} className="grid h-10 w-10 place-items-center rounded-full text-[#C0392B] disabled:opacity-60" aria-label="Guardar proyecto">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}</button></div>
-      <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><button type="button" onClick={() => cambiarVista('congregacion')} className={vista === 'congregacion' ? 'text-[#C0392B]' : ''}>Congregación</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><select value={indice} onChange={(event) => { setIndice(Number(event.target.value)); setSeleccion(null); setCapaAccionesAbiertas(null) }} aria-label={`Página ${indice + 1} de ${paginas.length}`} className="h-9 min-w-[48px] rounded-full border border-slate-200 bg-white px-1 text-center text-[10px] font-black text-slate-600 outline-none">{paginas.map((_, i) => <option key={i} value={i}>{i + 1}/{paginas.length}</option>)}</select><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
+      <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><button type="button" onClick={() => cambiarVista('congregacion')} className={vista === 'congregacion' ? 'text-[#C0392B]' : ''}>Congregación</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><button type="button" onClick={() => irPagina(indice - 1)} disabled={indice === 0} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 disabled:opacity-25" aria-label="Página anterior"><ChevronLeft className="h-4 w-4" /></button><select value={indice} onChange={(event) => irPagina(Number(event.target.value))} aria-label={`Página ${indice + 1} de ${paginas.length}`} className="h-9 min-w-[48px] rounded-full border border-slate-200 bg-white px-1 text-center text-[10px] font-black text-slate-600 outline-none">{paginas.map((_, i) => <option key={i} value={i}>{i + 1}/{paginas.length}</option>)}</select><button type="button" onClick={() => irPagina(indice + 1)} disabled={indice === paginas.length - 1} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 disabled:opacity-25" aria-label="Página siguiente"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
     </header>
 
     {vista === 'contenido' && pagina && <section className="pastoral-editor-section pb-4 pt-2">
       <div className="pastoral-editor-shell-flow flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#f4f5f9]">
         <div className="pastoral-stage-flow flex w-full shrink-0 items-stretch" style={estiloStage}>
-          <div className="pastoral-canvas-wrap w-full"><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} onDeleteElement={eliminarElemento} /></div>
+          <div className="pastoral-canvas-wrap w-full"><PastoralVisualCanvas key={`editar-${indice}`} pagina={pagina} biblioteca={biblioteca} editable seleccion={seleccion} onSelect={setSeleccion} onBeginChange={registrarHistorial} onPatchElement={patchElementoSinHistorial} onTextInput={(id, contenido) => patchElementoSinHistorial(id, { contenido })} onDeleteElement={eliminarElemento} /></div>
         </div>
         <div className="pastoral-editor-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={tecladoAbierto ? { paddingBottom: `${Math.max(160, tecladoInset + 32)}px`, scrollPaddingBottom: `${Math.max(160, tecladoInset + 32)}px` } : undefined}>
           <div className="pastoral-tool-dock flex w-full items-center gap-2 px-2 py-2" aria-label="Herramientas del lienzo"><div className="flex min-w-0 flex-1 items-stretch gap-1 rounded-full border border-slate-200 bg-white p-1">{HERRAMIENTAS.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => alternarGrupoPrincipal(id)} className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full bg-transparent px-2 py-1 text-slate-600 shadow-none" aria-pressed={grupoPrincipal === id} aria-expanded={grupoPrincipal === id} aria-label={label} title={label}><Icon className={`h-[18px] w-[18px] ${grupoPrincipal === id ? 'text-indigo-600' : 'text-slate-500'}`} /><small className="text-[10px] font-bold text-slate-700">{label}</small></button>)}</div><button type="button" disabled={!elementoSeleccionado || elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado && eliminarElemento(elementoSeleccionado.id)} className="grid h-11 w-11 min-w-11 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 disabled:opacity-30" aria-label="Borrar elemento seleccionado" title="Borrar"><Trash2 className="h-[18px] w-[18px]" /></button></div>

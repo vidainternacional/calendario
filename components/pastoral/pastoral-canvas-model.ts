@@ -36,6 +36,7 @@ export type ElementoCanvas = {
   radio?: number
   oculto?: boolean
   fondo_visual?: string
+  es_capa_fondo?: boolean
   modo_fusion?: ModoFusion
 }
 
@@ -214,7 +215,7 @@ export function normalizarElementoCanvas(item: Partial<ElementoCanvas>, index = 
     cursiva: Boolean(item.cursiva), subrayado: Boolean(item.subrayado), tachado: Boolean(item.tachado),
     interlineado: clamp(Number(item.interlineado ?? INTERLINEADO_BASE_POR_ROL[rol]), .8, 3), opacidad: clamp(Number(item.opacidad ?? 1), .1, 1),
     ajuste: item.ajuste === 'contain' ? 'contain' : 'cover', radio: clamp(Number(item.radio ?? 14), 0, 40),
-    oculto: Boolean(item.oculto), fondo_visual: fondoVisualSeguro(item.fondo_visual), modo_fusion: modoFusionSeguro(item.modo_fusion),
+    oculto: Boolean(item.oculto), fondo_visual: fondoVisualSeguro(item.fondo_visual), es_capa_fondo: Boolean(item.es_capa_fondo), modo_fusion: modoFusionSeguro(item.modo_fusion),
   }
 }
 

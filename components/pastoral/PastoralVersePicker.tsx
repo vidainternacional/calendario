@@ -33,6 +33,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   const [versos, setVersos] = useState<VersiculoElegido[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [seleccionados, setSeleccionados] = useState<number[]>([])
+  const [agregados, setAgregados] = useState<string[]>([])
   const [concordanciaDe, setConcordanciaDe] = useState<VersiculoElegido | null>(null)
   const [relacionados, setRelacionados] = useState<Array<VersiculoElegido & { score?: number }>>([])
   const [cargando, setCargando] = useState(false)
@@ -99,6 +100,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
     return versos.filter(v => `${v.referencia} ${v.texto}`.toLowerCase().includes(q))
   }, [versos, busqueda])
 
+  const claveVersiculo = (v: VersiculoElegido) => `${v.libroId}:${v.capitulo}:${v.verso}`
   const alternar = (numero: number) => setSeleccionados(actuales => actuales.includes(numero) ? actuales.filter(n => n !== numero) : [...actuales, numero])
 
   const textoReferencia = async (ref: ReferenciaRelacionada) => {
@@ -180,6 +182,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
       })
     })
 
+    setAgregados(actuales => Array.from(new Set([...actuales, ...elegidos.map(claveVersiculo)])))
     setSeleccionados([])
     const bloques = grupos.length
     mostrarToast(`${elegidos.length} versículo${elegidos.length === 1 ? '' : 's'} insertado${elegidos.length === 1 ? '' : 's'} en ${bloques} bloque${bloques === 1 ? '' : 's'}`)
@@ -187,6 +190,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
 
   const agregarUno = (v: VersiculoElegido) => {
     onInsert({ referencia: v.referencia, texto: v.texto, traduccion: v.traduccion })
+    setAgregados(actuales => actuales.includes(claveVersiculo(v)) ? actuales : [...actuales, claveVersiculo(v)])
     mostrarToast(`${v.referencia} insertado`)
   }
 
@@ -237,10 +241,11 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           </article>) : <div className="pastoral-verse-empty">No hay concordancias disponibles para este versículo.</div>
         ) : cargando ? <div className="pastoral-verse-loading"><Loader2 /></div> : visibles.length ? visibles.map(v => {
           const activo = seleccionados.includes(v.verso)
-          return <article key={v.verso} className="pastoral-verse-row">
+          const agregado = agregados.includes(claveVersiculo(v))
+          return <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
               <span className="min-w-0 flex-1"><strong>{v.referencia}</strong><em>{v.texto}</em></span>
-              <span className={`pastoral-verse-check ml-auto shrink-0 ${activo ? 'is-active' : ''}`} style={activo ? { backgroundColor: '#16a34a', borderColor: '#16a34a', color: '#ffffff' } : undefined}>{activo && <Check />}</span>
+              <span className={`pastoral-verse-check ml-auto shrink-0 ${activo || agregado ? 'is-active' : ''}`} style={activo || agregado ? { backgroundColor: '#16a34a', borderColor: '#16a34a', color: '#ffffff' } : undefined} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check />}</span>
             </button>
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
