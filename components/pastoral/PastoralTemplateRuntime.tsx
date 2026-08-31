@@ -6,11 +6,16 @@ import type { PlantillaAdministrada } from '@/components/pastoral/pastoral-templ
 
 const normalizar = (valor: string) => valor.replace(/\s+/g, ' ').trim().toLowerCase()
 
+function panelActual() {
+  return document.querySelector<HTMLElement>('.pastoral-editor-v4 .pastoral-tool-panel-flow')
+}
+
+function barraSubmenus() {
+  return panelActual()?.querySelector<HTMLElement>('[aria-label^="Opciones de "]') ?? null
+}
+
 function botonSubmenu(indice: number) {
-  const panel = document.querySelector<HTMLElement>('.pastoral-editor-v4 .pastoral-tool-panel-flow')
-  if (!panel) return null
-  const barra = panel.querySelector<HTMLElement>('[aria-label^="Opciones de "]')
-  return barra?.querySelectorAll<HTMLButtonElement>(':scope > button')[indice] ?? null
+  return barraSubmenus()?.querySelectorAll<HTMLButtonElement>(':scope > button')[indice] ?? null
 }
 
 function construirTarjetaFondo(paleta: (typeof PALETAS_PRESENTACION)[number]) {
@@ -46,13 +51,18 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
 
     const sincronizarEtiquetas = () => {
       const dock = Array.from(document.querySelectorAll<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-tool-dock button'))
-        .find((boton) => normalizar(boton.getAttribute('aria-label') ?? '') === 'plantillas')
+        .find((boton) => ['plantillas', 'fondos'].includes(normalizar(boton.getAttribute('aria-label') ?? '')))
       if (dock) {
         dock.setAttribute('aria-label', 'Fondos')
         dock.title = 'Fondos'
         const texto = dock.querySelector('small')
         if (texto) texto.textContent = 'Fondos'
       }
+
+      const panel = panelActual()
+      const barra = barraSubmenus()
+      const esPanelFondos = normalizar(panel?.getAttribute('aria-label') ?? '') === 'panel plantillas'
+      if (barra) barra.style.display = esPanelFondos ? 'none' : ''
 
       const fondos = botonSubmenu(0)
       if (fondos) fondos.textContent = 'Fondos'
@@ -62,8 +72,6 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         temas.setAttribute('aria-hidden', 'true')
         temas.tabIndex = -1
       }
-      const imagenes = botonSubmenu(2)
-      if (imagenes && normalizar(imagenes.textContent ?? '') === 'imágenes') imagenes.textContent = 'Imágenes'
     }
 
     const sincronizarGaleria = () => {
