@@ -26,16 +26,24 @@ jobs:
         run: |
           from pathlib import Path
 
+          def replace_between(text, start_marker, end_marker, replacement, label):
+              start = text.find(start_marker)
+              if start < 0:
+                  raise SystemExit(f'{label}: start not found')
+              end = text.find(end_marker, start)
+              if end < 0:
+                  raise SystemExit(f'{label}: end not found')
+              return text[:start] + replacement + text[end:]
+
           v4 = Path('components/pastoral/PastoralVisualWorkspaceV4.tsx')
           text = v4.read_text()
-          old = """  const persistirFormulario = async (formData: FormData) => {
-            if (saveInFlightRef.current) await saveInFlightRef.current
-            const promesa = editarPaquetePastoral(paquete.id, formData)
-            saveInFlightRef.current = promesa
-            try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
-          }
-          """
-          new = """  const persistirFormulario = async (formData: FormData) => {
+
+          ref_line = "  const autosaveSerialRef = useRef(0)\n"
+          if ref_line not in text:
+              raise SystemExit('autosave ref not found')
+          text = text.replace(ref_line, ref_line + "  const revisionGuardadoRef = useRef(0)\n", 1)
+
+          persist = """  const persistirFormulario = async (formData: FormData) => {
             const anterior = saveInFlightRef.current
             const promesa = (async () => {
               if (anterior) await anterior
@@ -44,38 +52,17 @@ jobs:
             saveInFlightRef.current = promesa
             try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
           }
-          """
-          if old not in text:
-            raise SystemExit('persistirFormulario target not found')
-          text = text.replace(old, new, 1)
 
-          old = """  const autosaveSerialRef = useRef(0)
-          const saveInFlightRef = useRef<Promise<Awaited<ReturnType<typeof editarPaquetePastoral>>> | null>(null)
           """
-          new = """  const autosaveSerialRef = useRef(0)
-          const revisionGuardadoRef = useRef(0)
-          const saveInFlightRef = useRef<Promise<Awaited<ReturnType<typeof editarPaquetePastoral>>> | null>(null)
-          """
-          if old not in text:
-            raise SystemExit('refs target not found')
-          text = text.replace(old, new, 1)
+          text = replace_between(
+              text,
+              "  const persistirFormulario = async (formData: FormData) => {",
+              "  const guardar = () =>",
+              persist,
+              'persist queue',
+          )
 
-          old = """  const guardar = () => startTransition(async () => {
-            const resultado = await persistirFormulario(construirFormulario())
-            if (!resultado.success) return mostrarToast(resultado.error)
-            setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)
-          })
-
-          const guardarAutomatico = async () => {
-            const serial = ++autosaveSerialRef.current
-            setGuardandoAuto(true)
-            const resultado = await persistirFormulario(construirFormulario())
-            if (serial !== autosaveSerialRef.current) return
-            setGuardandoAuto(false)
-            if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
-          }
-          """
-          new = """  const guardar = () => startTransition(async () => {
+          saves = """  const guardar = () => startTransition(async () => {
             const revision = revisionGuardadoRef.current
             const resultado = await persistirFormulario(construirFormulario())
             if (!resultado.success) return mostrarToast(resultado.error)
@@ -91,19 +78,17 @@ jobs:
             setGuardandoAuto(false)
             if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
           }
-          """
-          if old not in text:
-            raise SystemExit('save functions target not found')
-          text = text.replace(old, new, 1)
 
-          old = """  useEffect(() => {
-            if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
-            const timer = window.setTimeout(() => { void guardarAutomatico() }, 650)
-            return () => window.clearTimeout(timer)
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-          }, [titulo, paginas])
           """
-          new = """  useEffect(() => {
+          text = replace_between(
+              text,
+              "  const guardar = () =>",
+              "  useEffect(() => {\n    if (!modoPresentacion) return",
+              saves,
+              'save functions',
+          )
+
+          autosave = """  useEffect(() => {
             if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
             const revision = ++revisionGuardadoRef.current
             setGuardado(false)
@@ -111,21 +96,20 @@ jobs:
             return () => window.clearTimeout(timer)
           // eslint-disable-next-line react-hooks/exhaustive-deps
           }, [titulo, paginas])
+
           """
-          if old not in text:
-            raise SystemExit('autosave effect target not found')
-          text = text.replace(old, new, 1)
+          text = replace_between(
+              text,
+              "  useEffect(() => {\n    if (!autosaveReadyRef.current)",
+              "  const cambiarVista =",
+              autosave,
+              'autosave effect',
+          )
           v4.write_text(text)
 
           model = Path('components/pastoral/pastoral-canvas-model.ts')
           text = model.read_text()
-          old = """export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
-            const elementos = Array.isArray(item.elementos) ? item.elementos.map((el, i) => normalizarElementoCanvas(el, i)) : []
-            if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 42, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
-            if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
-            else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
-          """
-          new = """export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
+          modern = """export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
             const tieneElementosModernos = Array.isArray(item.elementos)
             const elementos = tieneElementosModernos ? item.elementos!.map((el, i) => normalizarElementoCanvas(el, i)) : []
             if (!tieneElementosModernos) {
@@ -134,23 +118,25 @@ jobs:
               else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
             }
           """
-          if old not in text:
-            raise SystemExit('normalizarPaginaCanvas target not found')
-          text = text.replace(old, new, 1)
+          text = replace_between(
+              text,
+              "export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {",
+              "  return { ...item, formato:",
+              modern,
+              'modern page state',
+          )
           model.write_text(text)
 
           action = Path('app/actions/pastoral-paquetes.ts')
           text = action.read_text()
           old = "interlineado: numeroAcotado(item.interlineado, 0.9, 2, 1.25),"
-          new = "interlineado: numeroAcotado(item.interlineado, 0.8, 3, 1.25),"
           if old not in text:
-            raise SystemExit('interlineado target not found')
-          text = text.replace(old, new, 1)
+              raise SystemExit('interlineado target not found')
+          text = text.replace(old, "interlineado: numeroAcotado(item.interlineado, 0.8, 3, 1.25),", 1)
           old = "})).filter((item) => item.titulo || item.contenido || item.recurso_id || item.fondo_recurso_id || item.elementos.length).slice(0, 50)"
-          new = "})).slice(0, 50)"
           if old not in text:
-            raise SystemExit('blank pages filter target not found')
-          text = text.replace(old, new, 1)
+              raise SystemExit('blank page filter target not found')
+          text = text.replace(old, "})).slice(0, 50)", 1)
           action.write_text(text)
       - name: Install dependencies
         run: npm ci
