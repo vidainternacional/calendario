@@ -20,7 +20,7 @@ function tipoFondoDesdeMuestra(muestra: HTMLElement | null): Exclude<TipoFondo, 
   return 'flat'
 }
 
-function estiloImportante(elemento: HTMLElement, propiedad: string, valor: string) {
+function importante(elemento: HTMLElement, propiedad: string, valor: string) {
   elemento.style.setProperty(propiedad, valor, 'important')
 }
 
@@ -29,6 +29,39 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
     void catalogo
     let frame = 0
     let cambiandoPanel = false
+
+    let estilos = document.getElementById('pastoral-background-toolbar-clean') as HTMLStyleElement | null
+    if (!estilos) {
+      estilos = document.createElement('style')
+      estilos.id = 'pastoral-background-toolbar-clean'
+      estilos.textContent = `
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button,
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button.is-active,
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button[aria-pressed="true"] {
+          background: transparent !important;
+          background-color: transparent !important;
+          box-shadow: none !important;
+          color: #475569 !important;
+        }
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button::before,
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button::after {
+          display: none !important;
+          content: none !important;
+        }
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button[aria-pressed="true"] > svg {
+          color: #4f46e5 !important;
+          stroke: currentColor !important;
+        }
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button[aria-pressed="false"] > svg {
+          color: #475569 !important;
+          stroke: currentColor !important;
+        }
+        .pastoral-editor-v4 .pastoral-primary-tool-pill .pastoral-tool-button > small {
+          color: #334155 !important;
+        }
+      `
+      document.head.appendChild(estilos)
+    }
 
     const asegurarPildoraPrincipal = (dock: HTMLElement) => {
       const herramientas = Array.from(dock.querySelectorAll<HTMLButtonElement>('button.pastoral-tool-button'))
@@ -42,48 +75,54 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         herramientas.slice(0, 3).forEach((boton) => pildora?.appendChild(boton))
       }
 
-      estiloImportante(dock, 'display', 'flex')
-      estiloImportante(dock, 'flex-direction', 'row')
-      estiloImportante(dock, 'align-items', 'center')
-      estiloImportante(dock, 'gap', '8px')
-      estiloImportante(dock, 'width', '100%')
-      estiloImportante(dock, 'min-height', '0')
+      importante(dock, 'display', 'flex')
+      importante(dock, 'flex-direction', 'row')
+      importante(dock, 'align-items', 'center')
+      importante(dock, 'gap', '8px')
+      importante(dock, 'width', '100%')
+      importante(dock, 'min-height', '0')
 
       pildora.className = 'pastoral-primary-tool-pill'
-      estiloImportante(pildora, 'display', 'flex')
-      estiloImportante(pildora, 'flex-direction', 'row')
-      estiloImportante(pildora, 'align-items', 'stretch')
-      estiloImportante(pildora, 'gap', '2px')
-      estiloImportante(pildora, 'flex', '1 1 0')
-      estiloImportante(pildora, 'min-width', '0')
-      estiloImportante(pildora, 'height', '52px')
-      estiloImportante(pildora, 'padding', '3px')
-      estiloImportante(pildora, 'overflow', 'hidden')
-      estiloImportante(pildora, 'border', '1px solid #e2e8f0')
-      estiloImportante(pildora, 'border-radius', '999px')
-      estiloImportante(pildora, 'background', '#ffffff')
-      estiloImportante(pildora, 'box-shadow', '0 1px 2px rgba(15,23,42,.04)')
+      importante(pildora, 'display', 'flex')
+      importante(pildora, 'flex-direction', 'row')
+      importante(pildora, 'align-items', 'stretch')
+      importante(pildora, 'gap', '2px')
+      importante(pildora, 'flex', '1 1 0')
+      importante(pildora, 'min-width', '0')
+      importante(pildora, 'height', '52px')
+      importante(pildora, 'padding', '3px')
+      importante(pildora, 'overflow', 'hidden')
+      importante(pildora, 'border', '1px solid #e2e8f0')
+      importante(pildora, 'border-radius', '999px')
+      importante(pildora, 'background', '#ffffff')
+      importante(pildora, 'box-shadow', 'none')
 
       herramientas.slice(0, 3).forEach((boton) => {
+        boton.classList.remove('is-active')
+        importante(boton, 'display', 'flex')
+        importante(boton, 'flex-direction', 'column')
+        importante(boton, 'align-items', 'center')
+        importante(boton, 'justify-content', 'center')
+        importante(boton, 'gap', '1px')
+        importante(boton, 'flex', '1 1 0')
+        importante(boton, 'grid-column', 'auto')
+        importante(boton, 'grid-row', 'auto')
+        importante(boton, 'width', 'auto')
+        importante(boton, 'min-width', '0')
+        importante(boton, 'height', '46px')
+        importante(boton, 'min-height', '46px')
+        importante(boton, 'padding', '2px 6px')
+        importante(boton, 'border', '0')
+        importante(boton, 'border-radius', '999px')
+        importante(boton, 'box-shadow', 'none')
+        importante(boton, 'background', 'transparent')
+        importante(boton, 'color', '#475569')
+
         const activo = boton.getAttribute('aria-pressed') === 'true'
-        estiloImportante(boton, 'display', 'flex')
-        estiloImportante(boton, 'flex-direction', 'column')
-        estiloImportante(boton, 'align-items', 'center')
-        estiloImportante(boton, 'justify-content', 'center')
-        estiloImportante(boton, 'gap', '1px')
-        estiloImportante(boton, 'flex', '1 1 0')
-        estiloImportante(boton, 'grid-column', 'auto')
-        estiloImportante(boton, 'grid-row', 'auto')
-        estiloImportante(boton, 'width', 'auto')
-        estiloImportante(boton, 'min-width', '0')
-        estiloImportante(boton, 'height', '46px')
-        estiloImportante(boton, 'min-height', '46px')
-        estiloImportante(boton, 'padding', '2px 6px')
-        estiloImportante(boton, 'border', '0')
-        estiloImportante(boton, 'border-radius', '999px')
-        estiloImportante(boton, 'box-shadow', 'none')
-        estiloImportante(boton, 'background', activo ? '#eef2ff' : 'transparent')
-        estiloImportante(boton, 'color', activo ? '#4338ca' : '#475569')
+        const icono = boton.querySelector<SVGElement>('svg')
+        if (icono) icono.style.setProperty('color', activo ? '#4f46e5' : '#475569', 'important')
+        const etiqueta = boton.querySelector<HTMLElement>('small')
+        if (etiqueta) etiqueta.style.setProperty('color', '#334155', 'important')
       })
 
       return herramientas
@@ -92,7 +131,7 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
     const crearProxy = (source: HTMLButtonElement) => {
       const boton = document.createElement('button')
       boton.type = 'button'
-      boton.className = 'grid w-[58px] shrink-0 gap-1.5 text-center'
+      boton.className = 'grid w-[62px] shrink-0 gap-1.5 text-center'
       boton.setAttribute('aria-label', source.textContent?.trim() || 'Aplicar fondo')
 
       const muestraSource = source.querySelector<HTMLElement>('span')
@@ -122,11 +161,11 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       if (!contenedor) {
         contenedor = document.createElement('div')
         contenedor.dataset.pastoralBackgroundSections = 'true'
-        contenedor.className = 'grid gap-4 pb-2'
+        contenedor.className = 'grid gap-5 pb-2 pt-1'
         grilla.insertAdjacentElement('afterend', contenedor)
       }
 
-      const firma = fuentes.map((boton) => boton.textContent?.trim() ?? '').join('|')
+      const firma = fuentes.map((boton) => `${boton.textContent?.trim() ?? ''}:${boton.querySelector<HTMLElement>('span')?.getAttribute('style') ?? ''}`).join('|')
       if (contenedor.dataset.sourceSignature === firma) return
       contenedor.dataset.sourceSignature = firma
       contenedor.replaceChildren()
@@ -176,32 +215,15 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
 
       const panel = root.querySelector<HTMLElement>('aside[aria-label="Panel plantillas"], aside[aria-label="Panel fondos"], aside[aria-label="Panel fondo"]')
       if (!panel) return
-      panel.setAttribute('aria-label', 'Panel fondos')
 
       const barra = panel.querySelector<HTMLElement>('[aria-label^="Opciones de "]')
       if (!barra) return
-      barra.setAttribute('aria-label', 'Opciones de fondos')
 
       const botonesNativos = Array.from(barra.querySelectorAll<HTMLButtonElement>(':scope > button'))
-      const temas = botonesNativos[1] ?? null
-      botonesNativos.forEach((boton) => {
-        boton.hidden = true
-        boton.style.display = 'none'
-        boton.setAttribute('aria-hidden', 'true')
-        boton.tabIndex = -1
-      })
+      const temas = botonesNativos.find((boton) => normalizar(boton.textContent ?? '') === 'temas') ?? botonesNativos[1] ?? null
 
-      let unicaPestana = barra.querySelector<HTMLButtonElement>('[data-pastoral-background-only-tab="true"]')
-      if (!unicaPestana) {
-        unicaPestana = document.createElement('button')
-        unicaPestana.type = 'button'
-        unicaPestana.dataset.pastoralBackgroundOnlyTab = 'true'
-        unicaPestana.className = 'min-h-10 rounded-full bg-indigo-50 px-4 text-xs font-bold text-indigo-700'
-        unicaPestana.textContent = 'Fondos'
-        unicaPestana.setAttribute('aria-pressed', 'true')
-        unicaPestana.addEventListener('click', () => temas?.click())
-        barra.appendChild(unicaPestana)
-      }
+      importante(barra, 'display', 'none')
+      barra.setAttribute('aria-hidden', 'true')
 
       if (temas && temas.getAttribute('aria-pressed') !== 'true' && !cambiandoPanel) {
         cambiandoPanel = true
@@ -213,7 +235,7 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         return
       }
 
-      const grilla = root.querySelector<HTMLElement>('[aria-label="Temas en filas de tres"]')
+      const grilla = panel.querySelector<HTMLElement>('[aria-label="Temas en filas de tres"]')
       if (!grilla) return
       construirSecciones(panel, grilla)
     }
@@ -232,9 +254,15 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       attributeFilter: ['aria-expanded', 'aria-pressed'],
     })
 
+    const reintento = window.setInterval(sincronizar, 250)
+    const pararReintento = window.setTimeout(() => window.clearInterval(reintento), 2500)
+
     return () => {
       window.cancelAnimationFrame(frame)
       observador.disconnect()
+      window.clearInterval(reintento)
+      window.clearTimeout(pararReintento)
+      estilos?.remove()
     }
   }, [catalogo])
 
