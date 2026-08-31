@@ -1,0 +1,31 @@
+name: Update approved pastoral master checkpoint
+
+on:
+  push:
+    branches:
+      - automation/update-master-pastoral-checkpoint
+
+permissions:
+  contents: write
+
+jobs:
+  update-master:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Fetch approved patch script
+        run: git show origin/automation/update-master-pastoral-checkpoint:scripts/update-master-pastoral-checkpoint-2026-08-31.py > /tmp/update-master.py
+      - name: Apply approved master checkpoint
+        run: python /tmp/update-master.py
+      - name: Publish documentation only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add __VIDA_INTERNACIONAL.md
+          git diff --cached --check
+          git diff --cached --name-only | grep -qx '__VIDA_INTERNACIONAL.md'
+          git commit -m "docs: record approved pastoral editor checkpoint"
+          git push origin HEAD:main
