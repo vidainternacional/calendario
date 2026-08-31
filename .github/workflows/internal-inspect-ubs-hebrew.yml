@@ -37,6 +37,7 @@ jobs:
 
       - name: Verify diff scope
         run: |
+          git add -N public/data/ubs-hebrew-es-glosses.json
           git diff --check
           git diff --stat
           actual="$(git diff --name-only | sort | tr '\n' ' ')"
