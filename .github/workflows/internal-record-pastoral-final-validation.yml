@@ -22,18 +22,8 @@ jobs:
           from pathlib import Path
           p = Path('__VIDA_INTERNACIONAL.md')
           text = p.read_text()
-          old = """11. Se preservan Deshacer/Rehacer, guardado, navegación, Biblia, imágenes, capas, Presentar y Congregación sin cambios de permisos ni Supabase/RLS.
-12. Checkpoint técnico aprobado del bloque: `67153b157c01c4043395a907719d82d967268b6a`; PR #287 permanece OPEN · DRAFT · sin merge.
-
-# Siguiente punto autorizado
-
-**Continuar exclusivamente con la prioridad actual del Centro Pastoral, incluyendo la reorganización y pulido del editor visual del PR #287. Preservar todas las decisiones visuales y funcionales ya aprobadas; no modificar geometría, límites, tamaños o comportamientos validados salvo instrucción explícita o bug reproducible. FASE I permanece diferida hasta que la aplicación quede terminada.**"""
-          new = """11. Se confirma persistencia real del Editor Pastoral: Guardar y autoguardado conservan páginas, textos, imágenes, capas, posiciones, opacidad, fusión, fondos y degradados lineales, radiales y cónicos. El estado de guardado se comunica únicamente mediante el check superior, sin toast de “Proyecto guardado”.
-12. Checkpoint técnico aprobado del bloque: `f3d54260f998e83c93440622df26ef34aa1f0052`; PR #287 permanece OPEN · DRAFT · sin merge.
-
-# Siguiente punto autorizado
-
-**Validación final funcional del Editor Visual del Centro Pastoral, incluyendo Presentar, Congregación y pantalla completa real. Preservar íntegramente todo lo aprobado y no reabrir herramientas ya validadas salvo bug reproducible.**"""
+          old = '11. Se preservan Deshacer/Rehacer, guardado, navegación, Biblia, imágenes, capas, Presentar y Congregación sin cambios de permisos ni Supabase/RLS.\n12. Checkpoint técnico aprobado del bloque: `67153b157c01c4043395a907719d82d967268b6a`; PR #287 permanece OPEN · DRAFT · sin merge.\n\n# Siguiente punto autorizado\n\n**Continuar exclusivamente con la prioridad actual del Centro Pastoral, incluyendo la reorganización y pulido del editor visual del PR #287. Preservar todas las decisiones visuales y funcionales ya aprobadas; no modificar geometría, límites, tamaños o comportamientos validados salvo instrucción explícita o bug reproducible. FASE I permanece diferida hasta que la aplicación quede terminada.**'
+          new = '11. Se confirma persistencia real del Editor Pastoral: Guardar y autoguardado conservan páginas, textos, imágenes, capas, posiciones, opacidad, fusión, fondos y degradados lineales, radiales y cónicos. El estado de guardado se comunica únicamente mediante el check superior, sin toast de “Proyecto guardado”.\n12. Checkpoint técnico aprobado del bloque: `f3d54260f998e83c93440622df26ef34aa1f0052`; PR #287 permanece OPEN · DRAFT · sin merge.\n\n# Siguiente punto autorizado\n\n**Validación final funcional del Editor Visual del Centro Pastoral, incluyendo Presentar, Congregación y pantalla completa real. Preservar íntegramente todo lo aprobado y no reabrir herramientas ya validadas salvo bug reproducible.**'
           if old not in text:
             raise SystemExit('approved pastoral checkpoint target not found')
           p.write_text(text.replace(old, new, 1))
