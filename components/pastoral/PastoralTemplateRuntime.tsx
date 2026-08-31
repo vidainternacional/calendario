@@ -49,32 +49,44 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
     let frame = 0
     let observadorPanel: MutationObserver | null = null
 
-    const sincronizarEtiquetas = () => {
-      const dock = Array.from(document.querySelectorAll<HTMLButtonElement>('.pastoral-editor-v4 .pastoral-tool-dock button'))
-        .find((boton) => ['plantillas', 'fondos'].includes(normalizar(boton.getAttribute('aria-label') ?? '')))
-      if (dock) {
-        dock.setAttribute('aria-label', 'Fondos')
-        dock.title = 'Fondos'
-        const texto = dock.querySelector('small')
-        if (texto) texto.textContent = 'Fondos'
+    const sincronizarDock = () => {
+      const dock = document.querySelector<HTMLElement>('.pastoral-editor-v4 .pastoral-tool-dock')
+      if (!dock) return
+      const botones = Array.from(dock.querySelectorAll<HTMLButtonElement>(':scope > button'))
+      const fondos = botones.find((boton) => {
+        const aria = normalizar(boton.getAttribute('aria-label') ?? '')
+        const texto = normalizar(boton.querySelector('small')?.textContent ?? '')
+        return aria === 'plantillas' || aria === 'fondos' || texto === 'plantillas' || texto === 'fondos'
+      })
+      const texto = botones.find((boton) => normalizar(boton.getAttribute('aria-label') ?? '') === 'texto')
+
+      if (fondos) {
+        fondos.hidden = false
+        fondos.style.display = ''
+        fondos.removeAttribute('aria-hidden')
+        fondos.tabIndex = 0
+        fondos.setAttribute('aria-label', 'Fondos')
+        fondos.title = 'Fondos'
+        const etiqueta = fondos.querySelector('small')
+        if (etiqueta) etiqueta.textContent = 'Fondos'
+        if (texto && fondos.nextElementSibling !== texto) dock.insertBefore(fondos, texto)
       }
 
-      const panel = panelActual()
-      const barra = barraSubmenus()
-      const esPanelFondos = normalizar(panel?.getAttribute('aria-label') ?? '') === 'panel plantillas'
-      if (barra) barra.style.display = esPanelFondos ? 'none' : ''
-
-      const fondos = botonSubmenu(0)
-      if (fondos) fondos.textContent = 'Fondos'
-      const temas = botonSubmenu(1)
-      if (temas) {
-        temas.style.display = 'none'
-        temas.setAttribute('aria-hidden', 'true')
-        temas.tabIndex = -1
-      }
+      dock.style.display = 'grid'
+      dock.style.gridTemplateColumns = 'repeat(3,minmax(0,1fr)) 44px'
+      dock.style.gap = '8px'
+      botones.forEach((boton) => {
+        boton.style.gridColumn = 'auto'
+        if (boton.classList.contains('pastoral-tool-button')) boton.style.width = '100%'
+      })
     }
 
-    const sincronizarGaleria = () => {
+    const sincronizarPanel = () => {
+      const panel = panelActual()
+      const barra = barraSubmenus()
+      const esFondos = normalizar(panel?.getAttribute('aria-label') ?? '') === 'panel plantillas'
+      if (barra) barra.style.display = esFondos ? 'none' : ''
+
       const original = document.querySelector<HTMLElement>('.pastoral-editor-v4 [aria-label="Plantillas en filas de tres"]')
       if (!original) return
       original.style.display = 'none'
@@ -96,8 +108,8 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
     }
 
     const sincronizar = () => {
-      sincronizarEtiquetas()
-      sincronizarGaleria()
+      sincronizarDock()
+      sincronizarPanel()
     }
 
     const programarSincronizacion = () => {
@@ -130,8 +142,7 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
         observadorPanel = null
         boton.click()
         window.requestAnimationFrame(() => {
-          const volverFondos = botonSubmenu(0)
-          volverFondos?.click()
+          botonSubmenu(0)?.click()
           programarSincronizacion()
         })
         return true
