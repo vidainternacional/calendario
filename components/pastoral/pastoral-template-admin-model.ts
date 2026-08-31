@@ -99,10 +99,37 @@ export function combinarPlantillasAdministradas(valor: unknown): PlantillaAdmini
 export function normalizarCatalogoAdministradoParaGuardar(valor: unknown): PlantillaAdministrada[] { return combinarPlantillasAdministradas(valor).slice(0, 180) }
 export function crearPlantillaAdministrada(orden = 0): PlantillaAdministrada { const id = `admin-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`; return normalizarUna({ id, orden }, undefined, orden) as PlantillaAdministrada }
 
+type PlantillaVisualAdministrada = PlantillaVisual & {
+  __vidaAdministrada?: boolean
+  muestras?: PlantillaAdministrada['muestras']
+  titulo: PlantillaVisual['titulo'] & { interlineado?: number }
+  subtitulo?: PlantillaVisual['subtitulo'] & { interlineado?: number }
+  cuerpo?: PlantillaVisual['cuerpo'] & { interlineado?: number }
+}
+
 function aRuntime(item: PlantillaAdministrada): PlantillaVisual {
-  const caja = (valor: CajaPlantillaAdministrada) => ({ x: valor.x, y: valor.y, w: valor.w, h: valor.h, pt: Math.round(valor.pt / ESCALA_EDITOR_PLANTILLA), alineacion: valor.alineacion, fuente: valor.fuente })
-  const runtime = { id: item.id, nombre: item.nombre, categoria: item.categoria, fondo: item.fondo, colorTexto: item.colorTexto, titulo: caja(item.titulo), subtitulo: caja(item.subtitulo), cuerpo: caja(item.cuerpo) } as PlantillaVisual & { __vidaAdministrada?: boolean }
-  runtime.__vidaAdministrada = true
+  const caja = (valor: CajaPlantillaAdministrada) => ({
+    x: valor.x,
+    y: valor.y,
+    w: valor.w,
+    h: valor.h,
+    pt: Math.round(valor.pt / ESCALA_EDITOR_PLANTILLA),
+    alineacion: valor.alineacion,
+    fuente: valor.fuente,
+    interlineado: valor.interlineado,
+  })
+  const runtime: PlantillaVisualAdministrada = {
+    id: item.id,
+    nombre: item.nombre,
+    categoria: item.categoria,
+    fondo: item.fondo,
+    colorTexto: item.colorTexto,
+    muestras: copiar(item.muestras),
+    titulo: caja(item.titulo),
+    subtitulo: caja(item.subtitulo),
+    cuerpo: caja(item.cuerpo),
+    __vidaAdministrada: true,
+  }
   return runtime
 }
 
