@@ -67,20 +67,18 @@ function unificarVistaPresentacion() {
   const congregacion = botonesDirectos.find((button) => button.textContent?.trim() === 'Congregación')
   if (!editar || !presentar || !congregacion) return
 
-  congregacion.hidden = true
-  congregacion.style.display = 'none'
+  congregacion.hidden = false
+  congregacion.style.removeProperty('display')
 
-  // Conserva la autoridad existente del editor, pero elimina el espacio elástico
-  // que separaba Presentar de Compartir en móvil.
   nav.style.setProperty('display', 'grid', 'important')
-  nav.style.setProperty('grid-template-columns', '54px 80px minmax(0, 1fr)', 'important')
+  nav.style.setProperty('grid-template-columns', '54px 80px 92px minmax(0, 1fr)', 'important')
   nav.style.setProperty('align-items', 'center', 'important')
   nav.style.setProperty('justify-content', 'stretch', 'important')
   nav.style.setProperty('gap', '0', 'important')
   nav.style.setProperty('overflow', 'visible', 'important')
   nav.style.setProperty('width', '100%', 'important')
 
-  ;[editar, presentar].forEach((button) => {
+  ;[editar, presentar, congregacion].forEach((button) => {
     button.style.width = '100%'
     button.style.minWidth = '0'
     button.style.minHeight = '44px'
