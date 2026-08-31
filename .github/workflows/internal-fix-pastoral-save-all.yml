@@ -1,0 +1,170 @@
+name: Fix pastoral persistence completely
+
+on:
+  push:
+    branches:
+      - automation/pastoral-save-all-fix
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Checkout active pastoral branch
+        run: git checkout agent/centro-pastoral-reorganizacion
+      - name: Apply complete persistence fix
+        shell: python
+        run: |
+          from pathlib import Path
+
+          v4 = Path('components/pastoral/PastoralVisualWorkspaceV4.tsx')
+          text = v4.read_text()
+          old = """  const persistirFormulario = async (formData: FormData) => {
+            if (saveInFlightRef.current) await saveInFlightRef.current
+            const promesa = editarPaquetePastoral(paquete.id, formData)
+            saveInFlightRef.current = promesa
+            try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
+          }
+          """
+          new = """  const persistirFormulario = async (formData: FormData) => {
+            const anterior = saveInFlightRef.current
+            const promesa = (async () => {
+              if (anterior) await anterior
+              return editarPaquetePastoral(paquete.id, formData)
+            })()
+            saveInFlightRef.current = promesa
+            try { return await promesa } finally { if (saveInFlightRef.current === promesa) saveInFlightRef.current = null }
+          }
+          """
+          if old not in text:
+            raise SystemExit('persistirFormulario target not found')
+          text = text.replace(old, new, 1)
+
+          old = """  const autosaveSerialRef = useRef(0)
+          const saveInFlightRef = useRef<Promise<Awaited<ReturnType<typeof editarPaquetePastoral>>> | null>(null)
+          """
+          new = """  const autosaveSerialRef = useRef(0)
+          const revisionGuardadoRef = useRef(0)
+          const saveInFlightRef = useRef<Promise<Awaited<ReturnType<typeof editarPaquetePastoral>>> | null>(null)
+          """
+          if old not in text:
+            raise SystemExit('refs target not found')
+          text = text.replace(old, new, 1)
+
+          old = """  const guardar = () => startTransition(async () => {
+            const resultado = await persistirFormulario(construirFormulario())
+            if (!resultado.success) return mostrarToast(resultado.error)
+            setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)
+          })
+
+          const guardarAutomatico = async () => {
+            const serial = ++autosaveSerialRef.current
+            setGuardandoAuto(true)
+            const resultado = await persistirFormulario(construirFormulario())
+            if (serial !== autosaveSerialRef.current) return
+            setGuardandoAuto(false)
+            if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
+          }
+          """
+          new = """  const guardar = () => startTransition(async () => {
+            const revision = revisionGuardadoRef.current
+            const resultado = await persistirFormulario(construirFormulario())
+            if (!resultado.success) return mostrarToast(resultado.error)
+            if (revision !== revisionGuardadoRef.current) return
+            setGuardado(true); window.setTimeout(() => setGuardado(false), 1500)
+          })
+
+          const guardarAutomatico = async (revision: number) => {
+            const serial = ++autosaveSerialRef.current
+            setGuardandoAuto(true)
+            const resultado = await persistirFormulario(construirFormulario())
+            if (serial !== autosaveSerialRef.current || revision !== revisionGuardadoRef.current) return
+            setGuardandoAuto(false)
+            if (resultado.success) { setGuardado(true); window.setTimeout(() => setGuardado(false), 900) }
+          }
+          """
+          if old not in text:
+            raise SystemExit('save functions target not found')
+          text = text.replace(old, new, 1)
+
+          old = """  useEffect(() => {
+            if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
+            const timer = window.setTimeout(() => { void guardarAutomatico() }, 650)
+            return () => window.clearTimeout(timer)
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          }, [titulo, paginas])
+          """
+          new = """  useEffect(() => {
+            if (!autosaveReadyRef.current) { autosaveReadyRef.current = true; return }
+            const revision = ++revisionGuardadoRef.current
+            setGuardado(false)
+            const timer = window.setTimeout(() => { void guardarAutomatico(revision) }, 650)
+            return () => window.clearTimeout(timer)
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          }, [titulo, paginas])
+          """
+          if old not in text:
+            raise SystemExit('autosave effect target not found')
+          text = text.replace(old, new, 1)
+          v4.write_text(text)
+
+          model = Path('components/pastoral/pastoral-canvas-model.ts')
+          text = model.read_text()
+          old = """export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
+            const elementos = Array.isArray(item.elementos) ? item.elementos.map((el, i) => normalizarElementoCanvas(el, i)) : []
+            if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 42, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
+            if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
+            else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
+          """
+          new = """export function normalizarPaginaCanvas(item: DiapositivaCanvas): DiapositivaCanvas {
+            const tieneElementosModernos = Array.isArray(item.elementos)
+            const elementos = tieneElementosModernos ? item.elementos!.map((el, i) => normalizarElementoCanvas(el, i)) : []
+            if (!tieneElementosModernos) {
+              if (!elementos.length && item.titulo) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'titulo', contenido: escaparHtmlCanvas(item.titulo), x: 8, y: 8, w: 84, h: 20, tamano_fuente: 42, color: item.color_texto, alineacion: item.alineacion, peso: 800 }, 0))
+              if (!elementos.length && item.contenido) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 16, w: 84, h: 68, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, 1))
+              else if (item.contenido && !elementos.some((el) => el.rol === 'cuerpo')) elementos.push(normalizarElementoCanvas({ tipo: 'texto', rol: 'cuerpo', contenido: limpiarHtmlCanvas(item.contenido), x: 8, y: 30, w: 84, h: 55, tamano_fuente: 22, color: item.color_texto, alineacion: item.alineacion }, elementos.length))
+            }
+          """
+          if old not in text:
+            raise SystemExit('normalizarPaginaCanvas target not found')
+          text = text.replace(old, new, 1)
+          model.write_text(text)
+
+          action = Path('app/actions/pastoral-paquetes.ts')
+          text = action.read_text()
+          old = "interlineado: numeroAcotado(item.interlineado, 0.9, 2, 1.25),"
+          new = "interlineado: numeroAcotado(item.interlineado, 0.8, 3, 1.25),"
+          if old not in text:
+            raise SystemExit('interlineado target not found')
+          text = text.replace(old, new, 1)
+          old = "})).filter((item) => item.titulo || item.contenido || item.recurso_id || item.fondo_recurso_id || item.elementos.length).slice(0, 50)"
+          new = "})).slice(0, 50)"
+          if old not in text:
+            raise SystemExit('blank pages filter target not found')
+          text = text.replace(old, new, 1)
+          action.write_text(text)
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate ephemeral VAPID keys
+        run: |
+          node -e "const w=require('web-push'); const k=w.generateVAPIDKeys(); require('fs').appendFileSync(process.env.GITHUB_ENV, 'NEXT_PUBLIC_VAPID_PUBLIC_KEY='+k.publicKey+'\nVAPID_PRIVATE_KEY='+k.privateKey+'\nVAPID_SUBJECT=mailto:test@example.com\n')"
+      - name: Verify focused diff
+        run: git diff --check && git diff -- components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/pastoral-canvas-model.ts app/actions/pastoral-paquetes.ts
+      - name: Build
+        run: npm run build
+      - name: Publish to active branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/pastoral-canvas-model.ts app/actions/pastoral-paquetes.ts
+          git commit -m "fix(pastoral): persist complete editor state"
+          git push origin HEAD:agent/centro-pastoral-reorganizacion
