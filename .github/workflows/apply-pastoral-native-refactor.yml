@@ -26,13 +26,13 @@ jobs:
           path: target
 
       - name: Verify expected target head
-        run: |
-          test "$(git -C target rev-parse HEAD)" = "5170002685a02da9011953528f5af1fe291affc8"
+        run: test "$(git -C target rev-parse HEAD)" = "5170002685a02da9011953528f5af1fe291affc8"
 
-      - name: Install native editor files
+      - name: Apply native editor patch
         run: |
-          gzip -dc helper/.github/tmp/PastoralVisualWorkspaceV4.tsx.gz > target/components/pastoral/PastoralVisualWorkspaceV4.tsx
-          gzip -dc helper/.github/tmp/ProyectoContenidoWorkspace.tsx.gz > target/components/pastoral/ProyectoContenidoWorkspace.tsx
+          gzip -dc helper/.github/tmp/pastoral-native-refactor.patch.gz > /tmp/pastoral-native-refactor.patch
+          git -C target apply --check /tmp/pastoral-native-refactor.patch
+          git -C target apply /tmp/pastoral-native-refactor.patch
           test "$(git -C target hash-object components/pastoral/PastoralVisualWorkspaceV4.tsx)" = "128a613f9d69c1acce782314bd1dea4b7ebfee48"
           test "$(git -C target hash-object components/pastoral/ProyectoContenidoWorkspace.tsx)" = "6f3ae4aa8668cb3808358e971e8c5cf5ebce1c88"
           git -C target diff --check
