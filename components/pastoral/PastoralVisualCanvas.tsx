@@ -179,6 +179,8 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
     contentEditable={editable}
     suppressContentEditableWarning
     spellCheck
+    onPointerDown={(event) => { event.stopPropagation(); onSelect?.(elemento.id) }}
+    onTouchStart={(event) => event.stopPropagation()}
     onFocus={() => { onSelect?.(elemento.id); onBeginChange?.() }}
     onInput={(event) => onTextInput?.(elemento.id, limpiarHtmlCanvas(event.currentTarget.innerHTML))}
     className={`h-full w-full overflow-hidden break-words outline-none ${elemento.tipo === 'versiculo' && elemento.sombreado ? 'rounded-xl bg-slate-900/[0.04] px-3 py-2' : ''}`}
@@ -196,6 +198,8 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       direction: 'ltr',
       unicodeBidi: 'plaintext',
       writingMode: 'horizontal-tb',
+      touchAction: 'auto',
+      cursor: editable ? 'text' : 'default',
     }}
   />
 }
@@ -442,7 +446,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         })}
       </div>
       <style jsx global>{`
-        .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; direction:ltr !important; unicode-bidi:plaintext !important; writing-mode:horizontal-tb !important; text-shadow:none !important; -webkit-text-stroke:0 transparent !important; }
+        .pastoral-visual-canvas [contenteditable='true'] { -webkit-user-select:text; user-select:text; touch-action:auto !important; -webkit-touch-callout:default; direction:ltr !important; unicode-bidi:plaintext !important; writing-mode:horizontal-tb !important; text-shadow:none !important; -webkit-text-stroke:0 transparent !important; }
         .pastoral-visual-canvas [data-canvas-text-role='libre'] [contenteditable='true'] { background:transparent !important; box-shadow:none !important; }
         .pastoral-visual-canvas [contenteditable='true'] ul { list-style:disc; padding-left:1.35em; }
         .pastoral-visual-canvas [contenteditable='true'] ol { list-style:decimal; padding-left:1.35em; }
