@@ -136,7 +136,7 @@ function leerCrudo(valor: unknown): unknown[] {
   return []
 }
 
-export function esPlantillaBase() { return false }
+export function esPlantillaBase(_id?: string) { return false }
 
 export function combinarPlantillasAdministradas(valor: unknown): PlantillaAdministrada[] {
   const administradas = leerCrudo(valor)
