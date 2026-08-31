@@ -25,8 +25,20 @@ jobs:
         run: git show origin/automation/pastoral-textures-bible-ai:scripts/apply-pastoral-textures-bible-ai.py > /tmp/apply-pastoral-textures-bible-ai.py
       - name: Apply patch
         run: python /tmp/apply-pastoral-textures-bible-ai.py
+      - name: Generate ephemeral VAPID keys
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const webpush = require('web-push')
+          const keys = webpush.generateVAPIDKeys()
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_SUBJECT=mailto:ci@example.invalid\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_PRIVATE_KEY=${keys.privateKey}\n`)
+          NODE
       - name: Build
         run: npm run build
+        env:
+          CI: 'true'
       - name: Publish
         run: |
           git config user.name "github-actions[bot]"
