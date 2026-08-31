@@ -1,18 +1,64 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, Copy, Link2, Loader2, Plus, Search, X } from 'lucide-react'
+import { cargarPalabrasBiblicasVerificadas } from '@/app/actions/lexico-biblico'
 import { mostrarToast } from '@/lib/ui/toast'
 
 const API = 'https://bible.helloao.org/api'
 
 type Traduccion = { id: string; name: string; language: string; shortName?: string }
 
+type NombreHebreoLibro = { hebreo: string; transliteracion: string }
+
 const LIBROS_NT = new Set(['MAT','MRK','LUK','JHN','ACT','ROM','1CO','2CO','GAL','EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB','JAS','1PE','2PE','1JN','2JN','3JN','JUD','REV'])
+const NOMBRES_LIBROS_HEBREOS: Record<string, NombreHebreoLibro> = {
+  GEN: { hebreo: 'בְּרֵאשִׁית', transliteracion: 'Bereshit' },
+  EXO: { hebreo: 'שְׁמוֹת', transliteracion: 'Shemot' },
+  LEV: { hebreo: 'וַיִּקְרָא', transliteracion: 'Vayikra' },
+  NUM: { hebreo: 'בְּמִדְבַּר', transliteracion: 'Bamidbar' },
+  DEU: { hebreo: 'דְּבָרִים', transliteracion: 'Devarim' },
+  JOS: { hebreo: 'יְהוֹשֻׁעַ', transliteracion: 'Yehoshua' },
+  JDG: { hebreo: 'שֹׁפְטִים', transliteracion: 'Shoftim' },
+  RUT: { hebreo: 'רוּת', transliteracion: 'Rut' },
+  '1SA': { hebreo: 'שְׁמוּאֵל א׳', transliteracion: 'Shmuel Alef' },
+  '2SA': { hebreo: 'שְׁמוּאֵל ב׳', transliteracion: 'Shmuel Bet' },
+  '1KI': { hebreo: 'מְלָכִים א׳', transliteracion: 'Melakhim Alef' },
+  '2KI': { hebreo: 'מְלָכִים ב׳', transliteracion: 'Melakhim Bet' },
+  '1CH': { hebreo: 'דִּבְרֵי הַיָּמִים א׳', transliteracion: 'Divrei Hayamim Alef' },
+  '2CH': { hebreo: 'דִּבְרֵי הַיָּמִים ב׳', transliteracion: 'Divrei Hayamim Bet' },
+  EZR: { hebreo: 'עֶזְרָא', transliteracion: 'Ezra' },
+  NEH: { hebreo: 'נְחֶמְיָה', transliteracion: 'Nechemiah' },
+  EST: { hebreo: 'אֶסְתֵּר', transliteracion: 'Ester' },
+  JOB: { hebreo: 'אִיּוֹב', transliteracion: 'Iyov' },
+  PSA: { hebreo: 'תְּהִלִּים', transliteracion: 'Tehillim' },
+  PRO: { hebreo: 'מִשְׁלֵי', transliteracion: 'Mishlei' },
+  ECC: { hebreo: 'קֹהֶלֶת', transliteracion: 'Kohelet' },
+  SNG: { hebreo: 'שִׁיר הַשִּׁירִים', transliteracion: 'Shir Hashirim' },
+  ISA: { hebreo: 'יְשַׁעְיָהוּ', transliteracion: 'Yeshayahu' },
+  JER: { hebreo: 'יִרְמְיָהוּ', transliteracion: 'Yirmeyahu' },
+  LAM: { hebreo: 'אֵיכָה', transliteracion: 'Eikhah' },
+  EZK: { hebreo: 'יְחֶזְקֵאל', transliteracion: 'Yechezkel' },
+  DAN: { hebreo: 'דָּנִיֵּאל', transliteracion: 'Daniel' },
+  HOS: { hebreo: 'הוֹשֵׁעַ', transliteracion: 'Hoshea' },
+  JOL: { hebreo: 'יוֹאֵל', transliteracion: 'Yoel' },
+  AMO: { hebreo: 'עָמוֹס', transliteracion: 'Amos' },
+  OBA: { hebreo: 'עֹבַדְיָה', transliteracion: 'Ovadiah' },
+  JON: { hebreo: 'יוֹנָה', transliteracion: 'Yonah' },
+  MIC: { hebreo: 'מִיכָה', transliteracion: 'Mikhah' },
+  NAM: { hebreo: 'נַחוּם', transliteracion: 'Nachum' },
+  HAB: { hebreo: 'חֲבַקּוּק', transliteracion: 'Chavakuk' },
+  ZEP: { hebreo: 'צְפַנְיָה', transliteracion: 'Tzefanyah' },
+  HAG: { hebreo: 'חַגַּי', transliteracion: 'Chaggai' },
+  ZEC: { hebreo: 'זְכַרְיָה', transliteracion: 'Zekharyah' },
+  MAL: { hebreo: 'מַלְאָכִי', transliteracion: 'Malakhi' },
+}
+
 type Libro = { id: string; name: string; numberOfChapters: number }
 type VersoSimple = { type: string; number?: number; text?: string }
 type VersiculoElegido = { referencia: string; texto: string; traduccion: string; libroId: string; capitulo: number; verso: number }
 type ReferenciaRelacionada = { book: string; chapter: number; verse: number; endVerse?: number; score?: number }
+type ResultadoLexico = Awaited<ReturnType<typeof cargarPalabrasBiblicasVerificadas>>
 
 type Props = {
   open: boolean
@@ -24,6 +70,95 @@ type Props = {
 function etiquetaTraduccion(t?: Traduccion) {
   if (!t) return 'Biblia'
   return (t.shortName || t.name).toUpperCase()
+}
+
+function normalizarHebreo(value: string | null | undefined) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0591-\u05C7]/g, '')
+    .replace(/[^\u05D0-\u05EA]/g, '')
+}
+
+function significadoDePalabra(
+  palabra: string,
+  resultado: ResultadoLexico | null,
+  usados: Set<number>,
+) {
+  if (!resultado || resultado.status !== 'available') return null
+  const objetivo = normalizarHebreo(palabra)
+  if (!objetivo) return null
+
+  const indice = resultado.occurrences.findIndex((item, posicion) => {
+    if (usados.has(posicion)) return false
+    const formas = [item.surfaceForm, item.normalizedForm, item.entry.lemma]
+      .map(normalizarHebreo)
+      .filter(Boolean)
+    return formas.some((forma) => forma === objetivo || forma.includes(objetivo) || objetivo.includes(forma))
+  })
+  if (indice < 0) return null
+  usados.add(indice)
+  const occurrence = resultado.occurrences[indice]
+  return occurrence.entry.displayGlossEs || occurrence.entry.sourceGloss || occurrence.entry.definition || null
+}
+
+function PalabrasHebreasConSignificado({
+  versiculo,
+  original,
+  onInsert,
+}: {
+  versiculo: VersiculoElegido
+  original: string
+  onInsert: (palabra: string) => void
+}) {
+  const contenedorRef = useRef<HTMLDivElement | null>(null)
+  const [debeCargar, setDebeCargar] = useState(false)
+  const [resultado, setResultado] = useState<ResultadoLexico | null>(null)
+
+  useEffect(() => {
+    const nodo = contenedorRef.current
+    if (!nodo || debeCargar) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setDebeCargar(true)
+      return
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      setDebeCargar(true)
+      observer.disconnect()
+    }, { rootMargin: '240px 0px' })
+    observer.observe(nodo)
+    return () => observer.disconnect()
+  }, [debeCargar])
+
+  useEffect(() => {
+    if (!debeCargar) return
+    let activo = true
+    setResultado(null)
+    cargarPalabrasBiblicasVerificadas(versiculo.referencia)
+      .then((data) => { if (activo) setResultado(data) })
+      .catch(() => { if (activo) setResultado(null) })
+    return () => { activo = false }
+  }, [debeCargar, versiculo.referencia])
+
+  const palabras = original.split(/\s+/).filter(Boolean)
+  const usados = new Set<number>()
+
+  return <div ref={contenedorRef} dir="rtl" className="flex flex-wrap gap-1.5 border-t border-slate-100 px-3 py-3">
+    {palabras.map((palabra, indicePalabra) => {
+      const significado = significadoDePalabra(palabra, resultado, usados)
+      const etiqueta = significado ?? (debeCargar && resultado ? 'Significado no disponible' : 'Cargando significado…')
+      return <button
+        key={`${versiculo.verso}-${indicePalabra}`}
+        type="button"
+        onClick={() => onInsert(palabra)}
+        className="min-w-[82px] rounded-2xl border border-slate-200 bg-white px-2.5 py-2 text-center text-slate-700"
+        title={`Insertar ${palabra}`}
+      >
+        <span lang="he" dir="rtl" className="block text-[15px] font-bold leading-none">{palabra}</span>
+        <span dir="ltr" className={`mt-1.5 block text-[9px] font-bold leading-3 ${significado ? 'text-indigo-600' : 'text-slate-400'}`}>{etiqueta}</span>
+      </button>
+    })}
+  </div>
 }
 
 export default function PastoralVersePicker({ open, embedded = false, onClose, onInsert }: Props) {
@@ -78,6 +213,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   const libroActual = useMemo(() => libros.find(b => b.id === libro), [libros, libro])
   const traduccionActual = useMemo(() => traducciones.find(t => t.id === trad), [traducciones, trad])
   const esNuevoTestamento = LIBROS_NT.has(libro)
+  const libroHebreoActual = !esNuevoTestamento ? NOMBRES_LIBROS_HEBREOS[libro] ?? null : null
   const idiomaOriginal = esNuevoTestamento ? 'Griego' : 'Hebreo'
   const traduccionOriginal = useMemo(() => {
     const candidatos = todasTraducciones.filter(t => esNuevoTestamento ? t.language === 'grc' : ['hbo', 'heb'].includes(t.language))
@@ -279,7 +415,14 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           <button type="button" onClick={() => setModoOriginal(false)} className={`min-h-8 rounded-full px-3 ${!modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={!modoOriginal}>Español</button>
           <button type="button" disabled={!traduccionOriginal} onClick={() => setModoOriginal(true)} className={`min-h-8 rounded-full px-3 disabled:opacity-40 ${modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={modoOriginal}>Original · {idiomaOriginal}</button>
         </div>
-        <p className="pastoral-verse-guide">{modoOriginal ? `Selecciona versículos o toca una palabra en ${idiomaOriginal.toLowerCase()} para insertarla sola.` : 'Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.'}</p>
+        {modoOriginal && libroHebreoActual && <div className="mx-3 mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+          <div lang="he" dir="rtl" className="text-right text-[24px] font-bold leading-tight text-slate-900">{libroHebreoActual.hebreo}</div>
+          <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-2" dir="ltr">
+            <strong className="text-sm font-black text-indigo-700">{libroHebreoActual.transliteracion}</strong>
+            <span className="text-xs font-bold text-slate-500">{libroHebreoActual.transliteracion} {capitulo}</span>
+          </div>
+        </div>}
+        <p className="pastoral-verse-guide">{modoOriginal ? (esNuevoTestamento ? 'Selecciona versículos o toca una palabra en griego para insertarla sola.' : 'Cada palabra hebrea muestra su significado breve en español antes de insertarla. Tócala cuando quieras agregarla sola.') : 'Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.'}</p>
       </>}
 
       <div className="pastoral-verse-list">
@@ -291,12 +434,16 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
         ) : cargando ? <div className="pastoral-verse-loading"><Loader2 /></div> : visibles.length ? visibles.map(v => {
           const activo = seleccionados.includes(v.verso)
           const agregado = agregados.includes(claveVersiculo(v))
+          const referenciaVisible = modoOriginal && libroHebreoActual ? `${libroHebreoActual.transliteracion} ${v.capitulo}:${v.verso}` : v.referencia
           return <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
-              <span className="min-w-0 flex-1"><strong>{v.referencia}</strong><em dir={modoOriginal && !esNuevoTestamento ? 'rtl' : 'ltr'} lang={modoOriginal ? (esNuevoTestamento ? 'grc' : 'he') : 'es'}>{modoOriginal ? (cargandoOriginal ? 'Cargando original…' : originales[v.verso] || 'Original no disponible') : v.texto}</em></span>
+              <span className="min-w-0 flex-1">
+                <strong dir="ltr" className={modoOriginal ? 'block pb-2' : undefined}>{referenciaVisible}</strong>
+                <em dir={modoOriginal && !esNuevoTestamento ? 'rtl' : 'ltr'} lang={modoOriginal ? (esNuevoTestamento ? 'grc' : 'he') : 'es'} className={modoOriginal ? 'block pt-1' : undefined}>{modoOriginal ? (cargandoOriginal ? 'Cargando original…' : originales[v.verso] || 'Original no disponible') : v.texto}</em>
+              </span>
               <span className={`ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors ${activo || agregado ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white text-transparent'}`} aria-label={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : 'Versículo no seleccionado'} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check className="h-4 w-4" strokeWidth={3} />}</span>
             </button>
-            {modoOriginal && originales[v.verso] && <div dir={esNuevoTestamento ? 'ltr' : 'rtl'} className="flex flex-wrap gap-1 border-t border-slate-100 px-3 py-2">{originales[v.verso].split(/\s+/).filter(Boolean).map((palabra, indicePalabra) => <button key={`${v.verso}-${indicePalabra}`} type="button" onClick={() => insertarPalabraOriginal(v, palabra)} className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700" title={`Insertar ${palabra}`}>{palabra}</button>)}</div>}
+            {modoOriginal && originales[v.verso] && (esNuevoTestamento ? <div dir="ltr" className="flex flex-wrap gap-1 border-t border-slate-100 px-3 py-2">{originales[v.verso].split(/\s+/).filter(Boolean).map((palabra, indicePalabra) => <button key={`${v.verso}-${indicePalabra}`} type="button" onClick={() => insertarPalabraOriginal(v, palabra)} className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700" title={`Insertar ${palabra}`}>{palabra}</button>)}</div> : <PalabrasHebreasConSignificado versiculo={v} original={originales[v.verso]} onInsert={(palabra) => insertarPalabraOriginal(v, palabra)} />)}
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
               <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>
