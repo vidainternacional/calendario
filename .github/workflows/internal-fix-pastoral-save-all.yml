@@ -1,0 +1,13 @@
+name: Fix pastoral persistence completely
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo staged
