@@ -47,3 +47,5 @@ jobs:
           git add __VIDA_INTERNACIONAL.md .github/workflows/internal-record-pastoral-final-validation.yml
           git commit -m "docs: record pastoral persistence approval"
           git push origin HEAD:main
+
+# trigger
