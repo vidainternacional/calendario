@@ -1,0 +1,85 @@
+name: Apply pastoral native refactor
+
+on:
+  push:
+    branches:
+      - agent/pastoral-native-refactor-helper
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout helper payload
+        uses: actions/checkout@v6
+        with:
+          path: helper
+
+      - name: Checkout target branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/centro-pastoral-reorganizacion
+          fetch-depth: 0
+          path: target
+
+      - name: Verify expected target head
+        run: |
+          test "$(git -C target rev-parse HEAD)" = "5170002685a02da9011953528f5af1fe291affc8"
+
+      - name: Install native editor files
+        run: |
+          gzip -dc helper/.github/tmp/PastoralVisualWorkspaceV4.tsx.gz > target/components/pastoral/PastoralVisualWorkspaceV4.tsx
+          gzip -dc helper/.github/tmp/ProyectoContenidoWorkspace.tsx.gz > target/components/pastoral/ProyectoContenidoWorkspace.tsx
+          test "$(git -C target hash-object components/pastoral/PastoralVisualWorkspaceV4.tsx)" = "128a613f9d69c1acce782314bd1dea4b7ebfee48"
+          test "$(git -C target hash-object components/pastoral/ProyectoContenidoWorkspace.tsx)" = "6f3ae4aa8668cb3808358e971e8c5cf5ebce1c88"
+          git -C target diff --check
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: target/package-lock.json
+
+      - name: Install dependencies
+        working-directory: target
+        run: npm ci
+
+      - name: Run critical regressions
+        working-directory: target
+        run: npm run test:regression
+
+      - name: Generate ephemeral VAPID keys
+        working-directory: target
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+          const webpush = require('web-push')
+          const keys = webpush.generateVAPIDKeys()
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_SUBJECT=mailto:ci@example.invalid\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_PRIVATE_KEY=${keys.privateKey}\n`)
+          NODE
+
+      - name: Build application
+        working-directory: target
+        env:
+          CI: 'true'
+        run: npm run build
+
+      - name: Commit validated refactor to target branch
+        working-directory: target
+        run: |
+          git config user.name "vida-refactor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/ProyectoContenidoWorkspace.tsx
+          git commit -m "refactor(pastoral): make backgrounds native editor tool"
+          git push origin HEAD:agent/centro-pastoral-reorganizacion
+
+      - name: Remove helper branch
+        if: success()
+        working-directory: target
+        run: git push origin --delete agent/pastoral-native-refactor-helper
