@@ -25,6 +25,18 @@ jobs:
         run: git show origin/automation/pastoral-textures-bible-ai:scripts/apply-pastoral-textures-bible-ai.py > /tmp/apply-pastoral-textures-bible-ai.py
       - name: Apply patch
         run: python /tmp/apply-pastoral-textures-bible-ai.py
+      - name: Normalize custom gradient palette type
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          path = Path('components/pastoral/PastoralVisualWorkspaceV4.tsx')
+          text = path.read_text()
+          old = "const aplicarFondoVisual = (paleta: PaletaPresentacion) => aplicarFondoSeleccionado(paleta.fondo)"
+          new = "const aplicarFondoVisual = (paleta: { fondo: string }) => aplicarFondoSeleccionado(paleta.fondo)"
+          if old not in text:
+              raise SystemExit('palette signature anchor not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
       - name: Generate ephemeral VAPID keys
         run: |
           node <<'NODE'
@@ -43,7 +55,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/PastoralVersePicker.tsx app/api/pastoral/original-word/route.ts
+          git add components/pastoral/PastoralVisualWorkspaceV4.tsx components/pastoral/PastoralVisualCanvas.tsx
           git diff --cached --check
-          git commit -m "feat(pastoral): personalize textures and add Bible AI fallback"
+          git commit -m "feat(pastoral): add gradient editor and compact layer tools"
           git push origin HEAD:agent/centro-pastoral-reorganizacion
