@@ -175,7 +175,7 @@ function diapositivasDesdeFormulario(formData: FormData): Diapositiva[] {
     contenido: String(contenidos[index] ?? '').trim().slice(0, 12000),
     recurso_id: uuidOpcional(recursos[index] ?? null),
     plantilla: plantillaValida(plantillas[index]),
-    fondo: colorValido(fondos[index], '#ffffff'),
+    fondo: fondoVisualSeguro(fondos[index]) ?? '#ffffff',
     color_texto: colorValido(colores[index], '#0f172a'),
     alineacion: alineacionValida(alineaciones[index]),
     tamano: tamanoValido(tamanos[index]),
