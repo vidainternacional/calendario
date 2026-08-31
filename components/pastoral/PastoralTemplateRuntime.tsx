@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { escaparHtmlCanvas } from '@/components/pastoral/pastoral-canvas-model'
 import type {
   PlantillaAdministrada,
   RolPlantillaAdministrada,
@@ -9,7 +8,6 @@ import type {
 
 const ROLES: RolPlantillaAdministrada[] = ['titulo', 'subtitulo', 'cuerpo']
 const BASE_WIDTH_16_9 = 1100
-const TEXTOS_PLACEHOLDER = ['Título', 'Subtítulo', 'Escribe el contenido', 'Escribe aquí']
 
 const normalizar = (valor: string) => valor
   .replace(/[•◦▪●]/g, ' ')
@@ -17,11 +15,6 @@ const normalizar = (valor: string) => valor
   .replace(/\s+/g, ' ')
   .trim()
   .toLowerCase()
-
-function htmlMuestra(texto: string, interlineado: number) {
-  const seguro = escaparHtmlCanvas(texto).replace(/\n/g, '<br>')
-  return `<span data-vida-template-sample="true" data-vida-line-height="${interlineado}">${seguro}</span>`
-}
 
 function alineacionCss(valor: string) {
   if (valor === 'centro') return 'center'
@@ -68,16 +61,8 @@ function pintarPreview(preview: HTMLElement, plantilla: PlantillaAdministrada) {
 
 export default function PastoralTemplateRuntime({ catalogo }: { catalogo: PlantillaAdministrada[] }) {
   useEffect(() => {
-    let muestrasAntesDelClick = false
-
-    const conocidas = new Set<string>()
-    TEXTOS_PLACEHOLDER.forEach((texto) => conocidas.add(normalizar(texto)))
-    catalogo.forEach((plantilla) => {
-      conocidas.add(normalizar(plantilla.nombre))
-      conocidas.add(normalizar(`Estilo ${plantilla.categoria.toLowerCase()}`))
-      conocidas.add(normalizar(`Composición ${plantilla.nombre.toLowerCase()}`))
-      ROLES.forEach((rol) => conocidas.add(normalizar(plantilla.muestras[rol])))
-    })
+    let frame = 0
+    let timer = 0
 
     const buscarPlantillaPorBoton = (boton: HTMLButtonElement, grilla: HTMLElement) => {
       const etiqueta = boton.querySelectorAll('span')[1]?.textContent ?? boton.textContent ?? ''
@@ -100,80 +85,23 @@ export default function PastoralTemplateRuntime({ catalogo }: { catalogo: Planti
       })
     }
 
-    const programarMiniaturas = () => window.setTimeout(() => window.requestAnimationFrame(sincronizarMiniaturas), 0)
-
-    const editoresPorRol = () => new Map(
-      ROLES.map((rol) => {
-        const contenedor = document.querySelector<HTMLElement>(`.pastoral-editor-v4 .pastoral-visual-canvas [data-canvas-text-role="${rol}"]`)
-        return [rol, contenedor?.querySelector<HTMLElement>('[contenteditable="true"]') ?? null] as const
-      }),
-    )
-
-    const tieneTextoUsuario = () => {
-      const editores = Array.from(document.querySelectorAll<HTMLElement>('.pastoral-editor-v4 .pastoral-visual-canvas [data-canvas-text-role] [contenteditable="true"]'))
-      return editores.some((editor) => {
-        const texto = normalizar(editor.innerText || '')
-        return Boolean(texto) && !conocidas.has(texto)
-      })
+    const programarMiniaturas = () => {
+      window.clearTimeout(timer)
+      window.cancelAnimationFrame(frame)
+      timer = window.setTimeout(() => {
+        frame = window.requestAnimationFrame(sincronizarMiniaturas)
+      }, 0)
     }
 
-    const aplicarMuestras = (plantilla: PlantillaAdministrada) => {
-      const editores = editoresPorRol()
-      ROLES.forEach((rol) => {
-        const editor = editores.get(rol)
-        if (!editor) return
-        const caja = plantilla[rol]
-        editor.innerHTML = htmlMuestra(plantilla.muestras[rol], caja.interlineado)
-        editor.dispatchEvent(new Event('input', { bubbles: true }))
-      })
-    }
-
-    const alHacerClickCaptura = (event: MouseEvent) => {
-      const objetivo = event.target instanceof Element ? event.target : null
-      const boton = objetivo?.closest<HTMLButtonElement>('button')
-      const grilla = boton?.closest<HTMLElement>('[aria-label="Plantillas en filas de tres"]')
-
-      if (!boton || !grilla) {
-        programarMiniaturas()
-        return
-      }
-
-      const plantilla = buscarPlantillaPorBoton(boton, grilla)
-      if (!plantilla) return
-
-      // Solo recordamos si el lienzo contenía muestras antes del clic.
-      // No cancelamos, no re-disparamos el botón y no tocamos la geometría.
-      muestrasAntesDelClick = !tieneTextoUsuario()
-    }
-
-    const alHacerClickBurbuja = (event: MouseEvent) => {
-      const objetivo = event.target instanceof Element ? event.target : null
-      const boton = objetivo?.closest<HTMLButtonElement>('button')
-      const grilla = boton?.closest<HTMLElement>('[aria-label="Plantillas en filas de tres"]')
-      if (!boton || !grilla) return
-
-      const plantilla = buscarPlantillaPorBoton(boton, grilla)
-      if (!plantilla) return
-
-      const reemplazarMuestras = muestrasAntesDelClick
-      muestrasAntesDelClick = false
-
-      window.setTimeout(() => window.requestAnimationFrame(() => {
-        // Workspace ya creó/reubicó Título/Subtítulo/Cuerpo con la geometría guardada.
-        // Aquí solo colocamos el texto de muestra personalizado. El tamaño, fuente,
-        // posición y ancho/alto siguen siendo los del elemento React del canvas.
-        if (reemplazarMuestras) aplicarMuestras(plantilla)
-        sincronizarMiniaturas()
-      }), 0)
-    }
-
+    // Este runtime queda deliberadamente limitado a miniaturas.
+    // No intercepta clics de plantilla, no toca el canvas y no dispara inputs sintéticos.
     programarMiniaturas()
-    document.addEventListener('click', alHacerClickCaptura, true)
-    document.addEventListener('click', alHacerClickBurbuja, false)
+    document.addEventListener('click', programarMiniaturas, false)
 
     return () => {
-      document.removeEventListener('click', alHacerClickCaptura, true)
-      document.removeEventListener('click', alHacerClickBurbuja, false)
+      window.clearTimeout(timer)
+      window.cancelAnimationFrame(frame)
+      document.removeEventListener('click', programarMiniaturas, false)
     }
   }, [catalogo])
 
