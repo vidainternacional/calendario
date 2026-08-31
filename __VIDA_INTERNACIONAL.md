@@ -478,9 +478,9 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 8. Los textos y versículos insertados en el lienzo permanecen editables directamente mediante cursor, selección y borrado de contenido parcial.
 9. Biblia conserva español y texto original; AT usa hebreo y NT griego. En hebreo se mantiene jerarquía propia del libro y exploración puntual de palabras.
 10. La exploración léxica prioriza datos bíblicos existentes de VIDA; cuando una explicación no está disponible, la IA integrada puede actuar como respaldo claramente identificado como explicación IA.
-11. Se preservan Deshacer/Rehacer, guardado, navegación, Biblia, imágenes, capas, Presentar y Congregación sin cambios de permisos ni Supabase/RLS.
-12. Checkpoint técnico aprobado del bloque: `67153b157c01c4043395a907719d82d967268b6a`; PR #287 permanece OPEN · DRAFT · sin merge.
+11. Se confirma persistencia real del Editor Pastoral: Guardar y autoguardado conservan páginas, textos, imágenes, capas, posiciones, opacidad, fusión, fondos y degradados lineales, radiales y cónicos. El estado de guardado se comunica únicamente mediante el check superior, sin toast de “Proyecto guardado”.
+12. Checkpoint técnico aprobado del bloque: `f3d54260f998e83c93440622df26ef34aa1f0052`; PR #287 permanece OPEN · DRAFT · sin merge.
 
 # Siguiente punto autorizado
 
-**Continuar exclusivamente con la prioridad actual del Centro Pastoral, incluyendo la reorganización y pulido del editor visual del PR #287. Preservar todas las decisiones visuales y funcionales ya aprobadas; no modificar geometría, límites, tamaños o comportamientos validados salvo instrucción explícita o bug reproducible. FASE I permanece diferida hasta que la aplicación quede terminada.**
+**Validación final funcional del Editor Visual del Centro Pastoral, incluyendo Presentar, Congregación y pantalla completa real. Preservar íntegramente todo lo aprobado y no reabrir herramientas ya validadas salvo bug reproducible.**
