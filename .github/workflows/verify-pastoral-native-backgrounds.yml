@@ -31,6 +31,7 @@ jobs:
       - name: Apply native Fondos follow-up
         run: |
           python helper/scripts/apply_pastoral_native_followup.py target
+          python helper/scripts/normalize_pastoral_test_eof.py target
           git -C target diff --check
           ! grep -q "limpiarFondosDuplicados" target/components/pastoral/PastoralEditorRuntimeEnhancements.tsx
           test ! -e target/components/pastoral/PastoralTemplateRuntime.tsx
