@@ -1,0 +1,58 @@
+name: Internal Inspect UBS Hebrew Spanish
+
+on:
+  push:
+    branches:
+      - automation/pastoral-hebrew-gloss-inspect
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download UBS Spanish Hebrew dictionary
+        run: |
+          curl -L --fail --retry 3 \
+            'https://raw.githubusercontent.com/ubsicap/ubs-open-license/main/dictionaries/hebrew/JSON/UBSHebrewDic-v0.9.2-es.JSON' \
+            -o /tmp/ubs-hebrew-es.json
+      - name: Inspect schema safely
+        run: |
+          python - <<'PY'
+          import json, re
+          p='/tmp/ubs-hebrew-es.json'
+          with open(p, encoding='utf-8') as f:
+              data=json.load(f)
+          print('ROOT_TYPE', type(data).__name__)
+          if isinstance(data, dict):
+              print('ROOT_KEYS', list(data.keys())[:50])
+              vals=list(data.values())
+              first=vals[0] if vals else None
+          elif isinstance(data, list):
+              print('ROOT_LEN', len(data))
+              first=data[0] if data else None
+          else:
+              first=data
+          print('FIRST_TYPE', type(first).__name__)
+          if isinstance(first, dict): print('FIRST_KEYS', list(first.keys())[:100])
+          print('FIRST', json.dumps(first, ensure_ascii=False)[:8000])
+          # Find small objects containing ראשית / רֵאשִׁית and print nearest structure only.
+          target=re.compile(r'ראש|רֵאש')
+          seen=0
+          def walk(x, path='$'):
+              global seen
+              if seen>=5: return
+              if isinstance(x, dict):
+                  text=' '.join(v for v in x.values() if isinstance(v,str))
+                  if target.search(text):
+                      print('MATCH_PATH', path)
+                      print('MATCH_KEYS', list(x.keys())[:100])
+                      print('MATCH', json.dumps(x, ensure_ascii=False)[:12000])
+                      seen+=1
+                  for k,v in x.items(): walk(v, f'{path}.{k}')
+              elif isinstance(x, list):
+                  for i,v in enumerate(x): walk(v, f'{path}[{i}]')
+          walk(data)
+          print('MATCH_COUNT', seen)
+          PY
