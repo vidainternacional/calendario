@@ -68,7 +68,7 @@ const ESTADO_FORMATO_VACIO: EstadoFormatoSeleccion = {
   orderedList: false,
 }
 const MAX_HISTORIAL = 80
-const DESPLAZAMIENTO_ACCIONES_CAPA = 150
+const DESPLAZAMIENTO_ACCIONES_CAPA = 164
 const HERRAMIENTAS: Array<{ id: GrupoPrincipal; label: string; icon: typeof LayoutTemplate }> = [
   { id: 'fondos', label: 'Fondos', icon: Palette },
   { id: 'texto', label: 'Texto', icon: Type },
@@ -419,7 +419,14 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     const dy = toque.clientY - inicio.y
     if (Math.abs(dx) <= Math.abs(dy)) return
     const desplazamiento = Math.max(-DESPLAZAMIENTO_ACCIONES_CAPA, Math.min(0, inicio.desde + dx))
+    const progreso = Math.min(1, Math.abs(desplazamiento) / DESPLAZAMIENTO_ACCIONES_CAPA)
+    event.currentTarget.style.transition = 'none'
     event.currentTarget.style.transform = `translateX(${desplazamiento}px)`
+    const acciones = event.currentTarget.parentElement?.querySelector<HTMLElement>('[data-pastoral-layer-actions="true"]')
+    if (acciones) {
+      acciones.style.opacity = String(.25 + progreso * .75)
+      acciones.style.transform = `translateX(${Math.round((1 - progreso) * 18)}px) scale(${.94 + progreso * .06})`
+    }
   }
   const terminarSwipeCapa = (event: React.TouchEvent<HTMLDivElement>, id: string) => {
     const inicio = capaSwipeRef.current
@@ -428,19 +435,41 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     if (!inicio || inicio.id !== id || !toque) return
     const dx = toque.clientX - inicio.x
     const dy = toque.clientY - inicio.y
+    event.currentTarget.style.removeProperty('transition')
     event.currentTarget.style.removeProperty('transform')
+    const acciones = event.currentTarget.parentElement?.querySelector<HTMLElement>('[data-pastoral-layer-actions="true"]')
+    acciones?.style.removeProperty('opacity')
+    acciones?.style.removeProperty('transform')
     if (Math.abs(dx) <= Math.abs(dy)) return
-    if (inicio.desde === 0 && dx < -34) setCapaAccionesAbiertas(id)
-    else if (inicio.desde < 0 && dx > 26) setCapaAccionesAbiertas(null)
+    if (inicio.desde === 0 && dx < -28) setCapaAccionesAbiertas(id)
+    else if (inicio.desde < 0 && dx > 24) setCapaAccionesAbiertas(null)
   }
   const convertirImagenEnFondo = (id: string) => {
     const elemento = pagina.elementos?.find((item) => item.id === id) as ElementoCanvasEditor | undefined
-    if (!elemento || elemento.tipo !== 'imagen' || !elemento.recurso_id || elemento.bloqueado) return
+    if (!elemento || elemento.tipo !== 'imagen' || !elemento.recurso_id || elemento.bloqueado || elemento.es_capa_fondo) return
     registrarHistorial()
-    patchPaginaSinHistorial({ fondo_modo: 'imagen', fondo: '#ffffff', fondo_recurso_id: elemento.recurso_id, recurso_id: elemento.recurso_id, elementos: (pagina.elementos ?? []).filter((item) => item.id !== id) })
-    setSeleccion(null)
+    const otros = (pagina.elementos ?? []).filter((item) => item.id !== id)
+    const fondos = otros.filter((item) => Boolean(item.es_capa_fondo || item.fondo_visual)).slice().sort((a, b) => a.z - b.z)
+    const contenido = otros.filter((item) => !item.es_capa_fondo && !item.fondo_visual).slice().sort((a, b) => a.z - b.z)
+    const fondosOrdenados = fondos.map((item, posicion) => ({ ...item, z: posicion + 1 }))
+    const convertido = { ...elemento, es_capa_fondo: true, x: 0, y: 0, w: 100, h: 100, ajuste: 'cover' as const, radio: 0, z: fondosOrdenados.length + 1 }
+    const contenidoOrdenado = contenido.map((item, posicion) => ({ ...item, z: fondosOrdenados.length + 2 + posicion }))
+    patchPaginaSinHistorial({ elementos: [...fondosOrdenados, convertido, ...contenidoOrdenado] })
+    setSeleccion(id)
     setCapaAccionesAbiertas(null)
     setDestinoSubida('fondo')
+  }
+  const convertirFondoEnImagen = (id: string) => {
+    const elemento = pagina.elementos?.find((item) => item.id === id) as ElementoCanvasEditor | undefined
+    if (!elemento || elemento.tipo !== 'imagen' || !elemento.recurso_id || elemento.bloqueado || !elemento.es_capa_fondo) return
+    registrarHistorial()
+    const otros = (pagina.elementos ?? []).filter((item) => item.id !== id)
+    const z = Math.max(0, ...otros.map((item) => item.z)) + 1
+    const convertido = { ...elemento, es_capa_fondo: false, x: 12, y: 18, w: 56, h: 48, ajuste: 'contain' as const, radio: 14, z }
+    patchPaginaSinHistorial({ elementos: [...otros, convertido] })
+    setSeleccion(id)
+    setCapaAccionesAbiertas(null)
+    setDestinoSubida('elemento')
   }
   const restaurarFondoComoImagen = () => {
     const recursoId = pagina.fondo_recurso_id ?? pagina.recurso_id
@@ -453,6 +482,20 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     setSeleccion(imagen.id)
     setCapaAccionesAbiertas(null)
     setDestinoSubida('elemento')
+  }
+  const usarRecursoComoImagen = (recurso: RecursoPastoral) => {
+    const seleccionado = elementoSeleccionado?.tipo === 'imagen' && elementoSeleccionado.recurso_id === recurso.id ? elementoSeleccionado : null
+    if (seleccionado?.es_capa_fondo) return convertirFondoEnImagen(seleccionado.id)
+    if (seleccionado) return
+    const fondoBase = pagina.fondo_modo === 'imagen' && (pagina.fondo_recurso_id ?? pagina.recurso_id) === recurso.id
+    if (fondoBase) return restaurarFondoComoImagen()
+    agregarImagen(recurso)
+  }
+  const usarRecursoComoFondo = (recurso: RecursoPastoral) => {
+    const seleccionado = elementoSeleccionado?.tipo === 'imagen' && elementoSeleccionado.recurso_id === recurso.id ? elementoSeleccionado : null
+    if (seleccionado && !seleccionado.es_capa_fondo) return convertirImagenEnFondo(seleccionado.id)
+    if (seleccionado?.es_capa_fondo) return
+    aplicarFondoImagen(recurso)
   }
   const desbloquearFondo = () => {
     const recursoId = pagina.fondo_recurso_id ?? pagina.recurso_id
@@ -484,7 +527,6 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
     patchPaginaSinHistorial({ elementos: [...fondosOrdenados, capa, ...contenidoOrdenado] })
     setSeleccion(capa.id)
     setCapaAccionesAbiertas(null)
-    mostrarToast('Nueva capa creada')
   }
   const aplicarFondoSeleccionado = (fondo: string) => {
     const capaActiva = elementoSeleccionado as ElementoCanvasEditor | null
@@ -893,8 +935,8 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         {recursosFiltrados.length ? <div className="grid grid-cols-3 gap-2">{recursosFiltrados.map((recurso) => <article key={recurso.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <img src={recurso.acceso_url ?? ''} alt="" className="aspect-square w-full object-cover" />
           <div className="grid grid-cols-2 border-t border-slate-100">
-            <button type="button" onClick={() => agregarImagen(recurso)} className="min-h-9 border-r border-slate-100 px-1 text-[10px] font-black text-slate-600" aria-label={`Agregar ${recurso.titulo} como imagen`}>Imagen</button>
-            <button type="button" onClick={() => aplicarFondoImagen(recurso)} className="min-h-9 px-1 text-[10px] font-black text-indigo-600" aria-label={`Usar ${recurso.titulo} como fondo`}>Fondo</button>
+            <button type="button" onClick={() => usarRecursoComoImagen(recurso)} className="min-h-9 border-r border-slate-100 px-1 text-[10px] font-black text-slate-600" aria-label={`Usar ${recurso.titulo} como imagen`}>Imagen</button>
+            <button type="button" onClick={() => usarRecursoComoFondo(recurso)} className="min-h-9 px-1 text-[10px] font-black text-indigo-600" aria-label={`Usar ${recurso.titulo} como fondo`}>Fondo</button>
           </div>
         </article>)}</div> : <p className="text-[10px] text-slate-400">No hay imágenes disponibles todavía.</p>}
       </section>}
@@ -959,6 +1001,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
         <div className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Opacidad</span><input type="range" min="0.1" max="1" step="0.05" disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.opacidad ?? 1} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onInput={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.currentTarget.value) })} onChange={(e) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { opacidad: Number(e.currentTarget.value) })} className="min-w-0 flex-1 touch-none disabled:opacity-30" aria-label="Opacidad de la capa seleccionada" /><span className="w-10 text-right text-[11px] font-bold text-slate-500">{Math.round((elementoSeleccionado.opacidad ?? 1) * 100)}%</span></div>
         <label className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Fusión</span><select disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.modo_fusion ?? 'normal'} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(event) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { modo_fusion: event.target.value as ModoFusion })} className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none disabled:opacity-30" aria-label="Modo de fusión de la capa seleccionada">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select></label>
         <small className="pl-[90px] leading-4 text-slate-400">La capa seleccionada se fusiona visualmente con todas las capas que tenga debajo, sin destruir ninguna.</small>
+        {elementoSeleccionado.tipo === 'imagen' && <button type="button" disabled={elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado.es_capa_fondo ? convertirFondoEnImagen(elementoSeleccionado.id) : convertirImagenEnFondo(elementoSeleccionado.id)} className="ml-[90px] inline-flex min-h-9 w-fit items-center rounded-full border border-slate-200 bg-white px-3 text-[10px] font-black text-slate-600 disabled:opacity-30">{elementoSeleccionado.es_capa_fondo ? 'Convertir a imagen' : 'Convertir a fondo'}</button>}
       </div>}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-label="Lista vertical de capas">
         {(pagina.elementos ?? []).slice().sort((a, b) => b.z - a.z).map((elementoBase) => {
@@ -967,15 +1010,15 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
           const resumen = elemento.fondo_visual ? 'Fondo editable' : elemento.tipo === 'imagen' ? recursoCapa?.titulo ?? 'Imagen' : textoPlano(elemento.contenido ?? '') || nombreCapa(elemento)
           const accionesAbiertas = capaAccionesAbiertas === elemento.id
           return <div key={elemento.id} data-pastoral-layer-row="true" data-pastoral-layer-id={elemento.id} className="relative overflow-hidden border-b border-slate-100 last:border-b-0">
-            <div className={`absolute inset-y-0 right-2 flex items-center gap-2 transition-opacity duration-150 ${accionesAbiertas ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`} aria-hidden={!accionesAbiertas}>
+            <div data-pastoral-layer-actions="true" className={`absolute inset-y-0 right-2 flex items-center gap-2 transition-[opacity,transform] duration-200 ease-out ${accionesAbiertas ? 'pointer-events-auto translate-x-0 scale-100 opacity-100' : 'pointer-events-none translate-x-3 scale-95 opacity-0'}`} aria-hidden={!accionesAbiertas}>
               <button type="button" tabIndex={accionesAbiertas ? 0 : -1} onClick={() => { setSeleccion(elemento.id); duplicarElemento(elemento.id); setCapaAccionesAbiertas(null) }} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600" aria-label={`Duplicar ${nombreCapa(elemento)}`}><Copy className="h-4 w-4" /></button>
               <button type="button" tabIndex={accionesAbiertas ? 0 : -1} onClick={() => { setSeleccion(elemento.id); alternarBloqueoCapa(elemento.id) }} className={`grid h-10 w-10 place-items-center rounded-full border bg-white ${elemento.bloqueado ? 'border-indigo-200 text-indigo-600' : 'border-slate-200 text-slate-600'}`} aria-label={elemento.bloqueado ? `Desbloquear ${nombreCapa(elemento)}` : `Bloquear ${nombreCapa(elemento)}`}>{elemento.bloqueado ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}</button>
               <button type="button" tabIndex={accionesAbiertas ? 0 : -1} onClick={() => { setSeleccion(elemento.id); eliminarElemento(elemento.id) }} className="grid h-10 w-10 place-items-center rounded-full border border-rose-200 bg-white text-rose-600" aria-label={`Eliminar ${nombreCapa(elemento)}`}><Trash2 className="h-4 w-4" /></button>
             </div>
-            <div data-pastoral-layer-content="true" onTouchStart={(event) => iniciarSwipeCapa(event, elemento.id)} onTouchMove={(event) => moverSwipeCapa(event, elemento.id)} onTouchEnd={(event) => terminarSwipeCapa(event, elemento.id)} className={`relative flex min-h-14 items-center transition-[transform,background-color] duration-200 ${seleccion === elemento.id ? 'bg-indigo-50' : 'bg-white'}`} style={{ transform: accionesAbiertas ? `translateX(-${DESPLAZAMIENTO_ACCIONES_CAPA}px)` : 'translateX(0)' }}>
+            <div data-pastoral-layer-content="true" onTouchStart={(event) => iniciarSwipeCapa(event, elemento.id)} onTouchMove={(event) => moverSwipeCapa(event, elemento.id)} onTouchEnd={(event) => terminarSwipeCapa(event, elemento.id)} className={`relative flex min-h-14 items-center transition-[transform,background-color] duration-300 [transition-timing-function:cubic-bezier(.22,1,.36,1)] ${seleccion === elemento.id ? 'bg-indigo-50' : 'bg-white'}`} style={{ transform: accionesAbiertas ? `translateX(-${DESPLAZAMIENTO_ACCIONES_CAPA}px)` : 'translateX(0)' }}>
               <button type="button" onClick={() => alternarVisibilidadCapa(elemento.id)} className="grid h-11 w-11 shrink-0 place-items-center text-slate-500" aria-label={elemento.oculto ? `Mostrar ${nombreCapa(elemento)}` : `Ocultar ${nombreCapa(elemento)}`} aria-pressed={!elemento.oculto}>{elemento.oculto ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
               <button type="button" onClick={() => { setSeleccion(elemento.id); setCapaAccionesAbiertas(null) }} className="flex min-w-0 flex-1 items-center gap-3 px-1 py-2 text-left">
-                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500">{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.fondo_visual ? <Square className="h-4 w-4" /> : elemento.tipo === 'versiculo' ? <BookOpen className="h-4 w-4" /> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Type className="h-4 w-4" />}</span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-slate-500" style={elemento.fondo_visual ? { background: elemento.fondo_visual } : undefined}>{recursoCapa?.acceso_url ? <img src={recursoCapa.acceso_url} alt="" className="h-full w-full object-cover" /> : elemento.fondo_visual ? null : elemento.tipo === 'versiculo' || elemento.tipo === 'texto' ? <span className="line-clamp-3 max-h-9 overflow-hidden px-1 text-center text-[6px] font-semibold leading-[1.05] text-slate-600">{textoPlano(elemento.contenido ?? '').slice(0, 54) || 'Texto'}</span> : elemento.tipo === 'imagen' ? <ImageIcon className="h-4 w-4" /> : <Square className="h-4 w-4" />}</span>
                 <span className="min-w-0 flex-1"><strong className="flex items-center gap-1 truncate text-xs font-bold text-slate-700">{nombreCapa(elemento)}{elemento.bloqueado && <Lock className="h-3 w-3 shrink-0 text-slate-400" />}</strong><small className="block truncate text-[10px] text-slate-400">{resumen}</small></span>
               </button>
               <button type="button" data-pastoral-layer-drag-handle="true" disabled={elemento.bloqueado} onPointerDown={(event) => iniciarArrastreCapa(event, elemento.id)} onPointerMove={(event) => moverArrastreCapa(event, elemento.id)} onPointerUp={(event) => terminarArrastreCapa(event, elemento.id)} onPointerCancel={cancelarArrastreCapa} className="grid h-12 w-10 shrink-0 touch-none place-items-center text-slate-400 disabled:opacity-25" aria-label={`Mover capa ${nombreCapa(elemento)}`} title="Arrastra para subir o bajar"><GripVertical className="h-5 w-5" /></button>

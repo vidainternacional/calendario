@@ -7,6 +7,8 @@ import { mostrarToast } from '@/lib/ui/toast'
 const API = 'https://bible.helloao.org/api'
 
 type Traduccion = { id: string; name: string; language: string; shortName?: string }
+
+const LIBROS_NT = new Set(['MAT','MRK','LUK','JHN','ACT','ROM','1CO','2CO','GAL','EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB','JAS','1PE','2PE','1JN','2JN','3JN','JUD','REV'])
 type Libro = { id: string; name: string; numberOfChapters: number }
 type VersoSimple = { type: string; number?: number; text?: string }
 type VersiculoElegido = { referencia: string; texto: string; traduccion: string; libroId: string; capitulo: number; verso: number }
@@ -26,6 +28,7 @@ function etiquetaTraduccion(t?: Traduccion) {
 
 export default function PastoralVersePicker({ open, embedded = false, onClose, onInsert }: Props) {
   const [traducciones, setTraducciones] = useState<Traduccion[]>([])
+  const [todasTraducciones, setTodasTraducciones] = useState<Traduccion[]>([])
   const [trad, setTrad] = useState('')
   const [libros, setLibros] = useState<Libro[]>([])
   const [libro, setLibro] = useState('')
@@ -38,6 +41,9 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   const [relacionados, setRelacionados] = useState<Array<VersiculoElegido & { score?: number }>>([])
   const [cargando, setCargando] = useState(false)
   const [cargandoRelacionados, setCargandoRelacionados] = useState(false)
+  const [modoOriginal, setModoOriginal] = useState(false)
+  const [originales, setOriginales] = useState<Record<number, string>>({})
+  const [cargandoOriginal, setCargandoOriginal] = useState(false)
 
   useEffect(() => {
     if (!open || traducciones.length) return
@@ -46,6 +52,7 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
       return r.json()
     }).then(d => {
       const todas: Traduccion[] = d.translations ?? []
+      setTodasTraducciones(todas)
       const esp = todas.filter(t => t.language === 'spa' || t.language === 'es')
       setTraducciones(esp)
       const rv = esp.find(t => /1909|rv1909|reina[ -]?valera/i.test(`${t.name} ${t.shortName ?? ''} ${t.id}`))
@@ -70,6 +77,16 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
 
   const libroActual = useMemo(() => libros.find(b => b.id === libro), [libros, libro])
   const traduccionActual = useMemo(() => traducciones.find(t => t.id === trad), [traducciones, trad])
+  const esNuevoTestamento = LIBROS_NT.has(libro)
+  const idiomaOriginal = esNuevoTestamento ? 'Griego' : 'Hebreo'
+  const traduccionOriginal = useMemo(() => {
+    const candidatos = todasTraducciones.filter(t => esNuevoTestamento ? t.language === 'grc' : ['hbo', 'heb'].includes(t.language))
+    const preferida = esNuevoTestamento
+      ? candidatos.find(t => /^(Byz|TR)$/i.test(t.id)) ?? candidatos.find(t => /byzant|textus/i.test(`${t.name} ${t.shortName ?? ''}`))
+      : candidatos.find(t => /^WLC$/i.test(t.id)) ?? candidatos.find(t => /westminster|leningrad/i.test(`${t.name} ${t.shortName ?? ''}`))
+    return preferida ?? candidatos[0] ?? null
+  }, [todasTraducciones, esNuevoTestamento])
+  const etiquetaOriginal = traduccionOriginal ? `${idiomaOriginal} · ${(traduccionOriginal.shortName || traduccionOriginal.id).toUpperCase()}` : idiomaOriginal
 
   useEffect(() => {
     if (!open || !trad || !libro) return
@@ -93,6 +110,26 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
       })))
     }).catch(() => mostrarToast('No se pudo cargar el capítulo')).finally(() => setCargando(false))
   }, [open, trad, libro, capitulo, libroActual?.name, traduccionActual?.id])
+
+  useEffect(() => {
+    if (!open || !modoOriginal || !traduccionOriginal || !libro) { setOriginales({}); return }
+    setCargandoOriginal(true)
+    fetch(`${API}/${traduccionOriginal.id}/${libro}/${capitulo}.simple.json`).then(r => {
+      if (!r.ok) throw new Error('original')
+      return r.json()
+    }).then(d => {
+      const contenido: VersoSimple[] = d.chapter?.content ?? []
+      const mapa: Record<number, string> = {}
+      contenido.filter(v => v.type === 'verse' && typeof v.number === 'number').forEach(v => { mapa[v.number as number] = String(v.text ?? '').trim() })
+      setOriginales(mapa)
+    }).catch(() => {
+      setOriginales({})
+      mostrarToast(`No se pudo cargar el texto original en ${idiomaOriginal.toLowerCase()}`)
+    }).finally(() => setCargandoOriginal(false))
+  }, [open, modoOriginal, traduccionOriginal?.id, libro, capitulo, idiomaOriginal])
+
+  const textoVersiculoActual = (v: VersiculoElegido) => modoOriginal ? (originales[v.verso] ?? '') : v.texto
+  const traduccionVersiculoActual = (v: VersiculoElegido) => modoOriginal ? etiquetaOriginal : v.traduccion
 
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
@@ -177,8 +214,8 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
         : `${libroActual?.name ?? libro} ${primero.capitulo}:${primero.verso}-${ultimo.verso}`
       onInsert({
         referencia,
-        texto: grupo.map(v => v.texto).filter(Boolean).join(' '),
-        traduccion: primero.traduccion,
+        texto: grupo.map(v => textoVersiculoActual(v)).filter(Boolean).join(' '),
+        traduccion: traduccionVersiculoActual(primero),
       })
     })
 
@@ -189,13 +226,19 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
   }
 
   const agregarUno = (v: VersiculoElegido) => {
-    onInsert({ referencia: v.referencia, texto: v.texto, traduccion: v.traduccion })
+    const texto = textoVersiculoActual(v)
+    if (!texto) return
+    onInsert({ referencia: v.referencia, texto, traduccion: traduccionVersiculoActual(v) })
     setAgregados(actuales => actuales.includes(claveVersiculo(v)) ? actuales : [...actuales, claveVersiculo(v)])
     mostrarToast(`${v.referencia} insertado`)
   }
 
+  const insertarPalabraOriginal = (v: VersiculoElegido, palabra: string) => {
+    onInsert({ referencia: v.referencia, texto: palabra, traduccion: etiquetaOriginal })
+  }
+
   const copiar = async (v: VersiculoElegido) => {
-    await navigator.clipboard.writeText(`${v.referencia}\n${v.texto}`)
+    await navigator.clipboard.writeText(`${v.referencia}\n${textoVersiculoActual(v) || v.texto}`)
     mostrarToast('Versículo copiado')
   }
 
@@ -231,7 +274,13 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
         {!embedded && <button type="button" onClick={onClose} className="pastoral-verse-icon" aria-label="Cerrar"><X /></button>}
       </div>
 
-      {!concordanciaDe && <p className="pastoral-verse-guide">Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.</p>}
+      {!concordanciaDe && <>
+        <div className="mx-3 mt-2 inline-flex w-fit items-center rounded-full border border-slate-200 bg-white p-1 text-[10px] font-black" aria-label="Idioma del texto bíblico">
+          <button type="button" onClick={() => setModoOriginal(false)} className={`min-h-8 rounded-full px-3 ${!modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={!modoOriginal}>Español</button>
+          <button type="button" disabled={!traduccionOriginal} onClick={() => setModoOriginal(true)} className={`min-h-8 rounded-full px-3 disabled:opacity-40 ${modoOriginal ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500'}`} aria-pressed={modoOriginal}>Original · {idiomaOriginal}</button>
+        </div>
+        <p className="pastoral-verse-guide">{modoOriginal ? `Selecciona versículos o toca una palabra en ${idiomaOriginal.toLowerCase()} para insertarla sola.` : 'Selecciona varios versículos. Los consecutivos se insertarán juntos en un solo bloque.'}</p>
+      </>}
 
       <div className="pastoral-verse-list">
         {concordanciaDe ? (
@@ -244,9 +293,10 @@ export default function PastoralVersePicker({ open, embedded = false, onClose, o
           const agregado = agregados.includes(claveVersiculo(v))
           return <article key={`${v.libroId}-${v.capitulo}-${v.verso}`} className="pastoral-verse-row">
             <button type="button" onClick={() => alternar(v.verso)} className="pastoral-verse-main">
-              <span className="min-w-0 flex-1"><strong>{v.referencia}</strong><em>{v.texto}</em></span>
+              <span className="min-w-0 flex-1"><strong>{v.referencia}</strong><em dir={modoOriginal && !esNuevoTestamento ? 'rtl' : 'ltr'} lang={modoOriginal ? (esNuevoTestamento ? 'grc' : 'he') : 'es'}>{modoOriginal ? (cargandoOriginal ? 'Cargando original…' : originales[v.verso] || 'Original no disponible') : v.texto}</em></span>
               <span className={`ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors ${activo || agregado ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white text-transparent'}`} aria-label={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : 'Versículo no seleccionado'} title={agregado ? 'Versículo agregado' : activo ? 'Versículo seleccionado' : undefined}>{(activo || agregado) && <Check className="h-4 w-4" strokeWidth={3} />}</span>
             </button>
+            {modoOriginal && originales[v.verso] && <div dir={esNuevoTestamento ? 'ltr' : 'rtl'} className="flex flex-wrap gap-1 border-t border-slate-100 px-3 py-2">{originales[v.verso].split(/\s+/).filter(Boolean).map((palabra, indicePalabra) => <button key={`${v.verso}-${indicePalabra}`} type="button" onClick={() => insertarPalabraOriginal(v, palabra)} className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700" title={`Insertar ${palabra}`}>{palabra}</button>)}</div>}
             <div className="pastoral-verse-row-actions">
               <button type="button" onClick={() => agregarUno(v)} className="pastoral-verse-mini" aria-label={`Insertar ${v.referencia}`} title="Insertar"><Plus /></button>
               <button type="button" onClick={() => copiar(v)} className="pastoral-verse-mini" aria-label={`Copiar ${v.referencia}`} title="Copiar"><Copy /></button>

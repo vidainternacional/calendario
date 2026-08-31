@@ -265,8 +265,8 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   const background = pagina.fondo_modo === 'tema' ? tema.css : pagina.fondo ?? '#ffffff'
   const baseWidth = pagina.formato === '9:16' ? 430 : pagina.formato === '1:1' ? 720 : pagina.formato === '4:3' ? 960 : 1100
   const ratio = ratioFormato(pagina.formato)
-  const imagenSeleccionada = (pagina.elementos ?? []).find((item) => item.id === seleccion && item.tipo === 'imagen') as ElementoCanvasEditor | undefined
-  const imagenSeleccionadaEditable = Boolean(editable && imagenSeleccionada && !imagenSeleccionada.bloqueado)
+  const elementoGestualSeleccionado = (pagina.elementos ?? []).find((item) => item.id === seleccion && (item.tipo === 'imagen' || item.es_capa_fondo)) as ElementoCanvasEditor | undefined
+  const elementoGestualEditable = Boolean(editable && elementoGestualSeleccionado && !elementoGestualSeleccionado.bloqueado)
 
   const iniciarGesto = (event: ReactPointerEvent, elemento: ElementoCanvasEditor, tipo: Gesto['tipo']) => {
     if (!editable || elemento.bloqueado || !lienzoRef.current) return
@@ -304,7 +304,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   }
 
   const iniciarInteraccionImagen = (event: ReactPointerEvent, elemento: ElementoCanvasEditor) => {
-    if (!editable || elemento.bloqueado || elemento.tipo !== 'imagen' || !lienzoRef.current) return
+    if (!editable || elemento.bloqueado || (elemento.tipo !== 'imagen' && !elemento.es_capa_fondo) || !lienzoRef.current) return
     event.preventDefault()
     event.stopPropagation()
     onSelect?.(elemento.id)
@@ -326,7 +326,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
 
   const iniciarInteraccionLienzo = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!editable) return
-    const elemento = imagenSeleccionada
+    const elemento = elementoGestualSeleccionado
     if (!elemento || elemento.bloqueado || !lienzoRef.current) {
       onSelect?.(null)
       return
@@ -404,7 +404,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
         onPointerUp={terminarGesto}
         onPointerCancel={terminarGesto}
         onPointerDown={iniciarInteraccionLienzo}
-        className={`pastoral-visual-canvas isolate relative w-full overflow-hidden bg-white shadow-sm ${editable ? `${imagenSeleccionadaEditable ? 'touch-none' : 'touch-pan-y'} ring-1 ring-slate-200` : ''}`}
+        className={`pastoral-visual-canvas isolate relative w-full overflow-hidden bg-white shadow-sm ${editable ? `${elementoGestualEditable ? 'touch-none' : 'touch-pan-y'} ring-1 ring-slate-200` : ''}`}
         style={estiloLienzo}
       >
         {pagina.fondo_modo === 'imagen' && fondoRecurso?.acceso_url && <img src={fondoRecurso.acceso_url} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />}
@@ -422,21 +422,21 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             data-canvas-text-role={!esFondoVisual ? elemento.rol ?? undefined : undefined}
             data-canvas-locked={bloqueado ? 'true' : 'false'}
             onPointerDown={(event) => {
-              if (elemento.tipo === 'imagen' && editable && !bloqueado) { iniciarInteraccionImagen(event, elemento); return }
+              if ((elemento.tipo === 'imagen' || elemento.es_capa_fondo) && editable && !bloqueado) { iniciarInteraccionImagen(event, elemento); return }
               event.stopPropagation()
               editable && onSelect?.(elemento.id)
             }}
-            className={`absolute overflow-visible ${editable && elemento.tipo === 'imagen' && !bloqueado ? 'touch-none' : ''} ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
+            className={`absolute overflow-visible ${editable && (elemento.tipo === 'imagen' || elemento.es_capa_fondo) && !bloqueado ? 'touch-none' : ''} ${activo && !seleccionLibre ? 'ring-1 ring-[#C0392B] ring-offset-1' : ''} ${seleccionLibre ? 'outline outline-1 outline-dashed outline-slate-400/45 outline-offset-2' : ''}`}
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, mixBlendMode: elemento.modo_fusion ?? 'normal', display: elemento.oculto ? 'none' : undefined }}
           >
             {esFondoVisual ? <div className="h-full w-full" style={{ background: elemento.fondo_visual }} /> : elemento.tipo === 'imagen' ? (
               recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
             ) : <TextoCanvas elemento={elemento} editable={editable && !bloqueado} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onPatchElement={onPatchElement} onTextInput={onTextInput} />}
             {activo && !bloqueado && <>
-              {elemento.tipo !== 'imagen' && <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
+              {elemento.tipo !== 'imagen' && !elemento.es_capa_fondo && <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
                 <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'mover')} className="pastoral-canvas-action" aria-label="Mover elemento"><Move /></button>
               </div>}
-              {elemento.tipo !== 'imagen' && <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />}
+              {elemento.tipo !== 'imagen' && !elemento.es_capa_fondo && <button type="button" onPointerDown={(event) => iniciarGesto(event, elemento, 'redimensionar')} className="pastoral-canvas-resize-handle absolute touch-none" aria-label="Redimensionar elemento" />}
             </>}
           </div>
         })}
