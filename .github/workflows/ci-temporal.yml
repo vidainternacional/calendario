@@ -1,55 +1,178 @@
 name: CI temporal
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
-      - agent/centro-pastoral-reorganizacion
+      - main
+      - 'agent/**'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ci-temporal-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  patch:
+  validar:
+    name: Instalación, regresión, lint informativo y build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
         with:
-          ref: agent/centro-pastoral-reorganizacion
-          fetch-depth: 2
+          node-version: 24
+          cache: npm
 
-      - name: Apply pastoral patch
+      - name: Instalar dependencias reproducibles
+        run: npm ci
+
+      - name: Ejecutar regresiones críticas
+        run: npm run test:regression
+
+      - name: Ejecutar lint informativo
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Generar VAPID efímero para compilación
         run: |
-          python3 <<'PY'
-          from pathlib import Path
-          path = Path('components/pastoral/PastoralVisualWorkspaceV4.tsx')
-          text = path.read_text()
+          node <<'NODE'
+          const fs = require('node:fs')
+          const webpush = require('web-push')
+          const keys = webpush.generateVAPIDKeys()
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_SUBJECT=mailto:ci@example.invalid\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_VAPID_PUBLIC_KEY=${keys.publicKey}\n`)
+          fs.appendFileSync(process.env.GITHUB_ENV, `VAPID_PRIVATE_KEY=${keys.privateKey}\n`)
+          NODE
 
-          old = '<button type="button" onClick={() => usarRecursoComoImagen(recurso)} className="min-h-9 border-r border-slate-100 px-1 text-[10px] font-black text-slate-600" aria-label={`Usar ${recurso.titulo} como imagen`}>Imagen</button>'
-          new = '<button type="button" onClick={() => usarRecursoComoImagen(recurso)} className={`min-h-9 border-r border-slate-100 px-1 text-[10px] font-black ${elementoSeleccionado?.tipo === \'imagen\' && elementoSeleccionado.recurso_id === recurso.id && !elementoSeleccionado.es_capa_fondo ? \'text-indigo-600\' : \'text-slate-600\'}`} aria-pressed={Boolean(elementoSeleccionado?.tipo === \'imagen\' && elementoSeleccionado.recurso_id === recurso.id && !elementoSeleccionado.es_capa_fondo)} aria-label={`Usar ${recurso.titulo} como imagen`}>Imagen</button>'
-          if old not in text: raise SystemExit('image target missing')
-          text = text.replace(old, new, 1)
+      - name: Compilar aplicación
+        run: npm run build
+        env:
+          CI: 'true'
 
-          old = '<button type="button" onClick={() => usarRecursoComoFondo(recurso)} className="min-h-9 px-1 text-[10px] font-black text-indigo-600" aria-label={`Usar ${recurso.titulo} como fondo`}>Fondo</button>'
-          new = '<button type="button" onClick={() => usarRecursoComoFondo(recurso)} className={`min-h-9 px-1 text-[10px] font-black ${((elementoSeleccionado?.tipo === \'imagen\' && elementoSeleccionado.recurso_id === recurso.id && elementoSeleccionado.es_capa_fondo) || (pagina.fondo_modo === \'imagen\' && (pagina.fondo_recurso_id ?? pagina.recurso_id) === recurso.id)) ? \'text-indigo-600\' : \'text-slate-600\'}`} aria-pressed={Boolean((elementoSeleccionado?.tipo === \'imagen\' && elementoSeleccionado.recurso_id === recurso.id && elementoSeleccionado.es_capa_fondo) || (pagina.fondo_modo === \'imagen\' && (pagina.fondo_recurso_id ?? pagina.recurso_id) === recurso.id))} aria-label={`Usar ${recurso.titulo} como fondo`}>Fondo</button>'
-          if old not in text: raise SystemExit('background target missing')
-          text = text.replace(old, new, 1)
-
-          old = '''<label className="flex items-center gap-3"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Fusión</span><select disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.modo_fusion ?? 'normal'} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(event) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { modo_fusion: event.target.value as ModoFusion })} className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none disabled:opacity-30" aria-label="Modo de fusión de la capa seleccionada">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select></label>
-        <small className="pl-[90px] leading-4 text-slate-400">La capa seleccionada se fusiona visualmente con todas las capas que tenga debajo, sin destruir ninguna.</small>
-        {elementoSeleccionado.tipo === 'imagen' && <button type="button" disabled={elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado.es_capa_fondo ? convertirFondoEnImagen(elementoSeleccionado.id) : convertirImagenEnFondo(elementoSeleccionado.id)} className="ml-[90px] inline-flex min-h-9 w-fit items-center rounded-full border border-slate-200 bg-white px-3 text-[10px] font-black text-slate-600 disabled:opacity-30">{elementoSeleccionado.es_capa_fondo ? 'Convertir a imagen' : 'Convertir a fondo'}</button>}'''
-          new = '''<div className="flex items-center gap-2"><span className="w-[78px] shrink-0 text-[11px] font-black text-slate-500">Fusión</span><select disabled={elementoSeleccionado.bloqueado} value={elementoSeleccionado.modo_fusion ?? 'normal'} onPointerDown={() => !elementoSeleccionado.bloqueado && registrarHistorial()} onChange={(event) => !elementoSeleccionado.bloqueado && patchElementoSinHistorial(elementoSeleccionado.id, { modo_fusion: event.target.value as ModoFusion })} className="min-h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none disabled:opacity-30" aria-label="Modo de fusión de la capa seleccionada">{MODOS_FUSION.map((modo) => <option key={modo.id} value={modo.id}>{modo.label}</option>)}</select>{elementoSeleccionado.tipo === 'imagen' && <button type="button" disabled={elementoSeleccionado.bloqueado} onClick={() => elementoSeleccionado.es_capa_fondo ? convertirFondoEnImagen(elementoSeleccionado.id) : convertirImagenEnFondo(elementoSeleccionado.id)} className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-slate-200 bg-white px-2 text-[9px] font-black text-slate-600 disabled:opacity-30">{elementoSeleccionado.es_capa_fondo ? 'Convertir a imagen' : 'Convertir a fondo'}</button>}</div>
-        <small className="pl-[90px] leading-4 text-slate-400">La capa seleccionada se fusiona visualmente con todas las capas que tenga debajo, sin destruir ninguna.</small>'''
-          if old not in text: raise SystemExit('fusion target missing')
-          text = text.replace(old, new, 1)
-          path.write_text(text)
-          PY
-
-      - name: Restore workflows and commit
+      - name: Medir paquete tipográfico pastoral
+        id: medir_fuentes
+        continue-on-error: true
         run: |
-          git show HEAD^:.github/workflows/ci-temporal.yml > .github/workflows/ci-temporal.yml
-          git rm -f .github/workflows/patch-pastoral-final-ui.yml || true
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add components/pastoral/PastoralVisualWorkspaceV4.tsx .github/workflows/ci-temporal.yml
-          git commit -m "fix(pastoral): finish image state and layer controls"
-          git push origin HEAD:agent/centro-pastoral-reorganizacion
+          node <<'NODE'
+          const fs = require('node:fs')
+          const path = require('node:path')
+
+          const limite = 350 * 1024
+          const mediaDir = path.join('.next', 'static', 'media')
+          const variables = [
+            { nombre: 'Inter', variable: '--font-inter', nueva: false },
+            { nombre: 'EB Garamond', variable: '--font-pastoral-eb-garamond', nueva: true },
+            { nombre: 'Montserrat', variable: '--font-pastoral-montserrat', nueva: true },
+            { nombre: 'Playfair Display', variable: '--font-pastoral-playfair-display', nueva: true },
+            { nombre: 'Bebas Neue', variable: '--font-pastoral-bebas-neue', nueva: true },
+          ]
+
+          function recorrer(dir, encontrados = []) {
+            if (!fs.existsSync(dir)) return encontrados
+            for (const entrada of fs.readdirSync(dir, { withFileTypes: true })) {
+              const absoluto = path.join(dir, entrada.name)
+              if (entrada.isDirectory()) recorrer(absoluto, encontrados)
+              else if (entrada.name.endsWith('.css')) encontrados.push(absoluto)
+            }
+            return encontrados
+          }
+
+          const cssFiles = recorrer(path.join('.next', 'static', 'css'))
+          const css = cssFiles.map((archivo) => fs.readFileSync(archivo, 'utf8')).join('\n')
+          if (!css) throw new Error('No se encontró CSS compilado para medir las fuentes.')
+          if (!fs.existsSync(mediaDir)) throw new Error('No se encontró .next/static/media.')
+
+          const fontFaces = Array.from(css.matchAll(/@font-face\s*\{([^}]*)\}/g)).map((match) => match[1])
+          const detalle = []
+          const todosArchivos = new Set()
+
+          for (const fuente of variables) {
+            const variableEscapada = fuente.variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const declaracion = css.match(new RegExp(`${variableEscapada}\\s*:\\s*([^;}]+)`))?.[1]?.trim()
+            if (!declaracion) throw new Error(`No se encontró la variable compilada ${fuente.variable}.`)
+
+            const familia = declaracion.match(/["']([^"']+)["']/)?.[1]
+              ?? declaracion.split(',')[0]?.trim().replace(/^['"]|['"]$/g, '')
+            if (!familia) throw new Error(`No se pudo resolver la familia interna de ${fuente.nombre}.`)
+
+            const bloques = fontFaces.filter((bloque) => {
+              const declarada = bloque.match(/font-family\s*:\s*([^;]+)/)?.[1]?.trim().replace(/^['"]|['"]$/g, '')
+              return declarada === familia
+            })
+            if (!bloques.length) throw new Error(`No se encontraron @font-face para ${fuente.nombre} (${familia}).`)
+
+            const archivos = new Set()
+            for (const bloque of bloques) {
+              for (const match of bloque.matchAll(/url\(([^)]+\.woff2[^)]*)\)/gi)) {
+                const raw = match[1].trim().replace(/^['"]|['"]$/g, '').split('?')[0]
+                archivos.add(path.basename(raw))
+              }
+            }
+            if (!archivos.size) throw new Error(`No se encontraron WOFF2 para ${fuente.nombre}.`)
+
+            let bytes = 0
+            for (const archivo of archivos) {
+              const absoluto = path.join(mediaDir, archivo)
+              if (!fs.existsSync(absoluto)) throw new Error(`Falta el archivo generado ${archivo} de ${fuente.nombre}.`)
+              bytes += fs.statSync(absoluto).size
+              todosArchivos.add(archivo)
+            }
+            detalle.push({ ...fuente, familia, archivos: Array.from(archivos).sort(), bytes })
+          }
+
+          let total = 0
+          for (const archivo of todosArchivos) total += fs.statSync(path.join(mediaDir, archivo)).size
+          const nuevas = detalle.filter((item) => item.nueva).reduce((suma, item) => suma + item.bytes, 0)
+          const inter = detalle.find((item) => item.nombre === 'Inter')?.bytes ?? 0
+          const ok = total <= limite
+
+          const lineas = [
+            'Paquete tipográfico Centro Pastoral — medición del build',
+            `Límite aprobado: 350.00 KB (${limite} bytes)`,
+            '',
+            ...detalle.flatMap((item) => [
+              `${item.nombre}: ${(item.bytes / 1024).toFixed(2)} KB (${item.bytes} bytes)`,
+              `  variable: ${item.variable}`,
+              `  familia compilada: ${item.familia}`,
+              `  archivos: ${item.archivos.join(', ')}`,
+            ]),
+            '',
+            `Inter existente: ${(inter / 1024).toFixed(2)} KB (${inter} bytes)`,
+            `Incremento 4 fuentes nuevas: ${(nuevas / 1024).toFixed(2)} KB (${nuevas} bytes)`,
+            `TOTAL paquete 5 familias: ${(total / 1024).toFixed(2)} KB (${total} bytes)`,
+            `Resultado: ${ok ? 'DENTRO DEL PRESUPUESTO' : 'SUPERA EL PRESUPUESTO'}`,
+          ]
+          fs.writeFileSync('pastoral-font-budget.txt', `${lineas.join('\n')}\n`)
+          console.log(lineas.join('\n'))
+          console.log(`PASTORAL_FONT_BUDGET_BYTES=${total}`)
+          console.log(`PASTORAL_FONT_BUDGET_KB=${(total / 1024).toFixed(2)}`)
+          console.log(`PASTORAL_FONT_NEW_INCREMENT_KB=${(nuevas / 1024).toFixed(2)}`)
+          console.log(`PASTORAL_FONT_BUDGET_LIMIT_KB=350.00`)
+          fs.writeFileSync('pastoral-font-budget-status.txt', ok ? 'ok\n' : 'over\n')
+          NODE
+
+      - name: Guardar reporte de peso tipográfico
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: pastoral-font-budget
+          path: |
+            pastoral-font-budget.txt
+            pastoral-font-budget-status.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Exigir presupuesto tipográfico pastoral
+        run: |
+          test -f pastoral-font-budget-status.txt
+          test "$(tr -d '\n\r ' < pastoral-font-budget-status.txt)" = "ok"
