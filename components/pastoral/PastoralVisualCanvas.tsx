@@ -426,7 +426,8 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             data-canvas-text-role={!esFondoVisual ? elemento.rol ?? undefined : undefined}
             data-canvas-locked={bloqueado ? 'true' : 'false'}
             onPointerDown={(event) => {
-              if ((elemento.tipo === 'imagen' || elemento.es_capa_fondo) && editable && !bloqueado) { iniciarInteraccionImagen(event, elemento); return }
+              if (elemento.tipo === 'imagen' && editable && !bloqueado) { iniciarInteraccionImagen(event, elemento); return }
+              if (elemento.es_capa_fondo && editable && !bloqueado) { iniciarInteraccionImagen(event, elemento); return }
               event.stopPropagation()
               editable && onSelect?.(elemento.id)
             }}
