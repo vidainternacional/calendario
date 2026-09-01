@@ -6,8 +6,10 @@ const workspace = fs.readFileSync('components/pastoral/PastoralVisualWorkspaceV4
 const canvas = fs.readFileSync('components/pastoral/PastoralVisualCanvas.tsx', 'utf8')
 const runtime = fs.readFileSync('components/pastoral/PastoralEditorRuntimeEnhancements.tsx', 'utf8')
 
-test('cabecera mantiene Presentar y Compartir juntos sin perder páginas', () => {
-  assert.match(runtime, /setProperty\('grid-template-columns', '54px 80px minmax\(0, 1fr\)', 'important'\)/)
+test('cabecera mantiene Editar Presentar Congregación y Compartir sin perder páginas', () => {
+  assert.match(runtime, /setProperty\('grid-template-columns', '54px 80px 92px minmax\(0, 1fr\)', 'important'\)/)
+  assert.match(runtime, /congregacion\.hidden = false/)
+  assert.match(runtime, /congregacion\.style\.removeProperty\('display'\)/)
   assert.match(runtime, /grupo\.style\.justifyContent = 'space-between'/)
   assert.match(runtime, /compartir\.style\.flex = '0 0 66px'/)
   assert.match(runtime, /data\.pastoralPageStep|dataset\.pastoralPageStep/)
@@ -36,7 +38,7 @@ test('Fondo de página se desbloquea con cualquiera de las referencias compatibl
 })
 
 test('acciones de capa permanecen ocultas hasta deslizar y muestran los tres botones completos', () => {
-  assert.match(workspace, /const DESPLAZAMIENTO_ACCIONES_CAPA = 150/)
+  assert.match(workspace, /const DESPLAZAMIENTO_ACCIONES_CAPA = 164/)
   assert.match(workspace, /accionesAbiertas \? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'/)
   assert.match(workspace, /translateX\(-\$\{DESPLAZAMIENTO_ACCIONES_CAPA\}px\)/)
   for (const accion of ['Duplicar', 'Bloquear', 'Eliminar']) assert.ok(workspace.includes(accion))
