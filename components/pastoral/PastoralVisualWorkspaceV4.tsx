@@ -219,6 +219,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
   const [versionHistorial, setVersionHistorial] = useState(0)
   const [selectorFondoAbierto, setSelectorFondoAbierto] = useState(false)
   const [selectorImagenesAbierto, setSelectorImagenesAbierto] = useState(false)
+  const [selectorTemasAbierto, setSelectorTemasAbierto] = useState(false)
   const [tonoFondoPersonalizado, setTonoFondoPersonalizado] = useState(260)
   const [saturacionFondoPersonalizado, setSaturacionFondoPersonalizado] = useState(70)
   const [luminosidadFondoPersonalizado, setLuminosidadFondoPersonalizado] = useState(52)
@@ -604,7 +605,7 @@ export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paq
 
   const aplicarPaleta = (paleta: PaletaPresentacion) => {
     registrarHistorial()
-    const elementos = (pagina.elementos ?? []).filter((elemento) => !elemento.fondo_visual).map((elemento) => elemento.tipo === 'imagen' ? elemento : {
+    const elementos = (pagina.elementos ?? []).map((elemento) => elemento.tipo === 'imagen' || elemento.fondo_visual ? elemento : {
       ...elemento,
       color: elemento.rol === 'titulo' ? paleta.titulo : paleta.texto,
     })
@@ -1010,20 +1011,31 @@ const guardarAutomatico = async (revision: number) => {
   const panelContenido = pagina && panel ? <>
 
     {panel === 'fondos' && <div className="pastoral-panel-content grid gap-3 pb-3 pt-1">
-      <div className="grid grid-cols-3 gap-2" aria-label="Acciones de fondo">
-        <button type="button" onClick={() => { setSelectorFondoAbierto((abierto) => !abierto); setSelectorDegradadosAbierto(false); setSelectorImagenesAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorFondoAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorFondoAbierto} aria-controls="pastoral-selector-fondo-libre">
-          <span className="grid h-9 w-9 place-items-center rounded-full border border-white shadow-sm" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: fondoPersonalizadoPlano }} /></span>
-          <span className="text-[10px] font-black text-slate-700">Rueda de color</span>
+      <div className="grid grid-cols-4 gap-1.5" aria-label="Acciones de fondo">
+        <button type="button" onClick={() => { setSelectorFondoAbierto((abierto) => !abierto); setSelectorDegradadosAbierto(false); setSelectorImagenesAbierto(false); setSelectorTemasAbierto(false) }} className={`grid min-h-[68px] place-items-center gap-1 rounded-2xl border bg-white px-1 py-2 text-center ${selectorFondoAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorFondoAbierto} aria-controls="pastoral-selector-fondo-libre">
+          <span className="grid h-8 w-8 place-items-center rounded-full border border-white shadow-sm" style={{ background: 'conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#d946ef,#ef4444)' }}><span className="h-3 w-3 rounded-full border-2 border-white" style={{ background: fondoPersonalizadoPlano }} /></span>
+          <span className="text-[9px] font-black leading-tight text-slate-700">Rueda de color</span>
         </button>
-        <button type="button" onClick={() => { setSelectorDegradadosAbierto((abierto) => !abierto); setSelectorFondoAbierto(false); setSelectorImagenesAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorDegradadosAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorDegradadosAbierto} aria-controls="pastoral-selector-degradados">
-          <span className="h-9 w-9 rounded-full border border-white shadow-sm" style={{ background: fondoDegradadoPersonalizado }} />
-          <span className="text-[10px] font-black text-slate-700">Degradados</span>
+        <button type="button" onClick={() => { setSelectorDegradadosAbierto((abierto) => !abierto); setSelectorFondoAbierto(false); setSelectorImagenesAbierto(false); setSelectorTemasAbierto(false) }} className={`grid min-h-[68px] place-items-center gap-1 rounded-2xl border bg-white px-1 py-2 text-center ${selectorDegradadosAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorDegradadosAbierto} aria-controls="pastoral-selector-degradados">
+          <span className="h-8 w-8 rounded-full border border-white shadow-sm" style={{ background: fondoDegradadoPersonalizado }} />
+          <span className="text-[9px] font-black leading-tight text-slate-700">Degradados</span>
         </button>
-        <button type="button" onClick={() => { setSelectorImagenesAbierto((abierto) => !abierto); setSelectorFondoAbierto(false); setSelectorDegradadosAbierto(false) }} className={`grid min-h-[74px] place-items-center gap-1 rounded-2xl border bg-white px-2 py-2 text-center ${selectorImagenesAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorImagenesAbierto} aria-controls="pastoral-selector-imagenes">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-600"><ImageIcon className="h-4 w-4" /></span>
-          <span className="text-[10px] font-black text-slate-700">Imágenes</span>
+        <button type="button" onClick={() => { setSelectorImagenesAbierto((abierto) => !abierto); setSelectorFondoAbierto(false); setSelectorDegradadosAbierto(false); setSelectorTemasAbierto(false) }} className={`grid min-h-[68px] place-items-center gap-1 rounded-2xl border bg-white px-1 py-2 text-center ${selectorImagenesAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorImagenesAbierto} aria-controls="pastoral-selector-imagenes">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600"><ImageIcon className="h-4 w-4" /></span>
+          <span className="text-[9px] font-black leading-tight text-slate-700">Imágenes</span>
+        </button>
+        <button type="button" onClick={() => { setSelectorTemasAbierto((abierto) => !abierto); setSelectorFondoAbierto(false); setSelectorDegradadosAbierto(false); setSelectorImagenesAbierto(false) }} className={`grid min-h-[68px] place-items-center gap-1 rounded-2xl border bg-white px-1 py-2 text-center ${selectorTemasAbierto ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200'}`} aria-expanded={selectorTemasAbierto} aria-controls="pastoral-selector-temas">
+          <span className="grid h-8 w-8 place-items-center rounded-full border border-slate-200 bg-gradient-to-br from-indigo-500 via-rose-400 to-amber-300 text-white shadow-sm"><Palette className="h-4 w-4" /></span>
+          <span className="text-[9px] font-black leading-tight text-slate-700">Temas</span>
         </button>
       </div>
+
+      {selectorTemasAbierto && <section id="pastoral-selector-temas" className="grid gap-3 rounded-2xl border border-slate-200 bg-white/80 px-3 py-3">
+        <div className="px-1 text-[10px] font-black text-slate-500">Temas de color</div>
+        <div className="grid grid-cols-3 gap-x-2 gap-y-3" aria-label="Temas de color en filas de tres">
+          {PALETAS_PRESENTACION.map((paleta) => <button key={paleta.id} type="button" onClick={() => aplicarPaleta(paleta)} className="grid min-w-0 gap-1 text-center" aria-label={`Aplicar tema ${paleta.label}`}><span className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200" style={{ background: paleta.fondo, color: paleta.titulo }}><i className="absolute left-[10%] top-[35%] h-[5px] w-[68%] rounded-full bg-current opacity-90" /><i className="absolute left-[10%] top-[61%] h-[3px] w-[46%] rounded-full bg-current opacity-55" /></span><span className="truncate px-1 text-[11px] font-semibold text-slate-700">{paleta.label}</span></button>)}
+        </div>
+      </section>}
 
       {selectorFondoAbierto && <section id="pastoral-selector-fondo-libre" className="grid gap-3 rounded-2xl border border-slate-200 bg-white/80 px-3 py-3">
         <div className="grid grid-cols-[64px_1fr] items-center gap-3">
