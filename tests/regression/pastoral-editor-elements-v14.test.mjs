@@ -10,7 +10,7 @@ const picker = fs.readFileSync('components/pastoral/PastoralVersePicker.tsx', 'u
 test('versículos consecutivos se agrupan en un solo bloque', () => {
   assert.match(picker, /const grupos: VersiculoElegido\[\]\[\] = \[\]/)
   assert.match(picker, /versiculo\.verso === ultimo\.verso \+ 1/)
-  assert.match(picker, /grupo\.map\(v => v\.texto\)\.filter\(Boolean\)\.join\(' '\)/)
+  assert.match(picker, /grupo\.map\(v => textoVersiculoActual\(v\)\)\.filter\(Boolean\)\.join\(' '\)/)
   assert.match(picker, /\$\{primero\.verso\}-\$\{ultimo\.verso\}/)
 })
 
