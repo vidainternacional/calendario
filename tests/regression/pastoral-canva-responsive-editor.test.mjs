@@ -51,14 +51,13 @@ test('celular horizontal conserva la misma arquitectura inferior', () => {
   assert.doesNotMatch(horizontal, /grid-template-areas:\s*'dock stage'/)
 })
 
-test('dock principal mantiene tres grupos y suma Borrar para cualquier selección', () => {
+test('dock principal conserva Fondos Texto Capas y Borrar sigue contextual', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
-  for (const label of ['Elementos', 'Biblia', 'Diseño', 'Fondo', 'Párrafo', 'Borrar']) assert.doesNotMatch(dock, new RegExp(`label: '${label}'`))
-  assert.match(workspace, /plantillas:[\s\S]*label: 'Plantillas'[\s\S]*label: 'Temas'[\s\S]*label: 'Imágenes'/)
-  assert.doesNotMatch(workspace.match(/plantillas:[\s\S]*?\],/)?.[0] ?? '', /label: 'Fondo'/)
+  for (const label of ['Fondos', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  for (const label of ['Plantillas', 'Elementos', 'Biblia', 'Diseño', 'Fondo', 'Párrafo', 'Borrar']) assert.doesNotMatch(dock, new RegExp(`label: '${label}'`))
+  assert.match(workspace, /fondos: \[\]/)
   assert.match(workspace, /texto:[\s\S]*label: 'Herramientas'[\s\S]*label: 'Biblia'/)
-  assert.match(workspace, /capas:[\s\S]*label: 'Capas'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
+  assert.match(workspace, /capas:[\s\S]*label: 'Capas'/)
   assert.match(workspace, /aria-label="Borrar elemento seleccionado"/)
   assert.match(workspace, /onClick=\{\(\) => elementoSeleccionado && eliminarElemento\(elementoSeleccionado\.id\)\}/)
 })
