@@ -36,13 +36,7 @@ jobs:
         run: npm ci
 
       - name: Ejecutar regresiones críticas
-        run: |
-          set -euo pipefail
-          for test in tests/regression/*.test.mjs; do
-            echo "::group::$test"
-            node --test "$test"
-            echo "::endgroup::"
-          done
+        run: npm run test:regression
 
       - name: Ejecutar lint informativo
         continue-on-error: true
