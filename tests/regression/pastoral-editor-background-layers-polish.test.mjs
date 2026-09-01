@@ -39,7 +39,9 @@ test('Fondo de página se desbloquea con cualquiera de las referencias compatibl
 
 test('acciones de capa permanecen ocultas hasta deslizar y muestran los tres botones completos', () => {
   assert.match(workspace, /const DESPLAZAMIENTO_ACCIONES_CAPA = 164/)
-  assert.match(workspace, /accionesAbiertas \? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'/)
+  assert.match(workspace, /accionesAbiertas \? 'pointer-events-auto[^']*opacity-100' : 'pointer-events-none[^']*opacity-0'/)
+  assert.match(workspace, /aria-hidden=\{!accionesAbiertas\}/)
+  assert.match(workspace, /tabIndex=\{accionesAbiertas \? 0 : -1\}/)
   assert.match(workspace, /translateX\(-\$\{DESPLAZAMIENTO_ACCIONES_CAPA\}px\)/)
   for (const accion of ['Duplicar', 'Bloquear', 'Eliminar']) assert.ok(workspace.includes(accion))
 })
