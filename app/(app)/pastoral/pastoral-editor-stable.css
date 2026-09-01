@@ -69,10 +69,10 @@
 }
 .pastoral-editor-v4 > header button[aria-label='Guardar proyecto'] { color: var(--pastoral-stable-accent) !important; }
 
-/* Editar / Presentar / Congregación / Compartir */
+/* Editar / Presentar / Compartir */
 .pastoral-editor-v4 > header nav {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   width: 100% !important;
   min-height: 44px !important;
   gap: 0 !important;
@@ -741,6 +741,10 @@
   scrollbar-width: none !important;
 }
 .pastoral-editor-v4 .pastoral-tool-dock::-webkit-scrollbar { display: none !important; }
+.pastoral-editor-v4 .pastoral-tool-dock > button[aria-label='Borrar elemento seleccionado']:not(:disabled) {
+  border-color: rgba(217, 45, 32, .22) !important;
+  color: var(--pastoral-stable-danger) !important;
+}
 .pastoral-editor-v4 .pastoral-tool-dock > .pastoral-tool-button {
   position: relative !important;
   display: inline-flex !important;

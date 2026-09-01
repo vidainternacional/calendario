@@ -68,10 +68,13 @@ test('plantillas conservan familias visuales amplias', () => {
   assert.ok(cantidad >= 18)
 })
 
-test('workspace conserva edición presentación congregación y compartir', () => {
+test('workspace integra la vista de congregación dentro de Presentar y conserva Compartir', () => {
   assert.match(workspace, /onDeleteElement=\{eliminarElemento\}/)
   assert.match(workspace, /editarPaquetePastoral/)
   assert.match(workspace, /vista === 'presentacion'/)
-  assert.match(workspace, /vista === 'congregacion'/)
+  assert.doesNotMatch(workspace, />Congregación</)
+  assert.match(workspace, />Horizontal</)
+  assert.match(workspace, />Vertical</)
+  assert.match(workspace, /orientacionPresentacion/)
   assert.match(workspace, /PackageDistributionControls/)
 })
