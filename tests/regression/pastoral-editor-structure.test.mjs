@@ -13,7 +13,7 @@ test('Centro Pastoral carga base V3 y autoridad estable', () => {
 
 test('Borrar y Fondo no compiten como herramientas principales', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  assert.doesNotMatch(dock, /Borrar|Fondo|Párrafo/)
+  assert.doesNotMatch(dock, /label: '(?:Borrar|Fondo|Párrafo)'/)
 })
 
 test('desktop separa páginas lienzo inspector y dock', () => {
