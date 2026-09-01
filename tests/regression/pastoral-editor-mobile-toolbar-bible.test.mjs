@@ -18,10 +18,11 @@ test('formato y colores permanecen juntos sobre el teclado con colores debajo de
   assert.match(runtime, /window\.visualViewport\?\.addEventListener\('scroll', sincronizar\)/)
 })
 
-test('Presentar queda como una sola vista visible y Congregación deja de ocupar otra página', () => {
+test('Editar Presentar y Congregación permanecen como vistas directas visibles', () => {
   assert.match(runtime, /function unificarVistaPresentacion\(\)/)
-  assert.match(runtime, /congregacion\.hidden = true/)
-  assert.match(runtime, /congregacion\.style\.display = 'none'/)
+  assert.match(runtime, /congregacion\.hidden = false/)
+  assert.match(runtime, /congregacion\.style\.removeProperty\('display'\)/)
+  assert.match(runtime, /grid-template-columns', '54px 80px 92px minmax\(0, 1fr\)'/)
   assert.doesNotMatch(runtime, /summary\.textContent = 'Vista ⌄'/)
   assert.doesNotMatch(runtime, /crearOpcion\('Congregación'\)/)
 })
@@ -45,8 +46,8 @@ test('la selección múltiple aparece a la derecha y usa círculo verde con chec
   const fin = picker.indexOf('</article>', inicio)
   const fila = picker.slice(inicio, fin)
   assert.ok(inicio >= 0 && fin > inicio)
-  assert.ok(fila.indexOf('min-w-0 flex-1') < fila.indexOf('pastoral-verse-check'))
-  assert.match(fila, /ml-auto shrink-0/)
-  assert.match(fila, /backgroundColor: '#16a34a'/)
-  assert.match(fila, /\{activo && <Check \/>\}/)
+  assert.ok(fila.indexOf('min-w-0 flex-1') < fila.indexOf('ml-auto grid h-7 w-7'))
+  assert.match(fila, /ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full border-2/)
+  assert.match(fila, /border-emerald-600 bg-emerald-600 text-white/)
+  assert.match(fila, /\{\(activo \|\| agregado\) && <Check className="h-4 w-4" strokeWidth=\{3\} \/>\}/)
 })
