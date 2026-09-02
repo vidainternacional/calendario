@@ -15,7 +15,7 @@ export type SolidarityContributionStatus =
   | 'completado'
   | 'cancelado'
 
-export type SolidarityUrgency = 'normal' | 'prioritaria' | 'urgente'
+export type SolidarityHelpType = 'general' | 'paquete_despensa'
 export type SolidarityContactPreference = 'aplicacion' | 'telefono' | 'whatsapp'
 export type SolidarityContributionType =
   | 'alimentos'
@@ -39,6 +39,31 @@ export type PantryNeed = {
   existencia_actual: number
   minimo_necesario: number
   estado: PantryNeedStatus
+  created_at?: string
+  updated_at?: string
+}
+
+export type SolidarityMessage = {
+  id: string
+  solicitud_id: string | null
+  aporte_id: string | null
+  autor_id: string
+  mensaje: string
+  created_at: string
+}
+
+export type ChurchBankAccountPurpose = 'ayuda_solidaria' | 'diezmos_ofrendas'
+
+export type ChurchBankAccount = {
+  id: string
+  proposito: ChurchBankAccountPurpose
+  titulo: string
+  banco: string
+  titular: string
+  numero_cuenta: string
+  tipo_cuenta: string | null
+  instrucciones: string | null
+  activo: boolean
   created_at?: string
   updated_at?: string
 }
