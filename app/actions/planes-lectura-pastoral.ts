@@ -93,7 +93,7 @@ export async function crearPlanPastoral(input: PlanInput): Promise<PlanActionRes
   const descripcion = texto(input.descripcion)
   const duracionDias = Number(input.duracionDias)
 
-  if (titulo.length < 3) return { error: 'Escribe un título para el plan.' }
+  if (!titulo) return { error: 'Escribe un título para el plan.' }
   if (!descripcion) return { error: 'Describe el objetivo del plan.' }
   if (!Number.isInteger(duracionDias) || duracionDias < 1 || duracionDias > 90) {
     return { error: 'La duración debe estar entre 1 y 90 días.' }
@@ -131,7 +131,7 @@ export async function guardarPlanPastoral(planId: string, input: PlanInput): Pro
   const descripcion = texto(input.descripcion)
   const duracionDias = Number(input.duracionDias)
 
-  if (titulo.length < 3) return { error: 'Escribe un título para el plan.' }
+  if (!titulo) return { error: 'Escribe un título para el plan.' }
   if (!descripcion) return { error: 'Describe el objetivo del plan.' }
   if (!Number.isInteger(duracionDias) || duracionDias < 1 || duracionDias > 90) {
     return { error: 'La duración debe estar entre 1 y 90 días.' }
