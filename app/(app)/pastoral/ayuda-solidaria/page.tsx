@@ -6,10 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import SolidarityAdminBoard from '@/components/solidaridad/SolidarityAdminBoard'
 import BackButton from '@/components/navigation/BackButton'
 
-export const metadata: Metadata = {
-  title: 'Atención de Ayuda Solidaria',
-}
-
+export const metadata: Metadata = { title: 'Atención de Ayuda Solidaria' }
 export const dynamic = 'force-dynamic'
 
 export default async function PastoralAyudaSolidariaPage() {
@@ -32,12 +29,12 @@ export default async function PastoralAyudaSolidariaPage() {
   const [{ data: requestRows }, { data: contributionRows }, { data: pantryRows }] = await Promise.all([
     (service as any)
       .from('solicitudes_ayuda_solidaria')
-      .select('id, hogar_personas, necesidad, detalle_adicional, telefono, contacto_preferido, estado, respuesta, created_at, solicitante:profiles!solicitudes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
+      .select('id, profile_id, tipo_ayuda, hogar_personas, necesidad, detalle_adicional, telefono, contacto_preferido, estado, respuesta, created_at, solicitante:profiles!solicitudes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
       .order('created_at', { ascending: false })
       .limit(200),
     (service as any)
       .from('aportes_ayuda_solidaria')
-      .select('id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, created_at, aportante:profiles!aportes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
+      .select('id, profile_id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, agradecido_at, created_at, aportante:profiles!aportes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
       .order('created_at', { ascending: false })
       .limit(200),
     (service as any)
@@ -63,7 +60,7 @@ export default async function PastoralAyudaSolidariaPage() {
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Atención pastoral privada</p>
               <h1 className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.04em]">Ayuda Solidaria</h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/72">Atiende mensajes, coordina siembras y mantén la despensa al día desde una sola bandeja.</p>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/72">Atiende conversaciones, coordina paquetes y siembras, y mantén la despensa al día.</p>
             </div>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-3">
@@ -78,7 +75,7 @@ export default async function PastoralAyudaSolidariaPage() {
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
           <p className="text-xs leading-5 text-slate-600">Los mensajes, teléfonos y datos de coordinación solo están disponibles para Pastor, Pastor General y Administrador autorizados. Las necesidades individuales nunca se muestran a quien siembra.</p>
         </div>
-        <SolidarityAdminBoard requests={requests} contributions={contributions} pantryNeeds={pantryNeeds} />
+        <SolidarityAdminBoard currentUserId={user.id} requests={requests} contributions={contributions} pantryNeeds={pantryNeeds} />
       </div>
     </main>
   )
