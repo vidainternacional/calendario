@@ -10,6 +10,10 @@ export type PlanActionResult = {
   error?: string
 }
 
+type GestionError = { error: string }
+type GestionContext = { supabase: any; user: { id: string }; rol: string }
+type GestionPlanContext = GestionContext & { plan: any }
+
 type PlanInput = {
   titulo: string
   descripcion: string
@@ -43,10 +47,10 @@ function slug(value: string) {
     .slice(0, 48) || 'plan'
 }
 
-async function contextoGestion() {
+async function contextoGestion(): Promise<GestionContext | GestionError> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'No autenticado' as const }
+  if (!user) return { error: 'No autenticado' }
 
   const { data: profile, error } = await (supabase as any)
     .from('profiles')
@@ -54,16 +58,16 @@ async function contextoGestion() {
     .eq('id', user.id)
     .single()
 
-  if (error || !profile) return { error: 'No fue posible verificar tus permisos.' as const }
+  if (error || !profile) return { error: 'No fue posible verificar tus permisos.' }
 
   const rol = String(profile.rol ?? '')
   const autorizado = Boolean(profile.activo) && profile.estado_cuenta === 'activo' && (rol === 'pastor' || rol === 'administrador')
-  if (!autorizado) return { error: 'No tienes permiso para administrar planes de lectura.' as const }
+  if (!autorizado) return { error: 'No tienes permiso para administrar planes de lectura.' }
 
-  return { supabase, user, rol }
+  return { supabase, user: { id: user.id }, rol }
 }
 
-async function puedeGestionar(planId: string) {
+async function puedeGestionar(planId: string): Promise<GestionPlanContext | GestionError> {
   const ctx = await contextoGestion()
   if ('error' in ctx) return ctx
 
@@ -73,9 +77,9 @@ async function puedeGestionar(planId: string) {
     .eq('id', planId)
     .maybeSingle()
 
-  if (error || !plan) return { error: 'Plan no encontrado.' as const }
+  if (error || !plan) return { error: 'Plan no encontrado.' }
   if (ctx.rol !== 'administrador' && plan.creado_por !== ctx.user.id) {
-    return { error: 'Solo puedes editar tus propios planes.' as const }
+    return { error: 'Solo puedes editar tus propios planes.' }
   }
 
   return { ...ctx, plan }
