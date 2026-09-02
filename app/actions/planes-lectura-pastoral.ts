@@ -4,6 +4,12 @@ import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
+export type PlanActionResult = {
+  success?: boolean
+  id?: string
+  error?: string
+}
+
 type PlanInput = {
   titulo: string
   descripcion: string
@@ -75,7 +81,7 @@ async function puedeGestionar(planId: string) {
   return { ...ctx, plan }
 }
 
-export async function crearPlanPastoral(input: PlanInput) {
+export async function crearPlanPastoral(input: PlanInput): Promise<PlanActionResult> {
   const ctx = await contextoGestion()
   if ('error' in ctx) return ctx
 
@@ -113,7 +119,7 @@ export async function crearPlanPastoral(input: PlanInput) {
   return { success: true, id }
 }
 
-export async function guardarPlanPastoral(planId: string, input: PlanInput) {
+export async function guardarPlanPastoral(planId: string, input: PlanInput): Promise<PlanActionResult> {
   const ctx = await puedeGestionar(planId)
   if ('error' in ctx) return ctx
 
@@ -155,7 +161,7 @@ export async function guardarPlanPastoral(planId: string, input: PlanInput) {
   return { success: true }
 }
 
-export async function guardarDiaPlanPastoral(planId: string, input: DiaInput) {
+export async function guardarDiaPlanPastoral(planId: string, input: DiaInput): Promise<PlanActionResult> {
   const ctx = await puedeGestionar(planId)
   if ('error' in ctx) return ctx
 
@@ -209,7 +215,7 @@ export async function guardarDiaPlanPastoral(planId: string, input: DiaInput) {
   return { success: true }
 }
 
-export async function eliminarDiaPlanPastoral(planId: string, numeroDiaInput: number) {
+export async function eliminarDiaPlanPastoral(planId: string, numeroDiaInput: number): Promise<PlanActionResult> {
   const ctx = await puedeGestionar(planId)
   if ('error' in ctx) return ctx
 
@@ -232,7 +238,7 @@ export async function eliminarDiaPlanPastoral(planId: string, numeroDiaInput: nu
   return { success: true }
 }
 
-export async function cambiarPublicacionPlanPastoral(planId: string, publicar: boolean) {
+export async function cambiarPublicacionPlanPastoral(planId: string, publicar: boolean): Promise<PlanActionResult> {
   const ctx = await puedeGestionar(planId)
   if ('error' in ctx) return ctx
 
