@@ -5,12 +5,44 @@ import VidaHoyClient, { type VidaPlanSummary } from '@/components/biblia/VidaHoy
 
 export const metadata: Metadata = { title: 'Hoy en VIDA' }
 
+function vidaDateKey(value: string | Date) {
+  const date = typeof value === 'string' ? new Date(value) : value
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/El_Salvador',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date)
+}
+
+function previousDayKey(key: string) {
+  const [year, month, day] = key.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day - 1, 12))
+  return date.toISOString().slice(0, 10)
+}
+
+function calculateStreak(completedAt: Array<string | null | undefined>) {
+  const dates = new Set(completedAt.filter(Boolean).map(value => vidaDateKey(String(value))))
+  if (dates.size === 0) return 0
+
+  const today = vidaDateKey(new Date())
+  let cursor = dates.has(today) ? today : previousDayKey(today)
+  let streak = 0
+
+  while (dates.has(cursor)) {
+    streak += 1
+    cursor = previousDayKey(cursor)
+  }
+
+  return streak
+}
+
 export default async function HoyPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [preferenciaResult, planesResult, diasResult, progresoResult] = await Promise.all([
+  const [preferenciaResult, planesResult, diasResult, progresoResult, seguimientoResult] = await Promise.all([
     (supabase as any)
       .from('versiculo_diario_preferencias')
       .select('activo, hora_local')
@@ -27,14 +59,20 @@ export default async function HoyPage() {
       .order('numero_dia', { ascending: true }),
     (supabase as any)
       .from('planes_lectura_dias_progreso')
-      .select('plan_id, numero_dia')
+      .select('plan_id, numero_dia, completado_en')
       .eq('profile_id', user.id),
+    (supabase as any)
+      .from('planes_lectura_usuario')
+      .select('plan_id, ultimo_acceso_en, completado_en')
+      .eq('profile_id', user.id)
+      .order('ultimo_acceso_en', { ascending: false }),
   ])
 
   const preferencia = preferenciaResult.data
   const planes = Array.isArray(planesResult.data) ? planesResult.data : []
   const dias = Array.isArray(diasResult.data) ? diasResult.data : []
   const progreso = Array.isArray(progresoResult.data) ? progresoResult.data : []
+  const seguimientos = Array.isArray(seguimientoResult.data) ? seguimientoResult.data : []
   const completados = new Set(progreso.map((item: any) => `${item.plan_id}:${item.numero_dia}`))
 
   const summaries: VidaPlanSummary[] = planes.map((plan: any) => {
@@ -54,11 +92,18 @@ export default async function HoyPage() {
     }
   })
 
+  const seguimientoActivo = seguimientos.find((item: any) => !item.completado_en)
+  const planConAvance = summaries.find(plan => !plan.done && plan.completed > 0)
+  const featuredPlanId = String(seguimientoActivo?.plan_id ?? planConAvance?.id ?? summaries[0]?.id ?? '')
+  const streak = calculateStreak(progreso.map((item: any) => item.completado_en))
+
   return (
     <VidaHoyClient
       initialActive={Boolean(preferencia?.activo)}
       initialHour={Number.isInteger(preferencia?.hora_local) ? Number(preferencia.hora_local) : 7}
       plans={summaries}
+      featuredPlanId={featuredPlanId}
+      streak={streak}
     />
   )
 }

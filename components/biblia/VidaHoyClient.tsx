@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Bell, BookOpen, ChevronRight, Clock3, Loader2, Sparkles } from 'lucide-react'
+import { Bell, BookOpen, ChevronRight, Clock3, Flame, Loader2, Sparkles } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import { guardarPreferenciaVersiculoDiario } from '@/app/actions/versiculo-diario'
 import { dailyVerseForDate, fetchVerseText } from '@/lib/biblia/vida-daily'
@@ -23,9 +23,11 @@ type Props = {
   initialActive: boolean
   initialHour: number
   plans: VidaPlanSummary[]
+  featuredPlanId: string
+  streak: number
 }
 
-export default function VidaHoyClient({ initialActive, initialHour, plans }: Props) {
+export default function VidaHoyClient({ initialActive, initialHour, plans, featuredPlanId, streak }: Props) {
   const daily = useMemo(() => dailyVerseForDate(), [])
   const [verseText, setVerseText] = useState('')
   const [verseLoading, setVerseLoading] = useState(true)
@@ -55,6 +57,9 @@ export default function VidaHoyClient({ initialActive, initialHour, plans }: Pro
       mostrarToast(nextActive ? `Recordatorio guardado para las ${String(nextHour).padStart(2, '0')}:00` : 'Recordatorio desactivado')
     })
   }
+
+  const featured = plans.find(plan => plan.id === featuredPlanId) ?? plans[0]
+  const secondary = plans.filter(plan => plan.id !== featured?.id)
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
@@ -96,22 +101,50 @@ export default function VidaHoyClient({ initialActive, initialHour, plans }: Pro
       </section>
 
       <section className="mt-6" aria-labelledby="planes-lectura">
-        <div className="mb-3 px-1"><h2 id="planes-lectura" className="text-xl font-bold tracking-[-0.02em] text-[#171923]">Planes de lectura</h2><p className="mt-1 text-xs text-slate-500">Tu avance se guarda en tu cuenta y continúa en cualquier dispositivo.</p></div>
-        <div className="space-y-3">
-          {plans.map(plan => (
-            <article key={plan.id} className="rounded-[24px] border border-white/90 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0"><h3 className="font-bold text-slate-950">{plan.title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{plan.description}</p></div>
-                <span className="shrink-0 text-[11px] font-bold text-slate-500">{plan.completed}/{plan.total}</span>
+        <div className="mb-3 px-1">
+          <h2 id="planes-lectura" className="text-xl font-bold tracking-[-0.02em] text-[#171923]">Planes de lectura</h2>
+          <p className="mt-1 text-xs text-slate-500">Tu avance se guarda en tu cuenta y continúa en cualquier dispositivo.</p>
+          {streak >= 2 ? (
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-[#C0392B]"><Flame className="h-4 w-4" />Llevas {streak} días seguidos.</p>
+          ) : null}
+        </div>
+
+        {featured ? (
+          <article className="overflow-hidden rounded-[26px] border border-slate-200 bg-white">
+            <div className="p-5 sm:p-6">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#C0392B]">Tu plan de hoy</p>
+              <div className="mt-2 flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950">{featured.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">{featured.description}</p>
+                </div>
+                <span className="shrink-0 text-xs font-bold text-slate-500">{featured.completed}/{featured.total}</span>
               </div>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${Math.round((plan.completed / Math.max(plan.total, 1)) * 100)}%` }} /></div>
-              <Link href={`/hoy/planes/${plan.id}/${plan.nextDay}`} className="mt-4 flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-slate-100 px-4 text-sm font-bold text-slate-700">
-                <span className="min-w-0 truncate">{plan.done ? 'Revisar plan' : `Día ${plan.nextDay}`} · {plan.nextLabel}</span>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#C0392B] transition-all" style={{ width: `${Math.round((featured.completed / Math.max(featured.total, 1)) * 100)}%` }} /></div>
+              <Link href={`/hoy/planes/${featured.id}/${featured.nextDay}`} className="mt-5 flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-[#C0392B] px-4 text-sm font-bold text-white">
+                <span className="min-w-0 truncate">{featured.done ? 'Revisar plan' : `Continuar · Día ${featured.nextDay}`} · {featured.nextLabel}</span>
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </Link>
-            </article>
-          ))}
-        </div>
+            </div>
+          </article>
+        ) : null}
+
+        {secondary.length > 0 ? (
+          <div className="mt-5">
+            <h3 className="mb-2 px-1 text-sm font-bold text-slate-900">Explorar otros planes</h3>
+            <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white">
+              {secondary.map((plan, index) => (
+                <Link key={plan.id} href={`/hoy/planes/${plan.id}/${plan.nextDay}`} className={`flex min-h-[86px] items-center justify-between gap-4 px-4 py-3 ${index > 0 ? 'border-t border-slate-100' : ''}`}>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-slate-950">{plan.title}</h4>
+                    <p className="mt-1 text-xs text-slate-500">{plan.completed > 0 ? `${plan.completed} de ${plan.total} días completados` : `${plan.total} días · Empezar plan`}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   )
