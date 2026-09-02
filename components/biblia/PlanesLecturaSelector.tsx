@@ -35,7 +35,10 @@ export default function PlanesLecturaSelector({ plans, initialPlanId, streak }: 
 
   return (
     <>
-      <div className="flex flex-wrap gap-2" aria-label="Temas de planes de lectura">
+      <div
+        className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label="Temas de planes de lectura"
+      >
         {plans.map(plan => {
           const isSelected = plan.id === selected.id
           return (
@@ -43,7 +46,7 @@ export default function PlanesLecturaSelector({ plans, initialPlanId, streak }: 
               key={plan.id}
               type="button"
               onClick={() => setSelectedPlanId(plan.id)}
-              className={`min-h-10 rounded-full border px-4 text-sm font-bold transition ${
+              className={`min-h-9 shrink-0 rounded-full border px-3.5 text-[13px] font-bold whitespace-nowrap transition ${
                 isSelected
                   ? 'border-[#C0392B] bg-[#C0392B] text-white'
                   : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
@@ -56,17 +59,17 @@ export default function PlanesLecturaSelector({ plans, initialPlanId, streak }: 
         })}
       </div>
 
-      <section className="mt-6 border-y border-slate-100 py-6" aria-live="polite">
+      <section className="mt-4 border-y border-slate-100 py-5" aria-live="polite">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#C0392B]">{selected.completed > 0 && !selected.done ? 'Tu plan actual' : 'Plan seleccionado'}</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-slate-950">{selected.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{selected.description}</p>
+            <h2 className="mt-1.5 text-2xl font-bold tracking-[-0.025em] text-slate-950">{selected.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{selected.description}</p>
           </div>
-          <span className="shrink-0 text-xs font-bold text-slate-400">{selected.total} días</span>
+          <span className="shrink-0 pt-0.5 text-xs font-bold text-slate-400">{selected.total} días</span>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-4">
           <div className="flex items-center justify-between gap-3 text-xs">
             <span className="font-semibold text-slate-500">Avance · {selected.completed}/{selected.total}</span>
             <span className={`inline-flex items-center gap-1.5 font-bold ${streak > 0 ? 'text-emerald-700' : 'text-slate-400'}`}>
@@ -81,7 +84,7 @@ export default function PlanesLecturaSelector({ plans, initialPlanId, streak }: 
 
         <Link
           href={`/hoy/planes/${selected.id}/${selected.nextDay}`}
-          className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#C0392B] px-5 text-sm font-bold text-white"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#C0392B] px-5 text-sm font-bold text-white"
         >
           {selected.done ? 'Revisar plan' : selected.completed > 0 ? `Continuar · Día ${selected.nextDay}` : 'Comenzar plan'}
           <ChevronRight className="h-4 w-4" />

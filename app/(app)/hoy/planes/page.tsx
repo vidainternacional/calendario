@@ -110,10 +110,10 @@ export default async function PlanesLecturaPage() {
         Hoy en VIDA
       </Link>
 
-      <header className="mt-5 pb-6">
+      <header className="mt-3 pb-4">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Crecer con propósito</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.035em] text-[#171923]">Elige tu plan de lectura</h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+        <p className="mt-1.5 max-w-xl text-sm leading-5 text-slate-500">
           Selecciona el tema que quieres trabajar. Cada plan tiene la duración que necesita según su objetivo.
         </p>
       </header>
