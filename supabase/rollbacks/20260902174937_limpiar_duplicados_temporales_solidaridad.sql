@@ -1,0 +1,3 @@
+-- No se restauran estructuras temporales duplicadas.
+-- La estructura válida permanece en tipo_ayuda, ayuda_solidaria_mensajes
+-- y cuentas_bancarias_iglesia, creadas por la migración 20260902171500.
