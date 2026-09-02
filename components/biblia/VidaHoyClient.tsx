@@ -2,37 +2,38 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Bell, BookOpen, CheckCircle2, ChevronRight, Clock3, Loader2, Sparkles } from 'lucide-react'
+import { Bell, BookOpen, ChevronRight, Clock3, Loader2, Sparkles } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import { guardarPreferenciaVersiculoDiario } from '@/app/actions/versiculo-diario'
-import { dailyVerseForDate, fetchVerseText, READING_PLANS } from '@/lib/biblia/vida-daily'
+import { dailyVerseForDate, fetchVerseText } from '@/lib/biblia/vida-daily'
 import { mostrarToast } from '@/lib/ui/toast'
 
-const PLAN_PROGRESS_KEY = 'vida-reading-plans-v1'
-
-type Props = { initialActive: boolean; initialHour: number }
-type Progress = Record<string, number>
-
-function readProgress(): Progress {
-  try {
-    const raw = localStorage.getItem(PLAN_PROGRESS_KEY)
-    return raw ? JSON.parse(raw) as Progress : {}
-  } catch {
-    return {}
-  }
+export type VidaPlanSummary = {
+  id: string
+  title: string
+  description: string
+  total: number
+  completed: number
+  nextDay: number
+  nextLabel: string
+  done: boolean
 }
 
-export default function VidaHoyClient({ initialActive, initialHour }: Props) {
+type Props = {
+  initialActive: boolean
+  initialHour: number
+  plans: VidaPlanSummary[]
+}
+
+export default function VidaHoyClient({ initialActive, initialHour, plans }: Props) {
   const daily = useMemo(() => dailyVerseForDate(), [])
   const [verseText, setVerseText] = useState('')
   const [verseLoading, setVerseLoading] = useState(true)
   const [active, setActive] = useState(initialActive)
   const [hour, setHour] = useState(initialHour)
-  const [progress, setProgress] = useState<Progress>({})
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    setProgress(readProgress())
     let cancelled = false
     fetchVerseText(daily)
       .then(text => { if (!cancelled) setVerseText(text) })
@@ -52,14 +53,6 @@ export default function VidaHoyClient({ initialActive, initialHour }: Props) {
         return
       }
       mostrarToast(nextActive ? `Recordatorio guardado para las ${String(nextHour).padStart(2, '0')}:00` : 'Recordatorio desactivado')
-    })
-  }
-
-  const markRead = (planId: string, total: number) => {
-    setProgress(prev => {
-      const next = { ...prev, [planId]: Math.min(total, (prev[planId] ?? 0) + 1) }
-      try { localStorage.setItem(PLAN_PROGRESS_KEY, JSON.stringify(next)) } catch {}
-      return next
     })
   }
 
@@ -103,23 +96,21 @@ export default function VidaHoyClient({ initialActive, initialHour }: Props) {
       </section>
 
       <section className="mt-6" aria-labelledby="planes-lectura">
-        <div className="mb-3 px-1"><h2 id="planes-lectura" className="text-xl font-bold tracking-[-0.02em] text-[#171923]">Planes de lectura</h2><p className="mt-1 text-xs text-slate-500">Elige un ritmo y continúa desde donde quedaste en este dispositivo.</p></div>
+        <div className="mb-3 px-1"><h2 id="planes-lectura" className="text-xl font-bold tracking-[-0.02em] text-[#171923]">Planes de lectura</h2><p className="mt-1 text-xs text-slate-500">Tu avance se guarda en tu cuenta y continúa en cualquier dispositivo.</p></div>
         <div className="space-y-3">
-          {READING_PLANS.map(plan => {
-            const completed = Math.min(plan.readings.length, progress[plan.id] ?? 0)
-            const reading = plan.readings[Math.min(completed, plan.readings.length - 1)]
-            const done = completed >= plan.readings.length
-            return (
-              <article key={plan.id} className="rounded-[24px] border border-white/90 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
-                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="font-bold text-slate-950">{plan.title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{plan.description}</p></div><span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-extrabold text-violet-700">{completed}/{plan.readings.length}</span></div>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${Math.round((completed / plan.readings.length) * 100)}%` }} /></div>
-                <div className="mt-4 flex items-center gap-2">
-                  <Link href={`/biblia?book=${reading.book}&chapter=${reading.chapter}&verse=${reading.verse ?? 1}`} className="flex min-h-11 min-w-0 flex-1 items-center justify-between rounded-2xl bg-slate-100 px-3 text-sm font-bold text-slate-700"><span className="truncate">{done ? 'Releer · ' : `Día ${completed + 1} · `}{reading.label}</span><ChevronRight className="h-4 w-4 shrink-0" /></Link>
-                  <button type="button" onClick={() => markRead(plan.id, plan.readings.length)} disabled={done} aria-label="Marcar lectura como completada" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white disabled:bg-emerald-500"><CheckCircle2 className="h-5 w-5" /></button>
-                </div>
-              </article>
-            )
-          })}
+          {plans.map(plan => (
+            <article key={plan.id} className="rounded-[24px] border border-white/90 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><h3 className="font-bold text-slate-950">{plan.title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{plan.description}</p></div>
+                <span className="shrink-0 text-[11px] font-bold text-slate-500">{plan.completed}/{plan.total}</span>
+              </div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${Math.round((plan.completed / Math.max(plan.total, 1)) * 100)}%` }} /></div>
+              <Link href={`/hoy/planes/${plan.id}/${plan.nextDay}`} className="mt-4 flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-slate-100 px-4 text-sm font-bold text-slate-700">
+                <span className="min-w-0 truncate">{plan.done ? 'Revisar plan' : `Día ${plan.nextDay}`} · {plan.nextLabel}</span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
+              </Link>
+            </article>
+          ))}
         </div>
       </section>
     </main>
