@@ -101,7 +101,10 @@ export default async function StudyAnalyticsPage() {
   const sectionRanking = ranking(sections.map(row => row.section_key))
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+5rem)] sm:px-6 sm:pt-12">
+    <main
+      className="mx-auto min-h-screen max-w-4xl bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+5rem)] sm:pt-12"
+      style={{ width: 'calc(100% - 64px)' }}
+    >
       <div className="mb-7"><BackButton /></div>
 
       <header className="mb-7">
