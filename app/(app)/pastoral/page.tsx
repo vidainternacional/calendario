@@ -2,11 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
-  BookHeart,
-  BookOpen,
-  BookOpenCheck,
   ChevronRight,
-  FileText,
   FolderOpen,
   Library,
   PackageOpen,
@@ -20,12 +16,6 @@ import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = { title: 'Centro Pastoral' }
 export const dynamic = 'force-dynamic'
-
-const estadoPaquete: Record<string, { texto: string; clase: string }> = {
-  borrador: { texto: 'Borrador', clase: 'bg-slate-100 text-slate-600' },
-  listo: { texto: 'Listo', clase: 'bg-emerald-50 text-emerald-700' },
-  compartido: { texto: 'Compartido', clase: 'bg-indigo-50 text-indigo-700' },
-}
 
 export default async function PastoralPage() {
   const supabase = await createClient()
@@ -45,24 +35,19 @@ export default async function PastoralPage() {
     .from('pastoral_paquetes')
     .select('id, titulo, descripcion_publica, estado, updated_at')
     .eq('profile_id', user.id)
+    .eq('estado', 'borrador')
     .order('updated_at', { ascending: false })
     .limit(3)
 
-  if (paquetesError) throw new Error('No fue posible cargar los paquetes pastorales recientes.')
+  if (paquetesError) throw new Error('No fue posible cargar los proyectos en preparación.')
 
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)
-  const recientes = (paquetes ?? []) as Array<{ id: string; titulo: string; descripcion_publica: string; estado: string; updated_at: string }>
-  const proyectoActual = recientes[0]
+  const borradores = (paquetes ?? []) as Array<{ id: string; titulo: string; descripcion_publica: string; estado: string; updated_at: string }>
 
   const areas = [
-    { titulo: 'Bosquejo', href: '/pastoral/bosquejos', icono: FileText, iconClass: 'text-violet-600' },
-    { titulo: 'Versículos', href: '/pastoral/colecciones', icono: BookHeart, iconClass: 'text-indigo-600' },
-    { titulo: 'Biblia', href: '/biblia?from=pastoral', icono: BookOpen, iconClass: 'text-indigo-600' },
     { titulo: 'Estudio', href: '/estudios/profundo?from=pastoral', icono: Sparkles, iconClass: 'text-[#C0392B]' },
     { titulo: 'Biblioteca', href: '/pastoral/biblioteca', icono: Library, iconClass: 'text-amber-700' },
-    { titulo: 'Materiales', href: '/pastoral/materiales', icono: BookOpenCheck, iconClass: 'text-cyan-700' },
-    { titulo: 'Proyectos', href: '/pastoral/paquetes', icono: PackageOpen, iconClass: 'text-slate-700' },
   ]
 
   return (
@@ -82,37 +67,41 @@ export default async function PastoralPage() {
         </div>
       </header>
 
-      <section className="pastoral-project" aria-labelledby="proyecto-pastoral">
+      <section className="pastoral-project" aria-labelledby="preparacion-pastoral">
         <div className="pastoral-section-label">
           <PackageOpen aria-hidden="true" />
-          <h2 id="proyecto-pastoral">Proyecto</h2>
+          <h2 id="preparacion-pastoral">En preparación</h2>
         </div>
 
-        {proyectoActual ? (
-          <Link href={`/pastoral/paquetes/${proyectoActual.id}`} className="pastoral-current-project">
-            <span className="pastoral-current-project-icon"><FolderOpen aria-hidden="true" /></span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2">
-                <strong className="truncate">{proyectoActual.titulo}</strong>
-                <span className={`pastoral-project-status ${estadoPaquete[proyectoActual.estado]?.clase ?? estadoPaquete.borrador.clase}`}>
-                  {estadoPaquete[proyectoActual.estado]?.texto ?? estadoPaquete.borrador.texto}
+        {borradores.length ? (
+          <div className="divide-y divide-slate-200">
+            {borradores.map((proyecto) => (
+              <Link key={proyecto.id} href={`/pastoral/paquetes/${proyecto.id}`} className="flex min-h-[70px] items-center gap-3 py-3 text-slate-900">
+                <span className="pastoral-current-project-icon"><FolderOpen aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1">
+                  <strong className="block truncate">{proyecto.titulo}</strong>
+                  <span className="pastoral-current-project-meta">Continuar trabajando</span>
                 </span>
-              </span>
-              <span className="pastoral-current-project-meta">Continuar trabajando</span>
-            </span>
-            <ChevronRight aria-hidden="true" />
-          </Link>
+                <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
         ) : (
-          <p className="pastoral-project-empty">Aún no tienes un proyecto activo.</p>
+          <p className="pastoral-project-empty">No tienes proyectos en preparación.</p>
         )}
 
-        <Link href="/pastoral/paquetes" className="pastoral-primary-action">
+        <Link href="/pastoral/paquetes?nuevo=1" className="pastoral-primary-action">
           <Plus aria-hidden="true" />
-          {proyectoActual ? 'Nuevo proyecto' : 'Crear proyecto'}
+          Nuevo proyecto
+        </Link>
+
+        <Link href="/pastoral/paquetes" className="mt-2 flex min-h-12 items-center justify-between border-t border-slate-200 px-1 pt-3 text-sm font-bold text-slate-700">
+          <span className="flex items-center gap-2"><PackageOpen className="h-4 w-4" aria-hidden="true" /> Proyectos</span>
+          <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
         </Link>
       </section>
 
-      <nav className="grid grid-cols-3 gap-x-3 gap-y-5 py-6 sm:grid-cols-4" aria-label="Herramientas del Centro Pastoral">
+      <nav className="grid grid-cols-2 gap-x-3 gap-y-5 py-6" aria-label="Herramientas auxiliares del Centro Pastoral">
         {areas.map(({ titulo, href, icono: Icono, iconClass }) => (
           <Link
             key={titulo}
