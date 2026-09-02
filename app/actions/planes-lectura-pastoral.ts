@@ -189,9 +189,7 @@ export async function guardarDiaPlanPastoral(planId: string, input: DiaInput): P
   const devocional = texto(input.devocional)
   const preguntaReflexion = texto(input.preguntaReflexion)
 
-  if (!titulo || !bookCode || !bookName || !referencia || !devocional || !preguntaReflexion) {
-    return { error: 'Completa el título, lectura bíblica, devocional y pregunta de reflexión.' }
-  }
+  if (!bookCode || !bookName) return { error: 'Selecciona un libro bíblico.' }
 
   const { error } = await (ctx.supabase as any)
     .from('planes_lectura_dias')
@@ -249,15 +247,21 @@ export async function cambiarPublicacionPlanPastoral(planId: string, publicar: b
   if (publicar) {
     const { data: dias, error: diasError } = await (ctx.supabase as any)
       .from('planes_lectura_dias')
-      .select('numero_dia')
+      .select('numero_dia, titulo, book_code, book_name, chapter, referencia, devocional, pregunta_reflexion')
       .eq('plan_id', planId)
       .order('numero_dia', { ascending: true })
 
     if (diasError) return { error: 'No se pudo validar el contenido del plan.' }
 
     const duracion = Number(ctx.plan.duracion_dias)
-    const numeros = Array.isArray(dias) ? dias.map((item: any) => Number(item.numero_dia)) : []
-    const completo = numeros.length === duracion && numeros.every((numero: number, index: number) => numero === index + 1)
+    const lista = Array.isArray(dias) ? dias : []
+    const completo = lista.length === duracion && lista.every((item: any, index: number) => {
+      const numeroCorrecto = Number(item.numero_dia) === index + 1
+      const chapterValido = Number.isInteger(Number(item.chapter)) && Number(item.chapter) >= 1
+      const textosCompletos = [item.titulo, item.book_code, item.book_name, item.referencia, item.devocional, item.pregunta_reflexion]
+        .every(value => texto(value).length >= 1)
+      return numeroCorrecto && chapterValido && textosCompletos
+    })
     if (!completo) return { error: `Completa los ${duracion} días antes de publicar.` }
   }
 
