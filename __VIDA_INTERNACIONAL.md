@@ -501,6 +501,17 @@ Cierre confirmado:
 
 No reabrir Centro Pastoral salvo bug comprobable o una nueva prioridad explícitamente documentada.
 
+### Ajuste posterior aprobado — Organización del Centro Pastoral
+
+La portada del Centro Pastoral queda organizada así:
+- En preparación: muestra borradores recientes para continuar trabajando.
+- Nuevo proyecto: crea directamente un proyecto nuevo.
+- Proyectos: único lugar para administrar todos los proyectos existentes.
+- Proyectos incluye búsqueda, filtros Todos · Borradores · Listos · No publicados · Publicados y vistas Tarjetas · Lista · Miniaturas.
+- La antigua separación “Mis proyectos / Publicados” queda eliminada por redundancia.
+- Estudio y Biblioteca permanecen como herramientas auxiliares.
+- Bosquejos, colecciones de versículos y Biblia permanecen disponibles internamente, pero fuera del nivel principal.
+
 # Siguiente prioridad autorizada
 
 **Pendiente de definición.**
