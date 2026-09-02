@@ -1,5 +1,6 @@
 import { Clock3, ExternalLink, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
 import type { PaqueteCronologicoBiblico } from '@/lib/estudios/biblical-chronology-maps'
+import { theographicTitleEs } from '@/lib/estudios/theographic-title-es'
 
 const precisionLabels = {
   exact: 'Exacta',
@@ -58,7 +59,7 @@ export default function ChronologyMapPanel({ bundle }: { bundle: PaqueteCronolog
             {narrativeEvents.map(event => (
               <article key={event.slug} className="rounded-2xl border border-violet-200/70 bg-white p-4 shadow-sm">
                 <p className="text-xs font-semibold text-violet-700">{bibleRange(event)}</p>
-                <h4 className="mt-1 text-base font-bold text-slate-950">{event.title}</h4>
+                <h4 className="mt-1 text-base font-bold text-slate-950">{theographicTitleEs(event.title)}</h4>
                 {event.summary && <p className="mt-2 text-sm leading-6 text-slate-600">{event.summary}</p>}
                 <footer className="mt-4 flex flex-col gap-1.5 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                   <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" /> Fuente: {event.source.attribution || event.source.name}</span>
