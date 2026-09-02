@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
-  BookOpenCheck,
   ChevronRight,
   FolderOpen,
   Library,
@@ -49,7 +48,6 @@ export default async function PastoralPage() {
   const areas = [
     { titulo: 'Estudio', href: '/estudios/profundo?from=pastoral', icono: Sparkles, iconClass: 'text-[#C0392B]' },
     { titulo: 'Biblioteca', href: '/pastoral/biblioteca', icono: Library, iconClass: 'text-amber-700' },
-    { titulo: 'Publicados', href: '/pastoral/materiales', icono: BookOpenCheck, iconClass: 'text-cyan-700' },
   ]
 
   return (
@@ -98,12 +96,12 @@ export default async function PastoralPage() {
         </Link>
 
         <Link href="/pastoral/paquetes" className="mt-2 flex min-h-12 items-center justify-between border-t border-slate-200 px-1 pt-3 text-sm font-bold text-slate-700">
-          <span className="flex items-center gap-2"><PackageOpen className="h-4 w-4" aria-hidden="true" /> Mis proyectos</span>
+          <span className="flex items-center gap-2"><PackageOpen className="h-4 w-4" aria-hidden="true" /> Proyectos</span>
           <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
         </Link>
       </section>
 
-      <nav className="grid grid-cols-3 gap-x-3 gap-y-5 py-6" aria-label="Herramientas auxiliares del Centro Pastoral">
+      <nav className="grid grid-cols-2 gap-x-3 gap-y-5 py-6" aria-label="Herramientas auxiliares del Centro Pastoral">
         {areas.map(({ titulo, href, icono: Icono, iconClass }) => (
           <Link
             key={titulo}
