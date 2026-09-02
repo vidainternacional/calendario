@@ -237,7 +237,7 @@ export async function guardarCuentaBancariaIglesia(input: {
       titular: holder,
       numero_cuenta: accountNumber,
       tipo_cuenta: accountType,
-      instrucciones,
+      instrucciones: instructions,
       activo: input.active !== false,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
