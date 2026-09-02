@@ -164,7 +164,7 @@ export async function parseInternalBibleReference(rawQuery: string): Promise<Par
 
   const books = await listApprovedBooks()
   const candidates = books.flatMap(book => {
-    const aliases = new Set([book.nameEs, book.nameEn, book.code, ...book.aliases])
+    const aliases = new Set([book.nameEs, book.nameEn, book.code, ...book.aliases, ...(book.code === 'ACT' ? ['Hecho'] : [])])
     return Array.from(aliases)
       .map(alias => ({ book, alias: normalizeAlias(alias) }))
       .filter(candidate => candidate.alias.length >= 2)
