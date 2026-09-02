@@ -13,6 +13,7 @@ import { editarPaquetePastoral } from '@/app/actions/pastoral-paquetes'
 import { subirArchivoBibliotecaPastoral } from '@/app/actions/pastoral-biblioteca'
 import { mostrarToast } from '@/lib/ui/toast'
 import PackageDistributionControls from '@/components/pastoral/PackageDistributionControls'
+import MaterialPastoralExperience from '@/components/pastoral/MaterialPastoralExperience'
 import PastoralVersePicker from '@/components/pastoral/PastoralVersePicker'
 import PastoralVisualCanvas from '@/components/pastoral/PastoralVisualCanvas'
 import { PALETAS_PRESENTACION, PLANTILLAS_VISUALES, type PaletaPresentacion, type PlantillaVisual } from '@/components/pastoral/pastoral-editor-presets'
@@ -28,7 +29,7 @@ type Paquete = {
   id: string; titulo: string; descripcion_publica: string; instrucciones: string; notas_privadas: string
   bosquejo_id: string | null; coleccion_id: string | null; recurso_ids: string[]
   estado: 'borrador' | 'listo' | 'compartido'; presentacion_diapositivas: DiapositivaCanvas[]
-  presentacion_pdf_recurso_id: string | null; audiencia: Audiencia; publicado: boolean; destacado: boolean
+  presentacion_pdf_recurso_id: string | null; audiencia: Audiencia; publicado: boolean; destacado: boolean; public_slug?: string | null
 }
 type Snapshot = { titulo: string; paginas: DiapositivaCanvas[]; indice: number }
 type DestinoSubida = 'elemento' | 'fondo'
@@ -183,9 +184,10 @@ function normalizarPaginaEditor(item: DiapositivaCanvas) {
   }
 }
 
-export default function PastoralVisualWorkspaceV4({ paquete, biblioteca }: { paquete: Paquete; coleccion: unknown; biblioteca: RecursoPastoral[] }) {
+export default function PastoralVisualWorkspaceV4({ paquete, coleccion, biblioteca }: { paquete: Paquete; coleccion: { nombre?: string; descripcion?: string; versiculos?: Array<{ referencia?: string; texto?: string; traduccion?: string }> } | null; biblioteca: RecursoPastoral[] }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const presentacionRef = useRef<HTMLElement | null>(null)
   const undoRef = useRef<Snapshot[]>([])
   const redoRef = useRef<Snapshot[]>([])
   const touchStart = useRef(0)
@@ -904,8 +906,11 @@ const guardarAutomatico = async (revision: number) => {
     const body = document.body
     const htmlOverflow = html.style.overflow
     const bodyOverflow = body.style.overflow
+    const navegacionesOcultas = Array.from(document.querySelectorAll<HTMLElement>('nav')).filter((nav) => !presentacionRef.current?.contains(nav))
+    const displaysPrevios = navegacionesOcultas.map((nav) => nav.style.display)
     html.style.overflow = 'hidden'
     body.style.overflow = 'hidden'
+    navegacionesOcultas.forEach((nav) => { nav.style.display = 'none' })
     const onFullscreenChange = () => {
       const doc = document as Document & { webkitFullscreenElement?: Element | null }
       if (!document.fullscreenElement && !doc.webkitFullscreenElement && modoPresentacion) {
@@ -917,6 +922,7 @@ const guardarAutomatico = async (revision: number) => {
     return () => {
       html.style.overflow = htmlOverflow
       body.style.overflow = bodyOverflow
+      navegacionesOcultas.forEach((nav, index) => { nav.style.display = displaysPrevios[index] ?? '' })
       document.removeEventListener('fullscreenchange', onFullscreenChange)
       document.removeEventListener('webkitfullscreenchange', onFullscreenChange as EventListener)
     }
@@ -943,9 +949,9 @@ const guardarAutomatico = async (revision: number) => {
   const abrirPantallaCompleta = async () => {
     setModoPresentacion(true)
     try {
-      const raiz = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void }
-      if (raiz.requestFullscreen) await raiz.requestFullscreen({ navigationUI: 'hide' })
-      else await raiz.webkitRequestFullscreen?.()
+      const raiz = presentacionRef.current as (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void }) | null
+      if (raiz?.requestFullscreen) await raiz.requestFullscreen({ navigationUI: 'hide' })
+      else await raiz?.webkitRequestFullscreen?.()
     } catch {}
     try { await (screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> }).lock?.(orientacionPresentacion === 'horizontal' ? 'landscape' : 'portrait') } catch {}
   }
@@ -998,14 +1004,9 @@ const guardarAutomatico = async (revision: number) => {
   const fuenteTextoActual = textoSeleccionado?.fuente ?? 'Fuente'
   const clasePanel = panel ? `panel-${panel}` : `panel-${grupoPrincipal ?? 'vacio'}`
   const estiloStage = { '--pastoral-stage-mobile-height': tecladoAbierto ? 'clamp(118px, 20dvh, 168px)' : 'clamp(210px, 32dvh, 300px)', height: 'clamp(250px, 52dvh, 640px)' } as CSSProperties
-  const ratioPresentacion = pagina?.formato === '9:16' ? 9 / 16 : pagina?.formato === '4:3' ? 4 / 3 : pagina?.formato === '1:1' ? 1 : 16 / 9
-  const presentarHorizontalGirado = Boolean(orientacionPresentacion === 'horizontal' && modoPresentacion && viewportVertical && (pagina?.formato === '16:9' || pagina?.formato === '4:3'))
-  const estiloPresentacionHorizontal = presentarHorizontalGirado ? {
-    width: `min(100dvh, calc(100dvw * ${ratioPresentacion}))`,
-    aspectRatio: String(ratioPresentacion),
-    transform: 'rotate(90deg)',
-    transformOrigin: 'center',
-  } as CSSProperties : undefined
+  const paginaPresentacion = pagina ? { ...pagina, formato: '16:9' as const } : null
+  const ratioPresentacion = 16 / 9
+
   void versionHistorial
   void claseBotonActivo
 
@@ -1196,7 +1197,7 @@ const guardarAutomatico = async (revision: number) => {
     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { subirImagen(event.target.files?.[0]); event.currentTarget.value = '' }} />
     <header className="sticky top-0 z-50 -mx-4 bg-[#f8f8f6]/96 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="flex items-center gap-2"><button type="button" onClick={() => router.back()} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-600" aria-label="Volver al Centro Pastoral" title="Atrás"><ChevronLeft className="h-5 w-5" /></button><input dir="ltr" value={titulo} onFocus={registrarHistorial} onChange={(event) => setTitulo(event.target.value)} aria-label="Título del proyecto" className="min-w-0 flex-1 bg-transparent text-base font-bold outline-none sm:text-lg" /><button type="button" onClick={deshacer} disabled={!undoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Deshacer"><Undo2 className="h-4 w-4" /></button><button type="button" onClick={rehacer} disabled={!redoRef.current.length} className="grid h-10 w-10 place-items-center rounded-full text-slate-600 disabled:opacity-25" aria-label="Rehacer"><Redo2 className="h-4 w-4" /></button>{guardandoAuto ? <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" aria-label="Guardando automáticamente" /> : guardado ? <Check className="h-4 w-4 text-emerald-600" /> : null}<button type="button" onClick={guardar} disabled={isPending} className="grid h-10 w-10 place-items-center rounded-full text-[#C0392B] disabled:opacity-60" aria-label="Guardar proyecto">{isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}</button></div>
-      <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><button type="button" onClick={() => irPagina(indice - 1)} disabled={indice === 0} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 disabled:opacity-25" aria-label="Página anterior"><ChevronLeft className="h-4 w-4" /></button><select value={indice} onChange={(event) => irPagina(Number(event.target.value))} aria-label={`Página ${indice + 1} de ${paginas.length}`} className="h-9 min-w-[48px] rounded-full border border-slate-200 bg-white px-1 text-center text-[10px] font-black text-slate-600 outline-none">{paginas.map((_, i) => <option key={i} value={i}>{i + 1}/{paginas.length}</option>)}</select><button type="button" onClick={() => irPagina(indice + 1)} disabled={indice === paginas.length - 1} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 disabled:opacity-25" aria-label="Página siguiente"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
+      <nav className="mt-1.5 flex items-center gap-5 overflow-x-auto text-xs font-bold text-slate-400 [scrollbar-width:none]"><button type="button" onClick={() => cambiarVista('contenido')} className={vista === 'contenido' ? 'text-[#C0392B]' : ''}>Editar</button><button type="button" onClick={() => cambiarVista('presentacion')} className={vista === 'presentacion' ? 'text-[#C0392B]' : ''}>Presentar</button><div className="flex min-w-max items-center justify-center gap-0.5"><button type="button" onClick={() => cambiarVista('publicar')} className={vista === 'publicar' ? 'text-[#C0392B]' : ''}>Compartir</button>{vista === 'contenido' && <><button type="button" onClick={() => irPagina(indice - 1)} disabled={indice === 0} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 disabled:opacity-25" aria-label="Página anterior"><ChevronLeft className="h-4 w-4" /></button><span aria-label={`Página ${indice + 1} de ${paginas.length}`} className="min-w-[38px] text-center text-[10px] font-black text-slate-500">{indice + 1}/{paginas.length}</span><button type="button" onClick={() => irPagina(indice + 1)} disabled={indice === paginas.length - 1} className="grid h-9 w-9 place-items-center rounded-full text-slate-500 disabled:opacity-25" aria-label="Página siguiente"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={nuevaPagina} className="grid h-10 w-10 place-items-center text-indigo-600" aria-label="Nueva página" title="Nueva página"><Plus className="h-4 w-4" /></button>{paginas.length > 1 && <button type="button" onClick={() => eliminarPagina()} className="grid h-10 w-10 place-items-center text-rose-600" aria-label={`Eliminar Página ${indice + 1}`} title="Eliminar página"><Trash2 className="h-4 w-4 text-rose-600" /></button>}</>}</div></nav>
     </header>
 
     {vista === 'contenido' && pagina && <section className="pastoral-editor-section pb-4 pt-2">
@@ -1211,7 +1212,7 @@ const guardarAutomatico = async (revision: number) => {
       </div>
     </section>}
 
-    {vista === 'presentacion' && pagina && <section className={modoPresentacion ? 'fixed inset-0 z-[170] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black overscroll-none' : 'relative pb-10 pt-5'}>
+    {vista === 'presentacion' && paginaPresentacion && <section ref={presentacionRef} className={modoPresentacion ? 'fixed inset-0 z-[2147483647] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black overscroll-none' : 'relative pb-10 pt-5'}>
       {!modoPresentacion && <div className="mb-4 grid gap-3">
         <div className="flex items-center justify-between gap-3"><div><h2 className="text-xl font-bold">Vista de la congregación</h2><p className="text-xs text-slate-500">La misma composición del lienzo en la orientación seleccionada.</p></div><button type="button" onClick={abrirPantallaCompleta} className="inline-flex min-h-10 items-center gap-2 px-3 text-xs font-bold"><Maximize2 className="h-4 w-4" /> Pantalla completa</button></div>
         <div className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-white p-1" aria-label="Orientación de presentación">
@@ -1220,11 +1221,19 @@ const guardarAutomatico = async (revision: number) => {
         </div>
       </div>}
       {modoPresentacion && <button type="button" onClick={cerrarPantallaCompleta} className="absolute right-[max(12px,env(safe-area-inset-right))] top-[max(12px,env(safe-area-inset-top))] z-[190] grid h-11 w-11 place-items-center rounded-full bg-black/50 text-white" aria-label="Salir de presentación"><Minimize2 className="h-5 w-5" /></button>}
-      <div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}>
-        <div className={presentarHorizontalGirado ? 'flex items-center justify-center' : 'w-full'} style={estiloPresentacionHorizontal}><PastoralVisualCanvas pagina={pagina} biblioteca={biblioteca} fitViewport={modoPresentacion && orientacionPresentacion === 'horizontal' && !presentarHorizontalGirado} /></div>
-      </div>
-      <button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`} aria-label="Diapositiva anterior"><ChevronLeft className="h-5 w-5" /></button>
-      <button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`} aria-label="Diapositiva siguiente"><ChevronRight className="h-5 w-5" /></button>
+      {orientacionPresentacion === 'vertical' ? (
+        <div className={modoPresentacion ? 'h-full w-full overflow-y-auto bg-white' : '-mx-4 w-[calc(100%+2rem)] bg-white sm:-mx-6 sm:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]'}>
+          <MaterialPastoralExperience material={{ ...paquete, presentacion_diapositivas: paginas, coleccion }} biblioteca={biblioteca} embeddedStudy />
+        </div>
+      ) : (
+        <>
+          <div onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? 0 }} onTouchEnd={(e) => { const fin = e.changedTouches[0]?.clientX ?? touchStart.current; const delta = fin - touchStart.current; if (Math.abs(delta) > 45) moverPresentacion(delta < 0 ? 1 : -1) }} className={modoPresentacion ? 'flex h-full w-full items-center justify-center' : ''}>
+            <div className="flex h-full w-full items-center justify-center"><PastoralVisualCanvas pagina={paginaPresentacion} biblioteca={biblioteca} fitViewport={modoPresentacion} /></div>
+          </div>
+          <button type="button" onClick={() => moverPresentacion(-1)} disabled={indice === 0} className={`absolute left-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`} aria-label="Diapositiva anterior"><ChevronLeft className="h-5 w-5" /></button>
+          <button type="button" onClick={() => moverPresentacion(1)} disabled={indice === paginas.length - 1} className={`absolute right-2 top-1/2 z-[185] -translate-y-1/2 rounded-full p-2 ${modoPresentacion ? 'bg-black/45 text-white' : 'bg-white/85 shadow'} disabled:opacity-0`} aria-label="Diapositiva siguiente"><ChevronRight className="h-5 w-5" /></button>
+        </>
+      )}
     </section>}
 
     {vista === 'publicar' && <section className="pastoral-share-view space-y-4 pb-10 pt-5"><PackageDistributionControls paqueteId={paquete.id} initialAudience={paquete.audiencia} initialPublished={paquete.publicado} initialFeatured={paquete.destacado} /><div className="pastoral-share-actions"><button type="button" onClick={() => window.print()}><FileDown /><span>PDF</span></button><button type="button" onClick={compartirInterno}><Share2 /><span>Compartir</span></button><button type="button" onClick={copiarEnlaceActual}><Link2 /><span>Copiar enlace</span></button></div><p className="text-[11px] leading-5 text-slate-500">El enlace actual conserva el acceso de VIDA. Un enlace público para redes/WhatsApp y el control remoto OBS/proyector requieren una capa segura de publicación y emparejamiento; no se exponen anónimamente todavía.</p></section>}

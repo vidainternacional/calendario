@@ -373,3 +373,53 @@ body:has(.fixed.inset-0.z-\[120\].items-end) .app-bottom-nav {
 .pastoral-background-swatch { display: grid; min-width: 0; place-items: center; border: 0; background: transparent; padding: 0; }
 .pastoral-background-swatch > span { display: block; width: 48px; height: 48px; max-width: 100%; border: 1px solid rgb(226 232 240); border-radius: 9999px; box-shadow: 0 1px 2px rgb(15 23 42 / 0.04); }
 @media (min-width: 540px) { .pastoral-background-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+
+/* Presentación pastoral: la proyección ocupa realmente la pantalla. */
+body.pastoral-presentation-fullscreen {
+  overflow: hidden !important;
+}
+body.pastoral-presentation-fullscreen .app-bottom-nav,
+body.pastoral-presentation-fullscreen .bottom-nav-shell {
+  display: none !important;
+}
+
+/* Cabecera del editor: tres vistas siempre visibles y controles de página en su propia fila. */
+.pastoral-editor-v4 > header nav {
+  position: relative !important;
+  grid-template-rows: 44px auto !important;
+  overflow: visible !important;
+}
+.pastoral-editor-v4 > header nav > button:nth-child(1) {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+.pastoral-editor-v4 > header nav > button:nth-child(2) {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+.pastoral-editor-v4 > header nav > div {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  display: flex !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  overflow: visible !important;
+}
+.pastoral-editor-v4 > header nav > div > button:first-child {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 33.333333% !important;
+  min-width: 0 !important;
+  height: 44px !important;
+}
+.pastoral-editor-v4 > header nav > div > span[aria-label^='Página '] {
+  min-width: 38px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}

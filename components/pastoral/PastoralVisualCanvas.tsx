@@ -68,10 +68,10 @@ const TEXTOS_INICIALES_AJUSTABLES = new Set(['Título', 'Subtítulo', 'Escribe e
 function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, onPatchElement, onTextInput }: TextoProps) {
   const textoRef = useRef<HTMLDivElement | null>(null)
   const cajaInicialAjustadaRef = useRef(false)
+  const estiloTextoRef = useRef<string | null>(null)
   const contenidoSeguro = limpiarHtmlCanvas(elemento.contenido ?? '')
   const decoracion = [elemento.subrayado ? 'underline' : '', elemento.tachado ? 'line-through' : ''].filter(Boolean).join(' ') || 'none'
   const puntos = elemento.tamano_fuente ?? 24
-  console.log('[TEMP PastoralVisualCanvas font]', { vista: elemento.id.startsWith('plantilla-admin-') ? 'Admin Preview' : 'Centro Pastoral', elemento: elemento.id, rol: elemento.rol, tamano_fuente: puntos })
   const pixeles = (puntos * 4) / 3
   const escalaLienzo = (pixeles / baseWidth) * 100
   const fuente = elemento.fuente ?? 'Inter'
@@ -86,6 +86,10 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
 
     const contenedor = editor.parentElement
     const debeEncajar = true
+    const claveEstilo = `${elemento.rol ?? 'libre'}:${puntos}`
+    const estiloAnterior = estiloTextoRef.current
+    const cambioEstilo = estiloAnterior !== null && estiloAnterior !== claveEstilo
+    estiloTextoRef.current = claveEstilo
     let frame = 0
     let observer: ResizeObserver | null = null
     let cancelado = false
@@ -131,6 +135,28 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
       onPatchElement(elemento.id, { x, w, h })
     }
 
+    const ampliarCajaParaEstilo = (caja: HTMLElement, preferido: number) => {
+      if (!cambioEstilo || !editable || !onPatchElement) return false
+      const lienzo = editor.closest<HTMLElement>('[data-pastoral-canvas="true"]')
+      const rectLienzo = lienzo?.getBoundingClientRect()
+      if (!rectLienzo || rectLienzo.width <= 0 || rectLienzo.height <= 0) return false
+
+      aplicar(preferido)
+      const anchoNecesario = clamp(((Math.max(caja.clientWidth, editor.scrollWidth) + 8) / rectLienzo.width) * 100, elemento.w, 100 - elemento.x)
+      const altoNecesario = clamp(((Math.max(caja.clientHeight, editor.scrollHeight) + 8) / rectLienzo.height) * 100, elemento.h, 100 - elemento.y)
+      const w = Math.ceil(anchoNecesario * 10) / 10
+      const h = Math.ceil(altoNecesario * 10) / 10
+      if (w <= elemento.w + .4 && h <= elemento.h + .4) return false
+
+      const x = elemento.alineacion === 'derecha'
+        ? clamp(elemento.x + elemento.w - w, 0, 100 - w)
+        : elemento.alineacion === 'centro'
+          ? clamp(elemento.x + (elemento.w - w) / 2, 0, 100 - w)
+          : clamp(elemento.x, 0, 100 - w)
+      onPatchElement(elemento.id, { x, w, h })
+      return true
+    }
+
     const encajar = () => {
       if (cancelado) return
       const caja = editor.parentElement
@@ -140,6 +166,8 @@ function TextoCanvas({ elemento, editable, baseWidth, onSelect, onBeginChange, o
         ajustarCajaInicial()
         return
       }
+
+      if (ampliarCajaParaEstilo(caja, preferido)) return
 
       let elegido = preferido
       for (let candidato = preferido; candidato >= 8; candidato -= 1) {
@@ -271,6 +299,25 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
   const ratio = ratioFormato(pagina.formato)
   const elementoGestualSeleccionado = (pagina.elementos ?? []).find((item) => item.id === seleccion && (item.tipo === 'imagen' || item.es_capa_fondo)) as ElementoCanvasEditor | undefined
   const elementoGestualEditable = Boolean(editable && elementoGestualSeleccionado && !elementoGestualSeleccionado.bloqueado)
+
+  const ajustarCajaImagenContenida = (elemento: ElementoCanvasEditor, imagen: HTMLImageElement) => {
+    if (!editable || !onPatchElement || elemento.tipo !== 'imagen' || elemento.es_capa_fondo || elemento.ajuste !== 'contain') return
+    if (!imagen.naturalWidth || !imagen.naturalHeight || elemento.w <= 0 || elemento.h <= 0) return
+    const ratioImagen = imagen.naturalWidth / imagen.naturalHeight
+    const ratioCaja = (elemento.w / elemento.h) * ratio
+    if (!Number.isFinite(ratioImagen) || !Number.isFinite(ratioCaja) || Math.abs(ratioImagen - ratioCaja) < .015) return
+
+    if (ratioImagen < ratioCaja) {
+      const w = clamp(elemento.h * ratioImagen / ratio, 5, 100)
+      const x = clamp(elemento.x + (elemento.w - w) / 2, 0, 100 - w)
+      if (Math.abs(w - elemento.w) > .2 || Math.abs(x - elemento.x) > .2) onPatchElement(elemento.id, { x, w })
+      return
+    }
+
+    const h = clamp(elemento.w * ratio / ratioImagen, 5, 100)
+    const y = clamp(elemento.y + (elemento.h - h) / 2, 0, 100 - h)
+    if (Math.abs(h - elemento.h) > .2 || Math.abs(y - elemento.y) > .2) onPatchElement(elemento.id, { y, h })
+  }
 
   const iniciarGesto = (event: ReactPointerEvent, elemento: ElementoCanvasEditor, tipo: Gesto['tipo']) => {
     if (!editable || elemento.bloqueado || !lienzoRef.current) return
@@ -435,7 +482,7 @@ export default function PastoralVisualCanvas({ pagina, biblioteca, editable = fa
             style={{ left: `${elemento.x}%`, top: `${elemento.y}%`, width: `${elemento.w}%`, height: `${elemento.h}%`, zIndex: elemento.z, opacity: elemento.opacidad ?? 1, mixBlendMode: elemento.modo_fusion ?? 'normal', display: elemento.oculto ? 'none' : undefined }}
           >
             {esFondoVisual ? <div className="h-full w-full" style={{ background: elemento.fondo_visual }} /> : elemento.tipo === 'imagen' ? (
-              recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
+              recurso?.acceso_url ? <img src={recurso.acceso_url} alt={recurso.titulo} draggable={false} onLoad={(event) => ajustarCajaImagenContenida(elemento, event.currentTarget)} className="h-full w-full select-none" style={{ objectFit: elemento.ajuste ?? 'cover', borderRadius: `${elemento.radio ?? 14}px` }} /> : <div className="grid h-full w-full place-items-center bg-slate-200 text-xs text-slate-500">Imagen no disponible</div>
             ) : <TextoCanvas elemento={elemento} editable={editable && !bloqueado} baseWidth={baseWidth} onSelect={onSelect} onBeginChange={onBeginChange} onPatchElement={onPatchElement} onTextInput={onTextInput} />}
             {activo && !bloqueado && <>
               {elemento.tipo !== 'imagen' && !elemento.es_capa_fondo && <div className="absolute z-[240] flex gap-1" style={estiloControlesFlotantes(elemento, pagina.elementos ?? [], lienzoRef.current?.getBoundingClientRect())} data-canvas-floating-controls="true">
