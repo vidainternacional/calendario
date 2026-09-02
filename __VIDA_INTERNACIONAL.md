@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-09-01
+Última actualización: 2026-09-02
 
-Fase / prioridad activa: **PENDIENTE DE DEFINICIÓN**
+Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 1 — VERSÍCULO DEL DÍA Y PLANES DE LECTURA**
 
 Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
@@ -33,6 +33,39 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 11. **Navegación móvil global:** la barra principal pertenece al layout de la aplicación y no a cada módulo. La aparición del teclado no debe levantarla ni hacerla flotar sobre el contenido de trabajo; en iOS debe permanecer en el borde inferior del layout y quedar cubierta por el teclado cuando corresponda.
 12. **Historial reversible:** cuando una superficie exponga Deshacer/Rehacer, toda acción que modifique contenido o metadatos creados por el usuario debe entrar en el mismo historial reversible; no limitar el historial únicamente al texto visible.
 13. **Repriorización obligatoriamente documentada:** cualquier decisión de repriorización tomada en un PR debe reflejarse en este documento maestro antes de continuar trabajando; no basta con que quede mencionada solo en el PR.
+
+## REGLAS ESTRICTAS DE PRESERVACIÓN Y EJECUCIÓN
+
+1. Un pedido del usuario es un contrato literal de alcance. Modificar únicamente lo solicitado.
+2. Está prohibido aprovechar un cambio para:
+   - rediseñar otras áreas;
+   - reorganizar código no relacionado;
+   - renombrar componentes;
+   - cambiar estilos globales;
+   - actualizar dependencias;
+   - limpiar código ajeno al problema;
+   - agregar mejoras no solicitadas.
+3. Antes de modificar, identificar el componente y la causa real. Si existen parches anteriores interfiriendo, consolidarlos únicamente cuando afecten directamente el cambio pedido.
+4. Todo lo que ya funciona se considera BLOQUEADO POR DEFECTO. Esto incluye datos, guardado, navegación, permisos, historial, Biblia, Estudios, Hebreo, Centro Pastoral, Ministerios, Calendario, notificaciones, imágenes, textos, capas y cualquier comportamiento previamente aprobado.
+5. Si para cumplir el pedido fuera indispensable alterar una funcionalidad aprobada, DETENERSE antes de modificarla y explicar exactamente por qué.
+6. Cuando una clase, componente o función compartida pueda afectar otras pantallas, aislar primero el cambio para evitar efectos secundarios.
+7. No marcar un cambio como corregido solo porque el código compiló. Verificar:
+   - diff exacto;
+   - build;
+   - Preview correspondiente al head nuevo.
+8. Máximo UN Preview por bloque de trabajo.
+9. No enviar avances intermedios salvo bloqueo real. Ejecutar directamente y entregar resultado.
+10. La entrega normal será únicamente:
+    - qué cambió;
+    - Preview exacto;
+    - checklist breve;
+    - qué falta verificar.
+11. Si no existe validación visual directa, usar exactamente:
+    “Cambio aplicado y compilado; falta validación visual tuya.”
+12. No hacer merge ni producción sin autorización explícita.
+13. No modificar Supabase/RLS/permisos/datos sensibles sin presentar antes cambio exacto, impacto y reversión y recibir aprobación explícita.
+14. Al iniciar una conversación nueva, `__VIDA_INTERNACIONAL.md` de `main` es la única fuente oficial. No reconstruir el estado mediante suposiciones ni pedir nuevamente información que ya está documentada.
+15. Trabajar de forma puntual: revisión mínima necesaria → causa real → cambio mínimo → diff → compilación → un Preview → checklist. Evitar auditorías generales y explicaciones largas salvo que el usuario las solicite.
 
 ## Estado de fases
 
@@ -523,6 +556,72 @@ La portada del Centro Pastoral queda organizada así:
 - Limpieza técnica realizada sobre PR antiguos correspondientes a fases ya cerradas.
 - Preview validado por el usuario: `https://calendario-git-agent-centro-pastoral-cb1651-vida-internacional.vercel.app`.
 
+# PRIORIDAD ACTIVA — EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I
+
+Esta prioridad reúne las últimas funciones nuevas que deben completarse antes de iniciar FASE I — Guía interactiva y ayuda contextual por rol.
+
+Orden aprobado:
+
+## Bloque 1 — Versículo del día y Planes de lectura — ACTIVO
+
+Objetivo:
+Hacer VIDA útil también para personas que todavía no pertenecen a la iglesia, de manera que puedan acercarse a la Biblia y conocer VIDA posteriormente por medio de la utilidad real de la aplicación.
+
+Alcance:
+- Versículo del día utilizando contenido bíblico aprobado.
+- Posibilidad de recibir el versículo mediante recordatorio/notificación configurable.
+- Planes de lectura bíblica progresivos.
+- Planes accesibles también para personas que no pertenecen a VIDA Internacional.
+- Integración natural con Biblia y Centro de Estudio existentes, sin crear motores bíblicos paralelos.
+- Hebreo Bíblico, Biblia, Estudio y estas nuevas herramientas forman parte de la capa de utilidad abierta de VIDA.
+- Las funciones internas de iglesia, ministerios y administración conservan sus permisos actuales.
+- El objetivo no es convertir la portada en publicidad de la iglesia, sino permitir que una persona conozca VIDA mediante herramientas útiles y después pueda descubrir actividades y comunidad.
+
+## Bloque 2 — Ayuda y Sembrar
+
+Objetivo:
+Hacer que pedir ayuda sea sencillo, privado, digno y empático, y que ayudar también sea fácil.
+
+Alcance previsto:
+- Entrada clara “Necesito ayuda” sin lenguaje que haga sentir vergüenza a la persona.
+- Posibilidad de explicar una necesidad de manera sencilla y discreta.
+- “Quiero sembrar” permite preguntar cómo ayudar cuando la persona no sabe qué hace falta.
+- Mostrar necesidades reales de la despensa, priorizando aquello que actualmente tenga menor existencia.
+- Permitir sembrar no solo alimentos: tiempo, transporte, herramientas, objetos, conocimientos, oficios, habilidades u otras formas de servicio.
+- Facilitar comunicación directa únicamente con las personas autorizadas necesarias.
+- Preservar privacidad y no mostrar públicamente información sensible de quien solicita ayuda.
+
+## Bloque 3 — Experiencia para músicos
+
+Objetivo:
+Convertir el repertorio/programación musical existente en una herramienta utilizable durante el servicio y no únicamente en una lista de canciones.
+
+Alcance previsto:
+- Setlist ordenado del servicio.
+- Vista práctica de canción, tono, acordes y contenido necesario para tocar.
+- Navegación rápida entre canción actual, anterior y siguiente.
+- Posibilidad de transponer las notas/acordes cuando sea necesario.
+- El líder autorizado puede cambiar tono, transponer y modificar la versión oficial de acordes.
+- Los músicos pueden consultar y utilizar la versión preparada, pero no alterar la versión oficial sin permiso.
+- Preservar Programación Ministerial, repertorio, permisos e historial existentes.
+
+## Bloque 4 — Alertas pastorales urgentes
+
+Este bloque se desarrollará de forma separada debido a privacidad, permisos y notificaciones sensibles.
+
+Objetivo:
+Diferenciar una consulta normal de una situación que necesita atención pastoral rápida.
+
+Alcance previsto:
+- Mensajes normales siguen su flujo habitual.
+- Situaciones urgentes pueden elevarse a un nivel de atención pastoral.
+- Situaciones críticas de bienestar, fallecimiento u otras emergencias pueden generar una alerta simultánea para pastores/líderes autorizados.
+- No diagnosticar automáticamente a una persona.
+- Mantener privacidad y mostrar únicamente la información necesaria a quienes tengan autorización.
+- Antes de implementar cambios de permisos, RLS, destinatarios de alertas o datos sensibles se presentará exactamente el cambio, impacto y reversión para aprobación explícita.
+
+FASE I continúa DIFERIDA hasta completar, validar y cerrar estos cuatro bloques.
+
 # Siguiente prioridad autorizada
 
-**Pendiente de definición.**
+**Bloque 1 — Versículo del día y Planes de lectura — ACTIVO.**
