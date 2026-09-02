@@ -8,8 +8,10 @@ import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Proyectos Pastorales' }
 
-export default async function PaquetesPastoralesPage({ searchParams }: { searchParams: Promise<{ nuevo?: string }> }) {
-  const { nuevo } = await searchParams
+const filtrosValidos = new Set(['todos', 'borradores', 'listos', 'no-publicados', 'publicados'])
+
+export default async function PaquetesPastoralesPage({ searchParams }: { searchParams: Promise<{ nuevo?: string; filtro?: string }> }) {
+  const { nuevo, filtro } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -31,6 +33,8 @@ export default async function PaquetesPastoralesPage({ searchParams }: { searchP
 
   if (error) throw new Error('No fue posible cargar los proyectos pastorales.')
 
+  const filtroInicial = filtrosValidos.has(String(filtro ?? '')) ? String(filtro) : 'todos'
+
   return (
     <main className="pastoral-project-page mx-auto min-h-screen max-w-6xl px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
       <PastoralPageHeader
@@ -40,7 +44,7 @@ export default async function PaquetesPastoralesPage({ searchParams }: { searchP
         icon={PackageOpen}
       />
 
-      <PaquetesClient paquetes={(paquetes ?? []) as any} abrirNuevo={nuevo === '1'} />
+      <PaquetesClient paquetes={(paquetes ?? []) as any} abrirNuevo={nuevo === '1'} filtroInicial={filtroInicial as any} />
     </main>
   )
 }
