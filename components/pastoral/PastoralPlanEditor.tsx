@@ -43,16 +43,17 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
   const router = useRouter()
   const [titulo, setTitulo] = useState(plan.titulo)
   const [descripcion, setDescripcion] = useState(plan.descripcion)
-  const [duracion, setDuracion] = useState(plan.duracion_dias)
+  const [duracion, setDuracion] = useState<number | ''>(plan.duracion_dias)
   const [selectedDay, setSelectedDay] = useState(1)
   const [published, setPublished] = useState(plan.publicado)
   const [pendingPlan, startPlan] = useTransition()
   const [pendingPublish, startPublish] = useTransition()
   const savedDays = useMemo(() => new Set(days.map(day => day.numero_dia)), [days])
+  const duracionNumero = duracion === '' ? 0 : duracion
 
   function savePlan() {
     startPlan(async () => {
-      const result = await guardarPlanPastoral(plan.id, { titulo, descripcion, duracionDias: duracion })
+      const result = await guardarPlanPastoral(plan.id, { titulo, descripcion, duracionDias: Number(duracion) })
       if (result.error) return mostrarToast(result.error)
       mostrarToast('Datos del plan guardados')
       router.refresh()
@@ -97,7 +98,7 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
             <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} rows={3} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal leading-6 outline-none focus:border-[#C0392B]" />
           </label>
           <label className="text-sm font-bold text-slate-800">Duración
-            <div className="mt-2 flex items-center gap-2"><input type="number" min={1} max={90} value={duracion} onChange={e => setDuracion(Number(e.target.value))} className="h-11 w-24 rounded-xl border border-slate-200 px-3 font-bold outline-none focus:border-[#C0392B]" /><span className="text-sm text-slate-500">días</span></div>
+            <div className="mt-2 flex items-center gap-2"><input type="number" min={1} max={90} value={duracion} onChange={e => setDuracion(e.target.value === '' ? '' : Number(e.target.value))} className="h-11 w-24 rounded-xl border border-slate-200 px-3 font-bold outline-none focus:border-[#C0392B]" /><span className="text-sm text-slate-500">días</span></div>
           </label>
         </div>
 
@@ -109,11 +110,11 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
       <section className="pt-6">
         <div className="flex items-end justify-between gap-3">
           <div><p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Contenido diario</p><h2 className="mt-1 text-xl font-bold text-slate-950">Prepara cada día</h2></div>
-          <span className="text-xs font-bold text-slate-400">{savedDays.size}/{duracion} completos</span>
+          <span className="text-xs font-bold text-slate-400">{savedDays.size}/{duracionNumero} completos</span>
         </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {Array.from({ length: Math.max(1, duracion) }, (_, index) => index + 1).map(day => (
+          {Array.from({ length: Math.max(1, duracionNumero) }, (_, index) => index + 1).map(day => (
             <button key={day} type="button" onClick={() => setSelectedDay(day)} className={`h-9 shrink-0 rounded-full border px-3 text-xs font-bold ${selectedDay === day ? 'border-[#C0392B] bg-[#C0392B] text-white' : savedDays.has(day) ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-500'}`}>Día {day}</button>
           ))}
         </div>
