@@ -43,35 +43,36 @@ export type PantryNeed = {
   updated_at?: string
 }
 
+// Los valores internos históricos se conservan por compatibilidad; la interfaz usa lenguaje pastoral simplificado.
 export const SOLIDARITY_REQUEST_STATUS_LABELS: Record<SolidarityRequestStatus, string> = {
-  enviada: 'Enviada',
-  revisando: 'En revisión',
-  aprobada: 'Aprobada',
-  programada: 'Entrega programada',
+  enviada: 'Recibida',
+  revisando: 'Conversando',
+  aprobada: 'Conversando',
+  programada: 'En camino',
   entregada: 'Entregada',
-  rechazada: 'No aprobada',
+  rechazada: 'No pudimos ayudar en esto',
   cancelada: 'Cancelada',
 }
 
 export const SOLIDARITY_CONTRIBUTION_STATUS_LABELS: Record<SolidarityContributionStatus, string> = {
   ofrecido: 'Ofrecido',
-  contactando: 'En contacto',
-  recibido: 'Recibido',
-  asignado: 'Asignado',
-  completado: 'Completado',
+  contactando: 'Coordinando',
+  recibido: 'Entregado',
+  asignado: 'Coordinando',
+  completado: 'Entregado',
   cancelado: 'Cancelado',
 }
 
 export const SOLIDARITY_CONTRIBUTION_TYPE_LABELS: Record<SolidarityContributionType, string> = {
   alimentos: 'Alimentos',
-  monetario: 'Siembra económica',
+  monetario: 'Dinero',
   voluntariado: 'Voluntariado',
   tiempo: 'Tiempo',
   transporte: 'Transporte',
   herramientas: 'Herramientas',
   objetos: 'Objetos',
   conocimientos: 'Conocimientos',
-  oficios: 'Oficios',
+  oficios: 'Un oficio',
   habilidades: 'Habilidades',
   otro: 'Otra forma de ayuda',
 }

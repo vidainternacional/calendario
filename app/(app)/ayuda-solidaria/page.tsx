@@ -18,7 +18,7 @@ export default async function AyudaSolidariaPage() {
   const [{ data: requests }, { data: contributions }, { data: pantryNeeds }] = await Promise.all([
     (supabase as any)
       .from('solicitudes_ayuda_solidaria')
-      .select('id, hogar_personas, urgencia, necesidad, telefono, contacto_preferido, estado, respuesta, created_at')
+      .select('id, hogar_personas, necesidad, detalle_adicional, telefono, contacto_preferido, estado, respuesta, created_at')
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false }),
     (supabase as any)
@@ -30,7 +30,6 @@ export default async function AyudaSolidariaPage() {
       .from('despensa_necesidades')
       .select('id, producto, unidad, existencia_actual, minimo_necesario, estado')
       .eq('estado', 'activa')
-      .order('existencia_actual', { ascending: true })
       .limit(50),
   ])
 

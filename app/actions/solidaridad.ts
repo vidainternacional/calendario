@@ -9,7 +9,6 @@ import type {
   SolidarityContributionStatus,
   SolidarityContributionType,
   SolidarityRequestStatus,
-  SolidarityUrgency,
 } from '@/lib/solidarity/types'
 
 const REQUEST_STATUSES: SolidarityRequestStatus[] = [
@@ -29,7 +28,6 @@ const CONTRIBUTION_STATUSES: SolidarityContributionStatus[] = [
   'completado',
   'cancelado',
 ]
-const URGENCIES: SolidarityUrgency[] = ['normal', 'prioritaria', 'urgente']
 const CONTACTS: SolidarityContactPreference[] = ['aplicacion', 'telefono', 'whatsapp']
 const CONTRIBUTION_TYPES: SolidarityContributionType[] = [
   'alimentos',
@@ -91,21 +89,27 @@ async function requireManager() {
 }
 
 export async function crearSolicitudAyudaSolidaria(input: {
-  householdSize: number
-  urgency: SolidarityUrgency
+  householdSize?: number | null
   need: string
+  additionalDetail?: string
   phone?: string
   contactPreference: SolidarityContactPreference
 }) {
-  const householdSize = Math.max(1, Math.min(30, Math.trunc(Number(input.householdSize) || 1)))
   const need = cleanText(input.need, 3000)
+  const additionalDetail = cleanText(input.additionalDetail, 3000) || null
   const phone = cleanText(input.phone, 40) || null
+  const rawHousehold = input.householdSize
+  const householdSize = rawHousehold === null || rawHousehold === undefined || rawHousehold === 0
+    ? null
+    : Math.max(1, Math.min(30, Math.trunc(Number(rawHousehold))))
 
-  if (!URGENCIES.includes(input.urgency)) return { success: false, error: 'Nivel de urgencia inválido.' }
   if (!CONTACTS.includes(input.contactPreference)) return { success: false, error: 'Forma de contacto inválida.' }
-  if (need.length < 10) return { success: false, error: 'Explique brevemente la necesidad para poder orientarle.' }
+  if (!need) return { success: false, error: 'Cuéntanos qué necesitas.' }
+  if (rawHousehold !== null && rawHousehold !== undefined && rawHousehold !== 0 && !Number.isFinite(Number(rawHousehold))) {
+    return { success: false, error: 'Cantidad de personas inválida.' }
+  }
   if (input.contactPreference !== 'aplicacion' && !phone) {
-    return { success: false, error: 'Agregue un teléfono para la forma de contacto seleccionada.' }
+    return { success: false, error: 'Agrega un teléfono para la forma de contacto seleccionada.' }
   }
 
   try {
@@ -115,8 +119,9 @@ export async function crearSolicitudAyudaSolidaria(input: {
       .insert({
         profile_id: user.id,
         hogar_personas: householdSize,
-        urgencia: input.urgency,
+        urgencia: 'normal',
         necesidad: need,
+        detalle_adicional: additionalDetail,
         telefono: phone,
         contacto_preferido: input.contactPreference,
       })
@@ -126,7 +131,7 @@ export async function crearSolicitudAyudaSolidaria(input: {
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] crear solicitud', error)
-    return { success: false, error: 'No fue posible enviar la solicitud. Intente nuevamente.' }
+    return { success: false, error: 'No fue posible enviar el mensaje. Intenta nuevamente.' }
   }
 }
 
@@ -143,10 +148,10 @@ export async function registrarAporteSolidario(input: {
   const amount: number | null = input.type === 'monetario' ? Number(input.amount) : null
   const pantryNeedId = input.type === 'alimentos' && input.pantryNeedId ? String(input.pantryNeedId) : null
 
-  if (!CONTRIBUTION_TYPES.includes(input.type)) return { success: false, error: 'Tipo de aporte inválido.' }
-  if (detail.length < 5) return { success: false, error: 'Describa brevemente cómo desea colaborar.' }
+  if (!CONTRIBUTION_TYPES.includes(input.type)) return { success: false, error: 'Tipo de siembra inválido.' }
+  if (!detail) return { success: false, error: 'Cuéntanos cómo te gustaría ayudar.' }
   if (input.type === 'monetario' && (amount === null || !Number.isFinite(amount) || amount <= 0)) {
-    return { success: false, error: 'Ingrese un monto válido para la siembra.' }
+    return { success: false, error: 'Ingresa un monto válido para la siembra.' }
   }
   if (pantryNeedId && !isUuid(pantryNeedId)) return { success: false, error: 'Necesidad de despensa inválida.' }
 
@@ -181,7 +186,7 @@ export async function registrarAporteSolidario(input: {
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] registrar aporte', error)
-    return { success: false, error: 'No fue posible registrar el aporte. Intente nuevamente.' }
+    return { success: false, error: 'No fue posible registrar tu siembra. Intenta nuevamente.' }
   }
 }
 
@@ -198,8 +203,8 @@ export async function guardarNecesidadDespensa(input: {
   const currentStock = Number(input.currentStock)
   const minimumStock = Number(input.minimumStock)
 
-  if (!product) return { success: false, error: 'Escriba el producto o necesidad.' }
-  if (!unit) return { success: false, error: 'Escriba la unidad.' }
+  if (!product) return { success: false, error: 'Escribe el producto o necesidad.' }
+  if (!unit) return { success: false, error: 'Escribe la unidad.' }
   if (!Number.isFinite(currentStock) || currentStock < 0) return { success: false, error: 'Existencia actual inválida.' }
   if (!Number.isFinite(minimumStock) || minimumStock < 0) return { success: false, error: 'Mínimo necesario inválido.' }
   if (!PANTRY_STATUSES.includes(input.status)) return { success: false, error: 'Estado inválido.' }
@@ -268,7 +273,7 @@ export async function eliminarNecesidadDespensa(id: string) {
 }
 
 export async function cancelarSolicitudAyudaSolidaria(requestId: string) {
-  if (!isUuid(requestId)) return { success: false, error: 'Solicitud inválida.' }
+  if (!isUuid(requestId)) return { success: false, error: 'Mensaje inválido.' }
 
   try {
     const { user } = await requireUser()
@@ -279,9 +284,9 @@ export async function cancelarSolicitudAyudaSolidaria(requestId: string) {
       .eq('id', requestId)
       .single()
 
-    if (!request || request.profile_id !== user.id) return { success: false, error: 'No puede modificar esta solicitud.' }
-    if (!['enviada', 'revisando'].includes(request.estado)) {
-      return { success: false, error: 'Esta solicitud ya no puede cancelarse desde la aplicación.' }
+    if (!request || request.profile_id !== user.id) return { success: false, error: 'No puedes modificar este mensaje.' }
+    if (!['enviada', 'revisando', 'aprobada'].includes(request.estado)) {
+      return { success: false, error: 'Este mensaje ya no puede cancelarse desde la aplicación.' }
     }
 
     const { error } = await (service as any)
@@ -294,12 +299,12 @@ export async function cancelarSolicitudAyudaSolidaria(requestId: string) {
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] cancelar solicitud', error)
-    return { success: false, error: 'No fue posible cancelar la solicitud.' }
+    return { success: false, error: 'No fue posible cancelar el mensaje.' }
   }
 }
 
 export async function cancelarAporteSolidario(contributionId: string) {
-  if (!isUuid(contributionId)) return { success: false, error: 'Aporte inválido.' }
+  if (!isUuid(contributionId)) return { success: false, error: 'Siembra inválida.' }
 
   try {
     const { user } = await requireUser()
@@ -310,9 +315,9 @@ export async function cancelarAporteSolidario(contributionId: string) {
       .eq('id', contributionId)
       .single()
 
-    if (!contribution || contribution.profile_id !== user.id) return { success: false, error: 'No puede modificar este aporte.' }
-    if (!['ofrecido', 'contactando'].includes(contribution.estado)) {
-      return { success: false, error: 'Este aporte ya no puede cancelarse desde la aplicación.' }
+    if (!contribution || contribution.profile_id !== user.id) return { success: false, error: 'No puedes modificar esta siembra.' }
+    if (!['ofrecido', 'contactando', 'asignado'].includes(contribution.estado)) {
+      return { success: false, error: 'Esta siembra ya no puede cancelarse desde la aplicación.' }
     }
 
     const { error } = await (service as any)
@@ -325,7 +330,7 @@ export async function cancelarAporteSolidario(contributionId: string) {
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] cancelar aporte', error)
-    return { success: false, error: 'No fue posible cancelar el aporte.' }
+    return { success: false, error: 'No fue posible cancelar la siembra.' }
   }
 }
 
@@ -335,7 +340,12 @@ export async function actualizarSolicitudAyudaSolidaria(input: {
   response?: string
 }) {
   if (!isUuid(input.id) || !REQUEST_STATUSES.includes(input.status)) {
-    return { success: false, error: 'Solicitud o estado inválido.' }
+    return { success: false, error: 'Mensaje o estado inválido.' }
+  }
+
+  const response = cleanText(input.response, 2000)
+  if (input.status === 'rechazada' && !response) {
+    return { success: false, error: 'Escribe una nota breve para explicar cómo puede continuar la persona.' }
   }
 
   try {
@@ -346,7 +356,7 @@ export async function actualizarSolicitudAyudaSolidaria(input: {
       .from('solicitudes_ayuda_solidaria')
       .update({
         estado: input.status,
-        respuesta: cleanText(input.response, 2000) || null,
+        respuesta: response || null,
         revisado_por: user.id,
         revisado_at: now,
         entregado_at: input.status === 'entregada' ? now : null,
@@ -358,7 +368,7 @@ export async function actualizarSolicitudAyudaSolidaria(input: {
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] actualizar solicitud', error)
-    return { success: false, error: 'No fue posible actualizar la solicitud.' }
+    return { success: false, error: 'No fue posible actualizar el mensaje.' }
   }
 }
 
@@ -368,7 +378,7 @@ export async function actualizarAporteSolidario(input: {
   response?: string
 }) {
   if (!isUuid(input.id) || !CONTRIBUTION_STATUSES.includes(input.status)) {
-    return { success: false, error: 'Aporte o estado inválido.' }
+    return { success: false, error: 'Siembra o estado inválido.' }
   }
 
   try {
@@ -389,6 +399,6 @@ export async function actualizarAporteSolidario(input: {
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] actualizar aporte', error)
-    return { success: false, error: 'No fue posible actualizar el aporte.' }
+    return { success: false, error: 'No fue posible actualizar la siembra.' }
   }
 }

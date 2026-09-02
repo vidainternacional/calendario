@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import SolidarityAdminBoard from '@/components/solidaridad/SolidarityAdminBoard'
-import SolidarityPantryManager from '@/components/solidaridad/SolidarityPantryManager'
 import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = {
@@ -33,7 +32,7 @@ export default async function PastoralAyudaSolidariaPage() {
   const [{ data: requestRows }, { data: contributionRows }, { data: pantryRows }] = await Promise.all([
     (service as any)
       .from('solicitudes_ayuda_solidaria')
-      .select('id, hogar_personas, urgencia, necesidad, telefono, contacto_preferido, estado, respuesta, created_at, solicitante:profiles!solicitudes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
+      .select('id, hogar_personas, necesidad, detalle_adicional, telefono, contacto_preferido, estado, respuesta, created_at, solicitante:profiles!solicitudes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
       .order('created_at', { ascending: false })
       .limit(200),
     (service as any)
@@ -44,20 +43,13 @@ export default async function PastoralAyudaSolidariaPage() {
     (service as any)
       .from('despensa_necesidades')
       .select('id, producto, unidad, existencia_actual, minimo_necesario, estado, created_at, updated_at')
-      .order('existencia_actual', { ascending: true })
+      .order('updated_at', { ascending: false })
       .limit(200),
   ])
 
-  const requests = (requestRows || []).map((item: any) => ({
-    ...item,
-    profiles: item.solicitante || null,
-  }))
-  const contributions = (contributionRows || []).map((item: any) => ({
-    ...item,
-    profiles: item.aportante || null,
-  }))
+  const requests = (requestRows || []).map((item: any) => ({ ...item, profiles: item.solicitante || null }))
+  const contributions = (contributionRows || []).map((item: any) => ({ ...item, profiles: item.aportante || null }))
   const pantryNeeds = pantryRows || []
-
   const openRequests = requests.filter((item: any) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length
   const availableContributions = contributions.filter((item: any) => !['completado', 'cancelado'].includes(item.estado)).length
 
@@ -71,12 +63,12 @@ export default async function PastoralAyudaSolidariaPage() {
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Atención pastoral privada</p>
               <h1 className="mt-1 text-[30px] font-extrabold leading-none tracking-[-0.04em]">Ayuda Solidaria</h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/72">Revisa solicitudes, coordina entregas y da seguimiento a las personas que desean aportar.</p>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/72">Atiende mensajes, coordina siembras y mantén la despensa al día desde una sola bandeja.</p>
             </div>
           </div>
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15"><p className="text-3xl font-extrabold">{openRequests}</p><p className="mt-1 text-xs text-white/65">solicitudes activas</p></div>
-            <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15"><p className="text-3xl font-extrabold">{availableContributions}</p><p className="mt-1 text-xs text-white/65">aportes disponibles</p></div>
+            <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15"><p className="text-3xl font-extrabold">{openRequests}</p><p className="mt-1 text-xs text-white/65">mensajes activos</p></div>
+            <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15"><p className="text-3xl font-extrabold">{availableContributions}</p><p className="mt-1 text-xs text-white/65">siembras disponibles</p></div>
           </div>
         </div>
       </section>
@@ -84,10 +76,9 @@ export default async function PastoralAyudaSolidariaPage() {
       <div className="mx-auto max-w-3xl px-4 pt-5 sm:px-6">
         <div className="mb-5 flex items-start gap-3 rounded-[22px] bg-white p-4 ring-1 ring-black/[0.05]">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-          <p className="text-xs leading-5 text-slate-600">Los motivos, teléfonos y datos de coordinación solo están disponibles para pastores, Pastor General y administradores autorizados. Cuando un aporte se marca como reservado, su identidad no se muestra al beneficiario.</p>
+          <p className="text-xs leading-5 text-slate-600">Los mensajes, teléfonos y datos de coordinación solo están disponibles para Pastor, Pastor General y Administrador autorizados. Las necesidades individuales nunca se muestran a quien siembra.</p>
         </div>
-        <SolidarityAdminBoard requests={requests} contributions={contributions} />
-        <SolidarityPantryManager needs={pantryNeeds} />
+        <SolidarityAdminBoard requests={requests} contributions={contributions} pantryNeeds={pantryNeeds} />
       </div>
     </main>
   )

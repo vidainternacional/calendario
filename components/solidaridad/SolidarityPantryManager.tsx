@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Check, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Check, Loader2, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { eliminarNecesidadDespensa, guardarNecesidadDespensa } from '@/app/actions/solidaridad'
 import type { PantryNeed, PantryNeedStatus } from '@/lib/solidarity/types'
@@ -18,11 +18,13 @@ const EMPTY_FORM = {
 export default function SolidarityPantryManager({ needs }: { needs: PantryNeed[] }) {
   const router = useRouter()
   const [form, setForm] = useState(EMPTY_FORM)
+  const [showForm, setShowForm] = useState(false)
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
 
   const edit = (need: PantryNeed) => {
     setMessage(null)
+    setShowForm(true)
     setForm({
       id: need.id,
       product: need.producto,
@@ -35,27 +37,55 @@ export default function SolidarityPantryManager({ needs }: { needs: PantryNeed[]
 
   const reset = () => {
     setMessage(null)
+    setShowForm(false)
     setForm(EMPTY_FORM)
   }
 
-  const save = () => {
+  const save = (override?: typeof EMPTY_FORM) => {
+    const source = override || form
     setMessage(null)
     startTransition(async () => {
       const result = await guardarNecesidadDespensa({
-        id: form.id || undefined,
-        product: form.product,
-        unit: form.unit,
-        currentStock: Number(form.currentStock),
-        minimumStock: Number(form.minimumStock),
-        status: form.status,
+        id: source.id || undefined,
+        product: source.product,
+        unit: source.unit,
+        currentStock: Number(source.currentStock),
+        minimumStock: Number(source.minimumStock),
+        status: source.status,
       })
       if (!result.success) {
         setMessage(result.error || 'No fue posible guardar la necesidad.')
         return
       }
-      setForm(EMPTY_FORM)
-      setMessage('Necesidad de despensa guardada.')
+      if (!override) {
+        setForm(EMPTY_FORM)
+        setShowForm(false)
+      }
+      setMessage('Despensa actualizada.')
       router.refresh()
+    })
+  }
+
+  const quickStock = (need: PantryNeed, delta: number) => {
+    const next = Math.max(0, Number(need.existencia_actual) + delta)
+    save({
+      id: need.id,
+      product: need.producto,
+      unit: need.unidad,
+      currentStock: next,
+      minimumStock: Number(need.minimo_necesario),
+      status: need.estado,
+    })
+  }
+
+  const quickStatus = (need: PantryNeed, status: PantryNeedStatus) => {
+    save({
+      id: need.id,
+      product: need.producto,
+      unit: need.unidad,
+      currentStock: Number(need.existencia_actual),
+      minimumStock: Number(need.minimo_necesario),
+      status,
     })
   }
 
@@ -68,78 +98,100 @@ export default function SolidarityPantryManager({ needs }: { needs: PantryNeed[]
         setMessage(result.error || 'No fue posible eliminar la necesidad.')
         return
       }
-      if (form.id === need.id) setForm(EMPTY_FORM)
+      if (form.id === need.id) reset()
       setMessage('Necesidad eliminada.')
       router.refresh()
     })
   }
 
   return (
-    <section className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.05]">
-      <header className="border-b border-slate-100 p-5">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-emerald-600">Despensa</p>
-        <h2 className="mt-1 text-xl font-extrabold text-[#171923]">Necesidades reales</h2>
-        <p className="mt-1 text-xs leading-5 text-slate-500">Actualiza existencia y mínimo. Las necesidades activas aparecen para quienes desean sembrar.</p>
-      </header>
-
-      <div className="space-y-4 p-5">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block sm:col-span-2">
-            <span className="mb-2 block text-xs font-bold text-slate-600">Producto o necesidad</span>
-            <input value={form.product} onChange={(event) => setForm((current) => ({ ...current, product: event.target.value }))} placeholder="Ej. Arroz" className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-emerald-400 focus:bg-white" />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold text-slate-600">Unidad</span>
-            <input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder="Ej. bolsas, libras, unidades" className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-emerald-400 focus:bg-white" />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold text-slate-600">Estado</span>
-            <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as PantryNeedStatus }))} className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-emerald-400 focus:bg-white">
-              <option value="activa">Activa</option>
-              <option value="cubierta">Cubierta</option>
-              <option value="pausada">Pausada</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold text-slate-600">Existencia actual</span>
-            <input type="number" min={0} step="0.01" value={form.currentStock} onChange={(event) => setForm((current) => ({ ...current, currentStock: Number(event.target.value) }))} className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-emerald-400 focus:bg-white" />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold text-slate-600">Mínimo necesario</span>
-            <input type="number" min={0} step="0.01" value={form.minimumStock} onChange={(event) => setForm((current) => ({ ...current, minimumStock: Number(event.target.value) }))} className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-emerald-400 focus:bg-white" />
-          </label>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-extrabold text-[#171923]">Despensa</p>
+          <p className="mt-1 text-xs text-slate-500">Actualiza solo lo necesario para saber qué hace falta hoy.</p>
         </div>
-
-        <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={pending} onClick={save} className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-emerald-600 px-4 text-sm font-extrabold text-white disabled:opacity-60">
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : form.id ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {form.id ? 'Guardar cambios' : 'Agregar necesidad'}
-          </button>
-          {form.id ? <button type="button" onClick={reset} className="min-h-11 rounded-2xl border border-slate-200 px-4 text-sm font-bold text-slate-600">Cancelar edición</button> : null}
-        </div>
-        {message ? <p className="text-sm font-semibold text-slate-600">{message}</p> : null}
+        <button type="button" onClick={() => { setShowForm(true); setForm(EMPTY_FORM); setMessage(null) }} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-xs font-extrabold text-white">
+          <Plus className="h-4 w-4" /> Agregar necesidad
+        </button>
       </div>
 
-      <div className="border-t border-slate-100">
+      {showForm && (
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-xs font-bold text-slate-600">Producto o necesidad</span>
+              <input value={form.product} onChange={(event) => setForm((current) => ({ ...current, product: event.target.value }))} placeholder="Ej. Arroz" className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-400" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold text-slate-600">Unidad</span>
+              <input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder="Ej. libras" className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-400" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold text-slate-600">Estado</span>
+              <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as PantryNeedStatus }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-emerald-400">
+                <option value="activa">Activa</option>
+                <option value="cubierta">Cubierta</option>
+                <option value="pausada">Pausada</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold text-slate-600">Existencia actual</span>
+              <input type="number" min={0} step="0.01" value={form.currentStock} onChange={(event) => setForm((current) => ({ ...current, currentStock: Number(event.target.value) }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-emerald-400" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-bold text-slate-600">Mínimo deseado</span>
+              <input type="number" min={0} step="0.01" value={form.minimumStock} onChange={(event) => setForm((current) => ({ ...current, minimumStock: Number(event.target.value) }))} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-emerald-400" />
+            </label>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button type="button" disabled={pending} onClick={() => save()} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-xs font-extrabold text-white disabled:opacity-60">
+              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {form.id ? 'Guardar cambios' : 'Agregar'}
+            </button>
+            <button type="button" onClick={reset} className="min-h-10 rounded-xl px-3 text-xs font-bold text-slate-500">Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {message ? <p className="text-xs font-semibold text-slate-500">{message}</p> : null}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
         {needs.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-slate-400">Todavía no hay necesidades de despensa registradas.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-400">Todavía no hay necesidades registradas.</p>
         ) : needs.map((need, index) => {
-          const missing = Math.max(0, Number(need.minimo_necesario) - Number(need.existencia_actual))
+          const current = Number(need.existencia_actual)
+          const minimum = Number(need.minimo_necesario)
+          const missing = Math.max(0, minimum - current)
           return (
-            <article key={need.id} className={`flex items-center gap-3 px-5 py-4 ${index < needs.length - 1 ? 'border-b border-slate-100' : ''}`}>
+            <article key={need.id} className={`flex items-center gap-3 px-4 py-3 ${index < needs.length - 1 ? 'border-b border-slate-100' : ''}`}>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-extrabold text-[#171923]">{need.producto}</p>
+                  <p className="truncate text-sm font-extrabold text-[#171923]">{need.producto}</p>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${need.estado === 'activa' ? 'bg-emerald-50 text-emerald-700' : need.estado === 'cubierta' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>{need.estado}</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">{Number(need.existencia_actual)} / {Number(need.minimo_necesario)} {need.unidad}{missing > 0 ? ` · faltan ${missing}` : ''}</p>
+                <p className="mt-1 text-xs text-slate-500">{current} / {minimum} {need.unidad}{missing > 0 ? ` · faltan ${missing}` : ' · cubierto por ahora'}</p>
               </div>
-              <button type="button" onClick={() => edit(need)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600" aria-label={`Editar ${need.producto}`}><Pencil className="h-4 w-4" /></button>
-              <button type="button" disabled={pending} onClick={() => remove(need)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-50 text-rose-600 disabled:opacity-50" aria-label={`Eliminar ${need.producto}`}><Trash2 className="h-4 w-4" /></button>
+
+              <div className="flex items-center rounded-xl bg-slate-100">
+                <button type="button" disabled={pending} onClick={() => quickStock(need, -1)} className="grid h-9 w-9 place-items-center text-base font-bold text-slate-600 disabled:opacity-50" aria-label={`Restar existencia de ${need.producto}`}>−</button>
+                <span className="min-w-8 text-center text-xs font-extrabold text-slate-700">{current}</span>
+                <button type="button" disabled={pending} onClick={() => quickStock(need, 1)} className="grid h-9 w-9 place-items-center text-base font-bold text-slate-600 disabled:opacity-50" aria-label={`Sumar existencia de ${need.producto}`}>+</button>
+              </div>
+
+              <details className="relative">
+                <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-full bg-slate-100 text-slate-600 [&::-webkit-details-marker]:hidden" aria-label={`Acciones para ${need.producto}`}><MoreHorizontal className="h-4 w-4" /></summary>
+                <div className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-2xl bg-white py-1 shadow-xl ring-1 ring-black/10">
+                  <button type="button" onClick={() => edit(need)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-600"><Pencil className="h-3.5 w-3.5" /> Editar</button>
+                  <button type="button" onClick={() => quickStatus(need, need.estado === 'pausada' ? 'activa' : 'pausada')} className="w-full px-3 py-2 text-left text-xs font-bold text-slate-600">{need.estado === 'pausada' ? 'Activar' : 'Pausar'}</button>
+                  <button type="button" onClick={() => quickStatus(need, 'cubierta')} className="w-full px-3 py-2 text-left text-xs font-bold text-emerald-700">Marcar cubierta</button>
+                  <button type="button" disabled={pending} onClick={() => remove(need)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold text-rose-600 disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" /> Eliminar</button>
+                </div>
+              </details>
             </article>
           )
         })}
       </div>
-    </section>
+    </div>
   )
 }
