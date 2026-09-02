@@ -240,6 +240,26 @@ export async function eliminarDiaPlanPastoral(planId: string, numeroDiaInput: nu
   return { success: true }
 }
 
+export async function eliminarPlanPastoral(planId: string): Promise<PlanActionResult> {
+  const ctx = await puedeGestionar(planId)
+  if ('error' in ctx) return ctx
+  if (!ctx.plan.creado_por) return { error: 'Los planes del sistema no se eliminan desde Centro Pastoral.' }
+
+  const { error } = await (ctx.supabase as any)
+    .from('planes_lectura')
+    .delete()
+    .eq('id', planId)
+
+  if (error) {
+    console.error('[planes-pastoral] eliminar plan', error)
+    return { error: 'No se pudo eliminar el plan.' }
+  }
+
+  revalidatePath('/pastoral/planes')
+  revalidatePath('/hoy/planes')
+  return { success: true }
+}
+
 export async function cambiarPublicacionPlanPastoral(planId: string, publicar: boolean): Promise<PlanActionResult> {
   const ctx = await puedeGestionar(planId)
   if ('error' in ctx) return ctx
