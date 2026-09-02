@@ -6,6 +6,7 @@ import { Check, Loader2, Trash2 } from 'lucide-react'
 import {
   cambiarPublicacionPlanPastoral,
   eliminarDiaPlanPastoral,
+  eliminarPlanPastoral,
   guardarDiaPlanPastoral,
   guardarPlanPastoral,
 } from '@/app/actions/planes-lectura-pastoral'
@@ -17,6 +18,7 @@ export type PastoralPlanData = {
   descripcion: string
   duracion_dias: number
   publicado: boolean
+  creado_por?: string | null
 }
 
 export type PastoralPlanDay = {
@@ -61,6 +63,7 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
   const [published, setPublished] = useState(plan.publicado)
   const [pendingPlan, startPlan] = useTransition()
   const [pendingPublish, startPublish] = useTransition()
+  const [deletingPlan, startDeletePlan] = useTransition()
   const [planSaveState, setPlanSaveState] = useState<SaveState>('idle')
   const planAutosaveReadyRef = useRef(false)
   const planAutosaveSerialRef = useRef(0)
@@ -114,6 +117,20 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
     })
   }
 
+  function deletePlan() {
+    const detalle = published
+      ? 'Se eliminará el plan, todos sus días y el progreso asociado de los lectores. Esta acción no se puede deshacer.'
+      : 'Se eliminará el plan y todo el contenido de sus días. Esta acción no se puede deshacer.'
+    if (!window.confirm(`¿Eliminar “${plan.titulo}” por completo?\n\n${detalle}`)) return
+    startDeletePlan(async () => {
+      const result = await eliminarPlanPastoral(plan.id)
+      if (result.error) return mostrarToast(result.error)
+      mostrarToast('Plan eliminado')
+      router.push('/pastoral/planes')
+      router.refresh()
+    })
+  }
+
   const selectedData = days.find(day => day.numero_dia === selectedDay)
 
   return (
@@ -154,6 +171,12 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
             {planSaveState === 'saving' ? 'Guardando…' : planSaveState === 'saved' ? 'Guardado automático' : planSaveState === 'error' ? 'No se pudo guardar' : 'Autoguardado activo'}
           </span>
         </div>
+
+        {plan.creado_por ? (
+          <button type="button" onClick={deletePlan} disabled={deletingPlan} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl border border-rose-200 px-4 text-sm font-bold text-rose-700 disabled:opacity-50">
+            {deletingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Eliminar plan
+          </button>
+        ) : null}
       </section>
 
       <section className="pt-6">
