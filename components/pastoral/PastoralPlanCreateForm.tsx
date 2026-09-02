@@ -10,13 +10,13 @@ export default function PastoralPlanCreateForm() {
   const router = useRouter()
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
-  const [duracion, setDuracion] = useState(7)
+  const [duracion, setDuracion] = useState<number | ''>(7)
   const [pending, startTransition] = useTransition()
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     startTransition(async () => {
-      const result = await crearPlanPastoral({ titulo, descripcion, duracionDias: duracion })
+      const result = await crearPlanPastoral({ titulo, descripcion, duracionDias: Number(duracion) })
       if (result.error) {
         mostrarToast(result.error)
         return
@@ -58,7 +58,7 @@ export default function PastoralPlanCreateForm() {
             min={1}
             max={90}
             value={duracion}
-            onChange={e => setDuracion(Number(e.target.value))}
+            onChange={e => setDuracion(e.target.value === '' ? '' : Number(e.target.value))}
             className="h-12 w-24 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-[#C0392B]"
             required
           />
