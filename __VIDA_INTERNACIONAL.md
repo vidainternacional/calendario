@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-08-31
+Última actualización: 2026-09-01
 
-Fase / prioridad activa: **PRIORIDAD ACTUAL — CENTRO PASTORAL · REORGANIZACIÓN Y CIERRE DEL EDITOR VISUAL**
+Fase / prioridad activa: **PENDIENTE DE DEFINICIÓN**
 
 Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
@@ -479,8 +479,28 @@ Dar a cada persona una guía dentro de VIDA sin depender de capacitación presen
 9. Biblia conserva español y texto original; AT usa hebreo y NT griego. En hebreo se mantiene jerarquía propia del libro y exploración puntual de palabras.
 10. La exploración léxica prioriza datos bíblicos existentes de VIDA; cuando una explicación no está disponible, la IA integrada puede actuar como respaldo claramente identificado como explicación IA.
 11. Se confirma persistencia real del Editor Pastoral: Guardar y autoguardado conservan páginas, textos, imágenes, capas, posiciones, opacidad, fusión, fondos y degradados lineales, radiales y cónicos. El estado de guardado se comunica únicamente mediante el check superior, sin toast de “Proyecto guardado”.
-12. Checkpoint técnico aprobado del bloque: `f3d54260f998e83c93440622df26ef34aa1f0052`; PR #287 permanece OPEN · DRAFT · sin merge.
+12. Checkpoint técnico aprobado del bloque: `f3d54260f998e83c93440622df26ef34aa1f0052`; PR #287 permaneció OPEN · DRAFT durante la validación y fue cerrado al preparar la integración final aprobada.
 
-# Siguiente punto autorizado
+## CENTRO PASTORAL · REORGANIZACIÓN Y CIERRE DEL EDITOR VISUAL — CERRADO Y APROBADO — 2026-09-01
 
-**Validación final funcional del Editor Visual del Centro Pastoral, incluyendo Presentar, Congregación y pantalla completa real. Preservar íntegramente todo lo aprobado y no reabrir herramientas ya validadas salvo bug reproducible.**
+El Centro Pastoral queda funcional y visualmente aprobado.
+
+Cierre confirmado:
+- Editor visual estable preservando Fondos, Texto, Capas, Biblia, imágenes, guardado y Deshacer/Rehacer.
+- Navegación principal del editor: Editar · Presentar · Compartir.
+- Presentar integra Horizontal y Vertical; pantalla completa muestra únicamente la diapositiva.
+- Vista vertical y experiencia para la congregación integradas dentro de VIDA, sin superficies tipo “card dentro de card”.
+- Paquetes pastorales muestran Presentación y Estudio.
+- Enviar paquete al Cuaderno abre directamente el paquete guardado dentro del Cuaderno, seleccionado y listo para trabajar.
+- Los paquetes utilizan icono de libro.
+- Marcar como importante se representa mediante destello dorado.
+- Skeleton del Centro Pastoral alineado con la estructura visual actual.
+- Interacción táctil del paquete de Inicio aislada correctamente sin afectar los efectos de Ministerios.
+- Preview de validación estable: `https://calendario-git-agent-centro-pastoral-cb1651-vida-internacional.vercel.app`.
+- Integración a `main` y publicación en producción autorizadas explícitamente por el usuario el 2026-09-01.
+
+No reabrir Centro Pastoral salvo bug comprobable o una nueva prioridad explícitamente documentada.
+
+# Siguiente prioridad autorizada
+
+**Pendiente de definición.**
