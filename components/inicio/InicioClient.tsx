@@ -9,6 +9,7 @@ import {
   Clock3,
   FileText,
   HeartHandshake,
+  Landmark,
   Mail,
   MapPin,
   UsersRound,
@@ -508,6 +509,14 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                 </span>
                 <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Ayuda</span>
                 <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Apoyo solidario</span>
+              </Link>
+
+              <Link href="/diezmos-ofrendas" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-emerald-600 text-white shadow-[0_6px_16px_rgba(5,150,105,0.2)]">
+                  <Landmark className="h-6 w-6" aria-hidden="true" />
+                </span>
+                <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Diezmos y ofrendas</span>
+                <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Datos oficiales</span>
               </Link>
             </div>
           </section>
