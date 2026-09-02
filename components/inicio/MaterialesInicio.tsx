@@ -64,7 +64,7 @@ export default function MaterialesInicio({
           </span>
           <span className="flex shrink-0 items-center gap-1 text-[10px] font-bold text-violet-600">
             Abrir
-            <ChevronRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </span>
         </Link>
       </section>
