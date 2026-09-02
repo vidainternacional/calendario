@@ -1,0 +1,4 @@
+-- Compatibilidad de historial remoto.
+-- Durante la ejecución se creó una estructura temporal duplicada; quedó sin datos y fue retirada
+-- por 20260902174937_limpiar_duplicados_temporales_solidaridad.sql.
+-- La estructura vigente usa tipo_ayuda, ayuda_solidaria_mensajes y cuentas_bancarias_iglesia.
