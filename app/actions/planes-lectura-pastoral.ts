@@ -189,7 +189,7 @@ export async function guardarDiaPlanPastoral(planId: string, input: DiaInput): P
   const devocional = texto(input.devocional)
   const preguntaReflexion = texto(input.preguntaReflexion)
 
-  if (!titulo || !bookCode || !bookName || !referencia || devocional.length < 20 || preguntaReflexion.length < 8) {
+  if (!titulo || !bookCode || !bookName || !referencia || !devocional || !preguntaReflexion) {
     return { error: 'Completa el título, lectura bíblica, devocional y pregunta de reflexión.' }
   }
 
