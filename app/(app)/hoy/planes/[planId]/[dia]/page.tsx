@@ -55,7 +55,7 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-white px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
-      <Link href="/hoy" className="inline-flex min-h-10 items-center gap-2 text-sm font-bold text-slate-600">
+      <Link href="/hoy/planes" className="inline-flex min-h-10 items-center gap-2 text-sm font-bold text-slate-600">
         <ArrowLeft className="h-4 w-4" />
         Planes de lectura
       </Link>
@@ -66,7 +66,7 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
         <p className="mt-2 text-sm leading-6 text-slate-500">Lee el pasaje, toma unos minutos para reflexionar y marca el día cuando termines.</p>
       </header>
 
-      <section className="py-6 border-b border-slate-100">
+      <section className="border-b border-slate-100 py-6">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><BookOpen className="h-5 w-5 text-[#C0392B]" />Lectura bíblica</div>
         <h2 className="mt-3 text-2xl font-bold text-slate-950">{reading.referencia}</h2>
         <div className="mt-4 grid grid-cols-2 gap-2">
@@ -75,14 +75,14 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
         </div>
       </section>
 
-      <section className="py-6 border-b border-slate-100">
+      <section className="border-b border-slate-100 py-6">
         <h2 className="text-lg font-bold text-slate-950">Devocional</h2>
         <div className="mt-3 space-y-4 text-[16px] leading-7 text-slate-700">
           {paragraphs.map((paragraph: string, index: number) => <p key={index}>{paragraph}</p>)}
         </div>
       </section>
 
-      <section className="py-6 border-b border-slate-100">
+      <section className="border-b border-slate-100 py-6">
         <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><MessageCircleQuestion className="h-5 w-5 text-[#C0392B]" />Pregunta para reflexionar</div>
         <p className="mt-3 text-lg font-semibold leading-8 text-slate-800">{reading.pregunta_reflexion}</p>
       </section>
@@ -93,7 +93,7 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
 
       <nav className="flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
         {previousDay ? <Link href={`/hoy/planes/${planId}/${previousDay}`} className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-slate-600"><ChevronLeft className="h-4 w-4" />Día {previousDay}</Link> : <span />}
-        {nextDay ? <Link href={`/hoy/planes/${planId}/${nextDay}`} className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-slate-600">Día {nextDay}<ChevronRight className="h-4 w-4" /></Link> : <Link href="/hoy" className="inline-flex min-h-11 items-center text-sm font-bold text-[#C0392B]">Volver a planes</Link>}
+        {nextDay ? <Link href={`/hoy/planes/${planId}/${nextDay}`} className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-slate-600">Día {nextDay}<ChevronRight className="h-4 w-4" /></Link> : <Link href="/hoy/planes" className="inline-flex min-h-11 items-center text-sm font-bold text-[#C0392B]">Volver a planes</Link>}
       </nav>
     </main>
   )

@@ -2,32 +2,18 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Bell, BookOpen, ChevronRight, Clock3, Flame, Loader2, Sparkles } from 'lucide-react'
+import { Bell, BookOpen, ChevronDown, ChevronRight, Clock3, Loader2, Sparkles } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import { guardarPreferenciaVersiculoDiario } from '@/app/actions/versiculo-diario'
 import { dailyVerseForDate, fetchVerseText } from '@/lib/biblia/vida-daily'
 import { mostrarToast } from '@/lib/ui/toast'
 
-export type VidaPlanSummary = {
-  id: string
-  title: string
-  description: string
-  total: number
-  completed: number
-  nextDay: number
-  nextLabel: string
-  done: boolean
-}
-
 type Props = {
   initialActive: boolean
   initialHour: number
-  plans: VidaPlanSummary[]
-  featuredPlanId: string
-  streak: number
 }
 
-export default function VidaHoyClient({ initialActive, initialHour, plans, featuredPlanId, streak }: Props) {
+export default function VidaHoyClient({ initialActive, initialHour }: Props) {
   const daily = useMemo(() => dailyVerseForDate(), [])
   const [verseText, setVerseText] = useState('')
   const [verseLoading, setVerseLoading] = useState(true)
@@ -58,93 +44,67 @@ export default function VidaHoyClient({ initialActive, initialHour, plans, featu
     })
   }
 
-  const featured = plans.find(plan => plan.id === featuredPlanId) ?? plans[0]
-  const secondary = plans.filter(plan => plan.id !== featured?.id)
-
   return (
-    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
-      <header className="mb-5">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-violet-600">Tu día con la Biblia</p>
+    <main className="mx-auto min-h-screen max-w-2xl bg-white px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
+      <header className="pb-5">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Tu día con la Biblia</p>
         <h1 className="mt-1 text-[28px] font-bold tracking-[-0.035em] text-[#171923]">Hoy en VIDA</h1>
-        <p className="mt-1 text-sm leading-6 text-slate-500">Un versículo para hoy y planes sencillos para avanzar paso a paso.</p>
       </header>
 
-      <section className="overflow-hidden rounded-[28px] border border-white/90 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#C0392B] text-white"><Sparkles className="h-5 w-5" /></span>
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Versículo del día</p>
-            <h2 className="text-lg font-bold text-slate-950">{daily.label}</h2>
-          </div>
+      <section className="border-y border-slate-100 py-6" aria-labelledby="versiculo-del-dia-title">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[#C0392B]" />
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Versículo del día</p>
         </div>
-        <div className="mt-5 min-h-[92px] text-[18px] leading-8 text-slate-700">
-          {verseLoading ? <Loader2 className="h-5 w-5 animate-spin text-violet-500" /> : <p>“{verseText}”</p>}
+        <h2 id="versiculo-del-dia-title" className="mt-2 text-xl font-bold text-slate-950">{daily.label}</h2>
+        <div className="mt-4 min-h-[92px] text-[18px] leading-8 text-slate-700">
+          {verseLoading ? <Loader2 className="h-5 w-5 animate-spin text-slate-400" /> : <p>“{verseText}”</p>}
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href={`/biblia?book=${daily.book}&chapter=${daily.chapter}&verse=${daily.verse ?? 1}`} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-violet-600 px-3 text-sm font-bold text-white"><BookOpen className="h-4 w-4" />Abrir Biblia</Link>
-          <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(daily.label)}&auto=1`} className="flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-slate-100 px-3 text-sm font-bold text-slate-700"><Sparkles className="h-4 w-4" />Estudiar</Link>
+        <div className="mt-5 flex flex-wrap items-center gap-4">
+          <Link href={`/biblia?book=${daily.book}&chapter=${daily.chapter}&verse=${daily.verse ?? 1}`} className="inline-flex min-h-11 items-center gap-2 bg-[#C0392B] px-4 text-sm font-bold text-white">
+            <BookOpen className="h-4 w-4" />Abrir Biblia
+          </Link>
+          <Link href={`/estudios/profundo?pasaje=${encodeURIComponent(daily.label)}&auto=1`} className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-600">
+            <Sparkles className="h-4 w-4" />Estudiar
+          </Link>
         </div>
       </section>
 
-      <section className="mt-5 rounded-[28px] border border-white/90 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-        <div className="flex items-center gap-3"><Bell className="h-5 w-5 text-violet-600" /><div><h2 className="font-bold text-slate-950">Recordatorio diario</h2><p className="text-xs text-slate-500">Recíbelo en la pantalla de bloqueo cuando las notificaciones estén activas.</p></div></div>
-        <div className="mt-4 border-t border-slate-100 pt-4"><PushToggle /></div>
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700"><Clock3 className="h-4 w-4 text-violet-500" />Hora</div>
-          <select value={hour} disabled={!active || isPending} onChange={e => saveReminder(true, Number(e.target.value))} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800 disabled:opacity-50">
-            {Array.from({ length: 18 }, (_, i) => i + 5).map(value => <option key={value} value={value}>{String(value).padStart(2, '0')}:00</option>)}
-          </select>
-        </div>
-        <button type="button" onClick={() => saveReminder(!active)} disabled={isPending} className={`mt-4 flex min-h-11 w-full items-center justify-center rounded-2xl px-4 text-sm font-bold transition ${active ? 'bg-violet-50 text-violet-700' : 'bg-violet-600 text-white'}`}>
-          {isPending ? 'Guardando…' : active ? 'Desactivar recordatorio' : 'Activar recordatorio'}
-        </button>
-      </section>
-
-      <section className="mt-6" aria-labelledby="planes-lectura">
-        <div className="mb-3 px-1">
-          <h2 id="planes-lectura" className="text-xl font-bold tracking-[-0.02em] text-[#171923]">Planes de lectura</h2>
-          <p className="mt-1 text-xs text-slate-500">Tu avance se guarda en tu cuenta y continúa en cualquier dispositivo.</p>
-          {streak >= 2 ? (
-            <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-[#C0392B]"><Flame className="h-4 w-4" />Llevas {streak} días seguidos.</p>
-          ) : null}
-        </div>
-
-        {featured ? (
-          <article className="overflow-hidden rounded-[26px] border border-slate-200 bg-white">
-            <div className="p-5 sm:p-6">
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#C0392B]">Tu plan de hoy</p>
-              <div className="mt-2 flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950">{featured.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">{featured.description}</p>
-                </div>
-                <span className="shrink-0 text-xs font-bold text-slate-500">{featured.completed}/{featured.total}</span>
-              </div>
-              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#C0392B] transition-all" style={{ width: `${Math.round((featured.completed / Math.max(featured.total, 1)) * 100)}%` }} /></div>
-              <Link href={`/hoy/planes/${featured.id}/${featured.nextDay}`} className="mt-5 flex min-h-12 items-center justify-between gap-3 rounded-2xl bg-[#C0392B] px-4 text-sm font-bold text-white">
-                <span className="min-w-0 truncate">{featured.done ? 'Revisar plan' : `Continuar · Día ${featured.nextDay}`} · {featured.nextLabel}</span>
-                <ChevronRight className="h-4 w-4 shrink-0" />
-              </Link>
-            </div>
-          </article>
-        ) : null}
-
-        {secondary.length > 0 ? (
-          <div className="mt-5">
-            <h3 className="mb-2 px-1 text-sm font-bold text-slate-900">Explorar otros planes</h3>
-            <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white">
-              {secondary.map((plan, index) => (
-                <Link key={plan.id} href={`/hoy/planes/${plan.id}/${plan.nextDay}`} className={`flex min-h-[86px] items-center justify-between gap-4 px-4 py-3 ${index > 0 ? 'border-t border-slate-100' : ''}`}>
-                  <div className="min-w-0">
-                    <h4 className="font-bold text-slate-950">{plan.title}</h4>
-                    <p className="mt-1 text-xs text-slate-500">{plan.completed > 0 ? `${plan.completed} de ${plan.total} días completados` : `${plan.total} días · Empezar plan`}</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-                </Link>
-              ))}
+      <details className="group border-b border-slate-100">
+        <summary className="flex min-h-[72px] cursor-pointer list-none items-center justify-between gap-4 py-3 [&::-webkit-details-marker]:hidden">
+          <div className="flex min-w-0 items-center gap-3">
+            <Bell className="h-4 w-4 shrink-0 text-slate-500" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900">Recordatorio diario</p>
+              <p className="mt-0.5 text-xs text-slate-500">{active ? `Activo · ${String(hour).padStart(2, '0')}:00` : 'Desactivado'}</p>
             </div>
           </div>
-        ) : null}
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+        </summary>
+
+        <div className="pb-5 pl-7">
+          <div className="border-t border-slate-100 pt-4"><PushToggle /></div>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700"><Clock3 className="h-4 w-4 text-slate-400" />Hora</div>
+            <select value={hour} disabled={!active || isPending} onChange={e => saveReminder(true, Number(e.target.value))} className="h-10 border border-slate-200 bg-white px-3 text-sm font-bold text-slate-800 disabled:opacity-50">
+              {Array.from({ length: 18 }, (_, i) => i + 5).map(value => <option key={value} value={value}>{String(value).padStart(2, '0')}:00</option>)}
+            </select>
+          </div>
+          <button type="button" onClick={() => saveReminder(!active)} disabled={isPending} className={`mt-4 min-h-10 px-4 text-sm font-bold transition ${active ? 'border border-slate-200 text-slate-700' : 'bg-[#C0392B] text-white'}`}>
+            {isPending ? 'Guardando…' : active ? 'Desactivar recordatorio' : 'Activar recordatorio'}
+          </button>
+        </div>
+      </details>
+
+      <section className="mt-10" aria-labelledby="seguir-creciendo-title">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-slate-400">Para seguir creciendo</p>
+        <Link href="/hoy/planes" className="mt-2 flex min-h-[86px] items-center justify-between gap-4 border-y border-slate-100 py-4">
+          <div className="min-w-0">
+            <h2 id="seguir-creciendo-title" className="font-bold text-slate-950">Planes de lectura</h2>
+            <p className="mt-1 text-sm leading-5 text-slate-500">Elige un objetivo y avanza con una lectura guiada a tu ritmo.</p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+        </Link>
       </section>
     </main>
   )

@@ -29,9 +29,9 @@ export default async function EstudiosPage() {
       actionClass: 'text-indigo-600',
     },
     {
-      href: '/hoy',
+      href: '/hoy/planes',
       title: 'Planes de lectura',
-      description: 'Sigue planes bíblicos progresivos de 7, 14 y 30 días, revisa el versículo del día y configura tu recordatorio.',
+      description: 'Elige un objetivo y sigue una lectura bíblica guiada con la duración adecuada para cada tema.',
       action: 'Ver planes',
       icon: BookOpenCheck,
       iconClass: 'bg-emerald-600 text-white shadow-inner shadow-emerald-900/20',
