@@ -8,7 +8,8 @@ import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
 export const metadata: Metadata = { title: 'Proyectos Pastorales' }
 
-export default async function PaquetesPastoralesPage() {
+export default async function PaquetesPastoralesPage({ searchParams }: { searchParams: Promise<{ nuevo?: string }> }) {
+  const { nuevo } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -52,6 +53,7 @@ export default async function PaquetesPastoralesPage() {
         bosquejos={(bosquejos ?? []).map((item: any) => ({ id: item.id, titulo: item.titulo }))}
         colecciones={(colecciones ?? []).map((item: any) => ({ id: item.id, titulo: item.nombre }))}
         recursos={(recursos ?? []) as any}
+        abrirNuevo={nuevo === '1'}
       />
     </main>
   )

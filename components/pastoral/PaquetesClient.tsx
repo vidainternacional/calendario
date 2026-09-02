@@ -18,10 +18,10 @@ type Paquete = {
 type Opcion = { id: string; titulo: string }
 type Recurso = Opcion & { categoria: string; tipo: 'archivo' | 'enlace' }
 
-export default function PaquetesClient({ paquetes }: { paquetes: Paquete[]; bosquejos: Opcion[]; colecciones: Opcion[]; recursos: Recurso[] }) {
+export default function PaquetesClient({ paquetes, abrirNuevo = false }: { paquetes: Paquete[]; bosquejos: Opcion[]; colecciones: Opcion[]; recursos: Recurso[]; abrirNuevo?: boolean }) {
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
-  const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  const [mostrarFormulario, setMostrarFormulario] = useState(abrirNuevo)
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [isPending, startTransition] = useTransition()
