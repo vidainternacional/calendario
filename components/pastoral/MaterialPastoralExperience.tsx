@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BookOpenText, CalendarDays, ChevronLeft, ChevronRight, Church,
@@ -108,6 +109,7 @@ function textosDeDiapositiva(diapositiva: DiapositivaCanvas) {
 }
 
 export default function MaterialPastoralExperience({ material, biblioteca, userId = '', embeddedStudy = false }: Props) {
+  const router = useRouter()
   const [modo, setModo] = useState<Modo>(embeddedStudy ? 'estudio' : 'presentacion')
   const [indice, setIndice] = useState(0)
   const [presentando, setPresentando] = useState(false)
@@ -200,6 +202,7 @@ export default function MaterialPastoralExperience({ material, biblioteca, userI
     })
     const guardada = guardarNotasBiblicasLocales([nota, ...actuales.filter((item) => item.id !== nota.id)], userId)
     mostrarToast(guardada ? 'Enviado al Cuaderno' : 'No se pudo guardar en el Cuaderno')
+    return guardada ? nota.id : null
   }
 
   const guardarPaqueteEnCuaderno = () => {
@@ -223,7 +226,8 @@ export default function MaterialPastoralExperience({ material, biblioteca, userI
       bloqueNota('Aplicación', material.instrucciones),
       textoDiapositivas.length ? `## Presentación\n${textoDiapositivas.join('\n\n')}` : '',
     ].filter(Boolean).join('\n\n')
-    guardarNota(material.titulo, contenido || textoNota(material.titulo))
+    const notaId = guardarNota(material.titulo, contenido || textoNota(material.titulo))
+    if (notaId) router.push(`/biblia/notas?nota=${encodeURIComponent(notaId)}`)
   }
 
   const fecha = material.published_at

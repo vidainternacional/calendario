@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { BookHeart, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { BookHeart, BookOpen, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
 
 export type MaterialVisible = {
   id: string
@@ -53,8 +53,9 @@ export default function MaterialesInicio({
           style={{ transform: 'none' }}
           className="group relative flex min-h-[92px] items-center gap-3 overflow-hidden rounded-[24px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/55 to-indigo-50 px-4 py-4 shadow-[0_10px_28px_rgba(91,61,245,0.08)] transition-[background-color,box-shadow,filter] duration-100 active:bg-violet-50/80 active:brightness-[0.97] active:shadow-[inset_0_2px_8px_rgba(91,61,245,0.18)]"
         >
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 ring-1 ring-violet-200/70">
-            {preparation.destacado ? <Sparkles className="h-5 w-5" aria-hidden="true" /> : <BookHeart className="h-5 w-5" aria-hidden="true" />}
+          <span className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 ring-1 ring-violet-200/70">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
+            {preparation.destacado && <Sparkles className="absolute -right-1.5 -top-1.5 h-4 w-4 fill-amber-300/60 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.65)]" aria-hidden="true" />}
           </span>
           <span className="min-w-0 flex-1">
             <span id="preparacion-inicio" className="block text-[10px] font-extrabold uppercase tracking-[0.13em] text-violet-600">Preparación</span>
@@ -118,8 +119,9 @@ export default function MaterialesInicio({
                 href={`/material/${material.public_slug}`}
                 className="group flex min-h-[76px] items-center gap-3 border-b border-slate-100 px-4 py-3.5 last:border-b-0 active:bg-violet-50/45"
               >
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-                  <BookHeart className="h-5 w-5" aria-hidden="true" />
+                <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+                  <BookOpen className="h-5 w-5" aria-hidden="true" />
+                  {material.destacado && <Sparkles className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-amber-300/60 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.6)]" aria-hidden="true" />}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="truncate text-sm font-bold text-[#171923]">{material.titulo}</span>
