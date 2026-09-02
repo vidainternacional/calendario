@@ -6,12 +6,12 @@ import { actualizarDistribucionPaquete } from '@/app/actions/pastoral-distribuci
 import { mostrarToast } from '@/lib/ui/toast'
 
 type Audiencia = 'iglesia' | 'lideres' | 'servidores' | 'publico'
+type AudienciaVisible = Exclude<Audiencia, 'publico'>
 
-const OPCIONES: Array<{ value: Audiencia; label: string; detalle: string }> = [
-  { value: 'iglesia', label: 'Toda la iglesia', detalle: 'Todas las personas con una cuenta activa podrán verlo.' },
+const OPCIONES: Array<{ value: AudienciaVisible; label: string; detalle: string }> = [
+  { value: 'iglesia', label: 'Toda la congregación', detalle: 'Todas las personas con una cuenta activa podrán verlo.' },
   { value: 'lideres', label: 'Líderes', detalle: 'Visible para líderes, pastores y administradores.' },
   { value: 'servidores', label: 'Servidores', detalle: 'Visible para servidores, líderes, pastores y administradores.' },
-  { value: 'publico', label: 'Toda la congregación', detalle: 'Material general disponible dentro de la aplicación.' },
 ]
 
 export default function PackageDistributionControls({
@@ -25,7 +25,7 @@ export default function PackageDistributionControls({
   initialPublished: boolean
   initialFeatured?: boolean
 }) {
-  const [audiencia, setAudiencia] = useState<Audiencia>(initialAudience)
+  const [audiencia, setAudiencia] = useState<AudienciaVisible>(initialAudience === 'publico' ? 'iglesia' : initialAudience)
   const [publicado, setPublicado] = useState(initialPublished)
   const [destacado, setDestacado] = useState(initialFeatured)
   const [isPending, startTransition] = useTransition()
@@ -59,7 +59,7 @@ export default function PackageDistributionControls({
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.17em] text-indigo-100">Último paso</p>
             <h2 className="mt-1 text-lg font-bold">Publicar y enviar a la congregación</h2>
-            <p className="mt-1 text-sm leading-6 text-indigo-100">El material aparecerá en Inicio con una tarjeta morada y se enviará una notificación push a la audiencia seleccionada.</p>
+            <p className="mt-1 text-sm leading-6 text-indigo-100">El material aparecerá en Inicio y se enviará una notificación push a la audiencia seleccionada.</p>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function PackageDistributionControls({
       <div className="p-5 sm:p-6">
         <label>
           <span className="mb-1.5 block text-xs font-bold text-slate-700">¿Quién debe recibirlo?</span>
-          <select value={audiencia} onChange={(event) => setAudiencia(event.target.value as Audiencia)} className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900">
+          <select value={audiencia} onChange={(event) => setAudiencia(event.target.value as AudienciaVisible)} className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900">
             {OPCIONES.map((opcion) => <option key={opcion.value} value={opcion.value}>{opcion.label}</option>)}
           </select>
           <span className="mt-1.5 block text-xs leading-5 text-slate-500">{OPCIONES.find((opcion) => opcion.value === audiencia)?.detalle}</span>

@@ -1,105 +1,171 @@
+/* Proyecto pastoral abierto: herramientas arriba, un solo panel activo y sin cajas anidadas. */
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) {
+  position: relative;
+  z-index: 20;
+  margin-top: .45rem;
+  overflow: visible !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dfe4ec !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:first-child {
+  display: none !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child {
+  overflow: visible !important;
+  padding: .35rem 0 .7rem !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child > div {
+  display: grid !important;
+  min-width: 0 !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .15rem !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button {
+  display: flex !important;
+  min-width: 0 !important;
+  min-height: 4.35rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  gap: .28rem !important;
+  border: 0 !important;
+  border-radius: .8rem !important;
+  background: transparent !important;
+  padding: .35rem .2rem !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+  text-align: center !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 140ms ease, background-color 140ms ease, transform 120ms ease !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button[class*='bg-violet-600'] {
+  background: rgba(79,70,229,.06) !important;
+  color: #4f46e5 !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button:active {
+  transform: scale(.95) !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button > svg {
+  width: 1.45rem !important;
+  height: 1.45rem !important;
+  stroke-width: 1.85;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button > span {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: .61rem !important;
+  line-height: .8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button strong + span {
+  display: none !important;
+}
+
+/* Panel activo: todo vive sobre el background, no dentro de tarjetas. */
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 {
+  margin-top: .65rem !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 section:not(.presentation-shell),
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 aside > section {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 section + section,
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 aside > section + section {
+  border-top: 1px solid #dfe4ec !important;
+  padding-top: 1rem !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 [class*='rounded-[24px]'][class*='bg-white'],
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 [class*='rounded-[26px]'][class*='bg-white'] {
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 input,
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 textarea,
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 select {
+  box-shadow: none !important;
+}
+
+.pastoral-mobile-workspace-shell > .text-slate-900 > div.sticky {
+  position: relative !important;
+  top: auto !important;
+  z-index: 10 !important;
+  margin-inline: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid #dfe4ec !important;
+  background: transparent !important;
+  padding: .4rem 0 .65rem !important;
+  backdrop-filter: none !important;
+}
+
+.pastoral-mobile-workspace-shell iframe[title='Biblia integrada del Centro Pastoral'] {
+  background: transparent !important;
+}
+
 @media (max-width: 639px) {
   .pastoral-package-page {
-    padding-bottom: calc(12.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
   }
 
   .pastoral-mobile-workspace-shell > .text-slate-900 {
-    padding-bottom: 5.75rem;
+    padding-bottom: 2rem;
   }
 
   .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) {
-    position: fixed;
-    z-index: 65;
-    right: max(0.75rem, env(safe-area-inset-right));
-    bottom: calc(5.25rem + env(safe-area-inset-bottom));
-    left: max(0.75rem, env(safe-area-inset-left));
-    margin-top: 0;
-    overflow: hidden;
-    border-radius: 1.5rem;
-    border-color: rgb(221 214 254 / 0.95);
-    background: rgb(255 255 255 / 0.96);
-    box-shadow: 0 18px 48px rgb(15 23 42 / 0.22);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:first-child {
-    display: none;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    padding: 0.5rem;
-    scroll-padding-inline: 0.5rem;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child::-webkit-scrollbar {
-    display: none;
+    position: sticky;
+    top: 0;
+    margin-inline: -.2rem;
+    background: rgb(244 245 249 / .96) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child > div {
-    gap: 0.25rem;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button {
-    min-height: 3.75rem;
-    min-width: 4.35rem;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.2rem;
-    padding: 0.4rem 0.5rem;
-    border-radius: 1rem;
-    text-align: center;
-    scroll-snap-align: center;
-    touch-action: manipulation;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button > svg {
-    width: 1.15rem;
-    height: 1.15rem;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button > span {
-    display: block;
-    max-width: 100%;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button strong {
-    display: block;
-    max-width: 3.85rem;
-    overflow: hidden;
-    font-size: 0.625rem;
-    line-height: 0.8rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button strong + span {
-    display: none;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .pastoral-mobile-workspace-shell > .text-slate-900 > div.mt-5 {
-    scroll-margin-top: 5.25rem;
-  }
-
-  .pastoral-mobile-workspace-shell > .text-slate-900 > div.sticky {
-    display: none;
+    scroll-margin-top: 9rem;
   }
 
   .pastoral-mobile-workspace-shell iframe[title='Biblia integrada del Centro Pastoral'] {
-    height: calc(100dvh - 10.75rem) !important;
-    min-height: 34rem !important;
-    background: transparent !important;
+    height: calc(100dvh - 13rem) !important;
+    min-height: 32rem !important;
   }
 }
 
-@media (max-width: 380px) {
-  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) button {
-    min-width: 4rem;
+@media (min-width: 640px) {
+  .pastoral-mobile-workspace-shell > .text-slate-900 > section:nth-of-type(2) > div:last-child > div {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
 

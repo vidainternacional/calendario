@@ -349,7 +349,7 @@ async function respuestaNavegacionApp(request) {
   const userId = await activeOwnerId()
 
   try {
-    const response = await fetchWithTimeout(request)
+    const response = await fetch(request)
     if (userId && response.ok) {
       await cacheUserPage(userId, url.toString(), response.clone())
     }

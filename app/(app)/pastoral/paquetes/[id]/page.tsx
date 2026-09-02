@@ -2,13 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
-import PaqueteDetalleClient from '@/components/pastoral/PaqueteDetalleClient'
-import PastoralMobileWorkspaceShell from '@/components/pastoral/PastoralMobileWorkspaceShell'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
+import ProyectoContenidoWorkspace from '@/components/pastoral/ProyectoContenidoWorkspace'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
-import './workspace-mobile.css'
 
-export const metadata: Metadata = { title: 'Espacio Pastoral' }
+export const metadata: Metadata = { title: 'Proyecto Pastoral' }
 
 export default async function PaquetePastoralDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -33,8 +31,7 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
 
   if (!paquete) notFound()
 
-  const [{ data: bosquejos }, { data: colecciones }, { data: bibliotecaBase }] = await Promise.all([
-    (supabase as any).from('pastoral_bosquejos').select('id, titulo, tema, pasaje_base, proposito, introduccion, puntos, conclusion').eq('profile_id', user.id).order('updated_at', { ascending: false }),
+  const [{ data: colecciones }, { data: bibliotecaBase }] = await Promise.all([
     (supabase as any).from('pastoral_colecciones').select('id, nombre, descripcion').eq('profile_id', user.id).order('updated_at', { ascending: false }),
     (supabase as any).from('pastoral_biblioteca').select('id, titulo, descripcion, categoria, tipo, url, storage_path, mime_type, nombre_archivo').eq('profile_id', user.id).order('updated_at', { ascending: false }),
   ])
@@ -48,7 +45,6 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
     return { ...item, acceso_url }
   }))
 
-  const bosquejo = (bosquejos ?? []).find((item: any) => item.id === paquete.bosquejo_id) ?? null
   const coleccionBase = (colecciones ?? []).find((item: any) => item.id === paquete.coleccion_id) ?? null
   let coleccion = null
 
@@ -62,30 +58,22 @@ export default async function PaquetePastoralDetallePage({ params }: { params: P
     coleccion = { ...coleccionBase, versiculos: versiculos ?? [] }
   }
 
-  const idsSeleccionados = new Set<string>((paquete.recurso_ids ?? []) as string[])
-  const recursosSeleccionados = biblioteca.filter((item: any) => idsSeleccionados.has(item.id))
-  const pdfPresentacion = biblioteca.find((item: any) => item.id === paquete.presentacion_pdf_recurso_id) ?? null
+  const admin = createAdminClient()
+  const { data: templateSetting } = await (admin as any)
+    .from('app_settings')
+    .select('valor')
+    .eq('clave', 'pastoral_templates')
+    .maybeSingle()
 
   return (
-    <main className="pastoral-package-page mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
+    <main className="pastoral-package-page mx-auto min-h-screen w-full max-w-none bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-6 lg:px-8">
       <div className="mb-2 print:hidden">
-        <Link href="/pastoral" className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 text-sm font-bold text-violet-700">
+        <Link href="/pastoral" className="inline-flex min-h-10 items-center gap-2 px-1 text-sm font-bold text-violet-700">
           <ArrowLeft className="h-4 w-4" /> Centro Pastoral
         </Link>
       </div>
 
-      <PastoralMobileWorkspaceShell>
-        <PaqueteDetalleClient
-          paquete={paquete as any}
-          bosquejo={bosquejo as any}
-          coleccion={coleccion as any}
-          recursos={recursosSeleccionados as any}
-          pdfPresentacion={pdfPresentacion as any}
-          bosquejos={(bosquejos ?? []).map((item: any) => ({ id: item.id, titulo: item.titulo }))}
-          colecciones={(colecciones ?? []).map((item: any) => ({ id: item.id, titulo: item.nombre }))}
-          biblioteca={biblioteca as any}
-        />
-      </PastoralMobileWorkspaceShell>
+      <ProyectoContenidoWorkspace paquete={paquete as any} coleccion={coleccion as any} biblioteca={biblioteca as any} plantillasAdministradas={templateSetting?.valor ?? []} />
     </main>
   )
 }

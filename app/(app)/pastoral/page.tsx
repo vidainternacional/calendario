@@ -53,103 +53,77 @@ export default async function PastoralPage() {
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)
   const recientes = (paquetes ?? []) as Array<{ id: string; titulo: string; descripcion_publica: string; estado: string; updated_at: string }>
+  const proyectoActual = recientes[0]
 
-  const herramientas = [
-    { href: '/pastoral/bosquejos', titulo: 'Bosquejos', texto: 'Estructura y organiza cada mensaje.', icono: FileText, clase: 'bg-violet-50 text-violet-700' },
-    { href: '/pastoral/colecciones', titulo: 'Versículos', texto: 'Agrupa los pasajes del tema.', icono: BookHeart, clase: 'bg-indigo-50 text-indigo-700' },
-    { href: '/pastoral/biblioteca', titulo: 'Biblioteca', texto: 'Guarda archivos y enlaces de apoyo.', icono: Library, clase: 'bg-amber-50 text-amber-700' },
-    { href: '/pastoral/materiales', titulo: 'Materiales', texto: 'Revisa y publica las guías.', icono: BookOpenCheck, clase: 'bg-cyan-50 text-cyan-700' },
+  const areas = [
+    { titulo: 'Bosquejo', href: '/pastoral/bosquejos', icono: FileText, iconClass: 'text-violet-600' },
+    { titulo: 'Versículos', href: '/pastoral/colecciones', icono: BookHeart, iconClass: 'text-indigo-600' },
+    { titulo: 'Biblia', href: '/biblia?from=pastoral', icono: BookOpen, iconClass: 'text-indigo-600' },
+    { titulo: 'Estudio', href: '/estudios/profundo?from=pastoral', icono: Sparkles, iconClass: 'text-[#C0392B]' },
+    { titulo: 'Biblioteca', href: '/pastoral/biblioteca', icono: Library, iconClass: 'text-amber-700' },
+    { titulo: 'Materiales', href: '/pastoral/materiales', icono: BookOpenCheck, iconClass: 'text-cyan-700' },
+    { titulo: 'Proyectos', href: '/pastoral/paquetes', icono: PackageOpen, iconClass: 'text-slate-700' },
   ]
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
-      <div className="mb-5">
+    <main className="pastoral-workspace mx-auto min-h-screen max-w-3xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
+      <div className="pastoral-workspace-back">
         <BackButton />
       </div>
 
-      <header className="pastoral-page-header">
+      <header className="pastoral-workspace-header">
         <div className="pastoral-eyebrow">
           <ShieldCheck aria-hidden="true" />
           <span>Centro Pastoral</span>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="pastoral-page-title mt-0">{nombre ? `Hola, ${nombre}` : 'Centro Pastoral'}</h1>
-          {esPastorGeneral && <span className="inline-flex min-h-7 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">Pastor General</span>}
+        <div className="pastoral-workspace-heading">
+          <h1>{nombre ? `Hola, ${nombre}` : 'Centro Pastoral'}</h1>
+          {esPastorGeneral && <span className="pastoral-role-badge">Pastor General</span>}
         </div>
-        <p className="pastoral-page-description">Prepara mensajes y estudios desde un solo lugar.</p>
       </header>
 
-      <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm" aria-labelledby="espacio-pastoral">
-        <div className="border-b border-slate-100 bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white sm:p-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-100">Flujo unificado</p>
-          <div className="mt-2 flex items-start justify-between gap-4">
-            <div className="max-w-xl">
-              <h2 id="espacio-pastoral" className="text-xl font-bold">Proyecto pastoral</h2>
-              <p className="mt-1 text-sm leading-6 text-indigo-100">Mantén unidos el bosquejo, los versículos, los recursos y la guía final.</p>
-            </div>
-            <PackageOpen className="h-7 w-7 shrink-0 text-white/80" />
-          </div>
-          <Link href="/pastoral/paquetes" className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-indigo-700 sm:w-auto">
-            <Plus className="h-4 w-4" /> Crear paquete
-          </Link>
+      <section className="pastoral-project" aria-labelledby="proyecto-pastoral">
+        <div className="pastoral-section-label">
+          <PackageOpen aria-hidden="true" />
+          <h2 id="proyecto-pastoral">Proyecto</h2>
         </div>
 
-        <div className="p-4 sm:p-5">
-          {recientes.length > 0 && (
-            <div className="mb-5">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-900">Continuar trabajando</h3>
-                  <p className="mt-0.5 text-xs text-slate-500">Retoma un paquete reciente.</p>
-                </div>
-                <Link href="/pastoral/paquetes" className="shrink-0 text-xs font-bold text-indigo-700">Ver todos</Link>
-              </div>
-              <div className="space-y-2">
-                {recientes.map((paquete) => {
-                  const estadoActual = estadoPaquete[paquete.estado] ?? estadoPaquete.borrador
-                  return (
-                    <Link key={paquete.id} href={`/pastoral/paquetes/${paquete.id}`} className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 transition active:scale-[0.99]">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-sm"><FolderOpen className="h-5 w-5" /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2">
-                          <strong className="truncate text-sm text-slate-900">{paquete.titulo}</strong>
-                          <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-bold ${estadoActual.clase}`}>{estadoActual.texto}</span>
-                        </span>
-                        <span className="mt-1 block truncate text-xs text-slate-500">{paquete.descripcion_publica || 'Paquete en preparación.'}</span>
-                      </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200" aria-label="Herramientas del espacio pastoral">
-            {herramientas.map(({ href, titulo, texto, icono: Icono, clase }, index) => (
-              <Link key={href} href={href} className={`flex min-h-20 items-center gap-3 bg-white p-4 text-left transition hover:bg-slate-50 active:bg-slate-100 ${index > 0 ? 'border-t border-slate-100' : ''}`}>
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${clase}`}><Icono className="h-5 w-5" /></span>
-                <span className="min-w-0 flex-1">
-                  <strong className="block text-sm text-slate-900">{titulo}</strong>
-                  <span className="mt-0.5 block text-xs leading-5 text-slate-500">{texto}</span>
+        {proyectoActual ? (
+          <Link href={`/pastoral/paquetes/${proyectoActual.id}`} className="pastoral-current-project">
+            <span className="pastoral-current-project-icon"><FolderOpen aria-hidden="true" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2">
+                <strong className="truncate">{proyectoActual.titulo}</strong>
+                <span className={`pastoral-project-status ${estadoPaquete[proyectoActual.estado]?.clase ?? estadoPaquete.borrador.clase}`}>
+                  {estadoPaquete[proyectoActual.estado]?.texto ?? estadoPaquete.borrador.texto}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-              </Link>
-            ))}
-          </div>
+              </span>
+              <span className="pastoral-current-project-meta">Continuar trabajando</span>
+            </span>
+            <ChevronRight aria-hidden="true" />
+          </Link>
+        ) : (
+          <p className="pastoral-project-empty">Aún no tienes un proyecto activo.</p>
+        )}
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Link href="/biblia?from=pastoral" className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><BookOpen className="h-5 w-5" /></span>
-              <span><strong className="block text-sm text-slate-900">Biblia</strong><span className="text-[11px] text-slate-500">Leer y buscar</span></span>
-            </Link>
-            <Link href="/estudios/profundo?from=pastoral" className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-[#C0392B]"><Sparkles className="h-5 w-5" /></span>
-              <span><strong className="block text-sm text-slate-900">Estudio</strong><span className="text-[11px] text-slate-500">Analizar pasaje</span></span>
-            </Link>
-          </div>
-        </div>
+        <Link href="/pastoral/paquetes" className="pastoral-primary-action">
+          <Plus aria-hidden="true" />
+          {proyectoActual ? 'Nuevo proyecto' : 'Crear proyecto'}
+        </Link>
       </section>
+
+      <nav className="grid grid-cols-3 gap-x-3 gap-y-5 py-6 sm:grid-cols-4" aria-label="Herramientas del Centro Pastoral">
+        {areas.map(({ titulo, href, icono: Icono, iconClass }) => (
+          <Link
+            key={titulo}
+            href={href}
+            className="group flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl px-1 text-center text-slate-700 transition active:scale-95"
+          >
+            <Icono className={`h-7 w-7 stroke-[1.8] transition-transform group-active:scale-90 ${iconClass}`} aria-hidden="true" />
+            <span className="text-[11px] font-bold leading-tight">{titulo}</span>
+          </Link>
+        ))}
+      </nav>
     </main>
   )
 }

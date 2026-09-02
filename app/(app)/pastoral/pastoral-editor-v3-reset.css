@@ -1,0 +1,16 @@
+/* V3: neutraliza reglas nth-child heredadas de capas anteriores. */
+.pastoral-editor-v3 .pastoral-tool-dock > button {
+  order: initial !important;
+  display: flex !important;
+  margin: 0 !important;
+  border-top: 0 !important;
+  border-left: 0 !important;
+}
+
+@media (orientation: portrait) and (max-width: 767px) {
+  .pastoral-editor-v3 .pastoral-tool-dock > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}

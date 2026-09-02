@@ -1,0 +1,417 @@
+/* Centro Pastoral — interacción de edición tipo CapCut.
+   El lienzo permanece arriba. Todas las herramientas viven en una única cinta
+   horizontal inferior con scroll lateral y una sola bandeja contextual encima. */
+
+@media (max-width: 1023px) {
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell.has-panel {
+    display: grid !important;
+    grid-template-areas:
+      'stage'
+      'dock' !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) 58px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* El stage ya no estira el contenedor del canvas a toda la altura disponible. */
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-stage {
+    grid-area: stage !important;
+    display: flex !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    padding: .38rem .45rem 0 !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-canvas-wrap,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell.has-panel .pastoral-canvas-wrap {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    flex: 0 0 auto !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-canvas-wrap > div {
+    display: flex !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  /* Las páginas quedan pegadas al lienzo y no al fondo del viewport. */
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-pages-strip,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell.has-panel .pastoral-pages-strip {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .18rem !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    margin-top: .22rem !important;
+    padding: 0 !important;
+    border-top: 1px solid rgba(228, 231, 236, .9) !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Cinta única inferior: CapCut-style. Nunca reparte 7 botones a la fuerza. */
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell.has-panel .pastoral-tool-dock {
+    grid-area: dock !important;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    flex: 0 0 58px !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain !important;
+    scroll-snap-type: x proximity !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0 max(.3rem, env(safe-area-inset-left, 0px)) !important;
+    border-top: 1px solid #E4E7EC !important;
+    background: rgba(255,255,255,.995) !important;
+    scrollbar-width: none !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock::-webkit-scrollbar,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-pages-strip::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock > .pastoral-tool-button {
+    order: 0 !important;
+    display: flex !important;
+    width: 74px !important;
+    min-width: 74px !important;
+    max-width: 74px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    flex: 0 0 74px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .22rem !important;
+    scroll-snap-align: start !important;
+    margin: 0 !important;
+    padding: .22rem .18rem .18rem !important;
+    border: 0 !important;
+    border-left: 0 !important;
+    border-top: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #667085 !important;
+    font-size: .56rem !important;
+    font-weight: 650 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock > .pastoral-tool-button svg {
+    width: 19px !important;
+    height: 19px !important;
+    flex: none !important;
+    stroke-width: 1.65 !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock > .pastoral-tool-button.is-active {
+    color: #C0392B !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock > .pastoral-tool-button.is-active::before {
+    top: auto !important;
+    right: 24% !important;
+    bottom: 0 !important;
+    left: 24% !important;
+    width: auto !important;
+    height: 2px !important;
+  }
+
+  /* Una sola bandeja contextual. Flota sobre el espacio inferior, sin empujar el canvas. */
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-panel {
+    position: absolute !important;
+    z-index: 52 !important;
+    right: 0 !important;
+    bottom: 58px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: min(39dvh, 330px) !important;
+    max-height: min(39dvh, 330px) !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-top: 1px solid #E4E7EC !important;
+    border-radius: 12px 12px 0 0 !important;
+    background: rgba(255,255,255,.995) !important;
+    box-shadow: 0 -4px 16px rgba(16,24,40,.08) !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-sheet-handle {
+    display: grid !important;
+    width: 100% !important;
+    height: 14px !important;
+    min-height: 14px !important;
+    place-items: center !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-sheet-handle span {
+    width: 28px !important;
+    height: 3px !important;
+    border-radius: 999px !important;
+    background: #D0D5DD !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-panel-scroll {
+    height: calc(100% - 14px) !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: .3rem .7rem .65rem !important;
+  }
+
+  /* Menos aspecto de ficha/administración: la bandeja es una superficie continua. */
+  .pastoral-editor-v3 .pastoral-panel-heading p { display: none !important; }
+  .pastoral-editor-v3 .pastoral-panel-heading h3 { font-size: .72rem !important; }
+  .pastoral-editor-v3 .pastoral-panel-label { margin-bottom: .28rem !important; font-size: .52rem !important; }
+  .pastoral-editor-v3 .pastoral-panel-section + .pastoral-panel-section { padding-top: .45rem !important; }
+
+  /* Plantillas: tira horizontal, no tarjetas 2×N apiladas. */
+  .pastoral-editor-v3 aside[aria-label='Panel plantillas'] .pastoral-tool-panel-scroll {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  .pastoral-editor-v3 aside[aria-label='Panel plantillas'] .pastoral-panel-content {
+    min-width: max-content !important;
+    height: 100% !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: .85rem !important;
+    padding-top: .15rem !important;
+  }
+  .pastoral-editor-v3 aside[aria-label='Panel plantillas'] .pastoral-panel-heading { display: none !important; }
+  .pastoral-editor-v3 aside[aria-label='Panel plantillas'] .pastoral-panel-section {
+    flex: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+  .pastoral-editor-v3 aside[aria-label='Panel plantillas'] .pastoral-template-grid {
+    display: flex !important;
+    width: max-content !important;
+    grid-template-columns: none !important;
+    gap: .42rem !important;
+  }
+  .pastoral-editor-v3 aside[aria-label='Panel plantillas'] .pastoral-template-option {
+    width: 104px !important;
+    min-width: 104px !important;
+    flex: 0 0 104px !important;
+  }
+
+  /* Elementos: dos filas compactas que solo hacen scroll cuando hay más recursos. */
+  .pastoral-editor-v3 .pastoral-elements-top {
+    min-height: 36px !important;
+    flex: 0 0 auto !important;
+    padding-bottom: .35rem !important;
+  }
+  .pastoral-editor-v3 .pastoral-elements-grid {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: repeat(2, 64px) !important;
+    grid-auto-columns: 64px !important;
+    gap: .38rem !important;
+    max-height: 136px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  .pastoral-editor-v3 .pastoral-elements-grid button {
+    width: 64px !important;
+    height: 64px !important;
+    aspect-ratio: 1 !important;
+  }
+
+  /* Texto: controles planos y desplazables, sin bloques dominantes. */
+  .pastoral-editor-v3 .pastoral-text-presets {
+    display: flex !important;
+    width: 100% !important;
+    grid-template-columns: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border: 0 !important;
+    border-bottom: 1px solid #E4E7EC !important;
+    border-radius: 0 !important;
+    scrollbar-width: none !important;
+  }
+  .pastoral-editor-v3 .pastoral-text-presets button {
+    min-width: 76px !important;
+    flex: 0 0 auto !important;
+    border: 0 !important;
+    border-left: 0 !important;
+    background: transparent !important;
+  }
+  .pastoral-editor-v3 .pastoral-font-strip,
+  .pastoral-editor-v3 .pastoral-inline-toolbar,
+  .pastoral-editor-v3 .pastoral-color-strip {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Fondos/temas: catálogo horizontal como presets de un editor. */
+  .pastoral-editor-v3 .pastoral-theme-grid {
+    display: flex !important;
+    width: 100% !important;
+    grid-template-columns: none !important;
+    gap: .42rem !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    padding-bottom: .12rem !important;
+  }
+  .pastoral-editor-v3 .pastoral-theme-option {
+    width: 92px !important;
+    min-width: 92px !important;
+    height: 62px !important;
+    flex: 0 0 92px !important;
+  }
+
+  /* Diseño en una sola fila. */
+  .pastoral-editor-v3 .pastoral-aspect-control {
+    display: flex !important;
+    width: 100% !important;
+    grid-template-columns: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-radius: 0 !important;
+    scrollbar-width: none !important;
+  }
+  .pastoral-editor-v3 .pastoral-aspect-control button {
+    width: 108px !important;
+    min-width: 108px !important;
+    flex: 0 0 108px !important;
+  }
+
+  /* Capas también se comporta como una tira de edición. */
+  .pastoral-editor-v3 .pastoral-layer-list {
+    display: flex !important;
+    width: 100% !important;
+    max-height: 42px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-top: 0 !important;
+    scrollbar-width: none !important;
+  }
+  .pastoral-editor-v3 .pastoral-layer-list button {
+    width: 142px !important;
+    min-width: 142px !important;
+    flex: 0 0 142px !important;
+    border-top: 0 !important;
+    border-right: 1px solid #F0F1F3 !important;
+    padding: 0 .45rem !important;
+  }
+  .pastoral-editor-v3 .pastoral-layer-actions {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    gap: .3rem !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding-top: .4rem !important;
+    scrollbar-width: none !important;
+  }
+  .pastoral-editor-v3 .pastoral-layer-actions > button,
+  .pastoral-editor-v3 .pastoral-layer-actions > label {
+    width: auto !important;
+    min-width: max-content !important;
+    flex: 0 0 auto !important;
+    grid-column: auto !important;
+  }
+  .pastoral-editor-v3 .pastoral-delete-layer {
+    border-top: 0 !important;
+    padding: 0 .55rem !important;
+  }
+
+  /* Selector bíblico: misma geometría de la bandeja, no modal externo al editor. */
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] {
+    inset: auto 0 calc(4rem + 58px + env(safe-area-inset-bottom,0px)) 0 !important;
+    height: min(39dvh, 330px) !important;
+    max-height: min(39dvh, 330px) !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] > section {
+    border-radius: 12px 12px 0 0 !important;
+  }
+}
+
+/* En horizontal seguimos usando UNA sola cinta inferior, no un rail lateral. */
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell.has-panel {
+    grid-template-areas: 'stage' 'dock' !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) 52px !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock,
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-editor-shell.has-panel .pastoral-tool-dock {
+    display: flex !important;
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    flex: 0 0 52px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-right: 0 !important;
+    border-top: 1px solid #E4E7EC !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-dock > .pastoral-tool-button {
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    flex: 0 0 70px !important;
+    font-size: .52rem !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 .pastoral-tool-panel {
+    top: auto !important;
+    right: 0 !important;
+    bottom: 52px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: min(43dvh, 190px) !important;
+    max-height: min(43dvh, 190px) !important;
+    border-left: 0 !important;
+    border-top: 1px solid #E4E7EC !important;
+    border-radius: 10px 10px 0 0 !important;
+  }
+}

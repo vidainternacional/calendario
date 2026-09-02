@@ -3,66 +3,58 @@ export default function PastoralLoading() {
     <main
       aria-busy="true"
       aria-label="Cargando Centro Pastoral"
-      className="mx-auto min-h-screen max-w-3xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7"
+      className="pastoral-workspace mx-auto min-h-screen max-w-3xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7"
     >
       <div className="animate-pulse">
-        <header className="mb-5">
-          <div className="h-4 w-36 rounded-full bg-indigo-100" />
-          <div className="mt-3 h-9 w-56 max-w-full rounded-xl bg-slate-200" />
-          <div className="mt-3 h-4 w-full max-w-lg rounded-full bg-slate-200" />
+        <div className="pastoral-workspace-back">
+          <div className="h-10 w-10 rounded-full bg-slate-200" />
+        </div>
+
+        <header className="pastoral-workspace-header">
+          <div className="pastoral-eyebrow">
+            <span className="h-4 w-4 rounded bg-violet-200" />
+            <span className="h-3 w-24 rounded-full bg-violet-100" />
+          </div>
+          <div className="pastoral-workspace-heading">
+            <div className="h-8 w-44 max-w-[65vw] rounded-lg bg-slate-200" />
+            <div className="h-6 w-24 rounded-full bg-violet-100" />
+          </div>
         </header>
 
-        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-5 sm:p-6">
-            <div className="h-3 w-36 rounded-full bg-white/25" />
-            <div className="mt-3 h-7 w-48 rounded-lg bg-white/35" />
-            <div className="mt-3 h-4 w-full max-w-xl rounded-full bg-white/20" />
-            <div className="mt-2 h-4 w-3/4 max-w-md rounded-full bg-white/20" />
-            <div className="mt-5 h-11 w-full rounded-xl bg-white/80 sm:w-48" />
+        <section className="pastoral-project" aria-label="Cargando proyecto pastoral">
+          <div className="pastoral-section-label">
+            <span className="h-4 w-4 rounded bg-slate-200" />
+            <span className="h-3 w-16 rounded-full bg-slate-200" />
           </div>
 
-          <div className="p-4 sm:p-5">
-            <div className="mb-5">
-              <div className="h-5 w-40 rounded-full bg-slate-200" />
-              <div className="mt-2 h-3 w-56 max-w-full rounded-full bg-slate-100" />
-              <div className="mt-3 space-y-2">
-                {Array.from({ length: 2 }).map((_, index) => (
-                  <div key={index} className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                    <div className="h-11 w-11 shrink-0 rounded-xl bg-white" />
-                    <div className="min-w-0 flex-1">
-                      <div className="h-4 w-2/3 rounded-full bg-slate-200" />
-                      <div className="mt-2 h-3 w-full rounded-full bg-slate-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="pastoral-current-project">
+            <span className="pastoral-current-project-icon">
+              <span className="block h-5 w-5 rounded bg-violet-200" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-36 max-w-[45vw] rounded-full bg-slate-200" />
+                <span className="h-5 w-14 rounded-full bg-slate-100" />
+              </span>
+              <span className="mt-2 block h-3 w-28 rounded-full bg-slate-100" />
+            </span>
+            <span className="h-4 w-4 rounded bg-slate-100" />
+          </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className={`flex min-h-20 items-center gap-3 bg-white p-4 ${index > 0 ? 'border-t border-slate-100' : ''}`}>
-                  <div className="h-11 w-11 shrink-0 rounded-xl bg-slate-100" />
-                  <div className="min-w-0 flex-1">
-                    <div className="h-4 w-28 rounded-full bg-slate-200" />
-                    <div className="mt-2 h-3 w-full rounded-full bg-slate-100" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {Array.from({ length: 2 }).map((_, index) => (
-                <div key={index} className="flex min-h-20 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                  <div className="h-10 w-10 shrink-0 rounded-xl bg-white" />
-                  <div className="min-w-0 flex-1">
-                    <div className="h-4 w-16 rounded-full bg-slate-200" />
-                    <div className="mt-2 h-3 w-20 max-w-full rounded-full bg-slate-100" />
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="pastoral-primary-action pointer-events-none">
+            <span className="h-4 w-4 rounded bg-white/45" />
+            <span className="h-3 w-24 rounded-full bg-white/45" />
           </div>
         </section>
+
+        <nav className="grid grid-cols-3 gap-x-3 gap-y-5 py-6 sm:grid-cols-4" aria-label="Cargando herramientas pastorales">
+          {Array.from({ length: 7 }).map((_, index) => (
+            <div key={index} className="flex min-h-[78px] flex-col items-center justify-center gap-2 rounded-2xl px-1 text-center">
+              <div className="h-7 w-7 rounded-lg bg-slate-200" />
+              <div className="h-3 w-16 max-w-full rounded-full bg-slate-200" />
+            </div>
+          ))}
+        </nav>
       </div>
       <span className="sr-only">Cargando herramientas pastorales…</span>
     </main>

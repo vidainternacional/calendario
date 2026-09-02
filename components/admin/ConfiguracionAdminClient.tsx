@@ -5,7 +5,19 @@ import Image from 'next/image'
 import { Check, Smartphone, Sparkles } from 'lucide-react'
 import { updateEstudioPrompt, updateIconVariant } from '@/app/actions/admin'
 
-export default function ConfiguracionAdminClient({ activeIconVariant, initialEstudioPrompt }: { activeIconVariant: string; initialEstudioPrompt: string }) {
+export default function ConfiguracionAdminClient({
+  activeIconVariant,
+  initialEstudioPrompt,
+  isAdministrator,
+  initialPastoralTemplates,
+}: {
+  activeIconVariant: string
+  initialEstudioPrompt: string
+  isAdministrator: boolean
+  initialPastoralTemplates: unknown
+}) {
+  void isAdministrator
+  void initialPastoralTemplates
   const [selectedIcon, setSelectedIcon] = useState<'dorado' | 'blanco' | 'rojo'>((activeIconVariant as any) || 'dorado')
   const [iconSaving, setIconSaving] = useState(false)
   const [prompt, setPrompt] = useState(initialEstudioPrompt || '')

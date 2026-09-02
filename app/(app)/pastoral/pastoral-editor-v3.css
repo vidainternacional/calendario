@@ -1,0 +1,955 @@
+/* Centro Pastoral V3 — capa final UX/UI. Solo presentación y organización visual. */
+
+.pastoral-editor-v3 {
+  --v3-accent: #C0392B;
+  --v3-text: #182230;
+  --v3-muted: #667085;
+  --v3-line: #E4E7EC;
+  --v3-soft: #F7F8FA;
+  --v3-stage: #F1F3F5;
+  --v3-danger: #D92D20;
+}
+
+.pastoral-editor-v3 > header {
+  border-bottom: 1px solid var(--v3-line) !important;
+  box-shadow: none !important;
+}
+
+.pastoral-editor-v3 > header nav {
+  border-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.pastoral-editor-v3 .pastoral-editor-section {
+  min-height: 0;
+}
+
+.pastoral-editor-v3 .pastoral-editor-shell {
+  position: relative !important;
+  display: grid !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: var(--v3-stage) !important;
+}
+
+.pastoral-editor-v3 .pastoral-stage {
+  min-width: 0;
+  min-height: 0 !important;
+  background: var(--v3-stage) !important;
+}
+
+.pastoral-editor-v3 .pastoral-canvas-wrap {
+  min-width: 0;
+  min-height: 0 !important;
+}
+
+.pastoral-editor-v3 .pastoral-tool-dock {
+  border-color: var(--v3-line) !important;
+  background: rgba(255,255,255,.99) !important;
+  box-shadow: none !important;
+}
+
+.pastoral-editor-v3 .pastoral-tool-button {
+  position: relative;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--v3-muted) !important;
+  box-shadow: none !important;
+}
+
+.pastoral-editor-v3 .pastoral-tool-button svg {
+  stroke-width: 1.7;
+}
+
+.pastoral-editor-v3 .pastoral-tool-button.is-active {
+  color: var(--v3-accent) !important;
+}
+
+.pastoral-editor-v3 .pastoral-tool-button.is-active::before {
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--v3-accent);
+  content: '';
+}
+
+.pastoral-editor-v3 .pastoral-tool-button:disabled {
+  opacity: .35;
+}
+
+.pastoral-editor-v3 .pastoral-tool-panel {
+  overflow: hidden !important;
+  border-color: var(--v3-line) !important;
+  background: rgba(255,255,255,.995) !important;
+  box-shadow: 0 -3px 14px rgba(16,24,40,.06) !important;
+}
+
+.pastoral-editor-v3 .pastoral-tool-panel-scroll {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.pastoral-editor-v3 .pastoral-sheet-handle {
+  background: transparent !important;
+}
+
+.pastoral-editor-v3 .pastoral-sheet-handle span {
+  background: #D0D5DD !important;
+}
+
+.pastoral-editor-v3 .pastoral-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.pastoral-editor-v3 .pastoral-panel-heading h3 {
+  color: var(--v3-text);
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+.pastoral-editor-v3 .pastoral-panel-heading p,
+.pastoral-editor-v3 .pastoral-empty-panel,
+.pastoral-editor-v3 .pastoral-bible-launch p {
+  margin-top: .15rem;
+  color: var(--v3-muted);
+  font-size: .68rem;
+  line-height: 1.45;
+}
+
+.pastoral-editor-v3 .pastoral-panel-section + .pastoral-panel-section {
+  padding-top: .75rem;
+  border-top: 1px solid var(--v3-line);
+}
+
+.pastoral-editor-v3 .pastoral-panel-label {
+  margin-bottom: .4rem;
+  color: #98A2B3;
+  font-size: .58rem;
+  font-weight: 750;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.pastoral-editor-v3 .pastoral-minimal-action,
+.pastoral-editor-v3 .pastoral-minimal-danger {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  border: 0;
+  border-radius: .42rem;
+  background: transparent;
+  padding: 0 .65rem;
+  color: var(--v3-accent);
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.pastoral-editor-v3 .pastoral-minimal-action svg,
+.pastoral-editor-v3 .pastoral-minimal-danger svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pastoral-editor-v3 .pastoral-minimal-danger {
+  color: var(--v3-danger);
+}
+
+/* Plantillas */
+.pastoral-editor-v3 .pastoral-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: .5rem;
+}
+
+.pastoral-editor-v3 .pastoral-template-option {
+  overflow: hidden;
+  border: 1px solid var(--v3-line);
+  border-radius: .5rem;
+  background: white;
+  color: var(--v3-text);
+  text-align: left;
+}
+
+.pastoral-editor-v3 .pastoral-template-preview {
+  position: relative;
+  display: block;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.pastoral-editor-v3 .pastoral-template-preview i {
+  position: absolute;
+  left: 10%;
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.pastoral-editor-v3 .pastoral-template-preview i:nth-child(1) { top: 28%; width: 58%; opacity: .9; }
+.pastoral-editor-v3 .pastoral-template-preview i:nth-child(2) { top: 49%; width: 42%; opacity: .52; }
+.pastoral-editor-v3 .pastoral-template-preview i:nth-child(3) { top: 69%; width: 68%; opacity: .3; }
+
+.pastoral-editor-v3 .pastoral-template-option > span:last-child {
+  display: block;
+  padding: .42rem .5rem;
+  font-size: .66rem;
+  font-weight: 700;
+}
+
+/* Elementos */
+.pastoral-editor-v3 .pastoral-elements-top {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  border-bottom: 1px solid var(--v3-line);
+  padding-bottom: .55rem;
+}
+
+.pastoral-editor-v3 .pastoral-elements-top input {
+  min-width: 0;
+  min-height: 34px;
+  flex: 1;
+  border: 0;
+  border-bottom: 1px solid #D0D5DD;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 .25rem;
+  color: var(--v3-text);
+  font-size: .72rem;
+  outline: none;
+}
+
+.pastoral-editor-v3 .pastoral-elements-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: .4rem;
+  max-height: 148px;
+  overflow-y: auto;
+  padding-right: .1rem;
+}
+
+.pastoral-editor-v3 .pastoral-elements-grid button {
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid var(--v3-line);
+  border-radius: .4rem;
+  background: white;
+}
+
+.pastoral-editor-v3 .pastoral-elements-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pastoral-editor-v3 .pastoral-external-banks {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  overflow-x: auto;
+  border-top: 1px solid var(--v3-line);
+  padding-top: .55rem;
+  scrollbar-width: none;
+}
+
+.pastoral-editor-v3 .pastoral-external-banks > span {
+  flex: none;
+  color: #98A2B3;
+  font-size: .58rem;
+  font-weight: 700;
+}
+
+.pastoral-editor-v3 .pastoral-external-banks a {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: .2rem;
+  color: var(--v3-muted);
+  font-size: .64rem;
+  font-weight: 650;
+}
+
+.pastoral-editor-v3 .pastoral-external-banks svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* Texto + Párrafo unificados */
+.pastoral-editor-v3 .pastoral-text-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  overflow: hidden;
+  border: 1px solid var(--v3-line);
+  border-radius: .45rem;
+}
+
+.pastoral-editor-v3 .pastoral-text-presets button {
+  min-width: 0;
+  min-height: 36px;
+  border: 0;
+  border-left: 1px solid var(--v3-line);
+  background: white;
+  padding: 0 .2rem;
+  color: #475467;
+  font-size: .65rem;
+  font-weight: 680;
+}
+
+.pastoral-editor-v3 .pastoral-text-presets button:first-child {
+  border-left: 0;
+}
+
+.pastoral-editor-v3 .pastoral-text-presets button.is-active {
+  background: rgba(192,57,43,.06);
+  color: var(--v3-accent);
+}
+
+.pastoral-editor-v3 .pastoral-text-presets svg {
+  width: 13px;
+  height: 13px;
+  margin-right: .15rem;
+  vertical-align: -2px;
+}
+
+.pastoral-editor-v3 .pastoral-font-strip,
+.pastoral-editor-v3 .pastoral-inline-toolbar,
+.pastoral-editor-v3 .pastoral-color-strip,
+.pastoral-editor-v3 .pastoral-background-images {
+  display: flex;
+  gap: .35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pastoral-editor-v3 .pastoral-font-strip {
+  border-bottom: 1px solid var(--v3-line);
+  padding-bottom: .35rem;
+}
+
+.pastoral-editor-v3 .pastoral-font-strip button {
+  flex: none;
+  min-height: 30px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 0 .45rem;
+  color: #475467;
+  font-size: .68rem;
+}
+
+.pastoral-editor-v3 .pastoral-font-strip button.is-active {
+  border-bottom-color: var(--v3-accent);
+  color: var(--v3-accent);
+}
+
+.pastoral-editor-v3 .pastoral-inline-toolbar {
+  align-items: center;
+  padding-bottom: .1rem;
+}
+
+.pastoral-editor-v3 .pastoral-inline-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: .35rem;
+  background: transparent;
+  color: #475467;
+}
+
+.pastoral-editor-v3 .pastoral-inline-icon.is-active {
+  background: rgba(192,57,43,.08);
+  color: var(--v3-accent);
+}
+
+.pastoral-editor-v3 .pastoral-inline-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.pastoral-editor-v3 .pastoral-toolbar-divider {
+  width: 1px;
+  height: 22px;
+  flex: none;
+  background: var(--v3-line);
+}
+
+.pastoral-editor-v3 .pastoral-font-size {
+  display: inline-flex;
+  min-height: 32px;
+  flex: none;
+  align-items: center;
+  gap: .25rem;
+  border-left: 1px solid var(--v3-line);
+  padding-left: .55rem;
+  color: var(--v3-muted);
+  font-size: .62rem;
+  font-weight: 650;
+}
+
+.pastoral-editor-v3 .pastoral-font-size input {
+  width: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--v3-text);
+  font-weight: 750;
+  text-align: right;
+  outline: none;
+}
+
+.pastoral-editor-v3 .pastoral-text-detail {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  border-top: 1px solid var(--v3-line);
+  padding-top: .55rem;
+}
+
+.pastoral-editor-v3 .pastoral-text-detail > label {
+  min-width: 130px;
+  flex: 1;
+  color: var(--v3-muted);
+  font-size: .62rem;
+  font-weight: 650;
+}
+
+.pastoral-editor-v3 .pastoral-text-detail input[type='range'] {
+  width: 100%;
+}
+
+.pastoral-editor-v3 .pastoral-color-strip button {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border: 1px solid #D0D5DD;
+  border-radius: 999px;
+}
+
+.pastoral-editor-v3 .pastoral-color-strip button.is-active {
+  outline: 2px solid var(--v3-accent);
+  outline-offset: 2px;
+}
+
+/* Biblia integrada */
+.pastoral-editor-v3 .pastoral-bible-launch {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: .65rem;
+}
+
+.pastoral-editor-v3 .pastoral-bible-launch > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--v3-accent);
+}
+
+.pastoral-editor-v3 .pastoral-bible-launch strong {
+  color: var(--v3-text);
+  font-size: .76rem;
+}
+
+.pastoral-editor-v3 .pastoral-bible-launch button {
+  min-height: 32px;
+  border: 0;
+  border-radius: .4rem;
+  background: rgba(192,57,43,.07);
+  padding: 0 .65rem;
+  color: var(--v3-accent);
+  font-size: .66rem;
+  font-weight: 700;
+}
+
+/* Fondos/temas */
+.pastoral-editor-v3 .pastoral-background-actions {
+  display: flex;
+  gap: .4rem;
+  border-bottom: 1px solid var(--v3-line);
+  padding-bottom: .45rem;
+}
+
+.pastoral-editor-v3 .pastoral-background-images button {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--v3-line);
+  border-radius: .4rem;
+}
+
+.pastoral-editor-v3 .pastoral-background-images img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pastoral-editor-v3 .pastoral-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: .45rem;
+}
+
+.pastoral-editor-v3 .pastoral-theme-option {
+  position: relative;
+  min-height: 62px;
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: .45rem;
+  padding: .45rem;
+  text-align: left;
+}
+
+.pastoral-editor-v3 .pastoral-theme-option > span:last-child {
+  position: absolute;
+  left: .45rem;
+  right: .35rem;
+  bottom: .35rem;
+  overflow: hidden;
+  font-size: .57rem;
+  font-weight: 740;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pastoral-editor-v3 .pastoral-theme-swatches {
+  display: flex;
+  gap: 3px;
+}
+
+.pastoral-editor-v3 .pastoral-theme-swatches i {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.5);
+}
+
+/* Diseño */
+.pastoral-editor-v3 .pastoral-aspect-control {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  overflow: hidden;
+  border: 1px solid var(--v3-line);
+  border-radius: .45rem;
+}
+
+.pastoral-editor-v3 .pastoral-aspect-control button {
+  display: flex;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  border: 0;
+  border-left: 1px solid var(--v3-line);
+  background: white;
+  color: #667085;
+}
+
+.pastoral-editor-v3 .pastoral-aspect-control button:first-child { border-left: 0; }
+.pastoral-editor-v3 .pastoral-aspect-control button.is-active { background: rgba(192,57,43,.06); color: var(--v3-accent); }
+.pastoral-editor-v3 .pastoral-aspect-control svg { width: 14px; height: 14px; }
+.pastoral-editor-v3 .pastoral-aspect-control strong { display:block; font-size:.65rem; }
+.pastoral-editor-v3 .pastoral-aspect-control small { display:block; font-size:.48rem; opacity:.75; }
+
+/* Capas */
+.pastoral-editor-v3 .pastoral-layer-list {
+  max-height: 132px;
+  overflow-y: auto;
+  border-top: 1px solid var(--v3-line);
+  border-bottom: 1px solid var(--v3-line);
+}
+
+.pastoral-editor-v3 .pastoral-layer-list button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: .45rem;
+  min-height: 34px;
+  border: 0;
+  border-top: 1px solid #F0F1F3;
+  background: transparent;
+  color: #475467;
+  text-align: left;
+  font-size: .68rem;
+}
+
+.pastoral-editor-v3 .pastoral-layer-list button:first-child { border-top: 0; }
+.pastoral-editor-v3 .pastoral-layer-list button.is-active { color: var(--v3-accent); }
+.pastoral-editor-v3 .pastoral-layer-list svg { width: 13px; height: 13px; }
+.pastoral-editor-v3 .pastoral-layer-list small { color:#98A2B3; font-size:.56rem; }
+
+.pastoral-editor-v3 .pastoral-layer-actions {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: .35rem;
+}
+
+.pastoral-editor-v3 .pastoral-layer-actions > button:not(.pastoral-delete-layer) {
+  min-height: 34px;
+  border: 1px solid var(--v3-line);
+  border-radius: .4rem;
+  background: white;
+  color: #475467;
+  font-size: .62rem;
+  font-weight: 680;
+}
+
+.pastoral-editor-v3 .pastoral-layer-actions > button svg {
+  width: 13px;
+  height: 13px;
+  margin-right: .2rem;
+  vertical-align: -2px;
+}
+
+.pastoral-editor-v3 .pastoral-layer-actions label {
+  grid-column: 1/-1;
+  color: var(--v3-muted);
+  font-size: .62rem;
+  font-weight: 650;
+}
+
+.pastoral-editor-v3 .pastoral-layer-actions label input { width:100%; margin-top:.2rem; }
+
+.pastoral-editor-v3 .pastoral-delete-layer {
+  grid-column: 1/-1;
+  min-height: 34px;
+  border: 0;
+  border-top: 1px solid #FEE4E2;
+  background: transparent;
+  color: var(--v3-danger);
+  font-size: .66rem;
+  font-weight: 720;
+}
+
+/* Compartir */
+.pastoral-editor-v3 .pastoral-share-actions {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  overflow: hidden;
+  border: 1px solid var(--v3-line);
+  border-radius: .5rem;
+  background: white;
+}
+
+.pastoral-editor-v3 .pastoral-share-actions button {
+  display: flex;
+  min-width: 0;
+  min-height: 56px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .2rem;
+  border: 0;
+  border-left: 1px solid var(--v3-line);
+  background: transparent;
+  color: #475467;
+  font-size: .62rem;
+  font-weight: 680;
+}
+
+.pastoral-editor-v3 .pastoral-share-actions button:first-child { border-left:0; }
+.pastoral-editor-v3 .pastoral-share-actions svg { width:17px; height:17px; color:var(--v3-accent); }
+
+/* Verse picker se integra visualmente a la bandeja en móvil. */
+@media (orientation: portrait) and (max-width: 767px) {
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) .pastoral-editor-v3 {
+    position: fixed !important;
+    z-index: 40 !important;
+    inset: 0 0 calc(4rem + env(safe-area-inset-bottom,0px)) 0 !important;
+    display: flex !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: var(--v3-stage) !important;
+  }
+
+  .pastoral-editor-v3 > header {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-editor-section {
+    display: flex !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    padding: 0 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-editor-shell,
+  .pastoral-editor-v3 .pastoral-editor-shell.has-panel {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    grid-template-areas: 'stage' 'dock' !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) 48px !important;
+    height: auto !important;
+    margin: 0 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-stage {
+    display: grid !important;
+    grid-area: stage !important;
+    grid-template-areas: 'canvas' 'pages' !important;
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: minmax(0,1fr) 36px !important;
+    gap: 0 !important;
+    padding: .35rem .45rem 0 !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-canvas-wrap {
+    grid-area: canvas !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: .2rem 0 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-canvas-wrap > div {
+    width: 100%;
+    min-height: 0;
+    align-items: flex-start !important;
+    overflow: hidden !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-pages-strip {
+    grid-area: pages !important;
+    min-height: 36px !important;
+    justify-content: center;
+    gap: .2rem !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 !important;
+    border-top: 1px solid rgba(228,231,236,.85);
+  }
+
+  .pastoral-editor-v3 .pastoral-page-chip > button:first-child,
+  .pastoral-editor-v3 .pastoral-pages-strip > button[aria-label='Nueva página'] {
+    min-height: 35px !important;
+    min-width: 36px !important;
+    width: auto !important;
+    padding: 0 .45rem !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-page-chip > button:first-child span { display:none !important; }
+
+  .pastoral-editor-v3 .pastoral-tool-dock {
+    grid-area: dock !important;
+    display: grid !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    grid-template-columns: repeat(7,minmax(0,1fr)) !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-tool-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    gap: .05rem !important;
+    padding: .15rem 0 !important;
+    font-size: .50rem !important;
+    font-weight: 650 !important;
+    line-height: 1 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-tool-button svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-tool-panel {
+    position: absolute !important;
+    z-index: 46 !important;
+    right: 0 !important;
+    bottom: 48px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: min(42dvh, 360px) !important;
+    max-height: min(42dvh, 360px) !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-top: 1px solid var(--v3-line) !important;
+    border-radius: 14px 14px 0 0 !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-sheet-handle {
+    height: 15px !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-sheet-handle span {
+    width: 28px !important;
+    height: 3px !important;
+  }
+
+  .pastoral-editor-v3 .pastoral-tool-panel-scroll {
+    height: calc(min(42dvh,360px) - 15px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: .25rem .75rem .75rem !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] {
+    position: fixed !important;
+    z-index: 150 !important;
+    inset: auto 0 calc(4rem + 48px + env(safe-area-inset-bottom,0px)) 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: min(44dvh, 390px) !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] > section {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-top: 1px solid var(--v3-line) !important;
+    border-radius: 14px 14px 0 0 !important;
+    background: #fff !important;
+    box-shadow: 0 -3px 14px rgba(16,24,40,.06) !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] > section > header {
+    padding: .55rem .75rem !important;
+  }
+
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] > section > header h2 { font-size:.78rem !important; }
+  body:has(.pastoral-editor-v3 .pastoral-editor-shell) [role='dialog'][aria-label='Seleccionar versículo'] > section > header p { font-size:.6rem !important; }
+
+  .pastoral-editor-v3 .pastoral-theme-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .pastoral-editor-v3 .pastoral-template-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+/* Celular horizontal: rail mínimo + lienzo + páginas; inspector overlay. */
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  .pastoral-editor-v3 .pastoral-editor-section { min-height:0; }
+  .pastoral-editor-v3 .pastoral-editor-shell,
+  .pastoral-editor-v3 .pastoral-editor-shell.has-panel {
+    display:grid !important;
+    grid-template-areas:'dock stage' !important;
+    grid-template-columns: 52px minmax(0,1fr) !important;
+    grid-template-rows:minmax(0,1fr) !important;
+    min-height:0 !important;
+  }
+  .pastoral-editor-v3 .pastoral-tool-dock {
+    display:grid !important;
+    grid-area:dock !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:repeat(7,minmax(0,1fr)) !important;
+    overflow:hidden !important;
+    padding:0 !important;
+    border-right:1px solid var(--v3-line) !important;
+    border-top:0 !important;
+  }
+  .pastoral-editor-v3 .pastoral-tool-button {
+    min-width:0 !important;
+    min-height:0 !important;
+    width:52px !important;
+    height:auto !important;
+    font-size:0 !important;
+  }
+  .pastoral-editor-v3 .pastoral-tool-button svg { width:16px !important; height:16px !important; }
+  .pastoral-editor-v3 .pastoral-stage {
+    grid-area:stage !important;
+    display:grid !important;
+    grid-template-areas:'canvas' 'pages' !important;
+    grid-template-rows:minmax(0,1fr) 38px !important;
+    gap:0 !important;
+    padding:.25rem .4rem 0 !important;
+  }
+  .pastoral-editor-v3 .pastoral-canvas-wrap { grid-area:canvas !important; min-height:0; }
+  .pastoral-editor-v3 .pastoral-pages-strip { grid-area:pages !important; min-height:38px; overflow-x:auto !important; border-top:1px solid var(--v3-line); }
+  .pastoral-editor-v3 .pastoral-tool-panel {
+    position:absolute !important;
+    z-index:50 !important;
+    top:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    left:auto !important;
+    width:min(290px,45vw) !important;
+    height:100% !important;
+    max-height:none !important;
+    border-radius:0 !important;
+    border-left:1px solid var(--v3-line) !important;
+    box-shadow:-4px 0 14px rgba(16,24,40,.07) !important;
+  }
+  .pastoral-editor-v3 .pastoral-sheet-handle { display:none !important; }
+  .pastoral-editor-v3 .pastoral-tool-panel-scroll { height:100% !important; overflow:auto !important; padding:.65rem !important; }
+}
+
+/* iPad / escritorio */
+@media (min-width: 768px) and (min-height: 621px) {
+  .pastoral-editor-v3 .pastoral-editor-shell {
+    display:grid !important;
+    grid-template-areas:'stage panel' 'dock dock' !important;
+    grid-template-columns:minmax(0,1fr) 0 !important;
+    grid-template-rows:minmax(540px,calc(100dvh - 205px)) 54px !important;
+    margin:0 !important;
+  }
+  .pastoral-editor-v3 .pastoral-editor-shell.has-panel { grid-template-columns:minmax(0,1fr) 300px !important; }
+  .pastoral-editor-v3 .pastoral-stage {
+    display:grid !important;
+    grid-area:stage !important;
+    grid-template-areas:'pages canvas' !important;
+    grid-template-columns:120px minmax(0,1fr) !important;
+    grid-template-rows:minmax(0,1fr) !important;
+    gap:.6rem !important;
+    padding:.7rem !important;
+  }
+  .pastoral-editor-v3 .pastoral-canvas-wrap { grid-area:canvas !important; }
+  .pastoral-editor-v3 .pastoral-pages-strip {
+    grid-area:pages !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    justify-content:flex-start !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    border-right:1px solid var(--v3-line) !important;
+    padding-right:.45rem !important;
+  }
+  .pastoral-editor-v3 .pastoral-tool-dock {
+    grid-area:dock !important;
+    display:grid !important;
+    grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+    min-height:54px !important;
+    padding:0 !important;
+  }
+  .pastoral-editor-v3 .pastoral-tool-button { min-width:0 !important; min-height:54px !important; }
+  .pastoral-editor-v3 .pastoral-tool-panel {
+    grid-area:panel !important;
+    position:relative !important;
+    width:100% !important;
+    height:100% !important;
+    max-height:none !important;
+    border-radius:0 !important;
+    border-left:1px solid var(--v3-line) !important;
+    box-shadow:none !important;
+  }
+  .pastoral-editor-v3 .pastoral-sheet-handle { display:none !important; }
+  .pastoral-editor-v3 .pastoral-tool-panel-scroll { height:100% !important; overflow:auto !important; padding:.9rem !important; }
+}

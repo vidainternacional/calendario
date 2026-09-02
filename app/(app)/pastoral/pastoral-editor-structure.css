@@ -1,0 +1,333 @@
+/* Centro Pastoral — jerarquía UX/UI alineada con VIDA.
+   Solo organización visual. No modifica funciones, datos, permisos ni persistencia. */
+
+.pastoral-canva-workspace {
+  --editor-accent: #C0392B;
+  --editor-accent-soft: rgba(192, 57, 43, .075);
+  --editor-stage: #f1f2f4;
+  --editor-line: #dfe3e8;
+  --editor-line-soft: #eceff2;
+  --editor-text: #1c2430;
+  --editor-muted: #8a94a3;
+  --editor-muted-strong: #5f6b7a;
+}
+
+/* Barra global: documento primero, acciones globales después. */
+.pastoral-canva-workspace > header {
+  background: rgba(248, 248, 246, .97) !important;
+  border-bottom-color: var(--editor-line) !important;
+}
+
+.pastoral-canva-workspace > header input[aria-label='Título del proyecto'] {
+  color: var(--editor-text) !important;
+  font-weight: 680 !important;
+}
+
+.pastoral-canva-workspace > header nav {
+  border-top: 1px solid rgba(223, 227, 232, .55);
+  padding-top: .25rem !important;
+}
+
+/* La fila principal contiene creación/formato. Borrar nunca vive aquí. */
+.pastoral-canva-workspace .pastoral-tool-dock > button.text-rose-600 {
+  display: none !important;
+}
+
+/* Orden conceptual: INSERTAR | PÁGINA | FORMATO. */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(1) { order: 1; } /* Plantillas */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(2) { order: 2; } /* Elementos */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(3) { order: 3; } /* Texto */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(5) { order: 4; } /* Biblia */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4) { order: 5; } /* Fondo */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(7) { order: 6; } /* Diseño */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(6) { order: 7; } /* Párrafo */
+
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4),
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(6) {
+  margin-left: .4rem !important;
+  border-left: 1px solid var(--editor-line) !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button {
+  color: var(--editor-muted-strong) !important;
+  letter-spacing: .005em;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button.is-active {
+  color: var(--editor-accent) !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button.is-active::before {
+  background: var(--editor-accent) !important;
+}
+
+/* Lienzo: foco principal, sin decoración de módulo independiente. */
+.pastoral-canva-workspace .pastoral-stage {
+  background: var(--editor-stage) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas {
+  border-radius: 2px !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .07) !important;
+}
+
+.pastoral-canva-workspace [data-canvas-element].ring-2 {
+  --tw-ring-color: rgba(192, 57, 43, .82) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Redimensionar elemento'] {
+  background: var(--editor-accent) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Mover elemento'] {
+  color: var(--editor-accent) !important;
+}
+
+/* Navegación: filas sobrias, no chips/cards. */
+.pastoral-canva-workspace .pastoral-page-chip,
+.pastoral-canva-workspace .pastoral-page-chip.is-active {
+  position: relative;
+  border-radius: 0 !important;
+  background: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-page-chip.is-active::before {
+  position: absolute;
+  top: 18%;
+  bottom: 18%;
+  left: 0;
+  width: 2px;
+  border-radius: 99px;
+  background: var(--editor-accent);
+  content: '';
+}
+
+.pastoral-canva-workspace .pastoral-page-chip.is-active > button:first-child {
+  color: var(--editor-accent) !important;
+}
+
+.pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+  border-radius: 0 !important;
+  color: var(--editor-accent) !important;
+}
+
+/* Inspector: superficie continua. Las divisiones nacen del contenido, no de tarjetas. */
+.pastoral-canva-workspace .pastoral-tool-panel {
+  background: #fbfbfa !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel-scroll > div > div + div {
+  padding-top: .9rem;
+  border-top: 1px solid var(--editor-line-soft);
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='shadow'] {
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='rounded-xl'],
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='rounded-2xl'] {
+  border-radius: .45rem !important;
+}
+
+/* Acciones destructivas: al final y con separación, nunca como herramienta principal. */
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='bg-rose-50'] {
+  margin-top: .55rem !important;
+  border-top: 1px solid rgba(225, 29, 72, .12) !important;
+  background: transparent !important;
+  color: #be123c !important;
+}
+
+/* Diseño: formato visible como control compacto, no cuatro fichas dominantes. */
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2 {
+  gap: 1px !important;
+  overflow: hidden;
+  border: 1px solid var(--editor-line);
+  border-radius: .5rem;
+  background: var(--editor-line);
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2 > button {
+  min-height: 2.8rem !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: var(--editor-muted-strong) !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2 > button[class*='bg-violet-600'] {
+  background: var(--editor-accent-soft) !important;
+  color: var(--editor-accent) !important;
+}
+
+/* ---------- CELULAR VERTICAL ---------- */
+@media (orientation: portrait) and (max-width: 767px) {
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4),
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(6) {
+    margin-left: .2rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    background: rgba(251, 251, 250, .995) !important;
+    box-shadow: 0 -3px 12px rgba(15, 23, 42, .05) !important;
+  }
+}
+
+/* ---------- CELULAR HORIZONTAL ----------
+   Tool rail izquierda · lienzo protagonista · páginas abajo · inspector overlay. */
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  .pastoral-canva-workspace .pastoral-editor-shell,
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-areas: 'dock stage' !important;
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage {
+    display: grid !important;
+    grid-template-areas:
+      'canvas'
+      'pages' !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) 44px !important;
+    gap: .2rem !important;
+    padding: .3rem .55rem .2rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-canvas-wrap {
+    grid-area: canvas !important;
+    min-height: 0;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip {
+    grid-area: pages !important;
+    min-width: 0;
+    min-height: 44px;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-top: 1px solid rgba(223, 227, 232, .75) !important;
+    border-right: 0 !important;
+    padding: .15rem .1rem 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip {
+    width: auto !important;
+    min-width: 40px;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child {
+    width: auto !important;
+    min-width: 40px !important;
+    min-height: 2rem !important;
+    padding: 0 .55rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child span {
+    display: inline !important;
+    margin-left: .25rem !important;
+    font-size: .55rem;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+    width: 40px !important;
+    min-width: 40px !important;
+    min-height: 2rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip.is-active::before {
+    top: auto;
+    right: 18%;
+    bottom: 0;
+    left: 18%;
+    width: auto;
+    height: 2px;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4),
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(6) {
+    margin-top: .25rem !important;
+    margin-left: 0 !important;
+    border-top: 1px solid var(--editor-line) !important;
+    border-left: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    width: min(292px, 44vw) !important;
+    box-shadow: -8px 0 20px rgba(15, 23, 42, .09) !important;
+  }
+}
+
+/* ---------- iPAD / DESKTOP ---------- */
+@media (min-width: 768px) and (min-height: 621px) {
+  .pastoral-canva-workspace .pastoral-stage {
+    grid-template-columns: 126px minmax(0, 1fr) !important;
+    gap: .75rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip {
+    padding-right: .65rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip {
+    justify-content: stretch !important;
+    border-bottom: 1px solid rgba(223, 227, 232, .7);
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child {
+    display: flex;
+    width: 100% !important;
+    min-height: 2.7rem !important;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 .6rem 0 .7rem !important;
+    text-align: left;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child span {
+    display: inline !important;
+    margin-left: .45rem !important;
+    color: var(--editor-muted) !important;
+    font-size: .59rem;
+    font-weight: 600 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 2.7rem !important;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .4rem;
+    padding-left: .7rem;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página']::after {
+    content: 'Nueva página';
+    font-size: .65rem;
+    font-weight: 700;
+  }
+
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(286px, 306px) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll {
+    padding: 1rem 1.05rem 1.2rem !important;
+  }
+}
+
+@media (min-width: 1180px) and (min-height: 621px) {
+  .pastoral-canva-workspace .pastoral-stage {
+    grid-template-columns: 142px minmax(0, 1fr) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-columns: minmax(0, 1fr) 316px !important;
+  }
+}

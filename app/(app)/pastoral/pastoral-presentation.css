@@ -1,0 +1,17 @@
+/* La presentación a pantalla completa debe cubrir el chrome de navegación de VIDA. */
+body:has(.pastoral-editor-v4 > section.fixed.inset-0) .app-bottom-nav {
+  display: none !important;
+}
+
+html:has(.pastoral-editor-v4 > section.fixed.inset-0),
+body:has(.pastoral-editor-v4 > section.fixed.inset-0) {
+  background: #000 !important;
+}
+
+.pastoral-editor-v4 > section.fixed.inset-0 .pastoral-visual-canvas {
+  width: 100dvw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+}

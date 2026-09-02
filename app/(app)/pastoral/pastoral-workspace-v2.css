@@ -1,0 +1,323 @@
+.pastoral-visual-system {
+  --pastoral-bg: #f4f5f9;
+  --pastoral-ink: #0f172a;
+  --pastoral-muted: #64748b;
+  --pastoral-line: #dfe4ec;
+  --pastoral-accent: #4f46e5;
+}
+
+/* Encabezados internos: integrados al fondo, sin botón-caja ni descripción permanente. */
+.pastoral-page-header { margin-bottom: 1.15rem; }
+.pastoral-back-link {
+  min-height: 2.5rem;
+  margin-bottom: .8rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: #64748b;
+  box-shadow: none;
+}
+.pastoral-page-description { display: none; }
+.pastoral-page-title { margin-top: .3rem; font-size: clamp(1.5rem, 5vw, 1.9rem); }
+
+/* Inicio: accesos como iconos directos sobre el background. */
+.pastoral-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem .35rem;
+  padding: 1.15rem 0 .5rem;
+}
+.pastoral-tool-link {
+  display: flex;
+  min-height: 5.35rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: .5rem;
+  border-radius: 1rem;
+  color: #334155;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 140ms ease, transform 120ms ease;
+}
+.pastoral-tool-link:active { transform: scale(.96); background: rgba(255,255,255,.6); }
+.pastoral-tool-link > svg { width: 1.65rem; height: 1.65rem; stroke-width: 1.85; }
+.pastoral-tool-link > span {
+  max-width: 6.25rem;
+  text-align: center;
+  font-size: .7rem;
+  font-weight: 720;
+  line-height: 1.15;
+}
+
+/* Proyecto: superficie continua. */
+.pastoral-project-workspace { display: grid; gap: 0; }
+.pastoral-project-actions { padding: .1rem 0 1rem; border-bottom: 1px solid var(--pastoral-line); }
+.pastoral-project-create,
+.pastoral-project-submit {
+  display: flex;
+  width: 100%;
+  min-height: 3.15rem;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  border: 0;
+  border-radius: .95rem;
+  background: var(--pastoral-accent);
+  color: white;
+  font-size: .82rem;
+  font-weight: 780;
+  box-shadow: 0 7px 18px rgba(79,70,229,.15);
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+.pastoral-project-create:active,
+.pastoral-project-submit:active { transform: scale(.985); }
+.pastoral-project-create svg,
+.pastoral-project-submit svg { width: 1.05rem; height: 1.05rem; }
+.pastoral-project-builder {
+  padding: 1.05rem 0 .95rem;
+  border-bottom: 1px solid var(--pastoral-line);
+  animation: pastoralReveal 180ms ease-out both;
+}
+.pastoral-project-builder-head { margin-bottom: .7rem; }
+.pastoral-project-builder-head p {
+  margin: 0;
+  color: var(--pastoral-accent);
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.pastoral-project-builder-head h2 {
+  margin: .18rem 0 0;
+  color: var(--pastoral-ink);
+  font-size: 1.1rem;
+  font-weight: 780;
+}
+
+/* Navegación del constructor: iconos arriba, un solo panel visible. */
+.pastoral-builder-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .2rem;
+  padding: .15rem 0 .65rem;
+  border-bottom: 1px solid var(--pastoral-line);
+}
+.pastoral-builder-tools button {
+  display: flex;
+  min-width: 0;
+  min-height: 4.4rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: .35rem;
+  border: 0;
+  border-radius: .85rem;
+  background: transparent;
+  color: #94a3b8;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 140ms ease, background-color 140ms ease, transform 120ms ease;
+}
+.pastoral-builder-tools button:active { transform: scale(.95); }
+.pastoral-builder-tools button.is-active {
+  color: var(--pastoral-accent);
+  background: rgba(79,70,229,.06);
+}
+.pastoral-builder-tools button svg { width: 1.45rem; height: 1.45rem; stroke-width: 1.85; }
+.pastoral-builder-tools button span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: .62rem;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pastoral-builder-panel {
+  min-height: 12rem;
+  padding: .9rem 0 .25rem;
+  animation: pastoralReveal 160ms ease-out both;
+}
+.pastoral-builder-section { display: grid; gap: .9rem; }
+.pastoral-builder-section-title strong,
+.pastoral-builder-section-title span { display: block; }
+.pastoral-builder-section-title strong { color: #1e293b; font-size: .86rem; font-weight: 780; }
+.pastoral-builder-section-title span { margin-top: .15rem; color: #94a3b8; font-size: .66rem; line-height: 1.45; }
+
+@keyframes pastoralReveal {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pastoral-field { display: grid; gap: .38rem; }
+.pastoral-field > span {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  color: #475569;
+  font-size: .68rem;
+  font-weight: 760;
+}
+.pastoral-field > span svg { width: .9rem; height: .9rem; }
+.pastoral-field em { color: #94a3b8; font-style: normal; font-weight: 560; }
+.pastoral-field :where(input, textarea, select),
+.pastoral-search-field input {
+  width: 100%;
+  min-height: 3rem;
+  border: 0;
+  border-bottom: 1px solid #cbd5e1;
+  border-radius: 0;
+  background: transparent;
+  padding: .55rem .1rem;
+  color: var(--pastoral-ink);
+  font-size: .92rem;
+  outline: none;
+}
+.pastoral-field textarea { resize: vertical; line-height: 1.55; }
+.pastoral-field :where(input, textarea, select):focus,
+.pastoral-search-field input:focus { border-bottom-color: var(--pastoral-accent); }
+
+.pastoral-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .25rem .8rem;
+}
+.pastoral-resource-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  align-items: center;
+  gap: .45rem;
+  min-height: 3.25rem;
+  border: 0;
+  border-bottom: 1px solid rgba(203,213,225,.7);
+  background: transparent;
+  padding: .45rem 0;
+  text-align: left;
+  color: #334155;
+}
+.pastoral-resource-option span,
+.pastoral-resource-option strong,
+.pastoral-resource-option small { display: block; min-width: 0; }
+.pastoral-resource-option strong {
+  overflow: hidden;
+  font-size: .7rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pastoral-resource-option small { margin-top: .12rem; color: #94a3b8; font-size: .58rem; }
+.pastoral-resource-option > svg { width: 1rem; height: 1rem; color: #cbd5e1; opacity: 0; }
+.pastoral-resource-option.is-selected { color: #4338ca; }
+.pastoral-resource-option.is-selected > svg { color: #4f46e5; opacity: 1; }
+.pastoral-inline-note { margin: .2rem 0 0; color: #94a3b8; font-size: .7rem; }
+.pastoral-project-submit { margin-top: .8rem; }
+.pastoral-project-submit:disabled { opacity: .55; }
+
+/* Secundario: proyectos existentes ocultos hasta pedirlos. */
+.pastoral-accordion { border-bottom: 1px solid var(--pastoral-line); }
+.pastoral-accordion > summary {
+  display: flex;
+  min-height: 3.8rem;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  gap: .7rem;
+  padding: .5rem 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.pastoral-accordion > summary::-webkit-details-marker { display: none; }
+.pastoral-accordion > summary > svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  margin-left: auto;
+  color: #94a3b8;
+  transition: transform 160ms ease;
+}
+.pastoral-accordion[open] > summary > svg { transform: rotate(180deg); }
+.pastoral-accordion-copy { display: block; min-width: 0; }
+.pastoral-accordion-copy strong,
+.pastoral-accordion-copy small { display: block; }
+.pastoral-accordion-copy strong { color: #1e293b; font-size: .84rem; font-weight: 760; }
+.pastoral-accordion-copy small { margin-top: .12rem; color: #94a3b8; font-size: .65rem; font-weight: 560; }
+.pastoral-accordion-content {
+  display: grid;
+  gap: .85rem;
+  padding: .1rem 0 1rem;
+  animation: pastoralReveal 170ms ease-out both;
+}
+.pastoral-search-field { position: relative; display: flex; align-items: center; gap: .45rem; }
+.pastoral-search-field > svg { width: 1rem; height: 1rem; flex: none; color: #94a3b8; }
+.pastoral-search-field input { flex: 1; padding-right: 2.25rem; }
+.pastoral-search-field button {
+  position: absolute;
+  right: 0;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+}
+.pastoral-search-field button svg { width: .95rem; height: .95rem; }
+.pastoral-project-links { display: grid; }
+.pastoral-project-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .35rem;
+  border-bottom: 1px solid rgba(203,213,225,.7);
+}
+.pastoral-project-link-row > a {
+  display: flex;
+  min-height: 3.75rem;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem;
+  color: inherit;
+  text-decoration: none;
+}
+.pastoral-project-link-row > a span,
+.pastoral-project-link-row > a strong,
+.pastoral-project-link-row > a small { display: block; min-width: 0; }
+.pastoral-project-link-row > a strong {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: .78rem;
+  font-weight: 730;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pastoral-project-link-row > a small { margin-top: .14rem; color: #94a3b8; font-size: .62rem; }
+.pastoral-project-link-row > a > svg { width: .9rem; height: .9rem; flex: none; color: #94a3b8; }
+.pastoral-project-link-row > button {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #cbd5e1;
+}
+.pastoral-project-link-row > button:active { background: rgba(244,63,94,.08); color: #e11d48; }
+.pastoral-project-link-row > button svg { width: .95rem; height: .95rem; }
+.pastoral-empty-state { display: grid; justify-items: center; gap: .3rem; padding: 1.5rem 0; text-align: center; }
+.pastoral-empty-state > svg { width: 1.5rem; height: 1.5rem; color: #cbd5e1; }
+.pastoral-empty-state strong { color: #475569; font-size: .76rem; }
+.pastoral-empty-state span { color: #94a3b8; font-size: .68rem; }
+
+@media (min-width: 640px) {
+  .pastoral-tool-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pastoral-builder-tools { max-width: 34rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pastoral-project-builder,
+  .pastoral-builder-panel,
+  .pastoral-accordion-content { animation: none; }
+  .pastoral-builder-tools button { transition: none; }
+}

@@ -1,0 +1,764 @@
+/* Centro Pastoral — jerarquía UX/UI final alineada con VIDA / Hebreo.
+   Capa exclusivamente visual y organizacional: no modifica lógica, datos, permisos ni persistencia. */
+
+.pastoral-canva-workspace {
+  --vida-editor-accent: #C0392B;
+  --vida-editor-accent-soft: rgba(192, 57, 43, .075);
+  --vida-editor-danger: #dc2626;
+  --vida-editor-bg: #f3f4f5;
+  --vida-editor-panel: #fbfbfa;
+  --vida-editor-line: #dfe3e8;
+  --vida-editor-line-soft: #eceff2;
+  --vida-editor-text: #202833;
+  --vida-editor-muted: #7b8491;
+}
+
+/* =========================================================
+   1. PROYECTO — UNA SOLA JERARQUÍA SUPERIOR
+   ========================================================= */
+.pastoral-canva-workspace > header {
+  border-bottom: 1px solid var(--vida-editor-line) !important;
+  background: rgba(249, 249, 247, .975) !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace > header input[aria-label='Título del proyecto'] {
+  color: var(--vida-editor-text) !important;
+  font-size: 1.02rem !important;
+  font-weight: 650 !important;
+  letter-spacing: -.012em;
+}
+
+.pastoral-canva-workspace > header button[aria-label='Deshacer'],
+.pastoral-canva-workspace > header button[aria-label='Rehacer'],
+.pastoral-canva-workspace > header button[aria-label='Guardar proyecto'] {
+  border-radius: .45rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace > header button[aria-label='Guardar proyecto'] {
+  color: var(--vida-editor-accent) !important;
+}
+
+.pastoral-canva-workspace > header nav {
+  gap: 1.4rem !important;
+  border-top: 0 !important;
+  padding-top: .15rem !important;
+}
+
+.pastoral-canva-workspace > header nav button {
+  min-height: 2.1rem !important;
+  color: var(--vida-editor-muted) !important;
+  font-size: .78rem !important;
+  font-weight: 560 !important;
+}
+
+.pastoral-canva-workspace > header nav button.text-violet-700 {
+  color: var(--vida-editor-accent) !important;
+  font-weight: 680 !important;
+}
+
+.pastoral-canva-workspace > header nav button.text-violet-700::after {
+  background: var(--vida-editor-accent) !important;
+}
+
+/* =========================================================
+   2. DOCK — INSERTAR PRIMERO, PÁGINA DESPUÉS
+   Plantillas · Elementos · Texto · Biblia | Fondo · Diseño
+   Párrafo no compite permanentemente: aparece solo con texto.
+   ========================================================= */
+.pastoral-canva-workspace .pastoral-tool-dock {
+  position: relative;
+  gap: 0 !important;
+  border-color: var(--vida-editor-line) !important;
+  background: rgba(252, 252, 251, .985) !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button {
+  min-width: 68px !important;
+  min-height: 54px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #66717f !important;
+  font-size: .66rem !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button svg {
+  width: 1.28rem !important;
+  height: 1.28rem !important;
+  stroke-width: 1.65;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button.is-active {
+  background: transparent !important;
+  color: var(--vida-editor-accent) !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-button.is-active::before {
+  background: var(--vida-editor-accent) !important;
+}
+
+/* Orden visual real sin cambiar el arreglo funcional. */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(1) { order: 1; } /* Plantillas */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(2) { order: 2; } /* Elementos */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(3) { order: 3; } /* Texto */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(5) { order: 4; } /* Biblia */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4) { order: 5; } /* Fondo */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(7) { order: 6; } /* Diseño */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(6) { order: 7; } /* Párrafo contextual */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(n+8) { order: 8; }
+
+/* Separador entre insertar contenido y configurar página. */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4) {
+  margin-left: .45rem !important;
+  border-left: 1px solid var(--vida-editor-line) !important;
+}
+
+/* Borrar nunca es una herramienta principal. */
+.pastoral-canva-workspace .pastoral-tool-dock > button.text-rose-600 {
+  display: none !important;
+}
+
+/* Párrafo desaparece cuando no tiene sentido. */
+.pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(6) {
+  display: none !important;
+}
+
+/* Se revela únicamente al seleccionar contenido textual. */
+.pastoral-canva-workspace:has([data-canvas-element='texto'].ring-2) .pastoral-tool-dock > button:nth-child(6),
+.pastoral-canva-workspace:has([data-canvas-element='versiculo'].ring-2) .pastoral-tool-dock > button:nth-child(6) {
+  display: flex !important;
+  margin-left: .3rem !important;
+  border-left: 1px solid var(--vida-editor-line) !important;
+  color: #66717f !important;
+}
+
+/* Texto queda señalado como familia contextual al seleccionar texto. */
+.pastoral-canva-workspace:has([data-canvas-element='texto'].ring-2) .pastoral-tool-dock > button:nth-child(3),
+.pastoral-canva-workspace:has([data-canvas-element='versiculo'].ring-2) .pastoral-tool-dock > button:nth-child(3) {
+  color: var(--vida-editor-accent) !important;
+}
+
+/* =========================================================
+   3. LIENZO — EL CENTRO VISUAL
+   ========================================================= */
+.pastoral-canva-workspace .pastoral-editor-shell,
+.pastoral-canva-workspace .pastoral-stage {
+  background: var(--vida-editor-bg) !important;
+}
+
+.pastoral-canva-workspace .pastoral-canvas-wrap {
+  padding: 1rem 1.25rem !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas {
+  border-radius: 2px !important;
+  box-shadow: 0 7px 20px rgba(15, 23, 42, .065) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas.ring-1 {
+  --tw-ring-color: rgba(203, 210, 219, .9) !important;
+}
+
+.pastoral-canva-workspace [data-canvas-element].ring-2 {
+  --tw-ring-color: rgba(192, 57, 43, .82) !important;
+  --tw-ring-offset-width: 0px !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Mover elemento'] {
+  color: var(--vida-editor-accent) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Eliminar elemento'] {
+  color: var(--vida-editor-danger) !important;
+  background: rgba(255, 255, 255, .98) !important;
+  border-color: rgba(220, 38, 38, .2) !important;
+}
+
+.pastoral-canva-workspace .pastoral-visual-canvas button[aria-label='Redimensionar elemento'] {
+  background: var(--vida-editor-accent) !important;
+}
+
+/* =========================================================
+   4. PÁGINAS — NAVEGACIÓN, NO CARDS
+   ========================================================= */
+.pastoral-canva-workspace .pastoral-pages-strip {
+  gap: 0 !important;
+  scrollbar-width: thin;
+}
+
+.pastoral-canva-workspace .pastoral-page-chip,
+.pastoral-canva-workspace .pastoral-page-chip.is-active {
+  position: relative;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(223, 227, 232, .78);
+  background: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-page-chip.is-active::before {
+  position: absolute;
+  top: 17%;
+  bottom: 17%;
+  left: 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--vida-editor-accent);
+  content: '';
+}
+
+.pastoral-canva-workspace .pastoral-page-chip > button:first-child {
+  color: #697483 !important;
+  font-weight: 650 !important;
+}
+
+.pastoral-canva-workspace .pastoral-page-chip.is-active > button:first-child {
+  color: var(--vida-editor-accent) !important;
+}
+
+.pastoral-canva-workspace .pastoral-page-chip > button:first-child span {
+  color: #9aa2ad !important;
+  font-weight: 520 !important;
+}
+
+.pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--vida-editor-accent) !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}
+
+/* =========================================================
+   5. INSPECTOR — SUPERFICIE CONTINUA, NO FICHAS
+   ========================================================= */
+.pastoral-canva-workspace .pastoral-tool-panel {
+  border-color: var(--vida-editor-line) !important;
+  border-radius: 0 !important;
+  background: var(--vida-editor-panel) !important;
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel-scroll {
+  padding: .9rem 1rem 1.25rem !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel h3 {
+  color: var(--vida-editor-text) !important;
+  font-size: .88rem !important;
+  font-weight: 660 !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel p[class*='uppercase'] {
+  margin: 0 0 .45rem !important;
+  color: #8b94a0 !important;
+  font-size: .61rem !important;
+  font-weight: 680 !important;
+  letter-spacing: .12em !important;
+}
+
+/* Las secciones se separan por líneas, no por contenedores. */
+.pastoral-canva-workspace .pastoral-tool-panel-scroll > div > div + div {
+  margin-top: .9rem !important;
+  padding-top: .9rem !important;
+  border-top: 1px solid var(--vida-editor-line-soft);
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='shadow'],
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='bg-white'] {
+  box-shadow: none !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='rounded-xl'],
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='rounded-2xl'] {
+  border-radius: .42rem !important;
+}
+
+.pastoral-canva-workspace .pastoral-tool-panel button[class*='bg-violet-600'] {
+  background: var(--vida-editor-accent) !important;
+  box-shadow: none !important;
+}
+
+/* Estados activos de texto: acento VIDA, no violeta ajeno al sistema. */
+.pastoral-canva-workspace .pastoral-tool-panel button[aria-pressed='true'] {
+  background: var(--vida-editor-accent) !important;
+  color: #fff !important;
+}
+
+/* =========================================================
+   6. DISEÑO — 16:9 / 9:16 / 4:3 / 1:1 COMO SEGMENTED CONTROL
+   ========================================================= */
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--vida-editor-line);
+  border-radius: .45rem;
+  background: var(--vida-editor-line);
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type > button {
+  min-width: 0 !important;
+  min-height: 3.15rem !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: .05rem !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #697483 !important;
+  padding: .35rem .2rem !important;
+  text-align: center !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type > button + button {
+  border-left: 1px solid var(--vida-editor-line);
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type > button svg {
+  display: none !important;
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type > button strong {
+  font-size: .66rem !important;
+  line-height: 1.1;
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type > button small {
+  margin-top: .12rem;
+  font-size: .58rem !important;
+  opacity: .72 !important;
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .grid.grid-cols-2:first-of-type > button[class*='bg-violet-600'] {
+  background: var(--vida-editor-accent-soft) !important;
+  color: var(--vida-editor-accent) !important;
+}
+
+/* =========================================================
+   7. ELEMENTO SELECCIONADO — ORGANIZAR ≠ ELIMINAR
+   ========================================================= */
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .space-y-3 > .grid.grid-cols-2 {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1px !important;
+  overflow: hidden;
+  border: 1px solid var(--vida-editor-line);
+  border-radius: .42rem;
+  background: var(--vida-editor-line);
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .space-y-3 > .grid.grid-cols-2 > button {
+  min-width: 0 !important;
+  min-height: 2.65rem !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  padding: .35rem .3rem !important;
+  color: #596473 !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}
+
+.pastoral-canva-workspace aside[aria-label='Panel diseno'] .space-y-3 > .grid.grid-cols-2 > button[class*='bg-rose-50'] {
+  grid-column: 1 / -1;
+  margin-top: .65rem !important;
+  border-top: 1px solid rgba(220, 38, 38, .18) !important;
+  background: transparent !important;
+  color: var(--vida-editor-danger) !important;
+  font-weight: 680 !important;
+}
+
+/* Imagen: propiedades secundarias en continuidad. */
+.pastoral-canva-workspace:has([data-canvas-element='imagen'].ring-2) aside[aria-label='Panel diseno'] .space-y-3 > .space-y-3 {
+  margin-top: 1rem !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid var(--vida-editor-line-soft);
+}
+
+/* =========================================================
+   8. CELULAR VERTICAL — BANDEJA HEBREO-LIKE
+   ========================================================= */
+@media (orientation: portrait) and (max-width: 767px) {
+  .pastoral-canva-workspace .pastoral-canvas-wrap {
+    padding: .55rem .75rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    max-height: 43dvh !important;
+    border-top: 1px solid var(--vida-editor-line) !important;
+    border-radius: .9rem .9rem 0 0 !important;
+    box-shadow: 0 -4px 14px rgba(15, 23, 42, .055) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll {
+    height: calc(43dvh - 1.15rem) !important;
+    padding: .15rem 1rem calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-sheet-handle {
+    height: 1.15rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-sheet-handle span {
+    width: 2rem !important;
+    height: 3px !important;
+    background: #cfd5dc !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button {
+    min-width: 64px !important;
+    min-height: 52px !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4),
+  .pastoral-canva-workspace:has([data-canvas-element='texto'].ring-2) .pastoral-tool-dock > button:nth-child(6),
+  .pastoral-canva-workspace:has([data-canvas-element='versiculo'].ring-2) .pastoral-tool-dock > button:nth-child(6) {
+    margin-left: .2rem !important;
+  }
+}
+
+/* =========================================================
+   9. CELULAR HORIZONTAL — TOOL RAIL | LIENZO + PÁGINAS ABAJO
+   Inspector overlay: nunca roba ancho de manera permanente.
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 620px) and (max-width: 1023px) {
+  .pastoral-canva-workspace > header {
+    padding-top: .12rem !important;
+    padding-bottom: .08rem !important;
+  }
+
+  .pastoral-canva-workspace > header > div:first-child {
+    min-height: 2rem !important;
+  }
+
+  .pastoral-canva-workspace > header nav {
+    gap: 1rem !important;
+    margin-top: 0 !important;
+    min-height: 1.7rem;
+  }
+
+  .pastoral-canva-workspace > header nav button {
+    min-height: 1.65rem !important;
+    font-size: .68rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-editor-shell,
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-areas: 'dock stage' !important;
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    height: calc(100dvh - 96px) !important;
+    min-height: calc(100dvh - 96px) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-dock {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-top: 0 !important;
+    border-right: 1px solid var(--vida-editor-line) !important;
+    padding: .1rem 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 46px !important;
+    font-size: .52rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button svg {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button.is-active::before {
+    top: 22% !important;
+    right: auto !important;
+    bottom: 22% !important;
+    left: 0 !important;
+    width: 2px !important;
+    height: auto !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-dock > button:nth-child(4),
+  .pastoral-canva-workspace:has([data-canvas-element='texto'].ring-2) .pastoral-tool-dock > button:nth-child(6),
+  .pastoral-canva-workspace:has([data-canvas-element='versiculo'].ring-2) .pastoral-tool-dock > button:nth-child(6) {
+    margin-top: .2rem !important;
+    margin-left: 0 !important;
+    border-top: 1px solid var(--vida-editor-line) !important;
+    border-left: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage {
+    display: grid !important;
+    grid-template-areas:
+      'canvas'
+      'pages' !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) 44px !important;
+    gap: .15rem !important;
+    padding: .28rem .45rem .16rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-canvas-wrap {
+    grid-area: canvas !important;
+    min-height: 0 !important;
+    padding: .12rem .6rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip {
+    grid-area: pages !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-top: 1px solid rgba(223, 227, 232, .78) !important;
+    border-right: 0 !important;
+    padding: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip {
+    width: auto !important;
+    min-width: 42px !important;
+    border-bottom: 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child {
+    width: auto !important;
+    min-width: 42px !important;
+    min-height: 2rem !important;
+    padding: 0 .5rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child span {
+    display: inline !important;
+    margin-left: .25rem !important;
+    font-size: .52rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip.is-active::before {
+    top: auto !important;
+    right: 18% !important;
+    bottom: 0 !important;
+    left: 18% !important;
+    width: auto !important;
+    height: 2px !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+    width: 42px !important;
+    min-width: 42px !important;
+    min-height: 2rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage > div:last-child {
+    display: none !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    position: absolute !important;
+    z-index: 45 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: min(280px, 44vw) !important;
+    height: 100% !important;
+    max-height: none !important;
+    border-top: 0 !important;
+    border-left: 1px solid var(--vida-editor-line) !important;
+    box-shadow: -8px 0 20px rgba(15, 23, 42, .08) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-sheet-handle {
+    display: none !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll {
+    height: 100% !important;
+    overflow: auto !important;
+    padding: .7rem .8rem 1rem !important;
+  }
+}
+
+/* =========================================================
+   10. iPAD / TABLET / DESKTOP — PÁGINAS | LIENZO | INSPECTOR
+   Dock inferior para separar claramente creación de navegación.
+   ========================================================= */
+@media (min-width: 768px) and (min-height: 621px) {
+  .pastoral-canva-workspace .pastoral-editor-shell,
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-areas:
+      'stage panel'
+      'dock panel' !important;
+    grid-template-columns: minmax(0, 1fr) 0 !important;
+    grid-template-rows: minmax(560px, calc(100dvh - 194px)) 56px !important;
+    transition: grid-template-columns .18s ease;
+  }
+
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-dock {
+    grid-area: dock !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-top: 1px solid var(--vida-editor-line) !important;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+    padding: 0 .5rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-button {
+    width: auto !important;
+    min-width: 78px !important;
+    min-height: 55px !important;
+    flex: none !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage {
+    grid-area: stage !important;
+    display: grid !important;
+    grid-template-areas:
+      'pages canvas'
+      'pages hint' !important;
+    grid-template-columns: 120px minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: .8rem !important;
+    min-height: 0 !important;
+    padding: .9rem 1.1rem .65rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-canvas-wrap {
+    grid-area: canvas !important;
+    min-height: 0 !important;
+    padding: .4rem 1rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip {
+    grid-area: pages !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-right: 1px solid rgba(223, 227, 232, .9) !important;
+    padding: .1rem .7rem .1rem 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 2.8rem !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0 .55rem 0 .75rem !important;
+    text-align: left !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-page-chip > button:first-child span {
+    display: inline !important;
+    margin-left: .45rem !important;
+    font-size: .58rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página'] {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 2.8rem !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: .4rem !important;
+    padding-left: .75rem !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-pages-strip > button[aria-label='Nueva página']::after {
+    content: 'Nueva página';
+    font-size: .66rem;
+    font-weight: 650;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage > div:last-child {
+    grid-area: hint !important;
+    color: #929aa5 !important;
+    font-size: .63rem !important;
+    font-weight: 520 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    grid-area: panel !important;
+    height: 100% !important;
+    max-height: none !important;
+    border-top: 0 !important;
+    border-left: 1px solid var(--vida-editor-line) !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-sheet-handle {
+    display: none !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel-scroll {
+    height: 100% !important;
+    overflow: auto !important;
+    padding: 1rem 1.05rem 1.2rem !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1100px) and (min-height: 621px) {
+  /* En tablet estrecha el inspector se superpone, preservando el lienzo. */
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-columns: minmax(0, 1fr) 0 !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-tool-panel {
+    position: absolute !important;
+    z-index: 45 !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 56px !important;
+    width: 260px !important;
+    height: auto !important;
+    box-shadow: -8px 0 20px rgba(15, 23, 42, .075) !important;
+  }
+}
+
+@media (min-width: 1180px) and (min-height: 621px) {
+  .pastoral-canva-workspace .pastoral-editor-shell.has-panel {
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+  }
+
+  .pastoral-canva-workspace .pastoral-stage {
+    grid-template-columns: 120px minmax(0, 1fr) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pastoral-canva-workspace .pastoral-editor-shell,
+  .pastoral-canva-workspace .pastoral-tool-button,
+  .pastoral-canva-workspace .pastoral-page-chip {
+    transition: none !important;
+  }
+}

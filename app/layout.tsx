@@ -9,6 +9,7 @@ import './cuaderno-fase-g.css'
 
 const inter = Inter({
   subsets: ['latin'],
+  style: ['normal', 'italic'],
   variable: '--font-inter',
   display: 'swap',
 })
@@ -73,6 +74,16 @@ const bibleThemeBootstrap = `
   })()
 `
 
+const pastoralLayersDirectCss = `
+  .pastoral-editor-v4 .panel-capas [aria-label="Opciones de capas"] {
+    display: none !important;
+  }
+
+  .pastoral-editor-v4 .panel-capas [aria-label="Opciones de capas"] + div {
+    padding-top: 0 !important;
+  }
+`
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -82,6 +93,7 @@ export default function RootLayout({
     <html lang="es" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: bibleThemeBootstrap }} />
+        <style dangerouslySetInnerHTML={{ __html: pastoralLayersDirectCss }} />
         <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/apple-touch-icon.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/api/icon/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -98,12 +110,25 @@ export default function RootLayout({
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', async () => {
                   try {
+                    const esPreviewVercel = window.location.hostname.endsWith('.vercel.app')
+
+                    if (esPreviewVercel) {
+                      const registrations = await navigator.serviceWorker.getRegistrations()
+                      await Promise.all(registrations.map((registration) => registration.unregister()))
+
+                      if ('caches' in window) {
+                        const cacheNames = await caches.keys()
+                        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))
+                      }
+                      return
+                    }
+
                     const registration = await navigator.serviceWorker.register('/sw.js', {
                       updateViaCache: 'none'
                     })
                     await registration.update()
                   } catch (error) {
-                    console.error('[service-worker] No se pudo registrar o actualizar:', error)
+                    console.error('[service-worker] No se pudo registrar, limpiar o actualizar:', error)
                   }
                 })
               }

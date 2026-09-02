@@ -6,7 +6,7 @@ import PaquetesClient from '@/components/pastoral/PaquetesClient'
 import PastoralPageHeader from '@/components/pastoral/PastoralPageHeader'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
 
-export const metadata: Metadata = { title: 'Paquetes Pastorales' }
+export const metadata: Metadata = { title: 'Proyectos Pastorales' }
 
 export default async function PaquetesPastoralesPage() {
   const supabase = await createClient()
@@ -19,7 +19,7 @@ export default async function PaquetesPastoralesPage() {
     .eq('id', user.id)
     .single()
 
-  if (profileError) throw new Error('No fue posible verificar el acceso a los paquetes pastorales.')
+  if (profileError) throw new Error('No fue posible verificar el acceso a los proyectos pastorales.')
   if (!tieneAccesoPastoral(profile as any)) redirect('/inicio')
 
   const [paquetesResult, bosquejosResult, coleccionesResult, recursosResult] = await Promise.all([
@@ -30,7 +30,7 @@ export default async function PaquetesPastoralesPage() {
   ])
 
   if (paquetesResult.error || bosquejosResult.error || coleccionesResult.error || recursosResult.error) {
-    throw new Error('No fue posible cargar el espacio integrado de paquetes pastorales.')
+    throw new Error('No fue posible cargar el espacio integrado de proyectos pastorales.')
   }
 
   const paquetes = paquetesResult.data
@@ -39,10 +39,10 @@ export default async function PaquetesPastoralesPage() {
   const recursos = recursosResult.data
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl bg-[#f4f5f9] px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
+    <main className="pastoral-project-page mx-auto min-h-screen max-w-6xl px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8 lg:px-8">
       <PastoralPageHeader
         eyebrow="Espacio de trabajo"
-        title="Paquetes"
+        title="Proyecto"
         description="Reúne el bosquejo, los versículos y los recursos en una guía lista para compartir."
         icon={PackageOpen}
       />

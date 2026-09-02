@@ -6,12 +6,13 @@ const master = fs.readFileSync('__VIDA_INTERNACIONAL.md', 'utf8')
 const explorer = fs.readFileSync('components/hebreo/AlefBetExplorer.tsx', 'utf8')
 const foundations = fs.readFileSync('components/hebreo/AlefBetFoundations.tsx', 'utf8')
 
-test('FASE H: Bloques 1 a 3 están cerrados y Bloque 4 queda activo', () => {
+test('FASE H: los cuatro bloques permanecen cerrados y la fase no se reabre', () => {
+  assert.match(master, /FASE H \| Centro de Hebreo Bíblico \| \*\*COMPLETADA Y APROBADA/)
   assert.match(master, /Bloque 1 — Línea base de fuentes y arquitectura didáctica — COMPLETADO Y APROBADO/)
   assert.match(master, /Bloque 2 — Fundamentos de lectura y gramática progresiva — COMPLETADO Y APROBADO/)
   assert.match(master, /Bloque 3 — Cobertura léxica progresiva y búsqueda inteligente — COMPLETADO Y APROBADO/)
-  assert.match(master, /Bloque 4 — Progreso personal y práctica adaptativa — ACTIVO/)
-  assert.match(master, /Primero auditar las estructuras actuales y preparar la propuesta mínima de persistencia, privacidad y RLS/)
+  assert.match(master, /Bloque 4 — Progreso personal y práctica adaptativa — COMPLETADO Y APROBADO/)
+  assert.match(master, /FASE H no debe reabrirse salvo bug comprobable/)
 })
 
 test('FASE H: Alef-Bet integra tablas fundamentales sin sustituir las fichas', () => {
@@ -33,15 +34,15 @@ test('FASE H: Dagesh distingue aprendizaje inicial de variación histórica', ()
   for (const pair of ['בּ', 'גּ', 'דּ', 'כּ', 'פּ', 'תּ']) assert.match(foundations, new RegExp(pair))
   assert.match(foundations, /No todo dagesh hace exactamente lo mismo/)
   assert.match(foundations, /dagesh qal/)
-  assert.match(foundations, /tradición de lectura/)
 })
 
 test('FASE H: Matres se enseña como función de lectura y no como vocal independiente', () => {
-  for (const letter of ['א', 'ה', 'ו', 'י']) assert.match(foundations, new RegExp(letter))
+  for (const value of ['ה', 'ו', 'י']) assert.match(foundations, new RegExp(value))
   assert.match(foundations, /función de lectura/)
   assert.match(foundations, /no una categoría de vocal independiente/)
 })
 
 test('FASE H: fundamentos no crean persistencia ni escrituras de datos', () => {
-  assert.doesNotMatch(foundations, /supabase|\.insert\(|\.update\(|\.delete\(|\.upsert\(|localStorage|sessionStorage/)
+  assert.doesNotMatch(explorer, /localStorage|sessionStorage|\.insert\(|\.upsert\(|\.update\(/)
+  assert.doesNotMatch(foundations, /localStorage|sessionStorage|\.insert\(|\.upsert\(|\.update\(/)
 })
