@@ -512,6 +512,17 @@ La portada del Centro Pastoral queda organizada así:
 - Estudio y Biblioteca permanecen como herramientas auxiliares.
 - Bosquejos, colecciones de versículos y Biblia permanecen disponibles internamente, pero fuera del nivel principal.
 
+### Ajuste posterior aprobado — Analíticas de Estudio, Theographic y geografía bíblica
+
+- Analíticas avanzadas de Estudio habilitadas para pasajes, libros, temas, búsquedas, recurrencia, sesiones anónimas, resultados y tiempo de uso, sin mostrar usuarios, perfiles ni notas personales.
+- Corpus Theographic habilitado con 450 eventos narrativos y 17,570 referencias aprobadas, presentado dentro de VIDA como Secuencia narrativa, con títulos en español y sin exponer metadata técnica.
+- Geografía bíblica incorpora recorridos gráficos del Éxodo, los tres viajes misioneros de Pablo y el viaje de Pablo a Roma.
+- Los recorridos se muestran sobre mapa geográfico real, con paradas numeradas, lugar bíblico, identificación actual cuando existe, nivel de certeza y acceso a la ubicación actual.
+- Las líneas representan el orden narrativo de las paradas y no se presentan como reconstrucción exacta de caminos históricos.
+- Tabla histórica de respaldo de FASE H asegurada mediante RLS y retiro de acceso público/autenticado, conservando íntegramente sus datos.
+- Limpieza técnica realizada sobre PR antiguos correspondientes a fases ya cerradas.
+- Preview validado por el usuario: `https://calendario-git-agent-centro-pastoral-cb1651-vida-internacional.vercel.app`.
+
 # Siguiente prioridad autorizada
 
 **Pendiente de definición.**
