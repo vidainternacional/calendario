@@ -19,17 +19,22 @@ import {
   crearSolicitudAyudaSolidaria,
   registrarAporteSolidario,
 } from '@/app/actions/solidaridad'
+import BankAccountCards from '@/components/solidaridad/BankAccountCards'
+import SolidarityChat from '@/components/solidaridad/SolidarityChat'
 import {
   SOLIDARITY_CONTRIBUTION_STATUS_LABELS,
   SOLIDARITY_CONTRIBUTION_TYPE_LABELS,
   SOLIDARITY_REQUEST_STATUS_LABELS,
+  type ChurchBankAccount,
   type PantryNeed,
   type SolidarityContactPreference,
   type SolidarityContributionType,
+  type SolidarityHelpType,
 } from '@/lib/solidarity/types'
 
 type RequestItem = {
   id: string
+  tipo_ayuda: SolidarityHelpType
   hogar_personas: number | null
   necesidad: string
   detalle_adicional: string | null
@@ -50,23 +55,14 @@ type ContributionItem = {
   anonimo: boolean
   estado: keyof typeof SOLIDARITY_CONTRIBUTION_STATUS_LABELS
   respuesta: string | null
+  agradecido_at: string | null
   created_at: string
 }
 
 type Tab = 'solicitar' | 'aportar' | 'seguimiento'
 
 const contributionTypes: SolidarityContributionType[] = [
-  'alimentos',
-  'monetario',
-  'tiempo',
-  'transporte',
-  'herramientas',
-  'objetos',
-  'oficios',
-  'habilidades',
-  'conocimientos',
-  'voluntariado',
-  'otro',
+  'alimentos', 'monetario', 'tiempo', 'transporte', 'herramientas', 'objetos', 'oficios', 'habilidades', 'conocimientos', 'voluntariado', 'otro',
 ]
 
 const requestTone: Record<string, string> = {
@@ -99,19 +95,26 @@ function pantryMessage(need: PantryNeed) {
 }
 
 export default function SolidarityHub({
+  userId,
   requests,
   contributions,
   pantryNeeds,
+  bankAccounts,
+  initialTab = 'solicitar',
 }: {
+  userId: string
   requests: RequestItem[]
   contributions: ContributionItem[]
   pantryNeeds: PantryNeed[]
+  bankAccounts: ChurchBankAccount[]
+  initialTab?: Tab
 }) {
-  const [tab, setTab] = useState<Tab>('solicitar')
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
   const [showExtra, setShowExtra] = useState(false)
   const [requestForm, setRequestForm] = useState({
+    helpType: 'general' as SolidarityHelpType,
     need: '',
     additionalDetail: '',
     householdSize: '',
@@ -136,18 +139,15 @@ export default function SolidarityHub({
     [pantryNeeds],
   )
 
-  const trackingCount = requests.length + contributions.length
-  const activeRequests = useMemo(
-    () => requests.filter((item) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length,
-    [requests],
-  )
-
+  const activeRequests = useMemo(() => requests.filter((item) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length, [requests])
+  const completedSeeds = useMemo(() => contributions.filter((item) => ['recibido', 'completado'].includes(item.estado)).length, [contributions])
   const selectedNeed = sortedPantry.find((item) => item.id === contributionForm.pantryNeedId) || null
 
   const submitRequest = () => {
     setMessage(null)
     startTransition(async () => {
       const result = await crearSolicitudAyudaSolidaria({
+        helpType: requestForm.helpType,
         need: requestForm.need,
         additionalDetail: requestForm.additionalDetail,
         householdSize: requestForm.householdSize ? Number(requestForm.householdSize) : null,
@@ -158,9 +158,9 @@ export default function SolidarityHub({
         setMessage({ type: 'error', text: result.error || 'No fue posible enviar el mensaje.' })
         return
       }
-      setRequestForm({ need: '', additionalDetail: '', householdSize: '', phone: '', contactPreference: 'aplicacion' })
+      setRequestForm({ helpType: 'general', need: '', additionalDetail: '', householdSize: '', phone: '', contactPreference: 'aplicacion' })
       setShowExtra(false)
-      setMessage({ type: 'ok', text: 'Listo, recibimos tu mensaje. Alguien del equipo se pondrá en contacto contigo pronto.' })
+      setMessage({ type: 'ok', text: 'Listo, recibimos tu mensaje. Puedes coordinar con el equipo desde Seguimiento.' })
       setTab('seguimiento')
     })
   }
@@ -187,300 +187,90 @@ export default function SolidarityHub({
     <div className="mx-auto min-h-screen max-w-2xl bg-[#f5f5f7] pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <section className="overflow-hidden rounded-b-[32px] bg-[linear-gradient(145deg,#302072,#5b3df5_58%,#7c64ff)] px-4 pb-7 pt-[calc(1.5rem+env(safe-area-inset-top))] text-white sm:px-6">
         <div className="flex items-start gap-4">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/14 ring-1 ring-white/20 backdrop-blur">
-            <HeartHandshake className="h-7 w-7" />
-          </span>
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/14 ring-1 ring-white/20 backdrop-blur"><HeartHandshake className="h-7 w-7" /></span>
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Vida Internacional</p>
             <h1 className="mt-1 text-[31px] font-extrabold leading-none tracking-[-0.04em]">Ayuda Solidaria</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">Pide ayuda con confianza o descubre una manera concreta de sembrar.</p>
           </div>
         </div>
-
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
-            <p className="text-2xl font-extrabold">{activeRequests}</p>
-            <p className="mt-1 text-xs text-white/70">mensajes tuyos activos</p>
-          </div>
-          <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
-            <p className="text-2xl font-extrabold">{trackingCount}</p>
-            <p className="mt-1 text-xs text-white/70">registros en seguimiento</p>
-          </div>
+          <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15"><p className="text-2xl font-extrabold">{activeRequests}</p><p className="mt-1 text-xs text-white/70">mensajes tuyos activos</p></div>
+          <div className="rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15"><p className="text-2xl font-extrabold">{completedSeeds}</p><p className="mt-1 text-xs text-white/70">siembras completadas</p></div>
         </div>
       </section>
 
       <div className="px-4 pt-5 sm:px-6">
         <div className="grid grid-cols-3 rounded-[18px] bg-white p-1 ring-1 ring-black/[0.05]">
-          {([
-            ['solicitar', 'Necesito ayuda'],
-            ['aportar', 'Quiero sembrar'],
-            ['seguimiento', 'Seguimiento'],
-          ] as Array<[Tab, string]>).map(([id, label]) => (
-            <button key={id} onClick={() => { setTab(id); setMessage(null) }} className={`min-h-11 rounded-[14px] px-2 text-[12px] font-bold transition ${tab === id ? 'bg-[#5b3df5] text-white shadow-sm' : 'text-slate-500'}`}>
-              {label}
-            </button>
+          {([['solicitar', 'Necesito ayuda'], ['aportar', 'Quiero sembrar'], ['seguimiento', 'Seguimiento']] as Array<[Tab, string]>).map(([id, label]) => (
+            <button key={id} onClick={() => { setTab(id); setMessage(null) }} className={`min-h-11 rounded-[14px] px-2 text-[12px] font-bold transition ${tab === id ? 'bg-[#5b3df5] text-white shadow-sm' : 'text-slate-500'}`}>{label}</button>
           ))}
         </div>
 
-        {message && (
-          <div className={`mt-4 flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${message.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>
-            {message.type === 'ok' ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" /> : <X className="mt-0.5 h-5 w-5 shrink-0" />}
-            <p className="leading-5">{message.text}</p>
-          </div>
-        )}
+        {message ? <div className={`mt-4 flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${message.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>{message.type === 'ok' ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" /> : <X className="mt-0.5 h-5 w-5 shrink-0" />}<p className="leading-5">{message.text}</p></div> : null}
 
-        {tab === 'solicitar' && (
+        {tab === 'solicitar' ? (
           <section className="mt-5 overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
-            <header className="border-b border-slate-100 p-5">
-              <h2 className="text-xl font-extrabold text-[#171923]">¿Cómo podemos ayudarte?</h2>
-              <p className="mt-1 text-sm leading-5 text-slate-500">Cuéntanos qué necesitas. Esto lo ve únicamente el equipo pastoral.</p>
-            </header>
-
+            <header className="border-b border-slate-100 p-5"><h2 className="text-xl font-extrabold text-[#171923]">¿Cómo podemos ayudarte?</h2><p className="mt-1 text-sm leading-5 text-slate-500">Pide lo que necesitas sin tener que justificar tu situación.</p></header>
             <div className="space-y-5 p-5">
-              <div className="flex items-start gap-3 rounded-2xl bg-violet-50 px-4 py-3 text-violet-900">
-                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-                <p className="text-xs leading-5"><strong>Lo que compartas aquí es privado.</strong> Solo lo ve el equipo pastoral, nunca se publica.</p>
+              <div className="flex items-start gap-3 rounded-2xl bg-violet-50 px-4 py-3 text-violet-900"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" /><p className="text-xs leading-5"><strong>Lo que compartas aquí es privado.</strong> Solo lo ve el equipo autorizado, nunca se publica.</p></div>
+
+              <div>
+                <p className="mb-2 text-xs font-bold text-slate-600">¿Qué necesitas?</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button type="button" onClick={() => setRequestForm((current) => ({ ...current, helpType: 'paquete_despensa', need: '' }))} className={`rounded-2xl border px-4 py-3 text-left ${requestForm.helpType === 'paquete_despensa' ? 'border-violet-300 bg-violet-50 text-violet-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><span className="flex items-center gap-2 text-sm font-extrabold"><PackageCheck className="h-4 w-4" />Paquete de despensa</span><span className="mt-1 block text-xs text-slate-500">Solo necesitamos saber para cuántas personas prepararlo.</span></button>
+                  <button type="button" onClick={() => setRequestForm((current) => ({ ...current, helpType: 'general' }))} className={`rounded-2xl border px-4 py-3 text-left ${requestForm.helpType === 'general' ? 'border-violet-300 bg-violet-50 text-violet-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}><span className="text-sm font-extrabold">Otra ayuda</span><span className="mt-1 block text-xs text-slate-500">Cuéntanos simplemente qué necesitas.</span></button>
+                </div>
               </div>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600">¿Qué necesitas?</span>
-                <textarea
-                  value={requestForm.need}
-                  onChange={(event) => setRequestForm((current) => ({ ...current, need: event.target.value }))}
-                  placeholder="Por ejemplo: necesito ayuda con alimentos esta semana"
-                  rows={4}
-                  maxLength={3000}
-                  className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-[#171923] outline-none placeholder:text-slate-400 focus:border-violet-400 focus:bg-white"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600">¿Cómo prefieres que te contactemos?</span>
-                <select
-                  value={requestForm.contactPreference}
-                  onChange={(event) => setRequestForm((current) => ({ ...current, contactPreference: event.target.value as SolidarityContactPreference }))}
-                  className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-[#171923] outline-none focus:border-violet-400 focus:bg-white"
-                >
-                  <option value="aplicacion">Dentro de VIDA</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="telefono">Llamada</option>
-                </select>
-              </label>
-
-              {requestForm.contactPreference !== 'aplicacion' && (
-                <label className="block">
-                  <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><Phone className="h-4 w-4" /> Teléfono</span>
-                  <input type="tel" value={requestForm.phone} onChange={(event) => setRequestForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Ej. 7000-0000" maxLength={40} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-[#171923] outline-none placeholder:text-slate-400 focus:border-violet-400 focus:bg-white" />
-                </label>
+              {requestForm.helpType === 'general' ? <label className="block"><span className="mb-2 block text-xs font-bold text-slate-600">¿Qué necesitas?</span><textarea value={requestForm.need} onChange={(event) => setRequestForm((current) => ({ ...current, need: event.target.value }))} placeholder="Por ejemplo: necesito ayuda con transporte esta semana" rows={4} maxLength={3000} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-violet-400 focus:bg-white" /></label> : (
+                <label className="block"><span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><Users className="h-4 w-4" />¿Para cuántas personas preparamos el paquete?</span><input type="number" min={1} max={30} value={requestForm.householdSize} onChange={(event) => setRequestForm((current) => ({ ...current, householdSize: event.target.value }))} placeholder="Ej. 4" className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-violet-400 focus:bg-white" /></label>
               )}
 
-              <button type="button" onClick={() => setShowExtra((value) => !value)} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left text-sm font-bold text-slate-600">
-                ¿Algo más que quieras contarnos? <ChevronDown className={`h-4 w-4 transition ${showExtra ? 'rotate-180' : ''}`} />
-              </button>
+              <label className="block"><span className="mb-2 block text-xs font-bold text-slate-600">¿Cómo prefieres que te contactemos?</span><select value={requestForm.contactPreference} onChange={(event) => setRequestForm((current) => ({ ...current, contactPreference: event.target.value as SolidarityContactPreference }))} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-violet-400 focus:bg-white"><option value="aplicacion">Dentro de VIDA</option><option value="whatsapp">WhatsApp</option><option value="telefono">Llamada</option></select></label>
+              {requestForm.contactPreference !== 'aplicacion' ? <label className="block"><span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><Phone className="h-4 w-4" />Teléfono</span><input type="tel" value={requestForm.phone} onChange={(event) => setRequestForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Ej. 7000-0000" maxLength={40} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-violet-400 focus:bg-white" /></label> : <p className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">La conversación aparecerá en <strong>Seguimiento</strong> y podrás volver a ella desde <strong>Mi Perfil → Mis ayudas</strong>.</p>}
 
-              {showExtra && (
-                <div className="space-y-4 border-l-2 border-violet-100 pl-4">
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-bold text-slate-600">Algo más que quieras contarnos <span className="font-medium text-slate-400">(opcional)</span></span>
-                    <textarea value={requestForm.additionalDetail} onChange={(event) => setRequestForm((current) => ({ ...current, additionalDetail: event.target.value }))} placeholder="No es necesario explicar tu situación, pero si quieres compartir algo más, aquí puedes hacerlo." rows={3} maxLength={3000} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-violet-400 focus:bg-white" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><Users className="h-4 w-4" /> ¿Cuántas personas viven en tu hogar? <span className="font-medium text-slate-400">(opcional)</span></span>
-                    <p className="mb-2 text-xs leading-5 text-slate-400">Solo nos ayuda a coordinar cuánto llevar si aplica.</p>
-                    <input type="number" min={1} max={30} value={requestForm.householdSize} onChange={(event) => setRequestForm((current) => ({ ...current, householdSize: event.target.value }))} placeholder="Ej. 4" className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-violet-400 focus:bg-white" />
-                  </label>
-                </div>
-              )}
+              <button type="button" onClick={() => setShowExtra((value) => !value)} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left text-sm font-bold text-slate-600">¿Algo más que quieras contarnos? <ChevronDown className={`h-4 w-4 transition ${showExtra ? 'rotate-180' : ''}`} /></button>
+              {showExtra ? <div className="space-y-4 border-l-2 border-violet-100 pl-4"><label className="block"><span className="mb-2 block text-xs font-bold text-slate-600">Algo más <span className="font-medium text-slate-400">(opcional)</span></span><textarea value={requestForm.additionalDetail} onChange={(event) => setRequestForm((current) => ({ ...current, additionalDetail: event.target.value }))} placeholder="No necesitas explicar tu situación. Si quieres compartir algo más, puedes hacerlo aquí." rows={3} maxLength={3000} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-violet-400 focus:bg-white" /></label>{requestForm.helpType === 'general' ? <label className="block"><span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><Users className="h-4 w-4" />Personas en tu hogar <span className="font-medium text-slate-400">(opcional)</span></span><input type="number" min={1} max={30} value={requestForm.householdSize} onChange={(event) => setRequestForm((current) => ({ ...current, householdSize: event.target.value }))} placeholder="Ej. 4" className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-violet-400 focus:bg-white" /></label> : null}</div> : null}
 
-              <button disabled={pending} onClick={submitRequest} className="min-h-12 w-full rounded-2xl bg-[#5b3df5] px-5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60">
-                {pending ? 'Enviando…' : 'Enviar'}
-              </button>
+              <button disabled={pending} onClick={submitRequest} className="min-h-12 w-full rounded-2xl bg-[#5b3df5] px-5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60">{pending ? 'Enviando…' : 'Enviar'}</button>
             </div>
           </section>
-        )}
+        ) : null}
 
-        {tab === 'aportar' && (
+        {tab === 'aportar' ? (
           <div className="mt-5 space-y-5">
             <section className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
-              <header className="border-b border-slate-100 p-5">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-600"><Sparkles className="h-5 w-5" /></span>
-                  <div>
-                    <h2 className="font-extrabold text-[#171923]">Quiero sembrar</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Sembrar puede ser comida, tiempo, un oficio, transporte o lo que tengas para dar.</p>
-                  </div>
-                </div>
-              </header>
-
-              <div className="p-5">
-                <h3 className="text-sm font-extrabold text-[#171923]">Hoy hace falta</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">Estas son necesidades generales de la despensa. Nunca mostramos quién pidió ayuda.</p>
-
-                {sortedPantry.length === 0 ? (
-                  <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-400">Por ahora no hay necesidades activas de despensa.</p>
-                ) : (
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    {sortedPantry.map((need) => {
-                      const minimum = Number(need.minimo_necesario)
-                      const current = Number(need.existencia_actual)
-                      const progress = minimum > 0 ? Math.min(100, Math.round((current / minimum) * 100)) : 100
-                      const selected = contributionForm.pantryNeedId === need.id
-                      return (
-                        <button
-                          key={need.id}
-                          type="button"
-                          onClick={() => setContributionForm((currentForm) => ({ ...currentForm, type: 'alimentos', pantryNeedId: selected ? '' : need.id }))}
-                          className={`rounded-2xl p-4 text-left ring-1 transition ${selected ? 'bg-emerald-50 ring-emerald-300' : 'bg-white ring-slate-200'}`}
-                        >
-                          <p className="text-sm font-extrabold text-[#171923]">{need.producto}</p>
-                          <p className="mt-1 text-[11px] font-semibold text-emerald-700">{pantryMessage(need)}</p>
-                          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${progress}%` }} />
-                          </div>
-                          <p className="mt-2 text-[10px] font-bold text-slate-400">{selected ? 'Seleccionado' : 'Puedo ayudar con esto'}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
+              <header className="border-b border-slate-100 p-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-600"><HandCoins className="h-5 w-5" /></span><div><h2 className="font-extrabold text-[#171923]">Quiero sembrar</h2><p className="mt-1 text-xs leading-5 text-slate-500">Puede ser comida, tiempo, transporte, un oficio o lo que tengas para dar.</p></div></div></header>
               <div className="space-y-5 p-5">
-                <div>
-                  <h3 className="text-sm font-extrabold text-[#171923]">Otras formas de ayudar</h3>
-                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {contributionTypes.map((type) => (
-                      <button key={type} type="button" onClick={() => setContributionForm((current) => ({ ...current, type, pantryNeedId: type === 'alimentos' ? current.pantryNeedId : '' }))} className={`min-h-10 shrink-0 rounded-full px-4 text-xs font-bold ${contributionForm.type === type ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                        {SOLIDARITY_CONTRIBUTION_TYPE_LABELS[type]}
-                      </button>
-                    ))}
-                  </div>
+                <div><p className="text-sm font-extrabold text-[#171923]">Hoy hace falta</p><p className="mt-1 text-xs text-slate-500">Necesidades generales de la despensa; nunca mostramos quién pidió ayuda.</p>
+                  {sortedPantry.length === 0 ? <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-400">La despensa no tiene necesidades activas registradas ahora.</p> : <div className="mt-3 grid grid-cols-2 gap-2">{sortedPantry.map((need) => { const selected = contributionForm.pantryNeedId === need.id; return <button key={need.id} type="button" onClick={() => setContributionForm((current) => ({ ...current, type: 'alimentos', pantryNeedId: selected ? '' : need.id, detail: selected ? current.detail : current.detail || `Puedo ayudar con ${need.producto}` }))} className={`rounded-2xl border p-3 text-left ${selected ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}><span className="block text-sm font-extrabold text-slate-800">{need.producto}</span><span className="mt-1 block text-[11px] text-slate-500">{pantryMessage(need)}</span></button>})}</div>}
                 </div>
 
-                {selectedNeed && (
-                  <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    <strong>{selectedNeed.producto}</strong> está seleccionado. Cuéntanos cuánto o cómo puedes ayudar.
-                  </div>
-                )}
+                <div><p className="mb-2 text-sm font-extrabold text-[#171923]">Otras formas de ayudar</p><div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{contributionTypes.map((type) => <button key={type} type="button" onClick={() => setContributionForm((current) => ({ ...current, type, pantryNeedId: type === 'alimentos' ? current.pantryNeedId : '' }))} className={`min-h-9 shrink-0 rounded-full px-3 text-xs font-bold ${contributionForm.type === type ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{SOLIDARITY_CONTRIBUTION_TYPE_LABELS[type]}</button>)}</div></div>
 
-                {contributionForm.type === 'monetario' && (
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-bold text-slate-600">Monto aproximado en USD</span>
-                    <input type="number" min="0.01" step="0.01" value={contributionForm.amount} onChange={(event) => setContributionForm((current) => ({ ...current, amount: event.target.value }))} placeholder="Ej. 25.00" className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base font-semibold outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white" />
-                  </label>
-                )}
+                {contributionForm.type === 'monetario' ? <div className="rounded-2xl bg-emerald-50/60 p-4"><p className="mb-3 text-sm font-extrabold text-emerald-900">Puedes transferir a una cuenta oficial</p><BankAccountCards accounts={bankAccounts} emptyText="El administrador aún no ha configurado una cuenta para Ayuda Solidaria." /><p className="mt-3 text-[11px] leading-5 text-emerald-800/70">VIDA no procesa el cobro dentro de la app. Registra abajo tu siembra para que el equipo pueda darle seguimiento y agradecerte.</p></div> : null}
 
-                <label className="block">
-                  <span className="mb-2 block text-xs font-bold text-slate-600">Cuéntanos cómo te gustaría ayudar</span>
-                  <textarea value={contributionForm.detail} onChange={(event) => setContributionForm((current) => ({ ...current, detail: event.target.value }))} placeholder={selectedNeed ? `Ej. Puedo aportar 10 ${selectedNeed.unidad} de ${selectedNeed.producto}.` : 'Ej. Puedo ayudar con transporte el sábado.'} rows={4} maxLength={2000} className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white" />
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-600"><Phone className="h-4 w-4" /> Teléfono opcional</span>
-                  <input type="tel" value={contributionForm.phone} onChange={(event) => setContributionForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Ej. 7000-0000" maxLength={40} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white" />
-                </label>
-
-                <label className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                  <input type="checkbox" checked={contributionForm.anonymous} onChange={(event) => setContributionForm((current) => ({ ...current, anonymous: event.target.checked }))} className="mt-0.5 h-5 w-5 accent-[#5b3df5]" />
-                  <span>
-                    <span className="block text-sm font-bold text-[#171923]">Prefiero mantener mi nombre en privado ante la persona ayudada</span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">El equipo pastoral sí sabrá quién eres para poder coordinar contigo.</span>
-                  </span>
-                </label>
-
-                <button disabled={pending} onClick={submitContribution} className="min-h-12 w-full rounded-2xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60">
-                  {pending ? 'Registrando…' : 'Sembrar'}
-                </button>
+                {selectedNeed ? <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">Ayudando con: {selectedNeed.producto}</p> : null}
+                {contributionForm.type === 'monetario' ? <label className="block"><span className="mb-2 block text-xs font-bold text-slate-600">Monto que deseas sembrar</span><input type="number" min={0.01} step="0.01" value={contributionForm.amount} onChange={(event) => setContributionForm((current) => ({ ...current, amount: event.target.value }))} placeholder="0.00" className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold outline-none focus:border-emerald-400 focus:bg-white" /></label> : null}
+                <label className="block"><span className="mb-2 block text-xs font-bold text-slate-600">Cuéntanos cómo te gustaría ayudar</span><textarea value={contributionForm.detail} onChange={(event) => setContributionForm((current) => ({ ...current, detail: event.target.value }))} rows={3} maxLength={2000} placeholder="Ej. puedo llevar 10 libras esta semana" className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white" /></label>
+                <label className="block"><span className="mb-2 block text-xs font-bold text-slate-600">Teléfono <span className="font-medium text-slate-400">(opcional)</span></span><input type="tel" value={contributionForm.phone} onChange={(event) => setContributionForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Ej. 7000-0000" maxLength={40} className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-emerald-400 focus:bg-white" /></label>
+                <label className="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3"><input type="checkbox" checked={contributionForm.anonymous} onChange={(event) => setContributionForm((current) => ({ ...current, anonymous: event.target.checked }))} className="mt-1 h-4 w-4 accent-emerald-600" /><span><span className="block text-sm font-bold text-[#171923]">Prefiero mantener mi nombre en privado ante la persona ayudada</span><span className="mt-1 block text-xs leading-5 text-slate-500">El equipo sí sabrá quién eres para coordinar y agradecerte.</span></span></label>
+                <button disabled={pending} onClick={submitContribution} className="min-h-12 w-full rounded-2xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60">{pending ? 'Registrando…' : 'Sembrar'}</button>
               </div>
             </section>
           </div>
-        )}
+        ) : null}
 
-        {tab === 'seguimiento' && (
-          <div className="mt-5 space-y-6">
-            <section>
-              <div className="mb-3 flex items-end justify-between px-1">
-                <div>
-                  <h2 className="font-extrabold text-[#171923]">Mis solicitudes</h2>
-                  <p className="mt-1 text-xs text-slate-500">Solo tú y el equipo autorizado pueden verlas.</p>
-                </div>
-                <span className="text-xs font-bold text-slate-400">{requests.length}</span>
-              </div>
-              <div className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
-                {requests.length === 0 ? (
-                  <p className="px-5 py-10 text-center text-sm text-slate-400">Aún no has pedido ayuda. Si la necesitas, aquí estamos.</p>
-                ) : requests.map((item, index) => (
-                  <article key={item.id} className={`p-5 ${index < requests.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="line-clamp-2 text-sm font-extrabold text-[#171923]">{item.necesidad}</p>
-                        <p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${requestTone[item.estado] || requestTone.enviada}`}>{SOLIDARITY_REQUEST_STATUS_LABELS[item.estado]}</span>
-                    </div>
-                    {item.detalle_adicional && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.detalle_adicional}</p>}
-                    {item.hogar_personas ? <p className="mt-3 text-xs text-slate-400">Hogar: {item.hogar_personas} persona{item.hogar_personas === 1 ? '' : 's'}</p> : null}
-                    {item.respuesta && (
-                      <div className="mt-3 rounded-2xl bg-violet-50 px-4 py-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-violet-500">Respuesta del equipo</p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm leading-5 text-violet-900">{item.respuesta}</p>
-                      </div>
-                    )}
-                    {['enviada', 'revisando', 'aprobada'].includes(item.estado) && (
-                      <button disabled={pending} onClick={() => startTransition(async () => { const result = await cancelarSolicitudAyudaSolidaria(item.id); if (!result.success) setMessage({ type: 'error', text: result.error || 'No fue posible cancelar.' }) })} className="mt-4 text-xs font-bold text-rose-600">Cancelar</button>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </section>
+        {tab === 'seguimiento' ? (
+          <div className="mt-5 space-y-5">
+            <section className="rounded-[24px] bg-white p-5 ring-1 ring-black/[0.045]"><div className="flex items-center gap-3"><Sparkles className="h-5 w-5 text-emerald-600" /><div><h2 className="font-extrabold text-[#171923]">Mi jardín de semillas</h2><p className="mt-1 text-xs text-slate-500">{completedSeeds} siembra{completedSeeds === 1 ? '' : 's'} completada{completedSeeds === 1 ? '' : 's'}. Sin rankings ni cantidades públicas.</p></div></div></section>
 
-            <section>
-              <div className="mb-3 flex items-end justify-between px-1">
-                <div>
-                  <h2 className="font-extrabold text-[#171923]">Mis aportes</h2>
-                  <p className="mt-1 text-xs text-slate-500">Seguimiento de tus siembras y formas de servir.</p>
-                </div>
-                <span className="text-xs font-bold text-slate-400">{contributions.length}</span>
-              </div>
-              <div className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
-                {contributions.length === 0 ? (
-                  <p className="px-5 py-10 text-center text-sm text-slate-400">Aún no has sembrado nada. Mira qué hace falta hoy.</p>
-                ) : contributions.map((item, index) => (
-                  <article key={item.id} className={`p-5 ${index < contributions.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><PackageCheck className="h-5 w-5" /></span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-extrabold text-[#171923]">{SOLIDARITY_CONTRIBUTION_TYPE_LABELS[item.tipo] || item.tipo}</p>
-                          <p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString('es-SV', { day: 'numeric', month: 'long' })}</p>
-                        </div>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${contributionTone[item.estado] || contributionTone.ofrecido}`}>{SOLIDARITY_CONTRIBUTION_STATUS_LABELS[item.estado]}</span>
-                    </div>
-                    {item.monto ? <p className="mt-3 text-xl font-extrabold text-emerald-700">${Number(item.monto).toFixed(2)}</p> : null}
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{item.detalle}</p>
-                    {item.respuesta && (
-                      <div className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">Respuesta del equipo</p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm leading-5 text-emerald-900">{item.respuesta}</p>
-                      </div>
-                    )}
-                    {['ofrecido', 'contactando', 'asignado'].includes(item.estado) && (
-                      <button disabled={pending} onClick={() => startTransition(async () => { const result = await cancelarAporteSolidario(item.id); if (!result.success) setMessage({ type: 'error', text: result.error || 'No fue posible cancelar.' }) })} className="mt-4 text-xs font-bold text-rose-600">Cancelar aporte</button>
-                    )}
-                  </article>
-                ))}
-              </div>
-            </section>
+            <section className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]"><header className="border-b border-slate-100 p-5"><h2 className="font-extrabold text-[#171923]">Mis ayudas</h2></header><div className="divide-y divide-slate-100">{requests.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-400">Aún no has pedido ayuda. Si la necesitas, aquí estamos.</p> : requests.map((item) => <article key={item.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-800">{item.tipo_ayuda === 'paquete_despensa' ? 'Paquete de despensa' : item.necesidad}</p><p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleString('es-SV')}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${requestTone[item.estado] || 'bg-slate-100 text-slate-600'}`}>{SOLIDARITY_REQUEST_STATUS_LABELS[item.estado]}</span></div>{item.tipo_ayuda === 'paquete_despensa' && item.hogar_personas ? <p className="mt-2 text-xs text-slate-500">Paquete para {item.hogar_personas} persona{item.hogar_personas === 1 ? '' : 's'}</p> : null}{item.respuesta ? <p className="mt-3 rounded-xl bg-violet-50 px-3 py-2 text-sm leading-6 text-violet-900">{item.respuesta}</p> : null}<SolidarityChat contextType="solicitud" contextId={item.id} currentUserId={userId} label={item.contacto_preferido === 'aplicacion' ? 'Conversación en VIDA' : 'Chat dentro de VIDA'} />{['enviada', 'revisando', 'aprobada'].includes(item.estado) ? <button type="button" disabled={pending} onClick={() => startTransition(async () => { const result = await cancelarSolicitudAyudaSolidaria(item.id); setMessage({ type: result.success ? 'ok' : 'error', text: result.success ? 'Mensaje cancelado.' : result.error || 'No fue posible cancelar.' }) })} className="mt-3 text-xs font-bold text-slate-400">Cancelar pedido</button> : null}</article>)}</div></section>
+
+            <section className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]"><header className="border-b border-slate-100 p-5"><h2 className="font-extrabold text-[#171923]">Mis siembras</h2></header><div className="divide-y divide-slate-100">{contributions.length === 0 ? <p className="px-5 py-8 text-center text-sm text-slate-400">Aún no has sembrado. Mira qué hace falta hoy.</p> : contributions.map((item) => <article key={item.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-800">{SOLIDARITY_CONTRIBUTION_TYPE_LABELS[item.tipo]}</p><p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleString('es-SV')}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${contributionTone[item.estado] || 'bg-slate-100 text-slate-600'}`}>{SOLIDARITY_CONTRIBUTION_STATUS_LABELS[item.estado]}</span></div>{item.monto ? <p className="mt-2 text-sm font-extrabold text-emerald-700">${Number(item.monto).toFixed(2)} {item.moneda}</p> : null}<p className="mt-2 text-sm leading-6 text-slate-600">{item.detalle}</p>{item.respuesta ? <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-900">{item.respuesta}</p> : null}{item.agradecido_at ? <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-bold text-emerald-700"><Sparkles className="h-3 w-3" />El equipo registró su agradecimiento</p> : null}<SolidarityChat contextType="aporte" contextId={item.id} currentUserId={userId} label="Coordinar esta siembra" />{['ofrecido', 'contactando', 'asignado'].includes(item.estado) ? <button type="button" disabled={pending} onClick={() => startTransition(async () => { const result = await cancelarAporteSolidario(item.id); setMessage({ type: result.success ? 'ok' : 'error', text: result.success ? 'Siembra cancelada.' : result.error || 'No fue posible cancelar.' }) })} className="mt-3 text-xs font-bold text-slate-400">Cancelar siembra</button> : null}</article>)}</div></section>
           </div>
-        )}
-
-        <div className="mt-6 flex items-start gap-3 rounded-[22px] bg-white p-4 text-slate-600 ring-1 ring-black/[0.045]">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-          <p className="text-xs leading-5">Las necesidades personales nunca se muestran públicamente. Solo compartimos necesidades generales de la despensa para facilitar que otros puedan sembrar.</p>
-        </div>
+        ) : null}
       </div>
     </div>
   )
