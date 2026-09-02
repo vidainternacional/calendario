@@ -6,3 +6,12 @@
   padding-right: 0 !important;
   padding-left: 0 !important;
 }
+
+/* La vista específica de Analíticas de Estudio necesita respirar en móvil.
+   Esta excepción no altera el Centro de Análisis principal. */
+.analisis-layout > main:has(> section.grid-cols-2) {
+  width: calc(100% - 48px) !important;
+  max-width: 56rem !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
