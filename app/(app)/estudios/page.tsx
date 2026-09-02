@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages } from 'lucide-react'
+import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -27,6 +27,17 @@ export default async function EstudiosPage() {
       hoverClass: 'hover:border-indigo-300',
       arrowClass: 'group-hover:text-indigo-600',
       actionClass: 'text-indigo-600',
+    },
+    {
+      href: '/hoy',
+      title: 'Planes de lectura',
+      description: 'Sigue planes bíblicos progresivos de 7, 14 y 30 días, revisa el versículo del día y configura tu recordatorio.',
+      action: 'Ver planes',
+      icon: BookOpenCheck,
+      iconClass: 'bg-emerald-600 text-white shadow-inner shadow-emerald-900/20',
+      hoverClass: 'hover:border-emerald-300',
+      arrowClass: 'group-hover:text-emerald-600',
+      actionClass: 'text-emerald-700',
     },
     {
       href: '/estudios/profundo',
