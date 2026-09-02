@@ -2,7 +2,7 @@
 
 Última actualización: 2026-09-02
 
-Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 1 — VERSÍCULO DEL DÍA Y PLANES DE LECTURA**
+Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 2 — AYUDA Y SEMBRAR**
 
 Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
@@ -562,7 +562,7 @@ Esta prioridad reúne las últimas funciones nuevas que deben completarse antes 
 
 Orden aprobado:
 
-## Bloque 1 — Versículo del día y Planes de lectura — ACTIVO
+## Bloque 1 — Versículo del día y Planes de lectura — COMPLETADO Y APROBADO — 2026-09-02
 
 Objetivo:
 Hacer VIDA útil también para personas que todavía no pertenecen a la iglesia, de manera que puedan acercarse a la Biblia y conocer VIDA posteriormente por medio de la utilidad real de la aplicación.
@@ -577,7 +577,10 @@ Alcance:
 - Las funciones internas de iglesia, ministerios y administración conservan sus permisos actuales.
 - El objetivo no es convertir la portada en publicidad de la iglesia, sino permitir que una persona conozca VIDA mediante herramientas útiles y después pueda descubrir actividades y comunidad.
 
-## Bloque 2 — Ayuda y Sembrar
+Cierre aprobado:
+Versículo diario y recordatorio configurable integrados con la Biblia aprobada. Catálogo de 12 planes temáticos con progreso y rachas. Centro Pastoral permite a Pastor/Admin crear, editar, autoguardar, publicar y eliminar sus planes, conservando borradores parciales y bloqueando publicación hasta completar todos los días. Los planes son accesibles a cualquier usuario con cuenta, pertenezca o no a VIDA Internacional.
+
+## Bloque 2 — Ayuda y Sembrar — ACTIVO
 
 Objetivo:
 Hacer que pedir ayuda sea sencillo, privado, digno y empático, y que ayudar también sea fácil.
@@ -624,4 +627,4 @@ FASE I continúa DIFERIDA hasta completar, validar y cerrar estos cuatro bloques
 
 # Siguiente prioridad autorizada
 
-**Bloque 1 — Versículo del día y Planes de lectura — ACTIVO.**
+**Bloque 2 — Ayuda y Sembrar — ACTIVO.**
