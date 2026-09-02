@@ -157,21 +157,72 @@ function precisionLabel(place: Place) {
   return 'Ubicación aproximada'
 }
 
-function projected(stops: Place[]) {
-  const width = 700
-  const height = 360
-  const pad = 34
-  const minLat = Math.min(...stops.map(stop => stop.lat))
-  const maxLat = Math.max(...stops.map(stop => stop.lat))
-  const minLon = Math.min(...stops.map(stop => stop.lon))
-  const maxLon = Math.max(...stops.map(stop => stop.lon))
-  const latRange = Math.max(maxLat - minLat, 1)
-  const lonRange = Math.max(maxLon - minLon, 1)
-  return stops.map(stop => ({
-    place: stop,
-    x: pad + ((stop.lon - minLon) / lonRange) * (width - pad * 2),
-    y: pad + ((maxLat - stop.lat) / latRange) * (height - pad * 2),
-  }))
+const MAP_WIDTH = 700
+const MAP_HEIGHT = 360
+const TILE_SIZE = 256
+const MAP_PADDING = 34
+
+function mercatorWorldPoint(place: Place, zoom: number) {
+  const size = TILE_SIZE * (2 ** zoom)
+  const lat = Math.max(-85.05112878, Math.min(85.05112878, place.lat))
+  const sinLat = Math.sin((lat * Math.PI) / 180)
+  return {
+    x: ((place.lon + 180) / 360) * size,
+    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * size,
+  }
+}
+
+function buildMap(stops: Place[]) {
+  let zoom = 2
+  for (let candidate = 7; candidate >= 2; candidate -= 1) {
+    const candidatePoints = stops.map(stop => mercatorWorldPoint(stop, candidate))
+    const minX = Math.min(...candidatePoints.map(point => point.x))
+    const maxX = Math.max(...candidatePoints.map(point => point.x))
+    const minY = Math.min(...candidatePoints.map(point => point.y))
+    const maxY = Math.max(...candidatePoints.map(point => point.y))
+    if (maxX - minX <= MAP_WIDTH - MAP_PADDING * 2 && maxY - minY <= MAP_HEIGHT - MAP_PADDING * 2) {
+      zoom = candidate
+      break
+    }
+  }
+
+  const worldPoints = stops.map(stop => mercatorWorldPoint(stop, zoom))
+  const minX = Math.min(...worldPoints.map(point => point.x))
+  const maxX = Math.max(...worldPoints.map(point => point.x))
+  const minY = Math.min(...worldPoints.map(point => point.y))
+  const maxY = Math.max(...worldPoints.map(point => point.y))
+  const originX = (minX + maxX) / 2 - MAP_WIDTH / 2
+  const originY = (minY + maxY) / 2 - MAP_HEIGHT / 2
+  const tileMinX = Math.floor(originX / TILE_SIZE)
+  const tileMaxX = Math.floor((originX + MAP_WIDTH) / TILE_SIZE)
+  const tileMinY = Math.floor(originY / TILE_SIZE)
+  const tileMaxY = Math.floor((originY + MAP_HEIGHT) / TILE_SIZE)
+  const tileCount = 2 ** zoom
+
+  const tiles: Array<{ key: string; x: number; y: number; left: number; top: number }> = []
+  for (let tileY = tileMinY; tileY <= tileMaxY; tileY += 1) {
+    if (tileY < 0 || tileY >= tileCount) continue
+    for (let tileX = tileMinX; tileX <= tileMaxX; tileX += 1) {
+      const wrappedX = ((tileX % tileCount) + tileCount) % tileCount
+      tiles.push({
+        key: `${zoom}-${tileX}-${tileY}`,
+        x: wrappedX,
+        y: tileY,
+        left: tileX * TILE_SIZE - originX,
+        top: tileY * TILE_SIZE - originY,
+      })
+    }
+  }
+
+  return {
+    zoom,
+    tiles,
+    points: worldPoints.map((point, index) => ({
+      place: stops[index],
+      x: point.x - originX,
+      y: point.y - originY,
+    })),
+  }
 }
 
 function JourneyGraphic({ journey }: { journey: Journey }) {
@@ -181,8 +232,8 @@ function JourneyGraphic({ journey }: { journey: Journey }) {
   })
   if (stops.length < 2) return null
 
-  const points = projected(stops.map(stop => stop.place))
-  const polyline = points.map(point => `${point.x},${point.y}`).join(' ')
+  const map = buildMap(stops.map(stop => stop.place))
+  const polyline = map.points.map(point => `${point.x},${point.y}`).join(' ')
 
   return (
     <article className="overflow-hidden rounded-3xl border border-sky-200 bg-white shadow-sm">
@@ -198,19 +249,36 @@ function JourneyGraphic({ journey }: { journey: Journey }) {
       </header>
 
       <div className="p-4 sm:p-5">
-        <div className="overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/40">
-          <svg viewBox="0 0 700 360" role="img" aria-label={`Mapa esquemático del ${journey.name}`} className="block h-auto w-full">
-            <rect width="700" height="360" rx="20" className="fill-sky-50" />
-            {[1,2,3,4,5].map(i => <line key={`v-${i}`} x1={i * 116.6} x2={i * 116.6} y1="0" y2="360" className="stroke-sky-100" strokeWidth="1" />)}
-            {[1,2,3].map(i => <line key={`h-${i}`} x1="0" x2="700" y1={i * 90} y2={i * 90} className="stroke-sky-100" strokeWidth="1" />)}
-            <polyline points={polyline} fill="none" className="stroke-sky-600" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
-            {points.map((point, index) => (
+        <div className="relative aspect-[35/18] overflow-hidden rounded-2xl border border-sky-100 bg-slate-100">
+          {map.tiles.map(tile => (
+            <img
+              key={tile.key}
+              src={`https://tile.openstreetmap.org/${map.zoom}/${tile.x}/${tile.y}.png`}
+              alt=""
+              loading="lazy"
+              draggable={false}
+              className="pointer-events-none absolute max-w-none select-none"
+              style={{
+                left: `${(tile.left / MAP_WIDTH) * 100}%`,
+                top: `${(tile.top / MAP_HEIGHT) * 100}%`,
+                width: `${(TILE_SIZE / MAP_WIDTH) * 100}%`,
+                height: `${(TILE_SIZE / MAP_HEIGHT) * 100}%`,
+              }}
+            />
+          ))}
+          <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} role="img" aria-label={`Mapa geográfico del ${journey.name}`} className="absolute inset-0 h-full w-full">
+            <polyline points={polyline} fill="none" stroke="white" strokeWidth="10" strokeLinejoin="round" strokeLinecap="round" opacity="0.9" />
+            <polyline points={polyline} fill="none" className="stroke-sky-700" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round" />
+            {map.points.map((point, index) => (
               <g key={`${journey.id}-${index}`}>
-                <circle cx={point.x} cy={point.y} r="13" className="fill-white stroke-sky-700" strokeWidth="3" />
-                <text x={point.x} y={point.y + 4} textAnchor="middle" className="fill-sky-800 text-[11px] font-black">{index + 1}</text>
+                <circle cx={point.x} cy={point.y} r="14" fill="white" className="stroke-sky-800" strokeWidth="4" />
+                <text x={point.x} y={point.y + 4} textAnchor="middle" className="fill-sky-900 text-[11px] font-black">{index + 1}</text>
               </g>
             ))}
           </svg>
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="absolute bottom-1 right-1 rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600 shadow-sm">
+            © OpenStreetMap
+          </a>
         </div>
 
         <p className="mt-3 text-xs leading-5 text-slate-500">{journey.note}</p>
@@ -241,7 +309,7 @@ function JourneyGraphic({ journey }: { journey: Journey }) {
 
         <footer className="mt-4 flex items-start gap-2 border-t border-slate-100 pt-3 text-[11px] leading-5 text-slate-500">
           <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
-          <span>Itinerario basado en el orden del relato bíblico. Identificaciones y coordenadas geográficas: OpenBible.info, mostradas con su nivel de certeza.</span>
+          <span>Itinerario basado en el orden del relato bíblico. Identificaciones y coordenadas geográficas: OpenBible.info; mapa base: OpenStreetMap. Las líneas muestran el orden de las paradas, no una trayectoria histórica exacta.</span>
         </footer>
       </div>
     </article>
@@ -257,7 +325,7 @@ export default function BiblicalJourneyMap({ bookCode, chapter, verse }: { bookC
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Geografía bíblica</p>
         <h3 className="mt-1 text-lg font-bold text-slate-950">Recorridos y lugares</h3>
-        <p className="mt-1 text-sm leading-6 text-slate-600">Muestra el recorrido de forma gráfica y, cuando existe una identificación confiable, indica qué lugar corresponde hoy.</p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">Muestra el recorrido sobre un mapa geográfico y, cuando existe una identificación confiable, indica qué lugar corresponde hoy.</p>
       </div>
       {journeys.map(journey => <JourneyGraphic key={journey.id} journey={journey} />)}
     </section>
