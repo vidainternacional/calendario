@@ -7,3 +7,11 @@ html:has(.pastoral-editor-v4 > section.fixed.inset-0),
 body:has(.pastoral-editor-v4 > section.fixed.inset-0) {
   background: #000 !important;
 }
+
+.pastoral-editor-v4 > section.fixed.inset-0 .pastoral-visual-canvas {
+  width: 100dvw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+}
