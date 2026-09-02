@@ -92,5 +92,5 @@ export default async function MaterialPastoralPage({ params }: { params: Promise
     }
   }
 
-  return <MaterialPastoralExperience material={{ ...material, presentacion_diapositivas: diapositivas }} biblioteca={biblioteca} userId={user.id} embeddedStudy />
+  return <MaterialPastoralExperience material={{ ...material, presentacion_diapositivas: diapositivas }} biblioteca={biblioteca} userId={user.id} />
 }
