@@ -10,6 +10,7 @@ import './pastoral-editor-feedback-v13.css'
 import './pastoral-editor-feedback-v14.css'
 import './pastoral-editor-feedback-v15.css'
 import './pastoral-editor-feedback-v16.css'
+import './pastoral-presentation.css'
 
 const ebGaramond = EB_Garamond({
   subsets: ['latin'],
