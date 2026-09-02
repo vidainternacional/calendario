@@ -1,0 +1,9 @@
+/* La presentación a pantalla completa debe cubrir el chrome de navegación de VIDA. */
+body:has(.pastoral-editor-v4 > section.fixed.inset-0) .app-bottom-nav {
+  display: none !important;
+}
+
+html:has(.pastoral-editor-v4 > section.fixed.inset-0),
+body:has(.pastoral-editor-v4 > section.fixed.inset-0) {
+  background: #000 !important;
+}
