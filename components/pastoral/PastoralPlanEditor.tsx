@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Loader2, Trash2 } from 'lucide-react'
 import {
@@ -38,6 +38,19 @@ const BOOKS = [
 ] as const
 
 type Props = { plan: PastoralPlanData; days: PastoralPlanDay[] }
+type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+function dayIsComplete(day: PastoralPlanDay) {
+  return Boolean(
+    day.titulo?.trim() &&
+    day.book_code?.trim() &&
+    day.book_name?.trim() &&
+    Number(day.chapter) >= 1 &&
+    day.referencia?.trim() &&
+    day.devocional?.trim() &&
+    day.pregunta_reflexion?.trim()
+  )
+}
 
 export default function PastoralPlanEditor({ plan, days }: Props) {
   const router = useRouter()
@@ -48,17 +61,48 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
   const [published, setPublished] = useState(plan.publicado)
   const [pendingPlan, startPlan] = useTransition()
   const [pendingPublish, startPublish] = useTransition()
-  const savedDays = useMemo(() => new Set(days.map(day => day.numero_dia)), [days])
+  const [planSaveState, setPlanSaveState] = useState<SaveState>('idle')
+  const planAutosaveReadyRef = useRef(false)
+  const planAutosaveSerialRef = useRef(0)
+  const completeDays = useMemo(() => new Set(days.filter(dayIsComplete).map(day => day.numero_dia)), [days])
+  const draftDays = useMemo(() => new Set(days.map(day => day.numero_dia)), [days])
   const duracionNumero = duracion === '' ? 0 : duracion
 
-  function savePlan() {
+  function savePlan(showToast = true) {
     startPlan(async () => {
       const result = await guardarPlanPastoral(plan.id, { titulo, descripcion, duracionDias: Number(duracion) })
-      if (result.error) return mostrarToast(result.error)
-      mostrarToast('Datos del plan guardados')
+      if (result.error) {
+        setPlanSaveState('error')
+        if (showToast) mostrarToast(result.error)
+        return
+      }
+      setPlanSaveState('saved')
+      if (showToast) mostrarToast('Datos del plan guardados')
       router.refresh()
     })
   }
+
+  useEffect(() => {
+    if (!planAutosaveReadyRef.current) {
+      planAutosaveReadyRef.current = true
+      return
+    }
+    const duracionActual = Number(duracion)
+    if (!titulo.trim() || !descripcion.trim() || !Number.isInteger(duracionActual) || duracionActual < 1 || duracionActual > 90) return
+    const serial = ++planAutosaveSerialRef.current
+    setPlanSaveState('saving')
+    const timer = window.setTimeout(async () => {
+      const result = await guardarPlanPastoral(plan.id, { titulo, descripcion, duracionDias: duracionActual })
+      if (serial !== planAutosaveSerialRef.current) return
+      if (result.error) {
+        setPlanSaveState('error')
+        return
+      }
+      setPlanSaveState('saved')
+      router.refresh()
+    }, 650)
+    return () => window.clearTimeout(timer)
+  }, [descripcion, duracion, plan.id, router, titulo])
 
   function togglePublish() {
     startPublish(async () => {
@@ -102,20 +146,25 @@ export default function PastoralPlanEditor({ plan, days }: Props) {
           </label>
         </div>
 
-        <button type="button" onClick={savePlan} disabled={pendingPlan} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-slate-900 px-4 text-sm font-bold text-white disabled:opacity-60">
-          {pendingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Guardar datos
-        </button>
+        <div className="mt-5 flex items-center gap-3">
+          <button type="button" onClick={() => savePlan(true)} disabled={pendingPlan} className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-slate-900 px-4 text-sm font-bold text-white disabled:opacity-60">
+            {pendingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Guardar ahora
+          </button>
+          <span className={`text-xs font-bold ${planSaveState === 'error' ? 'text-rose-600' : 'text-slate-400'}`}>
+            {planSaveState === 'saving' ? 'Guardando…' : planSaveState === 'saved' ? 'Guardado automático' : planSaveState === 'error' ? 'No se pudo guardar' : 'Autoguardado activo'}
+          </span>
+        </div>
       </section>
 
       <section className="pt-6">
         <div className="flex items-end justify-between gap-3">
           <div><p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Contenido diario</p><h2 className="mt-1 text-xl font-bold text-slate-950">Prepara cada día</h2></div>
-          <span className="text-xs font-bold text-slate-400">{savedDays.size}/{duracionNumero} completos</span>
+          <span className="text-xs font-bold text-slate-400">{completeDays.size}/{duracionNumero} completos</span>
         </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {Array.from({ length: Math.max(1, duracionNumero) }, (_, index) => index + 1).map(day => (
-            <button key={day} type="button" onClick={() => setSelectedDay(day)} className={`h-9 shrink-0 rounded-full border px-3 text-xs font-bold ${selectedDay === day ? 'border-[#C0392B] bg-[#C0392B] text-white' : savedDays.has(day) ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-500'}`}>Día {day}</button>
+            <button key={day} type="button" onClick={() => setSelectedDay(day)} className={`h-9 shrink-0 rounded-full border px-3 text-xs font-bold ${selectedDay === day ? 'border-[#C0392B] bg-[#C0392B] text-white' : completeDays.has(day) ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : draftDays.has(day) ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 text-slate-500'}`}>Día {day}</button>
           ))}
         </div>
 
@@ -138,6 +187,11 @@ function DayEditor({ planId, numeroDia, initial, published, onSaved }: { planId:
   const [pregunta, setPregunta] = useState(initial?.pregunta_reflexion ?? '')
   const [pending, startTransition] = useTransition()
   const [deleting, startDelete] = useTransition()
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+  const autosaveReadyRef = useRef(false)
+  const autosaveSerialRef = useRef(0)
+  const latestDraftRef = useRef<any>(null)
+  const lastSavedSignatureRef = useRef('')
 
   function changeBook(code: string) {
     const found = BOOKS.find(([value]) => value === code) ?? BOOKS[0]
@@ -145,18 +199,82 @@ function DayEditor({ planId, numeroDia, initial, published, onSaved }: { planId:
     setBookName(found[1])
   }
 
-  function save() {
-    startTransition(async () => {
-      const result = await guardarDiaPlanPastoral(planId, {
-        numeroDia, titulo, bookCode, bookName, chapter,
-        verseStart: verseStart === '' ? null : verseStart,
-        verseEnd: verseEnd === '' ? null : verseEnd,
-        referencia, devocional, preguntaReflexion: pregunta,
-      })
-      if (result.error) return mostrarToast(result.error)
-      mostrarToast(`Día ${numeroDia} guardado`)
-      onSaved()
+  const draft = {
+    numeroDia,
+    titulo,
+    bookCode,
+    bookName,
+    chapter,
+    verseStart: verseStart === '' ? null : verseStart,
+    verseEnd: verseEnd === '' ? null : verseEnd,
+    referencia,
+    devocional,
+    preguntaReflexion: pregunta,
+  }
+  latestDraftRef.current = draft
+  const signature = JSON.stringify(draft)
+
+  if (!lastSavedSignatureRef.current) {
+    lastSavedSignatureRef.current = JSON.stringify({
+      numeroDia,
+      titulo: initial?.titulo ?? '',
+      bookCode: initial?.book_code ?? initialBook[0],
+      bookName: initial?.book_name ?? initialBook[1],
+      chapter: initial?.chapter ?? 1,
+      verseStart: initial?.verse_start ?? null,
+      verseEnd: initial?.verse_end ?? null,
+      referencia: initial?.referencia ?? '',
+      devocional: initial?.devocional ?? '',
+      preguntaReflexion: initial?.pregunta_reflexion ?? '',
     })
+  }
+
+  async function persistDraft(showToast = false, refresh = true) {
+    const current = latestDraftRef.current
+    const currentSignature = JSON.stringify(current)
+    if (currentSignature === lastSavedSignatureRef.current) {
+      if (showToast) mostrarToast(`Día ${numeroDia} ya está guardado`)
+      return
+    }
+    const serial = ++autosaveSerialRef.current
+    setSaveState('saving')
+    const result = await guardarDiaPlanPastoral(planId, current)
+    if (serial !== autosaveSerialRef.current) return
+    if (result.error) {
+      setSaveState('error')
+      if (showToast) mostrarToast(result.error)
+      return
+    }
+    lastSavedSignatureRef.current = currentSignature
+    setSaveState('saved')
+    if (showToast) mostrarToast(`Día ${numeroDia} guardado`)
+    if (refresh) onSaved()
+  }
+
+  useEffect(() => {
+    if (!autosaveReadyRef.current) {
+      autosaveReadyRef.current = true
+      return
+    }
+    if (signature === lastSavedSignatureRef.current) return
+    setSaveState('saving')
+    const timer = window.setTimeout(() => { void persistDraft(false, true) }, 650)
+    return () => window.clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature])
+
+  useEffect(() => {
+    return () => {
+      const current = latestDraftRef.current
+      if (!current) return
+      const currentSignature = JSON.stringify(current)
+      if (currentSignature === lastSavedSignatureRef.current) return
+      void guardarDiaPlanPastoral(planId, current)
+    }
+  }, [numeroDia, planId])
+
+  function save() {
+    startTransition(async () => { await persistDraft(true, true) })
   }
 
   function remove() {
@@ -172,7 +290,12 @@ function DayEditor({ planId, numeroDia, initial, published, onSaved }: { planId:
 
   return (
     <div className="mt-4 border-y border-slate-100 py-5">
-      <h3 className="text-base font-bold text-slate-950">Día {numeroDia}</h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-base font-bold text-slate-950">Día {numeroDia}</h3>
+        <span className={`text-xs font-bold ${saveState === 'error' ? 'text-rose-600' : 'text-slate-400'}`}>
+          {saveState === 'saving' ? 'Guardando…' : saveState === 'saved' ? 'Guardado automático' : saveState === 'error' ? 'No se pudo guardar' : 'Autoguardado activo'}
+        </span>
+      </div>
       <div className="mt-4 grid gap-4">
         <Field label="Título del día"><input value={titulo} onChange={e => setTitulo(e.target.value)} className="input-plan" placeholder="Ej. Cuando la preocupación pesa" /></Field>
         <div className="grid grid-cols-2 gap-3">
@@ -189,7 +312,7 @@ function DayEditor({ planId, numeroDia, initial, published, onSaved }: { planId:
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" onClick={save} disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#C0392B] px-4 text-sm font-bold text-white disabled:opacity-60">{pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Guardar día</button>
+        <button type="button" onClick={save} disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#C0392B] px-4 text-sm font-bold text-white disabled:opacity-60">{pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Guardar ahora</button>
         {initial ? <button type="button" onClick={remove} disabled={deleting || published} className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm font-bold text-slate-600 disabled:opacity-40"><Trash2 className="h-4 w-4" />Eliminar día</button> : null}
       </div>
       {published ? <p className="mt-3 text-xs text-slate-400">Para eliminar días, vuelve primero el plan a borrador.</p> : null}
