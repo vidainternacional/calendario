@@ -1,6 +1,7 @@
 import { Clock3, ExternalLink, MapPin, ShieldCheck, Sparkles } from 'lucide-react'
 import type { PaqueteCronologicoBiblico } from '@/lib/estudios/biblical-chronology-maps'
 import { theographicTitleEs } from '@/lib/estudios/theographic-title-es'
+import BiblicalJourneyMap from '@/components/estudios/BiblicalJourneyMap'
 
 const precisionLabels = {
   exact: 'Exacta',
@@ -70,6 +71,8 @@ export default function ChronologyMapPanel({ bundle }: { bundle: PaqueteCronolog
           </div>
         </section>
       )}
+
+      <BiblicalJourneyMap bookCode={bundle.reference.bookCode} chapter={bundle.reference.chapter} verse={bundle.reference.verse} />
 
       {chronologyEvents.length > 0 && (
         <section className="border-b border-slate-100 bg-amber-50/40 px-5 py-6 sm:px-7" aria-labelledby="chronology-map-title">
