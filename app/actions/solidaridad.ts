@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import type {
+  PantryNeedStatus,
   SolidarityContactPreference,
   SolidarityContributionStatus,
   SolidarityContributionType,
@@ -30,7 +31,20 @@ const CONTRIBUTION_STATUSES: SolidarityContributionStatus[] = [
 ]
 const URGENCIES: SolidarityUrgency[] = ['normal', 'prioritaria', 'urgente']
 const CONTACTS: SolidarityContactPreference[] = ['aplicacion', 'telefono', 'whatsapp']
-const CONTRIBUTION_TYPES: SolidarityContributionType[] = ['alimentos', 'monetario', 'voluntariado', 'otro']
+const CONTRIBUTION_TYPES: SolidarityContributionType[] = [
+  'alimentos',
+  'monetario',
+  'voluntariado',
+  'tiempo',
+  'transporte',
+  'herramientas',
+  'objetos',
+  'conocimientos',
+  'oficios',
+  'habilidades',
+  'otro',
+]
+const PANTRY_STATUSES: PantryNeedStatus[] = ['activa', 'cubierta', 'pausada']
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -122,19 +136,33 @@ export async function registrarAporteSolidario(input: {
   detail: string
   phone?: string
   anonymous?: boolean
+  pantryNeedId?: string | null
 }) {
   const detail = cleanText(input.detail, 2000)
   const phone = cleanText(input.phone, 40) || null
   const amount: number | null = input.type === 'monetario' ? Number(input.amount) : null
+  const pantryNeedId = input.type === 'alimentos' && input.pantryNeedId ? String(input.pantryNeedId) : null
 
   if (!CONTRIBUTION_TYPES.includes(input.type)) return { success: false, error: 'Tipo de aporte inválido.' }
   if (detail.length < 5) return { success: false, error: 'Describa brevemente cómo desea colaborar.' }
   if (input.type === 'monetario' && (amount === null || !Number.isFinite(amount) || amount <= 0)) {
     return { success: false, error: 'Ingrese un monto válido para la siembra.' }
   }
+  if (pantryNeedId && !isUuid(pantryNeedId)) return { success: false, error: 'Necesidad de despensa inválida.' }
 
   try {
     const { supabase, user } = await requireUser()
+
+    if (pantryNeedId) {
+      const { data: need } = await (supabase as any)
+        .from('despensa_necesidades')
+        .select('id')
+        .eq('id', pantryNeedId)
+        .eq('estado', 'activa')
+        .maybeSingle()
+      if (!need) return { success: false, error: 'La necesidad seleccionada ya no está disponible.' }
+    }
+
     const { error } = await (supabase as any)
       .from('aportes_ayuda_solidaria')
       .insert({
@@ -145,6 +173,7 @@ export async function registrarAporteSolidario(input: {
         detalle: detail,
         telefono: phone,
         anonimo: Boolean(input.anonymous),
+        necesidad_despensa_id: pantryNeedId,
       })
 
     if (error) throw error
@@ -153,6 +182,88 @@ export async function registrarAporteSolidario(input: {
   } catch (error) {
     console.error('[solidaridad] registrar aporte', error)
     return { success: false, error: 'No fue posible registrar el aporte. Intente nuevamente.' }
+  }
+}
+
+export async function guardarNecesidadDespensa(input: {
+  id?: string
+  product: string
+  unit: string
+  currentStock: number
+  minimumStock: number
+  status: PantryNeedStatus
+}) {
+  const product = cleanText(input.product, 120)
+  const unit = cleanText(input.unit, 40)
+  const currentStock = Number(input.currentStock)
+  const minimumStock = Number(input.minimumStock)
+
+  if (!product) return { success: false, error: 'Escriba el producto o necesidad.' }
+  if (!unit) return { success: false, error: 'Escriba la unidad.' }
+  if (!Number.isFinite(currentStock) || currentStock < 0) return { success: false, error: 'Existencia actual inválida.' }
+  if (!Number.isFinite(minimumStock) || minimumStock < 0) return { success: false, error: 'Mínimo necesario inválido.' }
+  if (!PANTRY_STATUSES.includes(input.status)) return { success: false, error: 'Estado inválido.' }
+  if (input.id && !isUuid(input.id)) return { success: false, error: 'Necesidad inválida.' }
+
+  try {
+    const { supabase, user } = await requireManager()
+    const now = new Date().toISOString()
+
+    if (input.id) {
+      const { error } = await (supabase as any)
+        .from('despensa_necesidades')
+        .update({
+          producto: product,
+          unidad: unit,
+          existencia_actual: currentStock,
+          minimo_necesario: minimumStock,
+          estado: input.status,
+          updated_by: user.id,
+          updated_at: now,
+        })
+        .eq('id', input.id)
+      if (error) throw error
+    } else {
+      const { error } = await (supabase as any)
+        .from('despensa_necesidades')
+        .insert({
+          producto: product,
+          unidad: unit,
+          existencia_actual: currentStock,
+          minimo_necesario: minimumStock,
+          estado: input.status,
+          created_by: user.id,
+          updated_by: user.id,
+          created_at: now,
+          updated_at: now,
+        })
+      if (error) throw error
+    }
+
+    revalidateSolidarity()
+    return { success: true }
+  } catch (error) {
+    console.error('[solidaridad] guardar despensa', error)
+    return { success: false, error: 'No fue posible guardar esta necesidad de despensa.' }
+  }
+}
+
+export async function eliminarNecesidadDespensa(id: string) {
+  if (!isUuid(id)) return { success: false, error: 'Necesidad inválida.' }
+
+  try {
+    const { supabase } = await requireManager()
+    const { error } = await (supabase as any)
+      .from('despensa_necesidades')
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+
+    revalidateSolidarity()
+    return { success: true }
+  } catch (error) {
+    console.error('[solidaridad] eliminar despensa', error)
+    return { success: false, error: 'No fue posible eliminar esta necesidad de despensa.' }
   }
 }
 

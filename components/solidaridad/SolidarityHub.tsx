@@ -21,7 +21,9 @@ import {
 } from '@/app/actions/solidaridad'
 import {
   SOLIDARITY_CONTRIBUTION_STATUS_LABELS,
+  SOLIDARITY_CONTRIBUTION_TYPE_LABELS,
   SOLIDARITY_REQUEST_STATUS_LABELS,
+  type PantryNeed,
   type SolidarityContactPreference,
   type SolidarityContributionType,
   type SolidarityUrgency,
@@ -76,9 +78,11 @@ const contributionTone: Record<string, string> = {
 export default function SolidarityHub({
   requests,
   contributions,
+  pantryNeeds,
 }: {
   requests: RequestItem[]
   contributions: ContributionItem[]
+  pantryNeeds: PantryNeed[]
 }) {
   const [tab, setTab] = useState<Tab>('solicitar')
   const [pending, startTransition] = useTransition()
@@ -96,6 +100,7 @@ export default function SolidarityHub({
     detail: '',
     phone: '',
     anonymous: false,
+    pantryNeedId: '',
   })
 
   const trackingCount = requests.length + contributions.length
@@ -124,13 +129,14 @@ export default function SolidarityHub({
       const result = await registrarAporteSolidario({
         ...contributionForm,
         amount: contributionForm.type === 'monetario' ? Number(contributionForm.amount) : null,
+        pantryNeedId: contributionForm.type === 'alimentos' ? contributionForm.pantryNeedId || null : null,
       })
       if (!result.success) {
         setMessage({ type: 'error', text: result.error || 'No fue posible registrar el aporte.' })
         return
       }
-      setContributionForm({ type: 'alimentos', amount: '', detail: '', phone: '', anonymous: false })
-      setMessage({ type: 'ok', text: 'El aporte fue registrado. El equipo de la iglesia dará seguimiento.' })
+      setContributionForm({ type: 'alimentos', amount: '', detail: '', phone: '', anonymous: false, pantryNeedId: '' })
+      setMessage({ type: 'ok', text: 'Tu siembra fue registrada. El equipo de la iglesia dará seguimiento.' })
       setTab('seguimiento')
     })
   }
@@ -167,7 +173,7 @@ export default function SolidarityHub({
         <div className="grid grid-cols-3 rounded-[18px] bg-white p-1 ring-1 ring-black/[0.05]">
           {([
             ['solicitar', 'Necesito ayuda'],
-            ['aportar', 'Quiero aportar'],
+            ['aportar', 'Quiero sembrar'],
             ['seguimiento', 'Seguimiento'],
           ] as Array<[Tab, string]>).map(([id, label]) => (
             <button
@@ -193,8 +199,8 @@ export default function SolidarityHub({
               <div className="flex items-center gap-3">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-violet-50 text-violet-600"><ShoppingBasket className="h-5 w-5" /></span>
                 <div>
-                  <h2 className="font-extrabold text-[#171923]">Solicitar una bolsa alimenticia</h2>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">La información solo será visible para el equipo pastoral autorizado.</p>
+                  <h2 className="font-extrabold text-[#171923]">Necesito ayuda</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Cuéntanos qué necesitas. La información solo será visible para el equipo pastoral autorizado.</p>
                 </div>
               </div>
             </header>
@@ -281,24 +287,62 @@ export default function SolidarityHub({
               <div className="flex items-center gap-3">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-600"><HandCoins className="h-5 w-5" /></span>
                 <div>
-                  <h2 className="font-extrabold text-[#171923]">Donar o sembrar</h2>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">Registra tu intención. VIDA no realiza cobros; la iglesia te contactará.</p>
+                  <h2 className="font-extrabold text-[#171923]">Quiero sembrar</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Puedes responder a una necesidad real o decirnos cómo deseas ayudar. VIDA no realiza cobros.</p>
                 </div>
               </div>
             </header>
 
             <div className="space-y-5 p-5">
+              {pantryNeeds.length > 0 && (
+                <div>
+                  <div className="mb-3">
+                    <p className="text-xs font-extrabold text-slate-700">Necesidades actuales de la despensa</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">Las de menor existencia aparecen primero.</p>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {pantryNeeds.map((need) => {
+                      const missing = Math.max(0, Number(need.minimo_necesario) - Number(need.existencia_actual))
+                      const selected = contributionForm.pantryNeedId === need.id
+                      return (
+                        <button
+                          key={need.id}
+                          type="button"
+                          onClick={() => setContributionForm((current) => ({ ...current, type: 'alimentos', pantryNeedId: selected ? '' : need.id }))}
+                          className={`min-w-[150px] shrink-0 rounded-2xl border px-4 py-3 text-left ${selected ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}
+                        >
+                          <p className={`text-sm font-extrabold ${selected ? 'text-emerald-800' : 'text-[#171923]'}`}>{need.producto}</p>
+                          <p className={`mt-1 text-xs ${selected ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            {missing > 0 ? `Faltan ${missing} ${need.unidad}` : `${Number(need.existencia_actual)} ${need.unidad} disponibles`}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               <label className="block">
                 <span className="mb-2 block text-xs font-bold text-slate-600">¿Cómo deseas colaborar?</span>
                 <select
                   value={contributionForm.type}
-                  onChange={(event) => setContributionForm((current) => ({ ...current, type: event.target.value as SolidarityContributionType }))}
+                  onChange={(event) => {
+                    const type = event.target.value as SolidarityContributionType
+                    setContributionForm((current) => ({ ...current, type, pantryNeedId: type === 'alimentos' ? current.pantryNeedId : '' }))
+                  }}
                   className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-[#171923] outline-none focus:border-emerald-400 focus:bg-white"
                 >
                   <option value="alimentos">Donar alimentos</option>
                   <option value="monetario">Sembrar económicamente</option>
-                  <option value="voluntariado">Ayudar con tiempo o transporte</option>
-                  <option value="otro">Otra forma de apoyo</option>
+                  <option value="voluntariado">Voluntariado</option>
+                  <option value="tiempo">Dar de mi tiempo</option>
+                  <option value="transporte">Apoyar con transporte</option>
+                  <option value="herramientas">Prestar o donar herramientas</option>
+                  <option value="objetos">Donar objetos</option>
+                  <option value="conocimientos">Compartir conocimientos</option>
+                  <option value="oficios">Ayudar con un oficio</option>
+                  <option value="habilidades">Ayudar con una habilidad</option>
+                  <option value="otro">No sé qué hace falta; quiero preguntar cómo ayudar</option>
                 </select>
               </label>
 
@@ -318,11 +362,11 @@ export default function SolidarityHub({
               )}
 
               <label className="block">
-                <span className="mb-2 block text-xs font-bold text-slate-600">Detalle del aporte</span>
+                <span className="mb-2 block text-xs font-bold text-slate-600">Detalle de tu siembra</span>
                 <textarea
                   value={contributionForm.detail}
                   onChange={(event) => setContributionForm((current) => ({ ...current, detail: event.target.value }))}
-                  placeholder="Ej. Puedo donar arroz, frijoles y aceite para dos bolsas, o apoyar con transporte el sábado."
+                  placeholder="Ej. Puedo donar arroz y aceite, apoyar con transporte el sábado o ayudar con mi oficio."
                   rows={4}
                   maxLength={2000}
                   className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-[#171923] outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white"
@@ -359,7 +403,7 @@ export default function SolidarityHub({
                 onClick={submitContribution}
                 className="min-h-12 w-full rounded-2xl bg-emerald-600 px-5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60"
               >
-                {pending ? 'Registrando…' : 'Registrar mi aporte'}
+                {pending ? 'Registrando…' : 'Registrar mi siembra'}
               </button>
             </div>
           </section>
@@ -382,7 +426,7 @@ export default function SolidarityHub({
                   <article key={item.id} className={`p-5 ${index < requests.length - 1 ? 'border-b border-slate-100' : ''}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-[#171923]">Bolsa para {item.hogar_personas} persona{item.hogar_personas === 1 ? '' : 's'}</p>
+                        <p className="text-sm font-extrabold text-[#171923]">Solicitud para {item.hogar_personas} persona{item.hogar_personas === 1 ? '' : 's'}</p>
                         <p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                       </div>
                       <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${requestTone[item.estado] || requestTone.enviada}`}>
@@ -416,21 +460,21 @@ export default function SolidarityHub({
             <section>
               <div className="mb-3 flex items-end justify-between px-1">
                 <div>
-                  <h2 className="font-extrabold text-[#171923]">Mis aportes</h2>
-                  <p className="mt-1 text-xs text-slate-500">Seguimiento de donaciones, siembras y voluntariado.</p>
+                  <h2 className="font-extrabold text-[#171923]">Mis siembras</h2>
+                  <p className="mt-1 text-xs text-slate-500">Seguimiento de alimentos, aportes, tiempo, transporte y otras formas de ayuda.</p>
                 </div>
                 <span className="text-xs font-bold text-slate-400">{contributions.length}</span>
               </div>
               <div className="overflow-hidden rounded-[24px] bg-white ring-1 ring-black/[0.045]">
                 {contributions.length === 0 ? (
-                  <p className="px-5 py-10 text-center text-sm text-slate-400">Todavía no has registrado aportes.</p>
+                  <p className="px-5 py-10 text-center text-sm text-slate-400">Todavía no has registrado siembras.</p>
                 ) : contributions.map((item, index) => (
                   <article key={item.id} className={`p-5 ${index < contributions.length - 1 ? 'border-b border-slate-100' : ''}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">
                         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><PackageCheck className="h-5 w-5" /></span>
                         <div className="min-w-0">
-                          <p className="text-sm font-extrabold capitalize text-[#171923]">{item.tipo.replace('_', ' ')}</p>
+                          <p className="text-sm font-extrabold text-[#171923]">{SOLIDARITY_CONTRIBUTION_TYPE_LABELS[item.tipo]}</p>
                           <p className="mt-1 text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString('es-SV', { day: 'numeric', month: 'long' })}</p>
                         </div>
                       </div>

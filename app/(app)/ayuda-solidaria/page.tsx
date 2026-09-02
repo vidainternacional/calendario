@@ -15,7 +15,7 @@ export default async function AyudaSolidariaPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: requests }, { data: contributions }] = await Promise.all([
+  const [{ data: requests }, { data: contributions }, { data: pantryNeeds }] = await Promise.all([
     (supabase as any)
       .from('solicitudes_ayuda_solidaria')
       .select('id, hogar_personas, urgencia, necesidad, telefono, contacto_preferido, estado, respuesta, created_at')
@@ -26,6 +26,12 @@ export default async function AyudaSolidariaPage() {
       .select('id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, created_at')
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false }),
+    (supabase as any)
+      .from('despensa_necesidades')
+      .select('id, producto, unidad, existencia_actual, minimo_necesario, estado')
+      .eq('estado', 'activa')
+      .order('existencia_actual', { ascending: true })
+      .limit(50),
   ])
 
   return (
@@ -35,7 +41,7 @@ export default async function AyudaSolidariaPage() {
           <BackButton />
         </div>
       </div>
-      <SolidarityHub requests={requests || []} contributions={contributions || []} />
+      <SolidarityHub requests={requests || []} contributions={contributions || []} pantryNeeds={pantryNeeds || []} />
     </div>
   )
 }

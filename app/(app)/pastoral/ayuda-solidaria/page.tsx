@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import SolidarityAdminBoard from '@/components/solidaridad/SolidarityAdminBoard'
+import SolidarityPantryManager from '@/components/solidaridad/SolidarityPantryManager'
 import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = {
@@ -29,7 +30,7 @@ export default async function PastoralAyudaSolidariaPage() {
   if (!puedeAtender) redirect('/pastoral')
 
   const service = createServiceClient()
-  const [{ data: requestRows }, { data: contributionRows }] = await Promise.all([
+  const [{ data: requestRows }, { data: contributionRows }, { data: pantryRows }] = await Promise.all([
     (service as any)
       .from('solicitudes_ayuda_solidaria')
       .select('id, hogar_personas, urgencia, necesidad, telefono, contacto_preferido, estado, respuesta, created_at, solicitante:profiles!solicitudes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
@@ -39,6 +40,11 @@ export default async function PastoralAyudaSolidariaPage() {
       .from('aportes_ayuda_solidaria')
       .select('id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, created_at, aportante:profiles!aportes_ayuda_solidaria_profile_id_fkey(nombre_completo, email)')
       .order('created_at', { ascending: false })
+      .limit(200),
+    (service as any)
+      .from('despensa_necesidades')
+      .select('id, producto, unidad, existencia_actual, minimo_necesario, estado, created_at, updated_at')
+      .order('existencia_actual', { ascending: true })
       .limit(200),
   ])
 
@@ -50,6 +56,7 @@ export default async function PastoralAyudaSolidariaPage() {
     ...item,
     profiles: item.aportante || null,
   }))
+  const pantryNeeds = pantryRows || []
 
   const openRequests = requests.filter((item: any) => !['entregada', 'rechazada', 'cancelada'].includes(item.estado)).length
   const availableContributions = contributions.filter((item: any) => !['completado', 'cancelado'].includes(item.estado)).length
@@ -80,6 +87,7 @@ export default async function PastoralAyudaSolidariaPage() {
           <p className="text-xs leading-5 text-slate-600">Los motivos, teléfonos y datos de coordinación solo están disponibles para pastores, Pastor General y administradores autorizados. Cuando un aporte se marca como reservado, su identidad no se muestra al beneficiario.</p>
         </div>
         <SolidarityAdminBoard requests={requests} contributions={contributions} />
+        <SolidarityPantryManager needs={pantryNeeds} />
       </div>
     </main>
   )
