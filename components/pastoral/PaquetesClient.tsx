@@ -55,10 +55,10 @@ function fondoMiniatura(paquete: Paquete) {
   return '#e2e8f0'
 }
 
-export default function PaquetesClient({ paquetes, abrirNuevo = false }: { paquetes: Paquete[]; abrirNuevo?: boolean }) {
+export default function PaquetesClient({ paquetes, abrirNuevo = false, filtroInicial = 'todos' }: { paquetes: Paquete[]; abrirNuevo?: boolean; filtroInicial?: Filtro }) {
   const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
-  const [filtro, setFiltro] = useState<Filtro>('todos')
+  const [filtro, setFiltro] = useState<Filtro>(filtroInicial)
   const [vista, setVista] = useState<Vista>('tarjetas')
   const [mostrarFormulario, setMostrarFormulario] = useState(abrirNuevo)
   const [titulo, setTitulo] = useState('')
