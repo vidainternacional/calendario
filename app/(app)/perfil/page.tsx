@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
-import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion } from 'lucide-react'
+import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion, MessagesSquare, Sprout } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
@@ -19,10 +19,20 @@ export default async function PerfilPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: membresias }, { data: details }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: membresias },
+    { data: details },
+    { count: ayudasCount },
+    { count: conversacionesVidaCount },
+    { count: semillasCount },
+  ] = await Promise.all([
     (supabase as any).from('profiles').select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral, es_pastor_general').eq('id', user.id).single(),
     supabase.from('ministerio_miembros').select(`id,es_lider,ministerios (id,nombre,color_primario)`).eq('profile_id', user.id),
     (supabase as any).from('member_profile_details').select('*').eq('profile_id', user.id).maybeSingle(),
+    (supabase as any).from('solicitudes_ayuda_solidaria').select('id', { count: 'exact', head: true }).eq('profile_id', user.id),
+    (supabase as any).from('solicitudes_ayuda_solidaria').select('id', { count: 'exact', head: true }).eq('profile_id', user.id).eq('contacto_preferido', 'aplicacion'),
+    (supabase as any).from('aportes_ayuda_solidaria').select('id', { count: 'exact', head: true }).eq('profile_id', user.id).in('estado', ['recibido', 'completado']),
   ])
 
   const roles = {
@@ -40,6 +50,9 @@ export default async function PerfilPage() {
     || rolActual === 'administrador'
     || (profile as any)?.es_pastor_general === true
   const nombre = (profile as any)?.nombre_completo || 'Usuario'
+  const totalAyudas = ayudasCount || 0
+  const totalConversacionesVida = conversacionesVidaCount || 0
+  const totalSemillas = semillasCount || 0
 
   return (
     <main className="min-h-screen bg-[#f4f5f9] px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-8 max-w-xl mx-auto">
@@ -77,6 +90,23 @@ export default async function PerfilPage() {
         </section>
 
         <Link href="/contactos" className="block rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-indigo-200 active:scale-[0.99] sm:p-6"><div className="flex min-w-0 items-center justify-between gap-4"><div className="min-w-0"><h3 className="text-lg font-semibold text-[#171923]">Mis Contactos 🤝</h3><p className="mt-1 text-sm leading-relaxed text-slate-500">Tu código QR y tus conexiones con otros servidores</p></div><span className="shrink-0 text-2xl text-slate-300" aria-hidden="true">›</span></div></Link>
+
+        <section className="overflow-hidden rounded-[22px] border border-slate-100 bg-white shadow-sm">
+          <Link href="/ayuda-solidaria?tab=seguimiento" className="flex min-w-0 items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 transition hover:bg-violet-50/40 active:bg-violet-50">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-50 text-violet-600"><MessagesSquare className="h-5 w-5" /></span>
+              <div className="min-w-0"><p className="text-sm font-bold text-[#171923]">Mis ayudas</p><p className="mt-1 text-[11px] leading-5 text-slate-500">{totalAyudas} pedido{totalAyudas === 1 ? '' : 's'} · {totalConversacionesVida} conversación{totalConversacionesVida === 1 ? '' : 'es'} dentro de VIDA</p></div>
+            </div>
+            <span className="shrink-0 text-xl text-slate-300">›</span>
+          </Link>
+          <Link href="/ayuda-solidaria?tab=seguimiento" className="flex min-w-0 items-center justify-between gap-4 px-5 py-4 transition hover:bg-emerald-50/40 active:bg-emerald-50">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><Sprout className="h-5 w-5" /></span>
+              <div className="min-w-0"><p className="text-sm font-bold text-[#171923]">Mi jardín de semillas</p><p className="mt-1 text-[11px] leading-5 text-slate-500">{totalSemillas} siembra{totalSemillas === 1 ? '' : 's'} completada{totalSemillas === 1 ? '' : 's'} · registro personal sin rankings</p></div>
+            </div>
+            <span className="shrink-0 text-xl text-slate-300">›</span>
+          </Link>
+        </section>
 
         <section className="rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center gap-2"><Bell className="h-5 w-5 shrink-0 text-indigo-400" /><h3 className="text-lg font-semibold text-[#171923]">Notificaciones</h3></div><p className="mb-5 text-sm leading-relaxed text-gray-500">Activa las alertas push para recibir avisos, solicitudes e intercambios en tiempo real.</p><PushToggle /></section>
 
