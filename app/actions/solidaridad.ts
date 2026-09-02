@@ -4,45 +4,22 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import type {
+  ChurchBankAccountPurpose,
   PantryNeedStatus,
   SolidarityContactPreference,
   SolidarityContributionStatus,
   SolidarityContributionType,
+  SolidarityHelpType,
   SolidarityRequestStatus,
 } from '@/lib/solidarity/types'
 
-const REQUEST_STATUSES: SolidarityRequestStatus[] = [
-  'enviada',
-  'revisando',
-  'aprobada',
-  'programada',
-  'entregada',
-  'rechazada',
-  'cancelada',
-]
-const CONTRIBUTION_STATUSES: SolidarityContributionStatus[] = [
-  'ofrecido',
-  'contactando',
-  'recibido',
-  'asignado',
-  'completado',
-  'cancelado',
-]
+const REQUEST_STATUSES: SolidarityRequestStatus[] = ['enviada', 'revisando', 'aprobada', 'programada', 'entregada', 'rechazada', 'cancelada']
+const CONTRIBUTION_STATUSES: SolidarityContributionStatus[] = ['ofrecido', 'contactando', 'recibido', 'asignado', 'completado', 'cancelado']
 const CONTACTS: SolidarityContactPreference[] = ['aplicacion', 'telefono', 'whatsapp']
-const CONTRIBUTION_TYPES: SolidarityContributionType[] = [
-  'alimentos',
-  'monetario',
-  'voluntariado',
-  'tiempo',
-  'transporte',
-  'herramientas',
-  'objetos',
-  'conocimientos',
-  'oficios',
-  'habilidades',
-  'otro',
-]
+const HELP_TYPES: SolidarityHelpType[] = ['general', 'paquete_despensa']
+const CONTRIBUTION_TYPES: SolidarityContributionType[] = ['alimentos', 'monetario', 'voluntariado', 'tiempo', 'transporte', 'herramientas', 'objetos', 'conocimientos', 'oficios', 'habilidades', 'otro']
 const PANTRY_STATUSES: PantryNeedStatus[] = ['activa', 'cubierta', 'pausada']
+const BANK_PURPOSES: ChurchBankAccountPurpose[] = ['ayuda_solidaria', 'diezmos_ofrendas']
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -59,6 +36,8 @@ function revalidateSolidarity() {
   revalidatePath('/admin/analisis')
   revalidatePath('/admin')
   revalidatePath('/inicio')
+  revalidatePath('/perfil')
+  revalidatePath('/diezmos-ofrendas')
 }
 
 async function requireUser() {
@@ -72,45 +51,46 @@ async function requireUser() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.activo || profile?.estado_cuenta !== 'activo') {
-    throw new Error('La cuenta no está activa.')
-  }
-
+  if (!profile?.activo || profile?.estado_cuenta !== 'activo') throw new Error('La cuenta no está activa.')
   return { supabase, user, profile }
 }
 
 async function requireManager() {
   const context = await requireUser()
-  const allowed = context.profile?.rol === 'pastor'
-    || context.profile?.rol === 'administrador'
-    || context.profile?.es_pastor_general === true
+  const allowed = context.profile?.rol === 'pastor' || context.profile?.rol === 'administrador' || context.profile?.es_pastor_general === true
   if (!allowed) throw new Error('No tienes permiso para administrar Ayuda Solidaria.')
   return context
 }
 
+async function requireAdmin() {
+  const context = await requireUser()
+  if (context.profile?.rol !== 'administrador') throw new Error('Solo un administrador puede modificar datos bancarios oficiales.')
+  return context
+}
+
 export async function crearSolicitudAyudaSolidaria(input: {
+  helpType?: SolidarityHelpType
   householdSize?: number | null
-  need: string
+  need?: string
   additionalDetail?: string
   phone?: string
   contactPreference: SolidarityContactPreference
 }) {
-  const need = cleanText(input.need, 3000)
+  const helpType = input.helpType || 'general'
   const additionalDetail = cleanText(input.additionalDetail, 3000) || null
   const phone = cleanText(input.phone, 40) || null
   const rawHousehold = input.householdSize
   const householdSize = rawHousehold === null || rawHousehold === undefined || rawHousehold === 0
     ? null
     : Math.max(1, Math.min(30, Math.trunc(Number(rawHousehold))))
+  const need = helpType === 'paquete_despensa' ? 'Paquete de despensa' : cleanText(input.need, 3000)
 
+  if (!HELP_TYPES.includes(helpType)) return { success: false, error: 'Tipo de ayuda inválido.' }
   if (!CONTACTS.includes(input.contactPreference)) return { success: false, error: 'Forma de contacto inválida.' }
-  if (!need) return { success: false, error: 'Cuéntanos qué necesitas.' }
-  if (rawHousehold !== null && rawHousehold !== undefined && rawHousehold !== 0 && !Number.isFinite(Number(rawHousehold))) {
-    return { success: false, error: 'Cantidad de personas inválida.' }
-  }
-  if (input.contactPreference !== 'aplicacion' && !phone) {
-    return { success: false, error: 'Agrega un teléfono para la forma de contacto seleccionada.' }
-  }
+  if (helpType === 'general' && !need) return { success: false, error: 'Cuéntanos qué necesitas.' }
+  if (rawHousehold !== null && rawHousehold !== undefined && rawHousehold !== 0 && !Number.isFinite(Number(rawHousehold))) return { success: false, error: 'Cantidad de personas inválida.' }
+  if (helpType === 'paquete_despensa' && !householdSize) return { success: false, error: 'Indica para cuántas personas debemos preparar el paquete.' }
+  if (input.contactPreference !== 'aplicacion' && !phone) return { success: false, error: 'Agrega un teléfono para la forma de contacto seleccionada.' }
 
   try {
     const { supabase, user } = await requireUser()
@@ -118,6 +98,7 @@ export async function crearSolicitudAyudaSolidaria(input: {
       .from('solicitudes_ayuda_solidaria')
       .insert({
         profile_id: user.id,
+        tipo_ayuda: helpType,
         hogar_personas: householdSize,
         urgencia: 'normal',
         necesidad: need,
@@ -125,7 +106,6 @@ export async function crearSolicitudAyudaSolidaria(input: {
         telefono: phone,
         contacto_preferido: input.contactPreference,
       })
-
     if (error) throw error
     revalidateSolidarity()
     return { success: true }
@@ -150,43 +130,142 @@ export async function registrarAporteSolidario(input: {
 
   if (!CONTRIBUTION_TYPES.includes(input.type)) return { success: false, error: 'Tipo de siembra inválido.' }
   if (!detail) return { success: false, error: 'Cuéntanos cómo te gustaría ayudar.' }
-  if (input.type === 'monetario' && (amount === null || !Number.isFinite(amount) || amount <= 0)) {
-    return { success: false, error: 'Ingresa un monto válido para la siembra.' }
-  }
+  if (input.type === 'monetario' && (amount === null || !Number.isFinite(amount) || amount <= 0)) return { success: false, error: 'Ingresa un monto válido para la siembra.' }
   if (pantryNeedId && !isUuid(pantryNeedId)) return { success: false, error: 'Necesidad de despensa inválida.' }
 
   try {
     const { supabase, user } = await requireUser()
-
     if (pantryNeedId) {
-      const { data: need } = await (supabase as any)
-        .from('despensa_necesidades')
-        .select('id')
-        .eq('id', pantryNeedId)
-        .eq('estado', 'activa')
-        .maybeSingle()
+      const { data: need } = await (supabase as any).from('despensa_necesidades').select('id').eq('id', pantryNeedId).eq('estado', 'activa').maybeSingle()
       if (!need) return { success: false, error: 'La necesidad seleccionada ya no está disponible.' }
     }
-
-    const { error } = await (supabase as any)
-      .from('aportes_ayuda_solidaria')
-      .insert({
-        profile_id: user.id,
-        tipo: input.type,
-        monto: amount,
-        moneda: 'USD',
-        detalle: detail,
-        telefono: phone,
-        anonimo: Boolean(input.anonymous),
-        necesidad_despensa_id: pantryNeedId,
-      })
-
+    const { error } = await (supabase as any).from('aportes_ayuda_solidaria').insert({
+      profile_id: user.id,
+      tipo: input.type,
+      monto: amount,
+      moneda: 'USD',
+      detalle: detail,
+      telefono: phone,
+      anonimo: Boolean(input.anonymous),
+      necesidad_despensa_id: pantryNeedId,
+    })
     if (error) throw error
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
     console.error('[solidaridad] registrar aporte', error)
     return { success: false, error: 'No fue posible registrar tu siembra. Intenta nuevamente.' }
+  }
+}
+
+export async function enviarMensajeAyudaSolidaria(input: {
+  requestId?: string
+  contributionId?: string
+  message: string
+}) {
+  const requestId = input.requestId || null
+  const contributionId = input.contributionId || null
+  const message = cleanText(input.message, 2000)
+
+  if ((!requestId && !contributionId) || (requestId && contributionId)) return { success: false, error: 'Conversación inválida.' }
+  if (requestId && !isUuid(requestId)) return { success: false, error: 'Conversación inválida.' }
+  if (contributionId && !isUuid(contributionId)) return { success: false, error: 'Conversación inválida.' }
+  if (!message) return { success: false, error: 'Escribe un mensaje.' }
+
+  try {
+    const { supabase, user } = await requireUser()
+    const { error } = await (supabase as any).from('ayuda_solidaria_mensajes').insert({
+      solicitud_id: requestId,
+      aporte_id: contributionId,
+      autor_id: user.id,
+      mensaje: message,
+    })
+    if (error) throw error
+    revalidateSolidarity()
+    return { success: true }
+  } catch (error) {
+    console.error('[solidaridad] enviar chat', error)
+    return { success: false, error: 'No fue posible enviar el mensaje.' }
+  }
+}
+
+export async function marcarAgradecimientoAporte(id: string, thanked = true) {
+  if (!isUuid(id)) return { success: false, error: 'Siembra inválida.' }
+  try {
+    const { user } = await requireManager()
+    const service = createServiceClient()
+    const { error } = await (service as any).from('aportes_ayuda_solidaria').update({
+      agradecido_at: thanked ? new Date().toISOString() : null,
+      agradecido_por: thanked ? user.id : null,
+    }).eq('id', id)
+    if (error) throw error
+    revalidateSolidarity()
+    return { success: true }
+  } catch (error) {
+    console.error('[solidaridad] agradecimiento', error)
+    return { success: false, error: 'No fue posible actualizar el agradecimiento.' }
+  }
+}
+
+export async function guardarCuentaBancariaIglesia(input: {
+  id?: string
+  purpose: ChurchBankAccountPurpose
+  title: string
+  bank: string
+  holder: string
+  accountNumber: string
+  accountType?: string
+  instructions?: string
+  active?: boolean
+}) {
+  const title = cleanText(input.title, 120)
+  const bank = cleanText(input.bank, 120)
+  const holder = cleanText(input.holder, 160)
+  const accountNumber = cleanText(input.accountNumber, 120)
+  const accountType = cleanText(input.accountType, 80) || null
+  const instructions = cleanText(input.instructions, 1000) || null
+  if (!BANK_PURPOSES.includes(input.purpose)) return { success: false, error: 'Uso de cuenta inválido.' }
+  if (!title || !bank || !holder || !accountNumber) return { success: false, error: 'Completa título, banco, titular y número de cuenta.' }
+  if (input.id && !isUuid(input.id)) return { success: false, error: 'Cuenta inválida.' }
+
+  try {
+    const { supabase, user } = await requireAdmin()
+    const payload = {
+      proposito: input.purpose,
+      titulo: title,
+      banco: bank,
+      titular: holder,
+      numero_cuenta: accountNumber,
+      tipo_cuenta: accountType,
+      instrucciones,
+      activo: input.active !== false,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    }
+    const query = input.id
+      ? (supabase as any).from('cuentas_bancarias_iglesia').update(payload).eq('id', input.id)
+      : (supabase as any).from('cuentas_bancarias_iglesia').insert({ ...payload, created_by: user.id })
+    const { error } = await query
+    if (error) throw error
+    revalidateSolidarity()
+    return { success: true }
+  } catch (error) {
+    console.error('[solidaridad] cuenta bancaria', error)
+    return { success: false, error: 'No fue posible guardar los datos bancarios.' }
+  }
+}
+
+export async function eliminarCuentaBancariaIglesia(id: string) {
+  if (!isUuid(id)) return { success: false, error: 'Cuenta inválida.' }
+  try {
+    const { supabase } = await requireAdmin()
+    const { error } = await (supabase as any).from('cuentas_bancarias_iglesia').delete().eq('id', id)
+    if (error) throw error
+    revalidateSolidarity()
+    return { success: true }
+  } catch (error) {
+    console.error('[solidaridad] eliminar cuenta', error)
+    return { success: false, error: 'No fue posible eliminar la cuenta.' }
   }
 }
 
@@ -202,7 +281,6 @@ export async function guardarNecesidadDespensa(input: {
   const unit = cleanText(input.unit, 40)
   const currentStock = Number(input.currentStock)
   const minimumStock = Number(input.minimumStock)
-
   if (!product) return { success: false, error: 'Escribe el producto o necesidad.' }
   if (!unit) return { success: false, error: 'Escribe la unidad.' }
   if (!Number.isFinite(currentStock) || currentStock < 0) return { success: false, error: 'Existencia actual inválida.' }
@@ -213,38 +291,11 @@ export async function guardarNecesidadDespensa(input: {
   try {
     const { supabase, user } = await requireManager()
     const now = new Date().toISOString()
-
-    if (input.id) {
-      const { error } = await (supabase as any)
-        .from('despensa_necesidades')
-        .update({
-          producto: product,
-          unidad: unit,
-          existencia_actual: currentStock,
-          minimo_necesario: minimumStock,
-          estado: input.status,
-          updated_by: user.id,
-          updated_at: now,
-        })
-        .eq('id', input.id)
-      if (error) throw error
-    } else {
-      const { error } = await (supabase as any)
-        .from('despensa_necesidades')
-        .insert({
-          producto: product,
-          unidad: unit,
-          existencia_actual: currentStock,
-          minimo_necesario: minimumStock,
-          estado: input.status,
-          created_by: user.id,
-          updated_by: user.id,
-          created_at: now,
-          updated_at: now,
-        })
-      if (error) throw error
-    }
-
+    const query = input.id
+      ? (supabase as any).from('despensa_necesidades').update({ producto: product, unidad: unit, existencia_actual: currentStock, minimo_necesario: minimumStock, estado: input.status, updated_by: user.id, updated_at: now }).eq('id', input.id)
+      : (supabase as any).from('despensa_necesidades').insert({ producto: product, unidad: unit, existencia_actual: currentStock, minimo_necesario: minimumStock, estado: input.status, created_by: user.id, updated_by: user.id, created_at: now, updated_at: now })
+    const { error } = await query
+    if (error) throw error
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
@@ -255,15 +306,10 @@ export async function guardarNecesidadDespensa(input: {
 
 export async function eliminarNecesidadDespensa(id: string) {
   if (!isUuid(id)) return { success: false, error: 'Necesidad inválida.' }
-
   try {
     const { supabase } = await requireManager()
-    const { error } = await (supabase as any)
-      .from('despensa_necesidades')
-      .delete()
-      .eq('id', id)
+    const { error } = await (supabase as any).from('despensa_necesidades').delete().eq('id', id)
     if (error) throw error
-
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
@@ -274,27 +320,14 @@ export async function eliminarNecesidadDespensa(id: string) {
 
 export async function cancelarSolicitudAyudaSolidaria(requestId: string) {
   if (!isUuid(requestId)) return { success: false, error: 'Mensaje inválido.' }
-
   try {
     const { user } = await requireUser()
     const service = createServiceClient()
-    const { data: request } = await (service as any)
-      .from('solicitudes_ayuda_solidaria')
-      .select('profile_id, estado')
-      .eq('id', requestId)
-      .single()
-
+    const { data: request } = await (service as any).from('solicitudes_ayuda_solidaria').select('profile_id, estado').eq('id', requestId).single()
     if (!request || request.profile_id !== user.id) return { success: false, error: 'No puedes modificar este mensaje.' }
-    if (!['enviada', 'revisando', 'aprobada'].includes(request.estado)) {
-      return { success: false, error: 'Este mensaje ya no puede cancelarse desde la aplicación.' }
-    }
-
-    const { error } = await (service as any)
-      .from('solicitudes_ayuda_solidaria')
-      .update({ estado: 'cancelada' })
-      .eq('id', requestId)
+    if (!['enviada', 'revisando', 'aprobada'].includes(request.estado)) return { success: false, error: 'Este mensaje ya no puede cancelarse desde la aplicación.' }
+    const { error } = await (service as any).from('solicitudes_ayuda_solidaria').update({ estado: 'cancelada' }).eq('id', requestId)
     if (error) throw error
-
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
@@ -305,27 +338,14 @@ export async function cancelarSolicitudAyudaSolidaria(requestId: string) {
 
 export async function cancelarAporteSolidario(contributionId: string) {
   if (!isUuid(contributionId)) return { success: false, error: 'Siembra inválida.' }
-
   try {
     const { user } = await requireUser()
     const service = createServiceClient()
-    const { data: contribution } = await (service as any)
-      .from('aportes_ayuda_solidaria')
-      .select('profile_id, estado')
-      .eq('id', contributionId)
-      .single()
-
+    const { data: contribution } = await (service as any).from('aportes_ayuda_solidaria').select('profile_id, estado').eq('id', contributionId).single()
     if (!contribution || contribution.profile_id !== user.id) return { success: false, error: 'No puedes modificar esta siembra.' }
-    if (!['ofrecido', 'contactando', 'asignado'].includes(contribution.estado)) {
-      return { success: false, error: 'Esta siembra ya no puede cancelarse desde la aplicación.' }
-    }
-
-    const { error } = await (service as any)
-      .from('aportes_ayuda_solidaria')
-      .update({ estado: 'cancelado' })
-      .eq('id', contributionId)
+    if (!['ofrecido', 'contactando', 'asignado'].includes(contribution.estado)) return { success: false, error: 'Esta siembra ya no puede cancelarse desde la aplicación.' }
+    const { error } = await (service as any).from('aportes_ayuda_solidaria').update({ estado: 'cancelado' }).eq('id', contributionId)
     if (error) throw error
-
     revalidateSolidarity()
     return { success: true }
   } catch (error) {
@@ -334,35 +354,15 @@ export async function cancelarAporteSolidario(contributionId: string) {
   }
 }
 
-export async function actualizarSolicitudAyudaSolidaria(input: {
-  id: string
-  status: SolidarityRequestStatus
-  response?: string
-}) {
-  if (!isUuid(input.id) || !REQUEST_STATUSES.includes(input.status)) {
-    return { success: false, error: 'Mensaje o estado inválido.' }
-  }
-
+export async function actualizarSolicitudAyudaSolidaria(input: { id: string; status: SolidarityRequestStatus; response?: string }) {
+  if (!isUuid(input.id) || !REQUEST_STATUSES.includes(input.status)) return { success: false, error: 'Mensaje o estado inválido.' }
   const response = cleanText(input.response, 2000)
-  if (input.status === 'rechazada' && !response) {
-    return { success: false, error: 'Escribe una nota breve para explicar cómo puede continuar la persona.' }
-  }
-
+  if (input.status === 'rechazada' && !response) return { success: false, error: 'Escribe una nota breve para explicar cómo puede continuar la persona.' }
   try {
     const { user } = await requireManager()
     const service = createServiceClient()
     const now = new Date().toISOString()
-    const { error } = await (service as any)
-      .from('solicitudes_ayuda_solidaria')
-      .update({
-        estado: input.status,
-        respuesta: response || null,
-        revisado_por: user.id,
-        revisado_at: now,
-        entregado_at: input.status === 'entregada' ? now : null,
-      })
-      .eq('id', input.id)
-
+    const { error } = await (service as any).from('solicitudes_ayuda_solidaria').update({ estado: input.status, respuesta: response || null, revisado_por: user.id, revisado_at: now, entregado_at: input.status === 'entregada' ? now : null }).eq('id', input.id)
     if (error) throw error
     revalidateSolidarity()
     return { success: true }
@@ -372,28 +372,12 @@ export async function actualizarSolicitudAyudaSolidaria(input: {
   }
 }
 
-export async function actualizarAporteSolidario(input: {
-  id: string
-  status: SolidarityContributionStatus
-  response?: string
-}) {
-  if (!isUuid(input.id) || !CONTRIBUTION_STATUSES.includes(input.status)) {
-    return { success: false, error: 'Siembra o estado inválido.' }
-  }
-
+export async function actualizarAporteSolidario(input: { id: string; status: SolidarityContributionStatus; response?: string }) {
+  if (!isUuid(input.id) || !CONTRIBUTION_STATUSES.includes(input.status)) return { success: false, error: 'Siembra o estado inválido.' }
   try {
     const { user } = await requireManager()
     const service = createServiceClient()
-    const { error } = await (service as any)
-      .from('aportes_ayuda_solidaria')
-      .update({
-        estado: input.status,
-        respuesta: cleanText(input.response, 2000) || null,
-        revisado_por: user.id,
-        revisado_at: new Date().toISOString(),
-      })
-      .eq('id', input.id)
-
+    const { error } = await (service as any).from('aportes_ayuda_solidaria').update({ estado: input.status, respuesta: cleanText(input.response, 2000) || null, revisado_por: user.id, revisado_at: new Date().toISOString() }).eq('id', input.id)
     if (error) throw error
     revalidateSolidarity()
     return { success: true }
