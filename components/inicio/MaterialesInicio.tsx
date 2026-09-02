@@ -50,6 +50,7 @@ export default function MaterialesInicio({
       <section aria-labelledby="preparacion-inicio" className="isolate">
         <Link
           href={`/material/${preparation.public_slug}`}
+          style={{ transform: 'none' }}
           className="group relative flex min-h-[92px] items-center gap-3 overflow-hidden rounded-[24px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/55 to-indigo-50 px-4 py-4 shadow-[0_10px_28px_rgba(91,61,245,0.08)] transition-colors active:bg-violet-50/80"
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-100 text-violet-700 ring-1 ring-violet-200/70">
