@@ -22,6 +22,7 @@ import {
 import { crearServicioAlabanza, prepararFechaAlabanza } from '@/app/actions/servicios-alabanza'
 import PaletaAlabanzaEditor from '@/components/ministerios/PaletaAlabanzaEditor'
 import RepertorioBibliotecaPicker, { type CancionBiblioteca } from '@/components/ministerios/RepertorioBibliotecaPicker'
+import EliminarServicioButton from '@/components/ministerios/EliminarServicioButton'
 import {
   cargarCalendarioMinisterial,
   type ProgramacionCalendarItem,
@@ -407,7 +408,7 @@ export default async function ProgramacionMinisterialPage({
                     return (
                       <div
                         key={itemKey(item)}
-                        className={`rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
+                        className={`relative rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
                       >
                         <div className="flex items-start gap-3">
                           <span
@@ -434,6 +435,14 @@ export default async function ProgramacionMinisterialPage({
                               </p>
                             )}
                           </div>
+                          {puedeProgramar && item.kind === 'event' && (
+                            <EliminarServicioButton
+                              ministerioId={id}
+                              eventoId={item.id}
+                              mes={mes}
+                              dia={diaSeleccionado}
+                            />
+                          )}
                         </div>
 
                         {item.preparado && item.kind === 'event' ? (
