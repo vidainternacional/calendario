@@ -15,12 +15,14 @@ export default function SolidarityChat({
   currentUserId,
   label = 'Conversación en VIDA',
   defaultOpen = false,
+  alwaysOpen = false,
 }: {
   contextType: ContextType
   contextId: string
   currentUserId: string
   label?: string
   defaultOpen?: boolean
+  alwaysOpen?: boolean
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(defaultOpen)
@@ -29,6 +31,7 @@ export default function SolidarityChat({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const visible = alwaysOpen || open
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -57,11 +60,11 @@ export default function SolidarityChat({
   }, [contextId, contextType])
 
   useEffect(() => {
-    if (!open) return
+    if (!visible) return
     void load()
     const interval = window.setInterval(() => void load(), 8000)
     return () => window.clearInterval(interval)
-  }, [load, open])
+  }, [load, visible])
 
   const send = () => {
     const message = text.trim()
@@ -84,23 +87,27 @@ export default function SolidarityChat({
   }
 
   return (
-    <div className="mt-3 border-t border-slate-100 pt-3">
-      <button type="button" onClick={() => setOpen((value) => !value)} className="flex min-h-10 w-full items-center justify-between gap-3 text-left text-xs font-extrabold text-slate-700">
-        <span className="inline-flex items-center gap-2"><MessageCircle className="h-4 w-4 text-violet-600" />{label}</span>
-        <span className="text-[10px] font-bold text-slate-400">{open ? 'Ocultar' : 'Abrir'}</span>
-      </button>
+    <div className={alwaysOpen ? '' : 'mt-3 border-t border-slate-100 pt-3'}>
+      {!alwaysOpen ? (
+        <button type="button" onClick={() => setOpen((value) => !value)} className="flex min-h-10 w-full items-center justify-between gap-3 text-left text-xs font-extrabold text-slate-700">
+          <span className="inline-flex items-center gap-2"><MessageCircle className="h-4 w-4 text-violet-600" />{label}</span>
+          <span className="text-[10px] font-bold text-slate-400">{open ? 'Ocultar' : 'Abrir'}</span>
+        </button>
+      ) : null}
 
-      {open ? (
-        <div className="pt-2">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-[10px] font-medium text-slate-400">Privado entre tú y el equipo autorizado.</p>
-            <button type="button" onClick={() => void load()} disabled={loading} className="grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-slate-100 disabled:opacity-50" aria-label="Actualizar conversación">
-              <RefreshCcw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
+      {visible ? (
+        <div className={alwaysOpen ? '' : 'pt-2'}>
+          {!alwaysOpen ? (
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-[10px] font-medium text-slate-400">Privado entre tú y el equipo autorizado.</p>
+              <button type="button" onClick={() => void load()} disabled={loading} className="grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-slate-100 disabled:opacity-50" aria-label="Actualizar conversación">
+                <RefreshCcw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          ) : null}
 
-          <div className="max-h-72 space-y-2 overflow-y-auto rounded-2xl bg-[#eef0f4] p-3">
-            {messages.length === 0 ? <p className="py-5 text-center text-xs text-slate-500">Escribe abajo para iniciar la conversación.</p> : null}
+          <div className={`space-y-2 overflow-y-auto bg-[#eef0f4] p-3 ${alwaysOpen ? 'min-h-[46vh] max-h-[58vh]' : 'max-h-72 rounded-2xl'}`}>
+            {messages.length === 0 ? <p className="py-8 text-center text-xs text-slate-500">Escribe abajo para iniciar la conversación.</p> : null}
             {messages.map((item) => {
               const own = item.autor_id === currentUserId
               return (
@@ -114,11 +121,16 @@ export default function SolidarityChat({
             })}
           </div>
 
-          <div className="mt-2 flex items-end gap-2 rounded-2xl bg-white p-1.5 ring-1 ring-slate-200">
-            <textarea value={text} onChange={(event) => setText(event.target.value)} rows={1} maxLength={2000} placeholder="Escribe un mensaje…" className="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400" />
+          <div className={`flex items-end gap-2 bg-white p-2 ${alwaysOpen ? 'border-t border-slate-200' : 'mt-2 rounded-2xl ring-1 ring-slate-200'}`}>
+            {alwaysOpen ? (
+              <button type="button" onClick={() => void load()} disabled={loading} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-400 disabled:opacity-50" aria-label="Actualizar conversación">
+                <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            ) : null}
+            <textarea value={text} onChange={(event) => setText(event.target.value)} rows={1} maxLength={2000} placeholder="Escribe un mensaje…" className="min-h-10 flex-1 resize-none rounded-full bg-slate-100 px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400" />
             <button type="button" disabled={pending || !text.trim()} onClick={send} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#5b3df5] text-white disabled:opacity-40" aria-label="Enviar mensaje"><Send className="h-4 w-4" /></button>
           </div>
-          {error ? <p className="mt-2 text-xs font-semibold text-rose-600">{error}</p> : null}
+          {error ? <p className="px-3 pt-2 text-xs font-semibold text-rose-600">{error}</p> : null}
         </div>
       ) : null}
     </div>
