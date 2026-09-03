@@ -143,9 +143,7 @@ export default async function ProgramacionAlabanzaServicio({
         })}
       </div>
 
-      {puedeEditarProgramacion ? (
-        <RepertorioBibliotecaPicker canciones={biblioteca} agregarAction={async () => {}} crearAction={async () => {}} />
-      ) : null}
+      {puedeEditarProgramacion ? <RepertorioBibliotecaPicker canciones={biblioteca} /> : null}
     </div>
   )
 
