@@ -43,6 +43,33 @@ export type PantryNeed = {
   updated_at?: string
 }
 
+export type ServiceNeed = {
+  id: string
+  categoria: string
+  titulo: string
+  detalle: string | null
+  estado: PantryNeedStatus
+  created_at?: string
+  updated_at?: string
+}
+
+export type PantryPackage = {
+  id: string
+  nombre: string
+  activo: boolean
+  es_predeterminado: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export type PantryPackageItem = {
+  id: string
+  paquete_id: string
+  necesidad_id: string
+  cantidad: number
+  despensa_necesidades?: Pick<PantryNeed, 'id' | 'producto' | 'unidad'> | null
+}
+
 export type SolidarityMessage = {
   id: string
   solicitud_id: string | null

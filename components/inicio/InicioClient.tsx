@@ -96,7 +96,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         const [profileRes, proximoItemRes, membresiasRes, materialesRes] = await Promise.all([
           supabase
             .from('profiles')
-            .select('nombre_completo, avatar_url, rol, acceso_centro_pastoral')
+            .select('nombre_completo, avatar_url, rol, acceso_centro_pastoral, es_pastor_general')
             .eq('id', userId)
             .single(),
           (supabase as any).rpc('get_next_visible_calendar_item'),
@@ -209,6 +209,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
     rol === 'pastor' ||
     rol === 'administrador' ||
     membresias.some((m: any) => m.es_lider)
+  const puedeAtenderAyuda = rol === 'pastor' || rol === 'administrador' || profile?.es_pastor_general === true
   const puedeAbrirCentroPastoral =
     Boolean(profile?.acceso_centro_pastoral) || rol === 'pastor' || rol === 'administrador'
 
@@ -503,13 +504,15 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                 </Link>
               )}
 
-              <Link href="/ayuda-solidaria" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-rose-600 text-rose-50 shadow-[0_6px_16px_rgba(225,29,72,0.22)]">
-                  <HeartHandshake className="h-6 w-6" aria-hidden="true" />
-                </span>
-                <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Ayuda</span>
-                <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Apoyo solidario</span>
-              </Link>
+              {!puedeAtenderAyuda && (
+                <Link href="/ayuda-solidaria" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
+                  <span className="grid h-14 w-14 place-items-center rounded-full bg-rose-600 text-rose-50 shadow-[0_6px_16px_rgba(225,29,72,0.22)]">
+                    <HeartHandshake className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                  <span className="mt-2.5 text-[12px] font-bold text-[#171923]">Ayuda</span>
+                  <span className="mt-0.5 line-clamp-2 text-[9px] leading-3.5 text-slate-400">Apoyo solidario</span>
+                </Link>
+              )}
 
               <Link href="/diezmos-ofrendas" className="group flex min-w-0 flex-col items-center rounded-[22px] border border-white/90 bg-white px-2 py-4 text-center shadow-[0_7px_22px_rgba(15,23,42,0.045)] transition active:scale-[0.985]">
                 <span className="grid h-14 w-14 place-items-center rounded-full bg-emerald-600 text-white shadow-[0_6px_16px_rgba(5,150,105,0.2)]">
