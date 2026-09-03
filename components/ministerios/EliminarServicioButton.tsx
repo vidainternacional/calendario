@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { Trash2, X } from 'lucide-react'
-import { eliminarServicioAlabanza } from '@/app/actions/servicios-alabanza'
+import { eliminarServicioAlabanza } from '@/app/actions/eliminar-servicio-alabanza'
 
 export default function EliminarServicioButton({
   ministerioId,
