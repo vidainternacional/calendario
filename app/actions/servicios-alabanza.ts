@@ -74,6 +74,7 @@ function revalidar(ministerioId: string) {
   revalidatePath(`/ministerios/${ministerioId}`)
   revalidatePath(`/ministerios/${ministerioId}/programacion`)
   revalidatePath(`/ministerios/${ministerioId}/programacion/equipo`)
+  revalidatePath(`/ministerios/${ministerioId}/setlist`)
 }
 
 export async function prepararFechaAlabanza(ministerioId: string, formData: FormData): Promise<void> {
@@ -180,6 +181,33 @@ export async function crearServicioAlabanza(ministerioId: string, formData: Form
   if (!start) fail('Selecciona un día y una hora válidos.')
 
   const end = new Date(start.getTime() + durationMinutes * 60_000)
+
+  const { data: existente } = await admin
+    .from('eventos')
+    .select('id')
+    .eq('calendar_id', ministryCalendar.id)
+    .eq('fecha_inicio', start.toISOString())
+    .ilike('titulo', titulo)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (existente?.id) {
+    if (publicCalendars.length > 0) {
+      const { error } = await admin.from('evento_calendarios').upsert(
+        publicCalendars.map((calendar: any) => ({
+          evento_id: existente.id,
+          calendar_id: calendar.id,
+        })),
+        { onConflict: 'evento_id,calendar_id' },
+      )
+      if (error) fail('No fue posible completar la preparación del servicio existente.')
+    }
+
+    revalidar(ministerioId)
+    redirect(`/ministerios/${ministerioId}/programacion?mes=${mesSV(start)}&dia=${diaSV(start)}&evento=${existente.id}#servicio-activo`)
+  }
+
   const eventData = new FormData()
   eventData.set('item_type', 'event')
   eventData.set('titulo', titulo)
