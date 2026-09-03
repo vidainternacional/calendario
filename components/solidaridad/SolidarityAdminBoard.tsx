@@ -10,6 +10,7 @@ import {
 import UserAvatar from '@/components/comunidad/UserAvatar'
 import SolidarityChat from '@/components/solidaridad/SolidarityChat'
 import SolidarityPantryManager from '@/components/solidaridad/SolidarityPantryManager'
+import SolidarityUnreadBadge from '@/components/solidaridad/SolidarityUnreadBadge'
 import {
   SOLIDARITY_CONTRIBUTION_STATUS_LABELS,
   SOLIDARITY_CONTRIBUTION_TYPE_LABELS,
@@ -148,7 +149,7 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
       <div className="divide-y divide-slate-100">
         {filtered.length === 0 ? <p className="px-4 py-10 text-center text-sm text-slate-600">No hay conversaciones para mostrar.</p> : filtered.map((conversation) => {
           const status = conversation.kind === 'solicitud' ? SOLIDARITY_REQUEST_STATUS_LABELS[conversation.item.estado] : SOLIDARITY_CONTRIBUTION_STATUS_LABELS[conversation.item.estado]
-          return <button key={conversation.key} type="button" onClick={() => setSelectedKey(conversation.key)} className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-slate-50"><UserAvatar nombre={conversation.name} avatarUrl={conversation.avatarUrl} size="md" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-extrabold text-slate-900">{conversation.name}</p><span className="shrink-0 text-[10px] text-slate-500">{timeLabel(conversation.createdAt)}</span></div><div className="mt-0.5 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{conversation.preview}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${conversation.kind === 'solicitud' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700'}`}>{status}</span></div></div></button>
+          return <button key={conversation.key} type="button" onClick={() => setSelectedKey(conversation.key)} className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-slate-50"><UserAvatar nombre={conversation.name} avatarUrl={conversation.avatarUrl} size="md" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-extrabold text-slate-900">{conversation.name}</p><span className="inline-flex shrink-0 items-center gap-1.5"><SolidarityUnreadBadge scope="context" contextType={conversation.kind} contextId={conversation.item.id} /><span className="text-[10px] text-slate-500">{timeLabel(conversation.createdAt)}</span></span></div><div className="mt-0.5 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{conversation.preview}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${conversation.kind === 'solicitud' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700'}`}>{status}</span></div></div></button>
         })}
       </div>
     </div>
@@ -159,8 +160,8 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
       {message ? <p className="border-b border-slate-100 bg-slate-900 px-4 py-2 text-xs font-semibold text-white">{message}</p> : null}
 
       {!selected ? <div className="grid grid-cols-3 border-b border-slate-200 bg-white">
-        <button type="button" onClick={() => { setView('ayudas'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'ayudas' ? 'border-violet-600 text-violet-700' : 'border-transparent text-slate-600'}`}>Necesitan ayuda</button>
-        <button type="button" onClick={() => { setView('siembras'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'siembras' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>Quieren sembrar</button>
+        <button type="button" onClick={() => { setView('ayudas'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'ayudas' ? 'border-violet-600 text-violet-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Necesitan ayuda <SolidarityUnreadBadge scope="solicitud" /></span></button>
+        <button type="button" onClick={() => { setView('siembras'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'siembras' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Quieren sembrar <SolidarityUnreadBadge scope="aporte" /></span></button>
         <button type="button" onClick={() => { setView('despensa'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'despensa' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>Despensa</button>
       </div> : null}
 

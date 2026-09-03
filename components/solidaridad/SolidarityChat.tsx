@@ -5,6 +5,7 @@ import { MessageCircle, RefreshCcw, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { enviarMensajeAyudaSolidaria } from '@/app/actions/solidaridad'
 import { createClient } from '@/lib/supabase/client'
+import SolidarityUnreadBadge, { SOLIDARITY_READ_EVENT } from '@/components/solidaridad/SolidarityUnreadBadge'
 import type { SolidarityMessage } from '@/lib/solidarity/types'
 
 type ContextType = 'solicitud' | 'aporte'
@@ -33,6 +34,20 @@ export default function SolidarityChat({
   const [pending, startTransition] = useTransition()
   const visible = alwaysOpen || open
 
+  const markRead = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      const { error: readError } = await (supabase as any).rpc('marcar_ayuda_solidaria_leida', {
+        p_contexto: contextType,
+        p_contexto_id: contextId,
+      })
+      if (readError) throw readError
+      window.dispatchEvent(new Event(SOLIDARITY_READ_EVENT))
+    } catch (readError) {
+      console.error('[solidarity-chat] marcar leído', readError)
+    }
+  }, [contextId, contextType])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -51,13 +66,14 @@ export default function SolidarityChat({
       const { data, error: queryError } = await query
       if (queryError) throw queryError
       setMessages((data || []) as SolidarityMessage[])
+      await markRead()
     } catch (loadError) {
       console.error('[solidarity-chat] cargar', loadError)
       setError('No fue posible actualizar la conversación.')
     } finally {
       setLoading(false)
     }
-  }, [contextId, contextType])
+  }, [contextId, contextType, markRead])
 
   useEffect(() => {
     if (!visible) return
@@ -90,7 +106,7 @@ export default function SolidarityChat({
     <div className={alwaysOpen ? '' : 'mt-3 border-t border-slate-100 pt-3'}>
       {!alwaysOpen ? (
         <button type="button" onClick={() => setOpen((value) => !value)} className="flex min-h-10 w-full items-center justify-between gap-3 text-left text-xs font-extrabold text-slate-700">
-          <span className="inline-flex items-center gap-2"><MessageCircle className="h-4 w-4 text-violet-600" />{label}</span>
+          <span className="inline-flex items-center gap-2"><MessageCircle className="h-4 w-4 text-violet-600" />{label}<SolidarityUnreadBadge scope="context" contextType={contextType} contextId={contextId} /></span>
           <span className="text-[10px] font-bold text-slate-400">{open ? 'Ocultar' : 'Abrir'}</span>
         </button>
       ) : null}

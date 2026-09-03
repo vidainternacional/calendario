@@ -5,6 +5,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import PushSubscriptionSync from '@/components/pwa/PushSubscriptionSync'
 import MisServiciosShortcut from '@/components/inicio/MisServiciosShortcut'
 import PendingAttentionShortcut from '@/components/notificaciones/PendingAttentionShortcut'
+import SolidarityAccessBadgeSync from '@/components/solidaridad/SolidarityAccessBadgeSync'
 
 export default function AppLayout({
   children,
@@ -17,6 +18,7 @@ export default function AppLayout({
       <BibleThemeRouteSync />
       <BibleVerseActionsNoFlash />
       <BibleVerseActionsPersistent />
+      <SolidarityAccessBadgeSync />
       <div className="flex-1 pb-16">
         {children}
       </div>
