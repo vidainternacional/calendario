@@ -51,7 +51,7 @@ export default function ProgramacionAlabanzaSecciones({
               aria-expanded={seleccionada}
               className="flex min-w-0 flex-col items-center gap-2 text-center"
             >
-              <span className={`relative grid h-14 w-14 place-items-center rounded-full transition-all duration-200 ${seleccionada ? 'scale-105 bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>
+              <span className={`relative grid h-14 w-14 place-items-center rounded-full transition-colors duration-150 ${seleccionada ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>
                 <Icon className="h-5 w-5" />
                 <span className={`absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full px-1 text-[9px] font-black ${seleccionada ? 'bg-white text-indigo-700' : 'bg-slate-900 text-white'}`}>
                   {estado(id)}
@@ -63,11 +63,7 @@ export default function ProgramacionAlabanzaSecciones({
         })}
       </div>
 
-      <div className={`grid transition-all duration-250 ease-out ${activa ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-        <div className="overflow-hidden">
-          {contenido ? <div className="pt-5">{contenido}</div> : null}
-        </div>
-      </div>
+      {contenido ? <div className="pt-5">{contenido}</div> : null}
     </div>
   )
 }
