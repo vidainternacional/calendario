@@ -1,0 +1,61 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
+
+export async function guardarVersionOficialCancionSetlist(
+  ministerioId: string,
+  cancionId: string,
+  input: { tonalidadBase: string; acordes: string },
+) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Inicia sesión para continuar.' }
+
+    const admin = createAdminClient() as any
+    const [{ data: profile }, { data: membresia }] = await Promise.all([
+      admin.from('profiles').select('rol,activo,estado_cuenta').eq('id', user.id).maybeSingle(),
+      admin.from('ministerio_miembros').select('es_lider').eq('ministerio_id', ministerioId).eq('profile_id', user.id).maybeSingle(),
+    ])
+
+    if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') {
+      return { success: false, error: 'Tu cuenta no está activa.' }
+    }
+
+    const puedeEditar = profile.rol === 'administrador' || membresia?.es_lider === true
+    if (!puedeEditar) return { success: false, error: 'Solo el líder autorizado puede editar la versión oficial.' }
+
+    const tonalidadBase = String(input.tonalidadBase || '').trim()
+    const acordes = String(input.acordes || '').trim()
+    if (tonalidadBase.length > 12) return { success: false, error: 'La tonalidad base es demasiado larga.' }
+    if (acordes.length > 30000) return { success: false, error: 'La hoja de acordes es demasiado extensa.' }
+
+    const { data: cancion, error: lookupError } = await admin
+      .from('ministerio_canciones')
+      .select('id')
+      .eq('id', cancionId)
+      .eq('ministerio_id', ministerioId)
+      .maybeSingle()
+    if (lookupError || !cancion) return { success: false, error: 'La canción ya no está disponible.' }
+
+    const { error } = await admin
+      .from('ministerio_canciones')
+      .update({
+        tonalidad_base: tonalidadBase || null,
+        acordes: acordes || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', cancionId)
+      .eq('ministerio_id', ministerioId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/ministerios/${ministerioId}/setlist`)
+    revalidatePath(`/ministerios/${ministerioId}/programacion`)
+    return { success: true }
+  } catch (error) {
+    console.error('[setlist] guardar version oficial', error)
+    return { success: false, error: 'No fue posible guardar la versión oficial.' }
+  }
+}

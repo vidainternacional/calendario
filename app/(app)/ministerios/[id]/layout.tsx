@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { Music2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import BackButton from '@/components/navigation/BackButton'
@@ -58,6 +60,7 @@ export default async function MinisterioLayout({
   const profile = profileReq.data as any
   const esAdministrador = profile?.rol === 'administrador'
   const esLider = Boolean((membresiaReq.data as any)?.es_lider)
+  const esAlabanza = String(ministerio.nombre || '').trim().toLowerCase() === 'alabanza'
 
   // Pastor no implica membresía ni liderazgo global. Un pastor entra al dashboard
   // únicamente si pertenece al ministerio; Administrador conserva acceso transversal.
@@ -114,6 +117,11 @@ export default async function MinisterioLayout({
             }}
             ministerios={ministeriosAccesibles}
           />
+          {esAlabanza && (
+            <Link href={`/ministerios/${id}/setlist`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/95 text-violet-600 shadow-lg ring-1 ring-black/5 backdrop-blur-md" aria-label="Abrir setlist" title="Setlist">
+              <Music2 className="h-[18px] w-[18px]" />
+            </Link>
+          )}
           {esLider && <PersonalizarMinisterioButton ministerio={ministerio} />}
         </div>
       </div>
