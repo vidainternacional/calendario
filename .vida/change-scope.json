@@ -1,0 +1,15 @@
+{
+  "task": "Instalar guardrails automáticos para impedir cambios fuera de alcance y errores recurrentes de VIDA",
+  "userRequest": "Convertir las reglas repetidas del proyecto en controles automáticos para no depender solo de memoria conversacional.",
+  "allowedPaths": [
+    "AGENTS.md",
+    ".vida/**",
+    "scripts/vida-guardrails.mjs",
+    ".github/workflows/vida-guardrails.yml"
+  ],
+  "allowSupabase": false,
+  "allowMasterUpdate": false,
+  "allowStructuralCssOverride": false,
+  "allowImportantCss": false,
+  "preserveExistingUI": true
+}
