@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-09-02
+Última actualización: 2026-09-03
 
-Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 2 — AYUDA Y SEMBRAR**
+Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 3 — EXPERIENCIA PARA MÚSICOS**
 
 Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
@@ -33,6 +33,8 @@ La evidencia del piloto operativo iniciado el 2026-08-04 se conserva en:
 11. **Navegación móvil global:** la barra principal pertenece al layout de la aplicación y no a cada módulo. La aparición del teclado no debe levantarla ni hacerla flotar sobre el contenido de trabajo; en iOS debe permanecer en el borde inferior del layout y quedar cubierta por el teclado cuando corresponda.
 12. **Historial reversible:** cuando una superficie exponga Deshacer/Rehacer, toda acción que modifique contenido o metadatos creados por el usuario debe entrar en el mismo historial reversible; no limitar el historial únicamente al texto visible.
 13. **Repriorización obligatoriamente documentada:** cualquier decisión de repriorización tomada en un PR debe reflejarse en este documento maestro antes de continuar trabajando; no basta con que quede mencionada solo en el PR.
+14. **Primer estado de superficies desplegables nuevas:** cualquier opción, sección o grupo desplegable nuevo debe iniciar contraído y volver a iniciar contraído cuando la persona sale de la página y regresa, salvo que exista una razón funcional explícita para abrirlo automáticamente.
+15. **Badge como guía de pendiente:** cuando se implemente un badge nuevo, debe ayudar a conducir desde el acceso general hasta el elemento concreto pendiente. La extensión de esta regla a módulos ya cerrados queda diferida hasta terminar los bloques funcionales pendientes.
 
 ## REGLAS ESTRICTAS DE PRESERVACIÓN Y EJECUCIÓN
 
@@ -580,12 +582,12 @@ Alcance:
 Cierre aprobado:
 Versículo diario y recordatorio configurable integrados con la Biblia aprobada. Catálogo de 12 planes temáticos con progreso y rachas. Centro Pastoral permite a Pastor/Admin crear, editar, autoguardar, publicar y eliminar sus planes, conservando borradores parciales y bloqueando publicación hasta completar todos los días. Los planes son accesibles a cualquier usuario con cuenta, pertenezca o no a VIDA Internacional.
 
-## Bloque 2 — Ayuda y Sembrar — ACTIVO
+## Bloque 2 — Ayuda y Sembrar — COMPLETADO Y APROBADO — 2026-09-03
 
 Objetivo:
 Hacer que pedir ayuda sea sencillo, privado, digno y empático, y que ayudar también sea fácil.
 
-Alcance previsto:
+Alcance aprobado:
 - Entrada clara “Necesito ayuda” sin lenguaje que haga sentir vergüenza a la persona.
 - Posibilidad de explicar una necesidad de manera sencilla y discreta.
 - “Quiero sembrar” permite preguntar cómo ayudar cuando la persona no sabe qué hace falta.
@@ -594,7 +596,19 @@ Alcance previsto:
 - Facilitar comunicación directa únicamente con las personas autorizadas necesarias.
 - Preservar privacidad y no mostrar públicamente información sensible de quien solicita ayuda.
 
-## Bloque 3 — Experiencia para músicos
+Cierre aprobado:
+- Centro de Ayuda unificado para usuarios y equipo autorizado, preservando privacidad y evitando accesos redundantes para Pastor/Administrador.
+- Paquete de despensa y otra ayuda simplificados; conversaciones privadas integradas como chat directo.
+- Inventario de despensa, composición de paquetes y descuento automático al registrar una entrega.
+- Necesidades no materiales administrables — habilidades, oficios, transporte, conocimientos y otras formas de servicio.
+- Historial privado de siembras y agradecimientos sin rankings públicos.
+- Datos bancarios oficiales centralizados en Configuración avanzada para reutilización controlada dentro de la app.
+- Experiencias desplegables nuevas inician contraídas y vuelven a ese estado al reingresar.
+- Contraste de campos y textos corregido dentro del Centro de Ayuda.
+- Sistema de badge-guía validado en Ayuda Solidaria: un pendiente conduce desde el acceso general hasta la conversación exacta y desaparece al quedar leído.
+- La extensión del patrón de badges a otras áreas queda diferida hasta completar los bloques funcionales pendientes.
+
+## Bloque 3 — Experiencia para músicos — ACTIVO
 
 Objetivo:
 Convertir el repertorio/programación musical existente en una herramienta utilizable durante el servicio y no únicamente en una lista de canciones.
@@ -627,4 +641,4 @@ FASE I continúa DIFERIDA hasta completar, validar y cerrar estos cuatro bloques
 
 # Siguiente prioridad autorizada
 
-**Bloque 2 — Ayuda y Sembrar — ACTIVO.**
+**Bloque 3 — Experiencia para músicos — ACTIVO.**
