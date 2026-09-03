@@ -4,6 +4,7 @@ import { Check, Copy, Landmark } from 'lucide-react'
 import { useState } from 'react'
 import type { ChurchBankAccount } from '@/lib/solidarity/types'
 
+// Vista de solo lectura para mostrar datos oficiales; la edición vive en Administración.
 export default function BankAccountCards({
   accounts,
   emptyText = 'Aún no hay una cuenta bancaria configurada para esta opción.',
