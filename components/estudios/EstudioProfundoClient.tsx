@@ -213,10 +213,19 @@ export default function EstudioProfundoClient({
       })
 
       if (key === 'contexto_historico' && state.chronology) {
+        const hasNarrative = state.chronology.events.some(event => event.source.name.toLowerCase().includes('theographic'))
+        const hasChronology = state.chronology.events.some(event => !event.source.name.toLowerCase().includes('theographic'))
+        const chronologyLabel = hasNarrative && !hasChronology
+          ? 'Secuencia narrativa'
+          : hasNarrative
+            ? 'Secuencia narrativa y mapa'
+            : 'Cronología y mapa'
+        const chronologyShortLabel = hasNarrative && !hasChronology ? 'Narrativa' : 'Mapa'
+
         items.push({
           id: 'cronologia-mapa',
-          label: 'Cronología y mapa',
-          shortLabel: 'Mapa',
+          label: chronologyLabel,
+          shortLabel: chronologyShortLabel,
           content: <div className="-mx-4 -my-4 sm:-mx-5 sm:-my-5"><ChronologyMapPanel bundle={state.chronology} /></div>,
         })
       }
