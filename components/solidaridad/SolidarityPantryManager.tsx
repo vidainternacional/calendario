@@ -4,32 +4,15 @@ import { useMemo, useState, useTransition } from 'react'
 import { Check, Loader2, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { eliminarNecesidadDespensa, guardarNecesidadDespensa } from '@/app/actions/solidaridad'
-import {
-  eliminarItemPaqueteDespensa,
-  eliminarNecesidadServicio,
-  guardarItemPaqueteDespensa,
-  guardarNecesidadServicio,
-  guardarPaqueteDespensa,
-} from '@/app/actions/solidaridad-inventario'
+import { eliminarItemPaqueteDespensa, eliminarNecesidadServicio, guardarItemPaqueteDespensa, guardarNecesidadServicio, guardarPaqueteDespensa } from '@/app/actions/solidaridad-inventario'
 import type { PantryNeed, PantryNeedStatus, PantryPackage, PantryPackageItem, ServiceNeed } from '@/lib/solidarity/types'
 
 const FIELD = 'h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-emerald-400'
-
-const EMPTY_STOCK = {
-  id: '', product: '', unit: 'unidad', currentStock: 0, minimumStock: 0, status: 'activa' as PantryNeedStatus,
-}
-const EMPTY_SERVICE = {
-  id: '', category: 'habilidades', title: '', detail: '', status: 'activa' as PantryNeedStatus,
-}
-
+const EMPTY_STOCK = { id: '', product: '', unit: 'unidad', currentStock: 0, minimumStock: 0, status: 'activa' as PantryNeedStatus }
+const EMPTY_SERVICE = { id: '', category: 'habilidades', title: '', detail: '', status: 'activa' as PantryNeedStatus }
 type Section = 'inventario' | 'paquete' | 'necesidades'
 
-export default function SolidarityPantryManager({ needs, serviceNeeds, packages, packageItems }: {
-  needs: PantryNeed[]
-  serviceNeeds: ServiceNeed[]
-  packages: PantryPackage[]
-  packageItems: PantryPackageItem[]
-}) {
+export default function SolidarityPantryManager({ needs, serviceNeeds, packages, packageItems }: { needs: PantryNeed[]; serviceNeeds: ServiceNeed[]; packages: PantryPackage[]; packageItems: PantryPackageItem[] }) {
   const router = useRouter()
   const [section, setSection] = useState<Section>('inventario')
   const [stockForm, setStockForm] = useState(EMPTY_STOCK)
@@ -39,185 +22,39 @@ export default function SolidarityPantryManager({ needs, serviceNeeds, packages,
   const [packageName, setPackageName] = useState('Paquete estándar')
   const [selectedNeedId, setSelectedNeedId] = useState('')
   const [packageQuantity, setPackageQuantity] = useState(1)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
+  const activePackage = useMemo(() => packages.find((i) => i.es_predeterminado) || packages[0] || null, [packages])
+  const activePackageItems = useMemo(() => packageItems.filter((i) => i.paquete_id === activePackage?.id), [packageItems, activePackage])
+  const refresh = (text: string) => { setMessage(text); router.refresh() }
+  const editStock = (need: PantryNeed) => { setStockForm({ id: need.id, product: need.producto, unit: need.unidad, currentStock: Number(need.existencia_actual), minimumStock: Number(need.minimo_necesario), status: need.estado }); setShowStockForm(true); setOpenMenuId(null); setMessage(null) }
+  const saveStock = (override?: typeof EMPTY_STOCK) => { const source = override || stockForm; setMessage(null); startTransition(async () => { const result = await guardarNecesidadDespensa({ id: source.id || undefined, product: source.product, unit: source.unit, currentStock: Number(source.currentStock), minimumStock: Number(source.minimumStock), status: source.status }); if (!result.success) return setMessage(result.error || 'No fue posible guardar el producto.'); if (!override) { setStockForm(EMPTY_STOCK); setShowStockForm(false) } refresh('Inventario actualizado.') }) }
+  const quickStock = (need: PantryNeed, delta: number) => saveStock({ id: need.id, product: need.producto, unit: need.unidad, currentStock: Math.max(0, Number(need.existencia_actual) + delta), minimumStock: Number(need.minimo_necesario), status: need.estado })
+  const removeStock = (need: PantryNeed) => { setOpenMenuId(null); if (!window.confirm(`¿Eliminar “${need.producto}” del inventario?`)) return; startTransition(async () => { const result = await eliminarNecesidadDespensa(need.id); if (!result.success) return setMessage(result.error || 'No fue posible eliminar el producto.'); refresh('Producto eliminado.') }) }
+  const editService = (need: ServiceNeed) => { setServiceForm({ id: need.id, category: need.categoria, title: need.titulo, detail: need.detalle || '', status: need.estado }); setShowServiceForm(true); setMessage(null) }
+  const saveService = () => startTransition(async () => { const result = await guardarNecesidadServicio(serviceForm); if (!result.success) return setMessage(result.error || 'No fue posible guardar la necesidad.'); setServiceForm(EMPTY_SERVICE); setShowServiceForm(false); refresh('Necesidad actualizada.') })
+  const removeService = (need: ServiceNeed) => { if (!window.confirm(`¿Eliminar “${need.titulo}”?`)) return; startTransition(async () => { const result = await eliminarNecesidadServicio(need.id); if (!result.success) return setMessage(result.error || 'No fue posible eliminar la necesidad.'); refresh('Necesidad eliminada.') }) }
+  const ensurePackage = () => startTransition(async () => { const result = await guardarPaqueteDespensa({ id: activePackage?.id, name: packageName || activePackage?.nombre || 'Paquete estándar', active: true, makeDefault: true }); if (!result.success) return setMessage(result.error || 'No fue posible guardar el paquete.'); refresh('Paquete guardado.') })
+  const addPackageItem = () => { if (!activePackage) return setMessage('Guarda primero el paquete estándar.'); if (!selectedNeedId) return setMessage('Selecciona un producto del inventario.'); startTransition(async () => { const result = await guardarItemPaqueteDespensa({ packageId: activePackage.id, needId: selectedNeedId, quantity: Number(packageQuantity) }); if (!result.success) return setMessage(result.error || 'No fue posible agregar el producto.'); setSelectedNeedId(''); setPackageQuantity(1); refresh('Contenido del paquete actualizado.') }) }
+  const removePackageItem = (id: string) => startTransition(async () => { const result = await eliminarItemPaqueteDespensa(id); if (!result.success) return setMessage(result.error || 'No fue posible quitar el producto.'); refresh('Producto retirado del paquete.') })
+  const selectNumber = (event: React.FocusEvent<HTMLInputElement>) => event.currentTarget.select()
 
-  const activePackage = useMemo(() => packages.find((item) => item.es_predeterminado) || packages[0] || null, [packages])
-  const activePackageItems = useMemo(() => packageItems.filter((item) => item.paquete_id === activePackage?.id), [packageItems, activePackage])
-
-  const refresh = (text: string) => {
-    setMessage(text)
-    router.refresh()
-  }
-
-  const editStock = (need: PantryNeed) => {
-    setStockForm({
-      id: need.id,
-      product: need.producto,
-      unit: need.unidad,
-      currentStock: Number(need.existencia_actual),
-      minimumStock: Number(need.minimo_necesario),
-      status: need.estado,
-    })
-    setShowStockForm(true)
-    setMessage(null)
-  }
-
-  const saveStock = (override?: typeof EMPTY_STOCK) => {
-    const source = override || stockForm
-    setMessage(null)
-    startTransition(async () => {
-      const result = await guardarNecesidadDespensa({
-        id: source.id || undefined,
-        product: source.product,
-        unit: source.unit,
-        currentStock: Number(source.currentStock),
-        minimumStock: Number(source.minimumStock),
-        status: source.status,
-      })
-      if (!result.success) return setMessage(result.error || 'No fue posible guardar el producto.')
-      if (!override) {
-        setStockForm(EMPTY_STOCK)
-        setShowStockForm(false)
-      }
-      refresh('Inventario actualizado.')
-    })
-  }
-
-  const quickStock = (need: PantryNeed, delta: number) => saveStock({
-    id: need.id,
-    product: need.producto,
-    unit: need.unidad,
-    currentStock: Math.max(0, Number(need.existencia_actual) + delta),
-    minimumStock: Number(need.minimo_necesario),
-    status: need.estado,
-  })
-
-  const removeStock = (need: PantryNeed) => {
-    if (!window.confirm(`¿Eliminar “${need.producto}” del inventario?`)) return
-    startTransition(async () => {
-      const result = await eliminarNecesidadDespensa(need.id)
-      if (!result.success) return setMessage(result.error || 'No fue posible eliminar el producto.')
-      refresh('Producto eliminado.')
-    })
-  }
-
-  const editService = (need: ServiceNeed) => {
-    setServiceForm({ id: need.id, category: need.categoria, title: need.titulo, detail: need.detalle || '', status: need.estado })
-    setShowServiceForm(true)
-    setMessage(null)
-  }
-
-  const saveService = () => {
-    startTransition(async () => {
-      const result = await guardarNecesidadServicio(serviceForm)
-      if (!result.success) return setMessage(result.error || 'No fue posible guardar la necesidad.')
-      setServiceForm(EMPTY_SERVICE)
-      setShowServiceForm(false)
-      refresh('Necesidad actualizada.')
-    })
-  }
-
-  const removeService = (need: ServiceNeed) => {
-    if (!window.confirm(`¿Eliminar “${need.titulo}”?`)) return
-    startTransition(async () => {
-      const result = await eliminarNecesidadServicio(need.id)
-      if (!result.success) return setMessage(result.error || 'No fue posible eliminar la necesidad.')
-      refresh('Necesidad eliminada.')
-    })
-  }
-
-  const ensurePackage = () => {
-    startTransition(async () => {
-      const result = await guardarPaqueteDespensa({ id: activePackage?.id, name: packageName || activePackage?.nombre || 'Paquete estándar', active: true, makeDefault: true })
-      if (!result.success) return setMessage(result.error || 'No fue posible guardar el paquete.')
-      refresh('Paquete guardado.')
-    })
-  }
-
-  const addPackageItem = () => {
-    if (!activePackage) return setMessage('Guarda primero el paquete estándar.')
-    if (!selectedNeedId) return setMessage('Selecciona un producto del inventario.')
-    startTransition(async () => {
-      const result = await guardarItemPaqueteDespensa({ packageId: activePackage.id, needId: selectedNeedId, quantity: Number(packageQuantity) })
-      if (!result.success) return setMessage(result.error || 'No fue posible agregar el producto.')
-      setSelectedNeedId('')
-      setPackageQuantity(1)
-      refresh('Contenido del paquete actualizado.')
-    })
-  }
-
-  const removePackageItem = (id: string) => {
-    startTransition(async () => {
-      const result = await eliminarItemPaqueteDespensa(id)
-      if (!result.success) return setMessage(result.error || 'No fue posible quitar el producto.')
-      refresh('Producto retirado del paquete.')
-    })
-  }
-
-  return (
-    <div className="text-slate-900">
-      <div className="grid grid-cols-3 border-b border-slate-200">
-        {([['inventario', 'Inventario'], ['paquete', 'Paquete'], ['necesidades', 'Necesidades']] as Array<[Section, string]>).map(([id, label]) => (
-          <button key={id} type="button" onClick={() => { setSection(id); setMessage(null) }} className={`min-h-11 border-b-2 px-2 text-xs font-extrabold ${section === id ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>{label}</button>
-        ))}
-      </div>
-
-      {message ? <p className="border-b border-slate-100 px-4 py-2 text-xs font-semibold text-slate-700">{message}</p> : null}
-
-      {section === 'inventario' ? (
-        <div>
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <div><p className="text-sm font-extrabold text-slate-900">Inventario</p><p className="mt-0.5 text-xs text-slate-600">Existencias reales y mínimo deseado.</p></div>
-            <button type="button" onClick={() => { setShowStockForm(true); setStockForm(EMPTY_STOCK); setMessage(null) }} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-extrabold text-white"><Plus className="h-4 w-4" />Producto</button>
-          </div>
-
-          {showStockForm ? (
-            <div className="border-y border-slate-200 bg-slate-50 px-4 py-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="sm:col-span-2"><span className="mb-1 block text-xs font-bold text-slate-700">Producto</span><input value={stockForm.product} onChange={(e) => setStockForm((c) => ({ ...c, product: e.target.value }))} placeholder="Ej. Arroz" className={FIELD} /></label>
-                <label><span className="mb-1 block text-xs font-bold text-slate-700">Unidad</span><input value={stockForm.unit} onChange={(e) => setStockForm((c) => ({ ...c, unit: e.target.value }))} placeholder="Ej. libras" className={FIELD} /></label>
-                <label><span className="mb-1 block text-xs font-bold text-slate-700">Estado</span><select value={stockForm.status} onChange={(e) => setStockForm((c) => ({ ...c, status: e.target.value as PantryNeedStatus }))} className={`${FIELD} font-semibold`}><option value="activa">Activa</option><option value="cubierta">Cubierta</option><option value="pausada">Pausada</option></select></label>
-                <label><span className="mb-1 block text-xs font-bold text-slate-700">Existencia actual</span><input type="number" min={0} step="0.01" value={stockForm.currentStock} onChange={(e) => setStockForm((c) => ({ ...c, currentStock: Number(e.target.value) }))} className={`${FIELD} font-semibold`} /></label>
-                <label><span className="mb-1 block text-xs font-bold text-slate-700">Mínimo deseado</span><input type="number" min={0} step="0.01" value={stockForm.minimumStock} onChange={(e) => setStockForm((c) => ({ ...c, minimumStock: Number(e.target.value) }))} className={`${FIELD} font-semibold`} /></label>
-              </div>
-              <div className="mt-3 flex gap-2"><button type="button" disabled={pending} onClick={() => saveStock()} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-xs font-extrabold text-white disabled:opacity-50">{pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{stockForm.id ? 'Guardar' : 'Agregar'}</button><button type="button" onClick={() => { setShowStockForm(false); setStockForm(EMPTY_STOCK) }} className="min-h-10 px-3 text-xs font-bold text-slate-600">Cancelar</button></div>
-            </div>
-          ) : null}
-
-          <div className="divide-y divide-slate-100">
-            {needs.length === 0 ? <p className="px-4 py-8 text-center text-sm text-slate-600">Todavía no hay productos registrados.</p> : needs.map((need) => {
-              const current = Number(need.existencia_actual)
-              const minimum = Number(need.minimo_necesario)
-              const missing = Math.max(0, minimum - current)
-              return <article key={need.id} className="flex items-center gap-3 px-4 py-3"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-extrabold text-slate-900">{need.producto}</p>{missing > 0 ? <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Faltan {missing}</span> : <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Cubierto</span>}</div><p className="mt-1 text-xs text-slate-600">{current} de {minimum} {need.unidad}</p></div><div className="flex items-center rounded-xl bg-slate-100"><button type="button" disabled={pending} onClick={() => quickStock(need, -1)} className="grid h-9 w-9 place-items-center font-bold text-slate-700">−</button><span className="min-w-8 text-center text-xs font-extrabold text-slate-800">{current}</span><button type="button" disabled={pending} onClick={() => quickStock(need, 1)} className="grid h-9 w-9 place-items-center font-bold text-slate-700">+</button></div><details className="relative"><summary className="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-full bg-slate-100 text-slate-700 [&::-webkit-details-marker]:hidden"><MoreHorizontal className="h-4 w-4" /></summary><div className="absolute right-0 z-20 mt-2 w-36 overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-black/10"><button type="button" onClick={() => editStock(need)} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-bold text-slate-700"><Pencil className="h-3.5 w-3.5" />Editar</button><button type="button" onClick={() => removeStock(need)} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600"><Trash2 className="h-3.5 w-3.5" />Eliminar</button></div></details></article>
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {section === 'paquete' ? (
-        <div className="px-4 py-4">
-          <div className="mb-4"><p className="text-sm font-extrabold text-slate-900">Contenido del paquete</p><p className="mt-1 text-xs leading-5 text-slate-600">Cuando una solicitud de paquete se marca como entregada, estas cantidades se descuentan automáticamente del inventario.</p></div>
-          <label><span className="mb-1 block text-xs font-bold text-slate-700">Nombre</span><input value={activePackage?.nombre || packageName} onChange={(e) => setPackageName(e.target.value)} placeholder="Paquete estándar" className={FIELD} /></label>
-          <button type="button" disabled={pending} onClick={ensurePackage} className="mt-2 min-h-10 rounded-xl bg-slate-900 px-4 text-xs font-extrabold text-white disabled:opacity-50">Guardar paquete</button>
-
-          <div className="mt-5 grid grid-cols-[1fr_90px] gap-2"><select value={selectedNeedId} onChange={(e) => setSelectedNeedId(e.target.value)} className={FIELD}><option value="">Seleccionar producto</option>{needs.map((need) => <option key={need.id} value={need.id}>{need.producto} · {need.unidad}</option>)}</select><input type="number" min={0.01} step="0.01" value={packageQuantity} onChange={(e) => setPackageQuantity(Number(e.target.value))} className={`${FIELD} font-semibold`} aria-label="Cantidad" /></div>
-          <button type="button" disabled={pending || !selectedNeedId} onClick={addPackageItem} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold text-white disabled:opacity-50"><Plus className="h-4 w-4" />Agregar al paquete</button>
-
-          <div className="mt-4 divide-y divide-slate-100 border-y border-slate-100">
-            {activePackageItems.length === 0 ? <p className="py-6 text-center text-sm text-slate-600">Aún no has definido qué trae el paquete.</p> : activePackageItems.map((item) => <div key={item.id} className="flex items-center gap-3 py-3"><div className="min-w-0 flex-1"><p className="text-sm font-bold text-slate-900">{item.despensa_necesidades?.producto || 'Producto'}</p><p className="mt-0.5 text-xs text-slate-600">{Number(item.cantidad)} {item.despensa_necesidades?.unidad || ''}</p></div><button type="button" disabled={pending} onClick={() => removePackageItem(item.id)} className="grid h-9 w-9 place-items-center rounded-full bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4" /></button></div>)}
-          </div>
-        </div>
-      ) : null}
-
-      {section === 'necesidades' ? (
-        <div>
-          <div className="flex items-center justify-between gap-3 px-4 py-3"><div><p className="text-sm font-extrabold text-slate-900">Necesidades no materiales</p><p className="mt-0.5 text-xs text-slate-600">Habilidades, oficios, transporte y otros apoyos.</p></div><button type="button" onClick={() => { setShowServiceForm(true); setServiceForm(EMPTY_SERVICE) }} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-extrabold text-white"><Plus className="h-4 w-4" />Necesidad</button></div>
-          {showServiceForm ? <div className="border-y border-slate-200 bg-slate-50 px-4 py-4"><div className="grid gap-3"><label><span className="mb-1 block text-xs font-bold text-slate-700">Categoría</span><select value={serviceForm.category} onChange={(e) => setServiceForm((c) => ({ ...c, category: e.target.value }))} className={FIELD}><option value="habilidades">Habilidades</option><option value="profesional">Profesional</option><option value="oficios">Oficios</option><option value="transporte">Transporte</option><option value="tiempo">Tiempo</option><option value="otro">Otro</option></select></label><label><span className="mb-1 block text-xs font-bold text-slate-700">Necesidad</span><input value={serviceForm.title} onChange={(e) => setServiceForm((c) => ({ ...c, title: e.target.value }))} placeholder="Ej. Psicólogo, editor o mecánico" className={FIELD} /></label><label><span className="mb-1 block text-xs font-bold text-slate-700">Detalle <span className="font-medium text-slate-500">(opcional)</span></span><textarea value={serviceForm.detail} onChange={(e) => setServiceForm((c) => ({ ...c, detail: e.target.value }))} rows={2} placeholder="Qué apoyo se necesita" className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500 focus:border-emerald-400" /></label></div><div className="mt-3 flex gap-2"><button type="button" disabled={pending} onClick={saveService} className="min-h-10 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold text-white">Guardar</button><button type="button" onClick={() => setShowServiceForm(false)} className="min-h-10 px-3 text-xs font-bold text-slate-600">Cancelar</button></div></div> : null}
-          <div className="divide-y divide-slate-100">{serviceNeeds.length === 0 ? <p className="px-4 py-8 text-center text-sm text-slate-600">No hay necesidades registradas.</p> : serviceNeeds.map((need) => <article key={need.id} className="flex items-center gap-3 px-4 py-3"><div className="min-w-0 flex-1"><p className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">{need.categoria}</p><p className="mt-0.5 text-sm font-extrabold text-slate-900">{need.titulo}</p>{need.detalle ? <p className="mt-1 text-xs leading-5 text-slate-600">{need.detalle}</p> : null}</div><button type="button" onClick={() => editService(need)} className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700"><Pencil className="h-4 w-4" /></button><button type="button" onClick={() => removeService(need)} className="grid h-9 w-9 place-items-center rounded-full bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4" /></button></article>)}</div>
-        </div>
-      ) : null}
-    </div>
-  )
+  return <div className="text-slate-900">
+    <div className="grid grid-cols-3 border-b border-slate-200">{([['inventario','Inventario'],['paquete','Paquete'],['necesidades','Necesidades']] as Array<[Section,string]>).map(([id,label]) => <button key={id} type="button" onClick={() => { setSection(id); setMessage(null); setOpenMenuId(null) }} className={`min-h-11 border-b-2 px-2 text-xs font-extrabold ${section === id ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>{label}</button>)}</div>
+    {message ? <p className="border-b border-slate-100 px-4 py-2 text-xs font-semibold text-slate-700">{message}</p> : null}
+    {section === 'inventario' ? <div>
+      <div className="flex items-center justify-between gap-3 px-4 py-3"><div><p className="text-sm font-extrabold text-slate-900">Inventario</p><p className="mt-0.5 text-xs text-slate-600">Existencias reales y mínimo deseado.</p></div><button type="button" onClick={() => { setShowStockForm(true); setStockForm(EMPTY_STOCK); setMessage(null) }} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-extrabold text-white"><Plus className="h-4 w-4" />Producto</button></div>
+      {showStockForm ? <div className="border-y border-slate-200 bg-slate-50 px-4 py-4"><div className="grid gap-3 sm:grid-cols-2">
+        <label className="sm:col-span-2"><span className="mb-1 block text-xs font-bold text-slate-700">Producto</span><input value={stockForm.product} onChange={(e) => setStockForm((c) => ({...c,product:e.target.value}))} placeholder="Ej. Arroz" className={FIELD}/></label>
+        <label><span className="mb-1 block text-xs font-bold text-slate-700">Unidad</span><input value={stockForm.unit} onChange={(e) => setStockForm((c) => ({...c,unit:e.target.value}))} placeholder="Ej. libras" className={FIELD}/></label>
+        <label><span className="mb-1 block text-xs font-bold text-slate-700">Estado</span><select value={stockForm.status} onChange={(e) => setStockForm((c) => ({...c,status:e.target.value as PantryNeedStatus}))} className={`${FIELD} font-semibold`}><option value="activa">Activa</option><option value="cubierta">Cubierta</option><option value="pausada">Pausada</option></select></label>
+        <label><span className="mb-1 block text-xs font-bold text-slate-700">Existencia actual</span><input type="number" min={0} step="0.01" value={stockForm.currentStock} onFocus={selectNumber} onChange={(e) => setStockForm((c) => ({...c,currentStock:Number(e.target.value)}))} className={`${FIELD} font-semibold`}/></label>
+        <label><span className="mb-1 block text-xs font-bold text-slate-700">Mínimo deseado</span><input type="number" min={0} step="0.01" value={stockForm.minimumStock} onFocus={selectNumber} onChange={(e) => setStockForm((c) => ({...c,minimumStock:Number(e.target.value)}))} className={`${FIELD} font-semibold`}/></label>
+      </div><div className="mt-3 flex gap-2"><button type="button" disabled={pending} onClick={() => saveStock()} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-xs font-extrabold text-white disabled:opacity-50">{pending?<Loader2 className="h-4 w-4 animate-spin"/>:<Check className="h-4 w-4"/>}{stockForm.id?'Guardar':'Agregar'}</button><button type="button" onClick={() => {setShowStockForm(false);setStockForm(EMPTY_STOCK)}} className="min-h-10 px-3 text-xs font-bold text-slate-600">Cancelar</button></div></div> : null}
+      <div className="divide-y divide-slate-100">{needs.length===0?<p className="px-4 py-8 text-center text-sm text-slate-600">Todavía no hay productos registrados.</p>:needs.map((need)=>{const current=Number(need.existencia_actual),minimum=Number(need.minimo_necesario),missing=Math.max(0,minimum-current),menuOpen=openMenuId===need.id;return <article key={need.id} className={`relative flex items-center gap-3 px-4 py-3 ${menuOpen?'z-50':''}`}><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-extrabold text-slate-900">{need.producto}</p>{missing>0?<span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Faltan {missing}</span>:<span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Cubierto</span>}</div><p className="mt-1 text-xs text-slate-600">{current} de {minimum} {need.unidad}</p></div><div className="flex items-center rounded-xl bg-slate-100"><button disabled={pending} onClick={()=>quickStock(need,-1)} className="grid h-9 w-9 place-items-center font-bold text-slate-700">−</button><span className="min-w-8 text-center text-xs font-extrabold text-slate-800">{current}</span><button disabled={pending} onClick={()=>quickStock(need,1)} className="grid h-9 w-9 place-items-center font-bold text-slate-700">+</button></div><div className="relative"><button type="button" aria-label="Opciones" aria-expanded={menuOpen} onClick={()=>setOpenMenuId(menuOpen?null:need.id)} className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700"><MoreHorizontal className="h-4 w-4"/></button>{menuOpen?<div className="absolute right-0 top-10 z-[80] w-36 overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl ring-1 ring-slate-200"><button type="button" onClick={()=>editStock(need)} className="flex w-full items-center gap-2 bg-white px-3 py-2 text-xs font-bold text-slate-800"><Pencil className="h-3.5 w-3.5"/>Editar</button><button type="button" onClick={()=>removeStock(need)} className="flex w-full items-center gap-2 bg-white px-3 py-2 text-xs font-bold text-rose-600"><Trash2 className="h-3.5 w-3.5"/>Eliminar</button></div>:null}</div></article>})}</div>
+    </div>:null}
+    {section==='paquete'?<div className="px-4 py-4"><div className="mb-4"><p className="text-sm font-extrabold text-slate-900">Contenido del paquete</p><p className="mt-1 text-xs leading-5 text-slate-600">Cuando una solicitud de paquete se marca como entregada, estas cantidades se descuentan automáticamente del inventario.</p></div><label><span className="mb-1 block text-xs font-bold text-slate-700">Nombre</span><input value={activePackage?.nombre||packageName} onChange={(e)=>setPackageName(e.target.value)} placeholder="Paquete estándar" className={FIELD}/></label><button disabled={pending} onClick={ensurePackage} className="mt-2 min-h-10 rounded-xl bg-slate-900 px-4 text-xs font-extrabold text-white">Guardar paquete</button><div className="mt-5 grid grid-cols-[1fr_90px] gap-2"><select value={selectedNeedId} onChange={(e)=>setSelectedNeedId(e.target.value)} className={FIELD}><option value="">Seleccionar producto</option>{needs.map((n)=><option key={n.id} value={n.id}>{n.producto} · {n.unidad}</option>)}</select><input type="number" min={0.01} step="0.01" value={packageQuantity} onFocus={selectNumber} onChange={(e)=>setPackageQuantity(Number(e.target.value))} className={`${FIELD} font-semibold`} aria-label="Cantidad"/></div><button disabled={pending||!selectedNeedId} onClick={addPackageItem} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold text-white"><Plus className="h-4 w-4"/>Agregar al paquete</button><div className="mt-4 divide-y divide-slate-100 border-y border-slate-100">{activePackageItems.length===0?<p className="py-6 text-center text-sm text-slate-600">Aún no has definido qué trae el paquete.</p>:activePackageItems.map((item)=><div key={item.id} className="flex items-center gap-3 py-3"><div className="min-w-0 flex-1"><p className="text-sm font-bold text-slate-900">{item.despensa_necesidades?.producto||'Producto'}</p><p className="mt-0.5 text-xs text-slate-600">{Number(item.cantidad)} {item.despensa_necesidades?.unidad||''}</p></div><button disabled={pending} onClick={()=>removePackageItem(item.id)} className="grid h-9 w-9 place-items-center rounded-full bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4"/></button></div>)}</div></div>:null}
+    {section==='necesidades'?<div><div className="flex items-center justify-between gap-3 px-4 py-3"><div><p className="text-sm font-extrabold text-slate-900">Necesidades no materiales</p><p className="mt-0.5 text-xs text-slate-600">Habilidades, oficios, transporte y otros apoyos.</p></div><button onClick={()=>{setShowServiceForm(true);setServiceForm(EMPTY_SERVICE)}} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-extrabold text-white"><Plus className="h-4 w-4"/>Necesidad</button></div>{showServiceForm?<div className="border-y border-slate-200 bg-slate-50 px-4 py-4"><div className="grid gap-3"><label><span className="mb-1 block text-xs font-bold text-slate-700">Categoría</span><select value={serviceForm.category} onChange={(e)=>setServiceForm((c)=>({...c,category:e.target.value}))} className={FIELD}><option value="habilidades">Habilidades</option><option value="profesional">Profesional</option><option value="oficios">Oficios</option><option value="transporte">Transporte</option><option value="tiempo">Tiempo</option><option value="otro">Otro</option></select></label><label><span className="mb-1 block text-xs font-bold text-slate-700">Necesidad</span><input value={serviceForm.title} onChange={(e)=>setServiceForm((c)=>({...c,title:e.target.value}))} placeholder="Ej. Psicólogo, editor o mecánico" className={FIELD}/></label><label><span className="mb-1 block text-xs font-bold text-slate-700">Detalle <span className="font-medium text-slate-500">(opcional)</span></span><textarea value={serviceForm.detail} onChange={(e)=>setServiceForm((c)=>({...c,detail:e.target.value}))} rows={2} placeholder="Qué apoyo se necesita" className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500"/></label></div><div className="mt-3 flex gap-2"><button disabled={pending} onClick={saveService} className="min-h-10 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold text-white">Guardar</button><button onClick={()=>setShowServiceForm(false)} className="min-h-10 px-3 text-xs font-bold text-slate-600">Cancelar</button></div></div>:null}<div className="divide-y divide-slate-100">{serviceNeeds.length===0?<p className="px-4 py-8 text-center text-sm text-slate-600">No hay necesidades registradas.</p>:serviceNeeds.map((need)=><article key={need.id} className="flex items-center gap-3 px-4 py-3"><div className="min-w-0 flex-1"><p className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">{need.categoria}</p><p className="mt-0.5 text-sm font-extrabold text-slate-900">{need.titulo}</p>{need.detalle?<p className="mt-1 text-xs leading-5 text-slate-600">{need.detalle}</p>:null}</div><button onClick={()=>editService(need)} className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-700"><Pencil className="h-4 w-4"/></button><button onClick={()=>removeService(need)} className="grid h-9 w-9 place-items-center rounded-full bg-rose-50 text-rose-600"><Trash2 className="h-4 w-4"/></button></article>)}</div></div>:null}
+  </div>
 }
