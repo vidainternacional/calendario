@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
-import { Check, ChevronDown, Loader2, Plus, UserPlus, X } from 'lucide-react'
+import { Check, Loader2, Plus, UserPlus, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type Funcion = {
@@ -109,61 +109,57 @@ export default function EquipoServicioEditor({
 
       {mensaje ? <p className="mt-3 border-l-2 border-rose-400 pl-3 text-[11px] font-semibold text-rose-700">{mensaje}</p> : null}
 
-      <div className={`grid transition-all duration-200 ease-out ${agregando ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-        <div className="overflow-hidden">
-          <div className="mt-4 border-y border-slate-200">
-            <p className="py-3 text-[11px] font-bold text-slate-500">Elige una persona. Después verás solamente las funciones que ya tiene habilitadas.</p>
+      {agregando ? (
+        <div className="mt-4 border-y border-slate-200 py-4">
+          <p className="mb-3 text-[11px] font-bold text-slate-500">Desliza y elige una persona.</p>
+          <div className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {miembros.map((miembro) => {
-              const abierta = personaSeleccionada === miembro.id
+              const seleccionada = personaSeleccionada === miembro.id
               const asignadas = asignaciones.filter((item) => item.profile_id === miembro.id).length
               return (
-                <div key={miembro.id} className="border-t border-slate-100 first:border-t-0">
-                  <button
-                    type="button"
-                    onClick={() => setPersonaSeleccionada(abierta ? null : miembro.id)}
-                    className="flex min-h-[58px] w-full items-center gap-3 py-2.5 text-left"
-                    aria-expanded={abierta}
-                  >
-                    <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-indigo-50 text-xs font-extrabold text-indigo-600">
-                      {miembro.avatar_url ? <img src={miembro.avatar_url} alt="" className="h-full w-full object-cover" /> : miembro.nombre_completo.charAt(0)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-extrabold text-slate-800">{miembro.nombre_completo}</span>
-                      <span className="mt-0.5 block truncate text-[10px] text-slate-400">{miembro.capacidades.length} {miembro.capacidades.length === 1 ? 'función disponible' : 'funciones disponibles'}{asignadas ? ` · ${asignadas} en este servicio` : ''}</span>
-                    </span>
-                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${abierta ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <div className={`grid transition-all duration-200 ease-out ${abierta ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                    <div className="overflow-hidden">
-                      <div className="pb-3 pl-12">
-                        {disponiblesParaAgregar.length ? (
-                          <div className="flex flex-wrap gap-2">
-                            {disponiblesParaAgregar.map((funcion) => (
-                              <button
-                                key={funcion.id}
-                                type="button"
-                                disabled={pending}
-                                onClick={() => asignar(miembro.id, funcion.id)}
-                                className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-indigo-50 px-3 text-[10px] font-extrabold text-indigo-700 ring-1 ring-indigo-100 disabled:opacity-50"
-                              >
-                                {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                                {funcion.nombre}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-[10px] text-slate-400">{miembro.capacidades.length ? 'Todas sus funciones ya están asignadas en este servicio.' : 'Esta persona todavía no tiene funciones configuradas.'}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <button
+                  key={miembro.id}
+                  type="button"
+                  onClick={() => setPersonaSeleccionada(seleccionada ? null : miembro.id)}
+                  className="flex w-[74px] shrink-0 snap-start flex-col items-center text-center"
+                  aria-pressed={seleccionada}
+                >
+                  <span className={`relative grid h-12 w-12 place-items-center overflow-hidden rounded-full text-sm font-extrabold ${seleccionada ? 'bg-indigo-600 text-white ring-2 ring-indigo-300 ring-offset-2' : 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100'}`}>
+                    {miembro.avatar_url ? <img src={miembro.avatar_url} alt="" className="h-full w-full object-cover" /> : miembro.nombre_completo.charAt(0)}
+                    {asignadas > 0 ? <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-emerald-600 px-1 text-[9px] font-black text-white ring-2 ring-white">{asignadas}</span> : null}
+                  </span>
+                  <span className={`mt-2 line-clamp-2 text-[10px] font-bold leading-4 ${seleccionada ? 'text-indigo-700' : 'text-slate-600'}`}>{miembro.nombre_completo}</span>
+                </button>
               )
             })}
           </div>
+
+          {persona ? (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-xs font-extrabold text-slate-800">{persona.nombre_completo}</p>
+              <p className="mt-1 text-[10px] text-slate-400">Selecciona una de sus funciones habilitadas para este servicio.</p>
+              {disponiblesParaAgregar.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {disponiblesParaAgregar.map((funcion) => (
+                    <button
+                      key={funcion.id}
+                      type="button"
+                      disabled={pending}
+                      onClick={() => asignar(persona.id, funcion.id)}
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-indigo-50 px-3 text-[10px] font-extrabold text-indigo-700 ring-1 ring-indigo-100 disabled:opacity-50"
+                    >
+                      {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                      {funcion.nombre}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-[10px] text-slate-400">{persona.capacidades.length ? 'Todas sus funciones ya están asignadas en este servicio.' : 'Esta persona todavía no tiene funciones configuradas.'}</p>
+              )}
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : null}
 
       <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">
         {asignaciones.length === 0 ? (
