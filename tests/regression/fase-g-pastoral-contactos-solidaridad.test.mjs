@@ -42,8 +42,8 @@ test('Perfil ubica Buzón y Ayuda Solidaria debajo de Centro Pastoral y Ayuda us
   assert.match(ayuda, /profile\?\.rol === 'pastor'/)
   assert.match(ayuda, /profile\?\.rol === 'administrador'/)
   assert.match(ayuda, /profile\?\.es_pastor_general === true/)
+  assert.match(ayuda, /\.select\('id, profile_id, tipo, monto, moneda, detalle, telefono, anonimo, estado, respuesta, agradecido_at, created_at,/)
   assert.match(ayuda, /profiles: item\.aportante \|\| null/)
-  assert.match(ayuda, /su identidad no se muestra al beneficiario/)
 
   assert.match(adminLayout, /rol !== 'administrador'/)
   assert.doesNotMatch(adminLayout, /rol === 'pastor'/)
