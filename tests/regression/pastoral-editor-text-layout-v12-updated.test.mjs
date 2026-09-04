@@ -104,7 +104,7 @@ test('Capas usa pipeline por arrastre acotado y swipe con visibilidad bloqueo y 
   assert.match(capas, /moverArrastreCapa\(event, elemento\.id\)/)
   assert.match(workspace, /const DESPLAZAMIENTO_ACCIONES_CAPA = 164/)
   assert.match(capas, /translateX\(-\$\{DESPLAZAMIENTO_ACCIONES_CAPA\}px\)/)
-  assert.match(capas, /pointer-events-none opacity-0/)
+  assert.match(capas, /pointer-events-none translate-x-3 scale-95 opacity-0/)
   assert.match(capas, /duplicarElemento\(elemento\.id\)/)
   assert.match(capas, /alternarBloqueoCapa\(elemento\.id\)/)
   assert.match(capas, /eliminarElemento\(elemento\.id\)/)
