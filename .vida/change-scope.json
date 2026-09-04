@@ -1,11 +1,10 @@
 {
-  "task": "Instalar guardrails automáticos para impedir cambios fuera de alcance y errores recurrentes de VIDA",
-  "userRequest": "Convertir las reglas repetidas del proyecto en controles automáticos para no depender solo de memoria conversacional.",
+  "task": "Actualizar CI de Bloque 3 y convertir VIDA Guardrails en paso obligatorio del CI general",
+  "userRequest": "Corregir las dos regresiones desactualizadas de Alabanza y hacer que los guardrails se ejecuten obligatoriamente dentro del CI general, sin tocar la UI ni Supabase.",
   "allowedPaths": [
-    "AGENTS.md",
-    ".vida/**",
-    "scripts/vida-guardrails.mjs",
-    ".github/workflows/vida-guardrails.yml"
+    ".vida/change-scope.json",
+    ".github/workflows/ci-temporal.yml",
+    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
