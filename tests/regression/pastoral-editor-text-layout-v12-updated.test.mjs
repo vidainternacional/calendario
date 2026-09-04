@@ -58,15 +58,13 @@ test('Plantillas aplican composición real con escala inicial moderada y límite
   assert.doesNotMatch(paleta, /fuente:/)
 })
 
-test('Plantillas y Temas crecen verticalmente en filas de tres', () => {
-  const plantillas = workspace.slice(workspace.indexOf("panel === 'plantillas'"), workspace.indexOf("panel === 'temas'"))
-  const temas = workspace.slice(workspace.indexOf("panel === 'temas'"), workspace.indexOf("panel === 'recursos'"))
-  assert.match(plantillas, /grid grid-cols-3 gap-x-2 gap-y-3/)
-  assert.match(plantillas, /aria-label="Plantillas en filas de tres"/)
-  assert.match(temas, /grid grid-cols-3 gap-x-2 gap-y-3/)
-  assert.match(temas, /aria-label="Temas en filas de tres"/)
-  assert.doesNotMatch(plantillas, /pastoral-template-grid|overflow-x-auto/)
-  assert.doesNotMatch(temas, /pastoral-theme-grid|overflow-x-auto/)
+test('Plantillas conservan su motor y Temas viven dentro de Fondos en filas de tres', () => {
+  assert.match(workspace, /PLANTILLAS_VISUALES/)
+  assert.match(workspace, /const aplicarPlantilla/)
+  assert.match(workspace, /selectorTemasAbierto/)
+  assert.match(workspace, /aria-controls="pastoral-selector-temas"/)
+  assert.match(workspace, /grid grid-cols-3 gap-x-2 gap-y-3" aria-label="Temas de color en filas de tres"/)
+  assert.match(workspace, /PALETAS_PRESENTACION\.map/)
 })
 
 test('Formato listas tamaño interlineado y alineación comparten una sola cinta redonda horizontal', () => {
@@ -104,7 +102,7 @@ test('Capas usa pipeline por arrastre acotado y swipe con visibilidad bloqueo y 
   assert.match(capas, /<GripVertical className=/)
   assert.match(capas, /iniciarArrastreCapa\(event, elemento\.id\)/)
   assert.match(capas, /moverArrastreCapa\(event, elemento\.id\)/)
-  assert.match(workspace, /const DESPLAZAMIENTO_ACCIONES_CAPA = 150/)
+  assert.match(workspace, /const DESPLAZAMIENTO_ACCIONES_CAPA = 164/)
   assert.match(capas, /translateX\(-\$\{DESPLAZAMIENTO_ACCIONES_CAPA\}px\)/)
   assert.match(capas, /pointer-events-none opacity-0/)
   assert.match(capas, /duplicarElemento\(elemento\.id\)/)
@@ -134,11 +132,11 @@ test('bloqueo de capa impide editar mover y redimensionar sin cambiar el modelo 
 
 test('una imagen o fondo visual puede desbloquearse como capa editable', () => {
   assert.match(workspace, /const convertirImagenEnFondo/)
-  assert.match(workspace, /elementos: \(pagina\.elementos \?\? \[]\)\.filter\(\(item\) => item\.id !== id\)/)
+  assert.match(workspace, /const otros = \(pagina\.elementos \?\? \[]\)\.filter\(\(item\) => item\.id !== id\)/)
   assert.match(workspace, /const desbloquearFondo/)
   assert.match(workspace, /aria-label="Desbloquear fondo"/)
-  assert.match(workspace, /tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0/)
-  assert.match(workspace, /fondo_visual: fondoVisual/)
+  assert.match(workspace, /tipo: 'imagen', recurso_id: recursoId, x: 0, y: 0, w: 100, h: 100, z: 0[\s\S]*es_capa_fondo: true/)
+  assert.match(workspace, /fondo_visual: fondoVisual, es_capa_fondo: true/)
   assert.match(model, /fondo_visual\?: string/)
 })
 
@@ -163,7 +161,7 @@ test('la navegación de páginas queda en la cabecera con retorno al Centro Past
   assert.doesNotMatch(workspace, /pastoral-pages-strip/)
 })
 
-test('Compartir conserva solo distribución PDF compartir y enlace; Presentar adapta horizontalmente 16:9 y 4:3', () => {
+test('Compartir conserva distribución; Presentar separa horizontal y vertical', () => {
   const inicioCompartir = workspace.indexOf("{vista === 'publicar' && <section")
   const compartir = workspace.slice(inicioCompartir, workspace.indexOf('pastoral-print-deck', inicioCompartir))
   assert.match(compartir, /PackageDistributionControls/)
@@ -172,14 +170,16 @@ test('Compartir conserva solo distribución PDF compartir y enlace; Presentar ad
   assert.match(compartir, /<Link2/)
   assert.doesNotMatch(compartir, /Vista de presentación|<PastoralVisualCanvas|Presentación/)
   assert.doesNotMatch(workspace, /abrirPresentacionDesdeCompartir/)
-  assert.match(workspace, /const \[viewportVertical, setViewportVertical\] = useState\(false\)/)
-  assert.match(workspace, /pagina\?\.formato === '16:9' \|\| pagina\?\.formato === '4:3'/)
-  assert.match(workspace, /transform: 'rotate\(90deg\)'/)
-  const inicioPresentar = workspace.indexOf("{vista === 'presentacion' && pagina")
-  const presentar = workspace.slice(inicioPresentar, workspace.indexOf("{vista === 'congregacion'", inicioPresentar))
-  assert.match(presentar, /Pantalla completa/)
-  assert.match(presentar, /presentarHorizontalGirado/)
-  assert.match(presentar, /fitViewport=\{modoPresentacion && !presentarHorizontalGirado\}/)
+  assert.match(workspace, /const \[orientacionPresentacion, setOrientacionPresentacion\] = useState<'horizontal' \| 'vertical'>\('horizontal'\)/)
+  assert.match(workspace, /const paginaPresentacion = pagina \? \{ \.\.\.pagina, formato: '16:9' as const \} : null/)
+  assert.match(workspace, /aria-label="Orientación de presentación"/)
+  assert.match(workspace, />Horizontal<\/button>/)
+  assert.match(workspace, />Vertical<\/button>/)
+  assert.match(workspace, /onClick=\{abrirPantallaCompleta\}/)
+  assert.match(workspace, /onClick=\{cerrarPantallaCompleta\}/)
+  assert.match(workspace, /<PastoralVisualCanvas pagina=\{paginaPresentacion\} biblioteca=\{biblioteca\} fitViewport=\{modoPresentacion\} \/>/)
+  assert.match(workspace, /<MaterialPastoralExperience material=\{\{ \.\.\.paquete, presentacion_diapositivas: paginas, coleccion \}\} biblioteca=\{biblioteca\} embeddedStudy \/>/)
+  assert.doesNotMatch(workspace, /vista === 'congregacion'/)
 })
 
 test('el layout conserva stable después de V3 y los realces funcionales actuales', () => {
@@ -190,13 +190,13 @@ test('el layout conserva stable después de V3 y los realces funcionales actuale
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
 })
 
-test('la arquitectura real mantiene tres grupos y las nuevas acciones aprobadas', () => {
-  assert.match(workspace, /type GrupoPrincipal = 'plantillas' \| 'texto' \| 'capas'/)
+test('la arquitectura real mantiene Fondos Texto y Capas como tres grupos principales', () => {
+  assert.match(workspace, /type GrupoPrincipal = 'fondos' \| 'texto' \| 'capas'/)
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
-  assert.doesNotMatch(dock, /Elementos|Biblia|Diseño|Fondo|Párrafo|Borrar/)
-  assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
-  assert.match(workspace, /Aplicar plantilla en blanco a la página actual/)
+  for (const label of ['Fondos', 'Texto', 'Capas']) assert.match(dock, new RegExp(`label: '${label}'`))
+  assert.doesNotMatch(dock, /Plantillas|Elementos|Biblia|Diseño|Párrafo|Borrar/)
+  assert.match(workspace, /const SUBMENUS:[\s\S]*fondos: \[],[\s\S]*label: 'Herramientas'[\s\S]*label: 'Biblia'[\s\S]*label: 'Capas'/)
+  for (const label of ['Rueda de color', 'Degradados', 'Imágenes', 'Temas']) assert.match(workspace, new RegExp(label))
   assert.match(workspace, /aria-label="Borrar elemento seleccionado"/)
   assert.doesNotMatch(workspace, /Tema .* aplicado|Plantilla .* aplicada/)
   assert.match(css, /pastoral-tool-dock/)

@@ -7,7 +7,8 @@
     "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
     "tests/regression/fase-g-pastoral-admin-boundaries.test.mjs",
     "tests/regression/fase-g-pastoral-contactos-solidaridad.test.mjs",
-    "tests/regression/pastoral-editor-approved-controls.test.mjs"
+    "tests/regression/pastoral-editor-approved-controls.test.mjs",
+    "tests/regression/pastoral-editor-text-layout-v12-updated.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
