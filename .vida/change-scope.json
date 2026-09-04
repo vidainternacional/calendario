@@ -1,10 +1,11 @@
 {
   "task": "Actualizar CI de Bloque 3 y convertir VIDA Guardrails en paso obligatorio del CI general",
-  "userRequest": "Corregir las dos regresiones desactualizadas de Alabanza y hacer que los guardrails se ejecuten obligatoriamente dentro del CI general, sin tocar la UI ni Supabase.",
+  "userRequest": "Corregir las regresiones desactualizadas detectadas por el CI y hacer que los guardrails se ejecuten obligatoriamente dentro del CI general, sin tocar la UI ni Supabase.",
   "allowedPaths": [
     ".vida/change-scope.json",
     ".github/workflows/ci-temporal.yml",
-    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs"
+    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
+    "tests/regression/fase-g-pastoral-admin-boundaries.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
