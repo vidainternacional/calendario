@@ -6,11 +6,12 @@ function source(path) {
   return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
 }
 
-test('Perfil ubica Buzón y Ayuda Solidaria debajo de Centro Pastoral sin devolver acceso a Admin', () => {
+test('Perfil ubica Buzón y Ayuda Solidaria debajo de Centro Pastoral y Ayuda usa el centro unificado', () => {
   const perfil = source('app/(app)/perfil/page.tsx')
   const pastoral = source('app/(app)/pastoral/page.tsx')
   const preguntas = source('app/(app)/pastoral/preguntas/page.tsx')
-  const ayuda = source('app/(app)/pastoral/ayuda-solidaria/page.tsx')
+  const ayudaLegacy = source('app/(app)/pastoral/ayuda-solidaria/page.tsx')
+  const ayuda = source('app/(app)/ayuda-solidaria/page.tsx')
   const adminLayout = source('app/(app)/admin/layout.tsx')
 
   assert.match(perfil, /const puedeGestionarAtencion = rolActual === 'pastor'/)
@@ -35,6 +36,9 @@ test('Perfil ubica Buzón y Ayuda Solidaria debajo de Centro Pastoral sin devolv
   assert.match(preguntas, /pregunta\.es_anonima \? \{ \.\.\.pregunta, profiles: null \} : pregunta/)
   assert.match(preguntas, /desde el acceso de tu Perfil/)
 
+  assert.match(ayudaLegacy, /redirect\('\/ayuda-solidaria'\)/)
+  assert.match(ayuda, /profile\?\.activo === true/)
+  assert.match(ayuda, /profile\?\.estado_cuenta === 'activo'/)
   assert.match(ayuda, /profile\?\.rol === 'pastor'/)
   assert.match(ayuda, /profile\?\.rol === 'administrador'/)
   assert.match(ayuda, /profile\?\.es_pastor_general === true/)

@@ -5,7 +5,8 @@
     ".vida/change-scope.json",
     ".github/workflows/ci-temporal.yml",
     "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
-    "tests/regression/fase-g-pastoral-admin-boundaries.test.mjs"
+    "tests/regression/fase-g-pastoral-admin-boundaries.test.mjs",
+    "tests/regression/fase-g-pastoral-contactos-solidaridad.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
