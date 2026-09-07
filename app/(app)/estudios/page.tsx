@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, Sparkles } from 'lucide-react'
+import { BookOpen, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, Sparkles } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -20,24 +20,13 @@ export default async function EstudiosPage() {
     {
       href: '/hoy',
       title: 'Hoy en VIDA',
-      description: 'Recibe el versículo del día, configura tu recordatorio y abre la Biblia o el estudio desde el mismo lugar.',
+      description: 'Versículo del día, devocionales y planes de lectura en un solo lugar.',
       action: 'Abrir Hoy en VIDA',
       icon: Sparkles,
       iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
       hoverClass: 'hover:border-[#C0392B]/30',
       arrowClass: 'group-hover:text-[#C0392B]',
       actionClass: 'text-[#C0392B]',
-    },
-    {
-      href: '/hoy/planes',
-      title: 'Planes de lectura y devocionales',
-      description: 'Elige un plan, avanza día por día con lectura, devocional y reflexión, y conserva tu progreso y racha.',
-      action: 'Ver planes',
-      icon: BookOpenCheck,
-      iconClass: 'bg-emerald-600 text-white shadow-inner shadow-emerald-900/20',
-      hoverClass: 'hover:border-emerald-300',
-      arrowClass: 'group-hover:text-emerald-600',
-      actionClass: 'text-emerald-700',
     },
     {
       href: '/biblia',
