@@ -1,14 +1,9 @@
 {
-  "task": "Actualizar CI de Bloque 3 y convertir VIDA Guardrails en paso obligatorio del CI general",
-  "userRequest": "Corregir las regresiones desactualizadas detectadas por el CI y hacer que los guardrails se ejecuten obligatoriamente dentro del CI general, sin tocar la UI ni Supabase.",
+  "task": "Alinear regresión pastoral v13 con el comportamiento actual autorizado",
+  "userRequest": "El usuario autorizó actualizar tests/regression/pastoral-editor-text-layout-v13.test.mjs para alinearla al comportamiento actual, sin cambiar la UI, Supabase ni áreas cerradas.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    ".github/workflows/ci-temporal.yml",
-    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
-    "tests/regression/fase-g-pastoral-admin-boundaries.test.mjs",
-    "tests/regression/fase-g-pastoral-contactos-solidaridad.test.mjs",
-    "tests/regression/pastoral-editor-approved-controls.test.mjs",
-    "tests/regression/pastoral-editor-text-layout-v12-updated.test.mjs"
+    "tests/regression/pastoral-editor-text-layout-v13.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
