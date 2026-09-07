@@ -1,8 +1,8 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-09-03
+Última actualización: 2026-09-07
 
-Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 3 — EXPERIENCIA PARA MÚSICOS**
+Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 4 — ALERTAS PASTORALES URGENTES**
 
 Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
@@ -608,7 +608,7 @@ Cierre aprobado:
 - Sistema de badge-guía validado en Ayuda Solidaria: un pendiente conduce desde el acceso general hasta la conversación exacta y desaparece al quedar leído.
 - La extensión del patrón de badges a otras áreas queda diferida hasta completar los bloques funcionales pendientes.
 
-## Bloque 3 — Experiencia para músicos — ACTIVO
+## Bloque 3 — Experiencia para músicos — COMPLETADO Y APROBADO — 2026-09-07
 
 Objetivo:
 Convertir el repertorio/programación musical existente en una herramienta utilizable durante el servicio y no únicamente en una lista de canciones.
@@ -641,4 +641,4 @@ FASE I continúa DIFERIDA hasta completar, validar y cerrar estos cuatro bloques
 
 # Siguiente prioridad autorizada
 
-**Bloque 3 — Experiencia para músicos — ACTIVO.**
+**Bloque 4 — Alertas pastorales urgentes — ACTIVO.**
