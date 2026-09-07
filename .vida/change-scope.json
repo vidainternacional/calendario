@@ -1,9 +1,9 @@
 {
-  "task": "Alinear regresión pastoral v13 con el comportamiento actual autorizado",
-  "userRequest": "El usuario autorizó actualizar tests/regression/pastoral-editor-text-layout-v13.test.mjs para alinearla al comportamiento actual, sin cambiar la UI, Supabase ni áreas cerradas.",
+  "task": "Alinear regresión pastoral base con el comportamiento actual autorizado",
+  "userRequest": "El usuario pidió continuar sin detenerse hasta entregar Preview y autorizó ajustar las pruebas antiguas necesarias sin modificar la app ni funcionalidades aprobadas.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "tests/regression/pastoral-editor-text-layout-v13.test.mjs"
+    "tests/regression/pastoral-editor-text-layout.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
