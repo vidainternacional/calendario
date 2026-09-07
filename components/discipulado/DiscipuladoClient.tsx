@@ -542,7 +542,7 @@ export default function DiscipuladoClient({ userId, canManage, isAdmin }: Props)
             <h1 className="mt-1 text-2xl font-bold tracking-[-0.03em] text-[#171923] sm:text-3xl">Discipulado</h1>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-500">Lecciones, evaluación y aprobación pastoral en un solo recorrido.</p>
           </div>
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-600 text-white shadow-sm">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-indigo-600 text-slate-50 shadow-sm">
             <GraduationCap className="h-6 w-6" />
           </div>
         </div>
@@ -576,7 +576,7 @@ export default function DiscipuladoClient({ userId, canManage, isAdmin }: Props)
                   {myAssignments.map(assignment => {
                     const course = courses.find(item => item.id === assignment.curso_id)
                     return (
-                      <button key={assignment.id} type="button" onClick={() => setSelectedCourseId(assignment.curso_id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selectedCourseId === assignment.curso_id ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>
+                      <button key={assignment.id} type="button" onClick={() => setSelectedCourseId(assignment.curso_id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selectedCourseId === assignment.curso_id ? 'bg-indigo-600 text-slate-50' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>
                         {course?.titulo || 'Curso'}
                       </button>
                     )
@@ -587,15 +587,15 @@ export default function DiscipuladoClient({ userId, canManage, isAdmin }: Props)
               {selectedCourse && myAssignment && (
                 <>
                   <section className={`${panel} overflow-hidden`}>
-                    <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-5 py-5 text-white sm:px-6">
+                    <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-5 py-5 text-slate-50 sm:px-6">
                       <div className="flex items-center justify-between gap-3">
                         <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ring-1 ring-white/20 ${myAssignment.estado === 'aprobado' ? 'bg-emerald-400/25' : 'bg-white/15'}`}>{statusLabel(myAssignment.estado)}</span>
                         {myAssignment.calificacion != null && <span className="text-sm font-bold">{Math.round(Number(myAssignment.calificacion))}%</span>}
                       </div>
                       <h2 className="mt-4 text-xl font-bold tracking-[-0.02em]">{selectedCourse.titulo}</h2>
-                      {selectedCourse.descripcion && <p className="mt-1.5 text-sm leading-relaxed text-white/80">{selectedCourse.descripcion}</p>}
+                      {selectedCourse.descripcion && <p className="mt-1.5 text-sm leading-relaxed text-slate-50/80">{selectedCourse.descripcion}</p>}
                       <div className="mt-5">
-                        <div className="mb-1.5 flex justify-between text-[10px] font-bold uppercase tracking-wider text-white/70"><span>Progreso de lecciones</span><span>{completedCount}/{selectedLessons.length}</span></div>
+                        <div className="mb-1.5 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-50/70"><span>Progreso de lecciones</span><span>{completedCount}/{selectedLessons.length}</span></div>
                         <div className="h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${progressPercent}%` }} /></div>
                       </div>
                     </div>
@@ -681,7 +681,7 @@ export default function DiscipuladoClient({ userId, canManage, isAdmin }: Props)
             )}
             {courses.length > 0 && (
               <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                {courses.map(course => <button key={course.id} type="button" onClick={() => setSelectedCourseId(course.id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selectedCourseId === course.id ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'}`}>{course.titulo}</button>)}
+                {courses.map(course => <button key={course.id} type="button" onClick={() => setSelectedCourseId(course.id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selectedCourseId === course.id ? 'bg-indigo-600 text-slate-50' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'}`}>{course.titulo}</button>)}
               </div>
             )}
           </section>
@@ -767,7 +767,7 @@ export default function DiscipuladoClient({ userId, canManage, isAdmin }: Props)
                         {assignment.estado === 'revision' && (
                           <form className="mt-3 rounded-2xl bg-slate-50 p-3">
                             <TextArea name="notas" className="min-h-16 resize-y" placeholder="Nota pastoral opcional" />
-                            <div className="mt-2 grid grid-cols-2 gap-2"><button type="button" disabled={busy} onClick={event => void reviewAssignment(assignment, 'rechazado', event.currentTarget.form)} className="min-h-10 rounded-xl border border-rose-200 bg-rose-50 text-xs font-bold text-rose-700">Pedir repetir</button><button type="button" disabled={busy} onClick={event => void reviewAssignment(assignment, 'aprobado', event.currentTarget.form)} className="min-h-10 rounded-xl bg-emerald-600 text-xs font-bold text-white">Aprobar</button></div>
+                            <div className="mt-2 grid grid-cols-2 gap-2"><button type="button" disabled={busy} onClick={event => void reviewAssignment(assignment, 'rechazado', event.currentTarget.form)} className="min-h-10 rounded-xl border border-rose-200 bg-rose-50 text-xs font-bold text-rose-700">Pedir repetir</button><button type="button" disabled={busy} onClick={event => void reviewAssignment(assignment, 'aprobado', event.currentTarget.form)} className="min-h-10 rounded-xl bg-emerald-600 text-xs font-bold text-slate-50">Aprobar</button></div>
                           </form>
                         )}
                         <button type="button" disabled={busy} onClick={() => void run(() => supabase.from('discipulado_asignaciones').delete().eq('id', assignment.id), 'Asignación retirada.')} className="mt-2 text-[11px] font-bold text-slate-400 hover:text-rose-600">Retirar asignación</button>
@@ -813,7 +813,7 @@ export default function DiscipuladoClient({ userId, canManage, isAdmin }: Props)
         </div>
       )}
 
-      {busy && <div className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-slate-900 text-white shadow-lg"><RefreshCw className="h-4 w-4 animate-spin" /></div>}
+      {busy && <div className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-slate-900 text-slate-50 shadow-lg"><RefreshCw className="h-4 w-4 animate-spin" /></div>}
     </main>
   )
 }
