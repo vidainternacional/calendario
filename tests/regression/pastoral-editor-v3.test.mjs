@@ -15,23 +15,26 @@ test('workspace activo usa V4 con base V3 y autoridad stable', () => {
 
 test('dock mantiene solo los tres grupos principales aprobados', () => {
   const dock = workspace.match(/const HERRAMIENTAS:[\s\S]*?\n\]/)?.[0] ?? ''
-  for (const label of ['Plantillas', 'Texto', 'Capas']) assert.match(dock, new RegExp(label))
-  assert.doesNotMatch(dock, /Elementos|Biblia|Diseño|Fondo|Párrafo|Borrar/)
-  assert.match(workspace, /const SUBMENUS:[\s\S]*label: 'Imágenes'[\s\S]*label: 'Biblia'[\s\S]*label: 'Relación'[\s\S]*label: 'Ajustes'/)
+  for (const label of ['Fondos', 'Texto', 'Capas']) assert.match(dock, new RegExp(label))
+  assert.doesNotMatch(dock, /Plantillas|Elementos|Biblia|Diseño|Párrafo|Borrar/)
+  const submenus = workspace.match(/const SUBMENUS:[\s\S]*?\n\}/)?.[0] ?? ''
+  assert.match(submenus, /texto:[\s\S]*label: 'Herramientas'[\s\S]*label: 'Biblia'/)
+  assert.match(submenus, /capas:[\s\S]*label: 'Capas'/)
 })
 
-test('Biblia entra directamente en panel e Imágenes absorbe la opción de fondo', () => {
+test('Biblia vive dentro de Texto y Fondos integra imágenes directamente', () => {
   assert.match(workspace, /panel === 'biblia'[\s\S]*PastoralVersePicker/)
-  const plantillas = workspace.match(/plantillas:\s*\[[\s\S]*?\],/)?.[0] ?? ''
-  const imagenes = workspace.slice(workspace.indexOf("panel === 'recursos'"), workspace.indexOf("panel === 'texto'"))
-  assert.doesNotMatch(plantillas, /label: 'Fondo'/)
-  assert.match(plantillas, /label: 'Imágenes'/)
-  assert.match(imagenes, /Como fondo/)
-  assert.match(imagenes, /aplicarFondoImagen/)
+  const fondos = workspace.slice(workspace.indexOf("panel === 'fondos'"), workspace.indexOf("panel === 'texto'"))
+  assert.match(fondos, /Rueda de color/)
+  assert.match(fondos, /Degradados/)
+  assert.match(fondos, /Imágenes/)
+  assert.match(fondos, /Temas/)
+  assert.match(workspace, /aplicarFondoImagen/)
 })
 
-test('guardado automático usa acción existente', () => {
-  assert.match(workspace, /window\.setTimeout\(\(\) => \{ void guardarAutomatico\(\) \}, 650\)/)
+test('guardado automático usa acción existente con control de revisión', () => {
+  assert.match(workspace, /window\.setTimeout\(\(\) => \{ void guardarAutomatico\(revision\) \}, 650\)/)
+  assert.match(workspace, /const guardarAutomatico = async \(revision: number\)/)
   assert.match(workspace, /editarPaquetePastoral/)
 })
 
