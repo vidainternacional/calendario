@@ -353,7 +353,7 @@ FASE F queda **COMPLETADA — 2026-08-17** y no debe reabrirse salvo bug comprob
 
 FASE G se activó formalmente el 2026-08-17 después del cierre de FASE F y queda cerrada el 2026-08-18 tras completar validación funcional real, correcciones reproducibles, evidencia técnica y aprobación explícita del usuario.
 
-La evidencia consolidada del cierre se conserva en:
+La evidencia consolidada se conserva en:
 
 - `docs/FASE_G_MATRIZ_VALIDACION_INTEGRAL_2026-08-17.md`;
 - `docs/FASE_G_CIERRE_2026-08-18.md`.
@@ -637,6 +637,10 @@ Alcance previsto:
 - Una persona aprobada obtiene un indicador discreto visible en su perfil que confirma que completó el discipulado.
 - El estado de discipulado no sustituye roles, liderazgo ni permisos ministeriales existentes.
 - Antes de implementar nuevas tablas, RLS, permisos, asignaciones o estados de aprobación se presentará exactamente el cambio, impacto y reversión para aprobación explícita.
+
+### Decisión descartada — Cabecera dinámica de Inicio
+
+La propuesta visual de clima/hora para Inicio fue probada únicamente en Preview y **descartada por decisión del usuario el 2026-09-07**. No debe integrarse a `main` ni producción y no forma parte del alcance pendiente.
 
 ## Bloque 5 — Alertas pastorales urgentes — EN PAUSA / PENDIENTE DE DECISIÓN
 
