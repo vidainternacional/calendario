@@ -54,7 +54,7 @@ function esTla(item: any) {
 }
 
 function esPdt(item: any) {
-  return /\bpdt\b|palabra\s+de\s+dios\s+para\s+(?:ti|todos)/i.test(textoVersion(item))
+  return /\bpdt\b|pala(?:bra|bla)\s+de\s+dios\s+para\s+(?:ti|todos)/i.test(textoVersion(item))
 }
 
 function esRv1909(item: any) {
@@ -184,7 +184,9 @@ function normalizarTraduccionesApiBible(items: any[]) {
     vistos.add(id)
     return [{
       id,
-      name: String(item.nameLocal || item.name || item.abbreviationLocal || item.abbreviation || 'Biblia'),
+      name: esPdt(item)
+        ? 'Palabra de Dios para ti'
+        : String(item.nameLocal || item.name || item.abbreviationLocal || item.abbreviation || 'Biblia'),
       language: String(item.language?.id || 'spa'),
       shortName: String(item.abbreviationLocal || item.abbreviation || '').replace(/^spa/i, '') || undefined,
     }]
@@ -276,7 +278,9 @@ async function responderTraducciones() {
     })
   }
 
-  const helloTranslations = Array.isArray(hello?.translations) ? hello.translations : []
+  const helloTranslations = Array.isArray(hello?.translations)
+    ? hello.translations.filter((item: any) => String(item?.language || '').toLowerCase() === 'spa')
+    : []
   const vistos = new Set<string>()
   const merged = [...apiTranslations, ...helloTranslations]
     .sort(ordenarVersiones)
