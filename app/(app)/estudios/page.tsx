@@ -2,7 +2,18 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, Sparkles } from 'lucide-react'
+import {
+  BookOpen,
+  BookOpenCheck,
+  ChevronRight,
+  Video,
+  Clock3,
+  NotebookPen,
+  Languages,
+  Sparkles,
+  HeartHandshake,
+  UsersRound,
+} from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -16,29 +27,28 @@ export default async function EstudiosPage() {
     redirect('/login')
   }
 
-  const recursos = [
+  const crecimiento = [
     {
       href: '/hoy',
-      title: 'Hoy en VIDA',
-      description: 'Recibe el versículo del día, configura tu recordatorio y abre la Biblia o el estudio desde el mismo lugar.',
-      action: 'Abrir Hoy en VIDA',
+      title: 'Versículo del día',
+      description: 'Versículo diario, recordatorio configurable y acceso directo a la Biblia o al Estudio.',
+      action: 'Ver versículo de hoy',
       icon: Sparkles,
-      iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
-      hoverClass: 'hover:border-[#C0392B]/30',
-      arrowClass: 'group-hover:text-[#C0392B]',
+      iconClass: 'bg-[#C0392B] text-white',
       actionClass: 'text-[#C0392B]',
     },
     {
       href: '/hoy/planes',
-      title: 'Planes de lectura y devocionales',
-      description: 'Elige un plan, avanza día por día con lectura, devocional y reflexión, y conserva tu progreso y racha.',
-      action: 'Ver planes',
+      title: 'Devocionales y planes de lectura',
+      description: '12 planes temáticos con lectura, devocional, pregunta para reflexionar, progreso personal y racha.',
+      action: 'Abrir devocionales',
       icon: BookOpenCheck,
-      iconClass: 'bg-emerald-600 text-white shadow-inner shadow-emerald-900/20',
-      hoverClass: 'hover:border-emerald-300',
-      arrowClass: 'group-hover:text-emerald-600',
+      iconClass: 'bg-emerald-600 text-white',
       actionClass: 'text-emerald-700',
     },
+  ]
+
+  const recursos = [
     {
       href: '/biblia',
       title: 'Biblia',
@@ -85,16 +95,28 @@ export default async function EstudiosPage() {
     },
   ]
 
+  const vida = [
+    {
+      href: '/ayuda-solidaria',
+      title: 'Centro de Ayuda',
+      description: 'Necesito ayuda, Quiero sembrar, conversaciones privadas, despensa y otras formas de servicio.',
+      icon: HeartHandshake,
+      iconClass: 'bg-rose-600 text-white',
+    },
+    {
+      href: '/ministerios',
+      title: 'Ministerios',
+      description: 'Accede a tus equipos. Alabanza conserva programación, repertorio y la vista práctica para músicos.',
+      icon: UsersRound,
+      iconClass: 'bg-violet-600 text-white',
+    },
+  ]
+
   const proximamente = [
     {
       title: 'Prédicas en video',
       description: 'Accede a los mensajes del domingo y series de estudio.',
       icon: Video,
-    },
-    {
-      title: 'Devocionales ministeriales',
-      description: 'Reflexiones y guías de estudio para tu ministerio.',
-      icon: FileText,
     },
   ]
 
@@ -104,13 +126,41 @@ export default async function EstudiosPage() {
         <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#C0392B]">Formación</p>
         <h1 className="text-2xl font-bold leading-tight text-[#171923] sm:text-3xl">Estudios Bíblicos</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-          Lee la Biblia, profundiza en el texto y organiza todo lo aprendido en tu cuaderno personal.
+          Versículo diario, devocionales, planes de lectura, Biblia, estudio, Hebreo y Cuaderno en un solo lugar.
         </p>
       </header>
 
+      <section className="mb-8" aria-labelledby="crecimiento-diario-title">
+        <div className="mb-3 px-1">
+          <h2 id="crecimiento-diario-title" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Para cada día</h2>
+          <p className="mt-0.5 text-[11px] text-slate-500">Lo que ya está disponible para cualquier persona con cuenta.</p>
+        </div>
+
+        <div className="space-y-3">
+          {crecimiento.map(({ href, title, description, action, icon: Icon, iconClass, actionClass }) => (
+            <Link
+              key={title}
+              href={href}
+              className="group flex min-h-[112px] items-center gap-4 rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm transition active:scale-[0.99]"
+            >
+              <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${iconClass}`}>
+                <Icon className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-base text-slate-950">{title}</strong>
+                <span className="mt-1 block text-sm leading-5 text-slate-500">{description}</span>
+                <span className={`mt-2 inline-flex items-center gap-1 text-xs font-bold ${actionClass}`}>
+                  {action}<ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="space-y-3 sm:space-y-4" aria-labelledby="recursos-disponibles-title">
         <div className="flex items-center justify-between gap-3">
-          <h2 id="recursos-disponibles-title" className="text-sm font-bold text-[#171923]">Herramientas</h2>
+          <h2 id="recursos-disponibles-title" className="text-sm font-bold text-[#171923]">Herramientas de estudio</h2>
           <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
             Listas para usar
           </span>
@@ -136,6 +186,26 @@ export default async function EstudiosPage() {
             </div>
           </Link>
         ))}
+      </section>
+
+      <section className="mt-8" aria-labelledby="vida-disponible-title">
+        <div className="mb-3 px-1">
+          <h2 id="vida-disponible-title" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">También disponible en VIDA</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {vida.map(({ href, title, description, icon: Icon, iconClass }) => (
+            <Link key={title} href={href} className="flex min-h-[112px] items-start gap-3 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition active:scale-[0.99]">
+              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${iconClass}`}>
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-sm text-slate-950">{title}</strong>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
+              </span>
+              <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="mt-8" aria-labelledby="proximamente-title">
