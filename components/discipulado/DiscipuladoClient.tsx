@@ -121,7 +121,7 @@ type ExamQuestion = {
 
 const panel = 'rounded-[22px] border border-slate-200/80 bg-white shadow-sm'
 const labelClass = 'mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500'
-const primaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50'
+const primaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-indigo-50 transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50'
 const secondaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50'
 
 function TextInput({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
