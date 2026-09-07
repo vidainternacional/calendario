@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages } from 'lucide-react'
+import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, GraduationCap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -38,6 +38,17 @@ export default async function EstudiosPage() {
       hoverClass: 'hover:border-emerald-300',
       arrowClass: 'group-hover:text-emerald-600',
       actionClass: 'text-emerald-700',
+    },
+    {
+      href: '/discipulado',
+      title: 'Discipulado',
+      description: 'Completa las lecciones que te asignen, presenta la evaluación y recibe la aprobación pastoral dentro de VIDA.',
+      action: 'Abrir discipulado',
+      icon: GraduationCap,
+      iconClass: 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
+      hoverClass: 'hover:border-violet-300',
+      arrowClass: 'group-hover:text-violet-600',
+      actionClass: 'text-violet-700',
     },
     {
       href: '/estudios/profundo',
