@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server'
 
 const HELLO_API = 'https://bible.helloao.org/api'
 const API_BIBLE = 'https://rest.api.bible/v1'
+const RVR1960_BIBLE_ID = 'ff913c55498d2380-01'
 const RESOLVER_CACHE_MS = 10 * 60 * 1000
 
 const bibleIdCache = new Map<string, { id: string | null; expiresAt: number }>()
+const directAccessCache = new Map<string, { ok: boolean; expiresAt: number }>()
 
 function textoVersion(item: any) {
   return [
+    item?.id,
     item?.name,
     item?.nameLocal,
     item?.abbreviation,
@@ -21,21 +24,59 @@ function esNvi(item: any) {
 }
 
 function esRvr1960(item: any) {
-  return /\brvr?\s*(?:19)?60\b|\brv\s*(?:19)?60\b|reina[- ]?valera.*1960|reina\s+valera.*1960/i.test(textoVersion(item))
+  return String(item?.id || '') === RVR1960_BIBLE_ID
+    || /\brvr?\s*(?:19)?60\b|\brv\s*(?:19)?60\b|reina[- ]?valera.*1960|reina\s+valera.*1960/i.test(textoVersion(item))
+}
+
+function esNtv(item: any) {
+  return /\bntv\b|nueva\s+traducci[oó]n\s+viviente/i.test(textoVersion(item))
+}
+
+function esNbla(item: any) {
+  return /\bnbla\b|nueva\s+biblia\s+de\s+las\s+am[eé]ricas/i.test(textoVersion(item))
+}
+
+function esLbla(item: any) {
+  const texto = textoVersion(item)
+  return !esNbla(item) && /\blbla\b|biblia\s+de\s+las\s+am[eé]ricas/i.test(texto)
+}
+
+function esRvc(item: any) {
+  return /\brvc\b|reina[- ]?valera\s+contempor[aá]nea/i.test(textoVersion(item))
+}
+
+function esDhh(item: any) {
+  return /\bdhh\b|dios\s+habla\s+hoy/i.test(textoVersion(item))
+}
+
+function esTla(item: any) {
+  return /\btla\b|traducci[oó]n\s+en\s+lenguaje\s+actual/i.test(textoVersion(item))
+}
+
+function esPdt(item: any) {
+  return /\bpdt\b|palabra\s+de\s+dios\s+para\s+(?:ti|todos)/i.test(textoVersion(item))
+}
+
+function esRv1909(item: any) {
+  return /reina[- ]?valera.*1909|\brv(?:r)?\s*1909\b/i.test(textoVersion(item))
+}
+
+function esNbv(item: any) {
+  return /\bnbv\b|nueva\s+biblia\s+viva/i.test(textoVersion(item))
 }
 
 function prioridadConocida(item: any) {
-  const texto = textoVersion(item)
   if (esNvi(item)) return 0
   if (esRvr1960(item)) return 1
-  if (/\bntv\b|nueva\s+traducci[oó]n\s+viviente/i.test(texto)) return 2
-  if (/\bnbla\b|nueva\s+biblia\s+de\s+las\s+am[eé]ricas/i.test(texto)) return 3
-  if (/\blbla\b|biblia\s+de\s+las\s+am[eé]ricas/i.test(texto)) return 4
-  if (/\brvc\b|reina[- ]?valera\s+contempor[aá]nea/i.test(texto)) return 5
-  if (/\bdhh\b|dios\s+habla\s+hoy/i.test(texto)) return 6
-  if (/\btla\b|traducci[oó]n\s+en\s+lenguaje\s+actual/i.test(texto)) return 7
-  if (/\bpdt\b|palabra\s+de\s+dios\s+para\s+todos/i.test(texto)) return 8
-  if (/reina[- ]?valera.*1909|\brv(?:r)?\s*1909\b/i.test(texto)) return 9
+  if (esNtv(item)) return 2
+  if (esNbla(item)) return 3
+  if (esLbla(item)) return 4
+  if (esRvc(item)) return 5
+  if (esDhh(item)) return 6
+  if (esTla(item)) return 7
+  if (esPdt(item)) return 8
+  if (esRv1909(item)) return 9
+  if (esNbv(item)) return 10
   return 50
 }
 
@@ -53,6 +94,20 @@ async function biblesAutorizadas() {
   if (!response.ok) throw new Error(`API.Bible ${response.status}`)
   const payload = await response.json()
   return Array.isArray(payload?.data) ? payload.data : []
+}
+
+async function accesoDirectoBibleId(bibleId: string) {
+  const cached = directAccessCache.get(bibleId)
+  if (cached && cached.expiresAt > Date.now()) return cached.ok
+  try {
+    const response = await apiBible(`/bibles/${encodeURIComponent(bibleId)}/books?include-chapters=false`)
+    const ok = response.ok
+    directAccessCache.set(bibleId, { ok, expiresAt: Date.now() + RESOLVER_CACHE_MS })
+    return ok
+  } catch {
+    directAccessCache.set(bibleId, { ok: false, expiresAt: Date.now() + RESOLVER_CACHE_MS })
+    return false
+  }
 }
 
 function idVirtual(item: any) {
@@ -103,7 +158,11 @@ async function mejorBibleId(items: any[], cacheKey: string) {
 async function resolverBibleId(virtualId: string) {
   const bibles = await biblesAutorizadas()
   if (virtualId === 'api-nvi') return mejorBibleId(bibles.filter(esNvi), 'nvi')
-  if (virtualId === 'api-rvr1960') return mejorBibleId(bibles.filter(esRvr1960), 'rvr1960')
+  if (virtualId === 'api-rvr1960') {
+    const encontrada = await mejorBibleId(bibles.filter(esRvr1960), 'rvr1960')
+    if (encontrada) return encontrada
+    return await accesoDirectoBibleId(RVR1960_BIBLE_ID) ? RVR1960_BIBLE_ID : null
+  }
   if (virtualId.startsWith('api-')) {
     const candidate = virtualId.slice(4)
     return bibles.some((item: any) => String(item.id) === candidate) ? candidate : null
@@ -135,6 +194,15 @@ function normalizarTraduccionesApiBible(items: any[]) {
 function claveTraduccion(item: any) {
   if (esNvi(item)) return 'familia:nvi'
   if (esRvr1960(item)) return 'familia:rvr1960'
+  if (esNtv(item)) return 'familia:ntv'
+  if (esNbla(item)) return 'familia:nbla'
+  if (esLbla(item)) return 'familia:lbla'
+  if (esRvc(item)) return 'familia:rvc'
+  if (esDhh(item)) return 'familia:dhh'
+  if (esTla(item)) return 'familia:tla'
+  if (esPdt(item)) return 'familia:pdt'
+  if (esRv1909(item)) return 'familia:rv1909'
+  if (esNbv(item)) return 'familia:nbv'
   return `${String(item.shortName || '').toLowerCase()}|${String(item.name || '').toLowerCase()}`
 }
 
@@ -195,9 +263,19 @@ async function responderTraducciones() {
     .catch(() => ({ translations: [] }))
 
   const apiPromise = biblesAutorizadas().catch(() => [])
-  const [hello, api] = await Promise.all([helloPromise, apiPromise])
+  const rvrDirectPromise = accesoDirectoBibleId(RVR1960_BIBLE_ID)
+  const [hello, api, rvr1960Directa] = await Promise.all([helloPromise, apiPromise, rvrDirectPromise])
 
   const apiTranslations = normalizarTraduccionesApiBible(api)
+  if (rvr1960Directa && !apiTranslations.some((item: any) => item.id === 'api-rvr1960')) {
+    apiTranslations.push({
+      id: 'api-rvr1960',
+      name: 'Santa Biblia Reina-Valera 1960',
+      language: 'spa',
+      shortName: 'RVR1960',
+    })
+  }
+
   const helloTranslations = Array.isArray(hello?.translations) ? hello.translations : []
   const vistos = new Set<string>()
   const merged = [...apiTranslations, ...helloTranslations]
