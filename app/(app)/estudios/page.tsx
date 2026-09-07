@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, Sparkles } from 'lucide-react'
+import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -18,17 +18,6 @@ export default async function EstudiosPage() {
 
   const recursos = [
     {
-      href: '/hoy',
-      title: 'Hoy en VIDA',
-      description: 'Versículo del día, devocionales y planes de lectura en un solo lugar.',
-      action: 'Abrir Hoy en VIDA',
-      icon: Sparkles,
-      iconClass: 'bg-[#C0392B] text-white shadow-inner shadow-red-900/20',
-      hoverClass: 'hover:border-[#C0392B]/30',
-      arrowClass: 'group-hover:text-[#C0392B]',
-      actionClass: 'text-[#C0392B]',
-    },
-    {
       href: '/biblia',
       title: 'Biblia',
       description: 'Lee cualquier libro y capítulo, escúchalo en voz alta y envíalo al Estudio Profundo con un toque.',
@@ -38,6 +27,17 @@ export default async function EstudiosPage() {
       hoverClass: 'hover:border-indigo-300',
       arrowClass: 'group-hover:text-indigo-600',
       actionClass: 'text-indigo-600',
+    },
+    {
+      href: '/hoy/planes',
+      title: 'Planes de lectura',
+      description: 'Elige un objetivo y sigue una lectura bíblica guiada con la duración adecuada para cada tema.',
+      action: 'Ver planes',
+      icon: BookOpenCheck,
+      iconClass: 'bg-emerald-600 text-white shadow-inner shadow-emerald-900/20',
+      hoverClass: 'hover:border-emerald-300',
+      arrowClass: 'group-hover:text-emerald-600',
+      actionClass: 'text-emerald-700',
     },
     {
       href: '/estudios/profundo',
