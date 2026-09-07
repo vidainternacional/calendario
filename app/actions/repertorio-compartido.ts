@@ -233,9 +233,9 @@ export async function obtenerListadosCompartidosMinisterio(ministerioDestinoId: 
     canciones = data || []
   }
 
-  const eventosPorId = new Map((eventos || []).map((item: any) => [String(item.id), item]))
-  const origenesPorId = new Map((origenes || []).map((item: any) => [String(item.id), item]))
-  const cancionesPorId = new Map((canciones || []).map((item: any) => [String(item.id), item]))
+  const eventosPorId = new Map<string, any>((eventos || []).map((item: any) => [String(item.id), item]))
+  const origenesPorId = new Map<string, any>((origenes || []).map((item: any) => [String(item.id), item]))
+  const cancionesPorId = new Map<string, any>((canciones || []).map((item: any) => [String(item.id), item]))
 
   return compartidos.map((share: any) => {
     const eventoId = String(share.evento_id)
