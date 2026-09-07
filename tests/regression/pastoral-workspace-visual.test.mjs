@@ -10,16 +10,17 @@ const model = fs.readFileSync('components/pastoral/pastoral-canvas-model.ts', 'u
 const styles = fs.readFileSync('app/(app)/pastoral/pastoral-workspace-v2.css', 'utf8')
 const detailStyles = fs.readFileSync('app/(app)/pastoral/paquetes/[id]/workspace-mobile.css', 'utf8')
 
-test('Centro Pastoral conserva Proyecto visible y herramientas en rejilla horizontal', () => {
-  assert.match(page, /<h2 id="proyecto-pastoral">Proyecto<\/h2>/)
+test('Centro Pastoral conserva proyectos en preparación y herramientas auxiliares en rejilla', () => {
+  assert.match(page, /<h2 id="preparacion-pastoral">En preparación<\/h2>/)
   assert.match(page, /className="pastoral-primary-action"/)
-  assert.match(page, /grid grid-cols-3 gap-x-3 gap-y-5 py-6 sm:grid-cols-4/)
+  assert.match(page, /grid grid-cols-2 gap-x-3 gap-y-5 py-6/)
   assert.match(page, /h-7 w-7 stroke-\[1\.8\]/)
   assert.doesNotMatch(page, /<details/)
 })
 
-test('Centro Pastoral conserva las rutas funcionales existentes', () => {
-  for (const route of ['/pastoral/bosquejos','/pastoral/colecciones','/pastoral/biblioteca','/pastoral/materiales','/biblia?from=pastoral','/estudios/profundo?from=pastoral','/pastoral/paquetes']) assert.match(page, new RegExp(route.replace(/[?]/g, '\\?')))
+test('Centro Pastoral conserva las rutas funcionales visibles vigentes', () => {
+  for (const route of ['/pastoral/biblioteca','/estudios/profundo?from=pastoral','/pastoral/paquetes']) assert.match(page, new RegExp(route.replace(/[?]/g, '\\?')))
+  assert.match(page, /\/pastoral\/planes/)
 })
 
 test('Centro Pastoral evita composición de lista y tarjetas anidadas', () => {
@@ -73,9 +74,12 @@ test('Proyecto abierto usa herramientas desplegables bajo una sola barra superio
   assert.doesNotMatch(workspace, /position:\s*fixed/)
 })
 
-test('Proyectos existentes permanecen cerrados hasta solicitarlos', () => {
-  assert.match(packages, /pastoral-projects-accordion/)
-  assert.doesNotMatch(packages, /<details[^>]*\sopen(?:\s|=|>)/)
+test('Proyectos existentes se consultan desde la vista dedicada y el inicio muestra solo preparación reciente', () => {
+  assert.match(page, /\.limit\(3\)/)
+  assert.match(page, /href="\/pastoral\/paquetes"/)
+  assert.match(packages, /const \[busqueda, setBusqueda\] = useState\(''\)/)
+  assert.match(packages, /const \[filtro, setFiltro\]/)
+  assert.doesNotMatch(page, /<details[^>]*\sopen(?:\s|=|>)/)
 })
 
 test('Áreas internas usan encabezado compacto sin descripción permanente', () => {
