@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Cloud, CloudRain, CloudSun, Moon, Sun } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import UserAvatar from '@/components/comunidad/UserAvatar'
 
@@ -30,12 +29,28 @@ function greeting(part: DayPart) {
   return 'Buenas tardes'
 }
 
-const scene = {
-  morning: 'from-sky-300 via-sky-100 to-amber-50 text-slate-900',
-  afternoon: 'from-sky-500 via-sky-300 to-cyan-100 text-white',
-  sunset: 'from-indigo-500 via-orange-300 to-amber-100 text-white',
-  night: 'from-slate-950 via-indigo-950 to-slate-800 text-white',
-} satisfies Record<DayPart, string>
+const scene: Record<DayPart, { background: string; text: string; meta: string }> = {
+  morning: {
+    background: 'linear-gradient(145deg, #FFF9F2 0%, #FFF5EA 54%, #FFEFE0 100%)',
+    text: '#18181B',
+    meta: 'rgba(63,63,70,.62)',
+  },
+  afternoon: {
+    background: 'linear-gradient(145deg, #FFFFFF 0%, #FAFAFB 55%, #F5F5F7 100%)',
+    text: '#18181B',
+    meta: 'rgba(63,63,70,.60)',
+  },
+  sunset: {
+    background: 'linear-gradient(145deg, #FFD9A8 0%, #F8C2A5 48%, #F2A8A0 100%)',
+    text: '#33211F',
+    meta: 'rgba(72,45,42,.68)',
+  },
+  night: {
+    background: 'linear-gradient(145deg, #0B0E14 0%, #10131A 52%, #14171F 100%)',
+    text: '#F8FAFC',
+    meta: 'rgba(226,232,240,.68)',
+  },
+}
 
 export default function InicioDynamicHeader({ userId, email }: Props) {
   const [now, setNow] = useState<Date | null>(null)
@@ -108,49 +123,65 @@ export default function InicioDynamicHeader({ userId, email }: Props) {
   const dateLabel = now
     ? new Intl.DateTimeFormat('es-SV', { weekday: 'long', day: 'numeric', month: 'long' }).format(now).replace(/^./, (c) => c.toUpperCase())
     : 'Tu espacio personal en VIDA'
-  const WeatherIcon = resolved.weather === 'rain' || resolved.weather === 'storm'
-    ? CloudRain
-    : resolved.weather === 'cloudy'
-      ? CloudSun
-      : resolved.part === 'night'
-        ? Moon
-        : Sun
+  const palette = scene[resolved.part]
+  const climateFilter = resolved.weather === 'cloudy'
+    ? 'saturate(.85) brightness(.99)'
+    : resolved.weather === 'storm'
+      ? 'brightness(.90) contrast(1.035)'
+      : 'none'
 
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-b ${scene[resolved.part]}`}>
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        {resolved.part === 'night' ? (
-          <>
-            <span className="absolute left-[12%] top-8 h-1 w-1 rounded-full bg-white/80" />
-            <span className="absolute left-[32%] top-16 h-1.5 w-1.5 rounded-full bg-white/55" />
-            <span className="absolute right-[24%] top-10 h-1 w-1 rounded-full bg-white/75" />
-            <span className="absolute right-[8%] top-20 h-1.5 w-1.5 rounded-full bg-white/45" />
-          </>
-        ) : (
-          <span className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/25 blur-sm" />
+    <div
+      className="relative overflow-hidden"
+      style={{ background: palette.background, color: palette.text, filter: climateFilter }}
+    >
+      <style>{`
+        @keyframes vida-grain-breathe { 0%,100% { opacity:.03 } 50% { opacity:.04 } }
+        @keyframes vida-light-drift { 0%,100% { transform:translate3d(0,0,0) } 50% { transform:translate3d(2px,1px,0) } }
+        @keyframes vida-vapor-breathe { 0%,100% { opacity:.025; transform:translate3d(0,0,0) } 50% { opacity:.05; transform:translate3d(1px,-1px,0) } }
+        @media (prefers-reduced-motion: reduce) {
+          .vida-grain,.vida-light,.vida-vapor { animation:none!important }
+        }
+      `}</style>
+
+      <div className="vida-light pointer-events-none absolute -inset-[3px] animate-[vida-light-drift_20s_ease-in-out_infinite]" aria-hidden="true">
+        {resolved.part === 'morning' && (
+          <div className="absolute -right-[12%] -top-[65%] h-[190%] w-[68%] bg-[radial-gradient(ellipse_at_center,rgba(255,214,153,0.15),rgba(255,214,153,0)_68%)]" />
         )}
-        {(resolved.weather === 'cloudy' || resolved.weather === 'rain' || resolved.weather === 'storm') && (
-          <>
-            <Cloud className="absolute -left-8 top-7 h-28 w-28 text-white/25" strokeWidth={1.1} />
-            <Cloud className="absolute right-12 top-16 h-20 w-20 text-white/20" strokeWidth={1.1} />
-          </>
-        )}
-        {(resolved.weather === 'rain' || resolved.weather === 'storm') && (
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-slate-700/10" />
+        {resolved.part === 'sunset' && (
+          <div className="absolute -left-[18%] -top-[90%] h-[220%] w-[76%] bg-[radial-gradient(ellipse_at_center,rgba(255,244,220,0.16),rgba(255,244,220,0)_70%)]" />
         )}
       </div>
 
-      <header className="relative mx-auto flex min-h-[156px] max-w-3xl items-end justify-between gap-4 px-4 pb-5 pt-[calc(1.15rem+env(safe-area-inset-top))] sm:px-6 sm:pb-6">
-        <div className="min-w-0 flex-1 drop-shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-semibold opacity-80">
+      <div
+        className="vida-grain pointer-events-none absolute inset-0 animate-[vida-grain-breathe_20s_ease-in-out_infinite] mix-blend-multiply"
+        aria-hidden="true"
+        style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.48'/%3E%3C/svg%3E\")",
+        }}
+      />
+
+      {(resolved.weather === 'rain' || resolved.weather === 'storm') && (
+        <div
+          className="vida-vapor pointer-events-none absolute inset-0 animate-[vida-vapor-breathe_20s_ease-in-out_infinite]"
+          aria-hidden="true"
+          style={{
+            background: 'radial-gradient(ellipse at 20% 20%, rgba(255,255,255,.55), transparent 42%), radial-gradient(ellipse at 82% 62%, rgba(255,255,255,.35), transparent 48%)',
+          }}
+        />
+      )}
+
+      <header className="relative mx-auto flex min-h-[164px] max-w-3xl items-end justify-between gap-5 px-4 pb-7 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pb-8">
+        <div className="min-w-0 flex-1">
+          <div
+            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
+            style={{ color: palette.meta }}
+          >
             <span>{dateLabel}</span>
-            <span aria-hidden="true">·</span>
-            <span className="inline-flex items-center gap-1">
-              <WeatherIcon className="h-3.5 w-3.5" aria-hidden="true" />
-              {temperature != null ? `${temperature}°` : 'Ahora'}
-            </span>
+            <span className="opacity-45" aria-hidden="true">·</span>
+            <span>{temperature != null ? `${temperature}°` : 'Ahora'}</span>
           </div>
-          <h1 className="mt-1 truncate text-[27px] font-bold leading-tight tracking-[-0.035em]">
+          <h1 className="mt-2 truncate text-[28px] font-semibold leading-[1.08] tracking-[-0.035em] sm:text-[30px]">
             {greeting(resolved.part)}, {firstName}
           </h1>
         </div>
@@ -158,9 +189,14 @@ export default function InicioDynamicHeader({ userId, email }: Props) {
           nombre={nombre}
           avatarUrl={profile?.avatar_url}
           size="lg"
-          className="shadow-[0_8px_20px_rgba(15,23,42,0.2)] ring-4 ring-white/50"
+          className="shrink-0 ring-1 ring-white/45"
         />
       </header>
+
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-b from-transparent to-[#f4f5f9]"
+        aria-hidden="true"
+      />
     </div>
   )
 }
