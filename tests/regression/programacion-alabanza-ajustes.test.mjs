@@ -5,8 +5,8 @@ import fs from 'node:fs'
 const ajustes = fs.readFileSync('components/ministerios/ProgramacionVistaAjustes.tsx', 'utf8')
 const repertorio = fs.readFileSync('components/ministerios/RepertorioServicioEditor.tsx', 'utf8')
 
-test('Programación evita el acceso duplicado y mueve crear fecha fuera del servicio', () => {
-  assert.match(ajustes, /a\[href\*=\"#servicio-activo\"\]/)
+test('Programación mueve crear fecha sin eliminar el acceso Abrir programación', () => {
+  assert.doesNotMatch(ajustes, /\.remove\(\)/)
   assert.match(ajustes, /insertAdjacentElement\('beforebegin', crearFecha\)/)
 })
 
