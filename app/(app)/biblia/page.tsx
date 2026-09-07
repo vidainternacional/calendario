@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import BibliaClient from '@/components/biblia/BibliaClient'
+import BibliaApiBibleShell from '@/components/biblia/BibliaApiBibleShell'
 import BibliaVoiceControl from '@/components/biblia/BibliaVoiceControl'
 import BibliaFavoritesEmptyEnhancer from '@/components/biblia/BibliaFavoritesEmptyEnhancer'
 import BibliaErrorRetryEnhancer from '@/components/biblia/BibliaErrorRetryEnhancer'
@@ -67,7 +67,7 @@ export default async function BibliaPage({ searchParams }: { searchParams: Promi
       )}
 
       {esProyectoPastoral && <BibliaProyectoEnhancer paqueteId={paqueteId} />}
-      <BibliaClient />
+      <BibliaApiBibleShell />
       {from !== 'pastoral' && <BibliaThemeStateBridge />}
       {from !== 'pastoral' && <BibliaDeepLinkNavigation />}
       {from !== 'pastoral' && <BibliaQuickReferenceSearch />}
