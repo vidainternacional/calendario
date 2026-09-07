@@ -12,6 +12,7 @@ function textoVersion(item: any) {
     item?.nameLocal,
     item?.abbreviation,
     item?.abbreviationLocal,
+    item?.shortName,
   ].filter(Boolean).join(' ')
 }
 
@@ -20,7 +21,22 @@ function esNvi(item: any) {
 }
 
 function esRvr1960(item: any) {
-  return /\brvr?\s*1960\b|reina[- ]?valera.*1960|reina\s+valera.*1960/i.test(textoVersion(item))
+  return /\brvr?\s*(?:19)?60\b|\brv\s*(?:19)?60\b|reina[- ]?valera.*1960|reina\s+valera.*1960/i.test(textoVersion(item))
+}
+
+function prioridadConocida(item: any) {
+  const texto = textoVersion(item)
+  if (esNvi(item)) return 0
+  if (esRvr1960(item)) return 1
+  if (/\bntv\b|nueva\s+traducci[oó]n\s+viviente/i.test(texto)) return 2
+  if (/\bnbla\b|nueva\s+biblia\s+de\s+las\s+am[eé]ricas/i.test(texto)) return 3
+  if (/\blbla\b|biblia\s+de\s+las\s+am[eé]ricas/i.test(texto)) return 4
+  if (/\brvc\b|reina[- ]?valera\s+contempor[aá]nea/i.test(texto)) return 5
+  if (/\bdhh\b|dios\s+habla\s+hoy/i.test(texto)) return 6
+  if (/\btla\b|traducci[oó]n\s+en\s+lenguaje\s+actual/i.test(texto)) return 7
+  if (/\bpdt\b|palabra\s+de\s+dios\s+para\s+todos/i.test(texto)) return 8
+  if (/reina[- ]?valera.*1909|\brv(?:r)?\s*1909\b/i.test(texto)) return 9
+  return 50
 }
 
 async function apiBible(path: string) {
@@ -95,16 +111,15 @@ async function resolverBibleId(virtualId: string) {
   return null
 }
 
-function ordenarApiBible(a: any, b: any) {
-  const prioridad = (item: any) => esNvi(item) ? 0 : esRvr1960(item) ? 1 : 2
-  const delta = prioridad(a) - prioridad(b)
+function ordenarVersiones(a: any, b: any) {
+  const delta = prioridadConocida(a) - prioridadConocida(b)
   if (delta) return delta
   return String(a?.nameLocal || a?.name || '').localeCompare(String(b?.nameLocal || b?.name || ''), 'es', { sensitivity: 'base' })
 }
 
 function normalizarTraduccionesApiBible(items: any[]) {
   const vistos = new Set<string>()
-  return [...items].sort(ordenarApiBible).flatMap((item: any) => {
+  return [...items].sort(ordenarVersiones).flatMap((item: any) => {
     const id = idVirtual(item)
     if (vistos.has(id)) return []
     vistos.add(id)
@@ -115,6 +130,12 @@ function normalizarTraduccionesApiBible(items: any[]) {
       shortName: String(item.abbreviationLocal || item.abbreviation || '').replace(/^spa/i, '') || undefined,
     }]
   })
+}
+
+function claveTraduccion(item: any) {
+  if (esNvi(item)) return 'familia:nvi'
+  if (esRvr1960(item)) return 'familia:rvr1960'
+  return `${String(item.shortName || '').toLowerCase()}|${String(item.name || '').toLowerCase()}`
 }
 
 function unirTexto(anterior: string, fragmento: string) {
@@ -179,12 +200,14 @@ async function responderTraducciones() {
   const apiTranslations = normalizarTraduccionesApiBible(api)
   const helloTranslations = Array.isArray(hello?.translations) ? hello.translations : []
   const vistos = new Set<string>()
-  const merged = [...apiTranslations, ...helloTranslations].filter((item: any) => {
-    const key = `${String(item.shortName || '').toLowerCase()}|${String(item.name || '').toLowerCase()}`
-    if (vistos.has(key)) return false
-    vistos.add(key)
-    return true
-  })
+  const merged = [...apiTranslations, ...helloTranslations]
+    .sort(ordenarVersiones)
+    .filter((item: any) => {
+      const key = claveTraduccion(item)
+      if (vistos.has(key)) return false
+      vistos.add(key)
+      return true
+    })
 
   return NextResponse.json({ translations: merged })
 }
