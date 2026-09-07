@@ -2,7 +2,7 @@
 
 Última actualización: 2026-09-07
 
-Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 4 — ALERTAS PASTORALES URGENTES**
+Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 4 — DISCIPULADO**
 
 Decisión vigente: **FASE I — GUÍA INTERACTIVA Y AYUDA CONTEXTUAL POR ROL queda DIFERIDA HASTA EL CIERRE FINAL DE LA APLICACIÓN.** La guía se desarrollará únicamente cuando las herramientas, módulos y flujos de VIDA estén terminados y aprobados, para evitar documentar o enseñar superficies que todavía puedan cambiar.
 
@@ -622,23 +622,33 @@ Alcance previsto:
 - Los músicos pueden consultar y utilizar la versión preparada, pero no alterar la versión oficial sin permiso.
 - Preservar Programación Ministerial, repertorio, permisos e historial existentes.
 
-## Bloque 4 — Alertas pastorales urgentes
-
-Este bloque se desarrollará de forma separada debido a privacidad, permisos y notificaciones sensibles.
+## Bloque 4 — Discipulado — ACTIVO
 
 Objetivo:
-Diferenciar una consulta normal de una situación que necesita atención pastoral rápida.
+Permitir que miembros asignados completen un curso de discipulado dentro de VIDA mediante lecciones en video, evaluación y aprobación pastoral.
 
 Alcance previsto:
-- Mensajes normales siguen su flujo habitual.
-- Situaciones urgentes pueden elevarse a un nivel de atención pastoral.
-- Situaciones críticas de bienestar, fallecimiento u otras emergencias pueden generar una alerta simultánea para pastores/líderes autorizados.
-- No diagnosticar automáticamente a una persona.
-- Mantener privacidad y mostrar únicamente la información necesaria a quienes tengan autorización.
-- Antes de implementar cambios de permisos, RLS, destinatarios de alertas o datos sensibles se presentará exactamente el cambio, impacto y reversión para aprobación explícita.
+- Pastor/Administrador puede crear y administrar cursos de discipulado o asignar una persona autorizada para gestionarlos.
+- Cada curso puede contener lecciones ordenadas con video mediante enlace y contenido complementario breve.
+- Pastor/Administrador autorizado puede crear preguntas y respuestas para una evaluación.
+- El usuario asignado puede recorrer las lecciones y posteriormente presentar la evaluación dentro de la app.
+- El sistema guarda avance, intento y calificación real por usuario.
+- Pastor/Administrador autorizado puede revisar la calificación y aprobar o rechazar el discipulado de la persona.
+- Una persona aprobada obtiene un indicador discreto visible en su perfil que confirma que completó el discipulado.
+- El estado de discipulado no sustituye roles, liderazgo ni permisos ministeriales existentes.
+- Antes de implementar nuevas tablas, RLS, permisos, asignaciones o estados de aprobación se presentará exactamente el cambio, impacto y reversión para aprobación explícita.
 
-FASE I continúa DIFERIDA hasta completar, validar y cerrar estos cuatro bloques.
+## Bloque 5 — Alertas pastorales urgentes — EN PAUSA / PENDIENTE DE DECISIÓN
+
+Este bloque queda diferido por decisión del usuario debido a privacidad, permisos y notificaciones sensibles.
+
+Objetivo conservado:
+Diferenciar una consulta normal de una situación que necesita atención pastoral rápida.
+
+No implementar este bloque mientras permanezca en pausa.
+
+FASE I continúa DIFERIDA hasta completar, validar y cerrar los bloques funcionales finales autorizados.
 
 # Siguiente prioridad autorizada
 
-**Bloque 4 — Alertas pastorales urgentes — ACTIVO.**
+**Bloque 4 — Discipulado — ACTIVO.**
