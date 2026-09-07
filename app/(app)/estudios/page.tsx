@@ -29,7 +29,7 @@ export default async function EstudiosPage() {
       actionClass: 'text-indigo-600',
     },
     {
-      href: '/hoy/planes',
+      href: '/hoy',
       title: 'Planes de lectura',
       description: 'Elige un objetivo y sigue una lectura bíblica guiada con la duración adecuada para cada tema.',
       action: 'Ver planes',

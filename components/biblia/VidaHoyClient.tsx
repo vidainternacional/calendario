@@ -48,8 +48,7 @@ export default function VidaHoyClient({ initialActive, initialHour }: Props) {
     <main className="mx-auto min-h-screen max-w-2xl bg-white px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
       <header className="relative flex items-start justify-between gap-4 pb-5">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#C0392B]">Tu día con la Biblia</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-0.035em] text-[#171923]">Hoy en VIDA</h1>
+          <h1 className="text-[28px] font-bold tracking-[-0.035em] text-[#171923]">Tu día con la Biblia</h1>
         </div>
 
         <details className="group relative shrink-0">
