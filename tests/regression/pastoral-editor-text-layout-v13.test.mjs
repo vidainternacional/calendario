@@ -23,11 +23,11 @@ test('Plantillas aplican composición con escala moderada y límites seguros al 
 })
 
 test('imagen seleccionada no muestra Mover y el lienzo completo admite pellizco', () => {
-  assert.match(canvas, /\{elemento\.tipo !== 'imagen' && <div[\s\S]*aria-label="Mover elemento"/)
+  assert.match(canvas, /\{elemento\.tipo !== 'imagen' && !elemento\.es_capa_fondo && <div[\s\S]*aria-label="Mover elemento"/)
   assert.match(canvas, /const iniciarInteraccionLienzo =/)
-  assert.match(canvas, /const imagenSeleccionadaEditable = Boolean/)
+  assert.match(canvas, /const elementoGestualEditable = Boolean/)
   assert.match(canvas, /onPointerDown=\{iniciarInteraccionLienzo\}/)
-  assert.match(canvas, /imagenSeleccionadaEditable \? 'touch-none' : 'touch-pan-y'/)
+  assert.match(canvas, /elementoGestualEditable \? 'touch-none' : 'touch-pan-y'/)
   assert.match(canvas, /activarPellizcoImagen\(elemento\)/)
   assert.match(canvas, /aria-label="Redimensionar elemento"/)
 })
