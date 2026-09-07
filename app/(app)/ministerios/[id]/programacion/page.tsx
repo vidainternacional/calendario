@@ -385,6 +385,44 @@ export default async function ProgramacionMinisterialPage({
               })}
             </div>
 
+            {diaSeleccionado && puedeProgramar && (
+              <details className="mt-4 overflow-hidden rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-extrabold text-indigo-700">
+                  <Plus className="h-4 w-4" /> Crear una fecha nueva
+                </summary>
+                <form action={crearServicioAlabanza.bind(null, id)} className="grid gap-3 border-t border-indigo-100 bg-white p-3">
+                  <input type="hidden" name="fecha" value={diaSeleccionado} />
+                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Hora
+                    <input name="hora" type="time" required defaultValue="10:00" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-extrabold" />
+                  </label>
+                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Nombre
+                    <input name="titulo" defaultValue="Servicio" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
+                  </label>
+                  <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
+                    <label className="min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Ubicación
+                      <input name="ubicacion" placeholder="Templo principal" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs" />
+                    </label>
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Duración
+                      <select name="duracion_minutos" defaultValue="120" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-2 text-xs font-semibold">
+                        <option value="60">1 h</option>
+                        <option value="90">1.5 h</option>
+                        <option value="120">2 h</option>
+                        <option value="180">3 h</option>
+                      </select>
+                    </label>
+                  </div>
+                  <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y preparar</button>
+                  <p className="text-[10px] leading-4 text-slate-400">
+                    Se crea un solo evento real, visible en Vida Internacional y en {ministerio.nombre}.
+                  </p>
+                </form>
+              </details>
+            )}
+
             {diaSeleccionado && (
               <div id="dia-seleccionado" className="mt-4 scroll-mt-24 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">Día seleccionado</p>
@@ -436,10 +474,14 @@ export default async function ProgramacionMinisterialPage({
 
                         {item.preparado && item.kind === 'event' ? (
                           <Link
-                            href={`/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
-                            className="mt-3 flex min-h-10 items-center justify-between rounded-xl bg-slate-900 px-3 text-[11px] font-extrabold text-white"
+                            href={selected
+                              ? `/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}#dia-seleccionado`
+                              : `/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
+                            className="mt-3 flex min-h-11 items-center justify-between border-y border-slate-200 text-left text-xs font-extrabold text-slate-600"
+                            aria-expanded={selected}
                           >
-                            Abrir programación <ChevronRight className="h-4 w-4" />
+                            <span>{selected ? 'Ocultar programación' : 'Abrir programación'}</span>
+                            <ChevronDown className={`h-4 w-4 transition-transform ${selected ? 'rotate-180' : ''}`} />
                           </Link>
                         ) : puedeProgramar ? (
                           <form action={prepararFechaAlabanza.bind(null, id)} className="mt-3">
@@ -456,44 +498,6 @@ export default async function ProgramacionMinisterialPage({
                     <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">No hay fechas en el Calendario para este día.</p>
                   )}
                 </div>
-
-                {puedeProgramar && (
-                  <details className="mt-3 overflow-hidden rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-extrabold text-indigo-700">
-                      <Plus className="h-4 w-4" /> Crear una fecha nueva
-                    </summary>
-                    <form action={crearServicioAlabanza.bind(null, id)} className="grid gap-3 border-t border-indigo-100 bg-white p-3">
-                      <input type="hidden" name="fecha" value={diaSeleccionado} />
-                      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        Hora
-                        <input name="hora" type="time" required defaultValue="10:00" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-extrabold" />
-                      </label>
-                      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        Nombre
-                        <input name="titulo" defaultValue="Servicio" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
-                      </label>
-                      <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
-                        <label className="min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                          Ubicación
-                          <input name="ubicacion" placeholder="Templo principal" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs" />
-                        </label>
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                          Duración
-                          <select name="duracion_minutos" defaultValue="120" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-2 text-xs font-semibold">
-                            <option value="60">1 h</option>
-                            <option value="90">1.5 h</option>
-                            <option value="120">2 h</option>
-                            <option value="180">3 h</option>
-                          </select>
-                        </label>
-                      </div>
-                      <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y preparar</button>
-                      <p className="text-[10px] leading-4 text-slate-400">
-                        Se crea un solo evento real, visible en Vida Internacional y en {ministerio.nombre}.
-                      </p>
-                    </form>
-                  </details>
-                )}
               </div>
             )}
           </div>
