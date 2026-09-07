@@ -17,9 +17,9 @@ export default async function InicioPage() {
   if (!user) redirect('/login')
 
   return (
-    <div className="min-h-screen bg-[#f4f5f9]">
+    <div className="relative min-h-screen bg-transparent">
       <InicioDynamicHeader userId={user.id} email={user.email} />
-      <div className="[&>main>header]:hidden">
+      <div className="relative z-10 [&>main]:!bg-transparent [&>main>header]:hidden">
         <InicioOnlineRefresh userId={user.id} email={user.email} />
       </div>
     </div>
