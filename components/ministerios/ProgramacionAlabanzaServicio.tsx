@@ -1,6 +1,8 @@
 import { ExternalLink } from 'lucide-react'
 import { guardarPaletaAlabanza } from '@/app/actions/programacion-alabanza'
+import { guardarRepertorioCompartido, obtenerConfiguracionCompartirRepertorio } from '@/app/actions/repertorio-compartido'
 import { asignarFuncionEquipoMinisterial, cambiarDisponibilidadFuncionMiembro, obtenerDatosEquipoServicio, quitarFuncionEquipoMinisterial } from '@/app/actions/equipo-ministerial'
+import CompartirRepertorioButton from '@/components/ministerios/CompartirRepertorioButton'
 import EquipoServicioEditor from '@/components/ministerios/EquipoServicioEditor'
 import PaletaAlabanzaEditor from '@/components/ministerios/PaletaAlabanzaEditor'
 import ProgramacionAlabanzaSecciones from '@/components/ministerios/ProgramacionAlabanzaSecciones'
@@ -10,10 +12,20 @@ type Props = { ministerioId: string; eventoId: string; puedeEditarProgramacion: 
 
 export default async function ProgramacionAlabanzaServicio({ ministerioId, eventoId, puedeEditarProgramacion, puedePaleta, asignadosEvento, repertorio, paleta, colores, defaults }: Props) {
   let equipo: Awaited<ReturnType<typeof obtenerDatosEquipoServicio>> | null = null
-  if (puedeEditarProgramacion) { try { equipo = await obtenerDatosEquipoServicio(ministerioId, eventoId) } catch { equipo = null } }
+  let compartir: Awaited<ReturnType<typeof obtenerConfiguracionCompartirRepertorio>> = { ministerios: [], seleccionados: [] }
+
+  if (puedeEditarProgramacion) {
+    const [equipoResult, compartirResult] = await Promise.all([
+      obtenerDatosEquipoServicio(ministerioId, eventoId).catch(() => null),
+      obtenerConfiguracionCompartirRepertorio(ministerioId, eventoId).catch(() => ({ ministerios: [], seleccionados: [] })),
+    ])
+    equipo = equipoResult
+    compartir = compartirResult
+  }
+
   const personasAsignadas = new Set(asignadosEvento.map((item) => String(item.profile_id))).size
   const equipoContenido = equipo ? <EquipoServicioEditor funciones={equipo.funciones} miembros={equipo.miembros} asignaciones={equipo.asignaciones} disponibilidadAction={cambiarDisponibilidadFuncionMiembro.bind(null, ministerioId)} asignarAction={asignarFuncionEquipoMinisterial.bind(null, ministerioId, eventoId)} quitarAction={quitarFuncionEquipoMinisterial.bind(null, ministerioId, eventoId)} /> : <div className="text-slate-900"><div className="divide-y divide-slate-200 border-y border-slate-200">{asignadosEvento.length === 0 ? <p className="py-5 text-sm text-slate-500">Todavía no hay integrantes asignados.</p> : asignadosEvento.map((assignment, index) => <div key={`${assignment.profile_id}-${assignment.capacidad_id}-${index}`} className="flex min-h-[58px] items-center justify-between gap-3 py-2.5"><p className="min-w-0 truncate text-sm font-extrabold text-slate-800">{assignment.persona?.nombre_completo || 'Servidor'}</p><span className="shrink-0 text-[10px] font-bold text-indigo-600">{assignment.capacidad?.nombre || 'Sin función'}</span></div>)}</div></div>
-  const repertorioContenido = <RepertorioServicioEditor ministerioId={ministerioId} eventoId={eventoId} repertorio={repertorio} puedeEditar={puedeEditarProgramacion} />
+  const repertorioContenido = <div><RepertorioServicioEditor ministerioId={ministerioId} eventoId={eventoId} repertorio={repertorio} puedeEditar={puedeEditarProgramacion} />{puedeEditarProgramacion ? <CompartirRepertorioButton ministerios={compartir.ministerios} seleccionadosIniciales={compartir.seleccionados} action={guardarRepertorioCompartido.bind(null, ministerioId, eventoId)} /> : null}</div>
   const paletaContenido = <div className="text-slate-900"><p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-pink-500">Paleta del servicio</p><div className="mt-3 flex h-5 overflow-hidden rounded-full ring-1 ring-black/5">{(colores.length ? colores : defaults).map((item, index) => <span key={`${item}-${index}`} className="flex-1" style={{ backgroundColor: item }} />)}</div>{paleta?.observaciones ? <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-slate-600">{paleta.observaciones}</p> : null}{paleta?.referencia_url ? <a href={paleta.referencia_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600">Referencia visual <ExternalLink className="h-3 w-3" /></a> : null}{puedePaleta ? <div className="mt-4 border-t border-slate-200 pt-4"><PaletaAlabanzaEditor action={guardarPaletaAlabanza.bind(null, ministerioId, eventoId)} initialColors={colores.length ? colores : defaults} initialObservaciones={paleta?.observaciones} initialReferenciaUrl={paleta?.referencia_url} puedeProgramar={puedeEditarProgramacion} /></div> : null}</div>
   return <ProgramacionAlabanzaSecciones equipoCount={personasAsignadas} repertorioCount={repertorio.length} paletaLista={Boolean(colores.length || paleta?.observaciones || paleta?.referencia_url)} equipo={equipoContenido} repertorio={repertorioContenido} paleta={paletaContenido} />
 }

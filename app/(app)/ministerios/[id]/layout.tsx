@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { Music2 } from 'lucide-react'
+import { ListMusic, Music2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+import { tieneListadosCompartidosMinisterio } from '@/app/actions/repertorio-compartido'
 import BackButton from '@/components/navigation/BackButton'
 import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDashboardSwitcher'
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
@@ -68,12 +69,15 @@ export default async function MinisterioLayout({
     redirect('/ministerios')
   }
 
-  const { data: membresias } = await supabase
-    .from('ministerio_miembros')
-    .select('ministerio_id')
-    .eq('profile_id', user.id)
+  const [membresiasReq, tieneListadoCompartido] = await Promise.all([
+    supabase
+      .from('ministerio_miembros')
+      .select('ministerio_id')
+      .eq('profile_id', user.id),
+    esAlabanza ? Promise.resolve(false) : tieneListadosCompartidosMinisterio(id),
+  ])
 
-  const ids = (membresias || []).map((item: any) => item.ministerio_id)
+  const ids = (membresiasReq.data || []).map((item: any) => item.ministerio_id)
   let ministeriosAccesibles: Array<{
     id: string
     nombre: string
@@ -117,6 +121,11 @@ export default async function MinisterioLayout({
             }}
             ministerios={ministeriosAccesibles}
           />
+          {tieneListadoCompartido && (
+            <Link href={`/ministerios/${id}/listado-compartido`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/95 text-violet-600 shadow-lg ring-1 ring-black/5 backdrop-blur-md" aria-label="Abrir listado compartido" title="Listado compartido">
+              <ListMusic className="h-[18px] w-[18px]" />
+            </Link>
+          )}
           {esAlabanza && (
             <Link href={`/ministerios/${id}/setlist`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/95 text-violet-600 shadow-lg ring-1 ring-black/5 backdrop-blur-md" aria-label="Abrir setlist" title="Setlist">
               <Music2 className="h-[18px] w-[18px]" />
