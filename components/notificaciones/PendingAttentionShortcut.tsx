@@ -5,10 +5,8 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  CalendarCheck2,
   ChevronRight,
   ClipboardCheck,
-  HeartHandshake,
   MessageCircleQuestion,
   UserRoundPlus,
   UsersRound,
@@ -25,11 +23,9 @@ export default function PendingAttentionShortcut() {
   const surface = pathname === '/inicio' ? 'inicio' : pathname === '/avisos' ? 'avisos' : null
   const {
     pendingMinisterioIngresos,
-    pendingServicios,
     pendingSolicitudesGestionables,
     pendingContactos,
     pendingPreguntasPastorales,
-    pendingAyudaSolidaria,
   } = usePendingIndicators()
   const [pageTarget, setPageTarget] = useState<AttentionTarget>(null)
   const [previewTarget, setPreviewTarget] = useState<AttentionTarget>(null)
@@ -135,17 +131,6 @@ export default function PendingAttentionShortcut() {
       icon: typeof ClipboardCheck
     }> = []
 
-    if (pendingServicios > 0) {
-      items.push({
-        key: 'servicios',
-        href: '/calendario',
-        label: 'Servicios por confirmar',
-        detail: 'Asignaciones que requieren tu respuesta',
-        count: pendingServicios,
-        icon: CalendarCheck2,
-      })
-    }
-
     if (pendingContactos > 0) {
       items.push({
         key: 'contactos',
@@ -191,24 +176,11 @@ export default function PendingAttentionShortcut() {
       })
     }
 
-    if (pendingAyudaSolidaria > 0) {
-      items.push({
-        key: 'ayuda-solidaria',
-        href: '/pastoral/ayuda-solidaria',
-        label: 'Ayuda Solidaria',
-        detail: 'Solicitudes o aportes nuevos que requieren atención pastoral',
-        count: pendingAyudaSolidaria,
-        icon: HeartHandshake,
-      })
-    }
-
     return items
   }, [
-    pendingAyudaSolidaria,
     pendingContactos,
     pendingMinisterioIngresos,
     pendingPreguntasPastorales,
-    pendingServicios,
     pendingSolicitudesGestionables,
     rol,
   ])
