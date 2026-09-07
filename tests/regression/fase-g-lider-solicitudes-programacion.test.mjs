@@ -21,13 +21,13 @@ test('el dashboard reserva liderazgo a es_lider y Pastor no recibe gestión glob
   const hub = source('app/(app)/ministerios/[id]/page.tsx')
   const layout = source('app/(app)/ministerios/[id]/layout.tsx')
 
-  assert.match(hub, /const esLiderMinisterio = mem\?\.es_lider === true/)
-  assert.match(hub, /const accesoGlobal = perfil\?\.rol === 'administrador'/)
-  assert.match(hub, /visible: esLiderMinisterio/)
-  assert.match(hub, /\{esLiderMinisterio && <section>/)
+  assert.match(hub, /esLiderMinisterio\s*=\s*mem\?\.es_lider\s*===\s*true/)
+  assert.match(hub, /accesoGlobal\s*=\s*perfil\?\.rol\s*===\s*'administrador'/)
+  assert.match(hub, /visible\s*:\s*esLiderMinisterio/)
+  assert.match(hub, /\{esLiderMinisterio\s*&&\s*<section>/)
   assert.match(hub, /Eres parte del equipo/)
-  assert.doesNotMatch(hub, /mem\?\.es_lider === true \|\|/)
-  assert.doesNotMatch(hub, /\['pastor', 'administrador'\]\.includes\(perfil\?\.rol\)/)
+  assert.doesNotMatch(hub, /mem\?\.es_lider\s*===\s*true\s*\|\|/)
+  assert.doesNotMatch(hub, /\['pastor',\s*'administrador'\]\.includes\(perfil\?\.rol\)/)
 
   assert.match(layout, /const esAdministrador = profile\?\.rol === 'administrador'/)
   assert.match(layout, /if \(!membresiaReq\.data && !esAdministrador\)/)
@@ -116,9 +116,10 @@ test('acciones ministeriales sensibles usan Administrador o liderazgo contextual
   assert.doesNotMatch(solicitudes, /profile\.rol === 'pastor'/)
 })
 
-test('la biblioteca recupera canciones de servicios anteriores y las materializa al reutilizarlas', () => {
+test('la biblioteca recupera canciones históricas y el repertorio actual consume esa biblioteca', () => {
   const action = source('app/actions/repertorio-programacion.ts')
-  const picker = source('components/ministerios/RepertorioBibliotecaPicker.tsx')
+  const biblioteca = source('app/actions/biblioteca-alabanza.ts')
+  const editor = source('components/ministerios/RepertorioServicioEditor.tsx')
 
   assert.match(action, /export async function obtenerBibliotecaRepertorioMinisterio/)
   assert.match(action, /\.from\('evento_repertorio'\)/)
@@ -127,10 +128,15 @@ test('la biblioteca recupera canciones de servicios anteriores y las materializa
   assert.match(action, /cancionId\.startsWith\('hist:'\)/)
   assert.match(action, /\.from\('ministerio_canciones'\)[\s\S]*?\.insert\(/)
 
-  assert.match(picker, /obtenerBibliotecaRepertorioMinisterio/)
-  assert.match(picker, /setBiblioteca/)
-  assert.match(picker, /Historial/)
-  assert.match(picker, /biblioteca permanente/)
+  assert.match(biblioteca, /export async function listarBibliotecaAlabanza/)
+  assert.match(biblioteca, /\.from\('evento_repertorio'\)/)
+  assert.match(biblioteca, /id: `hist:\$\{String\(row\.id\)\}`/)
+  assert.match(biblioteca, /recuperada: true/)
+
+  assert.match(editor, /listarBibliotecaAlabanza/)
+  assert.match(editor, /agregarCancionExistenteCompleta/)
+  assert.match(editor, /data\.set\('cancion_id', song\.id\)/)
+  assert.match(editor, /song\.ultimaTonalidad \|\| song\.tonalidad_base \|\| ''/)
 })
 
 test('acciones gestionables forman parte de Para ti y respetan liderazgo real', () => {

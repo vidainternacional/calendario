@@ -5,23 +5,12 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  Music2,
-  Palette,
   Plus,
-  Users,
 } from 'lucide-react'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import {
-  agregarCancionAlabanza,
-  agregarCancionBibliotecaAlabanza,
-  actualizarCancionAlabanza,
-  eliminarCancionAlabanza,
-  guardarPaletaAlabanza,
-} from '@/app/actions/programacion-alabanza'
 import { crearServicioAlabanza, prepararFechaAlabanza } from '@/app/actions/servicios-alabanza'
-import PaletaAlabanzaEditor from '@/components/ministerios/PaletaAlabanzaEditor'
-import RepertorioBibliotecaPicker, { type CancionBiblioteca } from '@/components/ministerios/RepertorioBibliotecaPicker'
+import EliminarServicioButton from '@/components/ministerios/EliminarServicioButton'
+import ProgramacionAlabanzaServicio from '@/components/ministerios/ProgramacionAlabanzaServicio'
 import {
   cargarCalendarioMinisterial,
   type ProgramacionCalendarItem,
@@ -173,6 +162,7 @@ export default async function ProgramacionMinisterialPage({
   }
 
   const puedeProgramar = ['administrador', 'pastor'].includes(profile.rol) || membresia?.es_lider === true
+  const puedeEditarProgramacion = profile.rol === 'administrador' || membresia?.es_lider === true
   const puedePaleta = puedeProgramar || responsablePaleta
   if (!puedeProgramar && !puedePaleta) redirect(`/ministerios/${id}`)
 
@@ -289,7 +279,7 @@ export default async function ProgramacionMinisterialPage({
     }
   }
 
-  const biblioteca: CancionBiblioteca[] = (cancionesBiblioteca as any[]).map((song: any) => {
+  const biblioteca = (cancionesBiblioteca as any[]).map((song: any) => {
     const history = historyBySong.get(String(song.id)) || []
     const tonalidades = tonoHistorial(history)
     return {
@@ -395,6 +385,44 @@ export default async function ProgramacionMinisterialPage({
               })}
             </div>
 
+            {diaSeleccionado && puedeProgramar && (
+              <details className="mt-4 overflow-hidden rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-extrabold text-indigo-700">
+                  <Plus className="h-4 w-4" /> Crear una fecha nueva
+                </summary>
+                <form action={crearServicioAlabanza.bind(null, id)} className="grid gap-3 border-t border-indigo-100 bg-white p-3">
+                  <input type="hidden" name="fecha" value={diaSeleccionado} />
+                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Hora
+                    <input name="hora" type="time" required defaultValue="10:00" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-extrabold" />
+                  </label>
+                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Nombre
+                    <input name="titulo" defaultValue="Servicio" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
+                  </label>
+                  <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
+                    <label className="min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Ubicación
+                      <input name="ubicacion" placeholder="Templo principal" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs" />
+                    </label>
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Duración
+                      <select name="duracion_minutos" defaultValue="120" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-2 text-xs font-semibold">
+                        <option value="60">1 h</option>
+                        <option value="90">1.5 h</option>
+                        <option value="120">2 h</option>
+                        <option value="180">3 h</option>
+                      </select>
+                    </label>
+                  </div>
+                  <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y preparar</button>
+                  <p className="text-[10px] leading-4 text-slate-400">
+                    Se crea un solo evento real, visible en Vida Internacional y en {ministerio.nombre}.
+                  </p>
+                </form>
+              </details>
+            )}
+
             {diaSeleccionado && (
               <div id="dia-seleccionado" className="mt-4 scroll-mt-24 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-100">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">Día seleccionado</p>
@@ -407,7 +435,7 @@ export default async function ProgramacionMinisterialPage({
                     return (
                       <div
                         key={itemKey(item)}
-                        className={`rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
+                        className={`relative rounded-2xl p-3 ring-1 ${selected ? 'bg-indigo-50 ring-indigo-200' : 'bg-white ring-slate-100'}`}
                       >
                         <div className="flex items-start gap-3">
                           <span
@@ -434,14 +462,26 @@ export default async function ProgramacionMinisterialPage({
                               </p>
                             )}
                           </div>
+                          {puedeProgramar && item.kind === 'event' && (
+                            <EliminarServicioButton
+                              ministerioId={id}
+                              eventoId={item.id}
+                              mes={mes}
+                              dia={diaSeleccionado}
+                            />
+                          )}
                         </div>
 
                         {item.preparado && item.kind === 'event' ? (
                           <Link
-                            href={`/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
-                            className="mt-3 flex min-h-10 items-center justify-between rounded-xl bg-slate-900 px-3 text-[11px] font-extrabold text-white"
+                            href={selected
+                              ? `/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}#dia-seleccionado`
+                              : `/ministerios/${id}/programacion?mes=${mes}&dia=${diaSeleccionado}&evento=${item.id}#servicio-activo`}
+                            className="mt-3 flex min-h-11 items-center justify-between border-y border-slate-200 text-left text-xs font-extrabold text-slate-600"
+                            aria-expanded={selected}
                           >
-                            Abrir programación <ChevronRight className="h-4 w-4" />
+                            <span>{selected ? 'Ocultar programación' : 'Abrir programación'}</span>
+                            <ChevronDown className={`h-4 w-4 transition-transform ${selected ? 'rotate-180' : ''}`} />
                           </Link>
                         ) : puedeProgramar ? (
                           <form action={prepararFechaAlabanza.bind(null, id)} className="mt-3">
@@ -458,44 +498,6 @@ export default async function ProgramacionMinisterialPage({
                     <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">No hay fechas en el Calendario para este día.</p>
                   )}
                 </div>
-
-                {puedeProgramar && (
-                  <details className="mt-3 overflow-hidden rounded-2xl bg-indigo-50 ring-1 ring-indigo-100">
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-extrabold text-indigo-700">
-                      <Plus className="h-4 w-4" /> Crear una fecha nueva
-                    </summary>
-                    <form action={crearServicioAlabanza.bind(null, id)} className="grid gap-3 border-t border-indigo-100 bg-white p-3">
-                      <input type="hidden" name="fecha" value={diaSeleccionado} />
-                      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        Hora
-                        <input name="hora" type="time" required defaultValue="10:00" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-extrabold" />
-                      </label>
-                      <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        Nombre
-                        <input name="titulo" defaultValue="Servicio" required className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-sm font-semibold" />
-                      </label>
-                      <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2">
-                        <label className="min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                          Ubicación
-                          <input name="ubicacion" placeholder="Templo principal" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-3 text-xs" />
-                        </label>
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                          Duración
-                          <select name="duracion_minutos" defaultValue="120" className="mt-1 h-11 w-full rounded-xl bg-slate-50 px-2 text-xs font-semibold">
-                            <option value="60">1 h</option>
-                            <option value="90">1.5 h</option>
-                            <option value="120">2 h</option>
-                            <option value="180">3 h</option>
-                          </select>
-                        </label>
-                      </div>
-                      <button className="h-11 rounded-xl bg-indigo-600 text-xs font-bold text-white">Crear y preparar</button>
-                      <p className="text-[10px] leading-4 text-slate-400">
-                        Se crea un solo evento real, visible en Vida Internacional y en {ministerio.nombre}.
-                      </p>
-                    </form>
-                  </details>
-                )}
               </div>
             )}
           </div>
@@ -503,144 +505,25 @@ export default async function ProgramacionMinisterialPage({
       </section>
 
       {evento && (
-        <section id="servicio-activo" className="mt-5 scroll-mt-24 overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-black/[0.04]">
-          <div className="p-4">
+        <section id="servicio-activo" className="mt-5 scroll-mt-24">
+          <div className="pb-4">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-indigo-500">Programación de {ministerio.nombre}</p>
             <h2 className="mt-1 text-xl font-extrabold tracking-[-0.025em] text-[#171923]">{evento.titulo}</h2>
             <p className="mt-1 text-xs text-slate-500">{fechaSV(evento.fecha_inicio)}{evento.ubicacion ? ` · ${evento.ubicacion}` : ''}</p>
           </div>
 
-          <details className="border-t border-slate-100">
-            <summary className="flex min-h-[62px] cursor-pointer list-none items-center gap-3 px-4 py-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-600"><Users className="h-4 w-4" /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-extrabold text-slate-800">Equipo</span>
-                <span className="block text-[11px] text-slate-400">{asignadosEvento.length} {asignadosEvento.length === 1 ? 'integrante asignado' : 'integrantes asignados'}</span>
-              </span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </summary>
-            <div className="border-t border-slate-100 bg-slate-50/70 p-4">
-              {asignadosEvento.length === 0 ? (
-                <p className="text-xs text-slate-500">Todavía no hay integrantes asignados.</p>
-              ) : (
-                <div className="space-y-2">
-                  {asignadosEvento.map((assignment: any, index: number) => (
-                    <div key={`${assignment.profile_id}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-100">
-                      <p className="min-w-0 truncate text-xs font-bold text-slate-700">{assignment.persona?.nombre_completo || 'Servidor'}</p>
-                      <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-1 text-[9px] font-bold text-indigo-600">{assignment.capacidad?.nombre || 'Sin función'}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {puedeProgramar && (
-                <Link
-                  href={`/ministerios/${id}/programacion/equipo?mes=${mes}&evento=${evento.id}`}
-                  className="mt-3 flex min-h-11 items-center justify-between rounded-xl bg-indigo-600 px-4 text-xs font-extrabold text-white"
-                >
-                  Programar equipo <ChevronRight className="h-4 w-4" />
-                </Link>
-              )}
-            </div>
-          </details>
-
-          <details className="border-t border-slate-100">
-            <summary className="flex min-h-[62px] cursor-pointer list-none items-center gap-3 px-4 py-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-50 text-violet-600"><Music2 className="h-4 w-4" /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-extrabold text-slate-800">Repertorio</span>
-                <span className="block text-[11px] text-slate-400">{repertorio.length} {repertorio.length === 1 ? 'canción' : 'canciones'} · biblioteca reutilizable</span>
-              </span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </summary>
-            <div className="border-t border-slate-100 bg-slate-50/70 p-4">
-              <div className="space-y-2">
-                {repertorio.length === 0 ? (
-                  <p className="rounded-xl bg-white p-3 text-xs text-slate-500 ring-1 ring-slate-100">Todavía no hay canciones en este servicio.</p>
-                ) : repertorio.map((row: any, index: number) => {
-                  const librarySong = row.ministerio_canciones
-                  const title = librarySong?.titulo || row.titulo
-                  const spotify = librarySong?.spotify_url || row.spotify_url || null
-                  const youtube = librarySong?.youtube_url || row.youtube_url || null
-                  return (
-                    <div key={row.id} className="rounded-2xl bg-white p-3 ring-1 ring-slate-100">
-                      <div className="flex items-start gap-3">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 text-xs font-extrabold text-violet-600">{index + 1}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <p className="truncate text-sm font-extrabold text-slate-800">{title}</p>
-                            {row.tonalidad && <span className="shrink-0 rounded-full bg-slate-50 px-2 py-1 text-[10px] font-extrabold text-slate-500">{row.tonalidad}</span>}
-                          </div>
-                          {librarySong?.artista && <p className="mt-0.5 truncate text-[10px] text-slate-400">{librarySong.artista}</p>}
-                          {(spotify || youtube || row.enlace) && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {spotify && <a href={spotify} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">Spotify <ExternalLink className="h-3 w-3" /></a>}
-                              {youtube && <a href={youtube} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-50 px-2.5 text-[10px] font-bold text-slate-600">YouTube <ExternalLink className="h-3 w-3" /></a>}
-                            </div>
-                          )}
-                          {row.notas && <p className="mt-2 text-[11px] leading-5 text-slate-500">{row.notas}</p>}
-                        </div>
-                      </div>
-
-                      {puedeProgramar && (
-                        <details className="mt-2 border-t border-slate-100 pt-2">
-                          <summary className="cursor-pointer list-none text-[10px] font-bold text-violet-600">Editar detalles</summary>
-                          <form action={actualizarCancionAlabanza.bind(null, id, evento.id)} className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3">
-                            <input type="hidden" name="repertorio_id" value={row.id} />
-                            <div className="grid grid-cols-[minmax(0,1fr)_86px] gap-2">
-                              <input name="titulo" defaultValue={title} required aria-label="Canción" className="h-10 w-full rounded-xl bg-white px-3 text-xs" />
-                              <input name="tonalidad" defaultValue={row.tonalidad || ''} placeholder="Tono" aria-label="Tonalidad" className="h-10 w-full rounded-xl bg-white px-2 text-center text-xs" />
-                            </div>
-                            <input name="spotify_url" type="url" defaultValue={spotify || ''} placeholder="Link de Spotify" className="h-10 w-full rounded-xl bg-white px-3 text-xs" />
-                            <input name="youtube_url" type="url" defaultValue={youtube || ''} placeholder="Link de YouTube" className="h-10 w-full rounded-xl bg-white px-3 text-xs" />
-                            <textarea name="notas" defaultValue={row.notas || ''} placeholder="Notas solo para este servicio" className="min-h-16 w-full rounded-xl bg-white p-3 text-xs" />
-                            <button className="h-10 rounded-xl bg-indigo-600 text-xs font-bold text-white">Guardar detalles</button>
-                          </form>
-                          <form action={eliminarCancionAlabanza.bind(null, id, evento.id)} className="mt-2">
-                            <input type="hidden" name="repertorio_id" value={row.id} />
-                            <button className="h-9 w-full rounded-xl bg-rose-50 text-[10px] font-bold text-rose-600">Quitar de este servicio</button>
-                          </form>
-                        </details>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {puedeProgramar && (
-                <RepertorioBibliotecaPicker
-                  canciones={biblioteca}
-                  agregarAction={agregarCancionBibliotecaAlabanza.bind(null, id, evento.id)}
-                  crearAction={agregarCancionAlabanza.bind(null, id, evento.id)}
-                />
-              )}
-            </div>
-          </details>
-
-          <details className="border-t border-slate-100">
-            <summary className="flex min-h-[62px] cursor-pointer list-none items-center gap-3 px-4 py-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pink-50 text-pink-600"><Palette className="h-4 w-4" /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-extrabold text-slate-800">Paleta de colores</span>
-                <span className="mt-1 flex h-4 max-w-32 overflow-hidden rounded-full ring-1 ring-black/5">
-                  {(colores.length ? colores : defaults).map((item, index) => <span key={`${item}-${index}`} className="flex-1" style={{ backgroundColor: item }} />)}
-                </span>
-              </span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </summary>
-            <div className="border-t border-slate-100 bg-slate-50/70 p-4">
-              {paleta?.observaciones && <p className="rounded-xl bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-100">{paleta.observaciones}</p>}
-              {paleta?.referencia_url && <a href={paleta.referencia_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-indigo-600">Referencia visual <ExternalLink className="h-3 w-3" /></a>}
-              {puedePaleta && (
-                <PaletaAlabanzaEditor
-                  action={guardarPaletaAlabanza.bind(null, id, evento.id)}
-                  initialColors={colores.length ? colores : defaults}
-                  initialObservaciones={paleta?.observaciones}
-                  initialReferenciaUrl={paleta?.referencia_url}
-                  puedeProgramar={puedeProgramar}
-                />
-              )}
-            </div>
-          </details>
+          <ProgramacionAlabanzaServicio
+            ministerioId={id}
+            eventoId={evento.id}
+            puedeEditarProgramacion={puedeEditarProgramacion}
+            puedePaleta={puedePaleta}
+            asignadosEvento={asignadosEvento}
+            repertorio={repertorio}
+            biblioteca={biblioteca}
+            paleta={paleta}
+            colores={colores}
+            defaults={defaults}
+          />
         </section>
       )}
 

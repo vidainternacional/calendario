@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { notifyUser } from '@/lib/webpush'
+import { dailyVerseForDate, fetchVerseText, vidaDateKey, vidaHour } from '@/lib/biblia/vida-daily'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -14,7 +15,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createAdminClient() as any
   const ahora = Date.now()
   const h = 3600_000
@@ -25,6 +25,35 @@ export async function POST(req: NextRequest) {
   ] as const
 
   let enviadas = 0
+
+  // Versículo del día: reutiliza el mismo cron horario y el mismo sistema push ya aprobado.
+  const fechaHoy = vidaDateKey()
+  const horaHoy = vidaHour()
+  const { data: preferencias } = await supabase
+    .from('versiculo_diario_preferencias')
+    .select('profile_id, ultima_fecha_enviada')
+    .eq('activo', true)
+    .eq('hora_local', horaHoy)
+
+  const pendientes = (preferencias ?? []).filter((p: any) => p.ultima_fecha_enviada !== fechaHoy)
+  if (pendientes.length > 0) {
+    const lectura = dailyVerseForDate()
+    let texto = ''
+    try { texto = await fetchVerseText(lectura) } catch {}
+    for (const pref of pendientes) {
+      const body = texto ? `“${texto.slice(0, 150)}${texto.length > 150 ? '…' : ''}” — ${lectura.label}` : `Abre VIDA para leer ${lectura.label}.`
+      const cantidad = await notifyUser(supabase, pref.profile_id, {
+        title: 'Versículo del día',
+        body,
+        url: '/hoy',
+        tag: `versiculo-diario-${fechaHoy}`,
+      })
+      if (cantidad > 0) {
+        await supabase.from('versiculo_diario_preferencias').update({ ultima_fecha_enviada: fechaHoy, updated_at: new Date().toISOString() }).eq('profile_id', pref.profile_id)
+        enviadas += cantidad
+      }
+    }
+  }
 
   for (const v of ventanas) {
     const { data: asignaciones } = await supabase
@@ -50,7 +79,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 🎂 Cumpleaños: una vez al día (corrida de las 13:00 UTC = 7:00 am El Salvador)
   if (new Date().getUTCHours() === 13) {
     const { data: cumpleaneros } = await supabase
       .from('profiles')

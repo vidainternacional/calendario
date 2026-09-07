@@ -1,0 +1,31 @@
+name: VIDA Guardrails
+
+on:
+  push:
+    branches:
+      - main
+      - 'agent/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vida-guardrails-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guardrails:
+    name: Alcance y reglas de VIDA
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout con historial
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Validar alcance y reglas automáticas
+        run: node scripts/vida-guardrails.mjs

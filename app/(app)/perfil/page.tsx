@@ -19,7 +19,11 @@ export default async function PerfilPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: membresias }, { data: details }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: membresias },
+    { data: details },
+  ] = await Promise.all([
     (supabase as any).from('profiles').select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral, es_pastor_general').eq('id', user.id).single(),
     supabase.from('ministerio_miembros').select(`id,es_lider,ministerios (id,nombre,color_primario)`).eq('profile_id', user.id),
     (supabase as any).from('member_profile_details').select('*').eq('profile_id', user.id).maybeSingle(),

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
+  BookOpenCheck,
   ChevronRight,
   FolderOpen,
   Library,
@@ -43,11 +44,14 @@ export default async function PastoralPage() {
 
   const nombre = (profile as { nombre_completo?: string } | null)?.nombre_completo?.split(' ')[0]
   const esPastorGeneral = Boolean((profile as { es_pastor_general?: boolean } | null)?.es_pastor_general)
+  const rol = String((profile as { rol?: string } | null)?.rol ?? '')
+  const puedeGestionarPlanes = rol === 'pastor' || rol === 'administrador'
   const borradores = (paquetes ?? []) as Array<{ id: string; titulo: string; descripcion_publica: string; estado: string; updated_at: string }>
 
   const areas = [
     { titulo: 'Estudio', href: '/estudios/profundo?from=pastoral', icono: Sparkles, iconClass: 'text-[#C0392B]' },
     { titulo: 'Biblioteca', href: '/pastoral/biblioteca', icono: Library, iconClass: 'text-amber-700' },
+    ...(puedeGestionarPlanes ? [{ titulo: 'Planes de lectura', href: '/pastoral/planes', icono: BookOpenCheck, iconClass: 'text-emerald-700' }] : []),
   ]
 
   return (

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import EstudioProfundoClient from '@/components/estudios/EstudioProfundoClient'
 import AutoSubmitStudyQuery from '@/components/estudios/AutoSubmitStudyQuery'
+import StudyAnalyticsTracker from '@/components/estudios/StudyAnalyticsTracker'
 import FuentesBiblicasAprobadas from '@/components/estudios/FuentesBiblicasAprobadas'
 import BibliotecaBiblicaVerificada from '@/components/estudios/BibliotecaBiblicaVerificada'
 import ContextoHistoricoVerificado from '@/components/estudios/ContextoHistoricoVerificado'
@@ -63,6 +64,7 @@ export default async function EstudioProfundoPage({
       </header>
 
       <EstudioProfundoClient initialPasaje={initialQuery} initialTab={initialTab} />
+      <StudyAnalyticsTracker />
       <AutoSubmitStudyQuery query={initialQuery} enabled={auto === '1' && Boolean(initialQuery.trim())} />
 
       <details className="group mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

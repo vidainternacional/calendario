@@ -1,0 +1,4 @@
+-- Compatibilidad de historial remoto.
+-- La estructura definitiva de chat, paquetes, reconocimientos y cuentas quedó documentada
+-- en 20260902171500_ayuda_chat_paquetes_reconocimiento_y_cuentas.sql.
+-- Esta versión remota fue aplicada durante la ejecución y no requiere cambios adicionales.

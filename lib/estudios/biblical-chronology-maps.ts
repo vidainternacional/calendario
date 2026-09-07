@@ -143,6 +143,8 @@ type RelationRow = {
   place: PlaceRow | PlaceRow[]
 }
 
+const THEOGRAPHIC_PROVIDER_REF = 'theographic-bible-metadata-events'
+
 const EVENT_SELECT = `
   id, slug, title, summary,
   start_book_code, start_chapter, start_verse,
@@ -204,6 +206,56 @@ function packageVersion(events: EventoCronologicoBiblico[]) {
     .slice(0, 16)
 }
 
+async function cargarEventosNarrativosExactos(
+  supabase: any,
+  sourceId: string,
+  bookCode: string,
+  chapter: number,
+  verse: number | null
+) {
+  let referenceQuery = supabase
+    .from('biblical_timeline_event_references')
+    .select('event_id')
+    .eq('source_id', sourceId)
+    .eq('enabled', true)
+    .eq('review_status', 'approved')
+    .eq('book_code', bookCode)
+    .eq('chapter', chapter)
+    .limit(1000)
+
+  if (verse !== null) referenceQuery = referenceQuery.eq('verse', verse)
+
+  const { data: referenceData, error: referenceError } = await referenceQuery
+  if (referenceError) {
+    console.error('[biblical-chronology-maps] No se pudieron cargar referencias narrativas:', referenceError)
+    return [] as EventRow[]
+  }
+
+  const eventIds = Array.from(new Set((referenceData ?? []).map((row: any) => row.event_id).filter(Boolean))) as string[]
+  if (eventIds.length === 0) return [] as EventRow[]
+
+  const rows: EventRow[] = []
+  for (let index = 0; index < eventIds.length; index += 100) {
+    const chunk = eventIds.slice(index, index + 100)
+    const { data, error } = await supabase
+      .from('biblical_timeline_events')
+      .select(EVENT_SELECT)
+      .eq('source_id', sourceId)
+      .eq('enabled', true)
+      .eq('review_status', 'approved')
+      .in('id', chunk)
+      .order('relative_order', { ascending: true })
+
+    if (error) {
+      console.error('[biblical-chronology-maps] No se pudieron cargar eventos narrativos:', error)
+      return rows
+    }
+    rows.push(...((data ?? []) as EventRow[]))
+  }
+
+  return rows
+}
+
 export async function listarCronologiaBiblicaParaReferencia(
   request: SolicitudCronologia
 ): Promise<PaqueteCronologicoBiblico> {
@@ -220,7 +272,18 @@ export async function listarCronologiaBiblicaParaReferencia(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { version: 'sin-sesion', reference: { bookCode, chapter, verse }, events: [] }
 
-  const { data, error } = await (supabase as any)
+  const { data: narrativeSource, error: sourceError } = await (supabase as any)
+    .from('biblical_sources')
+    .select('id')
+    .eq('provider_ref', THEOGRAPHIC_PROVIDER_REF)
+    .eq('enabled', true)
+    .eq('review_status', 'approved')
+    .maybeSingle()
+
+  if (sourceError) console.error('[biblical-chronology-maps] No se pudo resolver fuente narrativa:', sourceError)
+  const narrativeSourceId = (narrativeSource as any)?.id as string | undefined
+
+  let rangeQuery = (supabase as any)
     .from('biblical_timeline_events')
     .select(EVENT_SELECT)
     .eq('enabled', true)
@@ -230,12 +293,26 @@ export async function listarCronologiaBiblicaParaReferencia(
     .order('relative_order', { ascending: true })
     .limit(50)
 
+  if (narrativeSourceId) rangeQuery = rangeQuery.neq('source_id', narrativeSourceId)
+
+  const { data, error } = await rangeQuery
   if (error) {
     console.error('[biblical-chronology-maps] No se pudieron cargar eventos:', error)
     return { version: 'no-disponible', reference: { bookCode, chapter, verse }, events: [] }
   }
 
-  const eventRows = ((data ?? []) as EventRow[]).filter((row) => includesReference(row, chapter, verse))
+  const rangeRows = ((data ?? []) as EventRow[]).filter((row) => includesReference(row, chapter, verse))
+  const narrativeRows = narrativeSourceId
+    ? await cargarEventosNarrativosExactos(supabase as any, narrativeSourceId, bookCode, chapter, verse)
+    : []
+
+  const byId = new Map<string, EventRow>()
+  for (const row of [...rangeRows, ...narrativeRows]) byId.set(row.id, row)
+
+  const eventRows = Array.from(byId.values())
+    .sort((a, b) => a.relative_order - b.relative_order || a.title.localeCompare(b.title, 'es'))
+    .slice(0, limit)
+
   if (eventRows.length === 0) return { version: 'sin-datos', reference: { bookCode, chapter, verse }, events: [] }
 
   const eventIds = eventRows.map((row) => row.id)
@@ -259,7 +336,7 @@ export async function listarCronologiaBiblicaParaReferencia(
     relationsByEvent.set(relation.event_id, current)
   }
 
-  const events = eventRows.slice(0, limit).flatMap((row): EventoCronologicoBiblico[] => {
+  const events = eventRows.flatMap((row): EventoCronologicoBiblico[] => {
     const period = one(row.period)
     const source = one(row.source)
     if (!source) return []

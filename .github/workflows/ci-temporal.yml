@@ -18,19 +18,24 @@ concurrency:
 
 jobs:
   validar:
-    name: Instalación, regresión, lint informativo y build
+    name: Instalación, guardrails, regresión, lint informativo y build
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
 
       - name: Configurar Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
+
+      - name: Validar alcance VIDA antes del resto del CI
+        run: node scripts/vida-guardrails.mjs
 
       - name: Instalar dependencias reproducibles
         run: npm ci

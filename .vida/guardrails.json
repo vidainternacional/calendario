@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sourceOfTruth": "__VIDA_INTERNACIONAL.md",
+  "principles": {
+    "literalScopeOnly": true,
+    "preserveApprovedBehavior": true,
+    "newDisclosuresStartCollapsed": true,
+    "lightFieldsRequireDarkText": true,
+    "avoidNestedCardsByDefault": true,
+    "masterRequiresExplicitUnlock": true,
+    "supabaseRequiresExplicitUnlock": true,
+    "structuralCssOverridesRequireExplicitUnlock": true,
+    "importantCssRequiresExplicitUnlock": true
+  },
+  "sensitivePrefixes": [
+    "supabase/"
+  ],
+  "masterFile": "__VIDA_INTERNACIONAL.md"
+}

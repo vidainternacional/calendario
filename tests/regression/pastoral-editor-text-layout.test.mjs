@@ -12,14 +12,14 @@ test('aplicar Plantilla o Tema no solicita toast de confirmación', () => {
   assert.doesNotMatch(workspace, /Tema “\$\{paleta\.label\}” aplicado|Plantilla “\$\{plantilla\.nombre\}” aplicada/)
 })
 
-test('En blanco modifica la página actual y solo el control superior crea página', () => {
-  const marcador = 'aria-label="Aplicar plantilla en blanco a la página actual"'
-  const inicio = workspace.indexOf(marcador)
-  const blanco = workspace.slice(Math.max(0, inicio - 700), inicio + marcador.length + 80)
-  assert.ok(inicio >= 0)
-  assert.match(blanco, /actualizarPagina/)
-  assert.doesNotMatch(blanco, /nuevaPagina/)
-  assert.match(workspace, /Aplicar plantilla en blanco a la página actual/)
+test('Plantillas modifican la página actual y Nueva página es la única creación explícita', () => {
+  const inicio = workspace.indexOf('const aplicarPlantilla')
+  const fin = workspace.indexOf('const nuevaPagina', inicio)
+  const aplicar = workspace.slice(inicio, fin)
+  assert.ok(inicio >= 0 && fin > inicio)
+  assert.match(aplicar, /patchPaginaSinHistorial/)
+  assert.doesNotMatch(aplicar, /nuevaPagina\(/)
+  assert.match(workspace, /const nuevaPagina = \(\) =>/)
   assert.equal((workspace.match(/onClick=\{nuevaPagina\}/g) ?? []).length, 1)
   assert.match(workspace, /aria-label="Nueva página"/)
   assert.match(layout, /PastoralEditorRuntimeEnhancements/)
@@ -55,9 +55,11 @@ test('A+ queda disponible y Título Subtítulo Cuerpo son atributos del texto se
   assert.doesNotMatch(workspace, /if \(!textoSeleccionado\) return agregarTexto\(rol\)/)
 })
 
-test('página activa se elige arriba y ya no existe la faja inferior', () => {
-  assert.match(workspace, /<select value=\{indice\}/)
-  assert.match(workspace, /\{i \+ 1\}\/\{paginas\.length\}/)
+test('página activa se navega arriba y ya no existe la faja inferior', () => {
+  assert.match(workspace, /onClick=\{\(\) => irPagina\(indice - 1\)\}/)
+  assert.match(workspace, /onClick=\{\(\) => irPagina\(indice \+ 1\)\}/)
+  assert.match(workspace, /aria-label=\{`Página \$\{indice \+ 1\} de \$\{paginas\.length\}`\}/)
+  assert.match(workspace, /\{indice \+ 1\}\/\{paginas\.length\}/)
   assert.doesNotMatch(workspace, /pastoral-pages-strip/)
   assert.match(css, /pastoral-pages-strip/)
 })

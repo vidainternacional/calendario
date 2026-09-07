@@ -1,0 +1,13 @@
+{
+  "task": "Alinear regresión visual del Centro Pastoral con el comportamiento actual autorizado",
+  "userRequest": "El usuario pidió continuar sin detenerse hasta entregar Preview y autorizó ajustar las pruebas antiguas necesarias sin modificar la app ni funcionalidades aprobadas.",
+  "allowedPaths": [
+    ".vida/change-scope.json",
+    "tests/regression/pastoral-workspace-visual.test.mjs"
+  ],
+  "allowSupabase": false,
+  "allowMasterUpdate": false,
+  "allowStructuralCssOverride": false,
+  "allowImportantCss": false,
+  "preserveExistingUI": true
+}
