@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
-import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion } from 'lucide-react'
+import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion, BadgeCheck } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
@@ -23,10 +23,12 @@ export default async function PerfilPage() {
     { data: profile },
     { data: membresias },
     { data: details },
+    { data: discipuladoAprobado },
   ] = await Promise.all([
     (supabase as any).from('profiles').select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral, es_pastor_general').eq('id', user.id).single(),
     supabase.from('ministerio_miembros').select(`id,es_lider,ministerios (id,nombre,color_primario)`).eq('profile_id', user.id),
     (supabase as any).from('member_profile_details').select('*').eq('profile_id', user.id).maybeSingle(),
+    (supabase as any).rpc('discipulado_aprobado', { p_profile_id: user.id }),
   ])
 
   const roles = {
@@ -58,7 +60,10 @@ export default async function PerfilPage() {
             <AvatarUploader userId={user.id} nombre={nombre} avatarUrl={(profile as any)?.avatar_url ?? null} />
             <div className="min-w-0 flex-1 pt-1">
               <h2 className="break-words text-lg font-bold leading-tight text-[#171923] sm:text-xl">{nombre}</h2>
-              <span className={`mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${rolGlobal.bg} ${rolGlobal.text} ${rolGlobal.border}`}><Shield className="h-3.5 w-3.5 shrink-0" /><span className="truncate">Rol global: {rolGlobal.label}</span></span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${rolGlobal.bg} ${rolGlobal.text} ${rolGlobal.border}`}><Shield className="h-3.5 w-3.5 shrink-0" /><span className="truncate">Rol global: {rolGlobal.label}</span></span>
+                {discipuladoAprobado === true && <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" /> Discipulado aprobado</span>}
+              </div>
               <p className="mt-2 text-[11px] leading-5 text-slate-400">Tu foto ayuda a que líderes y compañeros puedan reconocerte dentro de VIDA.</p>
             </div>
           </div>
