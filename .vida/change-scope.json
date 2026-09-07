@@ -1,11 +1,16 @@
 {
-  "task": "Alinear regresión visual del Centro Pastoral con el comportamiento actual autorizado",
-  "userRequest": "El usuario pidió continuar sin detenerse hasta entregar Preview y autorizó ajustar las pruebas antiguas necesarias sin modificar la app ni funcionalidades aprobadas.",
+  "task": "Implementar Bloque 4 — Discipulado con cursos, lecciones, evaluación, progreso y aprobación pastoral",
+  "userRequest": "El usuario autorizó explícitamente construir el sistema completo de Discipulado y aprobó el alcance sensible de Supabase/RLS: cursos, lecciones, preguntas, asignaciones, progreso, intentos, gestores y distintivo de aprobación, todo aditivo y reversible.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "tests/regression/pastoral-workspace-visual.test.mjs"
+    "app/(app)/discipulado/**",
+    "components/discipulado/**",
+    "app/(app)/estudios/page.tsx",
+    "app/(app)/perfil/page.tsx",
+    "supabase/migrations/20260907232713_discipulado_cursos_evaluacion_aprobacion.sql",
+    "supabase/migrations/20260907233126_discipulado_restringir_funciones_public.sql"
   ],
-  "allowSupabase": false,
+  "allowSupabase": true,
   "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
