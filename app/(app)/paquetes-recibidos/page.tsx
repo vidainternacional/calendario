@@ -21,7 +21,7 @@ export default async function PaquetesRecibidosPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data } = await (supabase as any).rpc('get_visible_pastoral_packages')
+  const { data } = await (supabase as any).rpc('get_received_pastoral_packages')
   const paquetes = ((data || []) as Paquete[])
     .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime())
 
