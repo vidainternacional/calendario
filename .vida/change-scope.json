@@ -1,9 +1,9 @@
 {
-  "task": "Restaurar en producción la activación aprobada de notificaciones push",
-  "userRequest": "El usuario reportó un bug comprobable en una prioridad cerrada: las notificaciones dejaron de activarse en la aplicación instalada. Autorizó explícitamente aplicar el cambio en producción porque esta función solo puede validarse correctamente desde la app instalada. El cambio debe ser mínimo, no modificar ninguna funcionalidad aprobada ajena a notificaciones y no incorporar Discipulado ni otros cambios todavía no aprobados a producción.",
+  "task": "Integrar check-in real de asistencia en Perfil",
+  "userRequest": "El usuario aprobó que la tarjeta de ubicación del Perfil deje de prometer un check-in automático en segundo plano y se convierta en un acceso real al check-in existente: primero permite autorizar ubicación una sola vez; cuando hay un servicio o actividad con asistencia abierta muestra Hacer check-in ahora usando el mismo flujo GPS y RPC existente; después muestra Llegada confirmada; y cuando no hay actividad disponible muestra Listo para tu próximo check-in. Deben mantenerse la privacidad, el pin, el escudo verde, el estilo visual existente y no tocar Discipulado, Paquetes, asistencia pastoral, notificaciones ni Supabase.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "app/layout.tsx"
+    "components/perfil/UbicacionVidaCard.tsx"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

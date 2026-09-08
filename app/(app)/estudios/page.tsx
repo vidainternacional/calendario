@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages } from 'lucide-react'
+import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, GraduationCap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -15,6 +15,11 @@ export default async function EstudiosPage() {
   if (!user) {
     redirect('/login')
   }
+
+  const { data: discipuladoEstado } = await (supabase as any).rpc('discipulado_estado_personal')
+  const discipuladoAprobado = (discipuladoEstado as any)?.aprobado === true
+  const estadoDiscipulado = (discipuladoEstado as any)?.estado as string | undefined
+  const discipuladoEnProceso = Boolean(estadoDiscipulado && !['sin_iniciar', 'sin_curso', 'aprobado', 'aprobado_previo'].includes(estadoDiscipulado))
 
   const recursos = [
     {
@@ -39,6 +44,19 @@ export default async function EstudiosPage() {
       arrowClass: 'group-hover:text-emerald-600',
       actionClass: 'text-emerald-700',
     },
+    ...(!discipuladoAprobado ? [{
+      href: '/discipulado',
+      title: 'Discipulado',
+      description: discipuladoEnProceso
+        ? 'Continúa tu curso desde el punto donde lo dejaste y prepárate para el examen final.'
+        : 'Comienza tu discipulado, avanza por cada video y comprueba lo aprendido paso a paso.',
+      action: discipuladoEnProceso ? 'Continuar discipulado' : 'Comenzar discipulado',
+      icon: GraduationCap,
+      iconClass: 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
+      hoverClass: 'hover:border-violet-300',
+      arrowClass: 'group-hover:text-violet-600',
+      actionClass: 'text-violet-700',
+    }] : []),
     {
       href: '/estudios/profundo',
       title: 'Estudio Profundo',
