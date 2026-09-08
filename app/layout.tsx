@@ -111,8 +111,15 @@ export default function RootLayout({
                 window.addEventListener('load', async () => {
                   try {
                     const esPreviewVercel = window.location.hostname.endsWith('.vercel.app')
+                    let conservarPushEnPreview = false
 
                     if (esPreviewVercel) {
+                      try {
+                        conservarPushEnPreview = window.localStorage.getItem('vida-preview-push-opt-in') === 'true'
+                      } catch {}
+                    }
+
+                    if (esPreviewVercel && !conservarPushEnPreview) {
                       const registrations = await navigator.serviceWorker.getRegistrations()
                       await Promise.all(registrations.map((registration) => registration.unregister()))
 

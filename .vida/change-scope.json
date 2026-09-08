@@ -1,8 +1,10 @@
 {
-  "task": "Completar Bloque 4 — Discipulado guiado, autoinscripción, seguimiento pastoral y reconocimiento previo",
-  "userRequest": "El usuario aprobó que quienes aún no se han discipulado reciban una invitación en Inicio, puedan autoinscribirse al curso activo, avancen por videos de YouTube con comprobación de finalización y preguntas por lección, presenten un examen final y sean revisados pastoralmente; además autorizó seguimiento de personas en proceso y reconocimiento manual de quienes ya hicieron discipulado previamente.",
+  "task": "Completar Bloque 4 — Discipulado y corregir la activación compartida de notificaciones",
+  "userRequest": "El usuario aprobó que quienes aún no se han discipulado reciban una invitación en Inicio, puedan autoinscribirse al curso activo, avancen por videos de YouTube con comprobación de finalización y preguntas por lección, presenten un examen final y sean revisados pastoralmente; además autorizó seguimiento de personas en proceso y reconocimiento manual de quienes ya hicieron discipulado previamente. También reportó y autorizó corregir el bug por el que la activación de notificaciones queda cargando tanto en la app general como en el flujo de recordatorios.",
   "allowedPaths": [
     ".vida/change-scope.json",
+    "app/layout.tsx",
+    "components/pwa/PushToggle.tsx",
     "app/(app)/discipulado/**",
     "components/discipulado/**",
     "app/(app)/inicio/page.tsx",
