@@ -110,25 +110,12 @@ export default function RootLayout({
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', async () => {
                   try {
-                    const esPreviewVercel = window.location.hostname.endsWith('.vercel.app')
-
-                    if (esPreviewVercel) {
-                      const registrations = await navigator.serviceWorker.getRegistrations()
-                      await Promise.all(registrations.map((registration) => registration.unregister()))
-
-                      if ('caches' in window) {
-                        const cacheNames = await caches.keys()
-                        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))
-                      }
-                      return
-                    }
-
                     const registration = await navigator.serviceWorker.register('/sw.js', {
                       updateViaCache: 'none'
                     })
                     await registration.update()
                   } catch (error) {
-                    console.error('[service-worker] No se pudo registrar, limpiar o actualizar:', error)
+                    console.error('[service-worker] No se pudo registrar o actualizar:', error)
                   }
                 })
               }

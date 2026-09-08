@@ -1,9 +1,9 @@
 {
-  "task": "Alinear regresión visual del Centro Pastoral con el comportamiento actual autorizado",
-  "userRequest": "El usuario pidió continuar sin detenerse hasta entregar Preview y autorizó ajustar las pruebas antiguas necesarias sin modificar la app ni funcionalidades aprobadas.",
+  "task": "Restaurar en producción la activación aprobada de notificaciones push",
+  "userRequest": "El usuario reportó un bug comprobable en una prioridad cerrada: las notificaciones dejaron de activarse en la aplicación instalada. Autorizó explícitamente aplicar el cambio en producción porque esta función solo puede validarse correctamente desde la app instalada. El cambio debe ser mínimo y no modificar ninguna funcionalidad aprobada ajena a notificaciones.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "tests/regression/pastoral-workspace-visual.test.mjs"
+    "app/layout.tsx"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
