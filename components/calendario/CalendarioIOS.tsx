@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
+import EventoAsistenciaPortal from '@/components/asistencia/EventoAsistenciaPortal'
 import CalendarioAgendaView from './CalendarioAgendaView'
 import CalendarioEventDetail from './CalendarioEventDetail'
 import CalendarioEventRow from './CalendarioEventRow'
@@ -531,6 +532,7 @@ export default function CalendarioIOS({
       )}
 
       <CalendarioEventDetail event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+      <EventoAsistenciaPortal event={selectedEvent} />
       <NuevoEventoCalendarioModal
         isOpen={newEventOpen}
         onClose={() => setNewEventOpen(false)}
