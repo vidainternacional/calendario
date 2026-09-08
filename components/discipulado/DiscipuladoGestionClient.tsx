@@ -155,6 +155,15 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
     await run(() => supabase.from('discipulado_cursos').update({ titulo: String(form.get('titulo') || '').trim(), descripcion: String(form.get('descripcion') || '').trim(), estado: nextState, updated_at: new Date().toISOString() }).eq('id', selectedCourse.id), 'Curso actualizado.')
   }
 
+  async function deleteCourse() {
+    if (!selectedCourse) return
+    const confirmed = window.confirm(`¿Eliminar "${selectedCourse.titulo}"? Se eliminarán también sus lecciones, preguntas y progreso relacionado.`)
+    if (!confirmed) return
+    const deletingId = selectedCourse.id
+    const result = await run(() => supabase.rpc('discipulado_eliminar_curso', { p_curso_id: deletingId }), 'Curso eliminado.')
+    if (result) setSelectedCourseId(null)
+  }
+
   async function createLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!selectedCourseId) return
@@ -256,7 +265,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
         </section>
 
         {selectedCourse && <>
-          <section className={`${panel} p-5`}><form onSubmit={saveCourse} className="space-y-4"><div><label className={labelClass}>Título</label><input name="titulo" defaultValue={selectedCourse.titulo} required className={fieldClass} /></div><div><label className={labelClass}>Descripción</label><textarea name="descripcion" defaultValue={selectedCourse.descripcion} className={`${fieldClass} min-h-20 resize-y`} /></div><div><label className={labelClass}>Estado</label><select name="estado" defaultValue={selectedCourse.estado} className={fieldClass}><option value="borrador">Borrador</option><option value="publicado">Publicado</option><option value="archivado">Archivado</option></select></div><button disabled={busy} className={primaryButton}>Guardar curso</button></form></section>
+          <section className={`${panel} p-5`}><form onSubmit={saveCourse} className="space-y-4"><div><label className={labelClass}>Título</label><input name="titulo" defaultValue={selectedCourse.titulo} required className={fieldClass} /></div><div><label className={labelClass}>Descripción</label><textarea name="descripcion" defaultValue={selectedCourse.descripcion} className={`${fieldClass} min-h-20 resize-y`} /></div><div><label className={labelClass}>Estado</label><select name="estado" defaultValue={selectedCourse.estado} className={fieldClass}><option value="borrador">Borrador</option><option value="publicado">Publicado</option><option value="archivado">Archivado</option></select></div><div className="flex flex-col gap-2 sm:flex-row"><button disabled={busy} className={primaryButton}>Guardar curso</button><button type="button" disabled={busy} onClick={() => void deleteCourse()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-700 transition active:scale-[.98] disabled:opacity-50"><Trash2 className="h-4 w-4" /> Eliminar curso</button></div></form></section>
 
           <section className="space-y-3"><div className="flex items-center justify-between gap-3 px-1"><div><h2 className="font-bold text-[#171923]">Lecciones</h2><p className="text-xs text-slate-500">Video de YouTube + preguntas de comprobación</p></div><button type="button" onClick={() => setNewLessonOpen(value => !value)} className={secondaryButton}><Plus className="h-4 w-4" /> Lección</button></div>
             {newLessonOpen && <form onSubmit={createLesson} className={`${panel} space-y-3 p-4`}><div><label className={labelClass}>Título</label><input name="titulo" required className={fieldClass} /></div><div><label className={labelClass}>Descripción breve</label><input name="descripcion" className={fieldClass} /></div><div><label className={labelClass}>Enlace de YouTube</label><input name="video_url" type="url" required className={fieldClass} placeholder="https://youtu.be/..." /></div><div><label className={labelClass}>Contenido complementario</label><textarea name="contenido" className={`${fieldClass} min-h-20 resize-y`} /></div><button disabled={busy} className={primaryButton}>Agregar lección</button></form>}
