@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Bell, BellOff, Loader2 } from 'lucide-react'
+import { Bell, BellOff, Loader2, MapPin } from 'lucide-react'
 import { guardarSuscripcionPush, eliminarSuscripcionPush } from '@/app/actions/push'
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
@@ -17,6 +17,27 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 }
 
 type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported'
+
+async function solicitarUbicacionVidaUnaVez() {
+  if (!('geolocation' in navigator)) return
+
+  try {
+    if ('permissions' in navigator && navigator.permissions?.query) {
+      const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+      if (status.state !== 'prompt') return
+    } else if (window.localStorage.getItem('vida-location-onboarding-requested-v1') === '1') {
+      return
+    }
+  } catch {
+    if (window.localStorage.getItem('vida-location-onboarding-requested-v1') === '1') return
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    () => window.localStorage.setItem('vida-location-onboarding-requested-v1', '1'),
+    () => window.localStorage.setItem('vida-location-onboarding-requested-v1', '1'),
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+  )
+}
 
 export default function PushToggle() {
   const [permission, setPermission] = useState<PermissionState>('default')
@@ -61,6 +82,8 @@ export default function PushToggle() {
       setCurrentEndpoint(sub.endpoint)
       const result = await guardarSuscripcionPush(JSON.stringify(sub.toJSON()))
       if (result?.error) console.error('[push] Save error:', result.error)
+
+      await solicitarUbicacionVidaUnaVez()
     } catch (err) {
       console.error('[push] Subscription error:', err)
     } finally {
@@ -98,48 +121,57 @@ export default function PushToggle() {
   const isActive = permission === 'granted' && !!currentEndpoint
 
   return (
-    <div className="flex min-w-0 items-start justify-between gap-4">
-      <div className="flex min-w-0 flex-1 items-start gap-2">
-        {isActive
-          ? <Bell className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" aria-hidden="true" />
-          : <BellOff className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
-        }
-        <div className="min-w-0">
-          <p className="break-words text-sm font-medium text-[#171923]">
-            {isActive ? 'Notificaciones activas' : 'Notificaciones desactivadas'}
-          </p>
-          {permission === 'denied' && (
-            <p className="mt-0.5 break-words text-xs text-rose-500">
-              Permiso bloqueado en el navegador. Ve a Configuración para habilitarlo.
+    <div className="space-y-3">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          {isActive
+            ? <Bell className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" aria-hidden="true" />
+            : <BellOff className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+          }
+          <div className="min-w-0">
+            <p className="break-words text-sm font-medium text-[#171923]">
+              {isActive ? 'Notificaciones activas' : 'Notificaciones desactivadas'}
             </p>
-          )}
+            {permission === 'denied' && (
+              <p className="mt-0.5 break-words text-xs text-rose-500">
+                Permiso bloqueado en el navegador. Ve a Configuración para habilitarlo.
+              </p>
+            )}
+          </div>
         </div>
+
+        {permission !== 'denied' && (
+          <button
+            id="push-toggle-btn"
+            type="button"
+            onClick={isActive ? desactivarNotificaciones : activarNotificaciones}
+            disabled={loading}
+            className="inline-flex min-h-11 min-w-12 shrink-0 items-center justify-center rounded-xl transition-colors focus:outline-none disabled:opacity-50"
+            aria-label={isActive ? 'Desactivar notificaciones push' : 'Activar notificaciones push y configurar Ubicación VIDA'}
+            aria-pressed={isActive}
+          >
+            <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              isActive ? 'bg-indigo-500' : 'bg-slate-200'
+            }`}>
+              {loading ? (
+                <Loader2 className="absolute left-1/2 h-3 w-3 -translate-x-1/2 animate-spin text-white" aria-hidden="true" />
+              ) : (
+                <span
+                  className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    isActive ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              )}
+            </span>
+          </button>
+        )}
       </div>
 
-      {permission !== 'denied' && (
-        <button
-          id="push-toggle-btn"
-          type="button"
-          onClick={isActive ? desactivarNotificaciones : activarNotificaciones}
-          disabled={loading}
-          className="inline-flex min-h-11 min-w-12 shrink-0 items-center justify-center rounded-xl transition-colors focus:outline-none disabled:opacity-50"
-          aria-label={isActive ? 'Desactivar notificaciones push' : 'Activar notificaciones push'}
-          aria-pressed={isActive}
-        >
-          <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            isActive ? 'bg-indigo-500' : 'bg-slate-200'
-          }`}>
-            {loading ? (
-              <Loader2 className="absolute left-1/2 h-3 w-3 -translate-x-1/2 animate-spin text-white" aria-hidden="true" />
-            ) : (
-              <span
-                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                  isActive ? 'translate-x-5' : 'translate-x-0.5'
-                }`}
-              />
-            )}
-          </span>
-        </button>
+      {!isActive && permission !== 'denied' && (
+        <div className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-5 text-slate-500">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" aria-hidden="true" />
+          <p>Al activar las notificaciones, VIDA también solicitará una sola vez permiso para <strong className="text-slate-700">Ubicación VIDA</strong>, usada alrededor de actividades programadas. No se guardan recorridos.</p>
+        </div>
       )}
     </div>
   )

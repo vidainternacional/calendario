@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { BookHeart, BookOpen, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { Archive, BookHeart, BookOpen, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
+import AsistenciaInicioAcceso from '@/components/inicio/AsistenciaInicioAcceso'
 
 export type MaterialVisible = {
   id: string
@@ -19,21 +20,23 @@ type MaterialesInicioProps = {
   puedeAbrirCentroPastoral?: boolean
 }
 
-const audienciaLabel: Record<MaterialVisible['audiencia'], string> = {
-  iglesia: 'Toda la iglesia',
-  lideres: 'Líderes',
-  servidores: 'Servidores',
-  publico: 'Congregación',
+const PREPARATION_WINDOW_MS = 48 * 60 * 60 * 1000
+
+function publishedTime(material: MaterialVisible) {
+  if (!material.published_at) return 0
+  const timestamp = new Date(material.published_at).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
 }
 
 function publicadoRecientemente(material: MaterialVisible) {
-  if (!material.published_at) return false
-  const publicado = new Date(material.published_at).getTime()
-  return Number.isFinite(publicado) && Date.now() - publicado < 8 * 24 * 60 * 60 * 1000
+  const publicado = publishedTime(material)
+  return publicado > 0 && Date.now() - publicado < PREPARATION_WINDOW_MS
 }
 
 function preparationMaterial(materiales: MaterialVisible[]) {
-  return materiales.find((material) => material.destacado || publicadoRecientemente(material)) || null
+  return [...materiales]
+    .filter(publicadoRecientemente)
+    .sort((a, b) => publishedTime(b) - publishedTime(a))[0] || null
 }
 
 export default function MaterialesInicio({
@@ -61,7 +64,7 @@ export default function MaterialesInicio({
             <span id="preparacion-inicio" className="block text-[10px] font-extrabold uppercase tracking-[0.13em] text-violet-600">Preparación</span>
             <span className="mt-1 block truncate text-[15px] font-bold tracking-[-0.015em] text-[#171923]">{preparation.titulo}</span>
             <span className="mt-1 block line-clamp-1 text-[11px] text-slate-500">
-              {preparation.descripcion_publica || 'Material pastoral disponible para esta semana.'}
+              {preparation.descripcion_publica || 'Material pastoral disponible durante las próximas 48 horas.'}
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1 text-[10px] font-bold text-violet-600">
@@ -73,14 +76,10 @@ export default function MaterialesInicio({
     )
   }
 
-  const growthMaterials = materiales
-    .filter((material) => material.id !== preparation?.id)
-    .slice(0, 3)
-
-  if (!puedeAbrirCentroPastoral && growthMaterials.length === 0) return null
+  if (!puedeAbrirCentroPastoral && materiales.length === 0) return null
 
   return (
-    <div className="space-y-4" data-build="inicio-materiales-priorizados-v2">
+    <div className="space-y-4" data-build="inicio-materiales-priorizados-v3">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
@@ -100,7 +99,9 @@ export default function MaterialesInicio({
         </section>
       )}
 
-      {growthMaterials.length > 0 && (
+      <AsistenciaInicioAcceso />
+
+      {materiales.length > 0 && (
         <section aria-labelledby="materiales-inicio">
           <div className="mb-3 flex items-center gap-3 px-1">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-violet-50 text-violet-700">
@@ -108,30 +109,23 @@ export default function MaterialesInicio({
             </span>
             <div className="min-w-0">
               <h2 id="materiales-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Para tu crecimiento</h2>
-              <p className="mt-0.5 text-[11px] text-slate-500">Enseñanzas y guías para seguir creciendo.</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">Conserva aquí todo lo que has recibido.</p>
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[24px] border border-white/90 bg-white shadow-[0_8px_26px_rgba(15,23,42,0.05)]">
-            {growthMaterials.map((material) => (
-              <Link
-                key={material.id}
-                href={`/material/${material.public_slug}`}
-                className="group flex min-h-[76px] items-center gap-3 border-b border-slate-100 px-4 py-3.5 last:border-b-0 active:bg-violet-50/45"
-              >
-                <span className="relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-                  <BookOpen className="h-5 w-5" aria-hidden="true" />
-                  {material.destacado && <Sparkles className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-amber-300/60 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.6)]" aria-hidden="true" />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="truncate text-sm font-bold text-[#171923]">{material.titulo}</span>
-                  <span className="mt-1 block truncate text-[11px] text-slate-500">{material.descripcion_publica || audienciaLabel[material.audiencia]}</span>
-                  <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.08em] text-violet-500">{audienciaLabel[material.audiencia]}</span>
-                </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
-              </Link>
-            ))}
-          </div>
+          <Link
+            href="/paquetes-recibidos"
+            className="group flex min-h-[76px] items-center gap-3 rounded-[24px] border border-white/90 bg-white px-4 py-3.5 shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition active:scale-[0.99]"
+          >
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+              <Archive className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-[#171923]">Paquetes recibidos</span>
+              <span className="mt-1 block text-[11px] text-slate-500">{materiales.length} paquete{materiales.length === 1 ? '' : 's'} disponible{materiales.length === 1 ? '' : 's'} para volver a consultar.</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+          </Link>
         </section>
       )}
     </div>
