@@ -292,7 +292,39 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
       </div>}
 
       {tab === 'previos' && <div className="space-y-5">
-        <section className={`${panel} p-5`}><div className="flex items-start gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-50 text-amber-500"><Star className="h-5 w-5" /></div><div><h2 className="font-bold text-[#171923]">Reconocer discipulado previo</h2><p className="mt-1 text-xs leading-5 text-slate-500">Para personas que ya fueron discipuladas antes de usar VIDA. No tendrán que repetir el curso.</p></div></div><form onSubmit={recognizePrior} className="mt-4 space-y-3"><div><label className={labelClass}>Persona</label><select name="profile_id" defaultValue="" required className={fieldClass}><option value="" disabled>Seleccionar persona</option>{profiles.filter(profile => !priorIds.has(profile.id)).map(profile => <option key={profile.id} value={profile.id}>{profile.nombre_completo} · {profile.rol}</option>)}</select></div><div><label className={labelClass}>Nota opcional</label><textarea name="notas" className={`${fieldClass} min-h-20 resize-y`} placeholder="Ej. Completó discipulado presencial antes de VIDA" /></div><button disabled={busy} className={primaryButton}><UserCheck className="h-4 w-4" /> Marcar como discipulado</button></form></section>
+        <section className={`${panel} p-5`}>
+          <div className="flex items-start gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-50 text-amber-500"><Star className="h-5 w-5" /></div><div><h2 className="font-bold text-[#171923]">Reconocer discipulado previo</h2><p className="mt-1 text-xs leading-5 text-slate-500">Para personas que ya fueron discipuladas antes de usar VIDA. No tendrán que repetir el curso.</p></div></div>
+          <form onSubmit={recognizePrior} className="mt-4 space-y-3">
+            <div>
+              <label className={labelClass}>Persona</label>
+              <div className="max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white divide-y divide-slate-100">
+                {profiles.filter(profile => !priorIds.has(profile.id)).length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-slate-400">No hay personas pendientes de reconocer.</p>
+                ) : profiles.filter(profile => !priorIds.has(profile.id)).map(profile => (
+                  <label key={profile.id} className="flex min-h-[68px] cursor-pointer items-center gap-3 px-3 py-2.5 transition active:bg-slate-50 has-[:checked]:bg-violet-50">
+                    <input type="radio" name="profile_id" value={profile.id} required className="peer sr-only" />
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-slate-200" />
+                    ) : (
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-extrabold uppercase text-slate-500 ring-1 ring-slate-200">
+                        {profile.nombre_completo.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('') || '?'}
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold text-[#171923]">{profile.nombre_completo}</span>
+                      <span className="mt-0.5 block text-xs capitalize text-slate-500">{profile.rol}</span>
+                    </span>
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-slate-300 text-transparent transition peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-checked:text-white">
+                      <UserCheck className="h-3.5 w-3.5" />
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div><label className={labelClass}>Nota opcional</label><textarea name="notas" className={`${fieldClass} min-h-20 resize-y`} placeholder="Ej. Completó discipulado presencial antes de VIDA" /></div>
+            <button disabled={busy} className={primaryButton}><UserCheck className="h-4 w-4" /> Marcar como discipulado</button>
+          </form>
+        </section>
         <section className={`${panel} p-4 sm:p-5`}><h2 className="font-bold text-[#171923]">Ya reconocidos</h2><div className="mt-3 divide-y divide-slate-100">{priorApprovals.length === 0 ? <p className="py-5 text-center text-sm text-slate-400">Aún no hay reconocimientos previos.</p> : priorApprovals.map(item => { const profile = profileMap.get(item.profile_id); return <div key={item.profile_id} className="flex items-start justify-between gap-3 py-3"><div><p className="text-sm font-bold text-[#171923]">{profile?.nombre_completo || 'Miembro'}</p><p className="mt-0.5 text-[11px] text-slate-400">Reconocido {new Intl.DateTimeFormat('es-SV',{dateStyle:'medium'}).format(new Date(item.aprobado_en))}</p>{item.notas && <p className="mt-1 text-xs text-slate-500">{item.notas}</p>}</div><div className="flex items-center gap-2"><BadgeCheck className="h-5 w-5 text-amber-500" /><button type="button" disabled={busy} onClick={() => void run(() => supabase.from('discipulado_aprobaciones_previas').delete().eq('profile_id',item.profile_id),'Reconocimiento retirado.')} className="text-[11px] font-bold text-rose-600">Retirar</button></div></div> })}</div></section>
         {isAdmin && <section className={`${panel} p-4 sm:p-5`}><button type="button" onClick={() => setManagerOpen(value => !value)} className="flex w-full items-center justify-between gap-3 text-left"><span className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-50 text-indigo-600"><ShieldCheck className="h-5 w-5" /></span><span><span className="block text-sm font-bold text-[#171923]">Gestores de Discipulado</span><span className="mt-0.5 block text-xs text-slate-500">Autoriza a otra persona para administrar este espacio.</span></span></span><ChevronRight className={`h-4 w-4 text-slate-400 transition ${managerOpen?'rotate-90':''}`} /></button>{managerOpen && <div className="mt-4 border-t border-slate-100 pt-4"><form onSubmit={addManager} className="flex gap-2"><select name="profile_id" defaultValue="" required className={fieldClass}><option value="" disabled>Seleccionar persona</option>{profiles.filter(profile => !['pastor','administrador'].includes(profile.rol) && !managers.some(manager => manager.profile_id===profile.id)).map(profile => <option key={profile.id} value={profile.id}>{profile.nombre_completo} · {profile.rol}</option>)}</select><button disabled={busy} className={primaryButton}>Autorizar</button></form><div className="mt-3 divide-y divide-slate-100">{managers.map(manager => <div key={manager.profile_id} className="flex items-center justify-between gap-3 py-3"><p className="text-sm font-bold text-[#171923]">{profileMap.get(manager.profile_id)?.nombre_completo || 'Gestor'}</p><button type="button" onClick={() => void run(() => supabase.from('discipulado_gestores').delete().eq('profile_id',manager.profile_id),'Gestor retirado.')} className="text-xs font-bold text-rose-600">Retirar</button></div>)}</div></div>}</section>}
       </div>}
