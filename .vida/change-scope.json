@@ -1,14 +1,16 @@
 {
-  "task": "Implementar Bloque 4 — Discipulado con cursos, lecciones, evaluación, progreso y aprobación pastoral",
-  "userRequest": "El usuario autorizó explícitamente construir el sistema completo de Discipulado y aprobó el alcance sensible de Supabase/RLS: cursos, lecciones, preguntas, asignaciones, progreso, intentos, gestores y distintivo de aprobación, todo aditivo y reversible.",
+  "task": "Completar Bloque 4 — Discipulado guiado, autoinscripción, seguimiento pastoral y reconocimiento previo",
+  "userRequest": "El usuario aprobó que quienes aún no se han discipulado reciban una invitación en Inicio, puedan autoinscribirse al curso activo, avancen por videos de YouTube con comprobación de finalización y preguntas por lección, presenten un examen final y sean revisados pastoralmente; además autorizó seguimiento de personas en proceso y reconocimiento manual de quienes ya hicieron discipulado previamente.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/(app)/discipulado/**",
     "components/discipulado/**",
+    "components/inicio/InicioClient.tsx",
     "app/(app)/estudios/page.tsx",
     "app/(app)/perfil/page.tsx",
     "supabase/migrations/20260907232713_discipulado_cursos_evaluacion_aprobacion.sql",
-    "supabase/migrations/20260907233126_discipulado_restringir_funciones_public.sql"
+    "supabase/migrations/20260907233126_discipulado_restringir_funciones_public.sql",
+    "supabase/migrations/20260908001200_discipulado_flujo_guiado_y_reconocimiento_previo.sql"
   ],
   "allowSupabase": true,
   "allowMasterUpdate": false,
