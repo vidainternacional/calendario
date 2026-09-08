@@ -122,7 +122,7 @@ export default function MaterialesInicio({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-bold text-[#171923]">Paquetes recibidos</span>
-              <span className="mt-1 block text-[11px] text-slate-500">{materiales.length} paquete{materiales.length === 1 ? '' : 's'} disponible{materiales.length === 1 ? '' : 's'} para volver a consultar.</span>
+              <span className="mt-1 block text-[11px] text-slate-500">Consulta el historial completo de paquetes pastorales disponibles para ti.</span>
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
           </Link>
