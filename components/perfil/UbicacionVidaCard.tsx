@@ -65,14 +65,14 @@ export default function UbicacionVidaCard() {
           <MapPin className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 id="ubicacion-vida-title" className="text-lg font-semibold text-[#171923]">Ubicación VIDA</h3>
-          <p className="mt-1 text-sm leading-relaxed text-slate-500">Permite que VIDA solicite tu ubicación cuando confirmes llegada a un servicio o actividad con control de asistencia.</p>
+          <h3 id="ubicacion-vida-title" className="text-lg font-semibold text-[#171923]">Check-in automático</h3>
+          <p className="mt-1 text-sm leading-relaxed text-slate-500">Actívalo y olvídate de buscar el botón de asistencia — en cuanto llegues a un servicio o actividad, te registramos automáticamente. Además, así el equipo pastoral sabe cuándo orar por ti si un día faltas.</p>
         </div>
       </div>
 
-      <div className="mt-4 flex items-start gap-2 rounded-2xl bg-slate-50 px-3.5 py-3 text-[11px] leading-5 text-slate-500">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
-        <p>No guardamos recorridos ni tu ubicación fuera de la confirmación de una actividad. Por ahora se usa únicamente para asistencia.</p>
+      <div className="mt-5 flex items-start gap-3 rounded-2xl bg-emerald-50/80 px-4 py-4 text-xs leading-5 text-slate-700">
+        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+        <p className="font-medium">Tu ubicación solo se usa en el momento de confirmar llegada. No guardamos recorridos ni te rastreamos fuera de eso.</p>
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3">
@@ -80,7 +80,7 @@ export default function UbicacionVidaCard() {
           {estado === 'comprobando' && <p className="text-xs font-semibold text-slate-400">Comprobando permiso…</p>}
           {activo && <p className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Ubicación activa</p>}
           {estado === 'denied' && <p className="text-xs font-semibold text-rose-600">Ubicación bloqueada en este dispositivo</p>}
-          {(estado === 'prompt' || estado === 'unknown') && <p className="text-xs font-semibold text-slate-500">Ubicación aún no activada</p>}
+          {(estado === 'prompt' || estado === 'unknown') && <p className="text-xs font-semibold text-slate-500">Aún haces check-in manual</p>}
           {estado === 'unsupported' && <p className="text-xs font-semibold text-slate-400">Ubicación no disponible en este dispositivo</p>}
           {estado === 'denied' && <p className="mt-1 text-[10px] leading-4 text-slate-400">Puedes habilitarla desde la configuración de permisos del dispositivo.</p>}
         </div>
@@ -93,7 +93,7 @@ export default function UbicacionVidaCard() {
             className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-bold text-white transition active:scale-[.98] disabled:opacity-60"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <MapPin className="h-4 w-4" aria-hidden="true" />}
-            Activar
+            Activar check-in automático
           </button>
         )}
       </div>
