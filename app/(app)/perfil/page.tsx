@@ -65,7 +65,7 @@ export default async function PerfilPage() {
               <h2 className="break-words text-lg font-bold leading-tight text-[#171923] sm:text-xl">{nombre}</h2>
               <div className="mt-2 flex flex-wrap gap-2">
                 <span className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${rolGlobal.bg} ${rolGlobal.text} ${rolGlobal.border}`}><Shield className="h-3.5 w-3.5 shrink-0" /><span className="truncate">Rol global: {rolGlobal.label}</span></span>
-                {discipuladoAprobado === true && <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700"><Star className="h-3.5 w-3.5 fill-current" /> Discipulado completado</span>}
+                {discipuladoAprobado === true && <Link href="/discipulado/completado" aria-label="Abrir discipulado completado" className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 transition active:scale-[.98]"><Star className="h-3.5 w-3.5 fill-current" /> Discipulado completado</Link>}
               </div>
               <p className="mt-2 text-[11px] leading-5 text-slate-400">Tu foto ayuda a que líderes y compañeros puedan reconocerte dentro de VIDA.</p>
             </div>

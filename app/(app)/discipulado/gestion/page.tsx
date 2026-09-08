@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DiscipuladoGestionClient from '@/components/discipulado/DiscipuladoGestionClient'
+import DiscipuladoCriterioClient from '@/components/discipulado/DiscipuladoCriterioClient'
 
 export const metadata: Metadata = { title: 'Gestión de Discipulado' }
 
@@ -17,5 +18,10 @@ export default async function GestionDiscipuladoPage() {
 
   if (canManage !== true) redirect('/discipulado')
 
-  return <DiscipuladoGestionClient userId={user.id} isAdmin={(profile as any)?.rol === 'administrador'} />
+  return (
+    <>
+      <DiscipuladoGestionClient userId={user.id} isAdmin={(profile as any)?.rol === 'administrador'} />
+      <DiscipuladoCriterioClient />
+    </>
+  )
 }

@@ -44,21 +44,19 @@ export default async function EstudiosPage() {
       arrowClass: 'group-hover:text-emerald-600',
       actionClass: 'text-emerald-700',
     },
-    {
+    ...(!discipuladoAprobado ? [{
       href: '/discipulado',
       title: 'Discipulado',
-      description: discipuladoAprobado
-        ? 'Tu discipulado ya está completado y reconocido dentro de VIDA.'
-        : discipuladoEnProceso
-          ? 'Continúa tu curso desde el punto donde lo dejaste y prepárate para el examen final.'
-          : 'Comienza tu discipulado, avanza por cada video y comprueba lo aprendido paso a paso.',
-      action: discipuladoAprobado ? 'Ver mi estado' : discipuladoEnProceso ? 'Continuar discipulado' : 'Comenzar discipulado',
+      description: discipuladoEnProceso
+        ? 'Continúa tu curso desde el punto donde lo dejaste y prepárate para el examen final.'
+        : 'Comienza tu discipulado, avanza por cada video y comprueba lo aprendido paso a paso.',
+      action: discipuladoEnProceso ? 'Continuar discipulado' : 'Comenzar discipulado',
       icon: GraduationCap,
-      iconClass: discipuladoAprobado ? 'bg-amber-500 text-white shadow-inner shadow-amber-900/20' : 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
-      hoverClass: discipuladoAprobado ? 'hover:border-amber-300' : 'hover:border-violet-300',
-      arrowClass: discipuladoAprobado ? 'group-hover:text-amber-600' : 'group-hover:text-violet-600',
-      actionClass: discipuladoAprobado ? 'text-amber-700' : 'text-violet-700',
-    },
+      iconClass: 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
+      hoverClass: 'hover:border-violet-300',
+      arrowClass: 'group-hover:text-violet-600',
+      actionClass: 'text-violet-700',
+    }] : []),
     {
       href: '/estudios/profundo',
       title: 'Estudio Profundo',

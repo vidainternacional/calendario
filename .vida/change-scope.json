@@ -1,6 +1,6 @@
 {
-  "task": "Completar Bloque 4 — Discipulado y restaurar el flujo aprobado de notificaciones",
-  "userRequest": "El usuario aprobó que quienes aún no se han discipulado reciban una invitación en Inicio, puedan autoinscribirse al curso activo, avancen por videos de YouTube con comprobación de finalización y preguntas por lección, presenten un examen final y sean revisados pastoralmente; además autorizó seguimiento de personas en proceso y reconocimiento manual de quienes ya hicieron discipulado previamente. También reportó que la activación de notificaciones dejó de funcionar después de cambios posteriores y pidió restaurar exactamente el comportamiento aprobado sin alterar otras funciones.",
+  "task": "Completar Bloque 4 — Discipulado con repaso, mejora de calificación y nota mínima",
+  "userRequest": "El usuario aprobó completar Discipulado manteniendo el flujo existente: al aprobar, Discipulado desaparece de Estudios y el acceso permanente queda desde la estrella del Perfil; desde allí la persona puede repasar el curso o presentar nuevos intentos para mejorar su calificación sin perder la aprobación. También autorizó una nota mínima configurable por curso, conservar siempre la mejor nota y mantener la aprobación pastoral como decisión final.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/layout.tsx",
@@ -14,7 +14,8 @@
     "supabase/migrations/20260907232713_discipulado_cursos_evaluacion_aprobacion.sql",
     "supabase/migrations/20260907233126_discipulado_restringir_funciones_public.sql",
     "supabase/migrations/20260908001200_discipulado_flujo_guiado_y_reconocimiento_previo.sql",
-    "supabase/migrations/20260908002800_discipulado_orden_preguntas_por_etapa.sql"
+    "supabase/migrations/20260908002800_discipulado_orden_preguntas_por_etapa.sql",
+    "supabase/migrations/20260908150920_discipulado_repaso_nota_minima.sql"
   ],
   "allowSupabase": true,
   "allowMasterUpdate": false,
