@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { Check, Landmark, Smartphone, Sparkles } from 'lucide-react'
+import { Check, Landmark, Loader2, MapPin, Smartphone, Sparkles } from 'lucide-react'
 import { updateEstudioPrompt, updateIconVariant } from '@/app/actions/admin'
 import BankAccountManager from '@/components/solidaridad/BankAccountManager'
 import type { ChurchBankAccount } from '@/lib/solidarity/types'
+import { createClient } from '@/lib/supabase/client'
+
+type ChurchLocation = { latitud?: number; longitud?: number; radio_metros?: number } | null
 
 export default function ConfiguracionAdminClient({
   activeIconVariant,
@@ -13,19 +16,26 @@ export default function ConfiguracionAdminClient({
   isAdministrator,
   initialPastoralTemplates,
   bankAccounts,
+  initialChurchLocation,
 }: {
   activeIconVariant: string
   initialEstudioPrompt: string
   isAdministrator: boolean
   initialPastoralTemplates: unknown
   bankAccounts: ChurchBankAccount[]
+  initialChurchLocation: ChurchLocation
 }) {
   void initialPastoralTemplates
+  const supabase = useMemo(() => createClient() as any, [])
   const [selectedIcon, setSelectedIcon] = useState<'dorado' | 'blanco' | 'rojo'>((activeIconVariant as any) || 'dorado')
   const [iconSaving, setIconSaving] = useState(false)
   const [prompt, setPrompt] = useState(initialEstudioPrompt || '')
   const [promptSaving, setPromptSaving] = useState(false)
   const [saved, setSaved] = useState('')
+  const [locationConfigured, setLocationConfigured] = useState(Boolean(initialChurchLocation?.latitud && initialChurchLocation?.longitud))
+  const [locationSaving, setLocationSaving] = useState(false)
+  const [locationError, setLocationError] = useState('')
+  const [churchRadius, setChurchRadius] = useState(Number(initialChurchLocation?.radio_metros || 150))
 
   const changeIcon = async (variant: 'dorado' | 'blanco' | 'rojo') => {
     setSelectedIcon(variant); setIconSaving(true); setSaved('')
@@ -38,6 +48,30 @@ export default function ConfiguracionAdminClient({
       const result = await updateEstudioPrompt(prompt)
       setSaved(result.success ? 'Prompt guardado' : (result.error || 'No se pudo guardar'))
     } finally { setPromptSaving(false) }
+  }
+
+  const saveChurchLocation = async () => {
+    setLocationSaving(true)
+    setLocationError('')
+    setSaved('')
+    try {
+      if (!('geolocation' in navigator)) throw new Error('Este dispositivo no permite obtener la ubicación.')
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 })
+      })
+      const { error } = await supabase.rpc('ubicacion_iglesia_guardar', {
+        p_latitud: position.coords.latitude,
+        p_longitud: position.coords.longitude,
+        p_radio_metros: churchRadius,
+      })
+      if (error) throw error
+      setLocationConfigured(true)
+      setSaved('Ubicación principal de la iglesia guardada')
+    } catch (error: any) {
+      setLocationError(error?.message || 'No fue posible guardar la ubicación principal.')
+    } finally {
+      setLocationSaving(false)
+    }
   }
 
   return (
@@ -65,13 +99,27 @@ export default function ConfiguracionAdminClient({
       </section>
 
       {isAdministrator ? (
-        <section>
-          <div className="mb-2 px-1">
-            <div className="flex items-center gap-2"><Landmark className="h-4 w-4 text-violet-600" /><p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-violet-700">Configuración avanzada</p></div>
-            <p className="mt-1 text-xs leading-5 text-slate-600">Datos internos reutilizables por cualquier módulo de la app.</p>
-          </div>
-          <BankAccountManager accounts={bankAccounts} />
-        </section>
+        <>
+          <section className="rounded-[22px] bg-white p-5 shadow-sm ring-1 ring-black/[0.04]">
+            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-violet-600" /><h2 className="text-sm font-extrabold text-[#171923]">Ubicación principal de la iglesia</h2></div>
+            <p className="mt-1 text-xs leading-5 text-slate-600">Dato general institucional que VIDA reutiliza para servicios y actividades realizadas en la iglesia.</p>
+            <div className={`mt-4 rounded-2xl px-4 py-3 text-xs font-bold ${locationConfigured ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-600'}`}>{locationConfigured ? 'Ubicación principal configurada' : 'Aún no se ha configurado la ubicación principal'}</div>
+            <label className="mt-4 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Radio de check-in (metros)
+              <input type="number" min={25} max={1000} value={churchRadius} onChange={(e) => setChurchRadius(Number(e.target.value))} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900" />
+            </label>
+            {locationError && <div className="mt-3 rounded-2xl bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">{locationError}</div>}
+            <button type="button" onClick={() => void saveChurchLocation()} disabled={locationSaving || churchRadius < 25 || churchRadius > 1000} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-sm font-bold text-white disabled:opacity-50">{locationSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />} {locationSaving ? 'Guardando…' : 'Usar mi ubicación actual'}</button>
+            <p className="mt-3 text-[11px] leading-5 text-slate-500">Guarda únicamente el punto fijo de la iglesia. No almacena recorridos ni ubicaciones personales de los miembros.</p>
+          </section>
+
+          <section>
+            <div className="mb-2 px-1">
+              <div className="flex items-center gap-2"><Landmark className="h-4 w-4 text-violet-600" /><p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-violet-700">Configuración avanzada</p></div>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Datos internos reutilizables por cualquier módulo de la app.</p>
+            </div>
+            <BankAccountManager accounts={bankAccounts} />
+          </section>
+        </>
       ) : null}
     </div>
   )

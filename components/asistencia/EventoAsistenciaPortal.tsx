@@ -12,6 +12,9 @@ type EstadoAsistencia = {
   radio_metros: number | null
   minutos_antes: number | null
   minutos_despues: number | null
+  ubicacion_tipo: 'principal' | 'especifica' | null
+  ubicacion_principal_disponible: boolean
+  radio_principal_metros: number | null
   puede_gestionar: boolean
   estado: 'asistio' | 'justificado' | null
   confirmado_en: string | null
@@ -74,7 +77,7 @@ export default function EventoAsistenciaPortal({ event }: { event: EventoCalenda
     } else {
       const next = data as EstadoAsistencia
       setEstado(next)
-      setRadio(Number(next.radio_metros || 150))
+      setRadio(Number(next.radio_metros || next.radio_principal_metros || 150))
       setAntes(Number(next.minutos_antes ?? 30))
       setDespues(Number(next.minutos_despues ?? 90))
     }
@@ -88,7 +91,7 @@ export default function EventoAsistenciaPortal({ event }: { event: EventoCalenda
     void cargar()
   }, [cargar, event?.id])
 
-  async function configurar() {
+  async function configurarEspecifica() {
     if (!event) return
     setBusy(true)
     setError(null)
@@ -104,10 +107,32 @@ export default function EventoAsistenciaPortal({ event }: { event: EventoCalenda
         p_minutos_despues: despues,
       })
       if (rpcError) throw rpcError
-      setNotice('Ubicación VIDA activada para este evento.')
+      setNotice('Ubicación específica activada para este evento.')
       await cargar()
     } catch (err: any) {
-      setError(err?.message || 'No fue posible activar Ubicación VIDA.')
+      setError(err?.message || 'No fue posible activar la ubicación del evento.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function configurarPrincipal() {
+    if (!event) return
+    setBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const { error: rpcError } = await supabase.rpc('asistencia_configurar_evento_principal', {
+        p_evento_id: event.id,
+        p_radio_metros: radio,
+        p_minutos_antes: antes,
+        p_minutos_despues: despues,
+      })
+      if (rpcError) throw rpcError
+      setNotice('Se usará la ubicación principal de la iglesia para este evento.')
+      await cargar()
+    } catch (err: any) {
+      setError(err?.message || 'No fue posible usar la ubicación principal de la iglesia.')
     } finally {
       setBusy(false)
     }
@@ -127,7 +152,7 @@ export default function EventoAsistenciaPortal({ event }: { event: EventoCalenda
         p_precision_m: location.accuracy,
       })
       if (rpcError) throw rpcError
-      setNotice(data?.distancia_metros != null ? `Llegada confirmada dentro del área del evento.` : 'Llegada confirmada.')
+      setNotice(data?.distancia_metros != null ? 'Llegada confirmada dentro del área del evento.' : 'Llegada confirmada.')
       await cargar()
     } catch (err: any) {
       setError(err?.message || 'No fue posible confirmar tu llegada.')
@@ -193,7 +218,7 @@ export default function EventoAsistenciaPortal({ event }: { event: EventoCalenda
                   <div className="rounded-[20px] bg-white p-4 text-sm leading-6 text-slate-600 ring-1 ring-slate-200">La confirmación estará disponible desde {estado.minutos_antes} minutos antes hasta {estado.minutos_despues} minutos después del inicio.</div>
                 )}
 
-                <div className="rounded-[20px] bg-white p-4 ring-1 ring-slate-200"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Área de confirmación</p><p className="mt-1 text-sm font-bold text-slate-800">Radio aproximado de {estado.radio_metros} m</p><p className="mt-1 text-xs leading-5 text-slate-500">“Sin confirmación” no significa automáticamente que una persona faltó; puede no tener el teléfono, permiso de ubicación o conexión disponible.</p></div>
+                <div className="rounded-[20px] bg-white p-4 ring-1 ring-slate-200"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Área de confirmación</p><p className="mt-1 text-sm font-bold text-slate-800">{estado.ubicacion_tipo === 'principal' ? 'Ubicación principal de la iglesia' : 'Ubicación específica del evento'} · radio aproximado de {estado.radio_metros} m</p><p className="mt-1 text-xs leading-5 text-slate-500">“Sin confirmación” no significa automáticamente que una persona faltó; puede no tener el teléfono, permiso de ubicación o conexión disponible.</p></div>
 
                 {estado.puede_gestionar && (
                   <div className="grid grid-cols-2 gap-2 pt-1">
@@ -204,14 +229,15 @@ export default function EventoAsistenciaPortal({ event }: { event: EventoCalenda
               </div>
             ) : estado.puede_gestionar ? (
               <div className="mt-5 space-y-4">
-                <div className="rounded-[20px] bg-white p-4 ring-1 ring-slate-200"><p className="text-sm font-bold text-slate-900">Activar control para este evento</p><p className="mt-1 text-xs leading-5 text-slate-500">Colócate en el lugar del evento. VIDA guardará ese punto como ubicación del evento; no como historial personal.</p></div>
+                <div className="rounded-[20px] bg-white p-4 ring-1 ring-slate-200"><p className="text-sm font-bold text-slate-900">Activar control para este evento</p><p className="mt-1 text-xs leading-5 text-slate-500">Para servicios en la iglesia usa el punto institucional guardado. Para actividades externas puedes guardar una ubicación específica del evento.</p></div>
                 <div className="grid grid-cols-3 gap-2">
                   <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Radio<input type="number" min={25} max={1000} value={radio} onChange={e => setRadio(Number(e.target.value))} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900" /></label>
                   <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Antes<input type="number" min={0} max={360} value={antes} onChange={e => setAntes(Number(e.target.value))} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900" /></label>
                   <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Después<input type="number" min={0} max={720} value={despues} onChange={e => setDespues(Number(e.target.value))} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900" /></label>
                 </div>
                 <p className="text-[11px] text-slate-400">Radio en metros; ventana antes/después en minutos.</p>
-                <button type="button" onClick={() => void configurar()} disabled={busy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-sm font-bold text-violet-50 disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />} Usar mi ubicación y activar</button>
+                {estado.ubicacion_principal_disponible && <button type="button" onClick={() => void configurarPrincipal()} disabled={busy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 text-sm font-bold text-violet-50 disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />} Usar ubicación principal de la iglesia</button>}
+                <button type="button" onClick={() => void configurarEspecifica()} disabled={busy} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />} Usar mi ubicación para este evento</button>
               </div>
             ) : null}
           </section>
