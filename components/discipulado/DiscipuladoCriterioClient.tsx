@@ -83,8 +83,8 @@ export default function DiscipuladoCriterioClient() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[95] flex items-end bg-slate-950/40 sm:items-center sm:justify-center">
-          <section className="w-full rounded-t-[28px] bg-[#f4f5f9] p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:max-w-md sm:rounded-[28px] sm:p-6">
+        <div className="fixed inset-0 z-[95] flex items-end overflow-y-auto bg-slate-950/40 sm:items-center sm:justify-center sm:p-4">
+          <section className="max-h-[calc(100dvh-0.75rem)] w-full overflow-y-auto overscroll-contain rounded-t-[28px] bg-[#f4f5f9] p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:rounded-[28px] sm:p-6 sm:pb-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-violet-600">Criterio pastoral</p>
