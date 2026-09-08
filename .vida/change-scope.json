@@ -11,7 +11,8 @@
     "app/(app)/perfil/page.tsx",
     "supabase/migrations/20260907232713_discipulado_cursos_evaluacion_aprobacion.sql",
     "supabase/migrations/20260907233126_discipulado_restringir_funciones_public.sql",
-    "supabase/migrations/20260908001200_discipulado_flujo_guiado_y_reconocimiento_previo.sql"
+    "supabase/migrations/20260908001200_discipulado_flujo_guiado_y_reconocimiento_previo.sql",
+    "supabase/migrations/20260908002800_discipulado_orden_preguntas_por_etapa.sql"
   ],
   "allowSupabase": true,
   "allowMasterUpdate": false,
