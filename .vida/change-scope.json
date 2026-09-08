@@ -1,12 +1,8 @@
 {
-  "task": "Refinar Paquetes recibidos y hacer visible el permiso de Ubicación VIDA en Perfil",
-  "userRequest": "El usuario pidió eliminar la jerarquía Para tu crecimiento y dejar únicamente Paquetes recibidos como centro de archivo de paquetes pastorales; dentro de ese centro debe poder cambiar entre vistas Lista, Miniaturas y Compacta manteniendo un diseño minimalista. También pidió retirar el acceso Mis Contactos del Perfil y usar ese espacio para que cada usuario pueda ver para qué sirve Ubicación VIDA y activar el permiso GPS. El resto del bloque debe permanecer sin cambios.",
+  "task": "Actualizar copy y jerarquía visual de Check-in automático en Perfil",
+  "userRequest": "El usuario aprobó cambiar únicamente el copy y la jerarquía visual de la tarjeta de ubicación del Perfil: título Check-in automático, nueva explicación, privacidad más prominente, estado previo Aún haces check-in manual y botón Activar check-in automático. Debe mantenerse intacta la lógica funcional del permiso de ubicación, el estilo visual existente, el pin y el escudo/check verde de privacidad.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "components/inicio/MaterialesInicio.tsx",
-    "components/inicio/PaquetesRecibidosClient.tsx",
-    "app/(app)/paquetes-recibidos/page.tsx",
-    "app/(app)/perfil/page.tsx",
     "components/perfil/UbicacionVidaCard.tsx"
   ],
   "allowSupabase": false,
