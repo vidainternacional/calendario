@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Archive, BookHeart, BookOpen, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { Archive, BookOpen, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
 import AsistenciaInicioAcceso from '@/components/inicio/AsistenciaInicioAcceso'
 
 export type MaterialVisible = {
@@ -76,10 +76,8 @@ export default function MaterialesInicio({
     )
   }
 
-  if (!puedeAbrirCentroPastoral && materiales.length === 0) return null
-
   return (
-    <div className="space-y-4" data-build="inicio-materiales-priorizados-v3">
+    <div className="space-y-4" data-build="inicio-materiales-priorizados-v4">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
@@ -101,33 +99,25 @@ export default function MaterialesInicio({
 
       <AsistenciaInicioAcceso />
 
-      {materiales.length > 0 && (
-        <section aria-labelledby="materiales-inicio">
-          <div className="mb-3 flex items-center gap-3 px-1">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-violet-50 text-violet-700">
-              <BookHeart className="h-[18px] w-[18px]" aria-hidden="true" />
+      <section aria-label="Paquetes recibidos">
+        <Link
+          href="/paquetes-recibidos"
+          className="group flex min-h-[76px] items-center gap-3 rounded-[24px] border border-white/90 bg-white px-4 py-3.5 shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition active:scale-[0.99]"
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+            <Archive className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-[#171923]">Paquetes recibidos</span>
+            <span className="mt-1 block text-[11px] text-slate-500">
+              {materiales.length > 0
+                ? 'Todos los paquetes pastorales que has recibido, guardados en un solo lugar.'
+                : 'Aquí se guardarán los paquetes pastorales que recibas.'}
             </span>
-            <div className="min-w-0">
-              <h2 id="materiales-inicio" className="text-[17px] font-bold tracking-[-0.02em] text-[#171923]">Para tu crecimiento</h2>
-              <p className="mt-0.5 text-[11px] text-slate-500">Conserva aquí todo lo que has recibido.</p>
-            </div>
-          </div>
-
-          <Link
-            href="/paquetes-recibidos"
-            className="group flex min-h-[76px] items-center gap-3 rounded-[24px] border border-white/90 bg-white px-4 py-3.5 shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition active:scale-[0.99]"
-          >
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-              <Archive className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold text-[#171923]">Paquetes recibidos</span>
-              <span className="mt-1 block text-[11px] text-slate-500">Consulta el historial completo de paquetes pastorales disponibles para ti.</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
-          </Link>
-        </section>
-      )}
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+        </Link>
+      </section>
     </div>
   )
 }

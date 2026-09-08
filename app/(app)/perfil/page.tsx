@@ -8,6 +8,7 @@ import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
 import AvatarUploader from '@/components/perfil/AvatarUploader'
+import UbicacionVidaCard from '@/components/perfil/UbicacionVidaCard'
 import PushTestButton from '@/components/pwa/PushTestButton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
@@ -88,7 +89,7 @@ export default async function PerfilPage() {
           )}
         </section>
 
-        <Link href="/contactos" className="block rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-indigo-200 active:scale-[0.99] sm:p-6"><div className="flex min-w-0 items-center justify-between gap-4"><div className="min-w-0"><h3 className="text-lg font-semibold text-[#171923]">Mis Contactos 🤝</h3><p className="mt-1 text-sm leading-relaxed text-slate-500">Tu código QR y tus conexiones con otros servidores</p></div><span className="shrink-0 text-2xl text-slate-300" aria-hidden="true">›</span></div></Link>
+        <UbicacionVidaCard />
 
         <section className="rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center gap-2"><Bell className="h-5 w-5 shrink-0 text-indigo-400" /><h3 className="text-lg font-semibold text-[#171923]">Notificaciones</h3></div><p className="mb-5 text-sm leading-relaxed text-gray-500">Activa las alertas push para recibir avisos, solicitudes e intercambios en tiempo real.</p><PushToggle /></section>
 
