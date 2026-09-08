@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/auth/LogoutButton'
 import Link from 'next/link'
-import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion, BadgeCheck } from 'lucide-react'
+import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion, Star, GraduationCap } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
@@ -24,11 +24,13 @@ export default async function PerfilPage() {
     { data: membresias },
     { data: details },
     { data: discipuladoAprobado },
+    { data: puedeGestionarDiscipulado },
   ] = await Promise.all([
     (supabase as any).from('profiles').select('nombre_completo, avatar_url, rol, telefono, fecha_nacimiento, estado_cuenta, acceso_centro_pastoral, es_pastor_general').eq('id', user.id).single(),
     supabase.from('ministerio_miembros').select(`id,es_lider,ministerios (id,nombre,color_primario)`).eq('profile_id', user.id),
     (supabase as any).from('member_profile_details').select('*').eq('profile_id', user.id).maybeSingle(),
     (supabase as any).rpc('discipulado_aprobado', { p_profile_id: user.id }),
+    (supabase as any).rpc('puede_gestionar_discipulado'),
   ])
 
   const roles = {
@@ -45,6 +47,7 @@ export default async function PerfilPage() {
   const puedeGestionarAtencion = rolActual === 'pastor'
     || rolActual === 'administrador'
     || (profile as any)?.es_pastor_general === true
+  const mostrarGestionDiscipulado = puedeGestionarDiscipulado === true
   const nombre = (profile as any)?.nombre_completo || 'Usuario'
 
   return (
@@ -62,7 +65,7 @@ export default async function PerfilPage() {
               <h2 className="break-words text-lg font-bold leading-tight text-[#171923] sm:text-xl">{nombre}</h2>
               <div className="mt-2 flex flex-wrap gap-2">
                 <span className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${rolGlobal.bg} ${rolGlobal.text} ${rolGlobal.border}`}><Shield className="h-3.5 w-3.5 shrink-0" /><span className="truncate">Rol global: {rolGlobal.label}</span></span>
-                {discipuladoAprobado === true && <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" /> Discipulado aprobado</span>}
+                {discipuladoAprobado === true && <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700"><Star className="h-3.5 w-3.5 fill-current" /> Discipulado completado</span>}
               </div>
               <p className="mt-2 text-[11px] leading-5 text-slate-400">Tu foto ayuda a que líderes y compañeros puedan reconocerte dentro de VIDA.</p>
             </div>
@@ -89,12 +92,13 @@ export default async function PerfilPage() {
 
         <section className="rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center gap-2"><Bell className="h-5 w-5 shrink-0 text-indigo-400" /><h3 className="text-lg font-semibold text-[#171923]">Notificaciones</h3></div><p className="mb-5 text-sm leading-relaxed text-gray-500">Activa las alertas push para recibir avisos, solicitudes e intercambios en tiempo real.</p><PushToggle /></section>
 
-        {(tieneCentroPastoral || puedeGestionarAtencion || tienePanelAdministrativo) && <section className="space-y-3">
+        {(tieneCentroPastoral || puedeGestionarAtencion || tienePanelAdministrativo || mostrarGestionDiscipulado) && <section className="space-y-3">
           {tieneCentroPastoral && <Link href="/pastoral" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-indigo-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-indigo-300 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50"><BookHeart className="h-5 w-5 text-indigo-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Centro Pastoral</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Versículos, bosquejos, biblioteca y materiales</p></div></div><span className="shrink-0 text-indigo-300">›</span></Link>}
+          {mostrarGestionDiscipulado && <Link href="/discipulado/gestion" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-violet-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-violet-300 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-50"><GraduationCap className="h-5 w-5 text-violet-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Gestión de Discipulado</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Cursos, progreso, evaluaciones y reconocimientos previos</p></div></div><span className="shrink-0 text-violet-300">›</span></Link>}
           {puedeGestionarAtencion && <Link href="/pastoral/preguntas" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-indigo-200 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50"><MessageCircleQuestion className="h-5 w-5 text-indigo-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Buzón de preguntas</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Preguntas y motivos de oración pendientes</p></div></div><span className="shrink-0 text-slate-300">›</span></Link>}
           {puedeGestionarAtencion && <Link href="/pastoral/ayuda-solidaria" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-rose-200 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50"><HeartHandshake className="h-5 w-5 text-rose-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Ayuda Solidaria</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Solicitudes y aportes que requieren seguimiento</p></div></div><span className="shrink-0 text-slate-300">›</span></Link>}
           {tienePanelAdministrativo && <PushTestButton />}
-          {tienePanelAdministrativo && <Link href="/admin" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] bg-indigo-600 px-4 py-4 text-white shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all hover:bg-indigo-500 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15"><Settings2 className="h-5 w-5 text-white" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Panel de Administración</p><p className="mt-0.5 text-[11px] leading-relaxed text-indigo-200">Ministerios, usuarios y membresías</p></div></div><span className="shrink-0 text-indigo-200">›</span></Link>}
+          {tienePanelAdministrativo && <Link href="/admin" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] bg-indigo-600 px-4 py-4 text-indigo-50 shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all hover:bg-indigo-500 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-500"><Settings2 className="h-5 w-5 text-indigo-50" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Panel de Administración</p><p className="mt-0.5 text-[11px] leading-relaxed text-indigo-200">Ministerios, usuarios y membresías</p></div></div><span className="shrink-0 text-indigo-200">›</span></Link>}
         </section>}
       </div>
     </main>
