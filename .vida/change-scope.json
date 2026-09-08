@@ -1,6 +1,6 @@
 {
-  "task": "Actualizar copy y jerarquía visual de Check-in automático en Perfil",
-  "userRequest": "El usuario aprobó cambiar únicamente el copy y la jerarquía visual de la tarjeta de ubicación del Perfil: título Check-in automático, nueva explicación, privacidad más prominente, estado previo Aún haces check-in manual y botón Activar check-in automático. Debe mantenerse intacta la lógica funcional del permiso de ubicación, el estilo visual existente, el pin y el escudo/check verde de privacidad.",
+  "task": "Integrar check-in real de asistencia en Perfil",
+  "userRequest": "El usuario aprobó que la tarjeta de ubicación del Perfil deje de prometer un check-in automático en segundo plano y se convierta en un acceso real al check-in existente: primero permite autorizar ubicación una sola vez; cuando hay un servicio o actividad con asistencia abierta muestra Hacer check-in ahora usando el mismo flujo GPS y RPC existente; después muestra Llegada confirmada; y cuando no hay actividad disponible muestra Listo para tu próximo check-in. Deben mantenerse la privacidad, el pin, el escudo verde, el estilo visual existente y no tocar Discipulado, Paquetes, asistencia pastoral, notificaciones ni Supabase.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/perfil/UbicacionVidaCard.tsx"
