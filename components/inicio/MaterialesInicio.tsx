@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Archive, BookOpen, ChevronRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Archive, BookOpen, ChevronRight, GraduationCap, ShieldCheck, Sparkles } from 'lucide-react'
 import AsistenciaInicioAcceso from '@/components/inicio/AsistenciaInicioAcceso'
+import { createClient } from '@/lib/supabase/client'
 
 export type MaterialVisible = {
   id: string
@@ -45,6 +47,41 @@ export default function MaterialesInicio({
   puedeAbrirCentroPastoral = false,
 }: MaterialesInicioProps) {
   const preparation = preparationMaterial(materiales)
+  const [discipulado, setDiscipulado] = useState<{ visible: boolean; yaInicio: boolean }>({
+    visible: false,
+    yaInicio: false,
+  })
+
+  useEffect(() => {
+    if (mode !== 'growth') return
+
+    let cancelled = false
+
+    async function cargarDiscipulado() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+
+      const [{ data: profile }, { data: discipuladoEstado }] = await Promise.all([
+        (supabase as any).from('profiles').select('rol').eq('id', user.id).single(),
+        (supabase as any).rpc('discipulado_estado_personal'),
+      ])
+
+      if (cancelled) return
+
+      const rol = (profile as any)?.rol as string | undefined
+      const estado = (discipuladoEstado as any)?.estado as string | undefined
+      const aprobado = (discipuladoEstado as any)?.aprobado === true
+
+      setDiscipulado({
+        visible: rol !== 'pastor' && rol !== 'administrador' && !aprobado,
+        yaInicio: Boolean(estado && !['sin_iniciar', 'sin_curso'].includes(estado)),
+      })
+    }
+
+    void cargarDiscipulado()
+    return () => { cancelled = true }
+  }, [mode])
 
   if (mode === 'preparation') {
     if (!preparation) return null
@@ -77,7 +114,7 @@ export default function MaterialesInicio({
   }
 
   return (
-    <div className="space-y-4" data-build="inicio-materiales-priorizados-v4">
+    <div className="space-y-4" data-build="inicio-materiales-priorizados-v5">
       {puedeAbrirCentroPastoral && (
         <section aria-label="Centro Pastoral">
           <Link
@@ -118,6 +155,29 @@ export default function MaterialesInicio({
           <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
         </Link>
       </section>
+
+      {discipulado.visible && (
+        <section aria-label="Discipulado">
+          <Link
+            href="/discipulado"
+            className="group flex min-h-[104px] items-center gap-4 rounded-[24px] border border-violet-200 bg-white p-4 shadow-[0_10px_28px_rgba(79,70,229,0.08)] transition active:scale-[0.992] sm:p-5"
+          >
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-600 text-violet-50 shadow-[0_6px_18px_rgba(124,58,237,0.22)]">
+              <GraduationCap className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-extrabold uppercase tracking-[0.12em] text-violet-600">Discipulado</span>
+              <span className="mt-1 block text-[15px] font-bold leading-snug text-[#171923]">
+                {discipulado.yaInicio ? 'Continúa tu discipulado' : '¿Aún no te has discipulado y quieres servir?'}
+              </span>
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">
+                {discipulado.yaInicio ? 'Retoma tu curso desde el punto donde lo dejaste.' : 'Empecemos aquí. Avanza por el curso y prepárate para servir.'}
+              </span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-violet-400 transition-transform group-active:translate-x-0.5" aria-hidden="true" />
+          </Link>
+        </section>
+      )}
     </div>
   )
 }
