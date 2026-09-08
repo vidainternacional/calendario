@@ -1,0 +1,2 @@
+-- Registro de la migración aplicada en Supabase con versión 20260908215842.
+-- La implementación canónica permanece en 20260908215430_discipulado_eliminar_curso.sql.
