@@ -1,10 +1,11 @@
 {
-  "task": "Implementar Ubicación VIDA y control pastoral de asistencia por eventos",
-  "userRequest": "El usuario aprobó que eventos del calendario puedan activar control de asistencia con ubicación, radio y ventana horaria; que el usuario confirme su llegada mediante GPS sin guardar coordenadas personales ni recorridos; y que pastor/administrador vea Asistió, Sin confirmación, Justificado, historial y señales por ausencias consecutivas. Discipulado queda implementado pero pendiente de validación real con el primer curso publicado.",
+  "task": "Implementar Ubicación VIDA y mostrar vista pastoral de asistencia antes de producción",
+  "userRequest": "El usuario aprobó que eventos del calendario puedan activar control de asistencia con ubicación, radio y ventana horaria; que el usuario confirme su llegada mediante GPS sin guardar coordenadas personales ni recorridos; que pastor/administrador vea Asistió, Sin confirmación, Justificado, historial y señales por ausencias consecutivas; y pidió ver en Preview cómo quedará la vista global de usuarios y eventos antes de pasarla a producción. Discipulado queda implementado pero pendiente de validación real con el primer curso publicado.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/asistencia/**",
     "app/(app)/asistencia/**",
+    "app/(app)/perfil/asistencia/**",
     "components/calendario/CalendarioIOS.tsx",
     "components/calendario/EventoDirectoClient.tsx",
     "supabase/migrations/20260908153500_ubicacion_vida_asistencia_eventos.sql",
