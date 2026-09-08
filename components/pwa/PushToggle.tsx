@@ -201,7 +201,7 @@ export default function PushToggle() {
             isActive ? 'bg-indigo-500' : 'bg-slate-200'
           }`}>
             {loading ? (
-              <Loader2 className="absolute left-1/2 h-3 w-3 -translate-x-1/2 animate-spin text-white" aria-hidden="true" />
+              <Loader2 className="absolute left-1/2 h-3 w-3 -translate-x-1/2 animate-spin text-slate-50" aria-hidden="true" />
             ) : (
               <span
                 className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
