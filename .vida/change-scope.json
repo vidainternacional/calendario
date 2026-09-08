@@ -1,6 +1,6 @@
 {
   "task": "Restaurar en producción la activación aprobada de notificaciones push",
-  "userRequest": "El usuario reportó un bug comprobable en una prioridad cerrada: las notificaciones dejaron de activarse en la aplicación instalada. Autorizó explícitamente aplicar el cambio en producción porque esta función solo puede validarse correctamente desde la app instalada. El cambio debe ser mínimo y no modificar ninguna funcionalidad aprobada ajena a notificaciones.",
+  "userRequest": "El usuario reportó un bug comprobable en una prioridad cerrada: las notificaciones dejaron de activarse en la aplicación instalada. Autorizó explícitamente aplicar el cambio en producción porque esta función solo puede validarse correctamente desde la app instalada. El cambio debe ser mínimo, no modificar ninguna funcionalidad aprobada ajena a notificaciones y no incorporar Discipulado ni otros cambios todavía no aprobados a producción.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/layout.tsx"
