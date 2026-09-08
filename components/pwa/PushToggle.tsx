@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Bell, BellOff, Loader2 } from 'lucide-react'
 import { guardarSuscripcionPush, eliminarSuscripcionPush } from '@/app/actions/push'
 
-const PREVIEW_PUSH_OPT_IN_KEY = 'vida-preview-push-opt-in'
-const SERVICE_WORKER_READY_TIMEOUT_MS = 12000
+const PUSH_STEP_TIMEOUT_MS = 20000
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -35,29 +34,53 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string)
   })
 }
 
-async function obtenerRegistroPush() {
-  const existing = await navigator.serviceWorker.getRegistration()
-  if (existing?.active) return existing
+function esperarActivacion(worker: ServiceWorker) {
+  if (worker.state === 'activated') return Promise.resolve()
+  if (worker.state === 'redundant') return Promise.reject(new Error('El service worker quedó inactivo.'))
 
-  const registration = existing ?? await navigator.serviceWorker.register('/sw.js', {
-    updateViaCache: 'none',
+  return new Promise<void>((resolve, reject) => {
+    const handleStateChange = () => {
+      if (worker.state === 'activated') {
+        worker.removeEventListener('statechange', handleStateChange)
+        resolve()
+      } else if (worker.state === 'redundant') {
+        worker.removeEventListener('statechange', handleStateChange)
+        reject(new Error('El service worker quedó inactivo.'))
+      }
+    }
+    worker.addEventListener('statechange', handleStateChange)
   })
+}
+
+async function obtenerRegistroPush() {
+  let registration = await navigator.serviceWorker.getRegistration()
+  if (!registration) {
+    registration = await withTimeout(
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }),
+      PUSH_STEP_TIMEOUT_MS,
+      'No se pudo preparar el servicio de notificaciones.',
+    )
+  }
 
   if (registration.active) return registration
 
+  const worker = registration.installing ?? registration.waiting
+  if (worker) {
+    await withTimeout(
+      esperarActivacion(worker),
+      PUSH_STEP_TIMEOUT_MS,
+      'El servicio de notificaciones tardó demasiado en activarse.',
+    )
+  }
+
+  const refreshed = await navigator.serviceWorker.getRegistration()
+  if (refreshed?.active) return refreshed
+
   return withTimeout(
     navigator.serviceWorker.ready,
-    SERVICE_WORKER_READY_TIMEOUT_MS,
-    'El service worker no quedó listo a tiempo.',
+    PUSH_STEP_TIMEOUT_MS,
+    'El servicio de notificaciones no quedó listo.',
   )
-}
-
-function guardarOptInPreview(active: boolean) {
-  if (!window.location.hostname.endsWith('.vercel.app')) return
-  try {
-    if (active) localStorage.setItem(PREVIEW_PUSH_OPT_IN_KEY, 'true')
-    else localStorage.removeItem(PREVIEW_PUSH_OPT_IN_KEY)
-  } catch {}
 }
 
 type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported'
@@ -90,46 +113,59 @@ export default function PushToggle() {
   }, [])
 
   const activarNotificaciones = useCallback(async () => {
+    if (loading) return
     setLoading(true)
     setErrorMessage(null)
 
     try {
-      // El permiso debe pedirse directamente desde el gesto del usuario. Esperar
-      // antes a serviceWorker.ready puede perder ese gesto (especialmente en iOS)
-      // y, si no hay registro activo, dejar el control cargando indefinidamente.
-      const nextPermission = await Notification.requestPermission()
-      setPermission(nextPermission as PermissionState)
+      const nextPermission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission()
 
+      setPermission(nextPermission as PermissionState)
       if (nextPermission !== 'granted') return
 
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidKey) throw new Error('Falta la clave pública VAPID.')
+      if (!vapidKey) throw new Error('Falta la clave pública de notificaciones.')
 
       const registration = await obtenerRegistroPush()
-      let subscription = await registration.pushManager.getSubscription()
+      let subscription = await withTimeout(
+        registration.pushManager.getSubscription(),
+        PUSH_STEP_TIMEOUT_MS,
+        'No se pudo comprobar la suscripción actual.',
+      )
 
       if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
-        })
+        subscription = await withTimeout(
+          registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+          }),
+          PUSH_STEP_TIMEOUT_MS,
+          'El dispositivo no terminó de crear la suscripción.',
+        )
       }
 
-      const result = await guardarSuscripcionPush(JSON.stringify(subscription.toJSON()))
+      const result = await withTimeout(
+        guardarSuscripcionPush(JSON.stringify(subscription.toJSON())),
+        PUSH_STEP_TIMEOUT_MS,
+        'VIDA no terminó de guardar la suscripción.',
+      )
       if (result?.error) throw new Error(result.error)
 
       setCurrentEndpoint(subscription.endpoint)
-      guardarOptInPreview(true)
+      setPermission('granted')
     } catch (error) {
       console.error('[push] Subscription error:', error)
       setCurrentEndpoint(null)
-      setErrorMessage('No pudimos activar las notificaciones. Inténtalo de nuevo.')
+      setErrorMessage(error instanceof Error ? error.message : 'No pudimos activar las notificaciones. Inténtalo de nuevo.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [loading])
 
   const desactivarNotificaciones = useCallback(async () => {
+    if (loading) return
     setLoading(true)
     setErrorMessage(null)
 
@@ -138,21 +174,24 @@ export default function PushToggle() {
       const subscription = await registration?.pushManager.getSubscription()
 
       if (subscription) {
-        const result = await eliminarSuscripcionPush(subscription.endpoint)
+        const result = await withTimeout(
+          eliminarSuscripcionPush(subscription.endpoint),
+          PUSH_STEP_TIMEOUT_MS,
+          'VIDA no terminó de desactivar la suscripción.',
+        )
         if (result?.error) throw new Error(result.error)
         await subscription.unsubscribe()
       }
 
       setCurrentEndpoint(null)
       setPermission(Notification.permission as PermissionState)
-      guardarOptInPreview(false)
     } catch (error) {
       console.error('[push] Unsubscribe error:', error)
-      setErrorMessage('No pudimos desactivar las notificaciones. Inténtalo de nuevo.')
+      setErrorMessage(error instanceof Error ? error.message : 'No pudimos desactivar las notificaciones. Inténtalo de nuevo.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [loading])
 
   if (permission === 'unsupported') {
     return (
@@ -204,7 +243,7 @@ export default function PushToggle() {
               <Loader2 className="absolute left-1/2 h-3 w-3 -translate-x-1/2 animate-spin text-slate-50" aria-hidden="true" />
             ) : (
               <span
-                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                className={`inline-block h-5 w-5 rounded-full bg-slate-50 shadow-sm transition-transform ${
                   isActive ? 'translate-x-5' : 'translate-x-0.5'
                 }`}
               />
