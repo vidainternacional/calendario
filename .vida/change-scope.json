@@ -25,7 +25,8 @@
     "supabase/migrations/20260908002800_discipulado_orden_preguntas_por_etapa.sql",
     "supabase/migrations/20260908150920_discipulado_repaso_nota_minima.sql",
     "supabase/migrations/20260908153500_ubicacion_vida_asistencia_eventos.sql",
-    "supabase/migrations/20260908154500_ubicacion_vida_asistencia_consecutiva.sql"
+    "supabase/migrations/20260908154500_ubicacion_vida_asistencia_consecutiva.sql",
+    "supabase/migrations/20260908193000_paquetes_recibidos_historial.sql"
   ],
   "allowSupabase": true,
   "allowMasterUpdate": false,
