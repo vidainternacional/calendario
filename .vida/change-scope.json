@@ -1,11 +1,16 @@
 {
-  "task": "Restaurar en producción la activación aprobada de notificaciones push",
-  "userRequest": "El usuario reportó un bug comprobable en una prioridad cerrada: las notificaciones dejaron de activarse en la aplicación instalada. Autorizó explícitamente aplicar el cambio en producción porque esta función solo puede validarse correctamente desde la app instalada. El cambio debe ser mínimo, no modificar ninguna funcionalidad aprobada ajena a notificaciones y no incorporar Discipulado ni otros cambios todavía no aprobados a producción.",
+  "task": "Implementar Ubicación VIDA y control pastoral de asistencia por eventos",
+  "userRequest": "El usuario aprobó que eventos del calendario puedan activar control de asistencia con ubicación, radio y ventana horaria; que el usuario confirme su llegada mediante GPS sin guardar coordenadas personales ni recorridos; y que pastor/administrador vea Asistió, Sin confirmación, Justificado, historial y señales por ausencias consecutivas. Discipulado queda implementado pero pendiente de validación real con el primer curso publicado.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "app/layout.tsx"
+    "components/asistencia/**",
+    "app/(app)/asistencia/**",
+    "components/calendario/CalendarioIOS.tsx",
+    "components/calendario/EventoDirectoClient.tsx",
+    "supabase/migrations/20260908153500_ubicacion_vida_asistencia_eventos.sql",
+    "supabase/migrations/20260908154500_ubicacion_vida_asistencia_consecutiva.sql"
   ],
-  "allowSupabase": false,
+  "allowSupabase": true,
   "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
