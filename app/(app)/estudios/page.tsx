@@ -16,6 +16,11 @@ export default async function EstudiosPage() {
     redirect('/login')
   }
 
+  const { data: discipuladoEstado } = await (supabase as any).rpc('discipulado_estado_personal')
+  const discipuladoAprobado = (discipuladoEstado as any)?.aprobado === true
+  const estadoDiscipulado = (discipuladoEstado as any)?.estado as string | undefined
+  const discipuladoEnProceso = Boolean(estadoDiscipulado && !['sin_iniciar', 'sin_curso', 'aprobado', 'aprobado_previo'].includes(estadoDiscipulado))
+
   const recursos = [
     {
       href: '/biblia',
@@ -42,13 +47,17 @@ export default async function EstudiosPage() {
     {
       href: '/discipulado',
       title: 'Discipulado',
-      description: 'Completa las lecciones que te asignen, presenta la evaluación y recibe la aprobación pastoral dentro de VIDA.',
-      action: 'Abrir discipulado',
+      description: discipuladoAprobado
+        ? 'Tu discipulado ya está completado y reconocido dentro de VIDA.'
+        : discipuladoEnProceso
+          ? 'Continúa tu curso desde el punto donde lo dejaste y prepárate para el examen final.'
+          : 'Comienza tu discipulado, avanza por cada video y comprueba lo aprendido paso a paso.',
+      action: discipuladoAprobado ? 'Ver mi estado' : discipuladoEnProceso ? 'Continuar discipulado' : 'Comenzar discipulado',
       icon: GraduationCap,
-      iconClass: 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
-      hoverClass: 'hover:border-violet-300',
-      arrowClass: 'group-hover:text-violet-600',
-      actionClass: 'text-violet-700',
+      iconClass: discipuladoAprobado ? 'bg-amber-500 text-white shadow-inner shadow-amber-900/20' : 'bg-violet-600 text-white shadow-inner shadow-violet-900/20',
+      hoverClass: discipuladoAprobado ? 'hover:border-amber-300' : 'hover:border-violet-300',
+      arrowClass: discipuladoAprobado ? 'group-hover:text-amber-600' : 'group-hover:text-violet-600',
+      actionClass: discipuladoAprobado ? 'text-amber-700' : 'text-violet-700',
     },
     {
       href: '/estudios/profundo',
