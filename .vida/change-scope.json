@@ -5,6 +5,7 @@
     ".vida/change-scope.json",
     "app/(app)/discipulado/**",
     "components/discipulado/**",
+    "app/(app)/inicio/page.tsx",
     "components/inicio/InicioClient.tsx",
     "app/(app)/estudios/page.tsx",
     "app/(app)/perfil/page.tsx",
