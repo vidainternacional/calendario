@@ -7,8 +7,10 @@ function source(path) {
 }
 
 test('Para ti reúne contactos y atención pastoral en el estado compartido', () => {
+  const layout = source('app/(app)/layout.tsx')
   const indicators = source('components/notificaciones/usePendingIndicators.ts')
   const shortcut = source('components/notificaciones/PendingAttentionShortcut.tsx')
+  const solidaritySync = source('components/solidaridad/SolidarityAccessBadgeSync.tsx')
 
   for (const field of [
     'pendingContactos',
@@ -16,6 +18,12 @@ test('Para ti reúne contactos y atención pastoral en el estado compartido', ()
     'pendingAyudaSolidaria',
   ]) {
     assert.match(indicators, new RegExp(field))
+  }
+
+  for (const field of [
+    'pendingContactos',
+    'pendingPreguntasPastorales',
+  ]) {
     assert.match(shortcut, new RegExp(field))
   }
 
@@ -27,10 +35,14 @@ test('Para ti reúne contactos y atención pastoral en el estado compartido', ()
 
   assert.match(shortcut, /href: '\/contactos'/)
   assert.match(shortcut, /href: '\/pastoral\/preguntas'/)
-  assert.match(shortcut, /href: '\/pastoral\/ayuda-solidaria'/)
   assert.match(shortcut, /label: 'Solicitudes de contacto'/)
   assert.match(shortcut, /label: 'Buzón pastoral'/)
-  assert.match(shortcut, /label: 'Ayuda Solidaria'/)
+
+  assert.match(layout, /<SolidarityAccessBadgeSync \/>/)
+  assert.match(solidaritySync, /SolidarityUnreadBadge/)
+  assert.match(solidaritySync, /scope="all"/)
+  assert.match(solidaritySync, /\/ayuda-solidaria/)
+  assert.match(solidaritySync, /\/pastoral\/ayuda-solidaria/)
 })
 
 test('badge global suma los nuevos pendientes sin contar casos pastorales ya en seguimiento', () => {

@@ -1,13 +1,14 @@
 {
   "task": "Optimizar rendimiento y fluidez de navegación sin cambiar funciones",
-  "userRequest": "El usuario pidió avanzar con optimización de rendimiento de toda la app, preservando las decisiones históricas tomadas para mantener carga rápida y navegación fluida. El cambio debe reducir trabajo persistente innecesario sin rediseñar pantallas, alterar datos, modificar Supabase ni tocar la lógica aprobada de notificaciones, Discipulado, Paquetes o asistencia. También se alinea una regresión antigua que todavía esperaba Servicios dentro de Para ti aunque el bloque aprobado de septiembre ya los separó en MisServiciosShortcut.",
+  "userRequest": "El usuario pidió avanzar con optimización de rendimiento de toda la app, preservando las decisiones históricas tomadas para mantener carga rápida y navegación fluida. El cambio debe reducir trabajo persistente innecesario sin rediseñar pantallas, alterar datos, modificar Supabase ni tocar la lógica aprobada de notificaciones, Discipulado, Paquetes o asistencia. También se alinean regresiones antiguas que todavía esperaban Servicios y Ayuda Solidaria dentro de Para ti aunque la integración aprobada de septiembre ya separó esos accesos en MisServiciosShortcut y SolidarityAccessBadgeSync.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/inicio/MisServiciosShortcut.tsx",
     "components/notificaciones/PendingAttentionShortcut.tsx",
     "components/notificaciones/usePendingIndicators.ts",
     "components/solidaridad/SolidarityAccessBadgeSync.tsx",
-    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs"
+    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
+    "tests/regression/fase-g-para-ti-atencion-integral.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
