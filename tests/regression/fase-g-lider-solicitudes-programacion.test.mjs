@@ -142,11 +142,13 @@ test('la biblioteca recupera canciones históricas y el repertorio actual consum
 test('acciones gestionables forman parte de Para ti y respetan liderazgo real', () => {
   const layout = source('app/(app)/layout.tsx')
   const shortcut = source('components/notificaciones/PendingAttentionShortcut.tsx')
+  const servicesShortcut = source('components/inicio/MisServiciosShortcut.tsx')
   const indicators = source('components/notificaciones/usePendingIndicators.ts')
 
   assert.match(layout, /<PendingAttentionShortcut \/>/)
+  assert.match(layout, /<MisServiciosShortcut \/>/)
   assert.match(shortcut, /pendingMinisterioIngresos/)
-  assert.match(shortcut, /pendingServicios/)
+  assert.match(servicesShortcut, /pendingServicios/)
   assert.match(shortcut, /pendingSolicitudesGestionables/)
   assert.match(shortcut, /Mensajes y acciones directas según tu rol y responsabilidades/)
   assert.match(shortcut, /avisos-preview-title/)
