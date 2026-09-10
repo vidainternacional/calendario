@@ -122,7 +122,9 @@ export default function MisServiciosShortcut() {
     const handleExplicitRefresh = () => void refresh()
 
     void refresh()
-    const interval = window.setInterval(refresh, 30_000)
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void refresh()
+    }, 30_000)
     window.addEventListener('focus', handleFocus)
     window.addEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
     document.addEventListener('visibilitychange', handleVisibility)
@@ -232,12 +234,10 @@ export default function MisServiciosShortcut() {
     ensureMount()
     const observer = new MutationObserver(ensureMount)
     observer.observe(document.body, { childList: true, subtree: true })
-    const retry = window.setInterval(ensureMount, 500)
 
     return () => {
       disposed = true
       observer.disconnect()
-      window.clearInterval(retry)
       restoreEventState()
       setTarget(null)
       mount?.remove()

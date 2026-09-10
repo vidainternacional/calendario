@@ -108,12 +108,10 @@ export default function PendingAttentionShortcut() {
     syncMounts()
     const observer = new MutationObserver(syncMounts)
     observer.observe(document.body, { childList: true, subtree: true })
-    const retry = window.setInterval(syncMounts, 400)
 
     return () => {
       disposed = true
       observer.disconnect()
-      window.clearInterval(retry)
       pageMount?.remove()
       previewMount?.remove()
       setPageTarget(null)

@@ -6,20 +6,35 @@ import SolidarityUnreadBadge from '@/components/solidaridad/SolidarityUnreadBadg
 
 const SELECTOR = 'a[href="/ayuda-solidaria"], a[href="/pastoral/ayuda-solidaria"]'
 
+function sameTargets(current: HTMLAnchorElement[], next: HTMLAnchorElement[]) {
+  return current.length === next.length && current.every((target, index) => target === next[index])
+}
+
 export default function SolidarityAccessBadgeSync() {
   const [targets, setTargets] = useState<HTMLAnchorElement[]>([])
 
   useEffect(() => {
+    let frame = 0
+
     const sync = () => {
+      frame = 0
       const next = Array.from(document.querySelectorAll<HTMLAnchorElement>(SELECTOR))
       next.forEach((element) => element.classList.add('relative'))
-      setTargets(next)
+      setTargets((current) => sameTargets(current, next) ? current : next)
+    }
+
+    const scheduleSync = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(sync)
     }
 
     sync()
-    const observer = new MutationObserver(sync)
+    const observer = new MutationObserver(scheduleSync)
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (frame) window.cancelAnimationFrame(frame)
+    }
   }, [])
 
   return (

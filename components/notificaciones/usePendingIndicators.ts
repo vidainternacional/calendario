@@ -249,7 +249,9 @@ function ensurePendingLifecycle() {
   }
   const handleExplicitRefresh = () => void refreshSharedPending(true)
 
-  const interval = window.setInterval(() => void refreshSharedPending(), PENDING_POLL_INTERVAL_MS)
+  const interval = window.setInterval(() => {
+    if (document.visibilityState === 'visible' && navigator.onLine) void refreshSharedPending()
+  }, PENDING_POLL_INTERVAL_MS)
   window.addEventListener('focus', handleFocus)
   window.addEventListener('online', handleOnline)
   window.addEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
