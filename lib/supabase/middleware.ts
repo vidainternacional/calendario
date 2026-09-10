@@ -25,10 +25,8 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { claims },
-  } = await supabase.auth.getClaims()
-  const userId = typeof claims?.sub === 'string' ? claims.sub : null
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = typeof claimsData?.claims?.sub === 'string' ? claimsData.claims.sub : null
 
   const { pathname } = request.nextUrl
 
