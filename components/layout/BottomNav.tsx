@@ -33,6 +33,8 @@ const navItems = [
   { name: 'Perfil', href: '/perfil', icon: User },
 ]
 
+const prefetchedDestinations = new Set<string>()
+
 function cargarTema(): ModoBiblia {
   try {
     const raw = localStorage.getItem(PREF_KEY)
@@ -139,7 +141,9 @@ export default function BottomNav() {
           const showUnreadBadge = item.href === '/avisos' && avisosRequierenAtencion > 0
           const badgeValue = item.href === '/avisos' ? avisosRequierenAtencion : 0
           const prepareDestination = () => {
-            if (!isActive) router.prefetch(item.href)
+            if (isActive || prefetchedDestinations.has(item.href)) return
+            prefetchedDestinations.add(item.href)
+            router.prefetch(item.href)
           }
           return (
             <Link key={item.name} href={item.href} prefetch={false} aria-current={isActive ? 'page' : undefined} aria-label={showUnreadBadge ? `${item.name}, ${badgeValue} elementos requieren atención` : item.name} onPointerDown={prepareDestination} onPointerEnter={prepareDestination} onFocus={prepareDestination} className={`group flex h-16 min-w-0 flex-1 flex-col items-center justify-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 ${isActive ? tema.active : tema.inactive}`}>

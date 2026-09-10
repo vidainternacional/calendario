@@ -1,16 +1,18 @@
 {
   "task": "Optimizar rendimiento y fluidez de navegación sin cambiar funciones",
-  "userRequest": "El usuario pidió avanzar con optimización de rendimiento de toda la app, preservando las decisiones históricas tomadas para mantener carga rápida y navegación fluida. El cambio debe reducir trabajo persistente innecesario sin rediseñar pantallas, alterar datos, modificar Supabase ni tocar la lógica aprobada de notificaciones, Discipulado, Paquetes o asistencia. También se alinean regresiones antiguas que todavía esperaban Servicios y Ayuda Solidaria dentro de Para ti aunque la integración aprobada de septiembre ya separó esos accesos en MisServiciosShortcut y SolidarityAccessBadgeSync.",
+  "userRequest": "El usuario confirmó que la app todavía tarda y autorizó optimizar la navegación siempre que no se dañe, cambie ni afecte nada de lo que ya funciona. Este bloque reduce validaciones de autenticación remotas redundantes en la guardia global usando getClaims recomendado por Supabase, conserva intacta la comprobación de estado_cuenta y deduplica la precarga de cada pestaña principal para evitar solicitudes repetidas. No modifica datos, RLS, funciones de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/inicio/MisServiciosShortcut.tsx",
+    "components/layout/BottomNav.tsx",
     "components/notificaciones/PendingAttentionShortcut.tsx",
     "components/notificaciones/usePendingIndicators.ts",
     "components/solidaridad/SolidarityAccessBadgeSync.tsx",
+    "lib/supabase/middleware.ts",
     "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
     "tests/regression/fase-g-para-ti-atencion-integral.test.mjs"
   ],
-  "allowSupabase": false,
+  "allowSupabase": true,
   "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,

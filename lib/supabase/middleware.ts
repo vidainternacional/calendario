@@ -26,8 +26,9 @@ export async function updateSession(request: NextRequest) {
   )
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { claims },
+  } = await supabase.auth.getClaims()
+  const userId = typeof claims?.sub === 'string' ? claims.sub : null
 
   const { pathname } = request.nextUrl
 
@@ -38,13 +39,13 @@ export async function updateSession(request: NextRequest) {
     route === '/' ? pathname === '/' : pathname.startsWith(route)
   )
 
-  if (!user && !isPublicRoute) {
+  if (!userId && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && (pathname === '/login' || pathname === '/signup')) {
+  if (userId && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone()
     url.pathname = '/inicio'
     return NextResponse.redirect(url)
@@ -54,11 +55,11 @@ export async function updateSession(request: NextRequest) {
   // Usuarios no-activos (pendiente/suspendido/rechazado) solo
   // pueden ver /pendiente. Usuarios activos no tienen nada que
   // hacer en /pendiente.
-  if (user && !isPublicRoute) {
+  if (userId && !isPublicRoute) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('estado_cuenta')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single<{ estado_cuenta: string }>()
 
     const estado = profile?.estado_cuenta ?? 'pendiente'
