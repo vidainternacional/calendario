@@ -1,6 +1,6 @@
 {
   "task": "Optimizar rendimiento y fluidez de navegación sin cambiar funciones",
-  "userRequest": "El usuario confirmó que la app sigue tardando mucho y autorizó continuar optimizando siempre que no se dañe, cambie ni afecte nada de lo que ya funciona. La revisión real mostró que Vercel ejecuta las funciones en iad1 mientras Supabase está en us-west-2; este bloque acerca las funciones a la base de datos configurando sfo1 para reducir la latencia de cada consulta sin modificar datos, RLS, permisos, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
+  "userRequest": "El usuario confirmó que el Preview mejoró pero la navegación todavía tarda demasiado. La medición del Preview sfo1 mostró varias solicitudes GET repetidas por cada toque de navegación móvil. Este bloque elimina la precarga en pointerDown/táctil que compite con la navegación real y conserva prefetch únicamente por hover/focus en dispositivos con puntero fino, manteniendo prefetch=false y sin cambiar datos, permisos, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/inicio/MisServiciosShortcut.tsx",
