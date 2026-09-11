@@ -1,6 +1,6 @@
 {
   "task": "Optimizar rendimiento y fluidez de navegación sin cambiar funciones",
-  "userRequest": "El usuario confirmó que la app todavía tarda y autorizó optimizar la navegación siempre que no se dañe, cambie ni afecte nada de lo que ya funciona. Este bloque reduce validaciones de autenticación remotas redundantes en la guardia global usando getClaims recomendado por Supabase, conserva intacta la comprobación de estado_cuenta y deduplica la precarga de cada pestaña principal para evitar solicitudes repetidas. No modifica datos, RLS, funciones de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
+  "userRequest": "El usuario confirmó que la app sigue tardando mucho y autorizó continuar optimizando siempre que no se dañe, cambie ni afecte nada de lo que ya funciona. La revisión real mostró que Vercel ejecuta las funciones en iad1 mientras Supabase está en us-west-2; este bloque acerca las funciones a la base de datos configurando sfo1 para reducir la latencia de cada consulta sin modificar datos, RLS, permisos, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/inicio/MisServiciosShortcut.tsx",
@@ -10,7 +10,8 @@
     "components/solidaridad/SolidarityAccessBadgeSync.tsx",
     "lib/supabase/middleware.ts",
     "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs",
-    "tests/regression/fase-g-para-ti-atencion-integral.test.mjs"
+    "tests/regression/fase-g-para-ti-atencion-integral.test.mjs",
+    "vercel.json"
   ],
   "allowSupabase": true,
   "allowMasterUpdate": false,
