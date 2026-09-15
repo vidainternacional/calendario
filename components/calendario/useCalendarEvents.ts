@@ -64,22 +64,35 @@ export function useCalendarEvents({
   // mientras esta pantalla está visible para que ningún usuario quede con una
   // agenda obsoleta por haber dejado la app abierta.
   useEffect(() => {
+    let resumeTimer: number | null = null
+
+    const scheduleResumeRefresh = () => {
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer)
+      resumeTimer = window.setTimeout(() => {
+        resumeTimer = null
+        reload()
+      }, 180)
+    }
     const refreshIfVisible = () => {
       if (document.visibilityState === 'visible') reload()
     }
-    const handleFocus = () => reload()
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') scheduleResumeRefresh()
+    }
+    const handleFocus = () => scheduleResumeRefresh()
     const handleOnline = () => reload()
 
     const interval = window.setInterval(refreshIfVisible, 30_000)
     window.addEventListener('focus', handleFocus)
     window.addEventListener('online', handleOnline)
-    document.addEventListener('visibilitychange', refreshIfVisible)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.clearInterval(interval)
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer)
       window.removeEventListener('focus', handleFocus)
       window.removeEventListener('online', handleOnline)
-      document.removeEventListener('visibilitychange', refreshIfVisible)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [reload])
 
