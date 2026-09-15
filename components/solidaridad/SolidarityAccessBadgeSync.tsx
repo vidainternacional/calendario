@@ -10,16 +10,34 @@ export default function SolidarityAccessBadgeSync() {
   const [targets, setTargets] = useState<HTMLAnchorElement[]>([])
 
   useEffect(() => {
+    let frame = 0
+
     const sync = () => {
       const next = Array.from(document.querySelectorAll<HTMLAnchorElement>(SELECTOR))
       next.forEach((element) => element.classList.add('relative'))
-      setTargets(next)
+      setTargets((current) => {
+        if (current.length === next.length && current.every((element, index) => element === next[index])) {
+          return current
+        }
+        return next
+      })
+    }
+
+    const scheduleSync = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        sync()
+      })
     }
 
     sync()
-    const observer = new MutationObserver(sync)
+    const observer = new MutationObserver(scheduleSync)
     observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (frame) window.cancelAnimationFrame(frame)
+    }
   }, [])
 
   return (

@@ -8,20 +8,22 @@ type AvisosContentRefreshProps = {
   userId: string
 }
 
-const RESUME_RETRY_MS = 2000
+const RESUME_COALESCE_MS = 180
 
 export default function AvisosContentRefresh({ userId }: AvisosContentRefreshProps) {
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    let retryTimer: number | null = null
+    let resumeTimer: number | null = null
     const refresh = () => setRefreshKey((current) => current + 1)
     const scheduleResumeRefresh = () => {
-      refresh()
-      if (retryTimer !== null) window.clearTimeout(retryTimer)
-      retryTimer = window.setTimeout(refresh, RESUME_RETRY_MS)
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer)
+      resumeTimer = window.setTimeout(() => {
+        resumeTimer = null
+        refresh()
+      }, RESUME_COALESCE_MS)
     }
-    const handleOnline = () => scheduleResumeRefresh()
+    const handleOnline = () => refresh()
     const handleFocus = () => scheduleResumeRefresh()
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') scheduleResumeRefresh()
@@ -32,7 +34,7 @@ export default function AvisosContentRefresh({ userId }: AvisosContentRefreshPro
     document.addEventListener('visibilitychange', handleVisibility)
     window.addEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, refresh)
     return () => {
-      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibility)

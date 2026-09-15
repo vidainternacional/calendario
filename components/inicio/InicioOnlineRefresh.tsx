@@ -20,14 +20,14 @@ type CachedInicioData = {
 
 const CACHE_SCOPE = 'inicio:v7'
 const CACHE_TTL = 10 * 60 * 1000
-const RESUME_RETRY_MS = 2000
+const RESUME_COALESCE_MS = 180
 
 export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefreshProps) {
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-    let retryTimer: number | null = null
+    let resumeTimer: number | null = null
     let refreshInFlight = false
     let refreshQueued = false
 
@@ -94,12 +94,14 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
     }
 
     const scheduleResumeRefresh = () => {
-      void refreshPublicaciones()
-      if (retryTimer !== null) window.clearTimeout(retryTimer)
-      retryTimer = window.setTimeout(() => void refreshPublicaciones(), RESUME_RETRY_MS)
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer)
+      resumeTimer = window.setTimeout(() => {
+        resumeTimer = null
+        void refreshPublicaciones()
+      }, RESUME_COALESCE_MS)
     }
     const handleContentRefresh = () => void refreshPublicaciones()
-    const handleOnline = () => scheduleResumeRefresh()
+    const handleOnline = () => void refreshPublicaciones()
     const handleFocus = () => scheduleResumeRefresh()
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') scheduleResumeRefresh()
@@ -111,7 +113,7 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
     window.addEventListener(PUBLICATIONS_CONTENT_REFRESH_EVENT, handleContentRefresh)
     return () => {
       cancelled = true
-      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibility)
