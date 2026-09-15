@@ -43,6 +43,11 @@ function cargarTema(): ModoBiblia {
   }
 }
 
+function temaActivoBiblia(): ModoBiblia {
+  const tema = document.documentElement.dataset.bibliaTema
+  return tema === 'sepia' || tema === 'oscuro' || tema === 'claro' ? tema : cargarTema()
+}
+
 function elementoEditableActivo() {
   const active = document.activeElement
   if (!(active instanceof HTMLElement)) return false
@@ -57,7 +62,7 @@ function elementoEditableActivo() {
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const dentroBiblia = pathname.startsWith('/biblia')
+  const dentroBiblia = pathname === '/biblia'
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
@@ -97,15 +102,24 @@ export default function BottomNav() {
 
   useEffect(() => {
     if (!dentroBiblia) return
-    setModo(cargarTema())
+    const sincronizar = () => setModo(temaActivoBiblia())
+    sincronizar()
+
     const actualizar = (event: Event) => {
       const custom = event as CustomEvent<{ modo?: ModoBiblia }>
-      setModo(custom.detail?.modo ?? cargarTema())
+      setModo(custom.detail?.modo ?? temaActivoBiblia())
     }
     const actualizarStorage = () => setModo(cargarTema())
+    const observer = new MutationObserver(sincronizar)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-biblia-tema'],
+    })
+
     window.addEventListener('vida-biblia-theme', actualizar)
     window.addEventListener('storage', actualizarStorage)
     return () => {
+      observer.disconnect()
       window.removeEventListener('vida-biblia-theme', actualizar)
       window.removeEventListener('storage', actualizarStorage)
     }
