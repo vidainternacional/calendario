@@ -1,12 +1,20 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { BellRing, Power, PowerOff, Search, Shield, UserCog, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { BellRing, CheckCircle2, Power, PowerOff, Search, Shield, UserCog, Users } from 'lucide-react'
 import UsuarioMembresiaModal from '@/components/admin/UsuarioMembresiaModal'
-import { cambiarRolUsuario, setEstadoCuenta, togglePastorGeneral } from '@/app/actions/admin'
+import { aprobarUsuario, cambiarRolUsuario, setEstadoCuenta, togglePastorGeneral } from '@/app/actions/admin'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 function avatarFallback(nombre?: string | null) {
   return (nombre || 'U').trim().charAt(0).toUpperCase()
+}
+
+function estadoCuentaClass(estado?: string | null) {
+  if (estado === 'pendiente') return 'bg-amber-50 text-amber-700'
+  if (estado === 'suspendido' || estado === 'rechazado') return 'bg-rose-50 text-rose-600'
+  return 'bg-emerald-50 text-emerald-600'
 }
 
 export default function UsuariosAdminClient({
@@ -20,10 +28,12 @@ export default function UsuariosAdminClient({
   capacidades: any[]
   responsabilidades: any[]
 }) {
+  const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
   const [editingUser, setEditingUser] = useState<any | null>(null)
   const [error, setError] = useState('')
+  const [aprobandoId, setAprobandoId] = useState<string | null>(null)
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
@@ -38,6 +48,22 @@ export default function UsuariosAdminClient({
     setError('')
     const result = await fn()
     if (result && result.success === false) setError(result.error || 'No fue posible completar la acción.')
+  }
+
+  const aprobar = async (profileId: string) => {
+    setError('')
+    setAprobandoId(profileId)
+    try {
+      const result = await aprobarUsuario(profileId)
+      if (result && result.success === false) {
+        setError(result.error || 'No fue posible aprobar la cuenta.')
+        return
+      }
+      requestPendingIndicatorsRefresh()
+      router.refresh()
+    } finally {
+      setAprobandoId(null)
+    }
   }
 
   return (
@@ -77,7 +103,7 @@ export default function UsuariosAdminClient({
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold capitalize text-indigo-600">{usuario.rol}</span>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${usuario.estado_cuenta === 'suspendido' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>{usuario.estado_cuenta || 'activo'}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${estadoCuentaClass(usuario.estado_cuenta)}`}>{usuario.estado_cuenta || 'activo'}</span>
                       {usuario.push_activo && <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-600"><BellRing className="h-3 w-3" />Push</span>}
                     </div>
                   </div>
@@ -88,6 +114,12 @@ export default function UsuariosAdminClient({
                   <div><p className="text-base font-extrabold text-[#171923]">{liderazgos}</p><p className="text-[9px] uppercase tracking-wide text-slate-400">Liderazgos</p></div>
                   <div><p className="text-[11px] font-bold text-[#171923]">{usuario.ultima_actividad ? new Date(usuario.ultima_actividad).toLocaleDateString('es-SV', { day: '2-digit', month: 'short' }) : 'Sin dato'}</p><p className="text-[9px] uppercase tracking-wide text-slate-400">Actividad</p></div>
                 </button>
+
+                {usuario.estado_cuenta === 'pendiente' && (
+                  <button type="button" disabled={aprobandoId === usuario.id} onClick={() => void aprobar(usuario.id)} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-50 text-xs font-bold text-emerald-700 disabled:opacity-60">
+                    <CheckCircle2 className="h-4 w-4" />{aprobandoId === usuario.id ? 'Aprobando…' : 'Aprobar usuario'}
+                  </button>
+                )}
 
                 <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
                   <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Rol

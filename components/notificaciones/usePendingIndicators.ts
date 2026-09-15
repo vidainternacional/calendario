@@ -17,6 +17,7 @@ type PendingSnapshot = {
   pendingContactos: number
   pendingPreguntasPastorales: number
   pendingAyudaSolidaria: number
+  pendingUsuariosAprobacion: number
 }
 
 const EMPTY_PENDING_SNAPSHOT: PendingSnapshot = {
@@ -26,6 +27,7 @@ const EMPTY_PENDING_SNAPSHOT: PendingSnapshot = {
   pendingContactos: 0,
   pendingPreguntasPastorales: 0,
   pendingAyudaSolidaria: 0,
+  pendingUsuariosAprobacion: 0,
 }
 
 let pendingSnapshot: PendingSnapshot = EMPTY_PENDING_SNAPSHOT
@@ -45,6 +47,7 @@ function publishPendingSnapshot(next: PendingSnapshot) {
     && next.pendingContactos === pendingSnapshot.pendingContactos
     && next.pendingPreguntasPastorales === pendingSnapshot.pendingPreguntasPastorales
     && next.pendingAyudaSolidaria === pendingSnapshot.pendingAyudaSolidaria
+    && next.pendingUsuariosAprobacion === pendingSnapshot.pendingUsuariosAprobacion
   ) {
     return
   }
@@ -135,6 +138,13 @@ async function refreshSharedPending(force = false) {
           .eq('estado', 'ofrecido')
       : Promise.resolve({ count: 0, error: null })
 
+    const usuariosPendientesQuery = esAdministrador
+      ? (supabase as any)
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('estado_cuenta', 'pendiente')
+      : Promise.resolve({ count: 0, error: null })
+
     const [
       leadershipReq,
       serviciosReq,
@@ -143,6 +153,7 @@ async function refreshSharedPending(force = false) {
       preguntasReq,
       ayudaSolicitudesReq,
       ayudaAportesReq,
+      usuariosPendientesReq,
     ] = await Promise.all([
       leadershipQuery,
       (supabase as any)
@@ -163,6 +174,7 @@ async function refreshSharedPending(force = false) {
       preguntasQuery,
       ayudaSolicitudesQuery,
       ayudaAportesQuery,
+      usuariosPendientesQuery,
     ])
 
     let nextMinisterioIngresos = pendingSnapshot.pendingMinisterioIngresos
@@ -170,6 +182,7 @@ async function refreshSharedPending(force = false) {
     let nextContactos = pendingSnapshot.pendingContactos
     let nextPreguntasPastorales = pendingSnapshot.pendingPreguntasPastorales
     let nextAyudaSolidaria = pendingSnapshot.pendingAyudaSolidaria
+    let nextUsuariosAprobacion = pendingSnapshot.pendingUsuariosAprobacion
 
     if (leadershipReq.error) {
       console.error('No se pudieron cargar los pendientes de liderazgo', leadershipReq.error)
@@ -208,6 +221,12 @@ async function refreshSharedPending(force = false) {
         + Math.max(0, Number(ayudaAportesReq.count || 0))
     }
 
+    if (usuariosPendientesReq.error) {
+      console.error('No se pudieron cargar los usuarios pendientes de aprobación', usuariosPendientesReq.error)
+    } else {
+      nextUsuariosAprobacion = Math.max(0, Number(usuariosPendientesReq.count || 0))
+    }
+
     if (pendingUserId !== user.id) return
 
     publishPendingSnapshot({
@@ -217,6 +236,7 @@ async function refreshSharedPending(force = false) {
       pendingContactos: nextContactos,
       pendingPreguntasPastorales: nextPreguntasPastorales,
       pendingAyudaSolidaria: nextAyudaSolidaria,
+      pendingUsuariosAprobacion: nextUsuariosAprobacion,
     })
   })()
 
@@ -317,6 +337,7 @@ export function usePendingIndicators() {
     pendingContactos,
     pendingPreguntasPastorales,
     pendingAyudaSolidaria,
+    pendingUsuariosAprobacion,
   } = useSyncExternalStore(subscribePending, getPendingSnapshot, getPendingServerSnapshot)
 
   const total =
@@ -327,6 +348,7 @@ export function usePendingIndicators() {
     + Math.max(0, pendingContactos)
     + Math.max(0, pendingPreguntasPastorales)
     + Math.max(0, pendingAyudaSolidaria)
+    + Math.max(0, pendingUsuariosAprobacion)
 
   useEffect(() => {
     applyAppBadge(total)
@@ -340,6 +362,7 @@ export function usePendingIndicators() {
     pendingContactos,
     pendingPreguntasPastorales,
     pendingAyudaSolidaria,
+    pendingUsuariosAprobacion,
     total,
   }
 }
