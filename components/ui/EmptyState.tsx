@@ -49,7 +49,7 @@ export function EmptyState({
       <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">{description}</p>
 
       {action?.href ? (
-        <Link href={action.href} className={classes(actionClassName, 'mt-6')}>
+        <Link href={action.href} prefetch={false} className={classes(actionClassName, 'mt-6')}>
           {action.label}
         </Link>
       ) : action?.onClick ? (

@@ -1,13 +1,11 @@
 {
   "task": "Optimizar rendimiento y fluidez de navegación sin cambiar funciones",
-  "userRequest": "El usuario confirmó que la navegación mejoró y autorizó continuar para hacerla más rápida antes de ponerla a trabajar. Este bloque elimina validaciones remotas de autenticación redundantes en las cinco pestañas principales reutilizando los claims ya validados por la guardia global, y desactiva la precarga automática de rutas pesadas visibles en Estudios y Perfil para evitar cargar módulos que el usuario todavía no abrió. No modifica datos, RLS, permisos, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
+  "userRequest": "El usuario confirmó que la navegación mejoró y autorizó continuar para hacerla más rápida antes de ponerla a trabajar. La evidencia real de Vercel mostró que al abrir Estudios y Perfil se estaban precargando automáticamente múltiples rutas pesadas que el usuario todavía no había abierto. Este bloque desactiva únicamente esa precarga automática en esas superficies y en acciones reutilizables de estado vacío, manteniendo la navegación normal al tocar. No modifica datos, RLS, permisos, autenticación, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "app/(app)/inicio/page.tsx",
-    "app/(app)/calendario/page.tsx",
-    "app/(app)/avisos/page.tsx",
     "app/(app)/estudios/page.tsx",
     "app/(app)/perfil/page.tsx",
+    "components/ui/EmptyState.tsx",
     "components/inicio/MisServiciosShortcut.tsx",
     "components/layout/BottomNav.tsx",
     "components/notificaciones/PendingAttentionShortcut.tsx",

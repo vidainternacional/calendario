@@ -127,6 +127,7 @@ export default async function EstudiosPage() {
           <Link
             key={href}
             href={href}
+            prefetch={false}
             className={`group relative flex min-h-[138px] items-center gap-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] sm:p-6 ${hoverClass}`}
           >
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
