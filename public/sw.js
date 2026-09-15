@@ -434,14 +434,28 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const targetUrl = event.notification.data?.url || '/inicio'
+  const absoluteTargetUrl = new URL(targetUrl, self.location.origin).href
+  const targetPathname = new URL(absoluteTargetUrl).pathname
+  const esIngresoMinisterio = /^\/ministerios\/[^/]+\/solicitudes-ingreso\/?$/.test(targetPathname)
+
   event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
     for (const client of clientList) {
       if (client.url.includes(self.location.origin) && 'focus' in client) {
-        if ('navigate' in client) await client.navigate(targetUrl)
+        if ('navigate' in client) {
+          try {
+            const navigated = await client.navigate(absoluteTargetUrl)
+            if (navigated && 'focus' in navigated) return navigated.focus()
+          } catch {}
+        }
+
+        if (esIngresoMinisterio && clients.openWindow) {
+          return clients.openWindow(absoluteTargetUrl)
+        }
+
         return client.focus()
       }
     }
-    if (clients.openWindow) return clients.openWindow(targetUrl)
+    if (clients.openWindow) return clients.openWindow(absoluteTargetUrl)
     return undefined
   }))
 })
