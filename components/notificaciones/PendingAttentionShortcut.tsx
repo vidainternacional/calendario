@@ -26,6 +26,7 @@ export default function PendingAttentionShortcut() {
     pendingSolicitudesGestionables,
     pendingContactos,
     pendingPreguntasPastorales,
+    pendingUsuariosAprobacion,
   } = usePendingIndicators()
   const [pageTarget, setPageTarget] = useState<AttentionTarget>(null)
   const [previewTarget, setPreviewTarget] = useState<AttentionTarget>(null)
@@ -131,6 +132,17 @@ export default function PendingAttentionShortcut() {
       icon: typeof ClipboardCheck
     }> = []
 
+    if (pendingUsuariosAprobacion > 0) {
+      items.push({
+        key: 'usuarios-pendientes',
+        href: '/admin/usuarios',
+        label: 'Usuarios por aprobar',
+        detail: 'Cuentas nuevas esperando tu aprobación',
+        count: pendingUsuariosAprobacion,
+        icon: UserRoundPlus,
+      })
+    }
+
     if (pendingContactos > 0) {
       items.push({
         key: 'contactos',
@@ -182,6 +194,7 @@ export default function PendingAttentionShortcut() {
     pendingMinisterioIngresos,
     pendingPreguntasPastorales,
     pendingSolicitudesGestionables,
+    pendingUsuariosAprobacion,
     rol,
   ])
 
