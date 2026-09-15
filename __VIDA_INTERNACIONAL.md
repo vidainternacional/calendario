@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-09-07
+Última actualización: 2026-09-15
 
 Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 4 — DISCIPULADO**
 
@@ -98,6 +98,8 @@ Cerrada el 2026-08-09. Administrador conserva eliminación permanente protegida 
 Cerrada el 2026-08-11 tras validación funcional en iPhone. Pushes, destinos directos, solicitudes de ingreso, bienvenida ministerial, identidades de Avisos y badges derivados de estado real quedaron operativos. Producción validada en `48efda443e719279fac267e64931b1c5f36e8a07`.
 
 Pendiente transversal diferido: optimizar al final la latencia ocasional de badges/push entre Supabase, cliente, service worker, segundo plano, red e iOS, sin parches aislados por pantalla. Este pendiente pasa formalmente a FASE G y queda cerrado en su evidencia final.
+
+**Badges globales — VALIDADO — 2026-09-15.** El conteo del ícono de la app y el badge interno de Avisos quedan sincronizados con los pendientes reales del usuario. Desde Avisos, cada pendiente conduce al área correspondiente para resolverlo según rol y permisos, incluyendo usuarios, ministerios, solicitudes, servicios, contactos, buzón pastoral y Ayuda Solidaria. Al resolverse, el conteo debe disminuir en todo el recorrido.
 
 ## Identidad Comunitaria y Perfil
 
