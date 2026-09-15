@@ -37,6 +37,7 @@ export default function AsistenciaInicioAcceso() {
     <section aria-label="Asistencia de la congregación">
       <Link
         href="/asistencia"
+        prefetch={false}
         className="group flex min-h-[74px] items-center gap-3 rounded-[24px] border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50/80 px-4 py-3.5 shadow-[0_7px_22px_rgba(16,185,129,0.06)] transition active:scale-[0.99]"
       >
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-100">

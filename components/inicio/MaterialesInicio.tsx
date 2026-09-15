@@ -90,6 +90,7 @@ export default function MaterialesInicio({
       <section aria-labelledby="preparacion-inicio" className="isolate">
         <Link
           href={`/material/${preparation.public_slug}`}
+          prefetch={false}
           style={{ transform: 'none' }}
           className="group relative flex min-h-[92px] items-center gap-3 overflow-hidden rounded-[24px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/55 to-indigo-50 px-4 py-4 shadow-[0_10px_28px_rgba(91,61,245,0.08)] transition-[background-color,box-shadow,filter] duration-100 active:bg-violet-50/80 active:brightness-[0.97] active:shadow-[inset_0_2px_8px_rgba(91,61,245,0.18)]"
         >
@@ -119,6 +120,7 @@ export default function MaterialesInicio({
         <section aria-label="Centro Pastoral">
           <Link
             href="/pastoral"
+            prefetch={false}
             className="group flex min-h-[74px] items-center gap-3 rounded-[24px] border border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50/80 px-4 py-3.5 shadow-[0_7px_22px_rgba(91,61,245,0.06)] transition active:scale-[0.99]"
           >
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-violet-700 shadow-sm ring-1 ring-violet-100">
@@ -139,6 +141,7 @@ export default function MaterialesInicio({
       <section aria-label="Paquetes recibidos">
         <Link
           href="/paquetes-recibidos"
+          prefetch={false}
           className="group flex min-h-[76px] items-center gap-3 rounded-[24px] border border-white/90 bg-white px-4 py-3.5 shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition active:scale-[0.99]"
         >
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
@@ -160,6 +163,7 @@ export default function MaterialesInicio({
         <section aria-label="Discipulado">
           <Link
             href="/discipulado"
+            prefetch={false}
             className="group flex min-h-[104px] items-center gap-4 rounded-[24px] border border-violet-200 bg-white p-4 shadow-[0_10px_28px_rgba(79,70,229,0.08)] transition active:scale-[0.992] sm:p-5"
           >
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-600 text-violet-50 shadow-[0_6px_18px_rgba(124,58,237,0.22)]">

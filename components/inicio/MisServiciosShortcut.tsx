@@ -258,6 +258,7 @@ export default function MisServiciosShortcut() {
     const circle = (
       <Link
         href={`/eventos/${servicioVisible.eventoId}`}
+        prefetch={false}
         className={`relative grid h-12 w-12 place-items-center rounded-full ring-1 transition active:scale-95 ${
           pendiente
             ? 'bg-amber-50 text-amber-700 ring-amber-200 shadow-[0_7px_18px_rgba(245,158,11,0.16)]'
@@ -287,6 +288,7 @@ export default function MisServiciosShortcut() {
     <section className={surface === 'avisos' ? 'mb-6' : ''} aria-label="Mis servicios">
       <Link
         href={`/eventos/${servicioVisible.eventoId}`}
+        prefetch={false}
         className={`group block overflow-hidden rounded-[24px] border bg-white shadow-[0_8px_26px_rgba(15,23,42,0.055)] transition active:scale-[0.993] ${pendiente ? 'border-rose-100 ring-1 ring-rose-50' : 'border-white/90'}`}
         aria-label={`${tituloSuperior}: ${servicioVisible.titulo}. ${estadoTexto}`}
       >

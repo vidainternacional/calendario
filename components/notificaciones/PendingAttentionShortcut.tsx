@@ -199,6 +199,7 @@ export default function PendingAttentionShortcut() {
               <Link
                 key={item.key}
                 href={item.href}
+                prefetch={false}
                 className="flex min-h-[66px] items-center gap-3 px-4 py-3 transition active:bg-slate-50"
               >
                 <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-indigo-50 text-indigo-600">

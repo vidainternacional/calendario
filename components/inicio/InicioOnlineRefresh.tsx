@@ -21,6 +21,7 @@ type CachedInicioData = {
 const CACHE_SCOPE = 'inicio:v7'
 const CACHE_TTL = 10 * 60 * 1000
 const RESUME_RETRY_MS = 2000
+const RESUME_DEDUPE_MS = 750
 
 export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefreshProps) {
   const [refreshKey, setRefreshKey] = useState(0)
@@ -30,6 +31,7 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
     let retryTimer: number | null = null
     let refreshInFlight = false
     let refreshQueued = false
+    let lastResumeRefreshAt = 0
 
     async function refreshPublicaciones() {
       if (refreshInFlight) {
@@ -77,12 +79,14 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
         }
 
         if (!cancelled) {
+          const nextPublicaciones = publicaciones || []
+          const changed = JSON.stringify(cached.publicaciones || []) !== JSON.stringify(nextPublicaciones)
           const nextData: CachedInicioData = {
             ...cached,
-            publicaciones: publicaciones || [],
+            publicaciones: nextPublicaciones,
           }
           writeUserCache(userId, CACHE_SCOPE, nextData, CACHE_TTL)
-          setRefreshKey((current) => current + 1)
+          if (changed) setRefreshKey((current) => current + 1)
         }
       } finally {
         refreshInFlight = false
@@ -94,7 +98,11 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
     }
 
     const scheduleResumeRefresh = () => {
-      void refreshPublicaciones()
+      const now = Date.now()
+      if (now - lastResumeRefreshAt >= RESUME_DEDUPE_MS) {
+        lastResumeRefreshAt = now
+        void refreshPublicaciones()
+      }
       if (retryTimer !== null) window.clearTimeout(retryTimer)
       retryTimer = window.setTimeout(() => void refreshPublicaciones(), RESUME_RETRY_MS)
     }

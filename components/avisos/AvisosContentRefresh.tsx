@@ -9,15 +9,21 @@ type AvisosContentRefreshProps = {
 }
 
 const RESUME_RETRY_MS = 2000
+const RESUME_DEDUPE_MS = 750
 
 export default function AvisosContentRefresh({ userId }: AvisosContentRefreshProps) {
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let retryTimer: number | null = null
+    let lastResumeRefreshAt = 0
     const refresh = () => setRefreshKey((current) => current + 1)
     const scheduleResumeRefresh = () => {
-      refresh()
+      const now = Date.now()
+      if (now - lastResumeRefreshAt >= RESUME_DEDUPE_MS) {
+        lastResumeRefreshAt = now
+        refresh()
+      }
       if (retryTimer !== null) window.clearTimeout(retryTimer)
       retryTimer = window.setTimeout(refresh, RESUME_RETRY_MS)
     }
