@@ -1,12 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 type BibleTheme = 'claro' | 'sepia' | 'oscuro'
 
-function detectarTema(): BibleTheme | null {
-  const section = document.querySelector<HTMLElement>('section.transition-colors')
-  if (!section) return null
+function detectarTema(section: HTMLElement): BibleTheme | null {
   if (section.classList.contains('bg-slate-950')) return 'oscuro'
   if (section.classList.contains('bg-[#efe5d0]')) return 'sepia'
   if (section.classList.contains('bg-[#f7f7f4]')) return 'claro'
@@ -20,18 +18,27 @@ function aplicarTema(theme: BibleTheme) {
 }
 
 export default function BibliaThemeStateBridge() {
+  const ultimoTemaRef = useRef<BibleTheme | null>(null)
+
   useEffect(() => {
+    const section = document.querySelector<HTMLElement>('section.transition-colors')
+    if (!section) return
+
     const sincronizar = () => {
-      const theme = detectarTema()
-      if (theme) aplicarTema(theme)
+      const theme = detectarTema(section)
+      if (!theme) return
+
+      aplicarTema(theme)
+      if (ultimoTemaRef.current !== theme) {
+        ultimoTemaRef.current = theme
+        window.dispatchEvent(new CustomEvent('vida-biblia-theme', { detail: { modo: theme } }))
+      }
     }
 
     sincronizar()
 
     const observer = new MutationObserver(sincronizar)
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
+    observer.observe(section, {
       attributes: true,
       attributeFilter: ['class'],
     })

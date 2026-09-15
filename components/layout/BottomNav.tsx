@@ -57,7 +57,7 @@ function elementoEditableActivo() {
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const dentroBiblia = pathname.startsWith('/biblia')
+  const dentroBiblia = pathname === '/biblia'
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)

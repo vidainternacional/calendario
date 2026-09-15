@@ -11,7 +11,7 @@ export default async function NotasBibliaPage() {
   return (
     <>
       <OfflineNotesOwnerMarker userId={user.id} />
-      <BibleNotesWorkspace userId={user.id} />
+      <BibleNotesWorkspace userId={user.id} modo="claro" />
     </>
   )
 }
