@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronDown, MessageCircle, Phone, Search, Sparkles } from 'lucide-react'
 import {
   actualizarAporteSolidario,
@@ -11,6 +12,7 @@ import UserAvatar from '@/components/comunidad/UserAvatar'
 import SolidarityChat from '@/components/solidaridad/SolidarityChat'
 import SolidarityPantryManager from '@/components/solidaridad/SolidarityPantryManager'
 import SolidarityUnreadBadge from '@/components/solidaridad/SolidarityUnreadBadge'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 import {
   SOLIDARITY_CONTRIBUTION_STATUS_LABELS,
   SOLIDARITY_CONTRIBUTION_TYPE_LABELS,
@@ -83,6 +85,12 @@ function timeLabel(value: string) {
   return date.toLocaleDateString('es-SV', { day: '2-digit', month: '2-digit' })
 }
 
+function requiereAtencion(conversation: Conversation) {
+  return conversation.kind === 'solicitud'
+    ? conversation.item.estado === 'enviada'
+    : conversation.item.estado === 'ofrecido'
+}
+
 export default function SolidarityAdminBoard({ currentUserId, requests, contributions, pantryNeeds, serviceNeeds, packages, packageItems }: {
   currentUserId: string
   requests: RequestItem[]
@@ -92,7 +100,10 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
   packages: PantryPackage[]
   packageItems: PantryPackageItem[]
 }) {
-  const [view, setView] = useState<View>('ayudas')
+  const router = useRouter()
+  const pendingHelpCount = requests.filter((item) => item.estado === 'enviada').length
+  const pendingSeedCount = contributions.filter((item) => item.estado === 'ofrecido').length
+  const [view, setView] = useState<View>(() => pendingHelpCount > 0 ? 'ayudas' : pendingSeedCount > 0 ? 'siembras' : 'ayudas')
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [pending, startTransition] = useTransition()
@@ -107,7 +118,10 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
     name: item.profiles?.nombre_completo || 'Persona registrada',
     avatarUrl: item.profiles?.avatar_url || null,
     preview: item.tipo_ayuda === 'paquete_despensa' ? `Paquete de despensa${item.hogar_personas ? ` · ${item.hogar_personas} personas` : ''}` : item.necesidad,
-  })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [requests])
+  })).sort((a, b) => {
+    const attentionDiff = Number(requiereAtencion(b)) - Number(requiereAtencion(a))
+    return attentionDiff || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  }), [requests])
 
   const seedConversations = useMemo<Conversation[]>(() => contributions.map((item) => ({
     key: `aporte:${item.id}`,
@@ -117,7 +131,10 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
     name: item.profiles?.nombre_completo || 'Persona registrada',
     avatarUrl: item.profiles?.avatar_url || null,
     preview: `${SOLIDARITY_CONTRIBUTION_TYPE_LABELS[item.tipo]} · ${item.detalle}`,
-  })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), [contributions])
+  })).sort((a, b) => {
+    const attentionDiff = Number(requiereAtencion(b)) - Number(requiereAtencion(a))
+    return attentionDiff || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  }), [contributions])
 
   const conversations = view === 'siembras' ? seedConversations : helpConversations
   const filtered = useMemo(() => {
@@ -127,17 +144,25 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
   }, [conversations, query])
   const selected = [...helpConversations, ...seedConversations].find((item) => item.key === selectedKey) || null
 
+  const refreshAfterAction = () => {
+    requestPendingIndicatorsRefresh()
+    router.refresh()
+  }
+
   const updateRequest = (item: RequestItem, status: SolidarityRequestStatus) => startTransition(async () => {
     const result = await actualizarSolicitudAyudaSolidaria({ id: item.id, status, response: responses[item.id] ?? item.respuesta ?? '' })
     setMessage(result.success ? 'Actualizado.' : result.error || 'No fue posible actualizar.')
+    if (result.success) refreshAfterAction()
   })
   const updateContribution = (item: ContributionItem, status: SolidarityContributionStatus) => startTransition(async () => {
     const result = await actualizarAporteSolidario({ id: item.id, status, response: responses[item.id] ?? item.respuesta ?? '' })
     setMessage(result.success ? 'Actualizado.' : result.error || 'No fue posible actualizar.')
+    if (result.success) refreshAfterAction()
   })
   const thankContribution = (item: ContributionItem) => startTransition(async () => {
     const result = await marcarAgradecimientoAporte(item.id, !item.agradecido_at)
     setMessage(result.success ? (item.agradecido_at ? 'Marcado como pendiente.' : 'Agradecimiento registrado.') : result.error || 'No fue posible actualizar.')
+    if (result.success) router.refresh()
   })
 
   const list = (
@@ -149,7 +174,8 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
       <div className="divide-y divide-slate-100">
         {filtered.length === 0 ? <p className="px-4 py-10 text-center text-sm text-slate-600">No hay conversaciones para mostrar.</p> : filtered.map((conversation) => {
           const status = conversation.kind === 'solicitud' ? SOLIDARITY_REQUEST_STATUS_LABELS[conversation.item.estado] : SOLIDARITY_CONTRIBUTION_STATUS_LABELS[conversation.item.estado]
-          return <button key={conversation.key} type="button" onClick={() => setSelectedKey(conversation.key)} className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-slate-50"><UserAvatar nombre={conversation.name} avatarUrl={conversation.avatarUrl} size="md" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-extrabold text-slate-900">{conversation.name}</p><span className="inline-flex shrink-0 items-center gap-1.5"><SolidarityUnreadBadge scope="context" contextType={conversation.kind} contextId={conversation.item.id} /><span className="text-[10px] text-slate-500">{timeLabel(conversation.createdAt)}</span></span></div><div className="mt-0.5 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{conversation.preview}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${conversation.kind === 'solicitud' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700'}`}>{status}</span></div></div></button>
+          const attention = requiereAtencion(conversation)
+          return <button key={conversation.key} type="button" onClick={() => setSelectedKey(conversation.key)} className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-slate-50"><UserAvatar nombre={conversation.name} avatarUrl={conversation.avatarUrl} size="md" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-extrabold text-slate-900">{conversation.name}</p><span className="inline-flex shrink-0 items-center gap-1.5">{attention ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-black text-amber-800">PENDIENTE</span> : null}<SolidarityUnreadBadge scope="context" contextType={conversation.kind} contextId={conversation.item.id} /><span className="text-[10px] text-slate-500">{timeLabel(conversation.createdAt)}</span></span></div><div className="mt-0.5 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{conversation.preview}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${conversation.kind === 'solicitud' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700'}`}>{status}</span></div></div></button>
         })}
       </div>
     </div>
@@ -160,8 +186,8 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
       {message ? <p className="border-b border-slate-100 bg-slate-900 px-4 py-2 text-xs font-semibold text-white">{message}</p> : null}
 
       {!selected ? <div className="grid grid-cols-3 border-b border-slate-200 bg-white">
-        <button type="button" onClick={() => { setView('ayudas'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'ayudas' ? 'border-violet-600 text-violet-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Necesitan ayuda <SolidarityUnreadBadge scope="solicitud" /></span></button>
-        <button type="button" onClick={() => { setView('siembras'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'siembras' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Quieren sembrar <SolidarityUnreadBadge scope="aporte" /></span></button>
+        <button type="button" onClick={() => { setView('ayudas'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'ayudas' ? 'border-violet-600 text-violet-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Necesitan ayuda {pendingHelpCount > 0 ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-500 px-1 text-[9px] font-black text-white">{pendingHelpCount > 99 ? '99+' : pendingHelpCount}</span> : null}<SolidarityUnreadBadge scope="solicitud" /></span></button>
+        <button type="button" onClick={() => { setView('siembras'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'siembras' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Quieren sembrar {pendingSeedCount > 0 ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-500 px-1 text-[9px] font-black text-white">{pendingSeedCount > 99 ? '99+' : pendingSeedCount}</span> : null}<SolidarityUnreadBadge scope="aporte" /></span></button>
         <button type="button" onClick={() => { setView('despensa'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'despensa' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>Despensa</button>
       </div> : null}
 
