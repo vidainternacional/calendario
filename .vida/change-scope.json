@@ -1,8 +1,13 @@
 {
   "task": "Optimizar rendimiento y fluidez de navegación sin cambiar funciones",
-  "userRequest": "El usuario confirmó que el Preview mejoró pero la navegación todavía tarda demasiado. La medición del Preview sfo1 mostró varias solicitudes GET repetidas por cada toque de navegación móvil. Este bloque elimina la precarga en pointerDown/táctil que compite con la navegación real y conserva prefetch únicamente por hover/focus en dispositivos con puntero fino, manteniendo prefetch=false y sin cambiar datos, permisos, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
+  "userRequest": "El usuario confirmó que la navegación mejoró y autorizó continuar para hacerla más rápida antes de ponerla a trabajar. Este bloque elimina validaciones remotas de autenticación redundantes en las cinco pestañas principales reutilizando los claims ya validados por la guardia global, y desactiva la precarga automática de rutas pesadas visibles en Estudios y Perfil para evitar cargar módulos que el usuario todavía no abrió. No modifica datos, RLS, permisos, lógica de negocio, diseño, notificaciones, Discipulado, Paquetes ni asistencia.",
   "allowedPaths": [
     ".vida/change-scope.json",
+    "app/(app)/inicio/page.tsx",
+    "app/(app)/calendario/page.tsx",
+    "app/(app)/avisos/page.tsx",
+    "app/(app)/estudios/page.tsx",
+    "app/(app)/perfil/page.tsx",
     "components/inicio/MisServiciosShortcut.tsx",
     "components/layout/BottomNav.tsx",
     "components/notificaciones/PendingAttentionShortcut.tsx",
