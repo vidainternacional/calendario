@@ -26,6 +26,7 @@ export default function PendingAttentionShortcut() {
     pendingSolicitudesGestionables,
     pendingContactos,
     pendingPreguntasPastorales,
+    pendingAyudaSolidaria,
     pendingUsuariosAprobacion,
   } = usePendingIndicators()
   const [pageTarget, setPageTarget] = useState<AttentionTarget>(null)
@@ -177,6 +178,17 @@ export default function PendingAttentionShortcut() {
       })
     }
 
+    if (pendingAyudaSolidaria > 0) {
+      items.push({
+        key: 'ayuda-solidaria',
+        href: '/ayuda-solidaria',
+        label: 'Ayuda Solidaria',
+        detail: 'Solicitudes o aportes pendientes de revisión',
+        count: pendingAyudaSolidaria,
+        icon: ClipboardCheck,
+      })
+    }
+
     if (pendingPreguntasPastorales > 0) {
       items.push({
         key: 'preguntas-pastorales',
@@ -190,6 +202,7 @@ export default function PendingAttentionShortcut() {
 
     return items
   }, [
+    pendingAyudaSolidaria,
     pendingContactos,
     pendingMinisterioIngresos,
     pendingPreguntasPastorales,
