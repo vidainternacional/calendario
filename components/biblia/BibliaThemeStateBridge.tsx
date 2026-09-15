@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 type BibleTheme = 'claro' | 'sepia' | 'oscuro'
 
@@ -20,10 +20,18 @@ function aplicarTema(theme: BibleTheme) {
 }
 
 export default function BibliaThemeStateBridge() {
+  const ultimoTemaRef = useRef<BibleTheme | null>(null)
+
   useEffect(() => {
     const sincronizar = () => {
       const theme = detectarTema()
-      if (theme) aplicarTema(theme)
+      if (!theme) return
+
+      aplicarTema(theme)
+      if (ultimoTemaRef.current !== theme) {
+        ultimoTemaRef.current = theme
+        window.dispatchEvent(new CustomEvent('vida-biblia-theme', { detail: { modo: theme } }))
+      }
     }
 
     sincronizar()
