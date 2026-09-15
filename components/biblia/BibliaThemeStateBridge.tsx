@@ -53,6 +53,40 @@ export default function BibliaThemeStateBridge() {
   }, [])
 
   return <style>{`
+    .app-bottom-nav,
+    .app-bottom-nav * {
+      transition-property: none !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
+
+    html[data-biblia-tema='claro'] .app-bottom-nav {
+      background:#ffffff !important;
+      border-color:#e2e8f0 !important;
+      box-shadow:0 -4px 18px rgba(20,24,40,.08) !important;
+    }
+    html[data-biblia-tema='claro'] .app-bottom-nav a {
+      color:#64748b !important;
+    }
+
+    html[data-biblia-tema='sepia'] .app-bottom-nav {
+      background:#fffaf0 !important;
+      border-color:#dac8a5 !important;
+      box-shadow:0 -4px 18px rgba(73,60,45,.12) !important;
+    }
+    html[data-biblia-tema='sepia'] .app-bottom-nav a {
+      color:#7d6b54 !important;
+    }
+
+    html[data-biblia-tema='oscuro'] .app-bottom-nav {
+      background:#020617 !important;
+      border-color:#1e293b !important;
+      box-shadow:0 -4px 18px rgba(0,0,0,.35) !important;
+    }
+    html[data-biblia-tema='oscuro'] .app-bottom-nav a {
+      color:#94a3b8 !important;
+    }
+
     html[data-biblia-tema='claro'] article > div.relative > div[class*='shadow-lg'] {
       background:#ffffff !important;
       border-color:#e2e8f0 !important;
