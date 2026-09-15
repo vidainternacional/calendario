@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import AvisosClient from '@/components/avisos/AvisosClient'
+import AdminAvisosClient from '@/components/avisos/AdminAvisosClient'
 
 export const metadata: Metadata = {
   title: 'Gestión de avisos',
@@ -23,5 +23,8 @@ export default async function AdminAvisosPage() {
   const allowed = p?.rol === 'administrador' || p?.rol === 'pastor' || p?.es_pastor_general === true
   if (!allowed) redirect('/inicio')
 
-  return <AvisosClient userId={user.id} adminMode />
+  const esAdministrador = p?.rol === 'administrador'
+  const puedeRevisar = esAdministrador || p?.es_pastor_general === true
+
+  return <AdminAvisosClient userId={user.id} esAdministrador={esAdministrador} puedeRevisar={puedeRevisar} />
 }
