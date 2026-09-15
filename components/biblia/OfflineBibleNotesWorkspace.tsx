@@ -66,7 +66,7 @@ export default function OfflineBibleNotesWorkspace() {
   return (
     <>
       <OfflineNotesOwnerMarker userId={ownerId} />
-      <BibleNotesWorkspace userId={ownerId} />
+      <BibleNotesWorkspace userId={ownerId} modo="claro" />
     </>
   )
 }
