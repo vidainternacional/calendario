@@ -6,6 +6,7 @@ import { useUnreadPublicationsCount } from '@/components/avisos/usePublicationRe
 import { obtenerConteoSolicitudesGestionables } from '@/app/actions/centro-solicitudes-ministerio'
 
 export const PENDING_INDICATORS_EVENT = 'vida-pending-indicators-refresh'
+const SOLIDARITY_READ_EVENT = 'vida:solidarity-read'
 
 const PENDING_FRESH_WINDOW_MS = 1_200
 const PENDING_POLL_INTERVAL_MS = 30_000
@@ -124,19 +125,9 @@ async function refreshSharedPending(force = false) {
           .eq('estado', 'pendiente')
       : Promise.resolve({ count: 0, error: null })
 
-    const ayudaSolicitudesQuery = esGestorPastoral
-      ? (supabase as any)
-          .from('solicitudes_ayuda_solidaria')
-          .select('id', { count: 'exact', head: true })
-          .eq('estado', 'enviada')
-      : Promise.resolve({ count: 0, error: null })
-
-    const ayudaAportesQuery = esGestorPastoral
-      ? (supabase as any)
-          .from('aportes_ayuda_solidaria')
-          .select('id', { count: 'exact', head: true })
-          .eq('estado', 'ofrecido')
-      : Promise.resolve({ count: 0, error: null })
+    const ayudaSolidariaQuery = esGestorPastoral
+      ? (supabase as any).rpc('ayuda_solidaria_no_leidos')
+      : Promise.resolve({ data: [], error: null })
 
     const usuariosPendientesQuery = esAdministrador
       ? (supabase as any)
@@ -151,8 +142,7 @@ async function refreshSharedPending(force = false) {
       solicitudesGestionables,
       contactosReq,
       preguntasReq,
-      ayudaSolicitudesReq,
-      ayudaAportesReq,
+      ayudaSolidariaReq,
       usuariosPendientesReq,
     ] = await Promise.all([
       leadershipQuery,
@@ -172,8 +162,7 @@ async function refreshSharedPending(force = false) {
         .eq('destinatario_id', user.id)
         .eq('estado', 'pendiente'),
       preguntasQuery,
-      ayudaSolicitudesQuery,
-      ayudaAportesQuery,
+      ayudaSolidariaQuery,
       usuariosPendientesQuery,
     ])
 
@@ -214,11 +203,13 @@ async function refreshSharedPending(force = false) {
       nextPreguntasPastorales = Math.max(0, Number(preguntasReq.count || 0))
     }
 
-    if (ayudaSolicitudesReq.error || ayudaAportesReq.error) {
-      console.error('No se pudieron cargar los pendientes de Ayuda Solidaria', ayudaSolicitudesReq.error || ayudaAportesReq.error)
+    if (ayudaSolidariaReq.error) {
+      console.error('No se pudieron cargar los pendientes de Ayuda Solidaria', ayudaSolidariaReq.error)
     } else {
-      nextAyudaSolidaria = Math.max(0, Number(ayudaSolicitudesReq.count || 0))
-        + Math.max(0, Number(ayudaAportesReq.count || 0))
+      nextAyudaSolidaria = (ayudaSolidariaReq.data || []).reduce(
+        (total: number, row: any) => total + Math.max(0, Number(row?.no_leidos || 0)),
+        0,
+      )
     }
 
     if (usuariosPendientesReq.error) {
@@ -273,6 +264,7 @@ function ensurePendingLifecycle() {
   window.addEventListener('focus', handleFocus)
   window.addEventListener('online', handleOnline)
   window.addEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
+  window.addEventListener(SOLIDARITY_READ_EVENT, handleExplicitRefresh)
   document.addEventListener('visibilitychange', handleVisibility)
 
   pendingLifecycleCleanup = () => {
@@ -280,6 +272,7 @@ function ensurePendingLifecycle() {
     window.removeEventListener('focus', handleFocus)
     window.removeEventListener('online', handleOnline)
     window.removeEventListener(PENDING_INDICATORS_EVENT, handleExplicitRefresh)
+    window.removeEventListener(SOLIDARITY_READ_EVENT, handleExplicitRefresh)
     document.removeEventListener('visibilitychange', handleVisibility)
   }
 }
