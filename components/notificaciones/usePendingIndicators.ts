@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useUnreadPublicationsCount } from '@/components/avisos/usePublicationReads'
 import { obtenerConteoSolicitudesGestionables } from '@/app/actions/centro-solicitudes-ministerio'
@@ -34,7 +34,6 @@ let pendingRefreshPromise: Promise<void> | null = null
 let pendingForceRefreshQueued = false
 let pendingLastRefreshAt = 0
 let pendingLifecycleCleanup: (() => void) | null = null
-let lastAppliedAppBadge: number | null = null
 const pendingSubscribers = new Set<() => void>()
 
 function publishPendingSnapshot(next: PendingSnapshot) {
@@ -283,26 +282,6 @@ function getPendingServerSnapshot() {
   return EMPTY_PENDING_SNAPSHOT
 }
 
-function applyAppBadge(total: number) {
-  if (typeof navigator === 'undefined' || lastAppliedAppBadge === total) return
-  lastAppliedAppBadge = total
-
-  const badgeNavigator = navigator as Navigator & {
-    setAppBadge?: (value?: number) => Promise<void>
-    clearAppBadge?: () => Promise<void>
-  }
-
-  if (total > 0 && badgeNavigator.setAppBadge) {
-    void badgeNavigator.setAppBadge(total).catch(() => {
-      lastAppliedAppBadge = null
-    })
-  } else if (total === 0 && badgeNavigator.clearAppBadge) {
-    void badgeNavigator.clearAppBadge().catch(() => {
-      lastAppliedAppBadge = null
-    })
-  }
-}
-
 export function requestPendingIndicatorsRefresh() {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new Event(PENDING_INDICATORS_EVENT))
@@ -327,10 +306,6 @@ export function usePendingIndicators() {
     + Math.max(0, pendingContactos)
     + Math.max(0, pendingPreguntasPastorales)
     + Math.max(0, pendingAyudaSolidaria)
-
-  useEffect(() => {
-    applyAppBadge(total)
-  }, [total])
 
   return {
     unreadAvisos,
