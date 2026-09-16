@@ -61,8 +61,8 @@ export default function BottomNav() {
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
-  const { unreadAvisos } = usePendingIndicators()
-  const avisosRequierenAtencion = Math.max(0, unreadAvisos)
+  const { total } = usePendingIndicators()
+  const avisosRequierenAtencion = Math.max(0, total)
 
   useEffect(() => setPortalReady(true), [])
 
