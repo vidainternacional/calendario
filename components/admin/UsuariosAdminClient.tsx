@@ -24,6 +24,7 @@ export default function UsuariosAdminClient({
   const [filtroRol, setFiltroRol] = useState('todos')
   const [editingUser, setEditingUser] = useState<any | null>(null)
   const [error, setError] = useState('')
+  const newestUserId = usuarios[0]?.id || null
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
@@ -48,7 +49,7 @@ export default function UsuariosAdminClient({
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre o correo" className="h-12 w-full rounded-2xl bg-slate-50 pl-10 pr-4 text-sm outline-none ring-1 ring-slate-100 focus:ring-indigo-300" />
           </div>
-          <div className="mt-3 grid grid-cols-5 gap-2">
+          <div className="mt-3 grid grid-cols-2 gap-2 min-[520px]:grid-cols-5">
             {['todos','servidor','lider','pastor','administrador'].map((rol) => (
               <button key={rol} type="button" onClick={() => setFiltroRol(rol)} className={`min-h-10 rounded-xl px-2 text-[11px] font-bold capitalize ${filtroRol === rol ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-500'}`}>{rol === 'todos' ? 'Todos' : rol}</button>
             ))}
@@ -61,6 +62,7 @@ export default function UsuariosAdminClient({
           {filtrados.map((usuario) => {
             const memberships = Array.isArray(usuario.ministerio_miembros) ? usuario.ministerio_miembros : usuario.ministerio_miembros ? [usuario.ministerio_miembros] : []
             const liderazgos = memberships.filter((m: any) => m.es_lider).length
+            const esMasReciente = usuario.id === newestUserId
             return (
               <article key={usuario.id} className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
                 <div className="flex items-start gap-3">
@@ -76,6 +78,7 @@ export default function UsuariosAdminClient({
                       <button type="button" onClick={() => setEditingUser(usuario)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600" aria-label="Gestionar usuario"><UserCog className="h-4.5 w-4.5" /></button>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
+                      {esMasReciente && <span className="rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-extrabold text-white">Nuevo</span>}
                       <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold capitalize text-indigo-600">{usuario.rol}</span>
                       <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${usuario.estado_cuenta === 'suspendido' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>{usuario.estado_cuenta || 'activo'}</span>
                       {usuario.push_activo && <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-600"><BellRing className="h-3 w-3" />Push</span>}

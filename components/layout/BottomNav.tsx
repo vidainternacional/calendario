@@ -5,7 +5,7 @@ import { useEffect, useState, type SVGProps } from 'react'
 import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Megaphone, User, BookOpen } from 'lucide-react'
-import { usePendingIndicators } from '@/components/notificaciones/usePendingIndicators'
+import { useAttentionBadgeCount } from '@/components/notificaciones/useAttentionBadgeCount'
 
 const PREF_KEY = 'vida-biblia-preferencias'
 type ModoBiblia = 'claro' | 'sepia' | 'oscuro'
@@ -61,8 +61,7 @@ export default function BottomNav() {
   const [modo, setModo] = useState<ModoBiblia>('claro')
   const [portalReady, setPortalReady] = useState(false)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
-  const { total } = usePendingIndicators()
-  const avisosRequierenAtencion = Math.max(0, total)
+  const avisosRequierenAtencion = useAttentionBadgeCount()
 
   useEffect(() => setPortalReady(true), [])
 

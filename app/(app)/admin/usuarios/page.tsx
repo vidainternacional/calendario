@@ -24,7 +24,7 @@ export default async function AdminUsuariosPage() {
     { data: responsabilidades },
     { data: responsabilidadAsignaciones },
   ] = await Promise.all([
-    supabase.from('profiles').select(`id,nombre_completo,email,telefono,avatar_url,rol,activo,estado_cuenta,created_at,es_pastor_general,fecha_nacimiento,ministerio_miembros(ministerio_id,es_lider,ministerios(nombre,color_primario))`).order('nombre_completo'),
+    supabase.from('profiles').select(`id,nombre_completo,email,telefono,avatar_url,rol,activo,estado_cuenta,created_at,es_pastor_general,fecha_nacimiento,ministerio_miembros(ministerio_id,es_lider,ministerios(nombre,color_primario))`).order('created_at', { ascending: false }),
     supabase.from('ministerios').select('*').order('orden', { ascending: true }),
     service.from('push_subscriptions').select('profile_id'),
     service.from('pilot_usage_events').select('profile_id,occurred_at').order('occurred_at', { ascending: false }).limit(5000),
