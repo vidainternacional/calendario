@@ -47,7 +47,7 @@ export default function UsuariosAdminClient({
         <div className="rounded-[22px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre o correo" className="h-12 w-full rounded-2xl bg-slate-50 pl-10 pr-4 text-sm outline-none ring-1 ring-slate-100 focus:ring-indigo-300" />
+            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre o correo" className="h-12 w-full rounded-2xl bg-slate-50 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 outline-none ring-1 ring-slate-100 focus:ring-indigo-300" />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 min-[520px]:grid-cols-5">
             {['todos','servidor','lider','pastor','administrador'].map((rol) => (
