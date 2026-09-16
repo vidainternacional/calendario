@@ -12,7 +12,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { usePendingIndicators } from '@/components/notificaciones/usePendingIndicators'
+import { useAttentionBadges } from '@/components/notificaciones/useAttentionBadgeCount'
 
 type Rol = 'administrador' | 'pastor' | 'lider' | 'servidor' | null
 
@@ -27,7 +27,7 @@ export default function PendingAttentionShortcut() {
     pendingContactos,
     pendingPreguntasPastorales,
     pendingAyudaSolidaria,
-  } = usePendingIndicators()
+  } = useAttentionBadges()
   const [pageTarget, setPageTarget] = useState<AttentionTarget>(null)
   const [previewTarget, setPreviewTarget] = useState<AttentionTarget>(null)
   const [rol, setRol] = useState<Rol>(null)

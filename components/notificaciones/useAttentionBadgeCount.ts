@@ -92,7 +92,7 @@ function applyBadge(total: number) {
   }
 }
 
-export function useAttentionBadgeCount() {
+export function useAttentionBadges() {
   const pathname = usePathname()
   const {
     unreadAvisos,
@@ -124,6 +124,7 @@ export function useAttentionBadgeCount() {
 
   const [userId, setUserId] = useState<string | null>(null)
   const [seen, setSeen] = useState<BadgeCounts>({ ...EMPTY_COUNTS })
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -146,13 +147,15 @@ export function useAttentionBadgeCount() {
   useEffect(() => {
     if (!userId) {
       setSeen({ ...EMPTY_COUNTS })
+      setLoadedUserId(null)
       return
     }
     setSeen(readSeen(userId))
+    setLoadedUserId(userId)
   }, [userId])
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId || loadedUserId !== userId) return
 
     const destination = destinationFor(pathname)
     setSeen((current) => {
@@ -168,16 +171,32 @@ export function useAttentionBadgeCount() {
       writeSeen(userId, next)
       return next
     })
-  }, [pathname, rawCounts, userId])
+  }, [loadedUserId, pathname, rawCounts, userId])
 
-  const total = useMemo(() => {
-    if (!userId) return KEYS.reduce((sum, key) => sum + rawCounts[key], 0)
-    return KEYS.reduce((sum, key) => sum + Math.max(0, rawCounts[key] - seen[key]), 0)
-  }, [rawCounts, seen, userId])
+  const attention = useMemo<BadgeCounts>(() => {
+    if (!userId || loadedUserId !== userId) return { ...EMPTY_COUNTS }
+    return KEYS.reduce((acc, key) => {
+      acc[key] = Math.max(0, rawCounts[key] - seen[key])
+      return acc
+    }, { ...EMPTY_COUNTS })
+  }, [loadedUserId, rawCounts, seen, userId])
+
+  const total = useMemo(
+    () => KEYS.reduce((sum, key) => sum + attention[key], 0),
+    [attention],
+  )
 
   useEffect(() => {
+    if (loadedUserId !== userId) return
     applyBadge(total)
-  }, [total])
+  }, [loadedUserId, total, userId])
 
-  return total
+  return {
+    ...attention,
+    total,
+  }
+}
+
+export function useAttentionBadgeCount() {
+  return useAttentionBadges().total
 }
