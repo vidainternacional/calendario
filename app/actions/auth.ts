@@ -42,7 +42,7 @@ export async function login(
       .eq('id', authData.user.id)
       .single()
 
-    if (profile && profile.estado_cuenta !== 'activo') {
+    if (profile && ['suspendido', 'rechazado'].includes(profile.estado_cuenta)) {
       redirect('/pendiente')
     }
   }
@@ -85,13 +85,13 @@ export async function signup(
     return { error: error.message }
   }
 
-  // Si Supabase entrega sesión inmediata, la cuenta ya está activa y entra a VIDA.
+  // Si Supabase entrega sesión inmediata, la cuenta entra directamente a VIDA.
   if (data.session) {
     redirect('/inicio')
   }
 
-  // La confirmación de correo puede seguir activa en Supabase, pero ya no existe
-  // una segunda aprobación manual por parte de Administración.
+  // Si la confirmación de correo está activa en Supabase, esa verificación puede
+  // seguir siendo necesaria; no existe una segunda aprobación manual de Administración.
   return {
     success: '¡Cuenta creada! Revisa tu correo para confirmar tu dirección. Después podrás entrar directamente a VIDA Internacional.',
   }

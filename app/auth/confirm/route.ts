@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) {
       if (type === 'recovery') return redirigir(next || '/restablecer')
-      return redirigir('/pendiente') // cuenta confirmada → sala de espera (o /inicio si ya está activa)
+      return redirigir('/inicio')
     }
   }
   return redirigir('/login?error=enlace')

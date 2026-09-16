@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LogoutButton from '@/components/auth/LogoutButton'
-import { Clock, ShieldAlert, XCircle } from 'lucide-react'
+import { ShieldAlert, XCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Cuenta en revisión',
+  title: 'Acceso restringido',
 }
 
 export const dynamic = 'force-dynamic'
@@ -23,18 +23,12 @@ export default async function PendientePage() {
     .eq('id', user.id)
     .single()
 
-  const estado: string = profile?.estado_cuenta ?? 'pendiente'
+  const estado: string = profile?.estado_cuenta ?? 'activo'
 
-  // Si ya está activo, no tiene nada que hacer aquí
-  if (estado === 'activo') redirect('/inicio')
+  // Las cuentas normales, incluidas las heredadas como "pendiente", entran directamente a VIDA.
+  if (estado !== 'suspendido' && estado !== 'rechazado') redirect('/inicio')
 
   const vistas: Record<string, { icono: React.ReactNode; titulo: string; texto: string; color: string }> = {
-    pendiente: {
-      icono: <Clock className="w-8 h-8 text-amber-500" />,
-      titulo: 'Tu cuenta está en revisión',
-      texto: 'Un líder o administrador de Vida Internacional debe aprobar tu cuenta antes de que puedas entrar. Te avisaremos en cuanto esté lista. Normalmente toma menos de un día.',
-      color: 'bg-amber-50 border-amber-100',
-    },
     suspendido: {
       icono: <ShieldAlert className="w-8 h-8 text-rose-500" />,
       titulo: 'Tu cuenta está suspendida',
@@ -43,13 +37,13 @@ export default async function PendientePage() {
     },
     rechazado: {
       icono: <XCircle className="w-8 h-8 text-slate-400" />,
-      titulo: 'Solicitud no aprobada',
-      texto: 'Tu solicitud de cuenta no fue aprobada. Si crees que es un error, comunícate directamente con la administración de Vida Internacional.',
+      titulo: 'Acceso restringido',
+      texto: 'Esta cuenta no tiene acceso a VIDA Internacional. Si crees que es un error, comunícate directamente con la administración de la iglesia.',
       color: 'bg-slate-50 border-slate-200',
     },
   }
 
-  const v = vistas[estado] ?? vistas.pendiente
+  const v = vistas[estado] ?? vistas.suspendido
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#f4f5f9] px-4">

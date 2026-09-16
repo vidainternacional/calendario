@@ -50,10 +50,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // ── Guardia de estado de cuenta ──────────────────────────────
-  // Usuarios no-activos (pendiente/suspendido/rechazado) solo
-  // pueden ver /pendiente. Usuarios activos no tienen nada que
-  // hacer en /pendiente.
+  // Solo cuentas expresamente suspendidas o rechazadas pierden acceso general.
+  // El estado "pendiente" ya no requiere aprobación administrativa para entrar a VIDA.
   if (user && !isPublicRoute) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -61,15 +59,16 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single<{ estado_cuenta: string }>()
 
-    const estado = profile?.estado_cuenta ?? 'pendiente'
+    const estado = profile?.estado_cuenta ?? 'activo'
+    const accesoRestringido = estado === 'suspendido' || estado === 'rechazado'
 
-    if (estado !== 'activo' && pathname !== '/pendiente') {
+    if (accesoRestringido && pathname !== '/pendiente') {
       const url = request.nextUrl.clone()
       url.pathname = '/pendiente'
       return NextResponse.redirect(url)
     }
 
-    if (estado === 'activo' && pathname === '/pendiente') {
+    if (!accesoRestringido && pathname === '/pendiente') {
       const url = request.nextUrl.clone()
       url.pathname = '/inicio'
       return NextResponse.redirect(url)
