@@ -1,31 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { notifyMultipleUsers } from '@/lib/webpush'
-import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import { contextoPastoral } from '@/lib/auth/permisos'
 
 const AUDIENCIAS = ['iglesia', 'lideres', 'servidores', 'publico'] as const
 
 type Audiencia = (typeof AUDIENCIAS)[number]
 
-async function contextoPastoral() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-
-  const { data: profile } = await (supabase as any)
-    .from('profiles')
-    .select('rol, estado_cuenta, acceso_centro_pastoral')
-    .eq('id', user.id)
-    .single()
-
-  if (!tieneAccesoPastoral(profile as any)) {
-    return { supabase, user, error: 'No tienes permiso para publicar paquetes pastorales.' }
-  }
-
-  return { supabase, user, error: null }
-}
 
 function audienciaValida(valor: string): Audiencia {
   return AUDIENCIAS.includes(valor as Audiencia) ? valor as Audiencia : 'iglesia'
@@ -62,7 +45,7 @@ export async function actualizarDistribucionPaquete(
   publicado: boolean,
   destacado = false,
 ) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para publicar paquetes pastorales.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const audienciaFinal = audienciaValida(audiencia)
