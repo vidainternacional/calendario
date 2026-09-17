@@ -1,11 +1,20 @@
 import webpush from 'web-push'
 import { createServiceClient } from '@/lib/supabase/service'
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+// Configurar solo al enviar: una llave ausente o inválida no rompe la acción principal.
+function configurarVapid(): boolean {
+  const subject = process.env.VAPID_SUBJECT
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  if (!subject || !publicKey || !privateKey) return false
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey)
+    return true
+  } catch {
+    console.error('[webpush] Configuración VAPID inválida; se omitió el envío.')
+    return false
+  }
+}
 
 export interface PushPayload {
   title: string
@@ -33,6 +42,7 @@ export async function sendPushNotification(
   subscription: PushSubscriptionData,
   payload: PushPayload
 ): Promise<{ success: boolean; expired: boolean; statusCode?: number }> {
+  if (!configurarVapid()) return { success: false, expired: false }
   const sub: webpush.PushSubscription = {
     endpoint: subscription.endpoint,
     keys: {
@@ -78,6 +88,7 @@ export async function notifyUser(
   profileId: string,
   payload: PushPayload
 ): Promise<number> {
+  if (!configurarVapid()) return 0
   const service = createServiceClient()
   const { data: subs, error } = await service
     .from('push_subscriptions')
@@ -115,6 +126,7 @@ export async function notifyMultipleUsers(
   profileIds: string[],
   payload: PushPayload
 ): Promise<number> {
+  if (!configurarVapid()) return 0
   const uniqueProfileIds = [...new Set(profileIds.filter(Boolean))]
   if (!uniqueProfileIds.length) return 0
 
@@ -160,6 +172,7 @@ export async function notifyUsersOnceByReference(
   payload: PushPayload,
   reference: NotifyOnceReference,
 ): Promise<{ users: number; devices: number }> {
+  if (!configurarVapid()) return { users: 0, devices: 0 }
   const uniqueProfileIds = [...new Set(profileIds.filter(Boolean))]
   if (!uniqueProfileIds.length) return { users: 0, devices: 0 }
 
