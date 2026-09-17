@@ -99,7 +99,25 @@ export async function eliminarContacto(id: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from('contactos').delete().eq('id', id)
+  const db = supabase as any
+  const { data: contacto, error: lookupError } = await db
+    .from('contactos')
+    .select('solicitante_id, destinatario_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (lookupError || !contacto || (contacto.solicitante_id !== user.id && contacto.destinatario_id !== user.id)) {
+    return { error: 'Contacto no encontrado o sin permiso para eliminarlo.' }
+  }
+
+  const { data: eliminado, error } = await db
+    .from('contactos')
+    .delete()
+    .eq('id', id)
+    .or(`solicitante_id.eq.${user.id},destinatario_id.eq.${user.id}`)
+    .select('id')
+    .maybeSingle()
+  if (error || !eliminado) return { error: 'No se pudo eliminar el contacto.' }
   revalidatePath('/contactos')
   return { success: true }
 }
