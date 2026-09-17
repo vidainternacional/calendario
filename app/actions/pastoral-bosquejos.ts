@@ -1,28 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import { contextoPastoral } from '@/lib/auth/permisos'
 
 type PuntoBosquejo = { titulo: string; contenido: string }
 
-async function contextoPastoral() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-
-  const { data: profile } = await (supabase as any)
-    .from('profiles')
-    .select('rol, estado_cuenta, acceso_centro_pastoral')
-    .eq('id', user.id)
-    .single()
-
-  if (!tieneAccesoPastoral(profile as any)) {
-    return { supabase, user, error: 'No tienes permiso para administrar bosquejos.' }
-  }
-
-  return { supabase, user, error: null }
-}
 
 function texto(formData: FormData, campo: string, maximo: number) {
   return String(formData.get(campo) ?? '').trim().slice(0, maximo)
@@ -42,7 +24,7 @@ function puntosDesdeFormulario(formData: FormData): PuntoBosquejo[] {
 }
 
 export async function crearBosquejoPastoral(formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar bosquejos.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const titulo = texto(formData, 'titulo', 120)
@@ -72,7 +54,7 @@ export async function crearBosquejoPastoral(formData: FormData) {
 }
 
 export async function editarBosquejoPastoral(id: string, formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar bosquejos.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const titulo = texto(formData, 'titulo', 120)
@@ -107,7 +89,7 @@ export async function editarBosquejoPastoral(id: string, formData: FormData) {
 }
 
 export async function eliminarBosquejoPastoral(id: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar bosquejos.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const { error: deleteError } = await (supabase as any)

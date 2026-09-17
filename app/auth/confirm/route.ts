@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { EmailOtpType } from '@supabase/supabase-js'
+import { destinoSeguro } from '@/lib/auth/destino-seguro'
 
 /** Procesa los enlaces de los correos (confirmar cuenta / recuperar contraseña). */
 export async function GET(request: NextRequest) {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) {
-      if (type === 'recovery') return redirigir(next || '/restablecer')
+      if (type === 'recovery') return redirigir(destinoSeguro(next))
       return redirigir('/inicio')
     }
   }

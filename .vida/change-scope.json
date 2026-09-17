@@ -1,9 +1,21 @@
 {
-  "task": "Integrar check-in real de asistencia en Perfil",
-  "userRequest": "El usuario aprobó que la tarjeta de ubicación del Perfil deje de prometer un check-in automático en segundo plano y se convierta en un acceso real al check-in existente: primero permite autorizar ubicación una sola vez; cuando hay un servicio o actividad con asistencia abierta muestra Hacer check-in ahora usando el mismo flujo GPS y RPC existente; después muestra Llegada confirmada; y cuando no hay actividad disponible muestra Listo para tu próximo check-in. Deben mantenerse la privacidad, el pin, el escudo verde, el estilo visual existente y no tocar Discipulado, Paquetes, asistencia pastoral, notificaciones ni Supabase.",
+  "task": "Correcciones de seguridad verificadas sobre main",
+  "userRequest": "2026-09-16: validar y corregir redirección recovery, autorización de acciones indicadas, aislamiento VAPID y consolidación del contexto pastoral. Cada corrección en commit con tsc y build; publicar rama y abrir PR a main sin merge ni producción. No cambiar Supabase, tipos database.ts, lint, badges ni maestro.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "components/perfil/UbicacionVidaCard.tsx"
+    "app/auth/confirm/route.ts",
+    "lib/auth/destino-seguro.ts",
+    "lib/auth/permisos.ts",
+    "app/actions/ministerios.ts",
+    "app/actions/contactos.ts",
+    "app/actions/pastoral.ts",
+    "app/actions/pastoral-bosquejos.ts",
+    "app/actions/pastoral-biblioteca.ts",
+    "app/actions/pastoral-paquetes.ts",
+    "app/actions/pastoral-proyecto-versiculos.ts",
+    "app/actions/pastoral-distribucion.ts",
+    "lib/webpush.ts",
+    "tests/regression/seguridad-real*.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

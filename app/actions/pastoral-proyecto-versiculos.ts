@@ -1,8 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import { contextoPastoral } from '@/lib/auth/permisos'
 
 type VersiculoProyecto = {
   id: string
@@ -16,23 +15,6 @@ function uuidValido(valor: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(valor)
 }
 
-async function contextoPastoral() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-
-  const { data: profile } = await (supabase as any)
-    .from('profiles')
-    .select('rol, estado_cuenta, acceso_centro_pastoral')
-    .eq('id', user.id)
-    .single()
-
-  if (!tieneAccesoPastoral(profile as any)) {
-    return { supabase, user, error: 'No tienes permiso para administrar este proyecto pastoral.' }
-  }
-
-  return { supabase, user, error: null }
-}
 
 function datosVersiculo(formData: FormData) {
   const libroNombre = String(formData.get('libro_nombre') ?? '').trim()
@@ -68,7 +50,7 @@ async function obtenerPaquete(supabase: any, profileId: string, paqueteId: strin
 }
 
 export async function obtenerVersiculosDelProyecto(paqueteId: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar este proyecto pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.', versiculos: [] as VersiculoProyecto[] }
 
   const paquete = await obtenerPaquete(supabase as any, user.id, paqueteId)
@@ -87,7 +69,7 @@ export async function obtenerVersiculosDelProyecto(paqueteId: string) {
 }
 
 export async function agregarVersiculoAlProyecto(paqueteId: string, formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar este proyecto pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const datos = datosVersiculo(formData)
@@ -152,7 +134,7 @@ export async function agregarVersiculoAlProyecto(paqueteId: string, formData: Fo
 }
 
 export async function eliminarVersiculoDelProyecto(paqueteId: string, versiculoId: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar este proyecto pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   if (!uuidValido(versiculoId)) return { success: false, error: 'No se pudo identificar el versículo.' }
 

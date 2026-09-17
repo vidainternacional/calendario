@@ -1,8 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import { contextoPastoral } from '@/lib/auth/permisos'
 
 type Plantilla = 'limpia' | 'titulo' | 'imagen' | 'versiculo'
 type Alineacion = 'izquierda' | 'centro' | 'derecha' | 'justificado'
@@ -72,14 +71,6 @@ const FUENTES = new Set([
 ])
 const TEMAS = new Set<TemaFondo>(['claro', 'amanecer', 'cielo', 'bosque', 'noche', 'vino'])
 
-async function contextoPastoral() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-  const { data: profile } = await (supabase as any).from('profiles').select('rol, estado_cuenta, acceso_centro_pastoral').eq('id', user.id).single()
-  if (!tieneAccesoPastoral(profile as any)) return { supabase, user, error: 'No tienes permiso para administrar proyectos pastorales.' }
-  return { supabase, user, error: null }
-}
 
 function texto(formData: FormData, campo: string, maximo: number) { return String(formData.get(campo) ?? '').trim().slice(0, maximo) }
 function uuidOpcional(valor: FormDataEntryValue | null) { const value = String(valor ?? '').trim(); return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value) ? value : null }
@@ -188,7 +179,7 @@ function diapositivasDesdeFormulario(formData: FormData): Diapositiva[] {
 }
 
 export async function listarPaquetesPastoralesParaNotas() {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar proyectos pastorales.')
   if (error || !user) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error }
   const { data, error: queryError } = await (supabase as any).from('pastoral_paquetes').select('id, titulo').eq('profile_id', user.id).order('updated_at', { ascending: false }).limit(50)
   if (queryError) return { success: false as const, paquetes: [] as Array<{ id: string; titulo: string }>, error: 'No se pudieron cargar los proyectos.' }
@@ -196,7 +187,7 @@ export async function listarPaquetesPastoralesParaNotas() {
 }
 
 export async function crearPaquetePastoral(formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar proyectos pastorales.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const titulo = texto(formData, 'titulo', 140)
   if (!titulo) return { success: false, error: 'Escribe un título para el proyecto.' }
@@ -209,7 +200,7 @@ export async function crearPaquetePastoral(formData: FormData) {
 }
 
 export async function editarPaquetePastoral(id: string, formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar proyectos pastorales.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const titulo = texto(formData, 'titulo', 140)
   if (!titulo) return { success: false, error: 'El título es obligatorio.' }
@@ -222,7 +213,7 @@ export async function editarPaquetePastoral(id: string, formData: FormData) {
 }
 
 export async function eliminarPaquetePastoral(id: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar proyectos pastorales.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
   const { error: deleteError } = await (supabase as any).from('pastoral_paquetes').delete().eq('id', id).eq('profile_id', user.id)
   if (deleteError) return { success: false, error: 'No se pudo eliminar el proyecto pastoral.' }

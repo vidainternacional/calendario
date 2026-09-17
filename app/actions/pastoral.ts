@@ -1,36 +1,18 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import { contextoPastoral } from '@/lib/auth/permisos'
 
 const COLORES = ['indigo', 'violet', 'amber', 'emerald', 'rose', 'sky'] as const
 export type ColorColeccion = typeof COLORES[number]
 
-async function contextoPastoral() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-
-  const { data: profile } = await (supabase as any)
-    .from('profiles')
-    .select('rol, estado_cuenta, acceso_centro_pastoral')
-    .eq('id', user.id)
-    .single()
-
-  if (!tieneAccesoPastoral(profile as any)) {
-    return { supabase, user, error: 'No tienes permiso para administrar contenido pastoral.' }
-  }
-
-  return { supabase, user, error: null }
-}
 
 function colorValido(valor: string): ColorColeccion {
   return COLORES.includes(valor as ColorColeccion) ? valor as ColorColeccion : 'indigo'
 }
 
 export async function crearColeccionPastoral(formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar contenido pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const nombre = String(formData.get('nombre') ?? '').trim()
@@ -56,7 +38,7 @@ export async function crearColeccionPastoral(formData: FormData) {
 }
 
 export async function editarColeccionPastoral(id: string, formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar contenido pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const nombre = String(formData.get('nombre') ?? '').trim()
@@ -81,7 +63,7 @@ export async function editarColeccionPastoral(id: string, formData: FormData) {
 }
 
 export async function agregarVersiculoPastoral(coleccionId: string, formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar contenido pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const libroNombre = String(formData.get('libro_nombre') ?? '').trim()
@@ -137,7 +119,7 @@ export async function agregarVersiculoPastoral(coleccionId: string, formData: Fo
 }
 
 export async function eliminarVersiculoPastoral(id: string, coleccionId: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar contenido pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const { error: deleteError } = await (supabase as any)
@@ -155,7 +137,7 @@ export async function eliminarVersiculoPastoral(id: string, coleccionId: string)
 }
 
 export async function eliminarColeccionPastoral(id: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar contenido pastoral.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const { error: deleteError } = await (supabase as any)

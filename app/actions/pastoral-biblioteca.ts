@@ -1,29 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { tieneAccesoPastoral } from '@/lib/pastoral/access'
+import { contextoPastoral } from '@/lib/auth/permisos'
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024
 const categorias = ['predica', 'estudio', 'liderazgo', 'consejeria', 'multimedia', 'administrativo', 'otro']
 
-async function contextoPastoral() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { supabase, user: null, error: 'Tu sesión expiró.' }
-
-  const { data: profile } = await (supabase as any)
-    .from('profiles')
-    .select('rol, estado_cuenta, acceso_centro_pastoral')
-    .eq('id', user.id)
-    .single()
-
-  if (!tieneAccesoPastoral(profile as any)) {
-    return { supabase, user, error: 'No tienes permiso para administrar la biblioteca.' }
-  }
-
-  return { supabase, user, error: null }
-}
 
 function texto(formData: FormData, campo: string, maximo: number) {
   return String(formData.get(campo) ?? '').trim().slice(0, maximo)
@@ -74,7 +56,7 @@ async function adjuntarAlPaquete(supabase: any, profileId: string, paqueteId: st
 }
 
 export async function crearEnlaceBibliotecaPastoral(formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar la biblioteca.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const titulo = texto(formData, 'titulo', 140)
@@ -104,7 +86,7 @@ export async function crearEnlaceBibliotecaPastoral(formData: FormData) {
 }
 
 export async function subirArchivoBibliotecaPastoral(formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar la biblioteca.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const titulo = texto(formData, 'titulo', 140)
@@ -151,7 +133,7 @@ export async function subirArchivoBibliotecaPastoral(formData: FormData) {
 }
 
 export async function editarRecursoBibliotecaPastoral(id: string, formData: FormData) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar la biblioteca.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const titulo = texto(formData, 'titulo', 140)
@@ -192,7 +174,7 @@ export async function editarRecursoBibliotecaPastoral(id: string, formData: Form
 }
 
 export async function eliminarRecursoBibliotecaPastoral(id: string) {
-  const { supabase, user, error } = await contextoPastoral()
+  const { supabase, user, error } = await contextoPastoral('No tienes permiso para administrar la biblioteca.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
   const { data: recurso } = await (supabase as any)
