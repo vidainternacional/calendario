@@ -1,11 +1,9 @@
 {
-  "task": "Permitir gestión de paleta asignada desde cualquier evento preparado de Alabanza",
-  "userRequest": "2026-09-17: únicamente corregir que la persona con responsabilidad paleta_colores en Alabanza pueda acceder desde cualquier evento preparado y modificar su paleta existente, sin tocar equipo, repertorio, roles, Supabase, RLS, datos ni otras funciones.",
+  "task": "Forzar actualización del caché PWA de producción",
+  "userRequest": "2026-09-18: renovar únicamente la versión del caché del Service Worker para que producción descarte la copia vieja y cargue el código actual de gestión de paleta. No tocar Alabanza, paletas, permisos, usuarios, Supabase ni ninguna otra sección.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "app/actions/equipo-evento-visible.ts",
-    "components/calendario/CalendarioEventDetail.tsx",
-    "tests/regression/paleta-responsabilidad-acceso.test.mjs"
+    "public/sw.js"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
