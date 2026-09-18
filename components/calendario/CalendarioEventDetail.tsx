@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -65,6 +66,17 @@ function estadoClasses(estado: EstadoEquipoEvento) {
   if (estado === 'confirmado') return 'bg-emerald-50 text-emerald-700 ring-emerald-100'
   if (estado === 'no_disponible') return 'bg-rose-50 text-rose-700 ring-rose-100'
   return 'bg-amber-50 text-amber-700 ring-amber-100'
+}
+
+function mesSV(value: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/El_Salvador',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date(value))
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  return `${year}-${month}`
 }
 
 function PanelButton({ icon: Icon, label, active, tone, badge, onClick }: PanelButtonProps) {
@@ -422,9 +434,19 @@ export default function CalendarioEventDetail({
 
                   {panelAbierto === 'paleta' && (
                     <div className="overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-100">
-                      <div className="border-b border-slate-100 px-4 py-3">
-                        <p className="text-[12px] font-extrabold text-slate-800">Paleta de colores</p>
-                        <p className="mt-0.5 text-[9px] text-slate-400">Referencia visual y observaciones para este servicio.</p>
+                      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[12px] font-extrabold text-slate-800">Paleta de colores</span>
+                          <span className="mt-0.5 block text-[9px] text-slate-400">Referencia visual y observaciones para este servicio.</span>
+                        </span>
+                        {equipoVisible.paletaGestionMinisterioId && (
+                          <Link
+                            href={`/ministerios/${equipoVisible.paletaGestionMinisterioId}/programacion?mes=${mesSV(event.fecha_inicio)}&evento=${event.id}#servicio-activo`}
+                            className="shrink-0 rounded-full bg-amber-500 px-3 py-2 text-[9px] font-extrabold text-white shadow-sm"
+                          >
+                            Gestionar paleta
+                          </Link>
+                        )}
                       </div>
                       {equipoVisible.paletas.length === 0 ? (
                         <p className="px-4 py-6 text-center text-xs text-slate-400">Todavía no hay una paleta publicada para este servicio.</p>
