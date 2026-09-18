@@ -1,10 +1,12 @@
 {
   "task": "Fijar navegación inferior en iOS sin modificar otros módulos",
-  "userRequest": "2026-09-17: corregir únicamente el desplazamiento intermitente del menú inferior observado en producción; debe permanecer fijo abajo. No modificar datos, permisos, navegación funcional ni otros módulos.",
+  "userRequest": "2026-09-17: corregir únicamente el desplazamiento intermitente del menú inferior observado en producción; debe permanecer fijo abajo. No modificar datos, permisos, navegación funcional ni otros módulos. Además, permitir que la persona con responsabilidad existente de paleta de Alabanza vea el acceso a Programación y pueda llegar al editor de paleta del servicio, sin otorgarle liderazgo ni otras herramientas.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/layout/BottomNav.tsx",
-    "tests/regression/bottom-nav-ios-layout.test.mjs"
+    "app/(app)/ministerios/[id]/page.tsx",
+    "tests/regression/bottom-nav-ios-layout.test.mjs",
+    "tests/regression/paleta-responsabilidad-acceso.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
