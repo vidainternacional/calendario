@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.4-app-offline'
+const CACHE_VERSION = 'v2.5-app-offline'
 const CACHE_NAME = `vida-shell-${CACHE_VERSION}`
 const USER_CACHE_PREFIX = `vida-user-${CACHE_VERSION}-`
 const OFFLINE_NOTES_APP = '/biblia/notas-offline'
