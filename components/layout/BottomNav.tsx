@@ -120,18 +120,23 @@ export default function BottomNav() {
 
   const navigation = (
     <div
-      data-bottom-nav-fixed="true"
-      data-keyboard-policy="layout-bottom-covered"
-      data-keyboard-open={keyboardOpen ? 'true' : 'false'}
-      aria-hidden={keyboardOpen ? 'true' : undefined}
-      className={`app-bottom-nav fixed inset-x-0 bottom-0 z-[100] m-0 w-full border-t transition-colors ${keyboardOpen ? 'hidden' : 'block'} ${tema.nav} ${tema.shadow}`}
-      style={{
-        paddingRight: 'env(safe-area-inset-right, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-      }}
+      data-bottom-nav-shell="layout-viewport"
+      className="app-bottom-nav-shell pointer-events-none fixed inset-x-0 top-0 z-[100] h-[100lvh] w-full"
+      style={{ height: '100lvh' }}
     >
-      <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
+      <div
+        data-bottom-nav-fixed="true"
+        data-keyboard-policy="layout-bottom-covered"
+        data-keyboard-open={keyboardOpen ? 'true' : 'false'}
+        aria-hidden={keyboardOpen ? 'true' : undefined}
+        className={`app-bottom-nav pointer-events-auto absolute inset-x-0 bottom-0 m-0 w-full border-t transition-colors ${keyboardOpen ? 'hidden' : 'block'} ${tema.nav} ${tema.shadow}`}
+        style={{
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+        }}
+      >
+        <nav aria-label="Navegación principal" className="app-bottom-nav-inner mx-auto flex h-16 max-w-lg items-stretch justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/inicio' && pathname.startsWith(item.href))
@@ -150,7 +155,8 @@ export default function BottomNav() {
             </Link>
           )
         })}
-      </nav>
+        </nav>
+      </div>
     </div>
   )
 
