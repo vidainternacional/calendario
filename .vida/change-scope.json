@@ -1,11 +1,10 @@
 {
-  "task": "Fijar navegación inferior en iOS sin modificar otros módulos",
-  "userRequest": "2026-09-17: corregir únicamente el desplazamiento intermitente del menú inferior observado en producción; debe permanecer fijo abajo. No modificar datos, permisos, navegación funcional ni otros módulos. Además, permitir que la persona con responsabilidad existente de paleta de Alabanza vea el acceso a Programación y pueda llegar al editor de paleta del servicio, sin otorgarle liderazgo ni otras herramientas.",
+  "task": "Permitir gestión de paleta asignada desde cualquier evento preparado de Alabanza",
+  "userRequest": "2026-09-17: únicamente corregir que la persona con responsabilidad paleta_colores en Alabanza pueda acceder desde cualquier evento preparado y modificar su paleta existente, sin tocar equipo, repertorio, roles, Supabase, RLS, datos ni otras funciones.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "components/layout/BottomNav.tsx",
-    "app/(app)/ministerios/[id]/page.tsx",
-    "tests/regression/bottom-nav-ios-layout.test.mjs",
+    "app/actions/equipo-evento-visible.ts",
+    "components/calendario/CalendarioEventDetail.tsx",
     "tests/regression/paleta-responsabilidad-acceso.test.mjs"
   ],
   "allowSupabase": false,

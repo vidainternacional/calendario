@@ -43,6 +43,7 @@ export type EquipoEventoVisible = {
   equipo: MiembroEquipoEvento[]
   repertorio: RepertorioEventoVisible[]
   paletas: PaletaEventoVisible[]
+  paletaGestionMinisterioId: string | null
 }
 
 function normalizarEstado(estados: string[]): EstadoEquipoEvento {
@@ -59,7 +60,13 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
   if (!user) return null
 
   const admin = createAdminClient() as any
-  const [{ data: profile }, { data: asignaciones = [] }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: asignaciones = [] },
+    { data: evento },
+    { data: calendarLinks = [] },
+    { data: responsabilidadAsignaciones = [] },
+  ] = await Promise.all([
     (supabase as any)
       .from('profiles')
       .select('rol,activo,estado_cuenta')
@@ -69,16 +76,57 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
       .from('evento_asignaciones')
       .select('id,profile_id,ministerio_id,capacidad_id,estado')
       .eq('evento_id', eventoId),
+    admin
+      .from('eventos')
+      .select('id,ministerio_id,calendar_id')
+      .eq('id', eventoId)
+      .maybeSingle(),
+    admin
+      .from('evento_calendarios')
+      .select('calendar_id')
+      .eq('evento_id', eventoId),
+    admin
+      .from('ministerio_responsabilidad_asignaciones')
+      .select('responsabilidad_id')
+      .eq('profile_id', user.id),
   ])
 
-  if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') return null
-  if (!asignaciones.length) return null
+  if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo' || !evento) return null
 
-  const ministerioIdsEvento = Array.from(new Set(
-    (asignaciones as any[])
-      .map((row) => String(row.ministerio_id || ''))
-      .filter(Boolean),
-  ))
+  const calendarIds = Array.from(new Set([
+    String(evento.calendar_id || ''),
+    ...(calendarLinks as any[]).map((row) => String(row.calendar_id || '')),
+  ].filter(Boolean)))
+
+  const { data: eventCalendars = [] } = calendarIds.length
+    ? await admin.from('calendars').select('id,ministerio_id').in('id', calendarIds)
+    : { data: [] as any[] }
+
+  const ministerioIdsEvento = Array.from(new Set([
+    ...(asignaciones as any[]).map((row) => String(row.ministerio_id || '')),
+    String(evento.ministerio_id || ''),
+    ...(eventCalendars as any[]).map((row) => String(row.ministerio_id || '')),
+  ].filter(Boolean)))
+
+  let paletaGestionMinisterioId: string | null = null
+  const responsabilidadIds = (responsabilidadAsignaciones as any[])
+    .map((row) => String(row.responsabilidad_id || ''))
+    .filter(Boolean)
+
+  if (responsabilidadIds.length > 0 && ministerioIdsEvento.length > 0) {
+    const { data: responsabilidadPaleta = [] } = await admin
+      .from('ministerio_responsabilidades')
+      .select('id,ministerio_id')
+      .in('id', responsabilidadIds)
+      .in('ministerio_id', ministerioIdsEvento)
+      .eq('codigo', 'paleta_colores')
+      .eq('activo', true)
+      .limit(1)
+
+    paletaGestionMinisterioId = responsabilidadPaleta?.[0]?.ministerio_id
+      ? String(responsabilidadPaleta[0].ministerio_id)
+      : null
+  }
 
   const ministeriosPropios = Array.from(new Set(
     (asignaciones as any[])
@@ -109,12 +157,16 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
     ))
   }
 
+  if (paletaGestionMinisterioId && !ministeriosVisibles.includes(paletaGestionMinisterioId)) {
+    ministeriosVisibles = [...ministeriosVisibles, paletaGestionMinisterioId]
+  }
+
   if (ministeriosVisibles.length === 0) return null
 
   const asignacionesVisibles = (asignaciones as any[]).filter((row) =>
     ministeriosVisibles.includes(String(row.ministerio_id || '')),
   )
-  if (asignacionesVisibles.length === 0) return null
+  if (asignacionesVisibles.length === 0 && !paletaGestionMinisterioId) return null
 
   const profileIds = Array.from(new Set(
     asignacionesVisibles.map((row) => String(row.profile_id || '')).filter(Boolean),
@@ -241,5 +293,6 @@ export async function obtenerEquipoVisibleEvento(eventoId: string): Promise<Equi
     equipo,
     repertorio,
     paletas,
+    paletaGestionMinisterioId,
   }
 }
