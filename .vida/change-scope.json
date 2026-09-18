@@ -1,21 +1,12 @@
 {
-  "task": "Correcciones de seguridad verificadas sobre main",
-  "userRequest": "2026-09-16: validar y corregir redirección recovery, autorización de acciones indicadas, aislamiento VAPID y consolidación del contexto pastoral. Cada corrección en commit con tsc y build; publicar rama y abrir PR a main sin merge ni producción. No cambiar Supabase, tipos database.ts, lint, badges ni maestro.",
+  "task": "Fijar navegación inferior en iOS sin modificar otros módulos",
+  "userRequest": "2026-09-17: corregir únicamente el desplazamiento intermitente del menú inferior observado en producción; debe permanecer fijo abajo. No modificar datos, permisos, navegación funcional ni otros módulos. Además, permitir que la persona con responsabilidad existente de paleta de Alabanza vea el acceso a Programación y pueda llegar al editor de paleta del servicio, sin otorgarle liderazgo ni otras herramientas.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "app/auth/confirm/route.ts",
-    "lib/auth/destino-seguro.ts",
-    "lib/auth/permisos.ts",
-    "app/actions/ministerios.ts",
-    "app/actions/contactos.ts",
-    "app/actions/pastoral.ts",
-    "app/actions/pastoral-bosquejos.ts",
-    "app/actions/pastoral-biblioteca.ts",
-    "app/actions/pastoral-paquetes.ts",
-    "app/actions/pastoral-proyecto-versiculos.ts",
-    "app/actions/pastoral-distribucion.ts",
-    "lib/webpush.ts",
-    "tests/regression/seguridad-real*.mjs"
+    "components/layout/BottomNav.tsx",
+    "app/(app)/ministerios/[id]/page.tsx",
+    "tests/regression/bottom-nav-ios-layout.test.mjs",
+    "tests/regression/paleta-responsabilidad-acceso.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
