@@ -1,9 +1,22 @@
 {
-  "task": "Forzar actualización del caché PWA de producción",
-  "userRequest": "2026-09-18: renovar únicamente la versión del caché del Service Worker para que producción descarte la copia vieja y cargue el código actual de gestión de paleta. No tocar Alabanza, paletas, permisos, usuarios, Supabase ni ninguna otra sección.",
+  "task": "Recuperar acceso sin costo mediante extracción reversible del corpus bíblico a Neon",
+  "userRequest": "2026-11-14: priorizar el acceso a la app sin pagar, migrar solamente contenido bíblico compartido desde Supabase a los dos proyectos gratuitos de Neon con copia e integridad verificadas. Conservar usuarios, progreso personal, RLS, permisos, Auth, ministerios, datos originales, main y producción hasta aprobaciones explícitas de borrado y despliegue.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "public/sw.js"
+    "neon/**",
+    "scripts/neon/**",
+    "docs/NEON_BIBLIA_*.md",
+    "lib/neon/**",
+    "lib/estudios/biblical-*.ts",
+    "lib/estudios/multilingual-biblical-textual-study.ts",
+    "lib/estudios/resolved-biblical-textual-study.ts",
+    "lib/hebreo/spanish-glosses.ts",
+    "lib/hebreo/strict-word-dictionary.ts",
+    "app/api/estudios/hebreo/biblia/route.ts",
+    "app/api/pastoral/original-word/route.ts",
+    "tests/regression/neon-*.test.mjs",
+    "package.json",
+    "package-lock.json"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
