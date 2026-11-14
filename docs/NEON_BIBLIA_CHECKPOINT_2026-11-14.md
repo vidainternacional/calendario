@@ -56,3 +56,15 @@ Las cantidades del bloque anterior son una fotografía histórica, no el inventa
 3. Para los lotes restantes, usar la representación `to_jsonb(fila)::text` del origen, reconstruir como `jsonb` en destino y verificar las filas insertadas; preservar reanudación por clave primaria y comprobar tamaño real después de cada bloque.
 4. Solo después de completar y validar ambas bases, implementar consultas **server-only** a Neon, configurar secretos en Preview y probar regresiones. No alterar autenticación ni permisos.
 5. Supabase conserva todos los datos originales hasta disponer de respaldo verificable, lista exacta de objetos a retirar, plan de reversión y aprobación expresa. El bloqueo de cuota no queda resuelto por la existencia de copias en Neon.
+
+
+## Lote comprobado — 2026-11-14 — Textos / Primera de Juan (1JN)
+
+- Origen: Supabase `calendariovida`, tabla pública editorial `biblical_verse_texts`, `book_code='1JN'`.
+- Destino: Neon B `Calendario Vida Biblia - Textos` (`curly-scene-97670657`), misma tabla.
+- Lote delimitado: **420/420 filas** originales leídas por UUID; reconstrucción desde `to_jsonb(fila)::text`, con `ON CONFLICT (id) DO NOTHING`.
+- Resultado de inserción: **126 filas nuevas**; otras **294 ya existían** en destino.
+- Revisión posterior de todas las filas del libro: Supabase **420**, Neon B **420**; huella ordenada `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))` idéntica en ambos: `1d3cc6cd0b28e659779b24a8e084c22f`.
+- Integridad: no se borraron filas originales, no se tocaron perfiles, autenticación, progreso, notas, RLS, permisos, ni otras tablas.
+- Este cierre certifica **solo 1JN**; no certifica que el corpus bíblico ni la migración completa estén terminados. Fase C continúa EN CURSO.
+- Detectada discrepancia documental independiente: el maestro de `main` todavía indica Discipulado como prioridad, con última actualización 2026-09-07. No se editó el maestro ni se reabrió Discipulado.
