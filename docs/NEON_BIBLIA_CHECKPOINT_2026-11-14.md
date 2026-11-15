@@ -261,3 +261,22 @@ Se inició una lectura/reconciliación del primer tramo de `1CO` (2,080 filas) p
 Fotografía posterior del entorno: Neon B `biblical_word_occurrences` **57,500 filas**, `biblical_verse_texts` **124,504 filas**, base **309,215,232 bytes**; Neon A **126,968 ocurrencias**, base **223,330,304 bytes**. Los contadores pueden variar debido a escrituras simultáneas. Supabase conserva **611,398 ocurrencias** y ocupaba **1,277,676,691 bytes** según consulta; ninguna tabla de origen fue reducida o borrada. No sumar filas A + B como cobertura única debido a los 9,133 AT redundantes que permanecen temporalmente en B.
 
 **Fase C continúa EN CURSO.** Sigue faltando una parte sustancial de ocurrencias AT/NT. Los textos bíblicos 66/66 y 21 tablas auxiliares ya fueron certificados previamente. La integración server-only de la app (Fase D), Preview funcional, pruebas y recuperación de cuota (Fases E/F) siguen pendientes. No se modificaron Auth, perfiles, notas, progreso, RLS, permisos, `main`, producción ni gastos. No se eliminó información. Antes de nuevos lotes de `1CO` u otros libros con crecimiento concurrente, coordinar el proceso activo y verificar curso de inserciones para evitar superposición.
+
+
+## Continuación — Daniel, Proverbios y Job verificados íntegramente en Neon A
+
+Fecha: **2026-11-14**. Se continuó Fase C transfiriendo únicamente ocurrencias **editoriales compartidas** de `public.biblical_word_occurrences` a Neon A Léxico (`rough-glitter-04635242`). Se mantuvo Supabase como origen intacto. Los lotes se leyeron en orden `book_code,id` mediante `to_jsonb(fila)::text`, se reconstruyeron con `jsonb_populate_recordset` y se insertaron de modo idempotente con `ON CONFLICT (id) DO NOTHING`. Antes de escribir se verificó la cantidad esperada, UUID únicos, `book_code` y `approved_by IS NULL`.
+
+| Libro | Total certificado Supabase = Neon A | Registros nuevos añadidos por esta intervención | Huella completa idéntica |
+|---|---:|---:|---|
+| Daniel (`DAN`) | **9,529** | **8,173** | `50841f94a8f4993f4382b301e9f7f555` |
+| Proverbios (`PRO`) | **9,703** | **8,403** | `f02659c77df42cf1620f2df656772ff4` |
+| Job (`JOB`) | **12,482** | **10,708** | `0e53532dfcc13e8503cf612c95cd5839` |
+
+**Resultado verificable: 31,714 filas revisadas, 27,284 nuevas insertadas; los tres libros quedaron completos, comparando `COUNT(*)` y `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))` directamente entre Supabase y Neon A.** No se sumaron números de proyectos distintos como si fueran UUID únicos. Además se constató Nehemías (`NEH`) **8,445/8,445** idéntico, hash `5fa4c9c1a996ba43fd9b92890be5f6e4`; ya estaba copiado por otro proceso y no se volvió a escribir.
+
+Durante Daniel hubo dos respuestas transitorias de autenticación `HTTP 401` en los conectores. Se verificó la integridad exacta de los primeros 6,000 registros antes de continuar en lotes más pequeños. La huella final completa de Daniel confirma que la copia quedó íntegra pese a las interrupciones. Se evitó convertir un error de conexión en una afirmación de avance.
+
+Fotografía al cierre de este bloque: **Neon A 137,676 ocurrencias y 239,108,096 bytes; Neon B 68,953 ocurrencias, 124,504 textos bíblicos y 323,829,760 bytes**; Supabase conserva **611,398 ocurrencias y 124,504 textos**, con tamaño **1,277,676,691 bytes**. Los totales variaron mientras se trabajaba por **otro proceso de copiado**: no atribuir incrementos totales de Neon a esta intervención, ni mezclar las 9,133 ocurrencias AT redundantes de Neon B con cobertura única.
+
+**Pendiente:** completar y cotejar por clave/huella las ocurrencias AT restantes en Neon A y NT restantes en Neon B; preservar originales. Solo después realizar integración `server-only`, Preview funcional y pruebas de acceso; cualquier eliminación para recuperar cuota debe esperar respaldo, plan de reversión y aprobación expresa. No se tocaron datos personales, Auth, progreso, notas, RLS, permisos, `main`, producción ni configuración de gastos.
