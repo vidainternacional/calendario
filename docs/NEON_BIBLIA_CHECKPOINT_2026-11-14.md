@@ -132,3 +132,35 @@ En un bloque anterior de esta misma conversación se copiaron y validaron libros
 - Neon B: **32,945 ocurrencias**, **104,911 textos/versículos**. Existen registros AT duplicados entre ambos Neon por diseño temporal de seguridad; NO sumar los contadores para afirmar claves únicas migradas.
 - Las cantidades de Neon B han seguido variando respecto de controles anteriores, posiblemente por otros procesos. Antes de cualquier copia masiva nueva, comprobar escrituras en curso y reconciliar por clave/huella.
 - Fase C **EN CURSO**. No se ha integrado Neon a la app, no se ha liberado cuota en Supabase, no se ha probado el login. No gastos, RLS, permisos, borrados, merge ni despliegue de producción.
+
+
+## Certificación Fase C — textos íntegros y tablas complementarias
+
+Fecha local: **2026-11-14**. Trabajo limitado a copia editorial de Supabase `calendariovida` → Neon B `curly-scene-97670657`, comprobación de Neon A `rough-glitter-04635242` y verificaciones de solo lectura. No se editó código de runtime, permisos, autenticación ni producción; no se borró el origen.
+
+### Textos bíblicos: COPIA COMPLETA Y VERIFICADA
+
+- Tabla: `public.biblical_verse_texts`.
+- En el comienzo del bloque: **104,911** filas en Neon B frente a **124,504** del original. Se incorporaron los **19,593 registros faltantes** mediante inserciones idempotentes `ON CONFLICT (id) DO NOTHING` con reconstrucción exacta de datos fuente `to_jsonb(fila)::text`. Los lotes se eligieron por `book_code` y UUID, excluyendo los UUID ya presentes; `approved_by` tiene 0 valores no nulos en el original.
+- Verificación final **por los 66 libros**: conteos exactos y huellas `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))` idénticas entre Supabase y Neon B. Resultado global **66/66 libros**, **124,504/124,504 filas**, **0 libros discrepantes**.
+- Confirmación adicional: las dos bases tuvieron **66 códigos de libro sin códigos extra en destino**. El dato de textos ya está íntegro, pero eso NO significa que la Biblia completa, la integración ni la recuperación del acceso estén terminadas.
+
+### Otras tablas editoriales: 21/21 verificadas
+
+Las siguientes **21 tablas** ya estaban completas en Neon B y fueron cotejadas en este bloque por **cantidad y huella de todas las filas**, con la huella calculada de forma independiente del orden: `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY md5(to_jsonb(fila)::text)))`. **21/21 huellas idénticas** a Supabase: `biblical_sources`, `biblical_books`, `biblical_lexical_entries`, `biblical_hebrew_spanish_glosses`, `biblical_hebrew_search_resolutions`, `biblical_timeline_event_references`, `biblical_textual_variants`, `biblical_place_references`, `biblical_places`, `biblical_timeline_events`, `biblical_context_units`, `biblical_context_fragments`, `biblical_concordance_occurrences`, `biblical_concordance_aliases`, `biblical_concordance_terms`, `biblical_verse_mappings`, `biblical_library_fragments`, `biblical_library_items`, `biblical_timeline_event_places`, `biblical_timeline_periods`, `biblical_versification_profiles`.
+
+### Ocurrencias por palabra: INCOMPLETAS; no ejecutar copias superpuestas
+
+- Un subconjunto de `biblical_word_occurrences` de NT se procesó con criterio idempotente. **2TI** ya tenía **1,273/1,273**, sin nuevas filas. En **1TH** se seleccionaron **1,308 identificadores faltantes** frente al corte inicial de Neon B y se insertaron directamente **478 filas nuevas**; durante los siguientes lotes aparecieron inserciones adicionales desde otro proceso no identificado. Al terminar, **1TH tenía 1,516/1,516** y **2TI 1,273/1,273** con huellas idénticas a Supabase. No se atribuyen las otras inserciones a esta intervención.
+- Se observó **actividad concurrente**: Neon A pasó de **76,846** a **94,132** ocurrencias; Neon B pasó de **32,945** a **37,513** durante el trabajo. En Neon B existen **9,133 registros AT redundantes**, heredados y conservados, que NO deben sumarse como cobertura única. Esto exige identificar/coordinar la copia antes de escribir más en las mismas tablas. Ninguna fila duplicada se borró.
+- Fotografía posterior: Neon A **94,132** ocurrencias AT y Neon B **28,380** ocurrencias NT + **9,133** AT redundantes. Reparto asignado **122,512** filas sobre **611,398** del origen, o **488,886 aún pendientes por conteo** (sin certificar aún huellas/UUID de todos los conjuntos parciales).
+- `pg_database_size` aproximado: Neon A **174,997,504 bytes**, Neon B **283,680,768 bytes**, ambos bajo 1 GiB de tamaño de rama por proyecto; revisar en el próximo checkpoint porque pueden crecer.
+- Supabase sigue intacto y restringido por exceso de cuota; NO iniciar limpieza hasta terminar la validación integral, tener respaldo/plan reversible y obtener autorización explícita.
+
+### Siguientes pasos
+
+1. Determinar qué proceso está alimentando activamente las ocurrencias y fijar exclusividad/cursor, evitando escrituras simultáneas en esas tablas.
+2. Completar AT en Neon A y NT en Neon B con comprobación por identificador y huella, no por conteo global solamente; sin borrar los 9,133 AT redundantes de Neon B.
+3. Integración **server-only** de lecturas bíblicas con Neon, mantener Supabase Auth, perfiles, notas y progreso; configurar Preview y pasar pruebas de regresión.
+4. Después de validar backups, controles de acceso, compatibilidad y Preview, **presentar por separado** listado de datos bíblicos a retirar de Supabase, impacto y reversión; esperar aprobación para liberar cuota.
+5. Verificar acceso real en la cuenta cuando Supabase sea funcional, antes de anunciar recuperación. Mantener rama separada de `main` y no producir merge sin autorización.
