@@ -322,3 +322,36 @@ Fecha: **2026-11-14**, Fase C. Se continuó exclusivamente la copia de la tabla 
 - **Validación final completa e independiente:** Supabase **20,141/20,141**, Neon B **20,141/20,141**. Huella de todas las filas, ordenadas por UUID, `md5(string_agg(md5(to_jsonb(t)::text), '' ORDER BY id))` idéntica: **`5a5576e4d74442b3f0b396e330c8807a`**. Libro **LUK COMPLETO Y COTEJADO**; esta certificación no cubre libros pendientes.
 - **Estado observado después del lote:** Neon B `biblical_word_occurrences` **123,613 filas en total**, `biblical_verse_texts` **124,504**, `pg_database_size` **393,625,600 bytes**; Neon A **137,676 ocurrencias**, **239,108,096 bytes**. Los totales de B contienen las **9,133 ocurrencias AT redundantes** y pueden incluir copias concurrentes de otros libros; no se suman como filas únicas ni se atribuyen todos los incrementos al bloque Lucas. Ambos proyectos siguen por debajo del límite 1 GiB observado.
 - **Guardrails:** ninguna eliminación, gasto, modificación de Supabase Auth, perfiles, progreso, notas, permisos, RLS, `main`, producción o secretos. No hubo despliegue integrado. **Fase C EN CURSO**: completar otras ocurrencias AT/NT, verificar todo el corpus por clave y huella; después integración de lectura server-only, Preview funcional y validación; liberar cuota solo mediante plan reversible y aprobación explícita. El inicio de sesión de la app sigue sin certificarse.
+
+
+## Validación completa de ocurrencias NT y cierre de Mateo + Jueces — 2026-11-14
+
+**Resultado de Fase C — dos libros completos y testamento NT totalmente cotejado.** Sin modificaciones a cuentas, Supabase Auth, perfiles, notas, progreso, permisos, RLS, planes, secretos, `main` o producción.
+
+### Nuevo Testamento (Neon B, Textos) — 27/27 libros verificados
+
+- Se cotejó `public.biblical_word_occurrences` directamente en Supabase origen y Neon B, filtrando exclusivamente los **27 códigos de libro del Nuevo Testamento**, agrupando por libro y comparando `COUNT(*)` junto con `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))`.
+- Resultado completo **27 libros, 142,096/142,096 ocurrencias, 0 libros discrepantes**. Es verificación de todas las filas, no una afirmación basada en suma de destinos. En Neon B continúan **9,133 filas AT redundantes**, que NO se suman a las 142,096 NT.
+- Se mantienen certificadas previamente las **124,504/124,504 filas** de `biblical_verse_texts` (66 libros) y las **21/21 tablas editoriales auxiliares** verificadas por recuento y huella.
+
+### Mateo (MAT) — Neon B
+
+- Origen y destino: **18,898 filas** cada uno. **16,340 nuevas filas** insertadas con esta operación; las **2,558 preexistentes** quedaron intactas.
+- Lectura por bloques ordenados por UUID con `to_jsonb(fila)::text`; reconstrucción `jsonb_populate_recordset` y escritura idempotente `ON CONFLICT(id) DO NOTHING`. Cada lote comprobó tamaño, UUID único, `book_code='MAT'` y `approved_by IS NULL`.
+- Verificación final independiente, 18,898 filas y huella íntegra idéntica en origen y destino: **`d0c234b30a0baca5ded4c3387dc6b29a`**.
+
+### Jueces (JDG) — Neon A
+
+- Origen y destino: **15,384 filas** cada uno. **13,175 nuevas filas** insertadas; las **2,209 preexistentes** quedaron intactas.
+- Procedimiento reanudable igual que Mateo, con `book_code='JDG'`; misma comprobación de campos y `approved_by IS NULL`.
+- Una consulta en el bloque con `OFFSET 5120` falló una vez por error de conexión, **sin escritura confirmada de ese intento**; el estado Neon A se comprobó mediante consulta independiente (5,120 filas) y el lote se reanudó, sin dar por completo nada antes de la validación.
+- Verificación final independiente: 15,384 filas y huella íntegra idéntica en origen y destino: **`f6b7114b05fa7672f17dd23f9ac57cb7`**.
+
+### Estado de contadores posterior y riesgos pendientes
+
+- Inserciones nuevas atribuibles a este bloque: **29,515** (Mateo +16,340; Jueces +13,175), sin contar datos ya presentes ni los copiados concurrentemente por otros procesos.
+- Neon A: **150,851 ocurrencias AT**, `pg_database_size=258,539,520` bytes. Frente al origen AT **469,302**, quedan **318,451 ocurrencias AT pendientes por recuento**; este subtotal debe conciliarse por UUID y contenido al finalizar.
+- Neon B: **151,229 ocurrencias brutas**, compuestas por **142,096 NT verificadas y 9,133 AT redundantes**; además **124,504 textos bíblicos**. `pg_database_size=428,982,272` bytes.
+- Supabase origen permanece intacto: **611,398 ocurrencias**, **124,504 textos** y `pg_database_size=1,277,676,691` bytes. No se recuperó cuota: la aplicación **todavía no tiene acceso validado**.
+- Ninguna escritura en tabla de origen, ningún borrado ni modificación de Auth/RLS/permisos. Los dos Neon permanecen por debajo del límite Free observado de 1 GiB.
+- **Fase C EN CURSO** por AT incompleto. Siguiente paso: completar/validar ocurrencias AT en Neon A; después integración de lectura **server-only** en la app, pruebas de Preview y acceso, y plan de respaldo/reversión previo a cualquier recuperación de cuota que requiera operaciones destructivas con autorización del usuario. Sin merge ni deploy de producción.
