@@ -1,6 +1,6 @@
 {
   "task": "Recuperar acceso sin costo mediante extracción reversible del corpus bíblico a Neon",
-  "userRequest": "2026-11-14: priorizar el acceso a la app sin pagar, migrar solamente contenido bíblico compartido desde Supabase a los dos proyectos gratuitos de Neon con copia e integridad verificadas. Conservar usuarios, progreso personal, RLS, permisos, Auth, ministerios, datos originales, main y producción hasta aprobaciones explícitas de borrado y despliegue.",
+  "userRequest": "2026-11-15: continuar la rama existente; completar AT editorial con lotes idempotentes, conciliar los 66 libros por UUID y huella, preparar lectura server-only en ambos Neon y validar en un único Preview. Conservar Supabase Auth, perfiles, permisos, notas y progreso; sin borrados del origen, RLS, gastos, maestro, merge ni producción.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "neon/**",
@@ -16,7 +16,13 @@
     "app/api/pastoral/original-word/route.ts",
     "tests/regression/neon-*.test.mjs",
     "package.json",
-    "package-lock.json"
+    "package-lock.json",
+    "docs/NEON_BIBLIA_*.json",
+    "lib/hebreo/word-catalog.ts",
+    "lib/hebreo/reading-catalog.ts",
+    "lib/hebreo/hebrew-ambiguity.ts",
+    "app/actions/traduccion-espanola-estudio.ts",
+    "app/api/estudios/hebreo/traducir/route.ts"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

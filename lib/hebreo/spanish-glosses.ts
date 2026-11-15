@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createServiceClient } from '@/lib/supabase/service'
+import { createServiceClient } from '@/lib/neon/biblical-client'
 import type { HebrewWordCatalogPage } from '@/lib/hebreo/word-catalog'
 
 type LexicalIdentityRow = {

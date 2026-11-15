@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 import { normalizeLearningGroup, type HebrewLearningGroupId } from '@/lib/hebreo/word-learning'
 
 const FINAL_SPANISH_STATUSES = ['verified_derived', 'manual_approved'] as const

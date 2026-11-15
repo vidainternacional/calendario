@@ -355,3 +355,26 @@ Fecha: **2026-11-14**, Fase C. Se continuó exclusivamente la copia de la tabla 
 - Supabase origen permanece intacto: **611,398 ocurrencias**, **124,504 textos** y `pg_database_size=1,277,676,691` bytes. No se recuperó cuota: la aplicación **todavía no tiene acceso validado**.
 - Ninguna escritura en tabla de origen, ningún borrado ni modificación de Auth/RLS/permisos. Los dos Neon permanecen por debajo del límite Free observado de 1 GiB.
 - **Fase C EN CURSO** por AT incompleto. Siguiente paso: completar/validar ocurrencias AT en Neon A; después integración de lectura **server-only** en la app, pruebas de Preview y acceso, y plan de respaldo/reversión previo a cualquier recuperación de cuota que requiera operaciones destructivas con autorización del usuario. Sin merge ni deploy de producción.
+
+
+## Cierre de copia e integridad — 2026-11-15
+
+- **Fase C de esta migración: COMPLETA.** Se añadieron exactamente **318,451** ocurrencias editoriales a Neon A, que pasó de 150,851 a **469,302 AT**. Se completaron y cotejaron los 16 libros pendientes: Josué, 1–2 Crónicas, 1–2 Samuel, 1–2 Reyes, Levítico, Deuteronomio, Isaías, Números, Éxodo, Ezequiel, Salmos, Jeremías y Génesis.
+- Conciliación final independiente contra Supabase: **66/66 libros**, **611,398 ocurrencias**, **0 diferencias de cantidad o huella de fila completa por UUID**. Distribución verificada: A **469,302 AT**; B **142,096 NT**. Las **9,133 AT redundantes de B** permanecen intactas y excluidas de las lecturas NT y de las sumas de cobertura.
+- Se revalidaron de nuevo las **124,504 filas de textos** y las **21 tablas auxiliares de B**, y los cinco catálogos compartidos de A: todos coinciden por cantidad y huella con el origen. Evidencia: `docs/NEON_BIBLIA_INTEGRIDAD_2026-11-15.json` y `docs/NEON_BIBLIA_VALIDACION_2026-11-15.json`.
+- Hubo un único escritor local. Cada lote conservó el JSON canónico del origen, validó libro, UUID y `approved_by IS NULL`, e insertó idempotentemente. La transacción rechazaba contenido diferente o escrituras externas inesperadas. Los tramos previos de Isaías, Ezequiel, Salmos y Jeremías no certificaron un prefijo continuo: se recorrieron desde el inicio y se conciliaron sin usar el mayor UUID como prueba de completitud. El escritor quedó detenido al terminar.
+- Tamaño PostgreSQL observado al cierre de A: **727,433,216 bytes**, inferior a 1 GiB. No se cambiaron planes.
+- Con autorización explícita del usuario se creó `/workspace/vida-respaldo-biblia-2026-11-15.jsonl.gz`: **611,398 filas editoriales**, **66 huellas verificadas**, **132,154,798 bytes**. SHA-256: `494b4f1d4d43b8275ece416190da60bf7974b103a819c7f11821367353f798c6`. El archivo está fuera del repositorio y no contiene usuarios, notas ni progreso. Conservar también su manifiesto adyacente.
+
+### Lectura segura preparada — Fase D
+
+- Adaptador `server-only` limitado a tablas editoriales. Supabase conserva Auth, cookies, comprobación `cuenta_activa`, perfiles, permisos, notas y progreso. El índice derivado de búsqueda y sus escrituras siguen en Supabase.
+- Se reproducen en las consultas los predicados SELECT observados de aprobación, fuentes, relaciones y licencias; no se modifica RLS ni grants. SQL parametrizado, límites de paginación y errores sin credenciales.
+- Neon ejecuta las consultas dentro de transacciones **READ ONLY**; se verificó `transaction_read_only=on`. AT se consulta en A y NT en B, excluyendo las copias AT redundantes de B incluso en búsquedas que combinan ambos testamentos.
+- Doce consultas reales de lectura coincidieron con Supabase en cantidad y huella de respuesta. TypeScript, compilación Turbopack y seis pruebas específicas pasaron. Lint de archivos nuevos: PASS. La suite general mantiene **9 fallos preexistentes**, reproducidos en el checkpoint original; **0 fallos nuevos**. El lint general también contiene deuda previa; no se reabrieron módulos ajenos.
+- Variables Neon autorizadas por el usuario y limitadas a **Preview de esta rama**. `VIDA_BIBLE_READ_BACKEND=neon`; las dos URLs son secretos sin prefijo público. Producción sigue sin cambiar.
+- Pendiente: construir/comprobar el único Preview, validar acceso real con sesión del usuario y obtener autorización independiente antes de cualquier producción o recuperación de cuota. No se anuncia recuperación de acceso por un estado READY.
+
+### Cuota de Supabase: pendiente de autorización y validación
+
+El origen conserva **611,398 ocurrencias y 124,504 textos**; tamaño observado **1,277,684,883 bytes**. `biblical_word_occurrences` ocupa **958,308,352 bytes** incluyendo índices. No se borró ningún registro. No hay claves foráneas entrantes ni triggers no internos en esa tabla según consulta de catálogo. El plan exacto de liberación y reversión está en `docs/NEON_BIBLIA_RECUPERACION_CUOTA_2026-11-15.md`; no ejecutarlo sin autorización explícita y sin validar previamente el lector desplegado.

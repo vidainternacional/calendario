@@ -1,0 +1,284 @@
+{
+  "date": "2026-11-15",
+  "wordOccurrences": {
+    "total": 611398,
+    "oldTestament": 469302,
+    "newTestament": 142096,
+    "newRowsInserted": 318451,
+    "booksVerified": 66,
+    "discrepantBooks": 0,
+    "redundantOldTestamentInBPreserved": 9133
+  },
+  "tables": [
+    {
+      "table_name": "biblical_books",
+      "n": "66",
+      "hash": "88b03ab55c716aa1277b03d9f1a50881",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_concordance_aliases",
+      "n": "305",
+      "hash": "d226b36ad869874e7e33fdbd60722b21",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_concordance_occurrences",
+      "n": "174",
+      "hash": "976757ce61b447e9241e822df2661ecf",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_concordance_terms",
+      "n": "34",
+      "hash": "86b9c4a046f6bdd3a3feb3bb7f3261ff",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_context_fragments",
+      "n": "2",
+      "hash": "1c2624b6f1f97b7ac7b2bc588228018d",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_context_units",
+      "n": "334",
+      "hash": "92e4796c4b54308b17116e3acd5d6e21",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_hebrew_search_resolutions",
+      "n": "169",
+      "hash": "2aca8cb865129efde09014edf1d9e22f",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_hebrew_spanish_glosses",
+      "n": "10737",
+      "hash": "ad473834b518c7597a40b37ad64cefdd",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_lexical_entries",
+      "n": "16946",
+      "hash": "ade2abf03438731ef99e7ca4bb954dec",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_library_fragments",
+      "n": "2",
+      "hash": "5b28182e66def4fb8c39145587c37df8",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_library_items",
+      "n": "1",
+      "hash": "5eeccdf0b74b7503a6ecdd1e017b3ea8",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_place_references",
+      "n": "8742",
+      "hash": "ca02b210e718c60276af42594fda6753",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_places",
+      "n": "1343",
+      "hash": "2e5bcb971cb01b41469396f4925f098a",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_sources",
+      "n": "16",
+      "hash": "714192934ceeecd58768c68a66c719a0",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_textual_variants",
+      "n": "9330",
+      "hash": "3e1a4e68bef3c562fc75a7e5ce2a46bd",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_timeline_event_places",
+      "n": "2",
+      "hash": "e310dca7f0473c8c9f3863c4d5f9c4cc",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_timeline_event_references",
+      "n": "17570",
+      "hash": "94547fc47337c90edc724dd0d044ce4d",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_timeline_events",
+      "n": "452",
+      "hash": "4de420ed86f4edd996ffc34a8d040378",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_timeline_periods",
+      "n": "1",
+      "hash": "686f8da720d9a7fbe29c7f115209c281",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_verse_mappings",
+      "n": "5",
+      "hash": "6da6f6bf532e70835d7e9cb1c063ad0a",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_verse_texts",
+      "n": "124504",
+      "hash": "4c9ecfd7b7a9ba8b4e96a2fcc9d9d43c",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_versification_profiles",
+      "n": "1",
+      "hash": "519bcf84092b1dcc79ee58185d710e91",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_books",
+      "n": "66",
+      "hash": "88b03ab55c716aa1277b03d9f1a50881",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_hebrew_search_resolutions",
+      "n": "169",
+      "hash": "2aca8cb865129efde09014edf1d9e22f",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_sources",
+      "n": "16",
+      "hash": "714192934ceeecd58768c68a66c719a0",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_hebrew_spanish_glosses",
+      "n": "10737",
+      "hash": "ad473834b518c7597a40b37ad64cefdd",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "table_name": "biblical_lexical_entries",
+      "n": "16946",
+      "hash": "ade2abf03438731ef99e7ca4bb954dec",
+      "destination": "A",
+      "ok": true
+    }
+  ],
+  "readProbes": [
+    {
+      "name": "GEN1:1",
+      "hash": "745fa26043a76bd5d68802de2ec9958d",
+      "count": 11
+    },
+    {
+      "name": "MAT1:1",
+      "hash": "1eb76b1e6193ef75fd57fae375f57b86",
+      "count": 8
+    },
+    {
+      "name": "RV1909-GEN1",
+      "hash": "271bf6caf6aac3fcfc9d79ebd7a972b6",
+      "count": 93
+    },
+    {
+      "name": "DAN2:4",
+      "hash": "4a796562d9afff5acc36d3a8690b9c93",
+      "count": 5
+    },
+    {
+      "name": "Lexico-hebreo",
+      "hash": "d751713988987e9331980363e24189ce",
+      "count": 0
+    },
+    {
+      "name": "Glosas-es",
+      "hash": "c99f1a28d5794b154fbfabfa1a516ed3",
+      "count": 13
+    },
+    {
+      "name": "Versificacion",
+      "hash": "d751713988987e9331980363e24189ce",
+      "count": 0
+    },
+    {
+      "name": "Cronologia",
+      "hash": "37d90a484c76c7ffe85b7d0e9d1851f7",
+      "count": 452
+    },
+    {
+      "name": "Geografia",
+      "hash": "0765a0abb5fa2fcc3a9ddb82a3083a5b",
+      "count": 2
+    },
+    {
+      "name": "Biblioteca",
+      "hash": "f9555666a0366ed0b542a2dd442e2691",
+      "count": 1
+    },
+    {
+      "name": "Contexto",
+      "hash": "041db1459af1b769cdd8ec1e897a35dc",
+      "count": 2
+    },
+    {
+      "name": "Conteo-lexico",
+      "hash": "d751713988987e9331980363e24189ce",
+      "count": 10737
+    }
+  ],
+  "checks": {
+    "typescript": "PASS",
+    "build": "PASS (Next.js 16.2.10 / Turbopack, 52 static pages)",
+    "focusedTests": "6 PASS",
+    "newFilesLint": "PASS",
+    "regressionSuite": {
+      "currentFailures": 9,
+      "unchangedBaselineFailures": 9,
+      "newFailures": 0
+    }
+  },
+  "backup": {
+    "file": "vida-respaldo-biblia-2026-11-15.jsonl.gz",
+    "rows": 611398,
+    "books": 66,
+    "bytes": 132154798,
+    "sha256": "494b4f1d4d43b8275ece416190da60bf7974b103a819c7f11821367353f798c6",
+    "bookHashesVerified": true
+  }
+}

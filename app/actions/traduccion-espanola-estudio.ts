@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 import { parseInternalBibleReference } from '@/lib/estudios/biblical-context-corpus'
 
 export type TraduccionEspanolaEstudio = {

@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { createHash } from 'node:crypto'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 
 export type CertezaCronologica = 'high' | 'medium' | 'low' | 'disputed'
 export type PrecisionCronologica = 'exact' | 'year' | 'range' | 'approximate' | 'relative' | 'unknown'

@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
   lexicalIdsForLearningGroup,

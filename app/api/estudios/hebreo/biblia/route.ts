@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 import { HEBREW_BIBLE_BOOKS, hebrewBibleBook } from '@/lib/hebreo/bible-books'
 
 const RV1909_SOURCE_ID = 'b6fef01a-f304-4fd0-98aa-5fe070279946'
