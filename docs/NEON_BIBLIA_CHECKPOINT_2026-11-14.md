@@ -68,3 +68,34 @@ Las cantidades del bloque anterior son una fotografía histórica, no el inventa
 - Integridad: no se borraron filas originales, no se tocaron perfiles, autenticación, progreso, notas, RLS, permisos, ni otras tablas.
 - Este cierre certifica **solo 1JN**; no certifica que el corpus bíblico ni la migración completa estén terminados. Fase C continúa EN CURSO.
 - Detectada discrepancia documental independiente: el maestro de `main` todavía indica Discipulado como prioridad, con última actualización 2026-09-07. No se editó el maestro ni se reabrió Discipulado.
+
+
+## Lote validado — 2026-11-14 — Ocurrencias NT y AT (8 libros)
+
+Se continuó exclusivamente la transferencia **editorial compartida** de `public.biblical_word_occurrences` desde Supabase `calendariovida` hacia la base Neon asignada por testamento, conservando el origen intacto. Cada lote se leyó desde el original como `to_jsonb(fila)::text`, se reconstruyó con `jsonb_populate_recordset` y se insertó con `ON CONFLICT (id) DO NOTHING`. Antes de cada escritura se verificó libro, UUID único y `approved_by IS NULL`. No se trasladaron datos personales ni se tocó autenticación, RLS, permisos o producción.
+
+### Neon B — Textos, ocurrencias del Nuevo Testamento
+
+| Libro | Filas del origen y destino | Insertadas ahora | Hash de todas las filas, ordenadas por UUID |
+|---|---:|---:|---|
+| 3JN | 221 | 196 | `57dd15963a4f1452a4bbe16c4e747f7b` |
+| PHM | 349 | 298 | `f46a4adfa7aff0133f86d4d60bd16263` |
+| TIT | 680 | 582 | `a009a01f13281e6ce5a8670bc248c582` |
+| 2PE | 1,112 | 978 | `a17d22c8144895937543094d712e431d` |
+| 1PE | 1,734 | 1,489 | `1a7a9443f0c26963e071a6f74e056636` |
+
+### Neon A — Léxico, ocurrencias del Antiguo Testamento
+
+| Libro | Filas del origen y destino | Insertadas ahora | Hash de todas las filas, ordenadas por UUID |
+|---|---:|---:|---|
+| ZEP | 1,120 | 979 | `a76658b971f057b5d69d66dcd0b5b976` |
+| JON | 1,080 | 906 | `578632fb7646b811cf28ca223e136f08` |
+| MAL | 1,302 | 1,132 | `8d8ee703a605288e4008e12691a8fa38` |
+
+### Certificación del bloque
+
+- **8 libros completos y cotejados**, **7,598 filas originales** idénticas en el destino correcto; **6,560 filas nuevas** insertadas en total. Los ocho conteos y hashes `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))` se compararon directamente entre origen y destino tras las inserciones. No equivalen a una migración bíblica terminada.
+- Lectura posterior: Neon A tiene **70,470 ocurrencias**, `pg_database_size` **140,615,680 bytes**; Neon B tiene **32,945 ocurrencias**, `pg_database_size` **254,599,168 bytes**. A y B permanecen por debajo de 1 GiB por proyecto según consulta actual; son cifras temporales.
+- Supabase conservó **611,398 ocurrencias** y su tamaño no se redujo: **1,277,668,499 bytes**. Recuperación de acceso **PENDIENTE**.
+- Neon B mostró además aumento de `biblical_verse_texts` a **101,611 filas** desde una observación previa de **90,095** sin que esta intervención escribiera esa tabla. No atribuir el aumento a estos lotes; comprobar posibles procesos simultáneos antes de trabajar en versículos.
+- Pendientes: validar resto del corpus con claves y huellas, integración server-only, Preview con acceso funcional, respaldo y posterior recuperación de cuota con autorización expresa. Sin merge a `main` ni producción.
