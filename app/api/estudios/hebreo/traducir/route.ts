@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { VidaAiError, vidaAI } from '@/lib/ai/vida-ai'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 import {
   detectHebrewTranslationDirection,
   isSingleWord,

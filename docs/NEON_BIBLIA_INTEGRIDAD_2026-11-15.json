@@ -1,0 +1,470 @@
+{
+  "date": "2026-11-15",
+  "source": "atjtjpchslxbseayzflz",
+  "table": "biblical_word_occurrences",
+  "algorithm": "md5(string_agg(md5(to_jsonb(t)::text), '' ORDER BY id))",
+  "books": [
+    {
+      "book": "1CH",
+      "n": 16550,
+      "hash": "8bac55227b96fba7c4717a6dc31a27cd",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "1CO",
+      "n": 6986,
+      "hash": "28081d55647b92d0fedf829bb07f534c",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "1JN",
+      "n": 2198,
+      "hash": "1f3306f2b6081bd659d5b2c20bbba7e5",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "1KI",
+      "n": 20149,
+      "hash": "4e91792ce8f07604d731cd9e432780bf",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "1PE",
+      "n": 1734,
+      "hash": "1a7a9443f0c26963e071a6f74e056636",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "1SA",
+      "n": 20727,
+      "hash": "c86c104ecfb6cf88781762d093fc31ce",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "1TH",
+      "n": 1516,
+      "hash": "2fa5e81ae3c70503e1f5a12a9fb9af02",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "1TI",
+      "n": 1640,
+      "hash": "4814e789f5ab3d5f81fb0f0b5c0ec86e",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "2CH",
+      "n": 21086,
+      "hash": "3c57a2392e2c7ea57165d25fdc39488e",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "2CO",
+      "n": 4547,
+      "hash": "5ac08a7248acb3dcde549641a1c29228",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "2JN",
+      "n": 249,
+      "hash": "91c54c4f18a96bd2d892dcea13b38818",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "2KI",
+      "n": 18634,
+      "hash": "8f81b0cfec61f0168074a339199665ce",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "2PE",
+      "n": 1112,
+      "hash": "a17d22c8144895937543094d712e431d",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "2SA",
+      "n": 17018,
+      "hash": "68e69b929f50b110fd624dbea72120f7",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "2TH",
+      "n": 842,
+      "hash": "2f381fb926a85164769f6f49189d2928",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "2TI",
+      "n": 1273,
+      "hash": "39648dc36fe615dcdae8958ed6aaa562",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "3JN",
+      "n": 221,
+      "hash": "57dd15963a4f1452a4bbe16c4e747f7b",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "ACT",
+      "n": 18986,
+      "hash": "6524435635630b44906a1eee66b32630",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "AMO",
+      "n": 2978,
+      "hash": "c280c3910ad3158e43a713d62b8e820b",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "COL",
+      "n": 1636,
+      "hash": "0d9b62dbb791d42fd3ab1539213c04dd",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "DAN",
+      "n": 9529,
+      "hash": "50841f94a8f4993f4382b301e9f7f555",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "DEU",
+      "n": 22865,
+      "hash": "193234fba524951b19815ff0dbb5c8e1",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "ECC",
+      "n": 4455,
+      "hash": "0d78c3818958e02d56902d7b426f1827",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "EPH",
+      "n": 2484,
+      "hash": "fc56916850d2ea27e61a21f680047dbb",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "EST",
+      "n": 4857,
+      "hash": "3a7c5aa5a539b451a54eb8caf03022d0",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "EXO",
+      "n": 25733,
+      "hash": "6fc96df26c80d1047b0e351a3c5a6098",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "EZK",
+      "n": 29224,
+      "hash": "b18d2ae9ecfd58bba5f494f38b5fc927",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "EZR",
+      "n": 5806,
+      "hash": "185ac42771ee01dfcc5b79e6894d95fb",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "GAL",
+      "n": 2270,
+      "hash": "cfe96b2856230db366706524c1ab9f3d",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "GEN",
+      "n": 32073,
+      "hash": "a37a46847d8b5603d53e3d2006ce643b",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "HAB",
+      "n": 1000,
+      "hash": "a74db52059bd71271e3a11269d0c9094",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "HAG",
+      "n": 911,
+      "hash": "75d86b79150a0babd1126ac4851f82db",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "HEB",
+      "n": 5037,
+      "hash": "590ecc9f2305e10aecd02b34f887fcdc",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "HOS",
+      "n": 3581,
+      "hash": "c3a51f65b7635b8383e7204216b4299c",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "ISA",
+      "n": 25222,
+      "hash": "83a5d4b3edfa4567603228af76cd9c35",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JAS",
+      "n": 1779,
+      "hash": "971eb22df70b17534522005e572ff600",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "JDG",
+      "n": 15384,
+      "hash": "f6b7114b05fa7672f17dd23f9ac57cb7",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JER",
+      "n": 32529,
+      "hash": "8e932f8ffe566c8968965bc7e48ef3d6",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JHN",
+      "n": 16076,
+      "hash": "63cedd5cc9c06609e19377e86b238c84",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "JOB",
+      "n": 12482,
+      "hash": "0e53532dfcc13e8503cf612c95cd5839",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JOL",
+      "n": 1438,
+      "hash": "3ff3b72a7473e35a3e6d8e80f57f868d",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JON",
+      "n": 1080,
+      "hash": "578632fb7646b811cf28ca223e136f08",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JOS",
+      "n": 15737,
+      "hash": "22c7a645a46055349fd534ad6e2acd52",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "JUD",
+      "n": 468,
+      "hash": "1823a8b52561b3a61d51bac2d2efcc1c",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "LAM",
+      "n": 2238,
+      "hash": "990e128240457812049254cc36ad77cd",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "LEV",
+      "n": 18571,
+      "hash": "3cfb3f33b0f6a4dd372d578b57abca06",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "LUK",
+      "n": 20141,
+      "hash": "5a5576e4d74442b3f0b396e330c8807a",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "MAL",
+      "n": 1302,
+      "hash": "8d8ee703a605288e4008e12691a8fa38",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "MAT",
+      "n": 18898,
+      "hash": "d0c234b30a0baca5ded4c3387dc6b29a",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "MIC",
+      "n": 2105,
+      "hash": "9f8b76a820172a5dc2ec9e7052294023",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "MRK",
+      "n": 11869,
+      "hash": "1f3ea39a8a796c294b3907edbff62ea5",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "NAM",
+      "n": 828,
+      "hash": "2c4517497d7a94f1c7fcacf33a1bf513",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "NEH",
+      "n": 8445,
+      "hash": "5fa4c9c1a996ba43fd9b92890be5f6e4",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "NUM",
+      "n": 24881,
+      "hash": "156e862b96231775278fa4c2d8c776d6",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "OBA",
+      "n": 434,
+      "hash": "90f833d638e626ebb05f4356387075e7",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "PHM",
+      "n": 349,
+      "hash": "f46a4adfa7aff0133f86d4d60bd16263",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "PHP",
+      "n": 1659,
+      "hash": "72a4d189a10903e1ab8f1506a35f9c2f",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "PRO",
+      "n": 9703,
+      "hash": "f02659c77df42cf1620f2df656772ff4",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "PSA",
+      "n": 29842,
+      "hash": "be4590bd71a4624bbad119d1d50f9601",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "REV",
+      "n": 10185,
+      "hash": "a642badf82a27787c41d45bd71d544a0",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "ROM",
+      "n": 7261,
+      "hash": "0a7826f762f3669748c29ca24cdc1c3d",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "RUT",
+      "n": 2026,
+      "hash": "48081285c2d099bc94122fd49a82da38",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "SNG",
+      "n": 1972,
+      "hash": "552aeffb22e3253424a49b27fe4b6494",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "TIT",
+      "n": 680,
+      "hash": "a009a01f13281e6ce5a8670bc248c582",
+      "destination": "B",
+      "ok": true
+    },
+    {
+      "book": "ZEC",
+      "n": 4787,
+      "hash": "340fe4a98c01e3385595ea37ccddc77c",
+      "destination": "A",
+      "ok": true
+    },
+    {
+      "book": "ZEP",
+      "n": 1120,
+      "hash": "a76658b971f057b5d69d66dcd0b5b976",
+      "destination": "A",
+      "ok": true
+    }
+  ]
+}

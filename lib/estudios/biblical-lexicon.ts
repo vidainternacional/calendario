@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { createHash } from 'node:crypto'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/neon/biblical-client'
 
 export type IdiomaLexicoBiblico = 'hebrew' | 'aramaic' | 'greek'
 export type TipoGlosaLexica = 'source_translation' | 'editorial_translation' | 'editorial_summary'
