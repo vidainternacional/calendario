@@ -271,6 +271,20 @@
       "currentFailures": 9,
       "unchangedBaselineFailures": 9,
       "newFailures": 0
+    },
+    "regressionSuiteWithoutLocalSubprocessRestriction": {
+      "current": {
+        "tests": 590,
+        "passed": 580,
+        "failed": 10
+      },
+      "baseline": {
+        "tests": 584,
+        "passed": 574,
+        "failed": 10
+      },
+      "sameFailingTests": true,
+      "newFailures": 0
     }
   },
   "backup": {
@@ -280,5 +294,25 @@
     "bytes": 132154798,
     "sha256": "494b4f1d4d43b8275ece416190da60bf7974b103a819c7f11821367353f798c6",
     "bookHashesVerified": true
+  },
+  "production": {
+    "commit": "8052a50300e1add92b7e7bb75bf6a75897a8d604",
+    "deployment": "dpl_86wVQS1DPPTC9KL4BBtfxXu9cELT",
+    "url": "https://calendario-vida-internacional.vercel.app",
+    "state": "READY",
+    "pullRequest": 304
+  },
+  "authorizedCleanup": {
+    "table": "public.biblical_word_occurrences",
+    "sourceOccurrencesAfter": 0,
+    "sourceTextsAfter": 124504,
+    "sourceDatabaseBytesBefore": 1277684883,
+    "sourceDatabaseBytesAfter": 319425683,
+    "reclaimedBytes": 958259200,
+    "defaultTransactionReadOnly": "off",
+    "sourceStillMatchedBackupBeforeCleanup": true,
+    "authHealthHTTPStatusAfter": 402,
+    "authRestriction": "exceed_db_size_quota",
+    "authenticatedAccessVerified": false
   }
 }

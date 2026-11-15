@@ -3,6 +3,9 @@ Fecha: 2026-11-14
 Rama independiente: agent/migracion-biblia-neon-20261114
 Objetivo actual: restaurar acceso a la app sin contratar plan, manteniendo Supabase Auth/usuarios y contenido bíblico compartido en dos Neon Free.
 
+> **ESTADO MÁS RECIENTE — 2026-11-15:** migración completa, PR #304 integrado y lector Neon publicado en producción. Con autorización explícita se vació únicamente `public.biblical_word_occurrences` en Supabase: ahora **0 filas**, base **319,425,683 bytes**. Neon conserva **469,302 AT + 142,096 NT** y el respaldo completo está verificado. El API de Supabase todavía devuelve **HTTP 402 / exceed_db_size_quota** pese a estar por debajo de 500 MB; **acceso autenticado no recuperado todavía**. No repetir la copia ni el vaciado. Los apartados previos describen fotografías históricas.
+
+
 ## Estado confirmado (consulta directa)
 - Supabase calendariovida (atjtjpchslxbseayzflz): biblical_word_occurrences 611398 filas y biblioteca bíblica todavía intacta; base ~1277668499 bytes. Restricción reportada exceed_db_size_quota; despliegue Vercel READY no significa inicio de sesión funcional.
 - Neon A rough-glitter-04635242: 59459 ocurrencias del Antiguo Testamento.
@@ -378,3 +381,17 @@ Fecha: **2026-11-14**, Fase C. Se continuó exclusivamente la copia de la tabla 
 ### Cuota de Supabase: pendiente de autorización y validación
 
 El origen conserva **611,398 ocurrencias y 124,504 textos**; tamaño observado **1,277,684,883 bytes**. `biblical_word_occurrences` ocupa **958,308,352 bytes** incluyendo índices. No se borró ningún registro. No hay claves foráneas entrantes ni triggers no internos en esa tabla según consulta de catálogo. El plan exacto de liberación y reversión está en `docs/NEON_BIBLIA_RECUPERACION_CUOTA_2026-11-15.md`; no ejecutarlo sin autorización explícita y sin validar previamente el lector desplegado.
+
+
+## Producción y liberación autorizadas — 2026-11-15
+
+El usuario autorizó expresamente: integrar la rama en main, guardar las dos conexiones como secretos de producción, publicar el lector y vaciar solamente las 611,398 ocurrencias editoriales ya respaldadas. No autorizó cambios de plan, spend cap, RLS, permisos, usuarios, notas ni progreso.
+
+- PR **#304** integrado. Commit de producción: **8052a50300e1add92b7e7bb75bf6a75897a8d604**. Vercel **dpl_86wVQS1DPPTC9KL4BBtfxXu9cELT**, **READY**, target **production**, alias `https://calendario-vida-internacional.vercel.app`. Se verificaron los secretos de servidor y `VIDA_BIBLE_READ_BACKEND=neon` en producción.
+- Antes del vaciado se revalidaron de nuevo las **66 cantidades y huellas** del origen contra el respaldo certificado, sin cambios; se comprobó también SHA-256 del archivo comprimido.
+- Se ejecutó una única transacción READ WRITE con plazo de bloqueo de 5 segundos, bloqueo exclusivo y comprobación de recuento igual a 611,398; después `TRUNCATE ONLY public.biblical_word_occurrences` y COMMIT. Sin CASCADE, cambios de esquema, RLS o grants.
+- Verificación posterior: **0 ocurrencias en Supabase**, **124,504 textos conservados**, base **319,425,683 bytes**, tabla vacía **49,152 bytes** y `default_transaction_read_only=off`. Espacio físico recuperado: **958,259,200 bytes**. Neon A sigue con **469,302 AT**; B conserva **151,229 filas brutas = 142,096 NT + 9,133 AT extra**, además de **124,504 textos**.
+- La portada de producción y el Preview cargan; sin sesión las rutas protegidas redirigen a login. El usuario intentó entrar y recibió la restricción de cuota. La comprobación independiente `/auth/v1/health` sigue dando **HTTP 402 / exceed_db_size_quota** después de liberar espacio. La situación ya no es falta de copia ni exceso de tamaño actual; queda el bloqueo de servicio administrado por Supabase. No se certifica login ni validación autenticada hasta que se levante.
+- Documentación oficial consultada: `https://supabase.com/docs/guides/platform/billing-faq#fair-use-policy` indica que las restricciones por cuota pueden mantenerse hasta el reinicio del ciclo; reducir tamaño no garantiza levantamiento inmediato del HTTP 402. No pausar/recrear proyectos para intentar reiniciar cuotas ni contratar plan. Solicitud de revisión preparada en `docs/NEON_BIBLIA_SOPORTE_RESTRICCION_2026-11-15.md`; no se envió mensaje a terceros.
+- Comprobación de tests sin la limitación local de subprocesos: **590 tests: 580 PASS, 10 fallos**; checkpoint original: **584 tests: 574 PASS, exactamente los mismos 10 fallos**. Los seis nuevos tests pasan. CI temporal falla en regresiones heredadas; VIDA Guardrails y contrato servidor de Roma pasan. No afirmar CI global verde.
+- El documento maestro permanece intacto según la restricción del usuario. El contenido bíblico se lee desde Neon; Auth, perfiles, notas, progreso y las demás funciones personales siguen en Supabase. Sus copias editoriales restantes no se borraron.

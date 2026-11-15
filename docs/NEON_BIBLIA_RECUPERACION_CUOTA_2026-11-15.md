@@ -1,6 +1,14 @@
-# Recuperación de cuota — propuesta, NO ejecutada
+# Recuperación de cuota — ejecutada con autorización explícita
 
-## Cambio propuesto y alcance exacto
+## Estado posterior — 2026-11-15
+
+**EJECUTADO, NO REPETIR.** PR #304 integrado y producción READY con lector Neon antes del vaciado. Supabase conserva 124,504 textos y sus tablas personales; únicamente las ocurrencias quedaron en 0. Tamaño antes: 1,277,684,883 bytes; después: **319,425,683 bytes**; recuperados: **958,259,200 bytes**. `default_transaction_read_only=off`.
+
+El API de Auth todavía devuelve HTTP 402 `exceed_db_size_quota`, pese al tamaño corregido. No se certifica recuperación del acceso. Solicitud preparada para revisión del bloqueo del proveedor en `NEON_BIBLIA_SOPORTE_RESTRICCION_2026-11-15.md`.
+
+Los apartados siguientes conservan el plan autorizado y su reversión como evidencia histórica.
+
+## Cambio autorizado y alcance exacto
 
 Después de aprobar y validar el Preview, autorizar por separado la publicación del lector Neon y el vaciado **únicamente** de `public.biblical_word_occurrences` en Supabase `atjtjpchslxbseayzflz`. No retirar textos, tablas, esquema, índices, RLS, grants, usuarios, perfiles, notas, progreso, ministerios ni el índice derivado de búsqueda.
 
