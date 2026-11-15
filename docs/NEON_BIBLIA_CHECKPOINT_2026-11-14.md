@@ -280,3 +280,22 @@ Durante Daniel hubo dos respuestas transitorias de autenticación `HTTP 401` en 
 Fotografía al cierre de este bloque: **Neon A 137,676 ocurrencias y 239,108,096 bytes; Neon B 68,953 ocurrencias, 124,504 textos bíblicos y 323,829,760 bytes**; Supabase conserva **611,398 ocurrencias y 124,504 textos**, con tamaño **1,277,676,691 bytes**. Los totales variaron mientras se trabajaba por **otro proceso de copiado**: no atribuir incrementos totales de Neon a esta intervención, ni mezclar las 9,133 ocurrencias AT redundantes de Neon B con cobertura única.
 
 **Pendiente:** completar y cotejar por clave/huella las ocurrencias AT restantes en Neon A y NT restantes en Neon B; preservar originales. Solo después realizar integración `server-only`, Preview funcional y pruebas de acceso; cualquier eliminación para recuperar cuota debe esperar respaldo, plan de reversión y aprobación expresa. No se tocaron datos personales, Auth, progreso, notas, RLS, permisos, `main`, producción ni configuración de gastos.
+
+
+## Continuación — 2026-11-14 — 1 Corintios, Romanos y Apocalipsis completos
+
+Se trasladaron exclusivamente ocurrencias de **texto editorial compartido** de `public.biblical_word_occurrences` (Supabase `calendariovida`) a **Neon B — Textos** (`curly-scene-97670657`), en lotes reanudables por `book_code` y `ORDER BY id`. Se leyó cada fila original como `to_jsonb(fila)::text`; se restauró con `jsonb_populate_recordset` y se insertó idempotentemente `ON CONFLICT (id) DO NOTHING`. Cada lote se rechazaba si faltaban filas, había UUID duplicado, libro diferente o `approved_by` no nulo. No se trasladaron datos personales.
+
+| Libro | Filas originales y finales en Neon B | Nuevas insertadas en esta intervención | MD5 del contenido completo por UUID, idéntico en Supabase y Neon B |
+|---|---:|---:|---|
+| 1 Corintios (`1CO`) | 6,986 | 6,038 | `28081d55647b92d0fedf829bb07f534c` |
+| Romanos (`ROM`) | 7,261 | 6,217 | `0a7826f762f3669748c29ca24cdc1c3d` |
+| Apocalipsis (`REV`) | 10,185 | 8,735 | `a642badf82a27787c41d45bd71d544a0` |
+
+**Resultado verificado: 20,990 nuevas filas**, **24,432 registros de los tres libros cotejados** en su totalidad mediante `count(*)` y `md5(string_agg(md5(to_jsonb(t)::text),'' ORDER BY id))` independientes en el origen y el destino. **Corrección del conteo:** 6,038 + 6,217 + 8,735 = 20,990 (no 20,004). 1 Corintios ya tenía 948 y Romanos 1,044 antes de estos lotes; Apocalipsis tenía 1,450. La transferencia se realizó en lotes de hasta 300 registros sin actualizaciones de filas existentes.
+
+Comprobación posterior: Supabase **611,398 ocurrencias**, **124,504 textos**, tamaño de base **1,277,676,691 bytes**; Neon A **137,676 ocurrencias** y **239,108,096 bytes**; Neon B **87,239 ocurrencias**, **124,504 textos** y **347,144,192 bytes**. Son fotografías temporales, no una conciliación global: otros procesos pueden insertar en Neon paralelamente. Neon B conserva filas AT redundantes, por lo que los contadores A+B no representan claves únicas. Los dos proyectos permanecen por debajo del límite observado de 1 GiB cada uno.
+
+Durante este bloque también se verificó independientemente que **2 Corintios (`2CO`, 4,547)**, **Hebreos (`HEB`, 5,037)** y **Santiago (`JAS`, 1,779)** ya coincidían por conteo y hash con el origen; **no atribuir a este bloque la copia de esos tres libros**. Los 124,504 textos bíblicos de Neon B permanecen presentes; las 21 tablas auxiliares habían sido validadas íntegramente en checkpoint previo, no reescritas aquí.
+
+**Fase C EN CURSO.** Faltan muchas ocurrencias AT/NT y conciliación global por UUID/huella. Fases D–F y recuperación del inicio de sesión siguen pendientes. No se tocaron Supabase RLS/grants/Auth, usuarios, notas, progreso, planes, secretos, borrados, `main` ni producción. No se hará limpieza para recuperar cuota sin respaldo, plan reversible y aprobación expresa.
