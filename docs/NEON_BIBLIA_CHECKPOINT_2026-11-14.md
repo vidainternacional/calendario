@@ -299,3 +299,16 @@ Comprobación posterior: Supabase **611,398 ocurrencias**, **124,504 textos**, t
 Durante este bloque también se verificó independientemente que **2 Corintios (`2CO`, 4,547)**, **Hebreos (`HEB`, 5,037)** y **Santiago (`JAS`, 1,779)** ya coincidían por conteo y hash con el origen; **no atribuir a este bloque la copia de esos tres libros**. Los 124,504 textos bíblicos de Neon B permanecen presentes; las 21 tablas auxiliares habían sido validadas íntegramente en checkpoint previo, no reescritas aquí.
 
 **Fase C EN CURSO.** Faltan muchas ocurrencias AT/NT y conciliación global por UUID/huella. Fases D–F y recuperación del inicio de sesión siguen pendientes. No se tocaron Supabase RLS/grants/Auth, usuarios, notas, progreso, planes, secretos, borrados, `main` ni producción. No se hará limpieza para recuperar cuota sin respaldo, plan reversible y aprobación expresa.
+
+
+## Continuación — Marcos (MRK) — transferencia completa a Neon B
+
+Fecha: **2026-11-14**, Fase C. Se continuó exclusivamente la copia de la tabla **editorial compartida** `public.biblical_word_occurrences`, libro `MRK`, desde Supabase `calendariovida` (proyecto `atjtjpchslxbseayzflz`) hasta **Neon B Textos** (`curly-scene-97670657`). No se movieron registros personales ni se modificó el origen.
+
+- Origen: **11,869 ocurrencias MRK**; destino al comenzar: **1,668**, con evidencia de otras copias en paralelo para otros libros.
+- Se leyeron exactamente **11,869 filas en orden UUID** y se reconstruyeron desde `to_jsonb(fila)::text` mediante `jsonb_populate_recordset`; **38 lotes** de hasta 320 filas y escritura idempotente `ON CONFLICT (id) DO NOTHING`.
+- Resultado atribuible a este bloque: **10,201 nuevas filas** insertadas; **1,668 preexistentes** preservadas. Antes de cada escritura se comprobaron libro correcto, IDs únicos, conteo esperado y `approved_by IS NULL`.
+- **Verificación final completa independiente:** Supabase **11,869/11,869**, Neon B **11,869/11,869**. Huella de fila completa en orden por UUID `md5(string_agg(md5(to_jsonb(t)::text), '' ORDER BY id))` coincidente en ambos extremos: **`1f3ea39a8a796c294b3907edbff62ea5`**.
+- Fotografía posterior: Neon B **87,239 ocurrencias** y **347,144,192 bytes** de tamaño PostgreSQL; los incrementos totales incluyen copias concurrentes y NO se atribuyen por completo a MRK. Se conservan los 9,133 registros AT redundantes hasta una operación reversible autorizada. Supabase sigue sin liberar cuota.
+- Conteo de distribución de trabajo en la comprobación siguiente: **45 libros** con cantidad esperada en el Neon asignado; eso por sí solo no certifica los hashes de los 45. Aún faltan **395,616 ocurrencias** por cantidad entre AT y NT asignados (fotografía, sujeta a otros procesos); de NT quedan principalmente ACT, JHN, LUK y MAT.
+- No se alteraron autenticación, perfiles, notas, progreso personal, RLS, permisos, `main`, secretos ni producción. Fase C continúa activa; pendientes la conciliación integral, integración de consultas `server-only` con Neon, Preview funcional, recuperación segura de cuota de Supabase y prueba de acceso.
