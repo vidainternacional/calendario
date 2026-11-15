@@ -99,3 +99,36 @@ Se continuó exclusivamente la transferencia **editorial compartida** de `public
 - Supabase conservó **611,398 ocurrencias** y su tamaño no se redujo: **1,277,668,499 bytes**. Recuperación de acceso **PENDIENTE**.
 - Neon B mostró además aumento de `biblical_verse_texts` a **101,611 filas** desde una observación previa de **90,095** sin que esta intervención escribiera esa tabla. No atribuir el aumento a estos lotes; comprobar posibles procesos simultáneos antes de trabajar en versículos.
 - Pendientes: validar resto del corpus con claves y huellas, integración server-only, Preview con acceso funcional, respaldo y posterior recuperación de cuota con autorización expresa. Sin merge a `main` ni producción.
+
+
+## Copia controlada adicional — 2026-11-14 — ocho libros
+
+Se continuó la Fase C mediante lotes de filas editoriales de `public.biblical_word_occurrences`, serializadas como `to_jsonb(fila)::text` desde Supabase y reconstruidas con `jsonb_populate_recordset` en Neon. Escritura idempotente `ON CONFLICT (id) DO NOTHING`. Cada libro marcado como completo fue cotejado con `COUNT(*)` y la huella ordenada `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))` en ambas bases. Las tablas personales, usuarios, permisos, producción y originales permanecieron intactos.
+
+### Antiguo Testamento — Neon A (Léxico)
+
+| Libro | Registros en Supabase | Registros en Neon A | Nuevos insertados en esta intervención | Huella idéntica |
+|---|---:|---:|---:|---|
+| Jonás (JON) | 1,080 | 1,080 | 0 (ya completos al revisar) | `578632fb7646b811cf28ca223e136f08` |
+| Sofonías (ZEP) | 1,120 | 1,120 | 0 (ya completos al revisar) | `a76658b971f057b5d69d66dcd0b5b976` |
+| Malaquías (MAL) | 1,302 | 1,302 | 0 (ya completos al copiar) | `8d8ee703a605288e4008e12691a8fa38` |
+| Nahúm (NAM) | 828 | 828 | 692 | `2c4517497d7a94f1c7fcacf33a1bf513` |
+| Joel (JOL) | 1,438 | 1,438 | 1,247 | `3ff3b72a7473e35a3e6d8e80f57f868d` |
+| Miqueas (MIC) | 2,105 | 2,105 | 1,825 | `9f8b76a820172a5dc2ec9e7052294023` |
+| Rut (RUT) | 2,026 | 2,026 | 1,737 | `48081285c2d099bc94122fd49a82da38` |
+| Habacuc (HAB) | 1,000 | 1,000 | 875 | `a74db52059bd71271e3a11269d0c9094` |
+| Lamentaciones (LAM) | 2,238 | 2,238 | 1,932 | `990e128240457812049254cc36ad77cd` |
+
+**Resultado comprobado en esta continuación: 8,308 filas nuevas añadidas a Neon A** en seis libros incompletos. El contador de filas de origen y destino y las huellas son iguales para los nueve libros indicados. En la consulta final, Neon A contenía 78,778 ocurrencias y 152,395,776 bytes de tamaño PostgreSQL de base; esta cifra total no es prueba de integridad del corpus completo.
+
+### Nuevo Testamento — Neon B (Textos) — lote anterior también verificado
+
+En un bloque anterior de esta misma conversación se copiaron y validaron libros completos desde Supabase: 3 Juan (221 filas, +196, digest `57dd15963a4f1452a4bbe16c4e747f7b`), Filemón (349, +298, `f46a4adfa7aff0133f86d4d60bd16263`), Tito (680, +582, `a009a01f13281e6ce5a8670bc248c582`), 2 Pedro (1,112, +978, `a17d22c8144895937543094d712e431d`) y 1 Pedro (1,734, +1,489, `1a7a9443f0c26963e071a6f74e056636`). **3,543 filas nuevas**, ya verificadas, adicionales a los 126 versículos de 1 Juan documentados antes.
+
+### Estado global al consultar (fotografía; puede variar si existe otra copia en paralelo)
+
+- Supabase conserva **611,398 ocurrencias** y **124,504 textos/versículos**; tamaño PostgreSQL de base: **1,277,668,499 bytes**. No se eliminó nada.
+- Neon A: **78,778 ocurrencias**.
+- Neon B: **32,945 ocurrencias**, **104,911 textos/versículos**. Existen registros AT duplicados entre ambos Neon por diseño temporal de seguridad; NO sumar los contadores para afirmar claves únicas migradas.
+- Las cantidades de Neon B han seguido variando respecto de controles anteriores, posiblemente por otros procesos. Antes de cualquier copia masiva nueva, comprobar escrituras en curso y reconciliar por clave/huella.
+- Fase C **EN CURSO**. No se ha integrado Neon a la app, no se ha liberado cuota en Supabase, no se ha probado el login. No gastos, RLS, permisos, borrados, merge ni despliegue de producción.
