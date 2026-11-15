@@ -183,3 +183,39 @@ Fecha: **2026-11-14**. Durante esta continuación se transfirieron filas **edito
 **1 Juan (`1JN`), ocurrencias (NO confundir con los 420 textos de 1JN que ya están completos):** origen **2,198** filas, destino comprobado **880**. Se procesaron los primeros **880** registros según UUID; **551** fueron nuevas inserciones idempotentes. El siguiente lote, a partir de `OFFSET 880`, falló dos veces por un error interno de la herramienta, incluso con menor tamaño; no se reintentó indefinidamente ni se marcó el libro completo. Reanudar desde ese punto tras diagnosticar conectividad y coordinar la copia concurrente. El conteo final de destino **880** y una huella parcial **`cbec17bb1487d4690793e086388695bc`** no certifican integridad del libro completo.
 
 **Total atribuible a esta continuación: 5,000 nuevas filas** en Neon B, de las cuales 4,449 pertenecen a libros íntegros/cotejados y 551 a un libro aún incompleto. En una comprobación posterior, Neon A reportó **97,965** ocurrencias y Neon B **39,460** ocurrencias; Neon B reportó **124,504 textos bíblicos**, cifra compatible con la certificación previa de los 66 libros, pero no sumar ocurrencias A+B como UUID únicos por los registros AT redundantes. Ambas bases siguen sin integrar al runtime de VIDA. Supabase Auth y datos originales siguen intactos; el acceso continúa pendiente por cuota. Se detectó crecimiento concurrente de A/B y se detuvieron nuevas escrituras para evitar interferir con otro proceso; primero coordinar origen/cursor antes de reanudar.
+
+
+## Conciliación adicional — 2026-11-14 — textos completos y ocho libros AT
+
+### Verificación completa de textos en Neon B
+
+- `public.biblical_verse_texts` tiene en Supabase origen **124,504 filas** y en Neon B **124,504 filas**, distribuidas entre los **66 libros**.
+- Se comparó directamente cada libro por `count(*)` y `md5(string_agg(md5(to_jsonb(t)::text), '' ORDER BY id))`. **66/66 libros coinciden en cantidad y huella íntegra de filas; 124,504/124,504 filas verificadas**. No se atribuye toda la copia a esta sesión: Neon B aumentó de forma concurrente mientras se verificaba.
+- Las **21 tablas editoriales auxiliares** presentes en Neon B (léxico, glosas, catálogos, concordancias, variantes, cronología, geografía, contexto y biblioteca) se compararon con el origen: **21/21 coincidieron en recuentos y huella agregada de todas sus filas**.
+- No confundir textos completos con corpus migrado: `biblical_word_occurrences` sigue incompleto en ambos destinos, y la integración con la app no está implementada.
+
+### Nuevos lotes en Neon A — Antiguo Testamento
+
+Lotes desde `public.biblical_word_occurrences` en Supabase: lectura `to_jsonb(fila)::text`; escritura a Neon A mediante `jsonb_populate_recordset` y `ON CONFLICT (id) DO NOTHING`. Cada libro se validó al terminar mediante **conteo y hash agregado ordenado de todas las filas** frente a origen.
+
+| Libro | Total verificado origen = Neon A | Filas nuevas en este bloque | Huella validada |
+|---|---:|---:|---|
+| Cantares (SNG) | 1,972 | 1,703 | `552aeffb22e3253424a49b27fe4b6494` |
+| Amós (AMO) | 2,978 | 2,566 | `c280c3910ad3158e43a713d62b8e820b` |
+| Oseas (HOS) | 3,581 | 3,098 | `c3a51f65b7635b8383e7204216b4299c` |
+| Eclesiastés (ECC) | 4,455 | 3,847 | `0d78c3818958e02d56902d7b426f1827` |
+| Zacarías (ZEC) | 4,787 | 4,140 | `340fe4a98c01e3385595ea37ccddc77c` |
+| Ester (EST) | 4,857 | 4,090 | `3a7c5aa5a539b451a54eb8caf03022d0` |
+| Esdras (EZR) | 5,806 | 4,944 | `185ac42771ee01dfcc5b79e6894d95fb` |
+| Nehemías (NEH) | 8,445 | 7,226 | `5fa4c9c1a996ba43fd9b92890be5f6e4` |
+
+**Total del bloque: 31,614 filas nuevas, ocho libros AT completos y validados**. Las filas existentes previas no se duplicaron.
+
+### Separación y tareas restantes
+
+- Neon B (Textos) tenía **124,504 textos completos y verificados**, pero solo parte de las ocurrencias de palabras del Nuevo Testamento; en controles posteriores el número de ocurrencias de B fue creciendo independientemente de los lotes hechos aquí. Evitar adjudicarse las escrituras simultáneas.
+- Neon A (Léxico) sigue incompleto respecto de las **469,302 ocurrencias AT** de Supabase. En la última lectura observada A tenía **115,036 ocurrencias**, superior al subtotal explicado por este bloque y el checkpoint previo; no asumir autoría de la diferencia ni sumar ambos Neon para inferir claves únicas.
+- En revisión cercana, Neon B ocupaba **292,200,448 bytes** y Neon A **205,799,424 bytes** según `pg_database_size`, todavía por debajo de los límites reportados del plan gratuito. Estas cifras pueden variar con otros procesos.
+- Supabase conserva íntegramente **611,398 ocurrencias** y **124,504 versículos**; `pg_database_size` se mantuvo en **1,277,668,499 bytes**, por encima del bloqueo de cuota reportado.
+- No se tocaron datos personales, progreso, notas, autenticación, RLS, grants, `main` ni producción.
+- **Fase C EN CURSO**: verificar/completar ocurrencias AT y NT y asegurar claves, hashes y capacidad; después integrar lecturas server-only a Neon y validar Preview. Liberar espacio en Supabase solo después de respaldo verificable, lista exacta de objetos y autorización explícita. El acceso a la app sigue sin confirmarse.
