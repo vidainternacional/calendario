@@ -219,3 +219,26 @@ Lotes desde `public.biblical_word_occurrences` en Supabase: lectura `to_jsonb(fi
 - Supabase conserva íntegramente **611,398 ocurrencias** y **124,504 versículos**; `pg_database_size` se mantuvo en **1,277,668,499 bytes**, por encima del bloqueo de cuota reportado.
 - No se tocaron datos personales, progreso, notas, autenticación, RLS, grants, `main` ni producción.
 - **Fase C EN CURSO**: verificar/completar ocurrencias AT y NT y asegurar claves, hashes y capacidad; después integrar lecturas server-only a Neon y validar Preview. Liberar espacio en Supabase solo después de respaldo verificable, lista exacta de objetos y autorización explícita. El acceso a la app sigue sin confirmarse.
+
+
+## Continuación — 2026-11-14 — cuatro libros de palabras NT completos (Neon B)
+
+Se continuó la Fase C sin tocar el proyecto de producción. Origen: Supabase `calendariovida`, tabla editorial `public.biblical_word_occurrences`; destino: `curly-scene-97670657` (Neon B, Textos). Para cada lote: `to_jsonb(fila)::text` del origen, `jsonb_populate_recordset` al destino e inserción `ON CONFLICT (id) DO NOTHING`, previa verificación del libro, UUID sin duplicaciones y `approved_by IS NULL`. Se verificaron libros completos por cantidad y huella `md5(string_agg(md5(to_jsonb(fila)::text), '' ORDER BY id))` del origen y destino.
+
+| Libro | Total en Supabase = Neon B | Nuevas filas insertadas en esta continuación | Huella idéntica |
+|---|---:|---:|---|
+| 1 Juan (1JN) | 2,198 | 1,318 | `1f3306f2b6081bd659d5b2c20bbba7e5` |
+| Filipenses (PHP) | 1,659 | 1,434 | `72a4d189a10903e1ab8f1506a35f9c2f` |
+| Gálatas (GAL) | 2,270 | 1,957 | `cfe96b2856230db366706524c1ab9f3d` |
+| Efesios (EPH) | 2,484 | 2,148 | `fc56916850d2ea27e61a21f680047dbb` |
+
+**Total de esta intervención en Neon B: 6,857 filas nuevas**, **8,611 registros completos cotejados**, cuatro libros del NT concluidos. La copia de 1JN anteriormente detenida en `OFFSET 880` se reanudó en lotes de 80 y se certificó íntegra. En PHP hubo interrupción de límite de llamadas después de los primeros lotes; se reanudó en `OFFSET 1200`, y todo el libro quedó verificado. En EPH una consulta recibió transitoriamente HTTP 401; tras comprobar que Supabase respondía de nuevo a una consulta simple, los lotes pendientes se completaron y verificaron. Ningún fallo se interpretó como copia terminada sin certificación posterior.
+
+### Auditoría adicional y concurrencia
+
+- Comprobación independiente del corpus `biblical_verse_texts`: **66/66 libros, 124,504/124,504 registros** en Supabase y Neon B, con conteo y huella por libro idénticos. No se necesita duplicar la copia de esos textos.
+- Se verificaron de nuevo **17 libros AT (37,112 ocurrencias)** del grupo ya completado en Neon A, mediante conteo y huella por libro, sin discrepancias. Esta comprobación no implica haber copiado nuevas filas de esos libros.
+- Durante la lectura, otra copia simultánea estaba completando Esdras en Neon A: pasó de 862 a 4,400 y luego a 5,806. Esta intervención examinó los primeros 1,680 registros de Esdras con escritura idempotente, pero **0 inserciones nuevas** porque ya existían; se detuvo para no duplicar ni interferir. Las escrituras concurrentes no se atribuyen a este bloque.
+- Lectura posterior de bases: Neon A **118,565 ocurrencias**, `pg_database_size` **210,845,696 bytes**; Neon B **46,317 ocurrencias**, **124,504 textos**, `pg_database_size` **294,895,616 bytes**. Son fotografías temporales; no sumar A + B como claves únicas sin descontar el AT redundante en B.
+- Supabase mantiene **611,398 ocurrencias** y `pg_database_size` **1,277,668,499 bytes**; no se borró ninguna fila y la restricción de cuota no está resuelta. No se modificaron usuarios, sesiones, notas, permisos, RLS, secretos, `main`, ni producción.
+- **Fase C continúa EN CURSO**: faltan ocurrencias AT/NT, su conciliación completa por UUID/huella, la integración `server-only` a Neon, las regresiones/Preview integrados, respaldo antes de plantear la eliminación controlada en Supabase con autorización explícita, y validación real del acceso.
