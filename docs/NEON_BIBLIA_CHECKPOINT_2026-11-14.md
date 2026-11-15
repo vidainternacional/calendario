@@ -242,3 +242,22 @@ Se continuó la Fase C sin tocar el proyecto de producción. Origen: Supabase `c
 - Lectura posterior de bases: Neon A **118,565 ocurrencias**, `pg_database_size` **210,845,696 bytes**; Neon B **46,317 ocurrencias**, **124,504 textos**, `pg_database_size` **294,895,616 bytes**. Son fotografías temporales; no sumar A + B como claves únicas sin descontar el AT redundante en B.
 - Supabase mantiene **611,398 ocurrencias** y `pg_database_size` **1,277,668,499 bytes**; no se borró ninguna fila y la restricción de cuota no está resuelta. No se modificaron usuarios, sesiones, notas, permisos, RLS, secretos, `main`, ni producción.
 - **Fase C continúa EN CURSO**: faltan ocurrencias AT/NT, su conciliación completa por UUID/huella, la integración `server-only` a Neon, las regresiones/Preview integrados, respaldo antes de plantear la eliminación controlada en Supabase con autorización explícita, y validación real del acceso.
+
+
+## Continuación — 2026-11-14 — Hebreos, Santiago y 2 Corintios
+
+Se ejecutó un bloque finito de copia editorial **únicamente** de `public.biblical_word_occurrences`, origen Supabase `calendariovida`, destino Neon B `curly-scene-97670657` (Nuevo Testamento). Cada lote se obtuvo como `to_jsonb(fila)::text`, se reconstruyó en PostgreSQL con `jsonb_populate_recordset` y utilizó `ON CONFLICT (id) DO NOTHING`. Antes de escribir se verificaron conteo de lote, UUID único, libro correcto y `approved_by IS NULL`. Cada libro fue cotejado íntegramente entre origen y destino por conteo y hash `md5(string_agg(md5(to_jsonb(t)::text),'' ORDER BY id))`.
+
+| Libro | Filas en origen y destino | Filas nuevas insertadas aquí | Huella idéntica |
+|---|---:|---:|---|
+| Hebreos (`HEB`) | 5,037 | 4,306 | `590ecc9f2305e10aecd02b34f887fcdc` |
+| Santiago (`JAS`) | 1,779 | 1,517 | `971eb22df70b17534522005e572ff600` |
+| 2 Corintios (`2CO`) | 4,547 | 3,908 | `5ac08a7248acb3dcde549641a1c29228` |
+
+**Resultado propio validado: 9,731 nuevas filas insertadas; 11,363 filas íntegras y verificadas, 3/3 libros.**
+
+Se inició una lectura/reconciliación del primer tramo de `1CO` (2,080 filas) pero la escritura idempotente devolvió **0 filas nuevas**. El contador de ese libro creció simultáneamente en Neon B de aproximadamente 948 a 6,900, luego a **6,986**, sin que estos lotes aportaran inserciones. Se confirmó que **1CO 6,986/6,986** coincide con Supabase en contenido: hash `28081d55647b92d0fedf829bb07f534c`. La finalización de `1CO` se atribuye a **otro proceso no identificado**, no a esta intervención. Se interrumpieron escrituras adicionales sobre ese libro para evitar interferencia.
+
+Fotografía posterior del entorno: Neon B `biblical_word_occurrences` **57,500 filas**, `biblical_verse_texts` **124,504 filas**, base **309,215,232 bytes**; Neon A **126,968 ocurrencias**, base **223,330,304 bytes**. Los contadores pueden variar debido a escrituras simultáneas. Supabase conserva **611,398 ocurrencias** y ocupaba **1,277,676,691 bytes** según consulta; ninguna tabla de origen fue reducida o borrada. No sumar filas A + B como cobertura única debido a los 9,133 AT redundantes que permanecen temporalmente en B.
+
+**Fase C continúa EN CURSO.** Sigue faltando una parte sustancial de ocurrencias AT/NT. Los textos bíblicos 66/66 y 21 tablas auxiliares ya fueron certificados previamente. La integración server-only de la app (Fase D), Preview funcional, pruebas y recuperación de cuota (Fases E/F) siguen pendientes. No se modificaron Auth, perfiles, notas, progreso, RLS, permisos, `main`, producción ni gastos. No se eliminó información. Antes de nuevos lotes de `1CO` u otros libros con crecimiento concurrente, coordinar el proceso activo y verificar curso de inserciones para evitar superposición.
