@@ -164,3 +164,22 @@ Las siguientes **21 tablas** ya estaban completas en Neon B y fueron cotejadas e
 3. Integración **server-only** de lecturas bíblicas con Neon, mantener Supabase Auth, perfiles, notas y progreso; configurar Preview y pasar pruebas de regresión.
 4. Después de validar backups, controles de acceso, compatibilidad y Preview, **presentar por separado** listado de datos bíblicos a retirar de Supabase, impacto y reversión; esperar aprobación para liberar cuota.
 5. Verificar acceso real en la cuenta cuando Supabase sea funcional, antes de anunciar recuperación. Mantener rama separada de `main` y no producir merge sin autorización.
+
+
+## Continuación confirmada — cinco libros NT y lote parcial 1JN
+
+Fecha: **2026-11-14**. Durante esta continuación se transfirieron filas **editoriales compartidas** de `public.biblical_word_occurrences` (Supabase `calendariovida`) a Neon B `curly-scene-97670657` mediante lotes finitos de `to_jsonb(fila)::text`, reconstrucción `jsonb_populate_recordset` y escritura `ON CONFLICT (id) DO NOTHING`. Se rechazó cada lote si faltaba una fila, había UUID duplicado, `book_code` incorrecto o `approved_by` no era nulo. No se escribieron datos personales ni se tocó el origen.
+
+| Libro NT | Filas del origen | Insertadas directamente ahora | Certificación `COUNT + MD5` en origen/destino |
+|---|---:|---:|---|
+| 2 Tesalonicenses (`2TH`) | 842 | 729 | `2f381fb926a85164769f6f49189d2928` |
+| 2 Timoteo (`2TI`) | 1,273 | 73 | `39648dc36fe615dcdae8958ed6aaa562` |
+| 1 Tesalonicenses (`1TH`) | 1,516 | 830 | `2fa5e81ae3c70503e1f5a12a9fb9af02` |
+| 1 Timoteo (`1TI`) | 1,640 | 1,421 | `4814e789f5ab3d5f81fb0f0b5c0ec86e` |
+| Colosenses (`COL`) | 1,636 | 1,396 | `0d9b62dbb791d42fd3ab1539213c04dd` |
+
+**Certificado: 5 libros / 6,907 filas idénticas de extremo a extremo; 4,449 filas nuevas escritas por esta intervención.** Las cifras de inserciones no incluyen las que hayan realizado otros procesos concurrentes.
+
+**1 Juan (`1JN`), ocurrencias (NO confundir con los 420 textos de 1JN que ya están completos):** origen **2,198** filas, destino comprobado **880**. Se procesaron los primeros **880** registros según UUID; **551** fueron nuevas inserciones idempotentes. El siguiente lote, a partir de `OFFSET 880`, falló dos veces por un error interno de la herramienta, incluso con menor tamaño; no se reintentó indefinidamente ni se marcó el libro completo. Reanudar desde ese punto tras diagnosticar conectividad y coordinar la copia concurrente. El conteo final de destino **880** y una huella parcial **`cbec17bb1487d4690793e086388695bc`** no certifican integridad del libro completo.
+
+**Total atribuible a esta continuación: 5,000 nuevas filas** en Neon B, de las cuales 4,449 pertenecen a libros íntegros/cotejados y 551 a un libro aún incompleto. En una comprobación posterior, Neon A reportó **97,965** ocurrencias y Neon B **39,460** ocurrencias; Neon B reportó **124,504 textos bíblicos**, cifra compatible con la certificación previa de los 66 libros, pero no sumar ocurrencias A+B como UUID únicos por los registros AT redundantes. Ambas bases siguen sin integrar al runtime de VIDA. Supabase Auth y datos originales siguen intactos; el acceso continúa pendiente por cuota. Se detectó crecimiento concurrente de A/B y se detuvieron nuevas escrituras para evitar interferir con otro proceso; primero coordinar origen/cursor antes de reanudar.
