@@ -9,7 +9,7 @@ import { youtubeVideo } from '@/lib/estudios/youtube-link'
 export const metadata: Metadata = { title: 'Mensaje semanal' }
 export const dynamic = 'force-dynamic'
 
-export default async function MensajePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ origen?: string }>; searchParams: Promise<{ origen?: string }> }) {
+export default async function MensajePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ origen?: string }> }) {
   const { id } = await params
   const { origen } = await searchParams
   const desdePastoral = origen === 'pastoral'
