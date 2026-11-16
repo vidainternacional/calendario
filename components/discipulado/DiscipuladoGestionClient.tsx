@@ -65,6 +65,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
   const [priorApprovals, setPriorApprovals] = useState<PriorApproval[]>([])
   const [managers, setManagers] = useState<Manager[]>([])
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
+  const [peopleCourseId, setPeopleCourseId] = useState<string | null>(null)
   const [newCourseOpen, setNewCourseOpen] = useState(false)
   const [newLessonOpen, setNewLessonOpen] = useState(false)
   const [newFinalQuestionOpen, setNewFinalQuestionOpen] = useState(false)
@@ -108,8 +109,10 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
   }, [courses, selectedCourseId])
 
   const selectedCourse = courses.find(course => course.id === selectedCourseId) || null
-  const selectedLessons = lessons.filter(lesson => lesson.curso_id === selectedCourseId).sort((a, b) => a.orden - b.orden)
-  const selectedAssignments = assignments.filter(item => item.curso_id === selectedCourseId)
+  const peopleCourse = peopleCourseId || courses.find(course => course.tipo === 'discipulado' && course.estado === 'publicado')?.id || courses.find(course => course.tipo === 'discipulado')?.id || courses[0]?.id || null
+  const viewCourseId = tab === 'personas' ? peopleCourse : selectedCourseId
+  const selectedLessons = lessons.filter(lesson => lesson.curso_id === viewCourseId).sort((a, b) => a.orden - b.orden)
+  const selectedAssignments = assignments.filter(item => item.curso_id === viewCourseId)
   const finalQuestions = questions.filter(question => question.curso_id === selectedCourseId && question.tipo === 'final' && !question.leccion_id).sort((a, b) => a.orden - b.orden)
   const profileMap = new Map(profiles.map(profile => [profile.id, profile]))
   const priorIds = new Set(priorApprovals.map(item => item.profile_id))
@@ -405,7 +408,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
       </div>}
 
       {tab === 'personas' && <div className="space-y-4">
-        <section className={`${panel} p-4`}><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-50 text-violet-600"><UsersRound className="h-5 w-5" /></div><div><h2 className="font-bold text-[#171923]">Personas en el discipulado actual</h2><p className="mt-0.5 text-xs text-slate-500">Lista rápida con foto y progreso de cada persona.</p></div></div>{courses.length > 1 && <select value={selectedCourseId || ''} onChange={event => setSelectedCourseId(event.target.value)} className={`${fieldClass} mt-4`}>{courses.map(course => <option key={course.id} value={course.id}>{course.titulo}</option>)}</select>}</section>
+        <section className={`${panel} p-4`}><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-50 text-violet-600"><UsersRound className="h-5 w-5" /></div><div><h2 className="font-bold text-[#171923]">Personas en el discipulado actual</h2><p className="mt-0.5 text-xs text-slate-500">Lista rápida con foto y progreso de cada persona.</p></div></div>{courses.length > 1 && <select value={peopleCourse || ''} onChange={event => setPeopleCourseId(event.target.value)} className={`${fieldClass} mt-4`}>{courses.map(course => <option key={course.id} value={course.id}>{course.titulo}</option>)}</select>}</section>
         {selectedAssignments.length === 0 ? <section className={`${panel} p-8 text-center`}><BookOpenCheck className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm font-bold text-slate-600">Todavía nadie ha comenzado este curso.</p></section> : <section className={`${panel} overflow-hidden`}><div className="max-h-[36rem] divide-y divide-slate-100 overflow-y-auto">{selectedAssignments.map(assignment => {
           const profile = profileMap.get(assignment.profile_id)
           const completedIds = new Set(progress.filter(item => item.asignacion_id === assignment.id).map(item => item.leccion_id))
