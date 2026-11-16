@@ -1,13 +1,20 @@
 {
-  "task": "Actualizar documento maestro y bitácora con Discipulado aprobado en producción",
-  "userRequest": "Usuario aprobó expresamente actualizar __VIDA_INTERNACIONAL.md: PR #311 integrado a main, despliegue de producción READY, Nota mínima validada y Preview fijo conservado. Mantener issue #309 de privacidad sin cerrar. Actualización documental únicamente, sin cambios en aplicación, permisos, datos o roles.",
+  "task": "Discipulado — biblioteca de carpetas, editor en tres secciones, cuestionarios flexibles y cursos temáticos con retiro seguro",
+  "userRequest": "Usuario autorizó explícitamente: biblioteca de cursos en lugar de ficha visible, tema de cada curso, Discipulado principal distinto de cursos temáticos; edición de información, lecciones y examen tipo Google Forms; eliminar cursos sin alumnos y archivar cursos con alumnos preservando historial; modificar solo los RPC imprescindibles para inscripción y badge, sin tocar otras funciones. Conservar Preview fijo y no desplegar producción ni integrar PR sin aprobación posterior.",
   "allowedPaths": [
-    "__VIDA_INTERNACIONAL.md",
+    ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
-    ".vida/change-scope.json"
+    "components/discipulado/DiscipuladoGestionClient.tsx",
+    "components/discipulado/PreguntaEditor.tsx",
+    "components/discipulado/DiscipuladoUserClient.tsx",
+    "components/discipulado/DiscipuladoCompletadoClient.tsx",
+    "components/discipulado/DiscipuladoTemasClient.tsx",
+    "app/(app)/discipulado/cursos/page.tsx",
+    "app/(app)/discipulado/cursos/[id]/page.tsx",
+    "supabase/migrations/20261116220700_discipulado_biblioteca_tematica.sql"
   ],
-  "allowSupabase": false,
-  "allowMasterUpdate": true,
+  "allowSupabase": true,
+  "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true
