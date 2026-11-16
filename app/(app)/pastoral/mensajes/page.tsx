@@ -25,7 +25,7 @@ export default async function PastoralMensajesPage() {
     {data.error
       ? <p role="alert" className="mt-6 text-sm text-red-700">{data.error}</p>
       : <MensajesSemanalesEditor mensajes={data.propios} />}
-    <Link href="/estudios/mensajes" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-violet-700">
+    <Link href="/estudios/mensajes?origen=pastoral" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-violet-700">
       Ver biblioteca en Estudios <ChevronRight className="h-4 w-4" />
     </Link>
   </main>

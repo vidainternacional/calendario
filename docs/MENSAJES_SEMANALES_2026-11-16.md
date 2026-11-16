@@ -45,3 +45,9 @@ Rama `agent/devocionales-centro-pastoral-20261116`, basada exactamente en el hea
 - Implementado en esta rama: vistas alternables de lista/cuadrícula, búsqueda local, autor y orden; categorías actuales «Todos» y «Mensajes». «Devocionales» y «Series» se señalan como pendientes hasta habilitar clasificación persistente real. Los datos autorizados, detalle y editor mantienen intacta la seguridad anterior.
 - **NO implementado**: audiencia segmentada ni tipos/series persistidos. Requiere aprobación explícita por impacto en privacidad y cambios en SQL/RLS/RPC y revisión de todas las superficies de paquetes. Ningún dato ni permiso se modificó.
 - Verificar en Preview que la biblioteca vacía muestre navegación, categorías y cambio de vista, y al existir publicaciones la búsqueda/lista/cuadrícula funcionen sin exponer borradores. Mantener PR Draft y sin producción.
+
+## Continuidad de edición y previsualización
+
+- Entrada `Centro Pastoral → Ver biblioteca` usa `?origen=pastoral`: el enlace volver en Biblioteca lleva a `/pastoral/mensajes` y no a Estudios. La paginación y enlaces al detalle mantienen ese origen. La entrada normal desde Estudios permanece igual.
+- Dentro de cada formulario hay una Vista previa desplegable, inicialmente cerrada, que refleja título, descripción y video de YouTube según se escriben. No hace escrituras a Supabase, no publica y conserva el formulario durante la previsualización.
+- El enlace a Biblioteca es una navegación completa, por lo que se debe guardar como borrador antes de salir para no perder cambios no guardados. Para comprobar contenido sin salir usar vista previa.

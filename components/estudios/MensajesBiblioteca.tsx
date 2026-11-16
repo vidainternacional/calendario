@@ -19,7 +19,7 @@ function fechaCorta(fecha: string | null) {
   return Number.isNaN(time.getTime()) ? '' : new Intl.DateTimeFormat('es-SV', { day: 'numeric', month: 'short', timeZone: 'America/El_Salvador' }).format(time)
 }
 
-export default function MensajesBiblioteca({ mensajes, pagina }: { mensajes: MensajeVisible[]; pagina: number }) {
+export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = false }: { mensajes: MensajeVisible[]; pagina: number; desdePastoral?: boolean }) {
   const [vista, setVista] = useState<Vista>('cuadricula')
   const [categoria, setCategoria] = useState<Categoria>('todos')
   const [busqueda, setBusqueda] = useState('')
@@ -99,7 +99,7 @@ export default function MensajesBiblioteca({ mensajes, pagina }: { mensajes: Men
           {filtrados.map(m => {
             const miniatura = imagenVideo(m.videoUrl)
             return <article key={m.id} className={vista === 'lista' ? 'py-4' : ''}>
-              <Link href={`/estudios/mensajes/${m.id}`} className={vista === 'lista' ? 'group flex min-h-28 gap-3 sm:gap-4' : 'group block'}>
+              <Link href={`/estudios/mensajes/${m.id}${desdePastoral ? "?origen=pastoral" : ""}`} className={vista === 'lista' ? 'group flex min-h-28 gap-3 sm:gap-4' : 'group block'}>
                 <div className={`relative shrink-0 overflow-hidden rounded-xl bg-slate-800 ${vista === 'lista' ? 'w-[42%] max-w-48 self-start' : 'w-full'} aspect-video`}>
                   {miniatura && <img src={miniatura} alt="" loading="lazy" className="h-full w-full object-cover" />}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/10"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-white"><Play className="ml-0.5 h-5 w-5 fill-current" aria-hidden="true" /></span></span>
