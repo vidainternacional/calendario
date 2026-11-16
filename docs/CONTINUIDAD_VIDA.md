@@ -2,6 +2,17 @@
 
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+## Producción de Devocionales y mensajes — aprobación 2026-11-16
+
+- **Implementado y aprobado visualmente:** Editor de Centro Pastoral, publicación o borrador privado, combinación de destinatarios entre congregación/roles/líderes/ministerios reales, nueve categorías, series con episodios, biblioteca de Estudios con filtros/lista/cuadrícula y retorno contextual. El usuario comprobó y aprobó el Preview.
+- **Autorización de producción:** el usuario solicitó expresamente integrar este bloque a producción el 16 de noviembre de 2026. Incluye la base del PR #306 y la extensión del PR #308; la integración definitiva será vía #308 con base `main`, sin incorporar otros PR Draft.
+- **Datos:** dos migraciones aditivas específicas de `vida_devocionales` aplicadas a ccvida; RLS activo; borradores solo propios; no se migraron paquetes pastorales históricos ni se alteraron roles o políticas de otras tablas. No se crearon publicaciones ficticias.
+- **Verificación previa:** Vercel Preview en rama `agent/devocionales-centro-pastoral-20261116` READY (SHA `70185fc81fed69c9b5cfcbaf0b7ab971c01c4346`); usuario validó la UI en su celular. La verificación autenticada cruzada de destinatarios de ministerios distintos sigue pendiente.
+- **Integración:** este registro fue preparado antes de la fusión. Confirmar en el PR #308 el SHA finalmente integrado a `main` y en Vercel la publicación **production READY** del mismo SHA antes de afirmar que quedó publicado. La bitácora no sustituye esa comprobación.
+- **Conservación:** mantener todos los cambios de continuidad del PR #307 (`AGENTS.md` y esta bitácora), sin sobrescribirlos al combinar ramas antiguas. Mantener las funciones pastorales existentes, menús, navegación, guardado, Biblia y Discipulado sin cambios.
+- **Reversión:** regresar a último deployment READY anterior en Vercel y revertir la integración Git si hubiera un error grave; no borrar tablas ni publicaciones al revertir la interfaz. No eliminar datos de usuarios para solucionar incidencias.
+- **Siguiente prueba:** tras publicar, comprobar menú inferior, biblioteca, categorías, series, carga, login y permisos con dos cuentas reales, sin enviar mensajes de prueba a la congregación.
+
 ## Cómo usar este registro
 
 Esta es la entrada operativa para continuar sin reconstruir conversaciones. `AGENTS.md` exige leerla al iniciar y actualizarla al cerrar un bloque con cambios relevantes. Funciona en conversaciones que tengan acceso a este repositorio; no sincroniza el contenido completo de otros chats.
