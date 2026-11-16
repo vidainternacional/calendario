@@ -1,13 +1,16 @@
 {
-  "task": "Corregir desde VIDA el enlace predeterminado de recuperación de contraseña y habilitar /restablecer antes de sesión",
-  "userRequest": "El usuario confirmó la cuenta normal activa y autorizó corregir el acceso con el correo predeterminado de Supabase, sin SMTP, cambios de contraseñas, usuarios, RLS ni producción. Solo actualizar solicitud de enlace, pantalla de recepción, middleware y pruebas; conservar UI, permisos y navegación.",
+  "task": "Mostrar la lectura bíblica dentro del día del plan y contraer lectura, devocional y preguntas sin cambiar el progreso",
+  "userRequest": "El usuario autorizó reabrir puntualmente el Bloque 1 ya aprobado: leer el pasaje exacto dentro de la vista del día, con acordeones inicialmente cerrados para lectura, devocional y una o varias preguntas. Conservar los enlaces a Biblia y Estudiar con IA, marcación, navegación, usuarios, Supabase y producción.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/actions/recuperacion.ts",
     "app/restablecer/page.tsx",
     "lib/supabase/middleware.ts",
     "tests/regression/recuperacion-enlace-vida.test.mjs",
-    "docs/CONTINUIDAD_VIDA.md"
+    "docs/CONTINUIDAD_VIDA.md",
+    "app/(app)/hoy/planes/[planId]/[dia]/page.tsx",
+    "components/biblia/PlanDiaLecturaAcordeon.tsx",
+    "tests/regression/plan-lectura-desplegable.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
