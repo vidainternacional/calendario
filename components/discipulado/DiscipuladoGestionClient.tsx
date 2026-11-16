@@ -222,6 +222,20 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
       const currentOptions = options.filter(option => option.pregunta_id === question.id)
       const { error: questionError } = await supabase.from('discipulado_preguntas').update({ enunciado: payload.enunciado }).eq('id', question.id)
       if (questionError) throw questionError
+      // Liberar los índices de orden antes de cambiar o agregar opciones:
+      // (pregunta_id, orden) tiene restricción UNIQUE.
+      const kept = new Set(payload.opciones.map(o => o.id).filter(Boolean))
+      for (const oldOption of currentOptions) {
+        if (!kept.has(oldOption.id)) {
+          const { error } = await supabase.from('discipulado_opciones').delete().eq('id', oldOption.id).eq('pregunta_id', question.id)
+          if (error) throw error
+        }
+      }
+      const tempBase = Math.max(1000, ...currentOptions.map(o => o.orden)) + currentOptions.length + 10
+      for (const [index, oldOption] of currentOptions.filter(o => kept.has(o.id)).entries()) {
+        const { error } = await supabase.from('discipulado_opciones').update({ orden: tempBase + index }).eq('id', oldOption.id).eq('pregunta_id', question.id)
+        if (error) throw error
+      }
       for (const [index, option] of payload.opciones.entries()) {
         if (option.id) {
           const { error } = await supabase.from('discipulado_opciones').update({
@@ -232,13 +246,6 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
           const { error } = await supabase.from('discipulado_opciones').insert({
             pregunta_id: question.id, texto: option.texto, es_correcta: option.es_correcta, orden: index + 1,
           })
-          if (error) throw error
-        }
-      }
-      const kept = new Set(payload.opciones.map(o => o.id).filter(Boolean))
-      for (const oldOption of currentOptions) {
-        if (!kept.has(oldOption.id)) {
-          const { error } = await supabase.from('discipulado_opciones').delete().eq('id', oldOption.id).eq('pregunta_id', question.id)
           if (error) throw error
         }
       }
