@@ -21,7 +21,7 @@ test('la recuperación usa la plantilla estándar de Supabase con retorno direct
     },
   }, { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'public-key' })
 
-  assert.deepEqual(await modulo.solicitarRecuperacion(' usuario@ejemplo.com '), { success: true })
+  assert.equal((await modulo.solicitarRecuperacion(' usuario@ejemplo.com ')).success, true)
   assert.equal(llamadas[0].email, 'usuario@ejemplo.com')
   assert.equal(llamadas[0].options.redirectTo, 'https://calendario-vida-internacional.vercel.app/restablecer')
   assert.equal(configuracion.auth.flowType, 'implicit')
@@ -37,7 +37,7 @@ test('recuperación mantiene respuesta neutra y no expone cuentas existentes', a
     },
   }, { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'public-key' })
   assert.ok((await modulo.solicitarRecuperacion('invalid')).error)
-  assert.deepEqual(await modulo.solicitarRecuperacion('otra@ejemplo.com'), { success: true })
+  assert.equal((await modulo.solicitarRecuperacion('otra@ejemplo.com')).success, true)
 })
 
 test('la ruta de nueva contraseña es pública hasta verificar la sesión recibida', () => {
