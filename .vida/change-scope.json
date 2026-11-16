@@ -1,18 +1,16 @@
 {
-  "task": "Preparar mensajes semanales por YouTube, checklist y alerta de espacio VIDA",
-  "userRequest": "El usuario solicita vigilancia preventiva del espacio de ccvida, un checklist concreto para comprobar la aplicación y un área para que el pastor Romy publique mensajes semanales mediante enlaces de YouTube, separada del discipulado. Reutilizar materiales pastorales y permisos actuales, sin subir videos a Supabase ni modificar RLS, roles, planes, diseños ajenos o documento maestro. Implementar y validar en un único Preview; no publicar cambios nuevos en producción sin revisión del usuario. No crear mensajes reales ni notificaciones a terceros como prueba.",
+  "task": "Ubicar gestión de devocionales y mensajes en Centro Pastoral sin modificar permisos",
+  "userRequest": "Reutilizar PR #306 para mover la edición a Centro Pastoral, mantener la visualización en Estudios y preservar todo lo aprobado. No cambiar roles, permisos, RLS, datos, producción, o trabajo de Codex. Series y permisos individuales requieren alcance y autorización separados.",
   "allowedPaths": [
-    ".vida/change-scope.json",
+    "app/(app)/estudios/mensajes/page.tsx",
     "app/(app)/estudios/page.tsx",
-    "app/(app)/estudios/mensajes/**",
+    "app/(app)/pastoral/page.tsx",
     "app/actions/mensajes-semanales.ts",
-    "components/estudios/MensajesSemanalesEditor.tsx",
     "lib/estudios/mensajes-semanales.ts",
-    "lib/estudios/youtube-link.ts",
     "tests/regression/mensajes-semanales.test.mjs",
-    "docs/VERIFICACION_VIDA_2026-11-16.md",
     "docs/MENSAJES_SEMANALES_2026-11-16.md",
-    "docs/VIGILANCIA_ESPACIO_VIDA_2026-11-16.md"
+    ".vida/change-scope.json",
+    "app/(app)/pastoral/mensajes/**"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

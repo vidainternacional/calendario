@@ -27,3 +27,14 @@ Romy debe entrar con su cuenta de VIDA, abrir Estudios → Mensajes semanales �
 La publicación de esta sección nueva en producción queda pendiente de la revisión del Preview. El acceso habitual ya restablecido no se modifica por preparar esta rama.
 
 Validación local: 9 pruebas nuevas de URLs, autorización, propiedad, concurrencia y paginación; 28 pruebas existentes de Hebreo/Cuaderno, todas aprobadas. TypeScript, build estándar Turbopack y ESLint de archivos nuevos pasan. La página Estudios conserva tres errores previos de no-explicit-any y una advertencia de accesibilidad en código no modificado; no se alteró ese código para silenciar el lint.
+
+
+## Extensión: Devocionales y mensajes desde Centro Pastoral
+
+Rama `agent/devocionales-centro-pastoral-20261116`, basada exactamente en el head del PR #306. No integra el PR #306 ni modifica producción.
+
+- Gestión y edición exclusivamente en `/pastoral/mensajes`, accesible desde Centro Pastoral a pastores y administradores activos.
+- Estudios → Devocionales y mensajes conserva la biblioteca de publicaciones; se retira el marcador redundante «Devocionales ministeriales · Próximamente».
+- Se reutilizan editor, acciones, validación YouTube, borrador, publicación, propietario, revisión y tablas existentes, sin esquemas/RLS/roles nuevos.
+- Pendientes separados: categorías, series ordenadas y permisos individuales delegados desde Administración. Requieren diseño de datos/permisos, impacto, reversión y autorización específica; no se habilitan por defecto.
+- Checklist de Preview: acceso desde Centro Pastoral, edición de borrador propio, lectura en Estudios para un miembro, publicación/despublicación, Planes de lectura intactos.

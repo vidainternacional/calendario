@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { BookOpen, BookOpenCheck, ChevronRight, Video, FileText, Clock3, NotebookPen, Languages, GraduationCap } from 'lucide-react'
+import { BookOpen, BookOpenCheck, ChevronRight, Video, NotebookPen, Languages, GraduationCap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Estudios Bíblicos',
@@ -24,9 +24,9 @@ export default async function EstudiosPage() {
   const recursos = [
     {
       href: '/estudios/mensajes',
-      title: 'Mensajes semanales',
-      description: 'Mira los videos y reflexiones que los pastores comparten con la iglesia cada semana.',
-      action: 'Ver mensajes',
+      title: 'Devocionales y mensajes',
+      description: 'Encuentra devocionales y mensajes en video compartidos por la iglesia.',
+      action: 'Explorar videos',
       icon: Video,
       iconClass: 'bg-violet-700 text-white',
       hoverClass: 'hover:border-violet-300',
@@ -103,14 +103,6 @@ export default async function EstudiosPage() {
     },
   ]
 
-  const proximamente = [
-    {
-      title: 'Devocionales ministeriales',
-      description: 'Reflexiones y guías de estudio para tu ministerio.',
-      icon: FileText,
-    },
-  ]
-
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
       <header className="mb-6 sm:mb-8">
@@ -151,33 +143,7 @@ export default async function EstudiosPage() {
         ))}
       </section>
 
-      <section className="mt-8" aria-labelledby="proximamente-title">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h2 id="proximamente-title" className="text-sm font-bold text-[#171923]">Próximamente</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Estos recursos todavía no están disponibles.</p>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600">
-            <Clock3 className="h-3 w-3" aria-hidden="true" />
-            En desarrollo
-          </span>
-        </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {proximamente.map(({ title, description, icon: Icon }) => (
-            <article key={title} aria-disabled="true" className="flex min-w-0 items-start gap-3 rounded-[18px] border border-dashed border-slate-300 bg-slate-100/70 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-bold leading-tight text-slate-700">{title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{description}</p>
-                <p className="mt-2 text-[11px] font-semibold text-slate-400">Aún no disponible</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
     </main>
   )
 }

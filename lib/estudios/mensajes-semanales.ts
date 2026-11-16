@@ -82,3 +82,22 @@ async function cargarPropios(db: SupabaseClient, userId: string): Promise<Mensaj
   if (error) throw error
   return (data ?? []).map((row: Record<string, unknown>) => mensajeDesdeFila(row)).filter((m: MensajeSemanal | null): m is MensajeSemanal => Boolean(m))
 }
+
+/** Carga únicamente mensajes propios para la gestión dentro del Centro Pastoral. */
+export async function cargarMisMensajesSemanales() {
+  const client = await createClient()
+  const db = client as unknown as SupabaseClient
+  const { data: { user } } = await client.auth.getUser()
+  const base = { propios: [] as MensajeSemanal[], puedeGestionar: false, error: null as string | null }
+  if (!user) return { ...base, autenticado: false }
+  const { data: perfil, error } = await db.from('profiles')
+    .select('rol,estado_cuenta').eq('id', user.id).single()
+  if (error || perfil?.estado_cuenta !== 'activo' || !['pastor', 'administrador'].includes(perfil.rol)) {
+    return { ...base, autenticado: true }
+  }
+  try {
+    return { propios: await cargarPropios(db, user.id), puedeGestionar: true, autenticado: true, error: null }
+  } catch {
+    return { ...base, puedeGestionar: true, autenticado: true, error: 'No fue posible cargar tus mensajes.' }
+  }
+}

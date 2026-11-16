@@ -75,6 +75,7 @@ test('pastor guarda un borrador propio sin adjuntar archivos, crear cursos ni pu
   assert.equal(data.recurso_ids.length, 0)
   assert.ok(calls.every(q => ['profiles', 'pastoral_paquetes'].includes(q.table)))
   assert.ok(refreshed.includes('/estudios/mensajes'))
+  assert.ok(refreshed.includes('/pastoral/mensajes'))
 })
 
 test('sin sesión, con rol delegado o cuenta inactiva no se escriben mensajes', async () => {

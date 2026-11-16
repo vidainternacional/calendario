@@ -10,6 +10,7 @@ import {
   Plus,
   ShieldCheck,
   Sparkles,
+  Video,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
@@ -52,6 +53,7 @@ export default async function PastoralPage() {
     { titulo: 'Estudio', href: '/estudios/profundo?from=pastoral', icono: Sparkles, iconClass: 'text-[#C0392B]' },
     { titulo: 'Biblioteca', href: '/pastoral/biblioteca', icono: Library, iconClass: 'text-amber-700' },
     ...(puedeGestionarPlanes ? [{ titulo: 'Planes de lectura', href: '/pastoral/planes', icono: BookOpenCheck, iconClass: 'text-emerald-700' }] : []),
+    ...(puedeGestionarPlanes ? [{ titulo: 'Devocionales y mensajes', href: '/pastoral/mensajes', icono: Video, iconClass: 'text-violet-700' }] : []),
   ]
 
   return (

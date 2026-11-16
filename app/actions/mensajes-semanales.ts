@@ -18,7 +18,7 @@ async function contexto() {
 }
 
 function refrescar(id?: string) {
-  for (const path of ['/estudios/mensajes', '/inicio', '/paquetes-recibidos', '/pastoral/paquetes']) revalidatePath(path)
+  for (const path of ['/estudios/mensajes', '/pastoral/mensajes', '/inicio', '/paquetes-recibidos', '/pastoral/paquetes']) revalidatePath(path)
   if (id) {
     revalidatePath(`/estudios/mensajes/${id}`)
     revalidatePath(`/materiales/${id}`)
