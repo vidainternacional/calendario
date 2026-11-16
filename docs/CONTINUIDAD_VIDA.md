@@ -2,6 +2,22 @@
 
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+
+## Validación visual Discipulado recibida y actualización del maestro — 2026-11-16
+
+- El usuario confirmó en el Preview fijo que el modal de nota mínima en Discipulado **ya está bien**; ajuste visual aprobado.
+- Al recibir esa aprobación, el usuario autorizó registrar en `__VIDA_INTERNACIONAL.md` el ajuste de Discipulado y el estado REAL del PR #308: integrado a `main` y producción READY.
+- Desarrollo del ajuste: PR [#311](https://github.com/vidainternacional/calendario/pull/311) OPEN/Draft, rama `agent/devocionales-centro-pastoral-20261116`. **No integrar ni publicar sin nueva aprobación expresa.** Se conservó el enlace fijo y la configuración correcta de Supabase para ese Preview; PR #310 duplicado cerrado sin merge.
+- La retroalimentación de privacidad entre ministerios continúa pendiente en [Issue #309](https://github.com/vidainternacional/calendario/issues/309). No se modificaron permisos ni se realizaron publicaciones de prueba.
+
+## Continuación 16-11-2026 · Privacidad pendiente y Discipulado
+
+- La persona que colabora en la prueba de visibilidad de publicaciones entre distintos ministerios responderá **esta noche del 16-11-2026**. El usuario dará entonces su retroalimentación; **no cerrar ni afirmar privacidad validada antes**. Seguimiento persistente: [GitHub Issue #309](https://github.com/vidainternacional/calendario/issues/309).
+- La rama de Devocionales ya fue **integrada** mediante PR #308, merge SHA `e20c8504c84dc041571ccdc2f37cf698789247b3` y Vercel producción READY deployment `dpl_89khTdozTZohhMicbWYnXkGnueZA` en `calendario-vida-internacional.vercel.app`. No conservar como estado vigente la nota anterior de PR #308 Draft: esa nota fue escrita antes del merge.
+- Siguiente área oficial según maestro: **Bloque 4 — Discipulado**. Se examinó PR #297 (OPEN/Draft): combina un ajuste de modal cortado en móvil con la **eliminación irreversible de cursos y datos relacionados**. No aprobar ni integrar la eliminación sin autorización específica de impacto y reversión.
+- Para avanzar sin esperar la prueba ni tocar datos, se prepara una rama nueva **solo visual**, `agent/discipulado-criterio-movil-20261116`, que permite desplazar verticalmente el modal de nota mínima y mantiene accesible «Guardar criterio» en móvil. No modifica servidor, tablas, RLS, permisos, valores, guardado ni lógica de Discipulado. PR #297 permanece intacto.
+- Pendiente de validar en el teléfono: abrir Nota mínima, comprobar desplazamiento en pantalla pequeña y teclado, guardar un valor válido, cerrar y volver a abrir; conservar aspecto en escritorio. No fusionar ni publicar hasta aprobación.
+
 ## Producción de Devocionales y mensajes — aprobación 2026-11-16
 
 - **Implementado y aprobado visualmente:** Editor de Centro Pastoral, publicación o borrador privado, combinación de destinatarios entre congregación/roles/líderes/ministerios reales, nueve categorías, series con episodios, biblioteca de Estudios con filtros/lista/cuadrícula y retorno contextual. El usuario comprobó y aprobó el Preview.
