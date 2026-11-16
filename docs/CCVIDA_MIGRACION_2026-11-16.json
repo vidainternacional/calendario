@@ -1,0 +1,1514 @@
+{
+  "date": "2026-11-16",
+  "source": {
+    "project_id": "atjtjpchslxbseayzflz",
+    "link_id": "link_6a9703d709188191878ac4403a0f6755",
+    "unchanged": true
+  },
+  "destination": {
+    "link_id": "link_6afa5fff3c2881918a34fd0cb822ee24",
+    "project_id": "lnkrojvyiwnlcoponxud",
+    "organization_id": "tnltbrpqmihemayglbyi"
+  },
+  "branch": "agent/migracion-supabase-ccvida-20261116",
+  "branchHead": "b08df5addece59aeff7d087198cef9a1b708b5dc",
+  "applicationRows": 192405,
+  "tables": [
+    {
+      "schema": "internal",
+      "name": "biblical_textual_import_batches",
+      "n": 66,
+      "hash": "fd3b08e28bb3986afb862d043e56bbf0",
+      "destination": {
+        "schema": "internal",
+        "name": "biblical_textual_import_batches",
+        "n": 66,
+        "hash": "fd3b08e28bb3986afb862d043e56bbf0"
+      },
+      "matches": true
+    },
+    {
+      "schema": "internal",
+      "name": "open_spanish_translation_catalog",
+      "n": 3,
+      "hash": "3aaed5db90d56095c254392e8dbb530e",
+      "destination": {
+        "schema": "internal",
+        "name": "open_spanish_translation_catalog",
+        "n": 3,
+        "hash": "3aaed5db90d56095c254392e8dbb530e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "internal",
+      "name": "tahot_book_catalog",
+      "n": 39,
+      "hash": "c2477f9ff47fdb31a2b45f003dbcbe9f",
+      "destination": {
+        "schema": "internal",
+        "name": "tahot_book_catalog",
+        "n": 39,
+        "hash": "c2477f9ff47fdb31a2b45f003dbcbe9f"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "_fase_h_backup_reuse_structured_identity_001_20260820",
+      "n": 195,
+      "hash": "06a1e9f030b8e6d210fab0d1b7380617",
+      "destination": {
+        "schema": "public",
+        "name": "_fase_h_backup_reuse_structured_identity_001_20260820",
+        "n": 195,
+        "hash": "06a1e9f030b8e6d210fab0d1b7380617"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "aportes_ayuda_solidaria",
+      "n": 1,
+      "hash": "a6b0746a24b47e01fd1f8512f452f967",
+      "destination": {
+        "schema": "public",
+        "name": "aportes_ayuda_solidaria",
+        "n": 1,
+        "hash": "a6b0746a24b47e01fd1f8512f452f967"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "app_settings",
+      "n": 4,
+      "hash": "3e110e86a073686644b7dcf8becb744a",
+      "destination": {
+        "schema": "public",
+        "name": "app_settings",
+        "n": 4,
+        "hash": "3e110e86a073686644b7dcf8becb744a"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ayuda_necesidades_servicio",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "ayuda_necesidades_servicio",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ayuda_solidaria_lecturas",
+      "n": 11,
+      "hash": "2e29b2eb4ce4ae85aebfc79f55777159",
+      "destination": {
+        "schema": "public",
+        "name": "ayuda_solidaria_lecturas",
+        "n": 11,
+        "hash": "2e29b2eb4ce4ae85aebfc79f55777159"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ayuda_solidaria_mensajes",
+      "n": 6,
+      "hash": "5db8c1e5a410b4bc20941dfd6480d38a",
+      "destination": {
+        "schema": "public",
+        "name": "ayuda_solidaria_mensajes",
+        "n": 6,
+        "hash": "5db8c1e5a410b4bc20941dfd6480d38a"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_books",
+      "n": 66,
+      "hash": "03e697cd40ce3d6e34e97a9e20b080f3",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_books",
+        "n": 66,
+        "hash": "03e697cd40ce3d6e34e97a9e20b080f3"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_concordance_aliases",
+      "n": 305,
+      "hash": "cd3c2ac67d6cbd3e0367902da2d01d1a",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_concordance_aliases",
+        "n": 305,
+        "hash": "cd3c2ac67d6cbd3e0367902da2d01d1a"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_concordance_occurrences",
+      "n": 174,
+      "hash": "73c4360ec2fcc79eb53494dd159f7d73",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_concordance_occurrences",
+        "n": 174,
+        "hash": "73c4360ec2fcc79eb53494dd159f7d73"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_concordance_terms",
+      "n": 34,
+      "hash": "355d285ce8dcb99adbdc5fdc33b66773",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_concordance_terms",
+        "n": 34,
+        "hash": "355d285ce8dcb99adbdc5fdc33b66773"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_context_fragments",
+      "n": 2,
+      "hash": "a9e25e1b6866af4755b40f6d8f29b293",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_context_fragments",
+        "n": 2,
+        "hash": "a9e25e1b6866af4755b40f6d8f29b293"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_context_units",
+      "n": 334,
+      "hash": "15f7ffd2138f9ac237a818ba20db3334",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_context_units",
+        "n": 334,
+        "hash": "15f7ffd2138f9ac237a818ba20db3334"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_hebrew_progress_answers",
+      "n": 149,
+      "hash": "1747d34f2462da2d63429effc08b2a5d",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_hebrew_progress_answers",
+        "n": 149,
+        "hash": "1747d34f2462da2d63429effc08b2a5d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_hebrew_progress_sessions",
+      "n": 20,
+      "hash": "446ea16bdc477b3b519f088ccde9594d",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_hebrew_progress_sessions",
+        "n": 20,
+        "hash": "446ea16bdc477b3b519f088ccde9594d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_hebrew_search_resolutions",
+      "n": 169,
+      "hash": "c28ec1092a2a06ca4b855b60cad707d1",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_hebrew_search_resolutions",
+        "n": 169,
+        "hash": "c28ec1092a2a06ca4b855b60cad707d1"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_hebrew_spanish_glosses",
+      "n": 10737,
+      "hash": "83d20444500fdcc1e4a3160c105e261d",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_hebrew_spanish_glosses",
+        "n": 10737,
+        "hash": "83d20444500fdcc1e4a3160c105e261d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_lexical_entries",
+      "n": 16946,
+      "hash": "39c9c5e3fc6d4ee08348d4a4c6964ef4",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_lexical_entries",
+        "n": 16946,
+        "hash": "39c9c5e3fc6d4ee08348d4a4c6964ef4"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_library_fragments",
+      "n": 2,
+      "hash": "5b28182e66def4fb8c39145587c37df8",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_library_fragments",
+        "n": 2,
+        "hash": "5b28182e66def4fb8c39145587c37df8"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_library_items",
+      "n": 1,
+      "hash": "5eeccdf0b74b7503a6ecdd1e017b3ea8",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_library_items",
+        "n": 1,
+        "hash": "5eeccdf0b74b7503a6ecdd1e017b3ea8"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_place_references",
+      "n": 8742,
+      "hash": "0c5d126fa43794ee8f92982462d5c1df",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_place_references",
+        "n": 8742,
+        "hash": "0c5d126fa43794ee8f92982462d5c1df"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_places",
+      "n": 1343,
+      "hash": "6708b6ec2de5136ee7d0e6f7be4e70b2",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_places",
+        "n": 1343,
+        "hash": "6708b6ec2de5136ee7d0e6f7be4e70b2"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_sources",
+      "n": 16,
+      "hash": "c5e9ab1b4d798bdc3b194c00236913e4",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_sources",
+        "n": 16,
+        "hash": "c5e9ab1b4d798bdc3b194c00236913e4"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_textual_variants",
+      "n": 9330,
+      "hash": "e4210c9b06f10a139082001a313657c3",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_textual_variants",
+        "n": 9330,
+        "hash": "e4210c9b06f10a139082001a313657c3"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_timeline_event_places",
+      "n": 2,
+      "hash": "67ed32e409427fd36a4c0f8de4c96b99",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_timeline_event_places",
+        "n": 2,
+        "hash": "67ed32e409427fd36a4c0f8de4c96b99"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_timeline_event_references",
+      "n": 17570,
+      "hash": "b511aaf7207816328ed32c44646a5d0d",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_timeline_event_references",
+        "n": 17570,
+        "hash": "b511aaf7207816328ed32c44646a5d0d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_timeline_events",
+      "n": 452,
+      "hash": "d75dc8e2b3f35f983b107544d6d18ad6",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_timeline_events",
+        "n": 452,
+        "hash": "d75dc8e2b3f35f983b107544d6d18ad6"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_timeline_periods",
+      "n": 1,
+      "hash": "686f8da720d9a7fbe29c7f115209c281",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_timeline_periods",
+        "n": 1,
+        "hash": "686f8da720d9a7fbe29c7f115209c281"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_verse_mappings",
+      "n": 5,
+      "hash": "fc2972449166dad9207bf6dfc590ec39",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_verse_mappings",
+        "n": 5,
+        "hash": "fc2972449166dad9207bf6dfc590ec39"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_verse_texts",
+      "n": 124504,
+      "hash": "59509f9ff3a909960256da649ba5a213",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_verse_texts",
+        "n": 124504,
+        "hash": "59509f9ff3a909960256da649ba5a213"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_versification_profiles",
+      "n": 1,
+      "hash": "519bcf84092b1dcc79ee58185d710e91",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_versification_profiles",
+        "n": 1,
+        "hash": "519bcf84092b1dcc79ee58185d710e91"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "biblical_word_occurrences",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "biblical_word_occurrences",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "calendar_changes",
+      "n": 19,
+      "hash": "b310d15afccef5b6c419f846845835e9",
+      "destination": {
+        "schema": "public",
+        "name": "calendar_changes",
+        "n": 19,
+        "hash": "b310d15afccef5b6c419f846845835e9"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "calendar_reminders",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "calendar_reminders",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "calendar_subscriptions",
+      "n": 78,
+      "hash": "fa162d71fa108850327c03339fc8be1d",
+      "destination": {
+        "schema": "public",
+        "name": "calendar_subscriptions",
+        "n": 78,
+        "hash": "fa162d71fa108850327c03339fc8be1d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "calendars",
+      "n": 10,
+      "hash": "826a3acbe955f3e3ff52aecd3cbc91fa",
+      "destination": {
+        "schema": "public",
+        "name": "calendars",
+        "n": 10,
+        "hash": "826a3acbe955f3e3ff52aecd3cbc91fa"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "change_reads",
+      "n": 3,
+      "hash": "08d178ffc1e7a20eb34163749b86dccf",
+      "destination": {
+        "schema": "public",
+        "name": "change_reads",
+        "n": 3,
+        "hash": "08d178ffc1e7a20eb34163749b86dccf"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "contacto_solicitudes",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "contacto_solicitudes",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "contactos",
+      "n": 1,
+      "hash": "71b0ff3e79d8bbfbb26ea84275e5accc",
+      "destination": {
+        "schema": "public",
+        "name": "contactos",
+        "n": 1,
+        "hash": "71b0ff3e79d8bbfbb26ea84275e5accc"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "cuentas_bancarias_iglesia",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "cuentas_bancarias_iglesia",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "despensa_necesidades",
+      "n": 1,
+      "hash": "b9e6aee21314b2a391327408e0ec97f7",
+      "destination": {
+        "schema": "public",
+        "name": "despensa_necesidades",
+        "n": 1,
+        "hash": "b9e6aee21314b2a391327408e0ec97f7"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "despensa_paquete_items",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "despensa_paquete_items",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "despensa_paquetes",
+      "n": 1,
+      "hash": "e4133de3e537670400ced7d4e163bffc",
+      "destination": {
+        "schema": "public",
+        "name": "despensa_paquetes",
+        "n": 1,
+        "hash": "e4133de3e537670400ced7d4e163bffc"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "despensa_salidas_paquetes",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "despensa_salidas_paquetes",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_aprobaciones_previas",
+      "n": 2,
+      "hash": "11a53352f614776679358c1c76882e5c",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_aprobaciones_previas",
+        "n": 2,
+        "hash": "11a53352f614776679358c1c76882e5c"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_asignaciones",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_asignaciones",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_cursos",
+      "n": 1,
+      "hash": "1300b8200847c0cceec37e3a8f9d6a2f",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_cursos",
+        "n": 1,
+        "hash": "1300b8200847c0cceec37e3a8f9d6a2f"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_gestores",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_gestores",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_intentos",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_intentos",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_intentos_mejora",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_intentos_mejora",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_leccion_progreso",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_leccion_progreso",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_lecciones",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_lecciones",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_opciones",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_opciones",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_preguntas",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_preguntas",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "discipulado_video_progreso",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "discipulado_video_progreso",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "estudio_analytics_events",
+      "n": 72,
+      "hash": "3ffe8264ad0794a60481bb82edd8f550",
+      "destination": {
+        "schema": "public",
+        "name": "estudio_analytics_events",
+        "n": 72,
+        "hash": "3ffe8264ad0794a60481bb82edd8f550"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "estudios_profundos_ia",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "estudios_profundos_ia",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_asignaciones",
+      "n": 16,
+      "hash": "fb8a89b16073c45d94b93272db2b8515",
+      "destination": {
+        "schema": "public",
+        "name": "evento_asignaciones",
+        "n": 16,
+        "hash": "fb8a89b16073c45d94b93272db2b8515"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_asistencia_config",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "evento_asistencia_config",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_asistencias",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "evento_asistencias",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_calendarios",
+      "n": 15,
+      "hash": "6969f7d3d918838cec82f82498fd62ee",
+      "destination": {
+        "schema": "public",
+        "name": "evento_calendarios",
+        "n": 15,
+        "hash": "6969f7d3d918838cec82f82498fd62ee"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_paletas",
+      "n": 2,
+      "hash": "2ec7cfef7bb90c535a692861743d542e",
+      "destination": {
+        "schema": "public",
+        "name": "evento_paletas",
+        "n": 2,
+        "hash": "2ec7cfef7bb90c535a692861743d542e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_repertorio",
+      "n": 3,
+      "hash": "26b93a10ec1b9f590f633395eecff64d",
+      "destination": {
+        "schema": "public",
+        "name": "evento_repertorio",
+        "n": 3,
+        "hash": "26b93a10ec1b9f590f633395eecff64d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "evento_repertorio_compartidos",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "evento_repertorio_compartidos",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "eventos",
+      "n": 12,
+      "hash": "279abc828f1c5dac278d4501ee173503",
+      "destination": {
+        "schema": "public",
+        "name": "eventos",
+        "n": 12,
+        "hash": "279abc828f1c5dac278d4501ee173503"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "identidad_visual",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "identidad_visual",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "intercambios",
+      "n": 3,
+      "hash": "2c86451fb7afafdbf4075ceddfbbc830",
+      "destination": {
+        "schema": "public",
+        "name": "intercambios",
+        "n": 3,
+        "hash": "2c86451fb7afafdbf4075ceddfbbc830"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "member_profile_details",
+      "n": 11,
+      "hash": "b7f3a7e3a87b03bd0ef817db27b7bcbd",
+      "destination": {
+        "schema": "public",
+        "name": "member_profile_details",
+        "n": 11,
+        "hash": "b7f3a7e3a87b03bd0ef817db27b7bcbd"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_canciones",
+      "n": 2,
+      "hash": "3b36dc6230e9751c52848c416512405f",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_canciones",
+        "n": 2,
+        "hash": "3b36dc6230e9751c52848c416512405f"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_capacidades",
+      "n": 14,
+      "hash": "1c3eb66cff78922a0ef1e3a2751dce47",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_capacidades",
+        "n": 14,
+        "hash": "1c3eb66cff78922a0ef1e3a2751dce47"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_miembro_capacidades",
+      "n": 13,
+      "hash": "1ff7521825d5352d5e601f3a59ac5aa2",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_miembro_capacidades",
+        "n": 13,
+        "hash": "1ff7521825d5352d5e601f3a59ac5aa2"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_miembros",
+      "n": 37,
+      "hash": "1a84158fc905b0bb14486c561ffa2bd8",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_miembros",
+        "n": 37,
+        "hash": "1a84158fc905b0bb14486c561ffa2bd8"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_paletas",
+      "n": 1,
+      "hash": "9936e2e774a7acd82aa538daca490e49",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_paletas",
+        "n": 1,
+        "hash": "9936e2e774a7acd82aa538daca490e49"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_responsabilidad_asignaciones",
+      "n": 1,
+      "hash": "f18e9bda253d5e9dc100faa799488799",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_responsabilidad_asignaciones",
+        "n": 1,
+        "hash": "f18e9bda253d5e9dc100faa799488799"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_responsabilidades",
+      "n": 1,
+      "hash": "b0f0c601b775276d317b1f3a52f9f2d3",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_responsabilidades",
+        "n": 1,
+        "hash": "b0f0c601b775276d317b1f3a52f9f2d3"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerio_solicitudes_ingreso",
+      "n": 31,
+      "hash": "510b51999e93b041952a0a133ee6647d",
+      "destination": {
+        "schema": "public",
+        "name": "ministerio_solicitudes_ingreso",
+        "n": 31,
+        "hash": "510b51999e93b041952a0a133ee6647d"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "ministerios",
+      "n": 10,
+      "hash": "c5bda826c233ca8f65f66b7f8ec01e0b",
+      "destination": {
+        "schema": "public",
+        "name": "ministerios",
+        "n": 10,
+        "hash": "c5bda826c233ca8f65f66b7f8ec01e0b"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "notas_estudio",
+      "n": 24,
+      "hash": "ebc8f8940d2e1868522932227566216a",
+      "destination": {
+        "schema": "public",
+        "name": "notas_estudio",
+        "n": 24,
+        "hash": "ebc8f8940d2e1868522932227566216a"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_enviadas",
+      "n": 118,
+      "hash": "bbe3b3d3053a396fa3f7f3061531c8fd",
+      "destination": {
+        "schema": "public",
+        "name": "notificaciones_enviadas",
+        "n": 118,
+        "hash": "bbe3b3d3053a396fa3f7f3061531c8fd"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_preferencias",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "notificaciones_preferencias",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pastoral_biblioteca",
+      "n": 1,
+      "hash": "93bc8abcbbb258acd8cc65d9d1cdccc1",
+      "destination": {
+        "schema": "public",
+        "name": "pastoral_biblioteca",
+        "n": 1,
+        "hash": "93bc8abcbbb258acd8cc65d9d1cdccc1"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pastoral_bosquejos",
+      "n": 1,
+      "hash": "624d34ed6e784543375989ad500645b6",
+      "destination": {
+        "schema": "public",
+        "name": "pastoral_bosquejos",
+        "n": 1,
+        "hash": "624d34ed6e784543375989ad500645b6"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pastoral_colecciones",
+      "n": 2,
+      "hash": "1bafecb908eef0b94a8b6867c78c9be3",
+      "destination": {
+        "schema": "public",
+        "name": "pastoral_colecciones",
+        "n": 2,
+        "hash": "1bafecb908eef0b94a8b6867c78c9be3"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pastoral_paquetes",
+      "n": 1,
+      "hash": "7aeda4b940dc53595c9f76b2b2c58af2",
+      "destination": {
+        "schema": "public",
+        "name": "pastoral_paquetes",
+        "n": 1,
+        "hash": "7aeda4b940dc53595c9f76b2b2c58af2"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pastoral_versiculos",
+      "n": 3,
+      "hash": "8ab61d59da5070a9aac92c72914e562e",
+      "destination": {
+        "schema": "public",
+        "name": "pastoral_versiculos",
+        "n": 3,
+        "hash": "8ab61d59da5070a9aac92c72914e562e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pilot_issue_reports",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "pilot_issue_reports",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pilot_onboarding_progress",
+      "n": 2,
+      "hash": "78fbf16ed8492cfbffe398799f70ec0a",
+      "destination": {
+        "schema": "public",
+        "name": "pilot_onboarding_progress",
+        "n": 2,
+        "hash": "78fbf16ed8492cfbffe398799f70ec0a"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pilot_participants",
+      "n": 2,
+      "hash": "8615060a41969d0ad12e38d6ef430dde",
+      "destination": {
+        "schema": "public",
+        "name": "pilot_participants",
+        "n": 2,
+        "hash": "8615060a41969d0ad12e38d6ef430dde"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "pilot_usage_events",
+      "n": 430,
+      "hash": "cdea65981f282f5ca212a2e0411281b0",
+      "destination": {
+        "schema": "public",
+        "name": "pilot_usage_events",
+        "n": 430,
+        "hash": "cdea65981f282f5ca212a2e0411281b0"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "planes_lectura",
+      "n": 12,
+      "hash": "25599095239419059128bea50bc69dbd",
+      "destination": {
+        "schema": "public",
+        "name": "planes_lectura",
+        "n": 12,
+        "hash": "25599095239419059128bea50bc69dbd"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "planes_lectura_dias",
+      "n": 116,
+      "hash": "30c9d13c80d9751bf74751761f226659",
+      "destination": {
+        "schema": "public",
+        "name": "planes_lectura_dias",
+        "n": 116,
+        "hash": "30c9d13c80d9751bf74751761f226659"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "planes_lectura_dias_progreso",
+      "n": 2,
+      "hash": "a42536737e7db563b6847d89366fbd26",
+      "destination": {
+        "schema": "public",
+        "name": "planes_lectura_dias_progreso",
+        "n": 2,
+        "hash": "a42536737e7db563b6847d89366fbd26"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "planes_lectura_usuario",
+      "n": 1,
+      "hash": "fcc9d3c4535a5cb18585338b439636b4",
+      "destination": {
+        "schema": "public",
+        "name": "planes_lectura_usuario",
+        "n": 1,
+        "hash": "fcc9d3c4535a5cb18585338b439636b4"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "preguntas_congregacion",
+      "n": 3,
+      "hash": "1120c38ed978b09582859c15d223b118",
+      "destination": {
+        "schema": "public",
+        "name": "preguntas_congregacion",
+        "n": 3,
+        "hash": "1120c38ed978b09582859c15d223b118"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "preguntas_congregacion_identidad",
+      "n": 0,
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "destination": {
+        "schema": "public",
+        "name": "preguntas_congregacion_identidad",
+        "n": 0,
+        "hash": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "profiles",
+      "n": 25,
+      "hash": "4cc90ee5e0822d4801bf2b745d2af46e",
+      "destination": {
+        "schema": "public",
+        "name": "profiles",
+        "n": 25,
+        "hash": "4cc90ee5e0822d4801bf2b745d2af46e"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "publicacion_lecturas",
+      "n": 14,
+      "hash": "84f00b0a2d408d27293e31d575f8b74b",
+      "destination": {
+        "schema": "public",
+        "name": "publicacion_lecturas",
+        "n": 14,
+        "hash": "84f00b0a2d408d27293e31d575f8b74b"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "publicaciones",
+      "n": 1,
+      "hash": "ed3a0a113f4e61067dfab303e57f1fa8",
+      "destination": {
+        "schema": "public",
+        "name": "publicaciones",
+        "n": 1,
+        "hash": "ed3a0a113f4e61067dfab303e57f1fa8"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "push_subscriptions",
+      "n": 17,
+      "hash": "41ca5a1ab7c8f1e02c553bbfb27bd944",
+      "destination": {
+        "schema": "public",
+        "name": "push_subscriptions",
+        "n": 17,
+        "hash": "41ca5a1ab7c8f1e02c553bbfb27bd944"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "solicitudes",
+      "n": 4,
+      "hash": "61bee9828871738fe0aa9b42469f9aae",
+      "destination": {
+        "schema": "public",
+        "name": "solicitudes",
+        "n": 4,
+        "hash": "61bee9828871738fe0aa9b42469f9aae"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "solicitudes_ayuda_solidaria",
+      "n": 2,
+      "hash": "260c5b858fde79d452eec6336c1df50f",
+      "destination": {
+        "schema": "public",
+        "name": "solicitudes_ayuda_solidaria",
+        "n": 2,
+        "hash": "260c5b858fde79d452eec6336c1df50f"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "versiculo_diario_preferencias",
+      "n": 2,
+      "hash": "cc6f673d1888d7c4bdfc0c0cf004b868",
+      "destination": {
+        "schema": "public",
+        "name": "versiculo_diario_preferencias",
+        "n": 2,
+        "hash": "cc6f673d1888d7c4bdfc0c0cf004b868"
+      },
+      "matches": true
+    },
+    {
+      "schema": "public",
+      "name": "versiculos_favoritos",
+      "n": 32,
+      "hash": "e93dfbf80005ce0f9f1efbdc243f9768",
+      "destination": {
+        "schema": "public",
+        "name": "versiculos_favoritos",
+        "n": 32,
+        "hash": "e93dfbf80005ce0f9f1efbdc243f9768"
+      },
+      "matches": true
+    }
+  ],
+  "auth": {
+    "users": {
+      "n": 25,
+      "hash": "dbfa6522c65e3c5c3c67353eb8ea1b8c",
+      "matches": true
+    },
+    "identities": {
+      "n": 25,
+      "hash": "88d56c0a720b29a13b42e6bcbd32ec93",
+      "matches": true
+    },
+    "sessionsCopied": false
+  },
+  "checks": {
+    "schema": {
+      "expected": 105,
+      "actual": 105,
+      "missing": 0,
+      "extra": 0
+    },
+    "constraints": {
+      "expected": 682,
+      "actual": 682,
+      "missing": 0,
+      "extra": 0,
+      "validated_foreign_keys": 206
+    },
+    "indexes": {
+      "expected": 137,
+      "actual": 137,
+      "missing": 0,
+      "extra": 0
+    },
+    "triggers": {
+      "expected": 28,
+      "actual": 28,
+      "missing": 0,
+      "extra": 0
+    },
+    "policies": {
+      "n": 236,
+      "identical": 236
+    },
+    "grants": [
+      {
+        "kind": "tables",
+        "expected": 2254,
+        "actual": 2254,
+        "missing": 0,
+        "extra": 0
+      },
+      {
+        "kind": "functions",
+        "expected": 277,
+        "actual": 277,
+        "missing": 0,
+        "extra": 0
+      }
+    ],
+    "routines": {
+      "total": 92,
+      "identical": 92
+    }
+  },
+  "sequence": {
+    "name": "public.pilot_usage_events_id_seq",
+    "last_value": 431
+  },
+  "storage": {
+    "buckets": 3,
+    "actualObjectsCopied": 0,
+    "pendingObjects": 7,
+    "blocker": "Origen HTTP 402 exceed_db_size_quota; no copiar metadata como si fueran archivos."
+  },
+  "cron": {
+    "copied": 2,
+    "activeDestination": 0,
+    "activeSource": 2,
+    "warning": "No activar simultáneamente; comandos origen apuntan calendario-six-orpin.vercel.app, verificar alias antes del cambio."
+  },
+  "preview": {
+    "created": false,
+    "configured": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "NEON_BIBLE_LEXICON_DATABASE_URL",
+      "NEON_BIBLE_TEXTS_DATABASE_URL",
+      "VIDA_BIBLE_READ_BACKEND",
+      "CCVIDA_SUPABASE_SERVICE_ROLE_KEY"
+    ],
+    "missing": [],
+    "productionChanged": false,
+    "secretValueValidated": false,
+    "note": "La variable alternativa existe en Preview y Production por carga manual del usuario; el código la selecciona únicamente si la URL corresponde a ccvida. Se conservan las claves originales. Existe también una clave estándar de Preview para la rama; sus valores no se leyeron."
+  },
+  "managedRlsHelper": {
+    "name": "public.rls_auto_enable()",
+    "sourceObject": false,
+    "returnType": "event_trigger",
+    "event": "ensure_rls",
+    "enabled": true,
+    "executeRoles": [
+      "postgres"
+    ],
+    "publicExecute": false,
+    "authExecute": false,
+    "serviceExecute": false,
+    "reason": "Auto-review rechazó restablecer permisos amplios al helper nuevo; se mantuvo solo administrador; 92 funciones migradas mantienen 277 grants originales exactos."
+  },
+  "runtime": {
+    "available": true,
+    "guardrailsForNewCommitNotRun": true,
+    "remoteCheckpointCommit": null
+  },
+  "pending": [
+    "Verificar Site URL/redirect URLs y correo de Auth ccvida en dashboard; no accesible por MCP.",
+    "Recuperar 7 archivos reales; preservar owners/paths y adaptar URLs absolutas de avatars tras recuperación, registrando transformación y nueva huella.",
+    "Preparar único Preview, probar login de usuario real y AT/NT, notas/progreso/ministerios/calendario/storage/discípulado y notificaciones.",
+    "Comprobar cron alias/header antes de activar destino y desactivar origen en cambio coordinado.",
+    "No hacer cambio de producción hasta pruebas.",
+    "7 Edge Functions históricas de importación bíblica no desplegadas en destino; permanecen en origen. No ejecutarlas ni repoblar corpus en Supabase.",
+    "Ejecutar build/guardrails del nuevo commit y crear un único Preview; validar allí clave nueva y login."
+  ],
+  "localValidation": {
+    "targetedTests": 11,
+    "testsPassed": 11,
+    "typescript": "passed",
+    "eslintTargeted": "passed",
+    "standardBuild": "passed (Turbopack)",
+    "webpackBuild": "failed: tres selectores globales preexistentes en CSS Modules; no se modificaron"
+  }
+}
