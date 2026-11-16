@@ -82,7 +82,7 @@ export default function MensajesBiblioteca({ mensajes, pagina }: { mensajes: Men
           {autores.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
         </select>
       </label>}
-      <select value={orden} onChange={e => setOrden(e.target.value)} aria-label="Ordenar publicaciones"
+      <select value={orden} onChange={e => setOrden(e.target.value === 'antiguos' ? 'antiguos' : 'recientes')} aria-label="Ordenar publicaciones"
         className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800">
         <option value="recientes">Más recientes</option>
         <option value="antiguos">Más antiguos</option>
