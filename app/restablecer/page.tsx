@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Lock, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AuthFrame from '@/components/auth/AuthFrame'
 
 export default function RestablecerPage() {
   const [msg, setMsg] = useState<string | null>(null)
+  const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [mostrarConfirm, setMostrarConfirm] = useState(false)
   const [pending, startTransition] = useTransition()
   const router = useRouter()
   const [acceso, setAcceso] = useState<'verificando' | 'listo' | 'invalido'>('verificando')
@@ -104,13 +106,22 @@ export default function RestablecerPage() {
             <input
               id="password"
               name="password"
-              type="password"
+              type={mostrarPassword ? "text" : "password"}
               required
               autoComplete="new-password"
               placeholder="Mínimo 8 caracteres"
-              className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
+              className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
               style={{ colorScheme: 'light' }}
             />
+            <button
+              type="button"
+              onClick={() => setMostrarPassword(!mostrarPassword)}
+              aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={mostrarPassword}
+              className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500"
+            >
+              {mostrarPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+            </button>
           </div>
         </div>
 
@@ -121,13 +132,22 @@ export default function RestablecerPage() {
             <input
               id="confirm"
               name="confirm"
-              type="password"
+              type={mostrarConfirm ? "text" : "password"}
               required
               autoComplete="new-password"
               placeholder="Repite la contraseña"
-              className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
+              className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-[15px] font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
               style={{ colorScheme: 'light' }}
             />
+            <button
+              type="button"
+              onClick={() => setMostrarConfirm(!mostrarConfirm)}
+              aria-label={mostrarConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={mostrarConfirm}
+              className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500"
+            >
+              {mostrarConfirm ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+            </button>
           </div>
         </div>
 
