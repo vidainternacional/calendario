@@ -1,15 +1,10 @@
 {
-  "task": "Publicar ccvida en la aplicación habitual y documentar la verificación",
-  "userRequest": "2026-11-16: el usuario autoriza explícitamente copiar todo, incluida app_settings, de calendariovida (atjtjpchslxbseayzflz) a lnkrojvyiwnlcoponxud de Ccvida/marketingccvida@gmail.com y usar ccvida como Supabase principal. Conservar el origen intacto como respaldo y cotejar cantidades y contenido al terminar la copia. Preservar usuarios e identificadores, archivos, permisos y funciones; Biblia se consulta en Neon; sin borrar origen, cambiar diseño, contratar planes ni modificar el maestro. Preparar copia y validación antes del cambio de conexiones. El usuario guardó CCVIDA_SUPABASE_SERVICE_ROLE_KEY y autoriza adaptar los clientes administrativos para seleccionar esa clave cuando la URL sea ccvida; conservar conexión anterior y preparar un único Preview.  El usuario confirmó el inicio de sesión del Preview con su cuenta habitual y autorizó publicar ccvida en la aplicación normal, conservando las mismas URLs y PWA instalada. Cambiar variables públicas de Production, integrar la conexión probada, publicar y coordinar cron sin duplicados. Conservar claves y datos anteriores para reversión; no alterar RLS, permisos, diseño ni planes.",
+  "task": "Continuidad automática de VIDA entre conversaciones de Codex",
+  "userRequest": "Crear un punto de continuidad que Codex lea al iniciar este repositorio y mantenga al cerrar trabajo, preservando decisiones aprobadas y pendientes reales. Solo instrucciones y documentación; no modificar maestro, aplicación, bases de datos ni permisos.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "lib/supabase/server.ts",
-    "lib/supabase/service.ts",
-    "lib/supabase/service-role-key.ts",
-    "tests/regression/ccvida-service-role-key.test.mjs",
-    "scripts/supabase-migration/**",
-    "docs/CCVIDA_MIGRACION_*.md",
-    "docs/CCVIDA_MIGRACION_*.json"
+    "AGENTS.md",
+    "docs/CONTINUIDAD_VIDA.md"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
