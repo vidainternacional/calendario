@@ -1,13 +1,16 @@
 {
-  "task": "Registrar la aprobación final de biblioteca de cursos e integración del PR #312 en maestro",
-  "userRequest": "El usuario aprobó visualmente el cambio de biblioteca y editor de Discipulado y ordenó actualizar __VIDA_INTERNACIONAL.md y llevar PR #312 a producción. Registrar el merge real, migración previamente aplicada y protección del historial, sin cerrar Bloque 4 ni Issue #309. Documentación únicamente.",
+  "task": "Corregir desde VIDA el enlace predeterminado de recuperación de contraseña y habilitar /restablecer antes de sesión",
+  "userRequest": "El usuario confirmó la cuenta normal activa y autorizó corregir el acceso con el correo predeterminado de Supabase, sin SMTP, cambios de contraseñas, usuarios, RLS ni producción. Solo actualizar solicitud de enlace, pantalla de recepción, middleware y pruebas; conservar UI, permisos y navegación.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "__VIDA_INTERNACIONAL.md",
+    "app/actions/recuperacion.ts",
+    "app/restablecer/page.tsx",
+    "lib/supabase/middleware.ts",
+    "tests/regression/recuperacion-enlace-vida.test.mjs",
     "docs/CONTINUIDAD_VIDA.md"
   ],
   "allowSupabase": false,
-  "allowMasterUpdate": true,
+  "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true
