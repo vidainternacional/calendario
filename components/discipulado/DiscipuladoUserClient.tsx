@@ -144,13 +144,13 @@ export default function DiscipuladoUserClient({ userId, courseId }: Props) {
     }
 
     const assignmentId = String(info.asignacion_id)
-    const courseId = String(info.curso_id)
+    const lessonCourseId = String(info.curso_id)
     const [courseRes, assignmentRes, lessonsRes, progressRes, videoRes, attemptsRes] = await Promise.all([
       courseId && info.titulo
-        ? Promise.resolve({ data: { id: courseId, titulo: info.titulo, descripcion: info.descripcion || '' }, error: null })
-        : supabase.from('discipulado_cursos').select('id,titulo,descripcion').eq('id', courseId).single(),
+        ? Promise.resolve({ data: { id: lessonCourseId, titulo: info.titulo, descripcion: info.descripcion || '' }, error: null })
+        : supabase.from('discipulado_cursos').select('id,titulo,descripcion').eq('id', lessonCourseId).single(),
       supabase.from('discipulado_asignaciones').select('id,curso_id,estado,calificacion,notas_revision').eq('id', assignmentId).single(),
-      supabase.from('discipulado_lecciones').select('id,curso_id,titulo,descripcion,video_url,contenido,orden').eq('curso_id', courseId).order('orden'),
+      supabase.from('discipulado_lecciones').select('id,curso_id,titulo,descripcion,video_url,contenido,orden').eq('curso_id', lessonCourseId).order('orden'),
       supabase.from('discipulado_leccion_progreso').select('*').eq('asignacion_id', assignmentId),
       supabase.from('discipulado_video_progreso').select('*').eq('asignacion_id', assignmentId),
       supabase.from('discipulado_intentos').select('id,asignacion_id,calificacion,correctas,total,enviado_en').eq('asignacion_id', assignmentId).order('enviado_en', { ascending: false }),
