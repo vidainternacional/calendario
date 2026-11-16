@@ -1,21 +1,12 @@
 {
-  "task": "Completar categorías y series reales de videos con episodios ordenados en Estudios",
-  "userRequest": "En la categoría del editor ya están Mensaje y Devocional; habilitar también Series y las demás categorías pertinentes, de forma que se guarden, puedan filtrarse y visualizarse en Biblioteca/Estudios. Series organizadas por nombre y episodio. Conservar lo demás aprobado, selección múltiple de destinatarios, permisos/RLS y un único alias Preview fijo.",
+  "task": "Registrar en el documento maestro la aprobación de categorías, series y navegación de Centro Pastoral",
+  "userRequest": "El usuario aprobó expresamente el texto presentado para incorporar en __VIDA_INTERNACIONAL.md las funcionalidades aprobadas de Centro Pastoral — Devocionales y mensajes (16-11-2026). No hacer merge ni producción, no alterar prioridad ni otras fases.",
   "allowedPaths": [
-    "supabase/migrations/20261116233000_vida_devocionales_categorias_series.sql",
-    "lib/estudios/mensajes-dirigidos-tipos.ts",
-    "app/actions/mensajes-dirigidos.ts",
-    "components/estudios/MensajesSemanalesEditor.tsx",
-    "components/estudios/MensajesBiblioteca.tsx",
-    "lib/estudios/mensajes-dirigidos.ts",
-    "app/(app)/estudios/mensajes/page.tsx",
-    "app/(app)/estudios/mensajes/[id]/page.tsx",
-    "tests/regression/mensajes-dirigidos.test.mjs",
-    ".vida/change-scope.json",
-    "docs/MENSAJES_SEMANALES_2026-11-16.md"
+    "__VIDA_INTERNACIONAL.md",
+    ".vida/change-scope.json"
   ],
-  "allowSupabase": true,
-  "allowMasterUpdate": false,
+  "allowSupabase": false,
+  "allowMasterUpdate": true,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true

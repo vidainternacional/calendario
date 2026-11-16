@@ -1,6 +1,6 @@
 # VIDA INTERNACIONAL — Documento maestro de fases
 
-Última actualización: 2026-09-07
+Última actualización: 2026-11-16
 
 Fase / prioridad activa: **EXPANSIÓN FUNCIONAL FINAL ANTES DE FASE I · BLOQUE 4 — DISCIPULADO**
 
@@ -652,6 +652,18 @@ Diferenciar una consulta normal de una situación que necesita atención pastora
 No implementar este bloque mientras permanezca en pausa.
 
 FASE I continúa DIFERIDA hasta completar, validar y cerrar los bloques funcionales finales autorizados.
+
+## Centro Pastoral — Devocionales y mensajes · APROBADO — 2026-11-16
+
+- Nueve categorías disponibles: Mensaje, Devocional, Serie, Estudio bíblico, Enseñanza, Reflexión, Testimonio, Conferencia y Capacitación.
+- Series organizadas por nombre y número de episodio.
+- Biblioteca de Estudios con filtros por categoría, lista, cuadrícula y navegación entre episodios.
+- Publicación para toda la congregación o múltiples ministerios y roles.
+- Borradores privados y vista previa desplegable.
+- Navegación aprobada y menú inferior conservados.
+- Preview fijo validado por el usuario.
+- Pendiente: pruebas de permisos con cuentas de diferentes ministerios.
+- PR #308 permanece abierto en Draft, sin integración a producción.
 
 # Siguiente prioridad autorizada
 
