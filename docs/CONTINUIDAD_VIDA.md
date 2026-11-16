@@ -3,6 +3,17 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Discipulado — Biblioteca de cursos y edición integral · preparado 2026-11-16
+
+- **Solicitud aprobada:** el usuario pidió sustituir la ficha visible permanentemente por una biblioteca de carpetas; abrir cada curso y editar Información, Lecciones y Examen final; permitir cursos temáticos propios, editor de respuestas tipo formulario, y eliminar cursos de forma protegida.
+- **Rama y Preview fijo:** trabajar en `agent/devocionales-centro-pastoral-20261116` para conservar `https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`. Crear exactamente un Preview del bloque al finalizar los cambios.
+- **Cambios preparados en el código:** biblioteca separando Discipulado principal y cursos temáticos; cada curso abre sus 3 secciones; preguntas con añadir/quitar hasta seis respuestas, elección de la correcta y vista previa; gestor puede eliminar cursos sin alumnos, o archivar cursos con historial; los alumnos pueden comenzar cursos temáticos sin sustituir el Discipulado principal.
+- **Autorización de datos:** el usuario aprobó expresamente separar tipos de curso y la asignación automática, así como el borrado seguro sin historial y archivado preservando registros. Migración localizada `20261116220700_discipulado_biblioteca_tematica.sql`, sin cambiar RLS y sin eliminar datos existentes.
+- **Seguridad:** las aprobaciones temáticas no deben otorgar el distintivo del Discipulado principal. La inscripción automática sigue reservada al principal. Las políticas y ministerios de otras áreas no se modifican.
+- **Reversión:** volver a la versión anterior de UI y RPC de inscripción/prioridad en una migración de reversión, manteniendo `tipo` y datos creados; no borrar temáticos o progreso durante una reversión. La función segura de retiro preserva historiales.
+- **Antes de declarar completo:** comprobar diff localizado, validación de acceso real y compilación de Vercel para el SHA de la rama, alias del Preview fijo. **Validación visual pendiente del usuario**; no merge ni producción sin aprobación.
+- **Fuera del alcance:** PR #297 sigue Draft; no integrar su función de borrado irreversible. Issue #309 privacidad interministerial sigue pendiente.
+
 ## Discipulado — Producción confirmada y cierre del ajuste móvil · 2026-11-16
 
 - **Aprobación:** el usuario confirmó que el ajuste «Nota mínima» se ve bien en Preview y posteriormente validó el comportamiento en producción. Autorizó expresamente la integración del PR #311 y luego el registro oficial de ese estado en el maestro.

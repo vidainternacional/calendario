@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { BadgeCheck, Check, ChevronLeft, ChevronRight, CircleCheck, ClipboardCheck, GraduationCap, Loader2, LockKeyhole, PlayCircle, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-type Props = { userId: string }
+type Props = { userId: string; courseId?: string }
 type Course = { id: string; titulo: string; descripcion: string }
 type Lesson = { id: string; curso_id: string; titulo: string; descripcion: string; video_url: string | null; contenido: string; orden: number }
 type Assignment = { id: string; curso_id: string; estado: 'asignado' | 'en_progreso' | 'revision' | 'aprobado' | 'rechazado'; calificacion: number | null; notas_revision: string | null }
@@ -19,6 +19,8 @@ type Enrollment = {
   estado?: string
   asignacion_id?: string | null
   curso_id?: string | null
+  titulo?: string
+  descripcion?: string
 }
 
 function youtubeId(value?: string | null) {
@@ -90,7 +92,7 @@ function YouTubeLessonPlayer({ videoUrl, lessonId, onEnded }: { videoUrl: string
   return <div className="aspect-video overflow-hidden rounded-2xl bg-slate-950"><div id={mountId} className="h-full w-full" /></div>
 }
 
-export default function DiscipuladoUserClient({ userId }: Props) {
+export default function DiscipuladoUserClient({ userId, courseId }: Props) {
   const supabase = useMemo(() => createClient() as any, [])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -115,7 +117,9 @@ export default function DiscipuladoUserClient({ userId }: Props) {
     if (first) setLoading(true)
     setError(null)
 
-    const { data: enrollment, error: enrollmentError } = await supabase.rpc('discipulado_autoinscribir')
+    const { data: enrollment, error: enrollmentError } = courseId
+      ? await supabase.rpc('discipulado_inscribir_tema', { p_curso_id: courseId })
+      : await supabase.rpc('discipulado_autoinscribir')
     if (enrollmentError) {
       setError(enrollmentError.message)
       if (first) setLoading(false)
@@ -140,11 +144,13 @@ export default function DiscipuladoUserClient({ userId }: Props) {
     }
 
     const assignmentId = String(info.asignacion_id)
-    const courseId = String(info.curso_id)
+    const lessonCourseId = String(info.curso_id)
     const [courseRes, assignmentRes, lessonsRes, progressRes, videoRes, attemptsRes] = await Promise.all([
-      supabase.from('discipulado_cursos').select('id,titulo,descripcion').eq('id', courseId).single(),
+      courseId && info.titulo
+        ? Promise.resolve({ data: { id: lessonCourseId, titulo: info.titulo, descripcion: info.descripcion || '' }, error: null })
+        : supabase.from('discipulado_cursos').select('id,titulo,descripcion').eq('id', lessonCourseId).single(),
       supabase.from('discipulado_asignaciones').select('id,curso_id,estado,calificacion,notas_revision').eq('id', assignmentId).single(),
-      supabase.from('discipulado_lecciones').select('id,curso_id,titulo,descripcion,video_url,contenido,orden').eq('curso_id', courseId).order('orden'),
+      supabase.from('discipulado_lecciones').select('id,curso_id,titulo,descripcion,video_url,contenido,orden').eq('curso_id', lessonCourseId).order('orden'),
       supabase.from('discipulado_leccion_progreso').select('*').eq('asignacion_id', assignmentId),
       supabase.from('discipulado_video_progreso').select('*').eq('asignacion_id', assignmentId),
       supabase.from('discipulado_intentos').select('id,asignacion_id,calificacion,correctas,total,enviado_en').eq('asignacion_id', assignmentId).order('enviado_en', { ascending: false }),
@@ -161,7 +167,7 @@ export default function DiscipuladoUserClient({ userId }: Props) {
     setApprovedWithoutCourse(false)
     setNoCourse(false)
     if (first) setLoading(false)
-  }, [supabase])
+  }, [supabase, courseId])
 
   useEffect(() => { void load(true) }, [load])
 
@@ -274,7 +280,7 @@ export default function DiscipuladoUserClient({ userId }: Props) {
   if (approvedWithoutCourse) {
     return (
       <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-28 pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6">
-        <Link href="/estudios" className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><ChevronLeft className="h-4 w-4" /> Estudios</Link>
+        <Link href={courseId ? '/discipulado/cursos' : '/estudios'} className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><ChevronLeft className="h-4 w-4" /> {courseId ? 'Otros cursos' : 'Estudios'}</Link>
         <section className="mt-8 rounded-[28px] border border-amber-200 bg-white p-6 text-center shadow-sm">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber-50 text-amber-500"><BadgeCheck className="h-8 w-8" /></div>
           <h1 className="mt-4 text-2xl font-bold text-[#171923]">Tu discipulado ya está reconocido</h1>
@@ -288,11 +294,11 @@ export default function DiscipuladoUserClient({ userId }: Props) {
   if (noCourse || !course || !assignment) {
     return (
       <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-28 pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6">
-        <Link href="/estudios" className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><ChevronLeft className="h-4 w-4" /> Estudios</Link>
+        <Link href={courseId ? '/discipulado/cursos' : '/estudios'} className="inline-flex items-center gap-1 text-xs font-bold text-slate-500"><ChevronLeft className="h-4 w-4" /> {courseId ? 'Otros cursos' : 'Estudios'}</Link>
         <section className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 text-center shadow-sm">
           <GraduationCap className="mx-auto h-10 w-10 text-violet-600" />
-          <h1 className="mt-4 text-xl font-bold text-[#171923]">El discipulado todavía no está publicado</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">Cuando el pastor publique el curso activo, podrás comenzar desde aquí automáticamente.</p>
+          <h1 className="mt-4 text-xl font-bold text-[#171923]">{courseId ? 'Este curso no está disponible' : 'El discipulado todavía no está publicado'}</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">{courseId ? 'Regresá a la biblioteca para elegir otro curso.' : 'Cuando el pastor publique el curso activo, podrás comenzar desde aquí automáticamente.'}</p><Link href="/discipulado/cursos" className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-violet-200 px-4 text-sm font-bold text-violet-700">Explorar cursos temáticos</Link>
         </section>
       </main>
     )
@@ -300,23 +306,24 @@ export default function DiscipuladoUserClient({ userId }: Props) {
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-6 sm:pt-8">
-      <Link href="/estudios" className="mb-4 inline-flex items-center gap-1 text-xs font-bold text-slate-500"><ChevronLeft className="h-4 w-4" /> Estudios</Link>
+      <Link href={courseId ? '/discipulado/cursos' : '/estudios'} className="mb-4 inline-flex items-center gap-1 text-xs font-bold text-slate-500"><ChevronLeft className="h-4 w-4" /> {courseId ? 'Otros cursos' : 'Estudios'}</Link>
       <header className="rounded-[26px] bg-gradient-to-br from-violet-600 via-indigo-600 to-indigo-700 p-5 text-indigo-50 shadow-[0_14px_34px_rgba(79,70,229,.2)] sm:p-6">
-        <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-indigo-100/80">Tu discipulado</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-indigo-100/80">{courseId ? 'Curso temático' : 'Tu discipulado'}</p>
         <h1 className="mt-1 text-2xl font-bold tracking-[-.03em]">{course.titulo}</h1>
         {course.descripcion && <p className="mt-2 text-sm leading-6 text-indigo-100/80">{course.descripcion}</p>}
         <div className="mt-5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-indigo-100/75"><span>Progreso</span><span>{completedCount}/{lessons.length}</span></div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-indigo-950/25"><div className="h-full rounded-full bg-indigo-50 transition-all" style={{ width: `${progressPercent}%` }} /></div>
       </header>
+      {!courseId && <Link href="/discipulado/cursos" className="mt-4 flex min-h-12 items-center justify-between rounded-2xl border border-violet-100 bg-white px-4 text-sm font-bold text-violet-700 shadow-sm">Explorar otros cursos <ChevronRight className="h-4 w-4" /></Link>}
 
       {(notice || error) && <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-medium ${error ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-100' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'}`}>{error || notice}</div>}
 
       {assignment.estado === 'aprobado' ? (
         <section className="mt-5 rounded-[24px] border border-amber-200 bg-white p-5 text-center shadow-sm">
           <BadgeCheck className="mx-auto h-9 w-9 text-amber-500" />
-          <h2 className="mt-3 text-lg font-bold text-[#171923]">Discipulado completado</h2>
-          <p className="mt-1 text-sm text-slate-500">Tu pastor aprobó el proceso. El distintivo ya aparece en tu perfil.</p>
-          <Link href="/perfil" className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-amber-500 px-5 text-sm font-bold text-amber-950">Ver mi perfil</Link>
+          <h2 className="mt-3 text-lg font-bold text-[#171923]">{courseId ? 'Curso completado' : 'Discipulado completado'}</h2>
+          <p className="mt-1 text-sm text-slate-500">{courseId ? 'Tu gestor aprobó el curso temático. Podés seguir explorando otros temas.' : 'Tu pastor aprobó el proceso. El distintivo ya aparece en tu perfil.'}</p>
+          <Link href={courseId ? '/discipulado/cursos' : '/perfil'} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-amber-500 px-5 text-sm font-bold text-amber-950">{courseId ? 'Ver otros cursos' : 'Ver mi perfil'}</Link>
         </section>
       ) : assignment.estado === 'revision' ? (
         <section className="mt-5 rounded-[24px] border border-amber-200 bg-amber-50 p-5 text-amber-900">
