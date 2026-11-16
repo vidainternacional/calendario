@@ -1,16 +1,15 @@
 {
-  "task": "Destinatarios combinables por roles y ministerios para Devocionales; borradores privados",
-  "userRequest": "Publicar mensajes/devocionales desde el mismo formulario opcionalmente para toda la iglesia, solo pastores, líderes ministeriales, servidores/administradores o varios ministerios simultáneos. El usuario dio autorización para realizar los cambios de seguridad necesarios, exigiendo mantener todo lo aprobado. Crear almacenamiento y RLS AISLADOS para videos, nunca editar permisos ni tablas existentes, sin merge ni producción. Alias de Preview fijo.",
+  "task": "Completar categorías y series reales de videos con episodios ordenados en Estudios",
+  "userRequest": "En la categoría del editor ya están Mensaje y Devocional; habilitar también Series y las demás categorías pertinentes, de forma que se guarden, puedan filtrarse y visualizarse en Biblioteca/Estudios. Series organizadas por nombre y episodio. Conservar lo demás aprobado, selección múltiple de destinatarios, permisos/RLS y un único alias Preview fijo.",
   "allowedPaths": [
-    "supabase/migrations/20261116223000_vida_devocionales_destinatarios.sql",
+    "supabase/migrations/20261116233000_vida_devocionales_categorias_series.sql",
     "lib/estudios/mensajes-dirigidos-tipos.ts",
-    "lib/estudios/mensajes-dirigidos.ts",
     "app/actions/mensajes-dirigidos.ts",
     "components/estudios/MensajesSemanalesEditor.tsx",
-    "app/(app)/pastoral/mensajes/page.tsx",
+    "components/estudios/MensajesBiblioteca.tsx",
+    "lib/estudios/mensajes-dirigidos.ts",
     "app/(app)/estudios/mensajes/page.tsx",
     "app/(app)/estudios/mensajes/[id]/page.tsx",
-    "components/estudios/MensajesBiblioteca.tsx",
     "tests/regression/mensajes-dirigidos.test.mjs",
     ".vida/change-scope.json",
     "docs/MENSAJES_SEMANALES_2026-11-16.md"

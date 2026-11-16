@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { contextoPastoral } from '@/lib/auth/permisos'
 import { youtubeVideo } from '@/lib/estudios/youtube-link'
-import { ROL_DESTINO_IDS, type RolDestino } from '@/lib/estudios/mensajes-dirigidos-tipos'
+import { ROL_DESTINO_IDS, TIPO_DEVOCIONAL_IDS, type RolDestino, type TipoDevocional } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
 type Resultado = { success: boolean; error?: string }
 const uuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
@@ -55,14 +55,20 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
   const titulo = String(form.get('titulo') ?? '').trim()
   const descripcion = String(form.get('descripcion') ?? '').trim()
   const video = youtubeVideo(String(form.get('video_url') ?? ''))
-  const tipo = String(form.get('tipo') || 'mensaje')
+  const tipo = String(form.get('tipo') || 'mensaje') as TipoDevocional
+  const serieTitulo = String(form.get('serie_titulo') || '').trim()
+  const episodioTexto = String(form.get('serie_episodio') || '').trim()
+  const serieEpisodio = Number(episodioTexto)
   const publicar = form.get('publicar') === 'on'
   const audiencia = destinatarios(form)
 
   if (!titulo || titulo.length > 140) return { success: false, error: 'Escribí un título de hasta 140 caracteres.' }
   if (descripcion.length > 2000) return { success: false, error: 'La descripción no puede superar los 2000 caracteres.' }
   if (!video) return { success: false, error: 'Pegá un enlace HTTPS válido de un video de YouTube.' }
-  if (!['mensaje','devocional'].includes(tipo)) return { success: false, error: 'El tipo de contenido no es válido.' }
+  if (!TIPO_DEVOCIONAL_IDS.has(tipo)) return { success: false, error: 'La categoría no es válida.' }
+  if (tipo === 'serie' && (!serieTitulo || serieTitulo.length > 100 || !/^[1-9][0-9]{0,2}$/.test(episodioTexto) || serieEpisodio > 999)) {
+    return { success: false, error: 'Para una serie indicá el nombre (máximo 100 caracteres) y un episodio entre 1 y 999.' }
+  }
   if (audiencia.error) return { success: false, error: audiencia.error }
   if (publicar && !audiencia.iglesia && !audiencia.lideres &&
       !audiencia.roles.length && !audiencia.ministerios.length) {
@@ -89,6 +95,8 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
 
   const campos = {
     titulo, descripcion, video_url: video.url, tipo,
+    serie_titulo: tipo === 'serie' ? serieTitulo : null,
+    serie_episodio: tipo === 'serie' ? serieEpisodio : null,
     publicado: publicar,
     audiencia_iglesia: audiencia.iglesia,
     roles_destino: audiencia.roles,
@@ -102,6 +110,7 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
       .eq('id', id).eq('autor_id', user.id).eq('updated_at', revision).select('id')
     : await db.from('vida_devocionales').insert({ ...campos, autor_id: user.id }).select('id')
   if (resultado.error || !resultado.data?.length) {
+    if (resultado.error?.code === '23505') return { success: false, error: 'Ese número de episodio ya existe en esta serie. Elegí otro.' }
     return { success: false, error: 'No se pudo guardar el mensaje. Comprobá tu conexión e intentá nuevamente.' }
   }
   refrescar(String(resultado.data[0].id))

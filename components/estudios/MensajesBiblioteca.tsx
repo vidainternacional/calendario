@@ -1,12 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ChevronRight, Grid2X2, List, Play, Search, Video, Users } from 'lucide-react'
-import type { MensajeBiblioteca } from '@/lib/estudios/mensajes-dirigidos-tipos'
+import { CATEGORIAS_DEVOCIONALES, etiquetaTipo, type MensajeBiblioteca, type TipoDevocional } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
 type Vista = 'cuadricula' | 'lista'
-type Categoria = 'todos' | 'mensajes' | 'devocionales'
+type Categoria = 'todos' | TipoDevocional
 
 function imagenVideo(url: string) {
   const id = /[?&]v=([A-Za-z0-9_-]{11})(?:[&#]|$)/.exec(url)?.[1]
@@ -19,42 +20,59 @@ function fechaCorta(fecha: string | null) {
   return Number.isNaN(time.getTime()) ? '' : new Intl.DateTimeFormat('es-SV', { day: 'numeric', month: 'short', timeZone: 'America/El_Salvador' }).format(time)
 }
 
-export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = false }: { mensajes: MensajeBiblioteca[]; pagina: number; desdePastoral?: boolean }) {
+export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = false, categoriaInicial = 'todos' }: {
+  mensajes: MensajeBiblioteca[]; pagina: number; desdePastoral?: boolean; categoriaInicial?: Categoria
+}) {
+  const router = useRouter()
   const [vista, setVista] = useState<Vista>('cuadricula')
-  const [categoria, setCategoria] = useState<Categoria>('todos')
+  const [categoria, setCategoria] = useState<Categoria>(categoriaInicial)
+  const [serieElegida, setSerieElegida] = useState('todas')
   const [busqueda, setBusqueda] = useState('')
   const [autor, setAutor] = useState('todos')
   const [orden, setOrden] = useState<'recientes' | 'antiguos'>('recientes')
+  const sufijoDetalle = [desdePastoral ? 'origen=pastoral' : '', categoria !== 'todos' ? 'categoria=' + categoria : ''].filter(Boolean).join('&')
+  function cambiarCategoria(siguiente: Categoria) {
+    setCategoria(siguiente)
+    setSerieElegida('todas')
+    const parametros = [desdePastoral ? 'origen=pastoral' : '', siguiente !== 'todos' ? 'categoria=' + siguiente : ''].filter(Boolean).join('&')
+    router.replace('/estudios/mensajes' + (parametros ? '?' + parametros : ''))
+  }
   const autores = useMemo(() => [...new Set(mensajes.map(m => m.autor).filter(Boolean))].sort((a,b) => a.localeCompare(b,'es')), [mensajes])
+  const series = useMemo(() => [...new Set(mensajes.filter(m => m.tipo === 'serie' && m.serieTitulo).map(m => m.serieTitulo!))].sort((a,b) => a.localeCompare(b, 'es')), [mensajes])
   const filtrados = useMemo(() => {
     const termino = busqueda.trim().toLocaleLowerCase('es')
     return mensajes.filter(m => {
       if (autor !== 'todos' && m.autor !== autor) return false
+      if (categoria === 'serie' && serieElegida !== 'todas' && m.serieTitulo !== serieElegida) return false
       if (termino && ![m.titulo, m.descripcion, m.autor].some(texto => texto.toLocaleLowerCase('es').includes(termino))) return false
-      return categoria === 'todos' || (categoria === 'mensajes' && m.tipo === 'mensaje') || (categoria === 'devocionales' && m.tipo === 'devocional')
+      return categoria === 'todos' || categoria === m.tipo
     }).sort((a, b) => {
+      if (categoria === 'serie') {
+        const grupo = (a.serieTitulo || '').localeCompare(b.serieTitulo || '', 'es')
+        return grupo || (a.serieEpisodio ?? 0) - (b.serieEpisodio ?? 0)
+      }
       const n = (b.fecha || '').localeCompare(a.fecha || '')
       return orden === 'recientes' ? n : -n
     })
-  }, [mensajes, autor, busqueda, categoria, orden])
+  }, [mensajes, autor, busqueda, categoria, serieElegida, orden])
 
   return <section className="mt-7" aria-label="Biblioteca de videos">
     <div className="border-b border-slate-200 pb-4">
       <h2 className="text-sm font-bold text-slate-900">Explorar por categoría</h2>
       <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Categorías de la biblioteca">
-        <button type="button" aria-pressed={categoria === 'todos'} onClick={() => setCategoria('todos')}
+        <button type="button" aria-pressed={categoria === 'todos'} onClick={() => cambiarCategoria('todos')}
           className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ${categoria === 'todos' ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>Todos</button>
-        <button type="button" aria-pressed={categoria === 'mensajes'} onClick={() => setCategoria('mensajes')}
-          className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ${categoria === 'mensajes' ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>Mensajes</button>
-        <button type="button" aria-pressed={categoria === 'devocionales'} onClick={() => setCategoria('devocionales')}
-          className={'min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ' + (categoria === 'devocionales' ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700')}>Devocionales</button>
-        <span title="Pendiente de habilitar las series" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-slate-200 bg-slate-100 px-4 text-xs font-medium text-slate-400">Series · Próximamente</span>
+        {CATEGORIAS_DEVOCIONALES.map(c => <button key={c.id} type="button" aria-pressed={categoria === c.id}
+          onClick={() => cambiarCategoria(c.id)}
+          className={'min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ' + (categoria === c.id ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700')}>
+          {c.id === 'serie' ? 'Series' : c.nombre}
+        </button>)}
       </div>
     </div>
 
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-900">Publicaciones</p>
+        <p className="text-sm font-bold text-slate-900">{categoria === 'serie' ? 'Series y episodios' : 'Publicaciones'}</p>
         <p className="mt-0.5 text-xs text-slate-500">Ordenadas para que encontrés el video que buscás.</p>
       </div>
       <div className="inline-flex shrink-0 gap-1 rounded-xl border border-slate-200 bg-white p-1" role="group" aria-label="Vista de videos">
@@ -81,7 +99,12 @@ export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = f
           {autores.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
         </select>
       </label>}
-      <select value={orden} onChange={e => setOrden(e.target.value === 'antiguos' ? 'antiguos' : 'recientes')} aria-label="Ordenar publicaciones"
+      {categoria === 'serie' && series.length > 1 && <select value={serieElegida} onChange={e => setSerieElegida(e.target.value)}
+        aria-label="Seleccionar serie" className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800">
+        <option value="todas">Todas las series</option>
+        {series.map(nombre => <option key={nombre} value={nombre}>{nombre}</option>)}
+      </select>}
+      <select value={orden} onChange={e => setOrden(e.target.value === 'antiguos' ? 'antiguos' : 'recientes')} aria-label="Ordenar publicaciones" disabled={categoria === 'serie'}
         className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800">
         <option value="recientes">Más recientes</option>
         <option value="antiguos">Más antiguos</option>
@@ -91,27 +114,31 @@ export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = f
     {filtrados.length === 0
       ? <div className="py-12 text-center">
           <Video className="mx-auto h-9 w-9 text-slate-400" aria-hidden="true" />
-          <h3 className="mt-4 font-bold text-slate-800">{mensajes.length === 0 ? (pagina === 1 ? 'Todavía no hay videos publicados' : 'No hay más publicaciones en esta página') : 'No encontramos videos con esos filtros'}</h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">{mensajes.length === 0 ? 'Cuando se publiquen devocionales o mensajes, los encontrarás aquí para verlos en lista o cuadrícula.' : 'Probá otra búsqueda o seleccioná Todos.'}</p>
+          <h3 className="mt-4 font-bold text-slate-800">{mensajes.length === 0 ? (pagina === 1 ? 'Todavía no hay publicaciones' : 'No hay más publicaciones en esta página') : 'No encontramos contenido con esos filtros'}</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">{mensajes.length === 0 ? 'Cuando se publiquen mensajes, devocionales, series y otros contenidos, los encontrarás aquí por categoría.' : 'Probá otra búsqueda o seleccioná Todos.'}</p>
         </div>
       : <div className={vista === 'cuadricula' ? 'mt-5 grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-5' : 'mt-5 divide-y divide-slate-200'}>
-          {filtrados.map(m => {
+          {filtrados.map((m, index) => {
             const miniatura = imagenVideo(m.videoUrl)
-            return <article key={m.id} className={vista === 'lista' ? 'py-4' : ''}>
-              <Link href={`/estudios/mensajes/${m.id}${desdePastoral ? "?origen=pastoral" : ""}`} className={vista === 'lista' ? 'group flex min-h-28 gap-3 sm:gap-4' : 'group block'}>
+            const encabezadoSerie = categoria === 'serie' && (index === 0 || filtrados[index - 1].serieTitulo !== m.serieTitulo || filtrados[index - 1].autor !== m.autor)
+            return <Fragment key={m.id}>
+              {encabezadoSerie && <h3 className={'col-span-2 mt-3 border-b border-slate-200 pb-2 text-base font-bold text-slate-900 ' + (vista === 'lista' ? 'pt-3' : '')}>{m.serieTitulo || 'Serie'} <span className="block text-xs font-normal text-slate-500">{m.autor}</span></h3>}
+              <article className={vista === 'lista' ? 'py-4' : ''}>
+              <Link href={`/estudios/mensajes/${m.id}${sufijoDetalle ? '?' + sufijoDetalle : ''}`} className={vista === 'lista' ? 'group flex min-h-28 gap-3 sm:gap-4' : 'group block'}>
                 <div className={`relative shrink-0 overflow-hidden rounded-xl bg-slate-800 ${vista === 'lista' ? 'w-[42%] max-w-48 self-start' : 'w-full'} aspect-video`}>
                   {miniatura && <img src={miniatura} alt="" loading="lazy" className="h-full w-full object-cover" />}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/10"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-white"><Play className="ml-0.5 h-5 w-5 fill-current" aria-hidden="true" /></span></span>
                 </div>
                 <div className={vista === 'lista' ? 'min-w-0 flex-1 py-0.5' : 'pt-2.5'}>
                   <h3 className={`break-words font-bold leading-snug text-slate-900 group-hover:text-violet-700 ${vista === 'lista' ? 'text-base' : 'text-sm'}`}>{m.titulo}</h3>
-                  <p className="mt-1 text-[11px] font-semibold text-violet-700">{m.tipo === 'devocional' ? 'Devocional' : 'Mensaje'}</p>
+                  <p className="mt-1 text-[11px] font-semibold text-violet-700">{etiquetaTipo(m.tipo)}{m.tipo === 'serie' ? ` · ${m.serieTitulo || 'Serie'} · Episodio ${m.serieEpisodio ?? '—'}` : ''}</p>
                   <p className="mt-1 line-clamp-2 text-xs text-slate-500">{m.autor}{m.fecha ? ` · ${fechaCorta(m.fecha)}` : ''}</p>
                   {vista === 'lista' && m.descripcion && <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">{m.descripcion}</p>}
                   {vista === 'lista' && <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-violet-700">Ver video <ChevronRight className="h-4 w-4" aria-hidden="true" /></span>}
                 </div>
               </Link>
-            </article>
+              </article>
+            </Fragment>
           })}
         </div>}
     {mensajes.length > 0 && <p className="mt-4 text-xs text-slate-500">La búsqueda y los filtros se aplican a los videos de esta página.</p>}

@@ -1,28 +1,31 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useId, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, ChevronDown, Loader2, Eye, PlayCircle, Users } from 'lucide-react'
 import { guardarMensajeSemanal, cambiarPublicacionMensaje } from '@/app/actions/mensajes-semanales'
 import { guardarMensajeDirigido, cambiarPublicacionDirigida } from '@/app/actions/mensajes-dirigidos'
 import { youtubeVideo } from '@/lib/estudios/youtube-link'
 import {
-  ROLES_DESTINO, resumenAudiencia,
+  ROLES_DESTINO, CATEGORIAS_DEVOCIONALES, TIPO_DEVOCIONAL_IDS, etiquetaTipo, resumenAudiencia,
   type MensajeConAudiencia, type MinisterioDestino, type RolDestino, type TipoDevocional,
 } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
 const campo = 'mt-1.5 block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100'
 
-function Editor({ mensaje, ministerios, onSaved }: {
-  mensaje?: MensajeConAudiencia; ministerios: MinisterioDestino[]; onSaved: () => void
+function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
+  mensaje?: MensajeConAudiencia; ministerios: MinisterioDestino[]; seriesDisponibles: string[]; onSaved: () => void
 }) {
   const router = useRouter()
+  const seriesListId = useId()
   const [busy, start] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [titulo, setTitulo] = useState(mensaje?.titulo ?? '')
   const [enlace, setEnlace] = useState(mensaje?.videoUrl ?? '')
   const [descripcion, setDescripcion] = useState(mensaje?.descripcion ?? '')
   const [tipo, setTipo] = useState<TipoDevocional>(mensaje?.tipo ?? 'mensaje')
+  const [serieTitulo, setSerieTitulo] = useState(mensaje?.serieTitulo ?? '')
+  const [serieEpisodio, setSerieEpisodio] = useState(mensaje?.serieEpisodio?.toString() ?? '1')
   const [publicar, setPublicar] = useState(mensaje?.publicado ?? false)
   const [iglesia, setIglesia] = useState(mensaje?.audienciaIglesia ?? true)
   const [roles, setRoles] = useState<RolDestino[]>(mensaje?.rolesDestino ?? [])
@@ -41,6 +44,7 @@ function Editor({ mensaje, ministerios, onSaved }: {
 
   function restaurarFormulario() {
     setTitulo(''); setEnlace(''); setDescripcion(''); setTipo('mensaje')
+    setSerieTitulo(''); setSerieEpisodio('1')
     setPublicar(false); setIglesia(true); setRoles([]); setGrupos([])
     setLideres(false); setFiltro(''); setVistaPrevia(false)
   }
@@ -71,10 +75,24 @@ function Editor({ mensaje, ministerios, onSaved }: {
       <textarea className={campo} name="descripcion" rows={3} maxLength={2000} value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Una breve reflexión para acompañar el video." />
     </label>
     <label className="block text-sm font-semibold text-slate-700">Categoría
-      <select name="tipo" className={campo} value={tipo} disabled={esLegado} onChange={e => setTipo(e.target.value === 'devocional' ? 'devocional' : 'mensaje')}>
-        <option value="mensaje">Mensaje</option><option value="devocional">Devocional</option>
+      <select name="tipo" className={campo} value={tipo} disabled={esLegado}
+        onChange={e => { const nuevo = e.target.value as TipoDevocional; if (TIPO_DEVOCIONAL_IDS.has(nuevo)) setTipo(nuevo) }}>
+        {CATEGORIAS_DEVOCIONALES.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
       </select>
     </label>
+    {tipo === 'serie' && !esLegado && <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/50 p-3" aria-label="Datos de la serie">
+      <p className="text-sm font-bold text-violet-900">Organizar serie por episodios</p>
+      <label className="block text-sm font-semibold text-slate-700">Nombre de la serie
+        <input className={campo} name="serie_titulo" list={seriesListId} required maxLength={100}
+          value={serieTitulo} onChange={e => setSerieTitulo(e.target.value)} placeholder="Ej. Fundamentos de la fe" />
+      </label>
+      <datalist id={seriesListId}>{seriesDisponibles.map(nombre => <option key={nombre} value={nombre} />)}</datalist>
+      <label className="block text-sm font-semibold text-slate-700">Número de episodio
+        <input className={campo} name="serie_episodio" type="number" inputMode="numeric" min={1} max={999} step={1} required
+          value={serieEpisodio} onChange={e => setSerieEpisodio(e.target.value)} />
+      </label>
+      <p className="text-xs leading-5 text-slate-600">Usá el mismo nombre de serie en cada episodio. La biblioteca los agrupará y ordenará por número.</p>
+    </div>}
 
     <div className="border-t border-slate-200 pt-4">
       <label className="flex items-start gap-3 text-sm leading-6 text-slate-700">
@@ -177,6 +195,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
   const [editando, setEditando] = useState<string | null>(null)
   const [busy, start] = useTransition()
   const [aviso, setAviso] = useState<string | null>(null)
+  const seriesDisponibles = [...new Set(mensajes.filter(m => m.tipo === 'serie' && m.serieTitulo).map(m => m.serieTitulo!))].sort((a, b) => a.localeCompare(b, 'es'))
   return <section className="my-7 border-y border-slate-200 py-5" aria-labelledby="gestion-mensajes">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 id="gestion-mensajes" className="font-bold text-slate-900">Tus mensajes</h2>
@@ -185,12 +204,13 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
       </button>
     </div>
     <p className="mt-2 text-sm leading-6 text-slate-500">Subí el video a YouTube y pegá su enlace. Podés guardar un borrador o publicarlo para los grupos que elijás.</p>
-    {nuevo && <Editor onSaved={() => { setNuevo(false); setAviso('Mensaje guardado.') }} ministerios={ministerios} />}
+    {nuevo && <Editor onSaved={() => { setNuevo(false); setAviso('Mensaje guardado.') }} ministerios={ministerios} seriesDisponibles={seriesDisponibles} />}
     {aviso && <p role="status" className="mt-3 text-sm text-slate-700">{aviso}</p>}
     {mensajes.length > 0 && <div className="mt-4 divide-y divide-slate-200">{mensajes.map(m => <div key={m.id} className="py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words text-sm font-bold text-slate-900">{m.titulo}</h3>
+          <p className="mt-1 text-xs font-medium text-violet-700">{etiquetaTipo(m.tipo)}{m.tipo === 'serie' ? ` · ${m.serieTitulo || 'Serie'} · Episodio ${m.serieEpisodio ?? '—'}` : ''}</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">{resumenAudiencia(m, ministerios)}</p>
         </div>
         <div className="flex gap-3">
@@ -210,7 +230,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
         </div>
       </div>
       {editando === m.id && <Editor key={m.id + m.revision} mensaje={m} ministerios={ministerios}
-        onSaved={() => { setEditando(null); setAviso('Mensaje actualizado.') }} />}
+        onSaved={() => { setEditando(null); setAviso('Mensaje actualizado.') }} seriesDisponibles={seriesDisponibles} />}
     </div>)}</div>}
   </section>
 }

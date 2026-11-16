@@ -36,12 +36,14 @@ for (const method of ['select','eq','in','insert','update','maybeSingle','single
   Query.prototype[method] = function (...args) { this.ops.push([method, ...args]); return this }
 }
 const op = (q,method,field) => q.ops.find(x=>x[0]===method && (field===undefined||x[1]===field))
-function makeForm({publicar=false, roles=[], ministerios=[], iglesia=false, lideres=false, tipo='mensaje'}={}) {
+function makeForm({publicar=false, roles=[], ministerios=[], iglesia=false, lideres=false, tipo='mensaje', serieTitulo='', episodio=''}={}) {
   const f = new FormData()
   f.set('titulo','Esperanza')
   f.set('video_url',videoUrl)
   f.set('descripcion','Para el ministerio')
   f.set('tipo',tipo)
+  if (serieTitulo) f.set('serie_titulo',serieTitulo)
+  if (episodio) f.set('serie_episodio',episodio)
   if(publicar) f.set('publicar','on')
   if(iglesia) f.set('audiencia_iglesia','on')
   if(lideres) f.set('lideres_ministerio','on')
@@ -58,7 +60,7 @@ function setup(options={}) {
     'next/cache': { revalidatePath: path=>refreshed.push(path) },
     '@/lib/auth/permisos': { contextoPastoral: async()=>({ supabase:db,user:opts.user===null?null:{id:actor},error:null }) },
     '@/lib/estudios/youtube-link': { youtubeVideo: v=>v===videoUrl ? {url:'https://www.youtube.com/watch?v=fvBD-rFlTfg'} : null },
-    '@/lib/estudios/mensajes-dirigidos-tipos': { ROL_DESTINO_IDS:new Set(['pastor','administrador','lider','servidor']) },
+    '@/lib/estudios/mensajes-dirigidos-tipos': { ROL_DESTINO_IDS:new Set(['pastor','administrador','lider','servidor']), TIPO_DEVOCIONAL_IDS: new Set(['mensaje','devocional','serie','estudio_biblico','ensenanza','reflexion','testimonio','conferencia','capacitacion']) },
   })
   return {actions,calls,refreshed}
 }
@@ -122,4 +124,59 @@ test('la migración protege directamente lectura, edición y lista de ministerio
   assert.match(sql,/for update to authenticated/i)
   assert.match(sql,/with check\s*\(/)
   assert.doesNotMatch(sql,/drop table/i)
+})
+
+test('el editor guarda todas las categorías disponibles sin alterar la audiencia seleccionada', async () => {
+  for (const tipo of ['estudio_biblico','ensenanza','reflexion','testimonio','conferencia','capacitacion']) {
+    const {actions,calls} = setup()
+    const r = await actions.guardarMensajeDirigido(makeForm({tipo,publicar:true,iglesia:true}))
+    assert.equal(r.success,true, tipo)
+    const fila = calls.find(q=>q.table==='vida_devocionales'&&op(q,'insert'))
+    const datos = op(fila,'insert')[1]
+    assert.equal(datos.tipo,tipo)
+    assert.equal(datos.serie_titulo,null)
+    assert.equal(datos.serie_episodio,null)
+    assert.equal(datos.audiencia_iglesia,true)
+  }
+})
+
+test('serie se guarda con título y número de capítulo, respetando borrador y destinatarios',async()=>{
+  const {actions,calls}=setup()
+  const r=await actions.guardarMensajeDirigido(makeForm({
+    tipo:'serie',serieTitulo:'Fundamentos de la fe',episodio:'2',publicar:false,
+    ministerios:[ministerioA],
+  }))
+  assert.equal(r.success,true)
+  const fila=calls.find(q=>q.table==='vida_devocionales'&&op(q,'insert'))
+  const datos=op(fila,'insert')[1]
+  assert.equal(datos.tipo,'serie')
+  assert.equal(datos.serie_titulo,'Fundamentos de la fe')
+  assert.equal(datos.serie_episodio,2)
+  assert.equal(datos.publicado,false)
+  assert.deepEqual(datos.ministerios_destino,[ministerioA])
+})
+
+test('serie rechaza nombre vacío, episodio fuera de rango y categoría desconocida',async()=>{
+  for(const o of [
+    {tipo:'serie',episodio:'1'},
+    {tipo:'serie',serieTitulo:'Serie A',episodio:'0'},
+    {tipo:'serie',serieTitulo:'Serie A',episodio:'1000'},
+    {tipo:'serie',serieTitulo:'Serie A',episodio:'1.5'},
+    {tipo:'otro'},
+  ]){
+    const {actions,calls}=setup()
+    assert.equal((await actions.guardarMensajeDirigido(makeForm(o))).success,false)
+    assert.equal(calls.some(q=>op(q,'insert')||op(q,'update')),false)
+  }
+})
+
+test('la migración de categorías solo amplía la tabla nueva y conserva políticas y datos existentes',()=>{
+  const sql=fs.readFileSync('supabase/migrations/20261116233000_vida_devocionales_categorias_series.sql','utf8')
+  assert.match(sql,/alter table public[.]vida_devocionales/)
+  assert.match(sql,/add column if not exists serie_titulo/)
+  assert.match(sql,/add column if not exists serie_episodio/)
+  assert.match(sql,/tipo in \('mensaje','devocional','serie','estudio_biblico','ensenanza','reflexion','testimonio','conferencia','capacitacion'\)/)
+  assert.match(sql,/unique index if not exists/i)
+  assert.doesNotMatch(sql,/drop table|delete from|update public[.]|create policy|drop policy/i)
+  assert.doesNotMatch(sql,/pastoral_paquetes|ministerio_miembros|alter table public[.]profiles/i)
 })

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cargarMensajesSemanales, cargarMisMensajesSemanales } from './mensajes-semanales'
 import {
   adaptarLegado, desdeVideoDirigido, CAMPOS_DIRIGIDOS,
-  type MensajeBiblioteca, type MensajeConAudiencia, type MinisterioDestino,
+  type MensajeBiblioteca, type MensajeConAudiencia, type MinisterioDestino, type TipoDevocional,
 } from './mensajes-dirigidos-tipos'
 
 const POR_PAGINA = 12
@@ -15,8 +15,9 @@ const POR_PAGINA = 12
  * Supabase aplica RLS incluso si alguien intenta entrar con un ID directo.
  * Los materiales pastorales históricos mantienen su lectura autorizada existente.
  */
-export async function cargarBibliotecaDirigida(pagina = 1) {
-  const viejo = await cargarMensajesSemanales(pagina)
+export async function cargarBibliotecaDirigida(pagina = 1, categoria: 'todos' | TipoDevocional = 'todos') {
+  const incluyeLegado = categoria === 'todos' || categoria === 'mensaje'
+  const viejo = await cargarMensajesSemanales(incluyeLegado ? pagina : 1)
   if (!viejo.autenticado || viejo.error) {
     return { ...viejo, mensajes: viejo.mensajes.map(m => ({ ...adaptarLegado(m), autor: m.autor })) }
   }
@@ -25,9 +26,11 @@ export async function cargarBibliotecaDirigida(pagina = 1) {
   const db = client as unknown as SupabaseClient
   const page = Math.min(100, Math.max(1, Math.floor(pagina) || 1))
   const tope = page * POR_PAGINA + 1
-  const { data: nuevos, error } = await db.from('vida_devocionales')
-    .select(CAMPOS_DIRIGIDOS).eq('publicado', true)
-    .order('published_at', { ascending: false }).order('id').limit(tope)
+  let consulta = db.from('vida_devocionales').select(CAMPOS_DIRIGIDOS).eq('publicado', true)
+  if (categoria !== 'todos') consulta = consulta.eq('tipo', categoria)
+  const { data: nuevos, error } = categoria === 'serie'
+    ? await consulta.order('serie_titulo', { ascending: true }).order('serie_episodio', { ascending: true }).limit(tope)
+    : await consulta.order('published_at', { ascending: false }).order('id').limit(tope)
   if (error) return { ...viejo, mensajes: [] as MensajeBiblioteca[], haySiguiente: false,
     error: 'No se pudieron cargar los mensajes. Intenta nuevamente.' }
 
@@ -47,11 +50,13 @@ export async function cargarBibliotecaDirigida(pagina = 1) {
   const autoresPorVideo = new Map((nuevos ?? []).map((v: Record<string, unknown>) =>
     [String(v.id), nombres.get(String(v.autor_id)) || 'Equipo pastoral'] as const))
 
-  const adaptados: MensajeBiblioteca[] = viejo.mensajes.map(m => ({ ...adaptarLegado(m), autor: m.autor }))
+  const adaptados: MensajeBiblioteca[] = incluyeLegado ? viejo.mensajes.map(m => ({ ...adaptarLegado(m), autor: m.autor })) : []
   for (const v of paginaNueva) adaptados.push({ ...v, autor: autoresPorVideo.get(v.id) || 'Equipo pastoral' })
-  adaptados.sort((a,b) => (b.fecha || '').localeCompare(a.fecha || '') || a.id.localeCompare(b.id))
+  adaptados.sort((a,b) => categoria === 'serie'
+    ? (a.serieTitulo || '').localeCompare(b.serieTitulo || '', 'es') || (a.serieEpisodio ?? 0) - (b.serieEpisodio ?? 0)
+    : (b.fecha || '').localeCompare(a.fecha || '') || a.id.localeCompare(b.id))
   return { ...viejo, mensajes: adaptados.slice(0, POR_PAGINA),
-    haySiguiente: viejo.haySiguiente || convertidos.length > page * POR_PAGINA }
+    haySiguiente: (incluyeLegado && viejo.haySiguiente) || convertidos.length > page * POR_PAGINA }
 }
 
 export async function cargarMisMensajesDirigidos() {
