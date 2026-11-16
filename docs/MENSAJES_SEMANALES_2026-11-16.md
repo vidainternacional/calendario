@@ -1,0 +1,29 @@
+# Mensajes semanales de VIDA
+
+Pedido: un espacio independiente del discipulado para que el pastor publique videos semanales alojados en YouTube. La aplicación guarda enlaces y texto, no videos binarios.
+
+Se comprobó que Prédicas en video y Devocionales ministeriales eran marcadores «Próximamente». La sección nueva sustituye el marcador de Prédicas en video por un acceso operativo Mensajes semanales en Estudios. No modifica la gestión de discipulado ni la formación de hebreo.
+
+Se localizó a Romy en la cuenta migrada: su rol ya es pastor y su cuenta está activa. No se modificaron roles ni permisos. Los pastores y administradores activos pueden gestionar sus propios mensajes. Los miembros activos ven únicamente publicaciones autorizadas para la iglesia.
+
+## Modelo y acceso
+
+Un mensaje usa un proyecto pastoral sencillo existente: titulo, descripcion_publica e instrucciones con la URL canónica de YouTube, sin bosquejo, colección ni archivos adjuntos. La audiencia es iglesia. El campo publicado distingue borradores y publicaciones. Es un enlace legible, no un marcador interno ni JSON mostrado al usuario.
+
+No se añadieron tablas, columnas, roles, RLS ni funciones SQL. Los mensajes publicados también son materiales pastorales y pueden aparecer en los espacios existentes de paquetes recibidos/Inicio; sus notas privadas no se consultan ni se exponen.
+
+Las escrituras usan sesión del usuario, verificación de rol/estado y RLS existentes. Edición y publicación filtran id, profile_id y updated_at para evitar cambios sobre mensajes de otro autor o sobrescribir una edición concurrente. No se ejecutan notificaciones push al publicar desde esta sección.
+
+Las lecturas obtienen primero los IDs visibles mediante get_received_pastoral_packages bajo la sesión del miembro. Solo esos IDs pueden consultarse en el cliente de servidor, con publicado=true, audiencia=iglesia y selección explícita de campos públicos. Los borradores propios se leen con la sesión y filtro de autor. El detalle usa get_internal_pastoral_package y vuelve a comprobar acceso/audiencia/tipo de material. No hay acceso por simple conocimiento del UUID de un borrador.
+
+YouTube: enlaces HTTPS de youtube.com/www/m o youtu.be, con watch, shorts, live o embed y un ID válido. Se normalizan los enlaces, sin resolver páginas externas. El reproductor usa youtube-nocookie.com; ofrece abrir YouTube si el autor del video impide la inserción. La visibilidad pública/no listada y la autorización de inserción se configuran en YouTube.
+
+## Verificación del Preview
+
+El Preview usa ccvida, por lo que trabaja con datos reales: empezar guardando un borrador propio. No publicar pruebas para toda la iglesia sin coordinarlo. No se cargaron mensajes ficticios ni se enviaron notificaciones durante el desarrollo.
+
+Romy debe entrar con su cuenta de VIDA, abrir Estudios → Mensajes semanales → Nuevo mensaje, pegar el URL, escribir título/descripción y guardar. Publicar debe ser una elección explícita. Otro miembro debe poder reproducir el publicado pero no ver borradores, editar ni publicar. Romy debe poder editar/despublicar el suyo y un enlace inválido debe rechazarse. Confirmar que no cambia ningún curso ni avance del discipulado.
+
+La publicación de esta sección nueva en producción queda pendiente de la revisión del Preview. El acceso habitual ya restablecido no se modifica por preparar esta rama.
+
+Validación local: 9 pruebas nuevas de URLs, autorización, propiedad, concurrencia y paginación; 28 pruebas existentes de Hebreo/Cuaderno, todas aprobadas. TypeScript, build estándar Turbopack y ESLint de archivos nuevos pasan. La página Estudios conserva tres errores previos de no-explicit-any y una advertencia de accesibilidad en código no modificado; no se alteró ese código para silenciar el lint.

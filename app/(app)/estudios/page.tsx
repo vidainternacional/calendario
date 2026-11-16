@@ -23,6 +23,17 @@ export default async function EstudiosPage() {
 
   const recursos = [
     {
+      href: '/estudios/mensajes',
+      title: 'Mensajes semanales',
+      description: 'Mira los videos y reflexiones que los pastores comparten con la iglesia cada semana.',
+      action: 'Ver mensajes',
+      icon: Video,
+      iconClass: 'bg-violet-700 text-white',
+      hoverClass: 'hover:border-violet-300',
+      arrowClass: 'group-hover:text-violet-700',
+      actionClass: 'text-violet-700',
+    },
+    {
       href: '/biblia',
       title: 'Biblia',
       description: 'Lee cualquier libro y capítulo, escúchalo en voz alta y envíalo al Estudio Profundo con un toque.',
@@ -93,11 +104,6 @@ export default async function EstudiosPage() {
   ]
 
   const proximamente = [
-    {
-      title: 'Prédicas en video',
-      description: 'Accede a los mensajes del domingo y series de estudio.',
-      icon: Video,
-    },
     {
       title: 'Devocionales ministeriales',
       description: 'Reflexiones y guías de estudio para tu ministerio.',
