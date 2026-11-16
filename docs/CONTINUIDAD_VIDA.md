@@ -3,6 +3,14 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Centro Pastoral y Estudios — comprobación de paginación · 2026-11-16
+
+- El usuario autorizó continuar el pulido con una cuenta de administrador y otra normal; las pruebas con más personas serán diferidas y no bloquearán otras mejoras.
+- Diagnóstico localizado: al combinar videos históricos y devocionales nuevos, cada origen se paginaba antes de ordenar la unión. Desde la segunda página podía faltar contenido y el indicador de página siguiente no contemplaba la suma de ambos orígenes.
+- Cambio preparado: consultar hasta la página requerida de ambos orígenes, ordenar la unión y paginar una sola vez; sin modificar RLS, destinatarios, títulos, diseño o guardado.
+- Pruebas añadidas con datos simulados (13+1, 7+7, 1+13) para evitar publicaciones ficticias en la congregación.
+- Validación visual en los dos teléfonos pendiente; no actualizar el maestro ni integrar a producción sin aprobación posterior. El issue de privacidad entre ministerios #309 continúa abierto.
+
 ## Discipulado — Biblioteca de cursos y edición integral · preparado 2026-11-16
 
 - **Solicitud aprobada:** el usuario pidió sustituir la ficha visible permanentemente por una biblioteca de carpetas; abrir cada curso y editar Información, Lecciones y Examen final; permitir cursos temáticos propios, editor de respuestas tipo formulario, y eliminar cursos de forma protegida.

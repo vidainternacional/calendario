@@ -1,13 +1,15 @@
 {
-  "task": "Registrar la aprobación final de biblioteca de cursos e integración del PR #312 en maestro",
-  "userRequest": "El usuario aprobó visualmente el cambio de biblioteca y editor de Discipulado y ordenó actualizar __VIDA_INTERNACIONAL.md y llevar PR #312 a producción. Registrar el merge real, migración previamente aplicada y protección del historial, sin cerrar Bloque 4 ni Issue #309. Documentación únicamente.",
+  "task": "Estudios: corregir pérdida de publicaciones entre páginas al combinar videos históricos y nuevos",
+  "userRequest": "Usuario aceptó pulir Centro Pastoral y Estudios; se comprobó un error de paginación en biblioteca de videos al combinar fuentes. Arreglar únicamente la composición de páginas y agregar pruebas sin alterar el diseño, RLS, destinatarios ni publicar contenido real.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "__VIDA_INTERNACIONAL.md",
+    "lib/estudios/mensajes-semanales.ts",
+    "lib/estudios/mensajes-dirigidos.ts",
+    "tests/regression/estudios-biblioteca-paginacion.test.mjs",
     "docs/CONTINUIDAD_VIDA.md"
   ],
   "allowSupabase": false,
-  "allowMasterUpdate": true,
+  "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true

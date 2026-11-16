@@ -17,7 +17,9 @@ const POR_PAGINA = 12
  */
 export async function cargarBibliotecaDirigida(pagina = 1, categoria: 'todos' | TipoDevocional = 'todos') {
   const incluyeLegado = categoria === 'todos' || categoria === 'mensaje'
-  const viejo = await cargarMensajesSemanales(incluyeLegado ? pagina : 1)
+  // Al mezclar mensajes históricos con nuevos, necesitamos el prefijo
+  // completo de ambos orígenes antes de paginar el resultado combinado.
+  const viejo = await cargarMensajesSemanales(incluyeLegado ? pagina : 1, incluyeLegado)
   if (!viejo.autenticado || viejo.error) {
     return { ...viejo, mensajes: viejo.mensajes.map(m => ({ ...adaptarLegado(m), autor: m.autor })) }
   }
@@ -36,7 +38,7 @@ export async function cargarBibliotecaDirigida(pagina = 1, categoria: 'todos' | 
 
   const convertidos = ((nuevos ?? []) as Record<string, unknown>[])
     .map(desdeVideoDirigido).filter((m): m is MensajeConAudiencia => Boolean(m))
-  const paginaNueva = convertidos.slice((page - 1) * POR_PAGINA, page * POR_PAGINA)
+  const paginaNueva = convertidos
   const idsAutores = [...new Set(((nuevos ?? []) as Record<string, unknown>[])
     .map(v => String(v.autor_id || '')).filter(Boolean))]
   const nombres = new Map<string, string>()
@@ -55,8 +57,10 @@ export async function cargarBibliotecaDirigida(pagina = 1, categoria: 'todos' | 
   adaptados.sort((a,b) => categoria === 'serie'
     ? (a.serieTitulo || '').localeCompare(b.serieTitulo || '', 'es') || (a.serieEpisodio ?? 0) - (b.serieEpisodio ?? 0)
     : (b.fecha || '').localeCompare(a.fecha || '') || a.id.localeCompare(b.id))
-  return { ...viejo, mensajes: adaptados.slice(0, POR_PAGINA),
-    haySiguiente: (incluyeLegado && viejo.haySiguiente) || convertidos.length > page * POR_PAGINA }
+  return { ...viejo, mensajes: adaptados.slice((page - 1) * POR_PAGINA, page * POR_PAGINA),
+    haySiguiente: (incluyeLegado && viejo.haySiguiente) ||
+      convertidos.length > page * POR_PAGINA ||
+      adaptados.length > page * POR_PAGINA }
 }
 
 export async function cargarMisMensajesDirigidos() {
