@@ -51,3 +51,8 @@ Rama `agent/devocionales-centro-pastoral-20261116`, basada exactamente en el hea
 - Entrada `Centro Pastoral → Ver biblioteca` usa `?origen=pastoral`: el enlace volver en Biblioteca lleva a `/pastoral/mensajes` y no a Estudios. La paginación y enlaces al detalle mantienen ese origen. La entrada normal desde Estudios permanece igual.
 - Dentro de cada formulario hay una Vista previa desplegable, inicialmente cerrada, que refleja título, descripción y video de YouTube según se escriben. No hace escrituras a Supabase, no publica y conserva el formulario durante la previsualización.
 - El enlace a Biblioteca es una navegación completa, por lo que se debe guardar como borrador antes de salir para no perder cambios no guardados. Para comprobar contenido sin salir usar vista previa.
+
+## Corrección puntual — navegación principal de Centro Pastoral
+
+- El botón «Atrás» de `/pastoral` ahora enlaza a `/perfil` de forma explícita, sin usar el historial del navegador. Se conserva el mismo diseño visual y no se modifica el componente `BackButton` compartido ni la navegación contextual de Biblioteca y Devocionales.
+- Alcance únicamente navegación, sin cambios de datos, roles, permisos, Supabase o producción. Verificar en Preview el regreso `/perfil → /pastoral → Atrás → /perfil` y el retorno interno `Biblioteca → Devocionales`.

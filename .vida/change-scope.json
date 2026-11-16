@@ -1,12 +1,8 @@
 {
-  "task": "Biblioteca contextual y vista previa desplegable sin cambios de permisos ni datos",
-  "userRequest": "Al entrar a la biblioteca desde la edición pastoral, regresar a Devocionales en vez de Estudios; permitir ver en el mismo editor una vista previa desplegable del contenido aun sin guardar, sin perder el texto ni cambiar guardado. Conservar además categorías y lista/cuadrícula de este bloque. No implementar nuevos destinatarios/ministros aún: requieren aprobación aparte sobre seguridad.",
+  "task": "Corregir destino de Atrás de la pantalla principal de Centro Pastoral",
+  "userRequest": "Desde /pastoral el botón Atrás debe volver siempre a /perfil, no a la última página del historial (por ejemplo Devocionales). Conservar el mismo diseño del control, el BackButton compartido y toda la navegación interna, guardado y permisos. No tocar Supabase ni producción.",
   "allowedPaths": [
-    "components/estudios/MensajesSemanalesEditor.tsx",
-    "app/(app)/pastoral/mensajes/page.tsx",
-    "app/(app)/estudios/mensajes/page.tsx",
-    "app/(app)/estudios/mensajes/[id]/page.tsx",
-    "components/estudios/MensajesBiblioteca.tsx",
+    "app/(app)/pastoral/page.tsx",
     ".vida/change-scope.json",
     "docs/MENSAJES_SEMANALES_2026-11-16.md"
   ],

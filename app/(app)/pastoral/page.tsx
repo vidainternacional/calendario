@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
+  ArrowLeft,
   BookOpenCheck,
   ChevronRight,
   FolderOpen,
@@ -14,7 +15,6 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { tieneAccesoPastoral } from '@/lib/pastoral/access'
-import BackButton from '@/components/navigation/BackButton'
 
 export const metadata: Metadata = { title: 'Centro Pastoral' }
 export const dynamic = 'force-dynamic'
@@ -59,7 +59,10 @@ export default async function PastoralPage() {
   return (
     <main className="pastoral-workspace mx-auto min-h-screen max-w-3xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 sm:pt-7">
       <div className="pastoral-workspace-back">
-        <BackButton />
+        <Link href="/perfil" className="inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-full border border-white/70 bg-white/95 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur-md transition-colors hover:bg-white hover:text-slate-900 active:scale-[0.98]" aria-label="Volver a Mi Perfil">
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="pr-0.5">Atrás</span>
+        </Link>
       </div>
 
       <header className="pastoral-workspace-header">
