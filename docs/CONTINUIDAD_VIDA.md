@@ -3,6 +3,13 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Validación visual Discipulado recibida y actualización del maestro — 2026-11-16
+
+- El usuario confirmó en el Preview fijo que el modal de nota mínima en Discipulado **ya está bien**; ajuste visual aprobado.
+- Al recibir esa aprobación, el usuario autorizó registrar en `__VIDA_INTERNACIONAL.md` el ajuste de Discipulado y el estado REAL del PR #308: integrado a `main` y producción READY.
+- Desarrollo del ajuste: PR [#311](https://github.com/vidainternacional/calendario/pull/311) OPEN/Draft, rama `agent/devocionales-centro-pastoral-20261116`. **No integrar ni publicar sin nueva aprobación expresa.** Se conservó el enlace fijo y la configuración correcta de Supabase para ese Preview; PR #310 duplicado cerrado sin merge.
+- La retroalimentación de privacidad entre ministerios continúa pendiente en [Issue #309](https://github.com/vidainternacional/calendario/issues/309). No se modificaron permisos ni se realizaron publicaciones de prueba.
+
 ## Continuación 16-11-2026 · Privacidad pendiente y Discipulado
 
 - La persona que colabora en la prueba de visibilidad de publicaciones entre distintos ministerios responderá **esta noche del 16-11-2026**. El usuario dará entonces su retroalimentación; **no cerrar ni afirmar privacidad validada antes**. Seguimiento persistente: [GitHub Issue #309](https://github.com/vidainternacional/calendario/issues/309).

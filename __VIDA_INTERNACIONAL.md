@@ -662,8 +662,17 @@ FASE I continúa DIFERIDA hasta completar, validar y cerrar los bloques funciona
 - Borradores privados y vista previa desplegable.
 - Navegación aprobada y menú inferior conservados.
 - Preview fijo validado por el usuario.
-- Pendiente: pruebas de permisos con cuentas de diferentes ministerios.
-- PR #308 permanece abierto en Draft, sin integración a producción.
+- Pendiente: pruebas de permisos con cuentas de diferentes ministerios; seguimiento #309 hasta recibir retroalimentación.
+- PR #308 integrado a `main` el 2026-11-16 (SHA `e20c8504c84dc041571ccdc2f37cf698789247b3`); Vercel producción READY (`dpl_89khTdozTZohhMicbWYnXkGnueZA`).
+
+## Discipulado — Ajuste móvil aprobado · 2026-11-16
+
+- Ventana «Nota mínima» adaptada para pantallas móviles.
+- Desplazamiento y botón «Guardar criterio» validados por el usuario.
+- Guardado, permisos y funciones existentes conservados.
+- PR #311 abierto en Draft, pendiente de integración a producción.
+- Preview fijo conservado: `calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`.
+- La prueba de privacidad de Devocionales entre ministerios sigue pendiente en el seguimiento #309; no marcarla como aprobada hasta recibir la retroalimentación.
 
 # Siguiente prioridad autorizada
 

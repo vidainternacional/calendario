@@ -1,13 +1,13 @@
 {
-  "task": "Discipulado — evitar corte del modal de nota mínima en móvil sin alterar guardado",
-  "userRequest": "Avanzar en un punto pendiente del Bloque 4 — Discipulado mientras llega esta noche la retroalimentación externa de Devocionales; registrar que privacidad quedó pendiente en issue #309. Aislar SOLO arreglo visual del modal de nota mínima, no tocar RPC de eliminación de cursos, datos, roles, RLS, lógica ni otras funciones.",
+  "task": "Registrar aprobación visual de Nota mínima en Discipulado y estado publicado de Devocionales en el maestro",
+  "userRequest": "El usuario aprobó el texto propuesto para __VIDA_INTERNACIONAL.md. Registrar ajuste móvil aprobado, conservar PR #311 abierto/Draft pendiente de producción, actualizar PR #308 como integrado y desplegado READY, preservar Preview fijo y seguimiento #309 de privacidad sin cerrar. No cambiar interfaz, lógica, base de datos, permisos ni producción.",
   "allowedPaths": [
-    "components/discipulado/DiscipuladoCriterioClient.tsx",
+    "__VIDA_INTERNACIONAL.md",
     "docs/CONTINUIDAD_VIDA.md",
     ".vida/change-scope.json"
   ],
   "allowSupabase": false,
-  "allowMasterUpdate": false,
+  "allowMasterUpdate": true,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true
