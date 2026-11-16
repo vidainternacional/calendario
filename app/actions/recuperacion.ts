@@ -6,7 +6,9 @@ import { createClient as createAuthClient } from '@supabase/supabase-js'
 // recuperación vuelve a esta página con los tokens en el fragmento (#).
 // El flujo implícito permite abrir el correo desde otro navegador/teléfono
 // sin depender de un verificador PKCE guardado en el navegador de origen.
-const URL_RECUPERACION = 'https://calendario-vida-internacional.vercel.app/restablecer'
+const URL_RECUPERACION = process.env.VERCEL_ENV === 'preview'
+  ? 'https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app/restablecer'
+  : 'https://calendario-vida-internacional.vercel.app/restablecer'
 
 export async function solicitarRecuperacion(email: string) {
   const direccion = typeof email === 'string' ? email.trim() : ''

@@ -19,11 +19,11 @@ test('la recuperación usa la plantilla estándar de Supabase con retorno direct
         return { auth }
       },
     },
-  }, { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'public-key' })
+  }, { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'public-key', VERCEL_ENV: 'preview' })
 
   assert.equal((await modulo.solicitarRecuperacion(' usuario@ejemplo.com ')).success, true)
   assert.equal(llamadas[0].email, 'usuario@ejemplo.com')
-  assert.equal(llamadas[0].options.redirectTo, 'https://calendario-vida-internacional.vercel.app/restablecer')
+  assert.equal(llamadas[0].options.redirectTo, 'https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app/restablecer')
   assert.equal(configuracion.auth.flowType, 'implicit')
   assert.equal(configuracion.auth.persistSession, false)
 })
