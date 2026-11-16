@@ -9,8 +9,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 Contexto obligatorio para cualquier asistente o agente de IA trabajando en este repo:
 
 - **Qué es:** PWA de gestión interna de iglesia (ministerios, eventos, avisos, solicitudes, intercambios de turnos, estudios bíblicos con IA, push).
-- **ÚNICA memoria oficial y fuente de prioridad:** `__VIDA_INTERNACIONAL.md` en `main`. Leer SIEMPRE antes de tocar código. Si otro documento contradice al maestro, manda `__VIDA_INTERNACIONAL.md`.
+- **Primera lectura de continuidad:** `docs/CONTINUIDAD_VIDA.md`. Contiene el estado operativo, la tarea pendiente y las referencias verificadas para retomar sin reiniciar.
+- **Documento maestro de decisiones aprobadas:** `__VIDA_INTERNACIONAL.md` en `main`. Leer SIEMPRE antes de tocar código. La bitácora no sustituye sus reglas ni autoriza cambios sensibles. Si su estado formal es anterior a integraciones verificadas, consultar esas evidencias y las instrucciones actuales del usuario; no reiniciar fases ya integradas ni modificar el maestro sin aprobación expresa.
 - `docs/DOCUMENTO-TECNICO.md` puede usarse como referencia técnica histórica, pero NO define prioridad, bloque activo ni autorización para reabrir áreas cerradas.
+
+## Continuidad obligatoria entre conversaciones
+
+1. Al abrir este repositorio, incluso si el usuario solo dice «continuemos», leer primero `docs/CONTINUIDAD_VIDA.md`, después el maestro y los guardrails. No pedir que vuelva a contar todo el proyecto.
+2. Revisar `git status` y la rama actual. Actualizar referencias remotas cuando haya conexión y contrastar la bitácora de `origin/main` con la rama activa. No cambiar de rama sobre archivos sin guardar ni integrar trabajo pendiente automáticamente.
+3. Leer el checkpoint específico de la tarea indicada y comprobar los PR relevantes antes de intervenir. Si falta acceso, declarar qué no pudo verificarse; no convertir un registro histórico en una comprobación actual.
+4. Conservar funciones y diseños aprobados. Probar el cambio y los recorridos afectados; no pedir otra validación completa de todos los módulos sin evidencia de regresión.
+5. Actualizar después de terminar cada proceso, al recibir su aprobación y siempre antes de cerrar un bloque que cambie el estado real. Si hay una pausa prolongada, dejar un checkpoint antes de detenerse. Registrar claramente «implementado», «probado», «aprobado» y «publicado» como estados distintos; no esperar a una fecha periódica. Actualizar `docs/CONTINUIDAD_VIDA.md` con fecha, resultado comprobado, rama/PR, pruebas, pendientes, autorizaciones concretas y siguiente paso. Incluirlo en el alcance del bloque. Si queda sin publicar o solo en una rama, decirlo y dejar un enlace accesible; no afirmar que otra conversación leerá cambios locales automáticamente.
+6. No actualizar la bitácora por conversaciones sin cambios relevantes ni crear despliegues o commits repetitivos para registrar que no ocurrió nada. Nunca guardar claves, tokens, contraseñas ni datos personales en ella.
+7. La bitácora registra autorizaciones con su alcance; no concede permisos nuevos. No mezclar ramas Draft con correcciones pequeñas. Mantener las restricciones de publicación y de datos indicadas por el usuario.
 
 ## Guardrails obligatorios antes de modificar
 
