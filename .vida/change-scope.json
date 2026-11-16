@@ -1,10 +1,11 @@
 {
   "task": "Registrar aprobación visual de Nota mínima en Discipulado y estado publicado de Devocionales en el maestro",
-  "userRequest": "El usuario aprobó el texto propuesto para __VIDA_INTERNACIONAL.md. Registrar ajuste móvil aprobado, conservar PR #311 abierto/Draft pendiente de producción, actualizar PR #308 como integrado y desplegado READY, preservar Preview fijo y seguimiento #309 de privacidad sin cerrar. No cambiar interfaz, lógica, base de datos, permisos ni producción.",
+  "userRequest": "El usuario aprobó el texto propuesto para __VIDA_INTERNACIONAL.md. Registrar ajuste móvil aprobado, conservar PR #311 abierto/Draft pendiente de producción, actualizar PR #308 como integrado y desplegado READY, preservar Preview fijo y seguimiento #309 de privacidad sin cerrar. No cambiar interfaz, lógica, base de datos, permisos ni producción. El alcance del PR conserva también el ajuste visual ya aprobado de Discipulado respecto a main.",
   "allowedPaths": [
+    ".vida/change-scope.json",
     "__VIDA_INTERNACIONAL.md",
-    "docs/CONTINUIDAD_VIDA.md",
-    ".vida/change-scope.json"
+    "components/discipulado/DiscipuladoCriterioClient.tsx",
+    "docs/CONTINUIDAD_VIDA.md"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": true,
