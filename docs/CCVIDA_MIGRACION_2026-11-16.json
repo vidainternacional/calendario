@@ -3,7 +3,7 @@
   "source": {
     "project_id": "atjtjpchslxbseayzflz",
     "link_id": "link_6a9703d709188191878ac4403a0f6755",
-    "unchanged": true
+    "unchanged": "Datos, RLS y permisos conservados; solo se desactivaron las dos tareas cron al activar las copias en ccvida."
   },
   "destination": {
     "link_id": "link_6afa5fff3c2881918a34fd0cb822ee24",
@@ -1456,12 +1456,13 @@
   },
   "cron": {
     "copied": 2,
-    "activeDestination": 0,
-    "activeSource": 2,
-    "warning": "No activar simultáneamente; comandos origen apuntan calendario-six-orpin.vercel.app, verificar alias antes del cambio."
+    "activeDestination": 2,
+    "activeSource": 0,
+    "commandsUnchanged": true,
+    "requestTriggeredManually": false
   },
   "preview": {
-    "created": false,
+    "created": true,
     "configured": [
       "NEXT_PUBLIC_SUPABASE_URL",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY",
@@ -1473,7 +1474,18 @@
     "missing": [],
     "productionChanged": false,
     "secretValueValidated": false,
-    "note": "La variable alternativa existe en Preview y Production por carga manual del usuario; el código la selecciona únicamente si la URL corresponde a ccvida. Se conservan las claves originales. Existe también una clave estándar de Preview para la rama; sus valores no se leyeron."
+    "note": "La variable alternativa existe en Preview y Production por carga manual del usuario; el código la selecciona únicamente si la URL corresponde a ccvida. Se conservan las claves originales. Existe también una clave estándar de Preview para la rama; sus valores no se leyeron.",
+    "url": "https://calendario-qkjpjp8ub-vida-internacional.vercel.app",
+    "id": "dpl_4Jcbe5UPhz6sCCKmgaU34uPe3w3Q",
+    "state": "READY",
+    "commit": "cd26026117e4329606ceb3a337fed7cdc6ea56e7",
+    "httpLogin": {
+      "status": 200,
+      "form": true,
+      "quotaError": false
+    },
+    "authenticatedFlowValidated": "login confirmado por usuario",
+    "loginUserConfirmed": true
   },
   "managedRlsHelper": {
     "name": "public.rls_auto_enable()",
@@ -1491,24 +1503,37 @@
   },
   "runtime": {
     "available": true,
-    "guardrailsForNewCommitNotRun": true,
+    "guardrailsForNewCommitNotRun": false,
     "remoteCheckpointCommit": null
   },
   "pending": [
-    "Verificar Site URL/redirect URLs y correo de Auth ccvida en dashboard; no accesible por MCP.",
-    "Recuperar 7 archivos reales; preservar owners/paths y adaptar URLs absolutas de avatars tras recuperación, registrando transformación y nueva huella.",
-    "Preparar único Preview, probar login de usuario real y AT/NT, notas/progreso/ministerios/calendario/storage/discípulado y notificaciones.",
-    "Comprobar cron alias/header antes de activar destino y desactivar origen en cambio coordinado.",
-    "No hacer cambio de producción hasta pruebas.",
-    "7 Edge Functions históricas de importación bíblica no desplegadas en destino; permanecen en origen. No ejecutarlas ni repoblar corpus en Supabase.",
-    "Ejecutar build/guardrails del nuevo commit y crear un único Preview; validar allí clave nueva y login."
+    "Usuario debe confirmar acceso desde aplicación instalada/URL normal y probar AT/NT, notas y progreso.",
+    "Recuperar siete archivos reales del origen restringido; no borrar originales.",
+    "No existe sincronización continua; desde el cambio las nuevas operaciones se guardan en ccvida.",
+    "Siete Edge Functions históricas de importación bíblica permanecen en origen, sin ejecutar ni repoblar el corpus."
   ],
-  "localValidation": {
-    "targetedTests": 11,
-    "testsPassed": 11,
-    "typescript": "passed",
-    "eslintTargeted": "passed",
-    "standardBuild": "passed (Turbopack)",
-    "webpackBuild": "failed: tres selectores globales preexistentes en CSS Modules; no se modificaron"
-  }
+  "production": {
+    "authorized": true,
+    "pr": 305,
+    "mergeSha": "be6021f63d05299528efc818c0937263835a477e",
+    "deploymentId": "dpl_EpefzUKRCXwVKeHd8BQfsh95LoGa",
+    "state": "READY",
+    "url": "https://calendario-vida-internacional.vercel.app",
+    "aliases": [
+      "calendario-vida-internacional.vercel.app",
+      "calendario-six-orpin.vercel.app"
+    ],
+    "loginHttp": 200,
+    "manifestUnchanged": true,
+    "serviceWorkerUnchanged": true,
+    "installedAppReinstallRequired": false,
+    "userAuthenticatedTestPending": true,
+    "authSiteUrl": "https://calendario-vida-internacional.vercel.app",
+    "siteUrlVerified": true,
+    "privateKeysPreserved": true,
+    "sourcePublicVarsRetainedAsPreview": true,
+    "backend": "ccvida",
+    "editorialBackend": "neon"
+  },
+  "certificationScope": "Cantidades y huellas certificadas al cierre de la copia; los inicios de sesión y las nuevas operaciones de ccvida cambian legítimamente sus registros después del cambio."
 }
