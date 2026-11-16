@@ -300,20 +300,65 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
       <header className="mb-5 flex items-start justify-between gap-4"><div><p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-violet-600">Centro de formación</p><h1 className="mt-1 text-2xl font-bold tracking-[-.03em] text-[#171923]">Gestión de Discipulado</h1><p className="mt-1.5 text-sm leading-6 text-slate-500">Crea el recorrido, sigue el progreso y reconoce a quienes ya fueron discipulados.</p></div><div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-600 text-violet-50"><GraduationCap className="h-6 w-6" /></div></header>
 
       <div className="mb-5 grid grid-cols-3 rounded-2xl bg-slate-200/70 p-1">
-        {([['curso','Curso'],['personas','En proceso'],['previos','Ya discipulados']] as const).map(([value,label]) => <button key={value} type="button" onClick={() => setTab(value)} className={`min-h-10 rounded-xl px-2 text-[11px] font-bold transition ${tab === value ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'}`}>{label}</button>)}
+        {([['curso','Biblioteca'],['personas','En proceso'],['previos','Ya discipulados']] as const).map(([value,label]) => <button key={value} type="button" onClick={() => setTab(value)} className={`min-h-10 rounded-xl px-2 text-[11px] font-bold transition ${tab === value ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'}`}>{label}</button>)}
       </div>
 
       {(notice || error) && <div className={`mb-4 rounded-2xl px-4 py-3 text-sm font-medium ${error ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-100' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'}`}>{error || notice}</div>}
 
       {tab === 'curso' && <div className="space-y-5">
-        <section className={`${panel} p-4 sm:p-5`}><div className="flex items-center justify-between gap-3"><div><h2 className="font-bold text-[#171923]">Cursos</h2><p className="mt-0.5 text-xs text-slate-500">El curso publicado más reciente será el que reciba un nuevo usuario.</p></div><button type="button" onClick={() => setNewCourseOpen(value => !value)} className={secondaryButton}><Plus className="h-4 w-4" /> Nuevo</button></div>
-          {newCourseOpen && <form onSubmit={createCourse} className="mt-4 space-y-3 border-t border-slate-100 pt-4"><div><label className={labelClass}>Nombre</label><input name="titulo" required className={fieldClass} placeholder="Discipulado VIDA" /></div><div><label className={labelClass}>Descripción</label><textarea name="descripcion" className={`${fieldClass} min-h-20 resize-y`} /></div><button disabled={busy} className={primaryButton}>Crear curso</button></form>}
-          {courses.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{courses.map(course => <button key={course.id} type="button" onClick={() => setSelectedCourseId(course.id)} className={`shrink-0 rounded-full px-3 py-2 text-xs font-bold ${selectedCourseId === course.id ? 'bg-violet-600 text-violet-50' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'}`}>{course.titulo}{course.estado === 'publicado' ? ' · Activo' : ''}</button>)}</div>}
-        </section>
-
+        {!selectedCourse && <>
+          <section className="flex items-start justify-between gap-3">
+            <div><p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-violet-600">Biblioteca de cursos</p><h2 className="mt-1 text-xl font-bold text-slate-900">Formación</h2><p className="mt-1 text-xs leading-5 text-slate-500">Cada carpeta contiene su información, lecciones en video y examen.</p></div>
+            <button type="button" onClick={() => setNewCourseOpen(value => !value)} className={secondaryButton}><FolderPlus className="h-4 w-4" /> Nuevo curso</button>
+          </section>
+          {newCourseOpen && <form onSubmit={createCourse} className={`${panel} space-y-3 p-4 sm:p-5`}>
+            <h3 className="font-bold text-slate-900">Crear curso</h3>
+            <div><label className={labelClass}>Tipo de curso</label>
+              <select name="tipo" defaultValue={courses.some(c => c.tipo === 'discipulado') ? 'tematico' : 'discipulado'} className={fieldClass}>
+                {!courses.some(c => c.tipo === 'discipulado') && <option value="discipulado">Discipulado principal</option>}
+                <option value="tematico">Curso temático</option>
+              </select>
+            </div>
+            <div><label className={labelClass}>Título</label><input name="titulo" required className={fieldClass} placeholder="Ej. Cómo tener una mejor relación con Dios" /></div>
+            <div><label className={labelClass}>Descripción</label><textarea name="descripcion" className={`${fieldClass} min-h-20 resize-y`} placeholder="Qué aprenderá la persona en este curso" /></div>
+            <button disabled={busy} className={primaryButton}>Crear y abrir curso</button>
+          </form>}
+          {courses.length === 0 && <div className={`${panel} p-7 text-center`}><FolderOpen className="mx-auto h-9 w-9 text-violet-400" /><p className="mt-3 font-semibold text-slate-800">Todavía no hay cursos</p><p className="mt-1 text-xs text-slate-500">Creá primero la carpeta de Discipulado.</p></div>}
+          {(['discipulado', 'tematico'] as const).map(tipo => {
+            const group = courses.filter(course => course.tipo === tipo)
+            if (!group.length) return null
+            return <section key={tipo} className="space-y-3">
+              <div className="px-1"><h3 className="text-sm font-bold text-slate-900">{tipo === 'discipulado' ? 'Discipulado principal' : 'Otros cursos'}</h3><p className="mt-0.5 text-xs text-slate-500">{tipo === 'discipulado' ? 'Curso de formación inicial y reconocimiento pastoral' : 'Cursos independientes por temática'}</p></div>
+              {group.map(course => {
+                const count = lessons.filter(lesson => lesson.curso_id === course.id).length
+                return <button key={course.id} type="button" onClick={() => { setSelectedCourseId(course.id); setEditorTab('datos'); setNewCourseOpen(false) }} className={`${panel} flex w-full items-center gap-3 p-4 text-left transition active:scale-[.99]`}>
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-600"><FolderOpen className="h-6 w-6" /></span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-slate-900">{course.titulo}</span><span className="mt-1 block text-xs text-slate-500">{count} lección(es) · {course.estado === 'publicado' ? 'Publicado' : course.estado === 'archivado' ? 'Archivado' : 'Borrador'}</span></span>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+                </button>
+              })}
+            </section>
+          })}
+        </>}
         {selectedCourse && <>
-          <section className={`${panel} p-5`}><form onSubmit={saveCourse} className="space-y-4"><div><label className={labelClass}>Título</label><input name="titulo" defaultValue={selectedCourse.titulo} required className={fieldClass} /></div><div><label className={labelClass}>Descripción</label><textarea name="descripcion" defaultValue={selectedCourse.descripcion} className={`${fieldClass} min-h-20 resize-y`} /></div><div><label className={labelClass}>Estado</label><select name="estado" defaultValue={selectedCourse.estado} className={fieldClass}><option value="borrador">Borrador</option><option value="publicado">Publicado</option><option value="archivado">Archivado</option></select></div><button disabled={busy} className={primaryButton}>Guardar curso</button></form></section>
-
+          <button type="button" onClick={() => { setSelectedCourseId(null); setNewQuestionLessonId(null); setNewFinalQuestionOpen(false) }} className="inline-flex min-h-11 items-center gap-2 text-xs font-bold text-violet-700"><ArrowLeft className="h-4 w-4" /> Biblioteca de cursos</button>
+          <section className={`${panel} p-4 sm:p-5`}>
+            <div className="flex items-center gap-3"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-600"><FolderOpen className="h-6 w-6" /></span><div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-widest text-violet-600">{selectedCourse.tipo === 'discipulado' ? 'Discipulado principal' : 'Curso temático'}</p><h2 className="truncate text-xl font-bold text-slate-900">{selectedCourse.titulo}</h2></div></div>
+            <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">
+              {([['datos', 'Información'], ['lecciones', 'Lecciones'], ['examen', 'Examen final']] as const).map(([value,label]) => <button key={value} type="button" onClick={() => setEditorTab(value)} className={`min-h-11 rounded-lg px-1.5 text-[11px] font-bold transition ${editorTab === value ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'}`}>{label}</button>)}
+            </div>
+          </section>
+          {editorTab === 'datos' && <section className={`${panel} p-4 sm:p-5`}>
+            <form key={selectedCourse.id} onSubmit={saveCourse} className="space-y-4">
+              <div><label className={labelClass}>Título</label><input name="titulo" defaultValue={selectedCourse.titulo} required className={fieldClass} /></div>
+              <div><label className={labelClass}>Descripción</label><textarea name="descripcion" defaultValue={selectedCourse.descripcion} className={`${fieldClass} min-h-24 resize-y`} /></div>
+              <div><label className={labelClass}>Tipo de curso</label><select name="tipo" defaultValue={selectedCourse.tipo} className={fieldClass}><option value="discipulado">Discipulado principal</option><option value="tematico">Curso temático</option></select></div>
+              <div><label className={labelClass}>Estado</label><select name="estado" defaultValue={selectedCourse.estado} className={fieldClass}><option value="borrador">Borrador</option><option value="publicado">Publicado</option><option value="archivado">Archivado</option></select></div>
+              <p className="text-xs leading-5 text-slate-500">Se publica cuando todas las lecciones tienen video y comprobación, además de un examen final. Los cursos temáticos no sustituyen al Discipulado principal.</p>
+              <div className="flex flex-wrap gap-2"><button disabled={busy} className={primaryButton}>Guardar curso</button><button type="button" disabled={busy} onClick={() => void deleteCourse()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700"><Trash2 className="h-4 w-4" /> {selectedAssignments.length ? 'Archivar curso' : 'Eliminar curso'}</button></div>
+            </form>
+          </section>}
+          {editorTab === 'lecciones' && (
           <section className="space-y-3"><div className="flex items-center justify-between gap-3 px-1"><div><h2 className="font-bold text-[#171923]">Lecciones</h2><p className="text-xs text-slate-500">Video de YouTube + preguntas de comprobación</p></div><button type="button" onClick={() => setNewLessonOpen(value => !value)} className={secondaryButton}><Plus className="h-4 w-4" /> Lección</button></div>
             {newLessonOpen && <form onSubmit={createLesson} className={`${panel} space-y-3 p-4`}><div><label className={labelClass}>Título</label><input name="titulo" required className={fieldClass} /></div><div><label className={labelClass}>Descripción breve</label><input name="descripcion" className={fieldClass} /></div><div><label className={labelClass}>Enlace de YouTube</label><input name="video_url" type="url" required className={fieldClass} placeholder="https://youtu.be/..." /></div><div><label className={labelClass}>Contenido complementario</label><textarea name="contenido" className={`${fieldClass} min-h-20 resize-y`} /></div><button disabled={busy} className={primaryButton}>Agregar lección</button></form>}
             {selectedLessons.map(lesson => {
@@ -326,11 +371,14 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
               </div></details>
             })}
           </section>
+          )}
 
+          {editorTab === 'examen' && (
           <section className="space-y-3"><div className="flex items-center justify-between gap-3 px-1"><div><h2 className="font-bold text-[#171923]">Examen final</h2><p className="text-xs text-slate-500">{finalQuestions.length} pregunta(s)</p></div><button type="button" onClick={() => setNewFinalQuestionOpen(value => !value)} className={secondaryButton}><Plus className="h-4 w-4" /> Pregunta</button></div>
             {newFinalQuestionOpen && <form onSubmit={event => void createQuestion(event, null)} className={`${panel} space-y-2 p-4`}><textarea name="enunciado" required className={`${fieldClass} min-h-16`} placeholder="Pregunta del examen final" />{[1,2,3,4].map(index => <input key={index} name={`opcion_${index}`} required={index<=2} className={fieldClass} placeholder={`Opción ${index}${index>2?' (opcional)':''}`} />)}<select name="correcta" defaultValue="1" className={fieldClass}><option value="1">Correcta: opción 1</option><option value="2">Correcta: opción 2</option><option value="3">Correcta: opción 3</option><option value="4">Correcta: opción 4</option></select><button disabled={busy} className={primaryButton}>Agregar pregunta</button></form>}
             {finalQuestions.map(question => { const questionOptions = options.filter(option => option.pregunta_id === question.id).sort((a,b)=>a.orden-b.orden); return <details key={question.id} className={`${panel} overflow-hidden`}><summary className="cursor-pointer list-none px-4 py-4 text-sm font-bold text-[#171923]">{question.orden}. {question.enunciado}</summary><form onSubmit={event => void saveQuestion(event, question)} className="space-y-2 border-t border-slate-100 p-4"><textarea name="enunciado" defaultValue={question.enunciado} className={`${fieldClass} min-h-16`} />{questionOptions.map(option => <label key={option.id} className="flex items-center gap-2"><input type="radio" name="correcta" value={option.id} defaultChecked={option.es_correcta} className="h-4 w-4 accent-violet-600" /><input name={`option_${option.id}`} defaultValue={option.texto} className={fieldClass} /></label>)}<div className="flex gap-2"><button disabled={busy} className={primaryButton}>Guardar</button><button type="button" onClick={() => void run(() => supabase.from('discipulado_preguntas').delete().eq('id', question.id), 'Pregunta eliminada.')} className="px-3 text-xs font-bold text-rose-600">Eliminar</button></div></form></details> })}
           </section>
+          )}
         </>}
       </div>}
 
