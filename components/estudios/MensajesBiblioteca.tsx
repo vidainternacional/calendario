@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, Grid2X2, List, Play, Search, Video, Users } from 'lucide-react'
-import type { MensajeVisible } from '@/lib/estudios/mensajes-semanales'
+import type { MensajeBiblioteca } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
 type Vista = 'cuadricula' | 'lista'
-type Categoria = 'todos' | 'mensajes'
+type Categoria = 'todos' | 'mensajes' | 'devocionales'
 
 function imagenVideo(url: string) {
   const id = /[?&]v=([A-Za-z0-9_-]{11})(?:[&#]|$)/.exec(url)?.[1]
@@ -19,7 +19,7 @@ function fechaCorta(fecha: string | null) {
   return Number.isNaN(time.getTime()) ? '' : new Intl.DateTimeFormat('es-SV', { day: 'numeric', month: 'short', timeZone: 'America/El_Salvador' }).format(time)
 }
 
-export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = false }: { mensajes: MensajeVisible[]; pagina: number; desdePastoral?: boolean }) {
+export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = false }: { mensajes: MensajeBiblioteca[]; pagina: number; desdePastoral?: boolean }) {
   const [vista, setVista] = useState<Vista>('cuadricula')
   const [categoria, setCategoria] = useState<Categoria>('todos')
   const [busqueda, setBusqueda] = useState('')
@@ -31,9 +31,7 @@ export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = f
     return mensajes.filter(m => {
       if (autor !== 'todos' && m.autor !== autor) return false
       if (termino && ![m.titulo, m.descripcion, m.autor].some(texto => texto.toLocaleLowerCase('es').includes(termino))) return false
-      // Todos los registros actuales pertenecen al único tipo almacenado: mensajes semanales.
-      // Devocionales y series requieren su propia clasificación persistente antes de habilitar el filtro.
-      return categoria === 'todos' || categoria === 'mensajes'
+      return categoria === 'todos' || (categoria === 'mensajes' && m.tipo === 'mensaje') || (categoria === 'devocionales' && m.tipo === 'devocional')
     }).sort((a, b) => {
       const n = (b.fecha || '').localeCompare(a.fecha || '')
       return orden === 'recientes' ? n : -n
@@ -48,7 +46,8 @@ export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = f
           className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ${categoria === 'todos' ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>Todos</button>
         <button type="button" aria-pressed={categoria === 'mensajes'} onClick={() => setCategoria('mensajes')}
           className={`min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ${categoria === 'mensajes' ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700'}`}>Mensajes</button>
-        <span title="Pendiente de habilitar la clasificación al publicar" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-slate-200 bg-slate-100 px-4 text-xs font-medium text-slate-400">Devocionales · Próximamente</span>
+        <button type="button" aria-pressed={categoria === 'devocionales'} onClick={() => setCategoria('devocionales')}
+          className={'min-h-10 shrink-0 rounded-full border px-4 text-xs font-semibold ' + (categoria === 'devocionales' ? 'border-violet-700 bg-violet-700 text-white' : 'border-slate-200 bg-white text-slate-700')}>Devocionales</button>
         <span title="Pendiente de habilitar las series" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-slate-200 bg-slate-100 px-4 text-xs font-medium text-slate-400">Series · Próximamente</span>
       </div>
     </div>
@@ -106,6 +105,7 @@ export default function MensajesBiblioteca({ mensajes, pagina, desdePastoral = f
                 </div>
                 <div className={vista === 'lista' ? 'min-w-0 flex-1 py-0.5' : 'pt-2.5'}>
                   <h3 className={`break-words font-bold leading-snug text-slate-900 group-hover:text-violet-700 ${vista === 'lista' ? 'text-base' : 'text-sm'}`}>{m.titulo}</h3>
+                  <p className="mt-1 text-[11px] font-semibold text-violet-700">{m.tipo === 'devocional' ? 'Devocional' : 'Mensaje'}</p>
                   <p className="mt-1 line-clamp-2 text-xs text-slate-500">{m.autor}{m.fecha ? ` · ${fechaCorta(m.fecha)}` : ''}</p>
                   {vista === 'lista' && m.descripcion && <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">{m.descripcion}</p>}
                   {vista === 'lista' && <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-violet-700">Ver video <ChevronRight className="h-4 w-4" aria-hidden="true" /></span>}

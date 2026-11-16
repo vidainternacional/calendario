@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import MensajesBiblioteca from '@/components/estudios/MensajesBiblioteca'
-import { cargarMensajesSemanales } from '@/lib/estudios/mensajes-semanales'
+import { cargarBibliotecaDirigida } from '@/lib/estudios/mensajes-dirigidos'
 
 export const metadata: Metadata = { title: 'Devocionales y mensajes' }
 export const dynamic = 'force-dynamic'
@@ -13,7 +13,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
   const pagina = Math.min(100, Math.max(1, Number.parseInt(params.pagina || '1', 10) || 1))
   const desdePastoral = params.origen === 'pastoral'
   const sufijo = desdePastoral ? '&origen=pastoral' : ''
-  const data = await cargarMensajesSemanales(pagina)
+  const data = await cargarBibliotecaDirigida(pagina)
   if (!data.autenticado) redirect('/login?next=%2Festudios%2Fmensajes')
   return <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6">
     <Link href={desdePastoral ? "/pastoral/mensajes" : "/estudios"} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-600"><ArrowLeft className="h-4 w-4" />{desdePastoral ? "Volver a Devocionales" : "Estudios Bíblicos"}</Link>

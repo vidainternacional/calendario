@@ -56,3 +56,23 @@ Rama `agent/devocionales-centro-pastoral-20261116`, basada exactamente en el hea
 
 - El botón «Atrás» de `/pastoral` ahora enlaza a `/perfil` de forma explícita, sin usar el historial del navegador. Se conserva el mismo diseño visual y no se modifica el componente `BackButton` compartido ni la navegación contextual de Biblioteca y Devocionales.
 - Alcance únicamente navegación, sin cambios de datos, roles, permisos, Supabase o producción. Verificar en Preview el regreso `/perfil → /pastoral → Atrás → /perfil` y el retorno interno `Biblioteca → Devocionales`.
+
+
+## Publicación flexible de Devocionales — 16-11-2026 (bloque dirigido en PR #308)
+
+**Solicitud:** En el mismo formulario de creación y edición, dejar opcional publicar, conservar borradores privados y seleccionar una combinación de destinatarios: toda la congregación, pastores, administradores, líderes, servidores, líderes de ministerio (asignados) y cualquier número de los ministerios activos existentes.
+
+**Solución y alcance:**
+- Control «Publicar» independiente del desplegable «Elegir destinatarios», ambos dentro del editor existente y sin alterar la vista previa.
+- Selección aditiva (OR): el destinatario ve el mensaje si pertenece a cualquiera de los roles o ministerios seleccionados; «Toda la congregación» incluye a todos los miembros con cuenta activa.
+- Las casillas usan los valores de rol y la tabla de miembros/ministerios REALES de ccvida, sin listas de ejemplo. Validación de ministerios activos en servidor.
+- Sin selección de audiencia no se permite publicar, pero sí guardar un borrador que solo puede leer su autor. Cambiar selección tras publicar actualiza quién tiene acceso a la biblioteca y al enlace directo.
+- La categoría «Devocional» se puede guardar y filtrar; «Mensaje» continúa, y «Series» permanece pendiente.
+- Datos nuevos aislados en public.vida_devocionales: no se modifican ni se migran datos del módulo pastoral de paquetes, roles preexistentes, RLS previa, navegación o menú inferior.
+- RLS en tabla nueva comprueba cuenta activa, rol, membresía y asignación de líder. Ningún destinatario no seleccionado puede abrir el video por su ID interno.
+- El enlace de YouTube es externo: un video público/no listado puede abrirse fuera de VIDA si alguien conoce su enlace. No se envían notificaciones push automáticamente desde este formulario.
+- Materiales antiguos del PR #306 siguen visibles y editables con su mecanismo previo; no se borraron ni reconvirtieron.
+
+**Cambios sensibles autorizados en alcance:** crear solamente tabla, índices, permisos y RLS nuevos para contenido dirigido. Reversión de app: regresar al commit 5d9054f9fc66c70b20ca900b596e54adcf37a864; sin borrar la tabla o información nueva. No tocar políticas existentes, producción web, cron ni Service Role.
+
+**Verificación requerida:** compilar y obtener un único Preview en el alias fijo; probar borrador privado, publicar para Alabanza solamente, varios ministerios combinados, pastores, líderes de ministerio y vista de Estudios según dos usuarios con distinta membresía. Sin usuarios de prueba, esto requiere validación visual/autenticada del usuario. No integrar PR ni cerrar bloque hasta su validación.
