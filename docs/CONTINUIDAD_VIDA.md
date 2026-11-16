@@ -11,7 +11,7 @@
 - **Autorización de datos:** el usuario aprobó expresamente separar tipos de curso y la asignación automática, así como el borrado seguro sin historial y archivado preservando registros. Migración localizada `20261116220700_discipulado_biblioteca_tematica.sql`, sin cambiar RLS y sin eliminar datos existentes.
 - **Seguridad:** las aprobaciones temáticas no deben otorgar el distintivo del Discipulado principal. La inscripción automática sigue reservada al principal. Las políticas y ministerios de otras áreas no se modifican.
 - **Reversión:** volver a la versión anterior de UI y RPC de inscripción/prioridad en una migración de reversión, manteniendo `tipo` y datos creados; no borrar temáticos o progreso durante una reversión. La función segura de retiro preserva historiales.
-- **Antes de declarar completo:** comprobar diff localizado, validación de acceso real y compilación de Vercel para el SHA de la rama, alias del Preview fijo. **Validación visual pendiente del usuario**; no merge ni producción sin aprobación.
+- **Aprobación y merge:** el usuario validó visualmente el Preview fijo el 2026-11-16 y autorizó integrar a producción y actualizar el maestro. PR #312 fusionado a `main` en SHA `0e2aa35c149d9b5cb3d4585dd502ffc04edd78ae`; Preview READY del SHA `cc7d73761f72e9055e47feff00ead973cf4e7eb7`. El cambio de código compiló; pruebas generales de CI heredadas siguen fallando fuera del alcance. Verificar el último deployment READY de Vercel correspondiente a `main` antes del cierre de publicación.
 - **Fuera del alcance:** PR #297 sigue Draft; no integrar su función de borrado irreversible. Issue #309 privacidad interministerial sigue pendiente.
 
 ## Discipulado — Producción confirmada y cierre del ajuste móvil · 2026-11-16

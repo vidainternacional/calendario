@@ -674,6 +674,19 @@ FASE I continúa DIFERIDA hasta completar, validar y cerrar los bloques funciona
 - Preview fijo conservado: `calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`.
 - La prueba de privacidad de Devocionales entre ministerios sigue pendiente en el seguimiento #309; no marcarla como aprobada hasta recibir la retroalimentación.
 
+## Discipulado — Biblioteca de cursos aprobada e integrada · 2026-11-16
+
+- Biblioteca de cursos organizada en carpetas: Discipulado principal y cursos temáticos independientes, visibles por su título y temática.
+- Al abrir un curso, el gestor edita tres secciones: Información, Lecciones con video y contenido, y Examen final, sin saturar la pantalla con formularios abiertos.
+- Preguntas editables con respuestas agregables o removibles (de 2 a 6), elección de respuesta correcta y vista previa para el alumno.
+- Los gestores pueden eliminar cursos sin historial y archivar los que tengan alumnos o intentos, conservando sus registros. No se borraron cursos de usuarios durante la integración.
+- Separación de asignación automática y distintivo: solo Discipulado principal cuenta para la aprobación pastoral; los cursos temáticos son independientes.
+- Ajustes aditivos de ccvida aplicados y verificados: migración `discipulado_biblioteca_tematica_20261116`. No se alteraron RLS ni roles ministeriales.
+- Cambio visual aprobado en Preview fijo por el usuario el 2026-11-16, head validado `cc7d73761f72e9055e47feff00ead973cf4e7eb7`.
+- PR #312 integrado a `main` con aprobación expresa de producción del usuario (merge SHA `0e2aa35c149d9b5cb3d4585dd502ffc04edd78ae`). Verificar el estado READY del despliegue correspondiente al último `main` antes de dar la publicación por cerrada.
+- Preview fijo conservado: `https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`.
+- El PR #297 de borrado anterior permanece abierto en Draft sin integrarse; prueba de privacidad entre ministerios #309 sigue pendiente. Bloque 4 continúa activo hasta el cierre formal del usuario.
+
 # Siguiente prioridad autorizada
 
 **Bloque 4 — Discipulado — ACTIVO.**
