@@ -3,11 +3,20 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Discipulado — Producción confirmada y cierre del ajuste móvil · 2026-11-16
+
+- **Aprobación:** el usuario confirmó que el ajuste «Nota mínima» se ve bien en Preview y posteriormente validó el comportamiento en producción. Autorizó expresamente la integración del PR #311 y luego el registro oficial de ese estado en el maestro.
+- **Publicado:** PR #311 integrado a `main` (merge SHA `59017b57852b4f9b7d270f07d171de8300732292`), Vercel producción READY en `dpl_DBzdoTamh5aiUJ8zmra3gaGLdhbs`. No se alteraron funciones ni datos al realizar esta actualización documental.
+- **Preview fijo:** `https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app` permanece como URL única de pruebas.
+- **Pendiente:** validación de privacidad entre ministerios, [issue #309](https://github.com/vidainternacional/calendario/issues/309), esperando retroalimentación del usuario. No afirmar aprobada ni cerrar.
+- **Prioridad oficial:** Bloque 4 — Discipulado; FASE I diferida. PR #297 permanece separado y sin autorización para eliminación de cursos.
+- **Nota de proceso:** el registro de esta aprobación actualiza únicamente documentación maestra, bitácora y alcance; no incorpora ninguna nueva funcionalidad.
+
 ## Validación visual Discipulado recibida y actualización del maestro — 2026-11-16
 
 - El usuario confirmó en el Preview fijo que el modal de nota mínima en Discipulado **ya está bien**; ajuste visual aprobado.
 - Al recibir esa aprobación, el usuario autorizó registrar en `__VIDA_INTERNACIONAL.md` el ajuste de Discipulado y el estado REAL del PR #308: integrado a `main` y producción READY.
-- Desarrollo del ajuste: PR [#311](https://github.com/vidainternacional/calendario/pull/311) OPEN/Draft, rama `agent/devocionales-centro-pastoral-20261116`. **No integrar ni publicar sin nueva aprobación expresa.** Se conservó el enlace fijo y la configuración correcta de Supabase para ese Preview; PR #310 duplicado cerrado sin merge.
+- Desarrollo del ajuste: PR [#311](https://github.com/vidainternacional/calendario/pull/311) trabajó en la rama `agent/devocionales-centro-pastoral-20261116`, se validó con el Preview fijo y se integró a `main` tras autorización expresa. PR #310 duplicado cerrado sin merge.
 - La retroalimentación de privacidad entre ministerios continúa pendiente en [Issue #309](https://github.com/vidainternacional/calendario/issues/309). No se modificaron permisos ni se realizaron publicaciones de prueba.
 
 ## Continuación 16-11-2026 · Privacidad pendiente y Discipulado
