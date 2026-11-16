@@ -2,11 +2,12 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { BadgeCheck, BookOpenCheck, ChevronLeft, ChevronRight, ClipboardCheck, GraduationCap, Loader2, Plus, ShieldCheck, Star, Trash2, UserCheck, UsersRound } from 'lucide-react'
+import { BadgeCheck, BookOpenCheck, ChevronLeft, ChevronRight, ClipboardCheck, GraduationCap, Loader2, Plus, ShieldCheck, Star, Trash2, UserCheck, UsersRound, FolderOpen, FolderPlus, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import PreguntaEditor, { type PreguntaPayload } from './PreguntaEditor'
 
 type Props = { userId: string; isAdmin: boolean }
-type Course = { id: string; titulo: string; descripcion: string; estado: 'borrador' | 'publicado' | 'archivado'; creado_por: string; created_at: string; updated_at: string }
+type Course = { id: string; titulo: string; descripcion: string; tipo: 'discipulado' | 'tematico'; estado: 'borrador' | 'publicado' | 'archivado'; creado_por: string; created_at: string; updated_at: string }
 type Lesson = { id: string; curso_id: string; titulo: string; descripcion: string; video_url: string | null; contenido: string; orden: number }
 type Question = { id: string; curso_id: string; leccion_id: string | null; tipo: 'leccion' | 'final'; enunciado: string; orden: number }
 type Option = { id: string; pregunta_id: string; texto: string; es_correcta: boolean; orden: number }
@@ -67,6 +68,8 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
   const [newCourseOpen, setNewCourseOpen] = useState(false)
   const [newLessonOpen, setNewLessonOpen] = useState(false)
   const [newFinalQuestionOpen, setNewFinalQuestionOpen] = useState(false)
+  const [newQuestionLessonId, setNewQuestionLessonId] = useState<string | null>(null)
+  const [editorTab, setEditorTab] = useState<'datos' | 'lecciones' | 'examen'>('datos')
   const [managerOpen, setManagerOpen] = useState(false)
 
   const load = useCallback(async (first = false) => {
@@ -101,7 +104,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
 
   useEffect(() => { void load(true) }, [load])
   useEffect(() => {
-    if (!selectedCourseId || !courses.some(course => course.id === selectedCourseId)) setSelectedCourseId(courses[0]?.id || null)
+    if (selectedCourseId && !courses.some(course => course.id === selectedCourseId)) setSelectedCourseId(null)
   }, [courses, selectedCourseId])
 
   const selectedCourse = courses.find(course => course.id === selectedCourseId) || null
@@ -131,8 +134,9 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
     const form = new FormData(event.currentTarget)
     const titulo = String(form.get('titulo') || '').trim()
     if (!titulo) return
-    const result = await run(() => supabase.from('discipulado_cursos').insert({ titulo, descripcion: String(form.get('descripcion') || '').trim(), creado_por: userId }).select('id').single(), 'Curso creado.')
-    if (result?.data?.id) setSelectedCourseId(result.data.id)
+    const tipo = String(form.get('tipo') || 'tematico') as Course['tipo']
+    const result = await run(() => supabase.from('discipulado_cursos').insert({ titulo, tipo, descripcion: String(form.get('descripcion') || '').trim(), creado_por: userId }).select('id').single(), 'Curso creado.')
+    if (result?.data?.id) { setSelectedCourseId(result.data.id); setEditorTab('datos') }
     if (result) setNewCourseOpen(false)
   }
 
@@ -141,6 +145,15 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
     if (!selectedCourse) return
     const form = new FormData(event.currentTarget)
     const nextState = String(form.get('estado')) as Course['estado']
+    const tipo = String(form.get('tipo') || selectedCourse.tipo) as Course['tipo']
+    if (tipo !== selectedCourse.tipo && selectedAssignments.length > 0) {
+      setError('Este curso tiene alumnos registrados. No se puede cambiar su tipo sin afectar su historial.')
+      return
+    }
+    if (tipo === 'discipulado' && nextState === 'publicado' && courses.some(course => course.id !== selectedCourse.id && course.tipo === 'discipulado' && course.estado === 'publicado')) {
+      setError('Solo puede haber un Discipulado principal publicado. Archivá el anterior antes de publicar otro.')
+      return
+    }
     if (nextState === 'publicado') {
       const everyLessonReady = selectedLessons.length > 0 && selectedLessons.every(lesson => {
         const hasVideo = Boolean(lesson.video_url && isYouTubeUrl(lesson.video_url))
@@ -152,7 +165,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
         return
       }
     }
-    await run(() => supabase.from('discipulado_cursos').update({ titulo: String(form.get('titulo') || '').trim(), descripcion: String(form.get('descripcion') || '').trim(), estado: nextState, updated_at: new Date().toISOString() }).eq('id', selectedCourse.id), 'Curso actualizado.')
+    await run(() => supabase.from('discipulado_cursos').update({ titulo: String(form.get('titulo') || '').trim(), descripcion: String(form.get('descripcion') || '').trim(), tipo, estado: nextState, updated_at: new Date().toISOString() }).eq('id', selectedCourse.id), 'Curso actualizado.')
   }
 
   async function createLesson(event: FormEvent<HTMLFormElement>) {
@@ -175,43 +188,86 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
     await run(() => supabase.from('discipulado_lecciones').update({ titulo: String(form.get('titulo') || '').trim(), descripcion: String(form.get('descripcion') || '').trim(), video_url: videoUrl, contenido: String(form.get('contenido') || '').trim(), updated_at: new Date().toISOString() }).eq('id', lesson.id), 'Lección actualizada.')
   }
 
-  async function createQuestion(event: FormEvent<HTMLFormElement>, lessonId: string | null) {
-    event.preventDefault()
-    if (!selectedCourseId) return
-    const form = new FormData(event.currentTarget)
-    const enunciado = String(form.get('enunciado') || '').trim()
-    const values = [1, 2, 3, 4].map(index => String(form.get(`opcion_${index}`) || '').trim()).filter(Boolean)
-    const correctIndex = Math.max(0, Number(form.get('correcta') || 1) - 1)
-    if (!enunciado || values.length < 2) { setError('Cada pregunta necesita enunciado y al menos dos opciones.'); return }
-    const related = questions.filter(question => question.curso_id === selectedCourseId && question.leccion_id === lessonId && question.tipo === (lessonId ? 'leccion' : 'final'))
+  async function createQuestionPayload(payload: PreguntaPayload, lessonId: string | null): Promise<boolean> {
+    if (!selectedCourseId) return false
+    const matching = questions.filter(q => q.curso_id === selectedCourseId && q.leccion_id === lessonId && q.tipo === (lessonId ? 'leccion' : 'final'))
     setBusy(true); setError(null); setNotice(null)
+    let createdId: string | null = null
     try {
-      const { data: question, error: questionError } = await supabase.from('discipulado_preguntas').insert({ curso_id: selectedCourseId, leccion_id: lessonId, tipo: lessonId ? 'leccion' : 'final', enunciado, orden: related.length ? Math.max(...related.map(item => item.orden)) + 1 : 1 }).select('id').single()
+      const { data: question, error: questionError } = await supabase.from('discipulado_preguntas').insert({
+        curso_id: selectedCourseId, leccion_id: lessonId, tipo: lessonId ? 'leccion' : 'final',
+        enunciado: payload.enunciado, orden: matching.length ? Math.max(...matching.map(q => q.orden)) + 1 : 1,
+      }).select('id').single()
       if (questionError) throw questionError
-      const { error: optionsError } = await supabase.from('discipulado_opciones').insert(values.map((texto, index) => ({ pregunta_id: question.id, texto, orden: index + 1, es_correcta: index === Math.min(correctIndex, values.length - 1) })))
+      createdId = question.id
+      const { error: optionsError } = await supabase.from('discipulado_opciones').insert(payload.opciones.map((option, index) => ({
+        pregunta_id: question.id, texto: option.texto, es_correcta: option.es_correcta, orden: index + 1,
+      })))
       if (optionsError) throw optionsError
-      setNotice(lessonId ? 'Pregunta de lección agregada.' : 'Pregunta final agregada.')
-      if (!lessonId) setNewFinalQuestionOpen(false)
+      setNotice('Pregunta agregada.')
+      if (lessonId) setNewQuestionLessonId(null)
+      else setNewFinalQuestionOpen(false)
       await load(false)
-      ;(event.currentTarget as HTMLFormElement).reset()
-    } catch (err: any) { setError(err?.message || 'No se pudo crear la pregunta.') } finally { setBusy(false) }
+      return true
+    } catch (err: any) {
+      if (createdId) await supabase.from('discipulado_preguntas').delete().eq('id', createdId)
+      setError(err?.message || 'No se pudo guardar la pregunta.')
+      return false
+    } finally { setBusy(false) }
   }
 
-  async function saveQuestion(event: FormEvent<HTMLFormElement>, question: Question) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    const questionOptions = options.filter(option => option.pregunta_id === question.id).sort((a, b) => a.orden - b.orden)
-    const correctId = String(form.get('correcta') || '')
+  async function saveQuestionPayload(question: Question, payload: PreguntaPayload): Promise<boolean> {
     setBusy(true); setError(null); setNotice(null)
     try {
-      const { error: questionError } = await supabase.from('discipulado_preguntas').update({ enunciado: String(form.get('enunciado') || '').trim() }).eq('id', question.id)
+      const currentOptions = options.filter(option => option.pregunta_id === question.id)
+      const { error: questionError } = await supabase.from('discipulado_preguntas').update({ enunciado: payload.enunciado }).eq('id', question.id)
       if (questionError) throw questionError
-      for (const option of questionOptions) {
-        const { error: optionError } = await supabase.from('discipulado_opciones').update({ texto: String(form.get(`option_${option.id}`) || '').trim(), es_correcta: option.id === correctId }).eq('id', option.id)
-        if (optionError) throw optionError
+      for (const [index, option] of payload.opciones.entries()) {
+        if (option.id) {
+          const { error } = await supabase.from('discipulado_opciones').update({
+            texto: option.texto, es_correcta: option.es_correcta, orden: index + 1,
+          }).eq('id', option.id).eq('pregunta_id', question.id)
+          if (error) throw error
+        } else {
+          const { error } = await supabase.from('discipulado_opciones').insert({
+            pregunta_id: question.id, texto: option.texto, es_correcta: option.es_correcta, orden: index + 1,
+          })
+          if (error) throw error
+        }
       }
-      setNotice('Pregunta actualizada.'); await load(false)
-    } catch (err: any) { setError(err?.message || 'No se pudo guardar la pregunta.') } finally { setBusy(false) }
+      const kept = new Set(payload.opciones.map(o => o.id).filter(Boolean))
+      for (const oldOption of currentOptions) {
+        if (!kept.has(oldOption.id)) {
+          const { error } = await supabase.from('discipulado_opciones').delete().eq('id', oldOption.id).eq('pregunta_id', question.id)
+          if (error) throw error
+        }
+      }
+      setNotice('Pregunta actualizada.')
+      await load(false)
+      return true
+    } catch (err: any) {
+      setError(err?.message || 'No se pudo guardar la pregunta.')
+      await load(false)
+      return false
+    } finally { setBusy(false) }
+  }
+
+  async function deleteCourse() {
+    if (!selectedCourse) return
+    const assigned = selectedAssignments.length
+    const message = assigned
+      ? `¿Archivar "${selectedCourse.titulo}"? Tiene ${assigned} alumno(s) con historial. No se eliminarán sus datos.`
+      : `¿Eliminar definitivamente "${selectedCourse.titulo}"? Se borrarán sus lecciones y preguntas. Esta acción no se puede deshacer.`
+    if (!window.confirm(message)) return
+    const response = await run(() => supabase.rpc('discipulado_retirar_curso', { p_curso_id: selectedCourse.id }))
+    if (response) {
+      if (response.data === 'eliminado') {
+        setSelectedCourseId(null)
+        setNotice('Curso eliminado definitivamente.')
+      } else {
+        setNotice('Curso archivado. El historial de los alumnos se ha conservado.')
+      }
+    }
   }
 
   async function review(assignment: Assignment, decision: 'aprobado' | 'rechazado', form: HTMLFormElement | null) {
