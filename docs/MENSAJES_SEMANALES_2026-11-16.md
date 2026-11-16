@@ -38,3 +38,10 @@ Rama `agent/devocionales-centro-pastoral-20261116`, basada exactamente en el hea
 - Se reutilizan editor, acciones, validación YouTube, borrador, publicación, propietario, revisión y tablas existentes, sin esquemas/RLS/roles nuevos.
 - Pendientes separados: categorías, series ordenadas y permisos individuales delegados desde Administración. Requieren diseño de datos/permisos, impacto, reversión y autorización específica; no se habilitan por defecto.
 - Checklist de Preview: acceso desde Centro Pastoral, edición de borrador propio, lectura en Estudios para un miembro, publicación/despublicación, Planes de lectura intactos.
+
+## Extensión de biblioteca — solicitud del 16-11-2026
+
+- El usuario aprobó visualmente la disposición de Centro Pastoral y solicitó listas/cuadrícula, categorías y destinatarios segmentados (ministerios, múltiples ministerios, pastores o iglesia completa).
+- Implementado en esta rama: vistas alternables de lista/cuadrícula, búsqueda local, autor y orden; categorías actuales «Todos» y «Mensajes». «Devocionales» y «Series» se señalan como pendientes hasta habilitar clasificación persistente real. Los datos autorizados, detalle y editor mantienen intacta la seguridad anterior.
+- **NO implementado**: audiencia segmentada ni tipos/series persistidos. Requiere aprobación explícita por impacto en privacidad y cambios en SQL/RLS/RPC y revisión de todas las superficies de paquetes. Ningún dato ni permiso se modificó.
+- Verificar en Preview que la biblioteca vacía muestre navegación, categorías y cambio de vista, y al existir publicaciones la búsqueda/lista/cuadrícula funcionen sin exponer borradores. Mantener PR Draft y sin producción.

@@ -1,16 +1,11 @@
 {
-  "task": "Ubicar gestión de devocionales y mensajes en Centro Pastoral sin modificar permisos",
-  "userRequest": "Reutilizar PR #306 para mover la edición a Centro Pastoral, mantener la visualización en Estudios y preservar todo lo aprobado. No cambiar roles, permisos, RLS, datos, producción, o trabajo de Codex. Series y permisos individuales requieren alcance y autorización separados.",
+  "task": "Ampliar vistas de biblioteca de mensajes, sin cambios de permisos ni datos",
+  "userRequest": "El usuario valida el diseño de Devocionales y solicita que la biblioteca incluya categorías y vistas de lista/cuadrícula, y que la publicación pueda dirigirse a toda la iglesia, ministerios múltiples o pastores. Implementar ahora solo vistas/filtros de biblioteca. Destinatarios segmentados y categorías persistidas son permisos y estructura sensibles: no implementarlos sin propuesta de impacto/reversión y autorización explícita.",
   "allowedPaths": [
     "app/(app)/estudios/mensajes/page.tsx",
-    "app/(app)/estudios/page.tsx",
-    "app/(app)/pastoral/page.tsx",
-    "app/actions/mensajes-semanales.ts",
-    "lib/estudios/mensajes-semanales.ts",
-    "tests/regression/mensajes-semanales.test.mjs",
-    "docs/MENSAJES_SEMANALES_2026-11-16.md",
+    "components/estudios/MensajesBiblioteca.tsx",
     ".vida/change-scope.json",
-    "app/(app)/pastoral/mensajes/**"
+    "docs/MENSAJES_SEMANALES_2026-11-16.md"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
