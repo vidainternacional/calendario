@@ -201,6 +201,7 @@ export default function DiscipuladoCompletadoClient() {
           <button type="button" onClick={() => void openExam()} disabled={busy} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 text-sm font-bold text-amber-950 transition active:scale-[.98] disabled:opacity-50">
             <Award className="h-4 w-4" /> Mejorar calificación
           </button>
+          <Link href="/discipulado/cursos" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-bold text-violet-700 transition active:scale-[.98]">Explorar cursos temáticos</Link>
         </div>
       </section>
 
