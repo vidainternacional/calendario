@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, MessageCircleQuestion, Sparkles } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronDown, ChevronLeft, ChevronRight, MessageCircleQuestion, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import PlanDiaCompletarButton from '@/components/biblia/PlanDiaCompletarButton'
+import PlanDiaLecturaAcordeon from '@/components/biblia/PlanDiaLecturaAcordeon'
 
 export const metadata: Metadata = { title: 'Plan de lectura' }
 
@@ -43,10 +44,35 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
   if (!plan || !reading) notFound()
 
   const paragraphs = String(reading.devocional ?? '')
-    .replaceAll('\\n', '\n')
+    .replace(/\\+n/g, '\n')
     .split(/\n\s*\n/)
     .map((text: string) => text.trim())
     .filter(Boolean)
+
+  const preguntas = String(reading.pregunta_reflexion ?? '')
+    .replaceAll('\\n', '\n')
+    .split(/\n+/)
+    .map((text: string) => text.trim())
+    .filter(Boolean)
+
+  // Reutiliza la misma biblioteca RV1909 aprobada de VIDA (ccvida), sin API externa.
+  const { data: textoBiblico, error: errorBiblia } = await (supabase as any)
+    .from('biblical_verse_texts')
+    .select('verse, original_text')
+    .eq('source_id', 'b6fef01a-f304-4fd0-98aa-5fe070279946')
+    .eq('language', 'spanish')
+    .eq('enabled', true)
+    .eq('review_status', 'approved')
+    .eq('book_code', reading.book_code)
+    .eq('chapter', reading.chapter)
+    .order('verse', { ascending: true })
+
+  const versosDelDia: Array<{ numero: number; texto: string }> = errorBiblia ? [] : (textoBiblico ?? [])
+    .filter((row: any) =>
+      (reading.verse_start == null || Number(row.verse) >= Number(reading.verse_start)) &&
+      (reading.verse_end == null || Number(row.verse) <= Number(reading.verse_end)))
+    .map((row: any) => ({ numero: Number(row.verse), texto: String(row.original_text ?? '') }))
+    .filter((row: { numero: number; texto: string }) => Number.isInteger(row.numero) && row.texto.trim().length > 0)
 
   const bibleHref = `/biblia?book=${encodeURIComponent(String(reading.book_code))}&chapter=${Number(reading.chapter)}${reading.verse_start ? `&verse=${Number(reading.verse_start)}` : ''}`
   const studyHref = `/estudios/profundo?pasaje=${encodeURIComponent(String(reading.referencia))}&auto=1`
@@ -66,25 +92,39 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
         <p className="mt-2 text-sm leading-6 text-slate-500">Lee el pasaje, toma unos minutos para reflexionar y marca el día cuando termines.</p>
       </header>
 
-      <section className="border-b border-slate-100 py-6">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><BookOpen className="h-5 w-5 text-[#C0392B]" />Lectura bíblica</div>
-        <h2 className="mt-3 text-2xl font-bold text-slate-950">{reading.referencia}</h2>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href={bibleHref} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-3 text-sm font-bold text-white"><BookOpen className="h-4 w-4" />Abrir Biblia</Link>
-          <Link href={studyHref} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-100 px-3 text-sm font-bold text-slate-700"><Sparkles className="h-4 w-4" />Estudiar</Link>
+      <section className="border-b border-slate-100 py-4">
+        <PlanDiaLecturaAcordeon
+          key={planId + '-' + numeroDia}
+          referencia={String(reading.referencia)}
+          versos={versosDelDia}
+          bookCode={String(reading.book_code)}
+          chapter={Number(reading.chapter)}
+          verseStart={reading.verse_start == null ? null : Number(reading.verse_start)}
+          verseEnd={reading.verse_end == null ? null : Number(reading.verse_end)}
+        />
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Link href={bibleHref} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-2 text-center text-xs font-bold text-white sm:text-sm"><BookOpen className="h-4 w-4 shrink-0" />Abrir Biblia</Link>
+          <Link href={studyHref} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-100 px-2 text-center text-xs font-bold text-slate-700 sm:text-sm"><Sparkles className="h-4 w-4 shrink-0" />Estudiar con IA</Link>
         </div>
       </section>
 
-      <section className="border-b border-slate-100 py-6">
+      <section className="border-b border-slate-100 py-4">
         <h2 className="text-lg font-bold text-slate-950">Devocional</h2>
-        <div className="mt-3 space-y-4 text-[16px] leading-7 text-slate-700">
+        <div className="mt-3 space-y-4 pb-2 text-[16px] leading-7 text-slate-700">
           {paragraphs.map((paragraph: string, index: number) => <p key={index}>{paragraph}</p>)}
         </div>
       </section>
 
-      <section className="border-b border-slate-100 py-6">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><MessageCircleQuestion className="h-5 w-5 text-[#C0392B]" />Pregunta para reflexionar</div>
-        <p className="mt-3 text-lg font-semibold leading-8 text-slate-800">{reading.pregunta_reflexion}</p>
+      <section className="border-b border-slate-100 py-4">
+        <details className="group">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-slate-900 [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2"><MessageCircleQuestion className="h-5 w-5 text-[#C0392B]" />{preguntas.length > 1 ? 'Preguntas para reflexionar' : 'Pregunta para reflexionar'}</span>
+            <ChevronDown className="h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="mt-3 space-y-3 pb-2 text-lg font-semibold leading-8 text-slate-800">
+            {preguntas.map((pregunta: string, index: number) => <p key={index}>{pregunta}</p>)}
+          </div>
+        </details>
       </section>
 
       <div className="py-6">

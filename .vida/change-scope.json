@@ -1,13 +1,14 @@
 {
-  "task": "Registrar la aprobación final de biblioteca de cursos e integración del PR #312 en maestro",
-  "userRequest": "El usuario aprobó visualmente el cambio de biblioteca y editor de Discipulado y ordenó actualizar __VIDA_INTERNACIONAL.md y llevar PR #312 a producción. Registrar el merge real, migración previamente aplicada y protección del historial, sin cerrar Bloque 4 ni Issue #309. Documentación únicamente.",
+  "task": "Publicación de lectura bíblica aprobada, separada de la recuperación de acceso",
+  "userRequest": "Poner en producción únicamente la lectura bíblica y el devocional validados visualmente por el usuario. El PR #314 también contiene cambios de contraseña y middleware sin validar; esos cambios quedan en Draft sin publicar. Lectura con cita completa, scroll interno, expandir/reducir, fondo integrado y devocional completo visible. La aprobación ya está documentada en el maestro de main.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "__VIDA_INTERNACIONAL.md",
-    "docs/CONTINUIDAD_VIDA.md"
+    "app/(app)/hoy/planes/[planId]/[dia]/page.tsx",
+    "components/biblia/PlanDiaLecturaAcordeon.tsx",
+    "tests/regression/plan-lectura-desplegable.test.mjs"
   ],
   "allowSupabase": false,
-  "allowMasterUpdate": true,
+  "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true
