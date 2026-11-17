@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { BookOpen, ChevronDown, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -20,6 +20,8 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
   const [cargando, setCargando] = useState(false)
   const [fallo, setFallo] = useState(false)
   const [reintento, setReintento] = useState(0)
+  const [lecturaCompleta, setLecturaCompleta] = useState(false)
+  const lecturaId = useId()
 
   useEffect(() => {
     if (versos.length > 0) return
@@ -65,36 +67,47 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
     : referencia
 
   return (
-    <details className="group">
-      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex min-w-0 items-start gap-2.5">
-          <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-[#C0392B]" aria-hidden="true" />
-          <span className="min-w-0">
-            <span className="block text-sm font-bold text-slate-900">Lectura bíblica</span>
-            <span className="mt-1 block text-xl font-bold leading-7 text-slate-950">{citaCompleta}</span>
-            {versos[0]?.texto ? (
-              <span aria-hidden="true" className="relative mt-2 block max-h-12 overflow-hidden group-open:hidden">
-                <span className="block line-clamp-2 text-[13px] font-normal leading-6 text-slate-600">
-                  {versos[0].texto} {versos[1]?.texto ?? ''}
-                </span>
-                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-b from-transparent to-white" />
-              </span>
-            ) : null}
-          </span>
-        </span>
-        <ChevronDown className="h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
-      </summary>
-      <div className="pb-2 pt-4">
+    <section aria-label={`Lectura bíblica: ${citaCompleta}`}>
+      <div className="flex min-h-14 items-start gap-2.5">
+        <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-[#C0392B]" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-900">Lectura bíblica</p>
+          <h2 className="mt-1 text-xl font-bold leading-7 text-slate-950">{citaCompleta}</h2>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
         <p className="mb-3 text-xs font-semibold text-slate-500">Reina-Valera 1909</p>
         {versos.length > 0 ? (
-          <div className="space-y-3 text-base leading-7 text-slate-800">
-            {versos.map((verso) => (
-              <p key={verso.numero}>
-                <sup className="mr-1.5 align-baseline text-xs font-bold text-[#C0392B]">{verso.numero}</sup>
-                {verso.texto}
-              </p>
-            ))}
-          </div>
+          <>
+            <div
+              id={lecturaId}
+              role="region"
+              aria-label={`Texto de ${citaCompleta}`}
+              tabIndex={0}
+              className={`space-y-3 text-base leading-7 text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C0392B] ${lecturaCompleta ? '' : 'max-h-52 overflow-y-auto overscroll-contain'}`}
+            >
+              {versos.map((verso) => (
+                <p key={verso.numero}>
+                  <sup className="mr-1.5 align-baseline text-xs font-bold text-[#C0392B]">{verso.numero}</sup>
+                  {verso.texto}
+                </p>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+              <span className="text-xs text-slate-500">{lecturaCompleta ? '' : 'Deslizá para seguir leyendo'}</span>
+              <button
+                type="button"
+                aria-controls={lecturaId}
+                aria-expanded={lecturaCompleta}
+                onClick={() => setLecturaCompleta((previo) => !previo)}
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-sm font-bold text-[#C0392B]"
+              >
+                {lecturaCompleta ? 'Reducir lectura' : 'Ver lectura completa'}
+                <ChevronDown className={`h-4 w-4 transition-transform ${lecturaCompleta ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+            </div>
+          </>
         ) : fallo ? (
           <div className="text-sm leading-6 text-slate-600">
             No pudimos cargar el texto bíblico. Podés abrirlo en Biblia.
@@ -106,6 +119,6 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
           </div>
         )}
       </div>
-    </details>
+    </section>
   )
 }

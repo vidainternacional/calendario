@@ -19,11 +19,15 @@ test('lectura usa la biblioteca bíblica RV1909 aprobada y los rangos editoriale
   assert.match(acordeon, /verseStart \?\? versos\[0\]\?\.numero/)
   assert.match(acordeon, /verseEnd \?\? versos\[versos\.length - 1\]\?\.numero/)
   assert.match(acordeon, /if \(versos\.length > 0\) return/)
-  assert.match(acordeon, /bg-gradient-to-b from-transparent to-white/)
-  assert.match(acordeon, /group-open:hidden/)
+  assert.match(acordeon, /max-h-52 overflow-y-auto overscroll-contain/)
+  assert.match(acordeon, /text-base leading-7 text-slate-800/)
+  assert.match(acordeon, /aria-expanded=\{lecturaCompleta\}/)
+  assert.match(acordeon, /Ver lectura completa/)
+  assert.match(acordeon, /Reducir lectura/)
+  assert.doesNotMatch(acordeon, /bg-gradient-to-b|line-clamp-2|text-\[13px\]/)
   assert.match(acordeon, /setVersos\(seleccionados\)/)
   assert.match(acordeon, /versos\.map/)
-  assert.match(acordeon, /<details className="group">/)
+  assert.match(acordeon, /<section aria-label=/)
 })
 
 test('devocional siempre toma el contenido guardado y tiene vista previa dentro del acordeón', () => {
@@ -31,7 +35,8 @@ test('devocional siempre toma el contenido guardado y tiene vista previa dentro 
   assert.match(pagina, /paragraphs\[0\]/)
   assert.match(pagina, /line-clamp-1/)
   assert.match(pagina, /paragraphs\.map/)
-  assert.equal((pagina.match(/<details className="group">/g) ?? []).length, 2)
+  assert.match(pagina, /<details className="group" open>/)
+  assert.equal((pagina.match(/<details className="group"/g) ?? []).length, 2)
 })
 
 test('se conservan pregunta, Biblia, IA, marcar completado y navegación', () => {

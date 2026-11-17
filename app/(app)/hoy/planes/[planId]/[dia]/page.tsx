@@ -109,7 +109,7 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
       </section>
 
       <section className="border-b border-slate-100 py-4">
-        <details className="group">
+        <details className="group" open>
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-lg font-bold text-slate-950 [&::-webkit-details-marker]:hidden">
             <span className="min-w-0">
               <span className="block">Devocional</span>
