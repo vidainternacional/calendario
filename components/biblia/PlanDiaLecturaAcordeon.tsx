@@ -76,7 +76,7 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+      <div className="mt-3">
         <p className="mb-3 text-xs font-semibold text-slate-500">Reina-Valera 1909</p>
         {versos.length > 0 ? (
           <>
@@ -94,7 +94,7 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
                 </p>
               ))}
             </div>
-            <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+            <div className="mt-3 flex items-center justify-between gap-3 pt-1">
               <span className="text-xs text-slate-500">{lecturaCompleta ? '' : 'Deslizá para seguir leyendo'}</span>
               <button
                 type="button"
