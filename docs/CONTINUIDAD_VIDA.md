@@ -3,6 +3,15 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Catálogo musical — corrección de disponibilidad y carga solicitada · 2026-11-17
+
+- El usuario rechazó importar manualmente y reportó videos «Not Available». PR #316 sigue Draft en `agent/catalogo-canciones-vida-20261117`; no está en main ni producción.
+- Se reemplazó la selección manual por carga automática preparada al abrir Biblioteca con sesión real de administración. Lotes de dos; título/intérprete/estado `OK` de YouTube y pista Spotify deben comprobarse antes de incorporar. Existentes y archivadas permanecen intactas. Las 82 referencias anteriores eran candidatas; solo 25 tienen ambos enlaces para intentar esta comprobación. No declarar 82 canciones verificadas.
+- El acceso a YouTube desde el entorno está bloqueado (proxy 403); falla también el acceso web directo. El Preview comprueba metadatos desde Vercel durante su build y genera un informe exclusivamente editorial en sus logs de build, sin usuarios/claves. El estado real de ese informe, importación y deployment queda en el recibo del PR. No afirmar filas importadas sin consulta posterior de ccvida.
+- **Aclaración final del propietario:** solo líderes de Alabanza y personas que él autorice pueden editar. Corrige su respuesta anterior «todos los integrantes». No se abrió el acceso a todos ni se otorgó rol/liderazgo a nadie; faltan identidades concretas para cualquier autorización adicional.
+- **Agregado con un toque ya existente:** componente activo `RepertorioServicioEditor.tsx`, con círculos, agregado directo e indicador de duplicado. Se conserva; el picker antiguo no es la superficie activa.
+- Verificado localmente: 17 pruebas, TypeScript, build, lint de archivos nuevos y flujo Chromium automático con datos simulados. Falta validación autenticada/medios reales; sin publicación ni cierre de fase. El historial siguiente del importador manual está sustituido por este corte.
+
 ## Catálogo de canciones VIDA · preparado 2026-11-17
 
 - **Tarea actual:** organizar e incorporar el listado musical del usuario. Rama `agent/catalogo-canciones-vida-20261117`, base main `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`. [Checkpoint del catálogo](CATALOGO_CANCIONES_VIDA_2026-11-17.md).

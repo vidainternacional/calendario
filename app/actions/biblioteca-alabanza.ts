@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { verificarReferenciasCancion } from '@/lib/musica/verificar-referencias'
 import catalogoVida from '@/data/canciones-vida-20261117.json'
 import { claveCancionVida, MINISTERIO_CATALOGO_VIDA, seleccionarLoteVida, type CancionCatalogoVida, type RevisionCatalogoVida } from '@/lib/musica/catalogo-vida'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
@@ -249,18 +250,20 @@ export async function importarCatalogoCancionesVida(ministerioId: string, ids: s
     const acceso = await accesoLider(ministerioId)
     if (!acceso || ministerioId !== MINISTERIO_CATALOGO_VIDA) return { error: 'No tienes permiso para importar este catálogo.', creadas, omitidas, errores }
     const lote = seleccionarLoteVida(catalogoVida as CancionCatalogoVida[], ids)
-    if (!lote) return { error: 'Selecciona hasta 20 referencias identificadas del catálogo.', creadas, omitidas, errores }
+    if (!lote || lote.length > 2) return { error: 'La comprobación admite hasta 2 referencias identificadas por lote.', creadas, omitidas, errores }
     const fichas = await fichasCatalogoVida(acceso.admin, ministerioId)
     const actuales = new Set(fichas.map((song) => song.id))
     const titulos = new Set(fichas.map((song) => claveCancionVida(song.titulo)))
     for (const song of lote) {
       const clave = claveCancionVida(song.titulo)
       if (actuales.has(song.id) || titulos.has(clave)) { omitidas.push(song.id); continue }
+      const referencia = await verificarReferenciasCancion(song)
+      if (!referencia.verificada) { errores.push({ id: song.id, titulo: song.titulo, error: referencia.error }); continue }
       const { error } = await acceso.admin.from('ministerio_canciones').insert({
         id: song.id, ministerio_id: ministerioId, creado_por: acceso.userId, activo: true,
         titulo: song.titulo, artista: song.artista, tonalidad_base: song.tonalidad_base,
         acordes: song.acordes, letra: null, notas_permanentes: song.notas_permanentes,
-        youtube_url: song.youtube_url, spotify_url: song.spotify_url,
+        youtube_url: referencia.youtubeUrl, spotify_url: referencia.spotifyUrl,
       })
       if (error) {
         // Otro envío puede haber terminado mientras se guardaba este lote.

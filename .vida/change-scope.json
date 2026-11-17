@@ -1,6 +1,6 @@
 {
-  "task": "Preparar e incorporar catálogo de canciones VIDA desde el listado del usuario",
-  "userRequest": "Organizar las canciones cristianas entregadas, conciliar duplicados y tonalidades, investigar identidad y enlaces YouTube/Spotify, preparar letra suministrada y cifrado transportable e incorporarlas a la biblioteca existente de Alabanza. Conservar registros y permisos existentes. Identificaciones dudosas quedan pendientes; no inventar letras, artistas, acordes o enlaces. Sin cambios de diseño, maestro, esquema o RLS; sin merge ni producción de código. Preparar importación revisable desde Biblioteca mediante server action existente y sesión de administrador/líder, sin escritura SQL directa ni cambios de permisos.",
+  "task": "Comprobar enlaces y cargar catálogo VIDA sin selección manual; conservar edición restringida",
+  "userRequest": "El usuario reporta Not Available, pide incorporar automáticamente canciones confirmadas con enlaces correctos y conservar agregado con un toque en Programación. Aclara finalmente que solo líderes de Alabanza y personas que él autorice pueden editar; no ampliar a todos los integrantes. Verificar medios antes de importar, retirar la selección manual del catálogo e incorporarlo mediante sesión real autorizada sin suplantación ni escritura SQL directa. No cambiar roles/RLS ni publicar producción sin aprobación.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -11,7 +11,11 @@
     "components/ministerios/BibliotecaAlabanzaClient.tsx",
     "components/ministerios/ImportarCatalogoVida.tsx",
     "data/canciones-vida-20261117.json",
-    "lib/musica/catalogo-vida.ts"
+    "lib/musica/catalogo-vida.ts",
+    "lib/musica/verificar-referencias.ts",
+    "tests/regression/referencias-musicales.test.mjs",
+    "app/(app)/ministerios/[id]/biblioteca-alabanza/page.tsx",
+    "package.json"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

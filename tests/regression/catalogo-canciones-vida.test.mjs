@@ -8,7 +8,7 @@ const util = cargarModulo('lib/musica/catalogo-vida.ts')
 const ministerio = util.MINISTERIO_CATALOGO_VIDA
 const elegibles = catalogo.filter((song) => song.estado === 'identificada')
 
-function escenario({ user = true, rol = 'administrador', lider = false, activo = true, estado = 'activo', nombre = 'Alabanza', existentes = [], falloLectura = false, falloId = null, concurrencia = false } = {}) {
+function escenario({ user = true, rol = 'administrador', lider = false, activo = true, estado = 'activo', nombre = 'Alabanza', existentes = [], falloLectura = false, falloId = null, concurrencia = false, mediosValidos = true } = {}) {
   const fichas = existentes.map((song) => ({ ...song }))
   const escrituras = []
   const revalidadas = []
@@ -32,6 +32,7 @@ function escenario({ user = true, rol = 'administrador', lider = false, activo =
     '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: user ? { id: 'editor-real' } : null } }) } }), createAdminClient: () => admin },
     '@/data/canciones-vida-20261117.json': catalogo,
     '@/lib/musica/catalogo-vida': util,
+    '@/lib/musica/verificar-referencias': { verificarReferenciasCancion: async (song) => mediosValidos ? { verificada: true, youtubeUrl: song.youtube_url, spotifyUrl: song.spotify_url, error: null } : { verificada: false, error: 'Referencia sin comprobar' } },
   })
   return { actions, fichas, escrituras, revalidadas }
 }
@@ -138,4 +139,13 @@ test('dos solicitudes simultáneas del mismo catálogo resuelven la colisión si
   assert.equal(r.omitidas.length, 1)
   assert.equal(r.errores.length, 0)
   assert.equal(e.fichas.length, 1)
+})
+
+
+test('no se importa una ficha cuando el proveedor no confirma sus enlaces', async () => {
+  const e = escenario({ mediosValidos: false })
+  const r = await e.actions.importarCatalogoCancionesVida(ministerio, [elegibles[0].id])
+  assert.equal(r.creadas.length, 0)
+  assert.equal(r.errores.length, 1)
+  assert.equal(e.escrituras.length, 0)
 })

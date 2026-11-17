@@ -1,6 +1,21 @@
 # Catálogo de canciones VIDA · 17 de noviembre de 2026
 
-## Alcance y estado real
+## Ajuste solicitado después de la revisión — 2026-11-17
+
+Este apartado sustituye el flujo de selección manual descrito más abajo; los recuentos previos son metadatos candidatos, no videos comprobados.
+
+- El usuario reportó «Not Available» y pidió cargar las canciones confirmadas sin que él o los líderes seleccionen/importen cada una. Se retiró el desplegable de selección: la biblioteca conserva su editor habitual.
+- La carga preparada se inicia al abrir la biblioteca con la sesión real de administración. Verifica lotes de dos, conserva existentes/archivadas y solo incorpora fichas con ambos enlaces comprobados. Líderes no reciben una tarea manual de importación. No se suplantan usuarios ni se leen claves de servidor.
+- Para YouTube se requiere coincidencia de título e intérprete en oEmbed y estado `OK` del reproductor con el mismo ID/título. Spotify debe responder con la pista correspondiente. Si hay bloqueo, consentimiento, login obligatorio, video retirado, URL inválida, error de red o respuesta incompleta, no se certifica la referencia ni se importa esa ficha. No se ejecutan scripts de los proveedores ni se descarga audio, video o letras.
+- Es una comprobación desde el servidor en ese momento: no garantiza disponibilidad futura ni en todas las regiones/dispositivos. La identidad musical y el arreglo siguen requiriendo cautela; no se elevan las 82 candidatas a canciones certificadas por una búsqueda.
+- En el entorno de trabajo, YouTube devolvió bloqueo del proxy HTTP 403 y la consulta web directa falló. Eso impide comprobar reproducción desde aquí y **no prueba que todos los videos estén retirados**. El build del Preview realiza una comprobación independiente de solo lectura de las 25 candidatas con ambos enlaces. Su informe editorial queda en los logs de build accesibles desde la cuenta Vercel, sin datos personales ni claves; no ejecuta consultas de escritura.
+- La comprobación de build corre exclusivamente en la rama de este Preview bajo Vercel. En main/desarrollo el paso sale sin solicitudes. No cambia cron, planes, RLS, roles ni producción.
+- **Permisos finales aclarados:** edición solo para líderes de Alabanza y personas que el propietario autorice. Se conserva el acceso existente de administración/líderes; no se habilita a todos los músicos ni se asigna nadie adicional sin identificarlo y autorizarlo. No se cambia el rol de ninguna cuenta.
+- **Programación ya implementada:** `RepertorioServicioEditor.tsx` es el componente activo; cada fila tiene icono circular y una pulsación incorpora la canción. Conserva indicadores «Agregada», bloqueo durante el envío, comprobación de duplicados en servidor y edición del tono del servicio. No sustituirlo por el picker histórico de selección + formulario ni rediseñarlo.
+- **Pruebas del ajuste:** 17 regresiones pertinentes pasan, TypeScript y build completos; lint de archivos nuevos correcto. Prueba Chromium con datos simulados valida carga automática/refresco sin selección manual. No equivale a importación real ni reproducción de medios en un teléfono.
+- Sin merge ni publicación de producción autorizados para este ajuste. El recibo del único Preview y el resultado real de disponibilidad se registran en el PR sin crear otro build documental. No afirmar que se importó hasta cotejar filas en ccvida.
+
+## Alcance y estado real — corte anterior
 
 Solicitud: organizar el listado del usuario e incorporarlo a la biblioteca existente de Alabanza, conservando arreglos, tonalidades y edición. Rama `agent/catalogo-canciones-vida-20261117`, basada en main `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`. Sin merge, publicación de producción, cambios en maestro, roles, RLS, esquema o repertorios de eventos.
 
