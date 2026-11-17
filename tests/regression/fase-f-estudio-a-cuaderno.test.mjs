@@ -8,7 +8,7 @@ const estudio = fs.readFileSync('app/actions/estudio.ts', 'utf8')
 test('FASE F: Estudio Profundo expone acciones claras hacia el cuaderno único', () => {
   assert.match(client, />\s*Mis notas\s*</)
   assert.match(client, /Guardar estudio en Notas/)
-  assert.match(client, /href="\/biblia\/notas"/)
+  assert.match(client, /href=\{notebookHref\}/)
   assert.match(client, /Abrir mi cuaderno/)
 })
 

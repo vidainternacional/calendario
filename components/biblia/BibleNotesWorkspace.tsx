@@ -46,6 +46,8 @@ type NoteHistory = {
 type Props = {
   modo?: ModoLecturaBiblia
   embedded?: boolean
+  returnHref?: string
+  initialOrigin?: FiltroOrigen
   userId?: string
 }
 
@@ -122,12 +124,12 @@ function origenOrganizacion(nota: NotaBiblica): Exclude<FiltroOrigen, 'todos'> {
   return 'cuaderno'
 }
 
-export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false, userId }: Props) {
+export default function BibleNotesWorkspace({ modo: modoExterno, embedded = false, userId, returnHref, initialOrigin }: Props) {
   const [notas, setNotas] = useState<NotaBiblica[]>([])
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState<TipoNota | 'todas'>('todas')
-  const [filtroOrigen, setFiltroOrigen] = useState<FiltroOrigen>('todos')
+  const [filtroOrigen, setFiltroOrigen] = useState<FiltroOrigen>(initialOrigin ?? 'todos')
   const [modoInterno, setModoInterno] = useState<ModoLecturaBiblia | null>(modoExterno ?? null)
   const [paquetes, setPaquetes] = useState<Paquete[]>([])
   const [notasCargadas, setNotasCargadas] = useState(false)
@@ -503,9 +505,10 @@ export default function BibleNotesWorkspace({ modo: modoExterno, embedded = fals
 
   const contenido = (
     <div className={embedded ? 'p-3 sm:p-5' : 'mx-auto max-w-4xl'}>
+      {!embedded && returnHref && <Link href={returnHref} className={`mb-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold ${tema.muted}`}><ArrowLeft className="h-4 w-4" />Volver al estudio anterior</Link>}
       <header className="mb-4 flex items-center gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          {!embedded && <Link href="/estudios" aria-label="Volver a Estudios" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
+          {!embedded && <Link href={returnHref ?? "/estudios"} aria-label={returnHref ? "Volver al estudio anterior" : "Volver a Estudios"} className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${tema.glassStrong}`}><ArrowLeft className="h-5 w-5" /></Link>}
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-sm"><NotebookPen className="h-5 w-5" aria-hidden="true" /></span>
           <div className="min-w-0">
             <h1 className="truncate text-[23px] font-extrabold tracking-[-0.025em]">Cuaderno</h1>
