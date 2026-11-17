@@ -1,18 +1,12 @@
 {
-  "task": "Publicar los planes de lectura y la recuperación de acceso ya validados por el usuario",
-  "userRequest": "El usuario autorizó expresamente poner en producción la lectura bíblica integrada (validada) y los demás cambios funcionales que previamente confirmó que funcionan, incluida la recuperación de contraseña. Preservar la solución aprobada de lectura: cita completa, scroll, expansión/reducción, fondo integrado y devocional visible. Incluir la ruta pública de restablecer y flujo estándar Supabase para recuperar acceso, sin modificar RLS, datos o permisos de la base. No tocar módulos no relacionados.",
+  "task": "Registrar aprobación de producción de lectura bíblica y recuperación de contraseña (PR #315)",
+  "userRequest": "El usuario aprobó explícitamente incorporar a __VIDA_INTERNACIONAL.md la validación de producción propuesta para 2026-11-16: PR #315 fusionado, Vercel READY, lectura integrada, devocional y recuperación aprobados, tres pruebas históricas de CI pendientes. Únicamente documentación; conservar prioridad activa Bloque 4 — Discipulado y no tocar código, base de datos ni permisos.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "app/(app)/hoy/planes/[planId]/[dia]/page.tsx",
-    "components/biblia/PlanDiaLecturaAcordeon.tsx",
-    "tests/regression/plan-lectura-desplegable.test.mjs",
-    "app/actions/recuperacion.ts",
-    "app/restablecer/page.tsx",
-    "lib/supabase/middleware.ts",
-    "tests/regression/recuperacion-enlace-vida.test.mjs"
+    "__VIDA_INTERNACIONAL.md"
   ],
   "allowSupabase": false,
-  "allowMasterUpdate": false,
+  "allowMasterUpdate": true,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true

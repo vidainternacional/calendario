@@ -584,6 +584,8 @@ Versículo diario y recordatorio configurable integrados con la Biblia aprobada.
 
 **Validación adicional — 2026-11-16:** Aprobada la presentación de lectura bíblica integrada al fondo de la aplicación, sin tarjetas ni recuadros. La lectura muestra la cita completa y conserva desplazamiento interno, expansión y reducción del texto. El devocional se presenta completo desde el inicio. Se mantienen las funciones de Biblia, estudio con IA, reflexión y progreso. Validación visual confirmada por el usuario en Preview.
 
+**Validación de producción — 2026-11-16:** PR #315 fusionado a `main`. Despliegue confirmado READY en Vercel. Aprobadas la lectura bíblica integrada, el devocional visible y la recuperación de contraseña. Se conservan las funciones existentes. Permanecen pendientes tres pruebas históricas del CI relacionadas con autenticación y Avisos.
+
 ## Bloque 2 — Ayuda y Sembrar — COMPLETADO Y APROBADO — 2026-09-03
 
 Objetivo:
