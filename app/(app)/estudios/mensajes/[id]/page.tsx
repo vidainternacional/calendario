@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import RegistrarVideoAbierto from '@/components/notificaciones/RegistrarVideoAbierto'
 import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -76,6 +77,7 @@ export default async function MensajePage({ params, searchParams }: {
       className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-600">
       <ArrowLeft className="h-4 w-4" />Devocionales y mensajes
     </Link>
+    {dirigido && fecha ? <RegistrarVideoAbierto usuarioId={user.id} id={id} publicadoEn={new Date(fecha).toISOString()} /> : null}
     <article className="mt-5">
       {serie && <p className="mb-2 text-sm font-bold text-violet-700">Serie: {serie.titulo} · Episodio {serie.actual}</p>}
       <h1 className="break-words text-3xl font-bold leading-tight text-slate-900">{titulo}</h1>

@@ -68,9 +68,9 @@ export async function notificarMensajeDirigido(id: string, autorId: string): Pro
     console.log('[devocionales] Resultado de aviso', { id, destinatarios: ids.length, usuarios: resultado.users, dispositivos: resultado.devices })
     return resultado.users > 0
       ? `Publicado. Aviso enviado a ${resultado.users} personas con notificaciones activadas. Quienes no las tienen activadas pueden abrir el mensaje en Devocionales.`
-      : 'Publicado, pero no se confirmó ningún envío push nuevo. Puedes usar Enviar aviso pendiente para reintentar; no se duplicarán los ya registrados.'
+      : 'Publicado, pero no se confirmó ningún envío push nuevo. Puedes usar Reenviar aviso pendiente para reintentar; no se duplicarán los ya registrados.'
   } catch (error) {
     console.error('[devocionales] No se pudo completar el aviso', { id, error: error instanceof Error ? error.message : 'Error de consulta o envío' })
-    return 'El mensaje está guardado. No se pudo completar el aviso; utiliza Enviar aviso pendiente para reintentar.'
+    return 'El mensaje está guardado. No se pudo completar el aviso; utiliza Reenviar aviso pendiente para reintentar.'
   }
 }

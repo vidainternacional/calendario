@@ -3,6 +3,14 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Ampliación de avisos — 2026-11-17 · PR #317
+
+- Pedido actual: reenvío para destinatarios pendientes aun publicado; aviso de video nuevo en Inicio/Avisos y badge hasta abrirlo; recordatorio de activar push.
+- Implementado en `agent/avisos-devocionales-20261117`, no en producción. Consulta con JWT/RLS del lector, marcadores locales por usuario/dispositivo (sin sincronización entre teléfonos), enlaces directos y renovación al reconectar/volver. Solo apertura del detalle retira ese video.
+- Reutiliza únicamente recordatorio push de #313; no integra su Estudio/Cuaderno. No mezclar #316 musical. Maestro, permisos, tablas, publicaciones y registros de envío intactos.
+- 35 comprobaciones pertinentes; compilación y TypeScript correctos; pruebas móviles aisladas con datos/acciones simuladas. Falta validación autenticada del usuario y aprobación nueva para merge/producción. No se enviaron notificaciones reales.
+- Detalles/limitaciones/reversión: `docs/AVISOS_DEVOCIONALES_2026-11-17.md`. Preview y SHA final en PR #317; verificar recibo antes de retomar.
+
 ## Incidencia prioritaria — avisos de Devocionales · 2026-11-17
 
 - Usuario reportó que el pastor Romy publicó para cinco ministerios y nadie recibió aviso. Verificados: publicación dirigida publicada, 17 destinatarios activos por pertenencia, 10 con push registrado (16 dispositivos), cero registros de envío para esa referencia. Sin trigger de envío en la tabla.

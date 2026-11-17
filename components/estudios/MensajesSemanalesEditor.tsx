@@ -227,7 +227,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
               } catch { setAviso('No se pudo actualizar. Intentá nuevamente.') }
             }) }}
           >{m.publicado ? 'Despublicar' : 'Publicar'}</button>
-          {m.publicado && m.origen !== 'legado' ? <button type="button" disabled={busy} className="min-h-11 text-sm font-semibold text-violet-700 disabled:opacity-50" onClick={() => { setAviso(null); start(async () => { try { const r = await avisarMensajeDirigido(m.id); setAviso(r.success ? r.aviso || 'Aviso preparado.' : r.error || 'No se pudo enviar.'); } catch { setAviso('No se pudo completar el aviso. Puedes reintentar.'); } }) }}>Enviar aviso pendiente</button> : null}
+          {m.publicado && m.origen !== 'legado' ? <button type="button" disabled={busy} className="min-h-11 text-sm font-semibold text-violet-700 disabled:opacity-50" onClick={() => { setAviso(null); start(async () => { try { const r = await avisarMensajeDirigido(m.id); setAviso(r.success ? r.aviso || 'Aviso preparado.' : r.error || 'No se pudo enviar.'); } catch { setAviso('No se pudo completar el aviso. Puedes reintentar.'); } }) }}>Reenviar aviso pendiente</button> : null}
         </div>
       </div>
       {editando === m.id && <Editor key={m.id + m.revision} mensaje={m} ministerios={ministerios}

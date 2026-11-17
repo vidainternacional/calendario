@@ -13,14 +13,14 @@ El usuario informó que una publicación reciente del pastor Romy no produjo avi
 
 ## Corrección preparada
 
-Rama independiente `agent/avisos-devocionales-20261117`, basada en main. No incorpora el PR musical #316 ni el PR #313.
+Rama independiente `agent/avisos-devocionales-20261117`, basada en main. No incorpora el PR musical #316. Reutiliza únicamente el recordatorio push y sus pruebas del PR #313; no incorpora su navegación de Estudio/Cuaderno.
 
 - Al crear publicado o publicar un borrador, se invoca el envío deduplicado existente. Editar una publicación ya publicada y guardar un borrador no dispara otro aviso.
 - Resolución de audiencia conforme a la política de lectura: unión de congregación, roles seleccionados, integrantes de ministerios activos y líderes contextuales. Solo cuentas activas, sin agregar pastores/administradores ajenos por defecto.
 - Respeta las preferencias de avisos desactivadas; pertenecer a dos grupos no duplica el destinatario. Consulta paginada para no perder destinatarios por el límite de mil filas.
 - Se vuelve a comprobar publicación/autor/revisión antes de enviar. Si se despublicó o cambió su audiencia, cancela ese intento.
 - Reutiliza `notifyUsersOnceByReference` y la unicidad existente de tipo/referencia/persona. El resultado distingue personas con envío aceptado de un guardado sin aviso confirmado. Los registros previos se conservan; reintentar no repite los ya registrados.
-- El autor dispone de **Enviar aviso pendiente** en sus publicaciones dirigidas publicadas. Requiere sesión pastoral activa y propiedad, no modifica contenido/audiencia/fecha de publicación y no permite enviar borradores o publicaciones de otro autor.
+- El autor dispone de **Reenviar aviso pendiente** en sus publicaciones dirigidas publicadas. Requiere sesión pastoral activa y propiedad, no modifica contenido/audiencia/fecha de publicación y no permite enviar borradores o publicaciones de otro autor.
 - Enlace push a `/estudios/mensajes/<id>`; RLS sigue protegiendo la lectura. Solo se incluye el título autorizado en el aviso.
 
 ## Verificación
@@ -34,7 +34,7 @@ Rama independiente `agent/avisos-devocionales-20261117`, basada en main. No inco
 
 ## Publicación y recuperación
 
-Falta autorización nueva para integrar/publicar este arreglo en producción. El documento maestro no se modifica. Una vez disponible el código, el autor puede usar **Enviar aviso pendiente** para la publicación existente; ese botón envía un aviso real a destinatarios elegibles y no es una prueba inocua. No debe pulsarse automáticamente desde esta sesión ni enviar mensajes de prueba a la congregación.
+Falta autorización nueva para integrar/publicar este arreglo en producción. El documento maestro no se modifica. Una vez disponible el código, el autor puede usar **Reenviar aviso pendiente** para la publicación existente; ese botón envía un aviso real a destinatarios elegibles y no es una prueba inocua. No debe pulsarse automáticamente desde esta sesión ni enviar mensajes de prueba a la congregación.
 
 Quienes no tienen push habilitado pueden acceder al contenido autorizado, pero esta corrección no concede permisos del navegador ni garantiza un aviso visible en sus teléfonos.
 
@@ -43,3 +43,18 @@ Quienes no tienen push habilitado pueden acceder al contenido autorizado, pero e
 Volver al código anterior detiene el nuevo disparo de avisos. No borrar publicaciones, suscripciones ni registros de envíos para revertirlo: los registros evitan duplicados y preservan historial. Sin RLS, roles, esquema, cron, planes, gastos ni datos personales modificados.
 
 El trabajo musical sigue separado en PR #316, SHA `039283b278801ce1af4113d46dd758fab13903de`. Último recuento de Alabanza en este diagnóstico: 23 fichas activas; no asumir que las 66 candidatas comprobadas del build ya se incorporaron todas. Retomar su cotejo y validación visual después de esta incidencia, sin sobrescribir ediciones nuevas.
+
+## Ampliación solicitada — reenvío, Inicio y recordatorio
+
+Implementado en la misma rama/PR #317, pendiente de aprobación y publicación:
+
+- Botón **Reenviar aviso pendiente** aun después de publicar. Excluye destinatarios con envío ya registrado; una aceptación push no certifica que la persona lo haya visto.
+- Aviso **Nuevo video ministerial** al principio de Inicio, también en Avisos y su vista rápida. Badge y enlace directo al video; otros pendientes en desplegable inicialmente cerrado.
+- La consulta usa la sesión del lector y RLS existente, sin service role. No muestra borradores ni genera otra audiencia. Excluye publicaciones propias de la lista de novedades.
+- El badge permanece al entrar en Inicio/Avisos y se retira para ese video al abrir su detalle autorizado. Se registra apertura, no reproducción completa. Marcadores locales por usuario y dispositivo: no se sincronizan entre teléfonos ni modifican datos del servidor. Cambiar de cuenta limpia inmediatamente el contenido de la anterior.
+- Actualización al volver a la app, reconectar, recibir eventos existentes y cada 30 segundos mientras está visible/conectada. Un único almacén y temporizador compartidos; respuestas antiguas se descartan al cambiar de cuenta.
+- Recordatorio visible con indicador Pendiente para activar push; distingue bloqueo del navegador e instalación necesaria en iPhone. Enlace a Perfil/Notificaciones y posposición de siete días. Nunca solicita permisos automáticamente.
+- Comprobaciones: 24 pruebas previas de publicación/envío, 5 del recordatorio y 6 de novedades (35 comprobaciones), TypeScript y compilación completa correctos. Novedades prueba también cambio de cuenta, apertura individual y persistencia separada. Browser aislado con acciones/datos simulados: editor y banner a 390 px, botón explícito, enlaces al detalle, desplegable cerrado y sin desbordamiento. No equivale a sesión autenticada real ni entrega push a teléfonos.
+- El lint específico de archivos nuevos pasa. Las siete pantallas/controles existentes conservan 40 errores de lint: 13 Inicio, 10 Avisos, 2 badges, 1 PushToggle y 14 Perfil; detalle y editor sin errores. Cotejados con el HEAD previo: mismas reglas y llamadas heredadas, sin corregirlas ni declarar lint global en verde. No se corrigen pruebas históricas de CI ajenas al bloque.
+
+La parte de recordatorio ya preparada en #313 ahora se entrega aquí: revisar ese solapamiento antes de integrar #313. El maestro permanece intacto. Recibo del Preview exacto se agrega al PR tras verificar READY, sin otro despliegue documental.
