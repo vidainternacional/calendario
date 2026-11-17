@@ -582,6 +582,8 @@ Alcance:
 Cierre aprobado:
 Versículo diario y recordatorio configurable integrados con la Biblia aprobada. Catálogo de 12 planes temáticos con progreso y rachas. Centro Pastoral permite a Pastor/Admin crear, editar, autoguardar, publicar y eliminar sus planes, conservando borradores parciales y bloqueando publicación hasta completar todos los días. Los planes son accesibles a cualquier usuario con cuenta, pertenezca o no a VIDA Internacional.
 
+**Validación adicional — 2026-11-16:** Aprobada la presentación de lectura bíblica integrada al fondo de la aplicación, sin tarjetas ni recuadros. La lectura muestra la cita completa y conserva desplazamiento interno, expansión y reducción del texto. El devocional se presenta completo desde el inicio. Se mantienen las funciones de Biblia, estudio con IA, reflexión y progreso. Validación visual confirmada por el usuario en Preview.
+
 ## Bloque 2 — Ayuda y Sembrar — COMPLETADO Y APROBADO — 2026-09-03
 
 Objetivo:
