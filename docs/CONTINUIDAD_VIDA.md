@@ -3,6 +3,14 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Centro Pastoral — Galería y edición · 2026-11-17 · PR #317
+
+- Usuario indicó «lo demás está bien» y pidió galería de mensajes anteriores, edición de título/video y eliminación desde Centro Pastoral. Preparado en la misma rama/alias del PR #317, aún sin producción.
+- Galería propia con miniaturas, búsqueda, filtros Publicados/Borradores, edición existente y confirmación de eliminación. Se conservan autoría/audiencia, reenvío pendiente y publicar/despublicar.
+- 40 pruebas pertinentes, TypeScript/lint del editor/actions y build local correctos; browser aislado a 390 px con acciones simuladas. Falta validación visual autenticada; no se alteraron publicaciones reales ni se enviaron avisos.
+- **Bloqueo:** ccvida no tiene política DELETE en `vida_devocionales`; no afirmar que los devocionales ya se pueden borrar. Preparada migración `20261118000100_vida_devocionales_eliminacion_autor.sql`, NO APLICADA, limitada a autor pastor/admin activo. Requiere aprobación específica de RLS; no aplicarla automáticamente.
+- Alcance, impacto, reversión y límites de carga: `docs/GALERIA_MENSAJES_PASTORALES_2026-11-17.md`. Recibo del nuevo HEAD/Preview READY en PR #317. Maestro intacto; merge/producción requieren autorización nueva.
+
 ## Ampliación de avisos — 2026-11-17 · PR #317
 
 - Pedido actual: reenvío para destinatarios pendientes aun publicado; aviso de video nuevo en Inicio/Avisos y badge hasta abrirlo; recordatorio de activar push.

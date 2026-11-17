@@ -155,3 +155,14 @@ export async function avisarMensajeDirigido(id: string): Promise<Resultado> {
   if (error || !data || !data.publicado) return { success: false, error: 'Solo el autor puede avisar sobre su mensaje publicado.' }
   return { success: true, aviso: await notificarMensajeDirigido(id, user.id) }
 }
+
+/** Eliminación explícita del autor; la política RLS debe permitirla por separado. */
+export async function eliminarMensajeDirigido(id: string, revision: string): Promise<Resultado> {
+  const { db, user } = await contexto()
+  if (!db || !user || !uuid(id) || !revision) return { success: false, error: 'No autorizado.' }
+  const { data, error } = await db.from('vida_devocionales').delete()
+    .eq('id', id).eq('autor_id', user.id).eq('updated_at', revision).select('id')
+  if (error || !data?.length) return { success: false, error: 'No se pudo eliminar el mensaje. Actualizá la página; si continúa, consultá al administrador.' }
+  refrescar(id)
+  return { success: true }
+}

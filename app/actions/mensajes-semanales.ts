@@ -78,3 +78,19 @@ export async function cambiarPublicacionMensaje(id: string, revision: string, pu
   refrescar(id)
   return { success: true }
 }
+
+/** Solo elimina un mensaje de video propio; nunca un proyecto o paquete con otros recursos. */
+export async function eliminarMensajeSemanal(id: string, revision: string): Promise<Resultado> {
+  const { db, user } = await contexto()
+  if (!db || !user || !uuid(id) || !revision) return { success: false, error: 'No autorizado.' }
+  const { data: anterior, error: lecturaError } = await db.from('pastoral_paquetes')
+    .select('id,audiencia,instrucciones,bosquejo_id,coleccion_id,recurso_ids,updated_at')
+    .eq('id', id).eq('profile_id', user.id).maybeSingle()
+  if (lecturaError || !anterior || !esMensajeSemanal(anterior)) return { success: false, error: 'No podés eliminar este mensaje.' }
+  if (anterior.updated_at !== revision) return { success: false, error: 'El mensaje cambió. Actualizá la página antes de eliminar.' }
+  const { data, error } = await db.from('pastoral_paquetes').delete()
+    .eq('id', id).eq('profile_id', user.id).eq('updated_at', revision).select('id')
+  if (error || !data?.length) return { success: false, error: 'No se pudo eliminar el mensaje. Actualizá la página e intentá nuevamente.' }
+  refrescar(id)
+  return { success: true }
+}
