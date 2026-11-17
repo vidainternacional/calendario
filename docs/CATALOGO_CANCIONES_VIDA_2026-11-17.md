@@ -1,5 +1,12 @@
 # Catálogo de canciones VIDA · 17 de noviembre de 2026
 
+## Carga real comprobada — 2026-11-17
+
+- **20 canciones nuevas guardadas, 22 totales en ccvida.** Cotejo de 20/20 por UUID, título, artista, tono, acordes, notas y enlaces frente al catálogo y comprobación positiva; activas y letras pendientes. Datos reales compartidos con la aplicación habitual, incorporados mediante server action y sesión autorizada; sin SQL de escritura ni suplantación.
+- Preview READY `dpl_44U9twcumi5FxvPLb8wxxbH7JhX7`, SHA `456b7a6357469dec5c72c719d6df03d4244b9982`. Enlace estable: https://calendario-git-agent-catalogo-cancion-2d423b-vida-internacional.vercel.app/ministerios/335daa03-4b5a-4ff5-8958-851de6b641ed/biblioteca-alabanza . Ficha nueva solo en Preview, pendiente aprobación visual/producción; datos ya visibles en app habitual.
+- Quedan 213 entradas fuera de esta carga: 151 dudas/cifrado incompleto, 57 candidatas sin ambos enlaces y 5 que no pasaron todos los controles. No declarar catálogo completo ni letras cargadas. Dos fichas originales conservadas; sin roles/RLS, eventos o maestro modificados.
+- Recibo remoto completo en PR #316. Este registro documental posterior se guarda localmente sin push para no crear otro Preview; incorporarlo con el siguiente cambio autorizado. No confundir el commit documental local posterior con el HEAD de código desplegado.
+
 ## Carga cero y ficha solicitada — corrección posterior 2026-11-17
 
 Este corte sustituye las instrucciones anteriores de volver a consultar a los proveedores durante cada inserción.
