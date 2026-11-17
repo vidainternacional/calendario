@@ -1,11 +1,15 @@
 {
-  "task": "Publicación de lectura bíblica aprobada, separada de la recuperación de acceso",
-  "userRequest": "Poner en producción únicamente la lectura bíblica y el devocional validados visualmente por el usuario. El PR #314 también contiene cambios de contraseña y middleware sin validar; esos cambios quedan en Draft sin publicar. Lectura con cita completa, scroll interno, expandir/reducir, fondo integrado y devocional completo visible. La aprobación ya está documentada en el maestro de main.",
+  "task": "Publicar los planes de lectura y la recuperación de acceso ya validados por el usuario",
+  "userRequest": "El usuario autorizó expresamente poner en producción la lectura bíblica integrada (validada) y los demás cambios funcionales que previamente confirmó que funcionan, incluida la recuperación de contraseña. Preservar la solución aprobada de lectura: cita completa, scroll, expansión/reducción, fondo integrado y devocional visible. Incluir la ruta pública de restablecer y flujo estándar Supabase para recuperar acceso, sin modificar RLS, datos o permisos de la base. No tocar módulos no relacionados.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/(app)/hoy/planes/[planId]/[dia]/page.tsx",
     "components/biblia/PlanDiaLecturaAcordeon.tsx",
-    "tests/regression/plan-lectura-desplegable.test.mjs"
+    "tests/regression/plan-lectura-desplegable.test.mjs",
+    "app/actions/recuperacion.ts",
+    "app/restablecer/page.tsx",
+    "lib/supabase/middleware.ts",
+    "tests/regression/recuperacion-enlace-vida.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
