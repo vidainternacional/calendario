@@ -1,6 +1,6 @@
 {
-  "task": "Reparar Salmos 27 desde RV1909 de ccvida y mostrar el devocional guardado en el acordeón",
-  "userRequest": "El usuario reportó Salmos 27 no disponible y devocional aparentemente vacío dentro del plan 14 días para caminar con Dios. Se confirmó en consulta de solo lectura que el plan tiene 14 versículos RV1909 aprobados y 376 caracteres devocionales. Cambiar solo la fuente de lectura para consultar los versículos aprobados desde Supabase existente y dar una vista previa del devocional. Preservar avance, enlaces, preguntas, RLS, datos y producción.",
+  "task": "Lectura diaria con scroll interno y opción de ampliación; devocional completo visible",
+  "userRequest": "El usuario indicó que el degradado de vista previa se ve cortado y la letra cambia de tamaño. Solicita un recuadro de lectura con scroll interno, misma tipografía y opción de mostrar toda la lectura, sin perder la estética. El devocional es breve y debe verse completo sin requerir despliegue. Mantener Biblia, IA, progreso, preguntas, rutas, permisos y datos, sin merge ni producción.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/actions/recuperacion.ts",

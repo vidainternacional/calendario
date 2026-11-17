@@ -30,13 +30,12 @@ test('lectura usa la biblioteca bíblica RV1909 aprobada y los rangos editoriale
   assert.match(acordeon, /<section aria-label=/)
 })
 
-test('devocional siempre toma el contenido guardado y tiene vista previa dentro del acordeón', () => {
+test('devocional muestra completo el texto guardado, sin acordeón inicial', () => {
   assert.match(pagina, /String\(reading\.devocional \?\? ''\)/)
-  assert.match(pagina, /paragraphs\[0\]/)
-  assert.match(pagina, /line-clamp-1/)
+  assert.match(pagina, /<h2 className="text-lg font-bold text-slate-950">Devocional<\/h2>/)
   assert.match(pagina, /paragraphs\.map/)
-  assert.match(pagina, /<details className="group" open>/)
-  assert.equal((pagina.match(/<details className="group"/g) ?? []).length, 2)
+  assert.doesNotMatch(pagina, /<details[^>]*\bopen\b/)
+  assert.equal((pagina.match(/<details className="group"/g) ?? []).length, 1)
 })
 
 test('se conservan pregunta, Biblia, IA, marcar completado y navegación', () => {

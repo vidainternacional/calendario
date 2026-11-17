@@ -109,18 +109,10 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
       </section>
 
       <section className="border-b border-slate-100 py-4">
-        <details className="group" open>
-          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-lg font-bold text-slate-950 [&::-webkit-details-marker]:hidden">
-            <span className="min-w-0">
-              <span className="block">Devocional</span>
-              {paragraphs[0] ? <span className="mt-1 block line-clamp-1 text-sm font-normal text-slate-500 group-open:hidden">{paragraphs[0]}</span> : null}
-            </span>
-            <ChevronDown className="h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
-          </summary>
-          <div className="mt-3 space-y-4 pb-2 text-[16px] leading-7 text-slate-700">
-            {paragraphs.map((paragraph: string, index: number) => <p key={index}>{paragraph}</p>)}
-          </div>
-        </details>
+        <h2 className="text-lg font-bold text-slate-950">Devocional</h2>
+        <div className="mt-3 space-y-4 pb-2 text-[16px] leading-7 text-slate-700">
+          {paragraphs.map((paragraph: string, index: number) => <p key={index}>{paragraph}</p>)}
+        </div>
       </section>
 
       <section className="border-b border-slate-100 py-4">
