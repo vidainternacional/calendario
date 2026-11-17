@@ -3,6 +3,14 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Ficha musical y corrección de carga cero · 2026-11-17
+
+- Usuario confirmó «0 canciones incorporadas» y pidió ver canciones guardadas como creadas con +, además de ordenar su ficha de letra/acordes/tono/enlaces. Rama y PR #316 continúan sin merge.
+- Corrección: certificado completo generado por el build, ligado por SHA-256 al catálogo y vigente 24 horas; la action conserva sesión/rol e idempotencia, sin repetir solicitudes a proveedores durante cada inserción. La ejecución anterior descartaba fichas al fallar esa segunda comprobación. No atribuir aquellos fallos a una causa de red específica sin evidencia.
+- Nueva ficha compartida de creación/edición: nombre, artista/versión, tono base, Letra, Acordes y estructura, Notas y enlaces cerrados; campos ocultos permanecen montados para no perder datos al guardar. Permisos finales se conservan: administración/líderes y futuras personas expresamente autorizadas; nadie adicional asignado.
+- 20 pruebas pertinentes, build/TypeScript y lint local verificados. Flujo aislado Chromium móvil con CSS compilado verifica edición de campos y pestañas sin pérdida de datos ni desbordamiento. Recibo del único Preview del nuevo bloque, certificado real e importación observada se registran en PR #316; no declarar carga realizada sin cotejo de ccvida.
+- Pendiente concreto: verificar cuántas referencias admite el build nuevo, comprobar filas efectivamente incorporadas con sesión autorizada y validar la ficha real. Sin producción, cambios de RLS/roles ni cierre de fase. Los cortes siguientes son históricos.
+
 ## Catálogo musical — corrección de disponibilidad y carga solicitada · 2026-11-17
 
 - El usuario rechazó importar manualmente y reportó videos «Not Available». PR #316 sigue Draft en `agent/catalogo-canciones-vida-20261117`; no está en main ni producción.

@@ -1,5 +1,16 @@
 # Catálogo de canciones VIDA · 17 de noviembre de 2026
 
+## Carga cero y ficha solicitada — corrección posterior 2026-11-17
+
+Este corte sustituye las instrucciones anteriores de volver a consultar a los proveedores durante cada inserción.
+
+- **Problema confirmado por el usuario:** cero canciones incorporadas, 82 candidatas pendientes. El build había admitido 20, pero la carga repetía las solicitudes externas dentro de cada server action y descartaba cualquier respuesta distinta o fallida. Los errores se convertían en el mismo resultado neutro, sin evidencia para atribuirlos todos a videos retirados. No se declara identificada la causa de red/proveedor exacta de aquella ejecución.
+- **Corrección:** el build guarda el resultado completo de las referencias positivas en un artefacto editorial de servidor, con fecha y SHA-256 del catálogo exacto. La action mantiene sesión/rol y conservación de existentes, pero lee ese certificado en lugar de depender de nuevas solicitudes a YouTube/Spotify al insertar. Se rechazan certificados ausentes, vencidos (24 horas), futuros, de otro catálogo, IDs ajenos y URLs fuera de las referencias originales. No se convierte una respuesta negativa en positiva.
+- **Trazabilidad:** logs separados por ficha, evitando el recorte del informe largo del conector. El archivo versionado inicial está vacío y no autoriza importaciones; se genera antes de Next build en la rama del Preview. La página no inicia carga automática si no hay certificado vigente.
+- **Ficha de edición solicitada:** nombre arriba; artista/versión y tono base juntos; secciones Letra, Acordes y estructura, Notas; enlaces desplegables inicialmente cerrados. Tipografía monoespaciada para alinear acordes con texto; campos montados aunque una sección esté oculta, por lo que FormData conserva todo al guardar. La edición existente usa el mismo formulario. Sin cambios de roles, RLS, Programación, transposición ni letras externas.
+- **Verificación:** 20 pruebas pertinentes pasan (incluyen rechazo de certificados vencidos/manipulados), TypeScript/build local completos y lint de archivos nuevos. Prueba aislada en Chromium móvil con CSS compilado comprueba edición/pestañas/persistencia de todos los campos y ausencia de desbordamiento. La ficha requiere la validación del usuario dentro de la aplicación autenticada.
+- **Importación real:** no afirmar que las fichas están guardadas hasta leer ccvida después de la ejecución autenticada. El usuario quiere verlas como canciones reales, no como una lista para importación manual. No fabricar una sesión ni escribir SQL directo como sustituto del control de acceso.
+
 ## Ajuste solicitado después de la revisión — 2026-11-17
 
 Este apartado sustituye el flujo de selección manual descrito más abajo; los recuentos previos son metadatos candidatos, no videos comprobados.

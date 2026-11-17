@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { verificarReferenciasCancion } from '@/lib/musica/verificar-referencias'
+import { obtenerReferenciaCertificada } from '@/lib/musica/referencias-certificadas'
 import catalogoVida from '@/data/canciones-vida-20261117.json'
 import { claveCancionVida, MINISTERIO_CATALOGO_VIDA, seleccionarLoteVida, type CancionCatalogoVida, type RevisionCatalogoVida } from '@/lib/musica/catalogo-vida'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
@@ -257,13 +257,13 @@ export async function importarCatalogoCancionesVida(ministerioId: string, ids: s
     for (const song of lote) {
       const clave = claveCancionVida(song.titulo)
       if (actuales.has(song.id) || titulos.has(clave)) { omitidas.push(song.id); continue }
-      const referencia = await verificarReferenciasCancion(song)
-      if (!referencia.verificada) { errores.push({ id: song.id, titulo: song.titulo, error: referencia.error }); continue }
+      const referencia = obtenerReferenciaCertificada(song)
+      if (!referencia) { errores.push({ id: song.id, titulo: song.titulo, error: 'La ficha no tiene una comprobación editorial vigente para ambos enlaces.' }); continue }
       const { error } = await acceso.admin.from('ministerio_canciones').insert({
         id: song.id, ministerio_id: ministerioId, creado_por: acceso.userId, activo: true,
         titulo: song.titulo, artista: song.artista, tonalidad_base: song.tonalidad_base,
         acordes: song.acordes, letra: null, notas_permanentes: song.notas_permanentes,
-        youtube_url: referencia.youtubeUrl, spotify_url: referencia.spotifyUrl,
+        youtube_url: referencia.youtube_url, spotify_url: referencia.spotify_url,
       })
       if (error) {
         // Otro envío puede haber terminado mientras se guardaba este lote.

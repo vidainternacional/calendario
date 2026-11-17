@@ -1,6 +1,6 @@
 {
-  "task": "Comprobar enlaces y cargar catálogo VIDA sin selección manual; conservar edición restringida",
-  "userRequest": "El usuario reporta Not Available, pide incorporar automáticamente canciones confirmadas con enlaces correctos y conservar agregado con un toque en Programación. Aclara finalmente que solo líderes de Alabanza y personas que él autorice pueden editar; no ampliar a todos los integrantes. Verificar medios antes de importar, retirar la selección manual del catálogo e incorporarlo mediante sesión real autorizada sin suplantación ni escritura SQL directa. No cambiar roles/RLS ni publicar producción sin aprobación.",
+  "task": "Cargar canciones comprobadas y ordenar su ficha de edición",
+  "userRequest": "El usuario reporta Not Available, pide incorporar automáticamente canciones confirmadas con enlaces correctos y conservar agregado con un toque en Programación. Aclara finalmente que solo líderes de Alabanza y personas que él autorice pueden editar; no ampliar a todos los integrantes. Verificar medios antes de importar, retirar la selección manual del catálogo e incorporarlo mediante sesión real autorizada sin suplantación ni escritura SQL directa. No cambiar roles/RLS ni publicar producción sin aprobación. El usuario confirmó carga cero y solicita ver las fichas realmente guardadas, como creadas con +, y ordenar visualmente el formulario de letra/cifrado/tono/enlaces. Usar certificado editorial íntegro y reciente del build, sin repetir comprobaciones externas inestables durante cada guardado. Conservar datos al cambiar secciones y los permisos existentes.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -15,7 +15,11 @@
     "lib/musica/verificar-referencias.ts",
     "tests/regression/referencias-musicales.test.mjs",
     "app/(app)/ministerios/[id]/biblioteca-alabanza/page.tsx",
-    "package.json"
+    "package.json",
+    "data/canciones-vida-verificadas.json",
+    "lib/musica/referencias-certificadas.ts",
+    "components/ministerios/FichaCancionCampos.tsx",
+    "tests/regression/ficha-cancion.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

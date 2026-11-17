@@ -32,7 +32,7 @@ function escenario({ user = true, rol = 'administrador', lider = false, activo =
     '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: user ? { id: 'editor-real' } : null } }) } }), createAdminClient: () => admin },
     '@/data/canciones-vida-20261117.json': catalogo,
     '@/lib/musica/catalogo-vida': util,
-    '@/lib/musica/verificar-referencias': { verificarReferenciasCancion: async (song) => mediosValidos ? { verificada: true, youtubeUrl: song.youtube_url, spotifyUrl: song.spotify_url, error: null } : { verificada: false, error: 'Referencia sin comprobar' } },
+    '@/lib/musica/referencias-certificadas': { obtenerReferenciaCertificada: (song) => mediosValidos ? { youtube_url: song.youtube_url, spotify_url: song.spotify_url } : null },
   })
   return { actions, fichas, escrituras, revalidadas }
 }
