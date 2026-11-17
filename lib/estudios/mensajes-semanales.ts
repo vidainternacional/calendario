@@ -10,7 +10,7 @@ const POR_PAGINA = 12
 export type MensajeVisible = MensajeSemanal & { autor: string }
 
 /** Solo los materiales publicados que el RPC vigente autoriza pueden leerse aquí. */
-export async function cargarMensajesSemanales(pagina = 1) {
+export async function cargarMensajesSemanales(pagina = 1, desdeInicio = false) {
   const client = await createClient()
   const db = client as unknown as SupabaseClient
   const { data: { user } } = await client.auth.getUser()
@@ -55,14 +55,16 @@ export async function cargarMensajesSemanales(pagina = 1) {
       }
       filas = filas.filter(row => ids.has(String(row.id)) && row.publicado === true && mensajeDesdeFila(row)).sort((a, b) =>
         String(b.published_at ?? '').localeCompare(String(a.published_at ?? '')) || String(a.id).localeCompare(String(b.id)))
-      const autores = [...new Set(filas.slice((page - 1) * POR_PAGINA, page * POR_PAGINA).map(row => String(row.profile_id)))]
+      const inicio = desdeInicio ? 0 : (page - 1) * POR_PAGINA
+      const fin = page * POR_PAGINA
+      const autores = [...new Set(filas.slice(inicio, fin).map(row => String(row.profile_id)))]
       const nombres = new Map<string, string>()
       if (autores.length) {
         const { data, error } = await service.from('profiles').select('id,nombre_completo').in('id', autores)
         if (error) throw error
         for (const row of data ?? []) nombres.set(row.id, row.nombre_completo || 'Pastor de VIDA')
       }
-      const mensajes = filas.slice((page - 1) * POR_PAGINA, page * POR_PAGINA).map(row => ({
+      const mensajes = filas.slice(inicio, fin).map(row => ({
         ...mensajeDesdeFila(row)!, autor: nombres.get(String(row.profile_id)) || 'Pastor de VIDA',
       }))
       const propios = puedePublicar ? await cargarPropios(db, user.id) : []

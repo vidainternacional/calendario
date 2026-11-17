@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Bell, BellOff, Loader2 } from 'lucide-react'
+import { PUSH_SUBSCRIPTION_CHANGED } from '@/lib/pwa/push-reminder'
 import { guardarSuscripcionPush, eliminarSuscripcionPush } from '@/app/actions/push'
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
@@ -61,6 +62,7 @@ export default function PushToggle() {
       setCurrentEndpoint(sub.endpoint)
       const result = await guardarSuscripcionPush(JSON.stringify(sub.toJSON()))
       if (result?.error) console.error('[push] Save error:', result.error)
+      window.dispatchEvent(new Event(PUSH_SUBSCRIPTION_CHANGED))
     } catch (err) {
       console.error('[push] Subscription error:', err)
     } finally {
@@ -78,6 +80,7 @@ export default function PushToggle() {
         await sub.unsubscribe()
         setCurrentEndpoint(null)
         setPermission('default')
+        window.dispatchEvent(new Event(PUSH_SUBSCRIPTION_CHANGED))
       }
     } catch (err) {
       console.error('[push] Unsubscribe error:', err)

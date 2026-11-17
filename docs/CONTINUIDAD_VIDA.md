@@ -1,7 +1,25 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
+Último corte operativo de esta rama: 17 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+## Bloque solicitado — continuidad, biblioteca y notificaciones · 2026-11-17
+
+- El usuario confirmó que debían preservarse las funciones aprobadas y ordenó implementar tres pendientes verificados: retorno al mismo estudio desde el Cuaderno, paginación de biblioteca del PR #313 y recordatorio de notificaciones desactivadas.
+- Se conserva como base `main` `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`, con lectura y recuperación aprobadas y publicadas. No rehacerlas ni integrar el antiguo PR #314 automáticamente.
+- Implementación, pruebas, límites y checklist: [entrega del bloque](CONTINUIDAD_Y_AVISOS_2026-11-17.md). 17 pruebas del bloque correctas; ampliación dirigida 61/62 con un contrato antiguo del service worker fallido, idéntico a main. Build/TypeScript correctos; sin nuevos avisos de lint en las superficies comparadas.
+- Preview único en la rama remota ya conectada `agent/devocionales-centro-pastoral-20261116`, dentro del [PR #313](https://github.com/vidainternacional/calendario/pull/313). **Consultar su cuerpo para el deployment y SHA verificados después de este commit.** Preview fijo: `https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`.
+- Estado: implementado y probado localmente, pendiente de validación visual real y aprobación de publicación. No merge ni producción en este bloque. Maestro intacto; Bloque 4 sigue activo, Fase I diferida y privacidad #309 pendiente.
+- Los registros siguientes son históricos: sus indicaciones de pendientes quedan sustituidas por aprobaciones e integraciones posteriores verificadas en main. No reabrir funciones por una entrada antigua.
+
+
+
+## Centro Pastoral y Estudios — comprobación de paginación · 2026-11-16
+
+- El usuario autorizó continuar el pulido con una cuenta de administrador y otra normal; las pruebas con más personas serán diferidas y no bloquearán otras mejoras.
+- Diagnóstico localizado: al combinar videos históricos y devocionales nuevos, cada origen se paginaba antes de ordenar la unión. Desde la segunda página podía faltar contenido y el indicador de página siguiente no contemplaba la suma de ambos orígenes.
+- Cambio preparado: consultar hasta la página requerida de ambos orígenes, ordenar la unión y paginar una sola vez; sin modificar RLS, destinatarios, títulos, diseño o guardado.
+- Pruebas añadidas con datos simulados (13+1, 7+7, 1+13) para evitar publicaciones ficticias en la congregación.
+- Validación visual en los dos teléfonos pendiente; no actualizar el maestro ni integrar a producción sin aprobación posterior. El issue de privacidad entre ministerios #309 continúa abierto.
 
 ## Discipulado — Biblioteca de cursos y edición integral · preparado 2026-11-16
 
@@ -53,7 +71,7 @@
 
 Esta es la entrada operativa para continuar sin reconstruir conversaciones. `AGENTS.md` exige leerla al iniciar y actualizarla al cerrar un bloque con cambios relevantes. Funciona en conversaciones que tengan acceso a este repositorio; no sincroniza el contenido completo de otros chats.
 
-El maestro `__VIDA_INTERNACIONAL.md` conserva las decisiones y diseños aprobados. Su última actualización es del 7 de septiembre y su bloque formal de Discipulado no refleja todas las integraciones posteriores. No modificarlo sin presentar la actualización y recibir aprobación expresa. Esta bitácora no autoriza cambios nuevos ni certifica pruebas pendientes.
+El maestro `__VIDA_INTERNACIONAL.md` conserva las decisiones y diseños aprobados. Su última actualización confirmada en main es del 16 de noviembre de 2026; contiene las aprobaciones posteriores de Devocionales, Discipulado, lectura y recuperación. No modificarlo sin presentar la actualización y recibir aprobación expresa. Esta bitácora no autoriza cambios nuevos ni certifica pruebas pendientes.
 
 Al retomar: revisar estado Git, referencias remotas, esta bitácora en main y el checkpoint de la rama pendiente. Comprobar las evidencias pertinentes antes de actuar. No reiniciar migraciones ni reabrir módulos aprobados por la antigüedad de otro documento. `docs/MEMORIA_TECNICA_Y_VISUAL.md` y los checkpoints de fases anteriores conservan contexto histórico, no el estado operativo actual.
 

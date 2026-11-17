@@ -26,6 +26,7 @@ import {
   useUnreadPublicationIds,
   useUnreadPublicationsCount,
 } from '@/components/avisos/usePublicationReads'
+import PushReminder from '@/components/pwa/PushReminder'
 import InstallBanner from '@/components/pwa/InstallBanner'
 import ShineSweep from '@/components/ui/ShineSweep'
 import { SkeletonPage } from '@/components/ui/Skeleton'
@@ -259,6 +260,8 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </header>
+
+        <PushReminder userId={userId} />
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 [-webkit-overflow-scrolling:touch] sm:px-4">
               {publicaciones.length === 0 ? (

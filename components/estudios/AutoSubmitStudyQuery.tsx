@@ -24,6 +24,8 @@ export default function AutoSubmitStudyQuery({
       const form = document.getElementById('estudio-form') as HTMLFormElement | null
       const input = form?.elements.namedItem('pasaje') as HTMLInputElement | null
 
+      if (form?.dataset.resumed === '1') return
+
       if (!form || !input) {
         attempts += 1
         if (attempts <= 10) window.setTimeout(submitQuery, 30)

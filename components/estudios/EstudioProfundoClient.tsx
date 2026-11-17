@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useActionState, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   AlertCircle,
   Check,
@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
+import { studyResumeHref } from '@/lib/estudios/study-navigation'
 import { mostrarToast } from '@/lib/ui/toast'
 import {
   analizarPasaje,
@@ -136,13 +137,22 @@ function textualPlainText(
 }
 
 export default function EstudioProfundoClient({
+  userId,
   initialPasaje = '',
   initialTab = 'study',
 }: {
+  userId: string
   initialPasaje?: string
   initialTab?: Tab
 }) {
-  const [state, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
+  const [actionState, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
+  const [resumedState, setResumedState] = useState<EstudioState | null>(null)
+  const state = actionState.status === 'idle' && resumedState ? resumedState : actionState
+  const resumeSection = useRef<string | null>(null)
+  const resumeLoaded = useRef(false)
+  const cacheKey = `vida-estudio-retorno-v1:${userId}`
+  const historyKey = `vida-estudio-historial-v1:${userId}`
+  const [studyOrigin, setStudyOrigin] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [historial, setHistorial] = useState<{ pasaje: string; created_at: string }[]>([])
@@ -153,6 +163,23 @@ export default function EstudioProfundoClient({
   const [estudioGuardado, setEstudioGuardado] = useState(false)
   const [copiado, setCopiado] = useState<string | null>(null)
   const [mensaje, setMensaje] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    Promise.resolve().then(() => setStudyOrigin(params.get('from')))
+    if (params.get('resume') !== '1' || resumeLoaded.current) return
+    resumeLoaded.current = true
+    resumeSection.current = params.get('section')
+    try {
+      const raw = sessionStorage.getItem(cacheKey)
+      if (!raw) return
+      const saved = JSON.parse(raw)
+      if (saved.state?.status !== 'success' || saved.query !== initialPasaje || Date.now() - saved.savedAt > 4 * 60 * 60 * 1000) return
+      Promise.resolve().then(() => setResumedState(saved.state))
+      document.getElementById('estudio-form')?.setAttribute('data-resumed', '1')
+      requestAnimationFrame(() => window.scrollTo(0, Number(saved.scroll) || 0))
+    } catch { /* Si no hay almacenamiento, se vuelve a consultar el pasaje. */ }
+  }, [cacheKey, initialPasaje])
 
   const isStudyResult = state.status === 'success' && state.kind === 'study'
   const isConcordanceResult = state.status === 'success' && state.kind === 'concordance'
@@ -242,19 +269,47 @@ export default function EstudioProfundoClient({
   const relatedConcordances = isStudyResult ? (state.relatedConcordances ?? []) : []
 
   useEffect(() => {
-    obtenerHistorial().then(setHistorial).catch(() => setHistorial([]))
-  }, [])
+    let local: Array<{ pasaje: string; created_at: string }> = []
+    try {
+      const parsed = JSON.parse(localStorage.getItem(historyKey) ?? '[]')
+      if (Array.isArray(parsed)) local = parsed.filter(item => typeof item.pasaje === 'string' && item.pasaje.length <= 500 && typeof item.created_at === 'string').slice(0, 12)
+    } catch { /* El historial remoto sigue disponible. */ }
+    obtenerHistorial().catch(() => []).then(remote => setHistorial(current => {
+      const merged = [...current, ...local, ...remote]
+      return merged.filter((item, index) => merged.findIndex(other => other.pasaje === item.pasaje) === index).slice(0, 12)
+    })).catch(() => {})
+  }, [historyKey])
 
   useEffect(() => {
     if (state.status !== 'success') return
     setActiveTab(state.kind)
     if (state.kind === 'study') {
-      setActiveSection(null)
+      setActiveSection(resumeSection.current)
+      resumeSection.current = null
       setEstudioGuardado(false)
-      obtenerHistorial().then(setHistorial).catch(() => {})
+      setHistorial(current => {
+        const next = [{ pasaje: state.query, created_at: new Date().toISOString() }, ...current.filter(item => item.pasaje !== state.query)].slice(0, 12)
+        try { localStorage.setItem(historyKey, JSON.stringify(next)) } catch { /* Historial opcional del dispositivo. */ }
+        return next
+      })
       obtenerNota(state.pasaje).then(value => setNota(value || '')).catch(() => setNota(''))
     }
-  }, [state])
+  }, [state, historyKey])
+
+  const returnHref = state.status === 'success'
+    ? studyResumeHref(state.query, activeSection, activeTab, studyOrigin)
+    : '/estudios/profundo'
+  const notebookHref = `/biblia/notas?origen=estudio_profundo&returnTo=${encodeURIComponent(returnHref)}`
+
+  const rememberStudy = () => {
+    if (state.status !== 'success') return
+    // El gesto Atrás del navegador debe recuperar la misma consulta que el enlace del Cuaderno.
+    window.history.replaceState(window.history.state, '', returnHref)
+    try {
+      // Solo el resultado editorial, nunca el contenido de notas personales.
+      sessionStorage.setItem(cacheKey, JSON.stringify({ state, query: state.query, savedAt: Date.now(), scroll: window.scrollY }))
+    } catch { /* El enlace conserva la consulta aunque el almacenamiento esté lleno. */ }
+  }
 
   const avisar = (texto: string) => {
     setMensaje(texto)
@@ -570,7 +625,7 @@ export default function EstudioProfundoClient({
               {estudioGuardando ? <Loader2 className="h-4 w-4 animate-spin" /> : estudioGuardado ? <Check className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
               {estudioGuardando ? 'Guardando…' : estudioGuardado ? 'Estudio guardado' : 'Guardar estudio en Notas'}
             </button>
-            <Link href="/biblia/notas" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <Link href={notebookHref} onClick={rememberStudy} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:bg-slate-50">
               <Edit3 className="h-4 w-4 text-[#C0392B]" />
               Abrir mi cuaderno
             </Link>
@@ -598,6 +653,7 @@ export default function EstudioProfundoClient({
                 <h3 className="text-sm font-bold text-slate-900">Mis notas personales</h3>
               </header>
               <div className="p-4 sm:p-5">
+                <p className="mb-3 text-sm leading-6 text-slate-500">Al guardar, esta nota queda en tu Cuaderno, en el origen «Estudio Profundo», con la referencia de este estudio.</p>
                 <textarea value={nota} onChange={event => setNota(event.target.value)} placeholder="Escriba reflexiones, preguntas o apuntes personales…" className="min-h-36 w-full resize-y rounded-2xl border border-slate-200 bg-white p-4 text-base leading-7 text-slate-700 outline-none focus:ring-2 focus:ring-[#C0392B]/30" />
                 <div className="mt-3 flex items-center justify-end gap-3">
                   {notaSuccess && <span className="text-xs font-semibold text-emerald-600">Nota guardada</span>}
