@@ -30,7 +30,7 @@ def candidates(row, research, i):
         if re.search(r'tutorial|pista|karaoke|reaccion|reacción|como tocar|cómo tocar|remix|instrumental|bebés|babies',headline,re.I) or 'Training' in (source.get('channel') or ''): continue
         artist = source.get('artist') or re.sub(r'\s*\(.*', '', source.get('channel') or '')
         if not artist and spotify_id(source['url']):
-            translated = re.search(r'(?:lyrics by|song by|letra de|letras de|Lyrics von|paroles par|testo di|songtekst van)\s+(.+?)\s*\|\s*Spotify$',headline,re.I)
+            translated = re.search(r'(?:lyrics by|song by|música y letra de|letra de|letras de|Lyrics von|paroles par|testo di|songtekst van)\s+(.+?)\s*\|\s*Spotify$',headline,re.I)
             if translated: artist = translated.group(1).strip()
             elif '/embed/track/' in source['url'] and ' - ' in headline: artist = headline.rsplit(' - ',1)[1].split('|')[0].strip()
         artist = {'MIEL SAN MARCOS':'Miel San Marcos','Marcos Witt Oficial':'Marcos Witt','Real Rojo Oficial':'Rojo','Montesanto Oficial':'Montesanto','Marcos y Fer Brunet':'Marcos Brunet','SovereignGraceMusic':'Sovereign Grace','Adoración La IBI - Topic':'La IBI'}.get(artist,artist)

@@ -258,7 +258,7 @@ export async function importarCatalogoCancionesVida(ministerioId: string, ids: s
       const clave = claveCancionVida(song.titulo)
       if (actuales.has(song.id) || titulos.has(clave)) { omitidas.push(song.id); continue }
       const referencia = obtenerReferenciaCertificada(song)
-      if (!referencia) { errores.push({ id: song.id, titulo: song.titulo, error: 'La ficha no tiene una comprobación editorial vigente para ambos enlaces.' }); continue }
+      if (!referencia) { errores.push({ id: song.id, titulo: song.titulo, error: 'La ficha no tiene una comprobación editorial vigente de sus referencias.' }); continue }
       const { error } = await acceso.admin.from('ministerio_canciones').insert({
         id: song.id, ministerio_id: ministerioId, creado_por: acceso.userId, activo: true,
         titulo: song.titulo, artista: song.artista, tonalidad_base: song.tonalidad_base,

@@ -1,5 +1,16 @@
 # Catálogo de canciones VIDA · 17 de noviembre de 2026
 
+## Transposición persistente y ficha integrada · preparado 2026-11-17
+
+- Solicitud nueva del usuario: transportar dentro de la ficha y guardar el último tono/acordes; practicidad desde setlist; campos integrados al fondo, sin cajas; ampliar canciones y completar referencias. La carga anterior de 20 nuevas/22 totales fue confirmada por el usuario.
+- Ficha: controles ±½ tono transportan tono base y cifrado juntos. En canciones existentes guardan automáticamente solo esos dos campos mediante la action oficial ya autorizada para administración/líderes. Cola serial/coalescida evita que un guardado antiguo sustituya al último; Guardar completo queda bloqueado durante ese guardado para no pisar cambios. En canción nueva, la transposición se incluye al guardar la ficha. Letras/notas/enlaces no se transportan ni se sobrescriben por esa operación.
+- Setlist conserva transposición personal sin alterar la versión oficial; los gestores tienen «Guardar este tono en biblioteca». Comparte el transportador con la ficha: inversiones, extensiones y bemoles/sostenidos; preserva letras y espacios. No cambia tonos ya asignados a eventos ni historial de servicios.
+- Editor sin superficie blanca ni recuadros: fondo transparente y separadores inferiores. Se conserva el formulario completo y el guardado de los paneles ocultos. Sin CSS global, roles ni RLS modificados.
+- Ampliación: 82 candidatas, ahora 77 con video y 29 con ambos enlaces por la investigación disponible. La carga admite video confirmado aunque falte Spotify; si Spotify está presente también debe comprobarse. Ausencias se conservan como null y pendientes, nunca se inventan pistas. Se mantiene identidad/intérprete y estado OK del video, certificado de catálogo reciente e idempotencia. Los recuentos guardados posteriores se confirman en ccvida, no por cantidad de candidatos.
+- Letras: el usuario pidió buscarlas en sitios de letras/acordes. No se copiaron letras completas protegidas ni se eludió el bloqueo anterior. Permanecen editables y pendientes; no declarar las 82 fichas completas. Los cifrados de esta carga proceden de los apuntes aportados.
+- Verificado localmente: 28 regresiones pertinentes, TypeScript, lint de archivos nuevos y build. Chromium móvil con CSS compilado comprueba transposición +2, cola de guardado, conservación de campos/FormData y ausencia de desbordamiento con datos simulados. Falta validar la interacción autenticada de transposición y contabilizar la ampliación real.
+- Un Preview nuevo para este bloque; recibo SHA/deployment y cotejo real se registran en PR #316 sin otro despliegue documental. No hacer merge, producción, actualizar maestro ni asignar personas adicionales sin autorización. Los cortes siguientes son históricos.
+
 ## Carga real comprobada — 2026-11-17
 
 - **20 canciones nuevas guardadas, 22 totales en ccvida.** Cotejo de 20/20 por UUID, título, artista, tono, acordes, notas y enlaces frente al catálogo y comprobación positiva; activas y letras pendientes. Datos reales compartidos con la aplicación habitual, incorporados mediante server action y sesión autorizada; sin SQL de escritura ni suplantación.

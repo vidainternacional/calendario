@@ -40,7 +40,7 @@ test('rechaza otro título, otro intérprete o una pista Spotify diferente', asy
 
 test('rechaza enlaces faltantes o manipulados sin contactar servidores arbitrarios', async () => {
   let llamadas = 0
-  for (const alteracion of [{ youtube_url: null }, { spotify_url: null }, { youtube_url: 'http://127.0.0.1/' }, { spotify_url: 'https://example.com/track/x' }]) {
+  for (const alteracion of [{ youtube_url: null }, { youtube_url: 'http://127.0.0.1/' }, { spotify_url: 'https://example.com/track/x' }]) {
     assert.equal((await verificarReferenciasCancion({ ...song, ...alteracion }, async () => { llamadas++; throw Error() })).verificada, false)
   }
   assert.equal(llamadas, 0)
@@ -50,4 +50,11 @@ test('lee JSON con llaves en cadenas sin ejecutar scripts del proveedor', () => 
   const result = extraerEstadoYouTube('var ytInitialPlayerResponse = {"playabilityStatus":{"status":"OK"},"texto":"} { \\\""}; throw new Error("No ejecutar");')
   assert.equal(result.playabilityStatus.status, 'OK')
   assert.equal(extraerEstadoYouTube('ytInitialPlayerResponse = {incorrecto};'), null)
+})
+
+
+test('una referencia de video verificada puede incorporarse sin inventar Spotify ausente', async () => {
+  const result = await verificarReferenciasCancion({ ...song, spotify_url: null }, fetcher())
+  assert.equal(result.verificada, true)
+  assert.equal(result.spotifyUrl, null)
 })

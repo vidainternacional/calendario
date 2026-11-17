@@ -20,19 +20,19 @@ export default function ImportarCatalogoVida({ ministerioId, habilitada }: { min
         if (salir) return
         if (revision.error || !revision.canciones) { setMensaje(revision.error || 'No se pudo comprobar el catálogo.'); return }
         const candidatas = revision.canciones.filter((song) => song.estado === 'identificada' && !song.yaExiste)
-        const completas = candidatas.filter((song) => song.youtube_url && song.spotify_url)
+        const completas = candidatas.filter((song) => song.youtube_url)
         if (!candidatas.length) return
         let pendientes = candidatas.length - completas.length
         for (let inicio = 0; inicio < completas.length; inicio += 2) {
           if (salir) return
-          setMensaje(`Comprobando enlaces e incorporando canciones: ${inicio + 1}–${Math.min(inicio + 2, completas.length)} de ${completas.length}… Puedes seguir utilizando la biblioteca.`)
+          setMensaje(`Incorporando canciones comprobadas: ${inicio + 1}–${Math.min(inicio + 2, completas.length)} de ${completas.length}… Puedes seguir utilizando la biblioteca.`)
           const result = await importarCatalogoCancionesVida(ministerioId, completas.slice(inicio, inicio + 2).map((song) => song.id))
           creadas += result.creadas.length
           pendientes += result.errores.length
           if (salir) return
           if (result.error) { setMensaje(`${creadas} canciones incorporadas. ${result.error}`); return }
         }
-        setMensaje(`${creadas} canciones incorporadas. ${pendientes} referencias candidatas quedan pendientes de completar o comprobar sus enlaces. Las fichas existentes se conservan.`)
+        setMensaje(`${creadas ? `${creadas} canciones nuevas incorporadas.` : 'Las canciones ya incorporadas se conservan en la biblioteca.'} ${pendientes} referencias candidatas quedan pendientes de completar o comprobar. Spotify y letras ausentes siguen señalados como pendientes.`)
       } catch {
         if (!salir) setMensaje('La comprobación se interrumpió. Las canciones ya guardadas se conservan; al volver a abrir se reintentará sin duplicarlas.')
       } finally { if (creadas) router.refresh() }

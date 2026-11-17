@@ -1,6 +1,6 @@
 {
-  "task": "Cargar canciones comprobadas y ordenar su ficha de edición",
-  "userRequest": "El usuario reporta Not Available, pide incorporar automáticamente canciones confirmadas con enlaces correctos y conservar agregado con un toque en Programación. Aclara finalmente que solo líderes de Alabanza y personas que él autorice pueden editar; no ampliar a todos los integrantes. Verificar medios antes de importar, retirar la selección manual del catálogo e incorporarlo mediante sesión real autorizada sin suplantación ni escritura SQL directa. No cambiar roles/RLS ni publicar producción sin aprobación. El usuario confirmó carga cero y solicita ver las fichas realmente guardadas, como creadas con +, y ordenar visualmente el formulario de letra/cifrado/tono/enlaces. Usar certificado editorial íntegro y reciente del build, sin repetir comprobaciones externas inestables durante cada guardado. Conservar datos al cambiar secciones y los permisos existentes.",
+  "task": "Transportar y guardar acordes desde ficha; editor integrado y ampliación verificable del catálogo",
+  "userRequest": "El usuario aprueba la carga anterior y pide transportar acordes desde la ficha conservando el último tono guardado; mantener practicidad desde setlist; quitar recuadros y superficies del editor para integrarlo al fondo. Solicita completar las 82 candidatas y ampliar al menos al doble de las 22 actuales mediante referencias verificables. Investigar metadatos y enlaces; no copiar letras completas protegidas ni eludir el bloqueo anterior. Mantener roles, letras/datos de usuarios, historial y tonos de servicios existentes; sin producción ni maestro.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -19,7 +19,10 @@
     "data/canciones-vida-verificadas.json",
     "lib/musica/referencias-certificadas.ts",
     "components/ministerios/FichaCancionCampos.tsx",
-    "tests/regression/ficha-cancion.test.mjs"
+    "tests/regression/ficha-cancion.test.mjs",
+    "lib/musica/transponer.ts",
+    "tests/regression/transposicion-ficha.test.mjs",
+    "components/ministerios/MusicianSetlistClient.tsx"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

@@ -5,6 +5,7 @@ import { ChevronDown, ExternalLink, Music2, Plus, Save, Search, Trash2, X } from
 import { useRouter } from 'next/navigation'
 import ImportarCatalogoVida from './ImportarCatalogoVida'
 import FichaCancionCampos from './FichaCancionCampos'
+import { guardarVersionOficialCancionSetlist } from '@/app/actions/setlist-alabanza'
 import {
   archivarCancionBibliotecaAlabanza,
   guardarCancionBibliotecaAlabanza,
@@ -38,6 +39,7 @@ export default function BibliotecaAlabanzaClient({ ministerioId, canciones, carg
   const [busqueda, setBusqueda] = useState('')
   const [nueva, setNueva] = useState(false)
   const [abierta, setAbierta] = useState<string | null>(null)
+  const [guardandoTono, setGuardandoTono] = useState(false)
   const [pending, startTransition] = useTransition()
   const [mensaje, setMensaje] = useState<string | null>(null)
   const [formNueva, setFormNueva] = useState(vacia)
@@ -107,7 +109,7 @@ export default function BibliotecaAlabanzaClient({ ministerioId, canciones, carg
       <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-violet-500">Nueva canción</p>
       <div className="mt-3 grid gap-3">
         <FichaCancionCampos valores={formNueva} cambiar={setFormNueva} />
-        <button type="button" disabled={pending} onClick={guardarNueva} className="h-11 rounded-xl bg-violet-600 text-xs font-extrabold text-white disabled:opacity-50">Guardar canción</button>
+        <button type="button" disabled={pending || guardandoTono} onClick={guardarNueva} className="h-11 rounded-xl bg-violet-600 text-xs font-extrabold text-white disabled:opacity-50">Guardar canción</button>
       </div>
     </div> : null}
 
@@ -121,8 +123,8 @@ export default function BibliotecaAlabanzaClient({ ministerioId, canciones, carg
             <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
           </button>
           {open ? <form onSubmit={(event) => { event.preventDefault(); guardarExistente(song, event.currentTarget) }} className="grid gap-4 pb-5">
-            <FichaCancionCampos iniciales={{ titulo: song.titulo, artista: song.artista || '', tonalidadBase: song.tonalidad_base || '', letra: song.letra || '', acordes: song.acordes || '', notasPermanentes: song.notas_permanentes || '', spotifyUrl: song.spotify_url || '', youtubeUrl: song.youtube_url || '' }} />
-            <div className="flex items-center justify-between gap-3"><button disabled={pending} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-extrabold text-white disabled:opacity-50"><Save className="h-4 w-4" />Guardar</button><button type="button" disabled={pending} onClick={() => archivar(song)} className="inline-flex min-h-10 items-center gap-2 text-xs font-bold text-rose-600 disabled:opacity-50"><Trash2 className="h-4 w-4" />Retirar</button></div>
+            <FichaCancionCampos guardandoTono={setGuardandoTono} guardarTransposicion={async (datos) => { const r = await guardarVersionOficialCancionSetlist(ministerioId, song.id, { tonalidadBase: datos.tonalidadBase, acordes: datos.acordes }); if (r.success) router.refresh(); return r }} iniciales={{ titulo: song.titulo, artista: song.artista || '', tonalidadBase: song.tonalidad_base || '', letra: song.letra || '', acordes: song.acordes || '', notasPermanentes: song.notas_permanentes || '', spotifyUrl: song.spotify_url || '', youtubeUrl: song.youtube_url || '' }} />
+            <div className="flex items-center justify-between gap-3"><button disabled={pending || guardandoTono} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-extrabold text-white disabled:opacity-50"><Save className="h-4 w-4" />Guardar</button><button type="button" disabled={pending || guardandoTono} onClick={() => archivar(song)} className="inline-flex min-h-10 items-center gap-2 text-xs font-bold text-rose-600 disabled:opacity-50"><Trash2 className="h-4 w-4" />Retirar</button></div>
             {(song.spotify_url || song.youtube_url) ? <div className="flex gap-4 text-[11px] font-bold text-slate-500">{song.spotify_url ? <a href={song.spotify_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">Spotify <ExternalLink className="h-3 w-3" /></a> : null}{song.youtube_url ? <a href={song.youtube_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">YouTube <ExternalLink className="h-3 w-3" /></a> : null}</div> : null}
           </form> : null}
         </div>

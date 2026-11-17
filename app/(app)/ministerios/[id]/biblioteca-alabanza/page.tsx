@@ -38,6 +38,6 @@ export default async function BibliotecaAlabanzaPage({ params }: { params: Promi
       <div className="mt-3 flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-full text-white" style={{ backgroundColor: color }}><BookOpen className="h-5 w-5" /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>Panel del líder</p><h1 className="mt-0.5 text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">Biblioteca de Alabanza</h1></div></div>
       <p className="mt-3 text-sm leading-6 text-slate-500">Aquí preparas una sola vez la letra, el cifrado, el tono base, las notas y los enlaces de cada canción.</p>
     </header>
-    <section className="bg-white px-4 py-4 ring-1 ring-black/[0.04]"><BibliotecaAlabanzaClient ministerioId={id} canciones={canciones} cargarCatalogo={profile.rol === 'administrador' && cargaCatalogoDisponible()} /></section>
+    <section className="py-4"><BibliotecaAlabanzaClient ministerioId={id} canciones={canciones} cargarCatalogo={profile.rol === 'administrador' && cargaCatalogoDisponible()} /></section>
   </main>
 }

@@ -1,21 +1,45 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
+import { transportarCifrado, transportarTono } from '@/lib/musica/transponer'
 
 export type DatosFichaCancion = {
   titulo: string; artista: string; tonalidadBase: string; letra: string; acordes: string;
   notasPermanentes: string; spotifyUrl: string; youtubeUrl: string
 }
-const CAMPO = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400'
+const CAMPO = 'mt-1.5 w-full rounded-none border-0 border-b border-slate-200 bg-transparent px-0 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400'
 
-export default function FichaCancionCampos({ valores, iniciales, cambiar }: {
-  valores?: DatosFichaCancion; iniciales?: DatosFichaCancion; cambiar?: (datos: DatosFichaCancion) => void
+export default function FichaCancionCampos({ valores, iniciales, cambiar, guardarTransposicion, guardandoTono }: {
+  valores?: DatosFichaCancion; iniciales?: DatosFichaCancion; cambiar?: (datos: DatosFichaCancion) => void; guardarTransposicion?: (datos: DatosFichaCancion) => Promise<{ success: boolean; error?: string }>; guardandoTono?: (ocupado: boolean) => void
 }) {
   const id = useId()
-  const [seccion, setSeccion] = useState<'letra' | 'acordes' | 'notas'>('letra')
-  const datos = valores || iniciales!
+  const [local, setLocal] = useState(() => {
+    const datos = iniciales || valores!
+    return { ...datos, letra: datos.letra.replace(/\\n/g, '\n'), acordes: datos.acordes.replace(/\\n/g, '\n'), notasPermanentes: datos.notasPermanentes.replace(/\\n/g, '\n') }
+  })
+  const datos = valores || local
+  const [seccion, setSeccion] = useState<'letra' | 'acordes' | 'notas'>(() => datos.acordes && !datos.letra ? 'acordes' : 'letra')
+  const [estadoTono, setEstadoTono] = useState('')
+  const cola = useRef(Promise.resolve())
+  const turno = useRef(0)
+  function actualizar(nuevo: DatosFichaCancion) { if (valores) cambiar?.(nuevo); else setLocal(nuevo) }
   function props(campo: keyof DatosFichaCancion) {
-    return valores ? { value: valores[campo], onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => cambiar?.({ ...valores, [campo]: event.target.value }) } : { defaultValue: ['letra', 'acordes', 'notasPermanentes'].includes(campo) ? datos[campo].replace(/\\n/g, '\n') : datos[campo] }
+    return { value: datos[campo], onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => actualizar({ ...datos, [campo]: event.target.value }) }
+  }
+  function transportar(semitonos: number) {
+    if (!/^[A-G](?:#|b)?(?:m|maj|min)?$/.test(datos.tonalidadBase.trim()) || !datos.acordes.trim()) { setEstadoTono('Escribe un tono válido y los acordes antes de transportar.'); return }
+    const nuevo = { ...datos, tonalidadBase: transportarTono(datos.tonalidadBase, semitonos), acordes: transportarCifrado(datos.acordes, semitonos) }
+    actualizar(nuevo)
+    setSeccion('acordes')
+    if (!guardarTransposicion) { setEstadoTono('El nuevo tono y los acordes se conservarán al guardar la canción.'); return }
+    const actual = ++turno.current
+    setEstadoTono('Guardando tono y acordes…'); guardandoTono?.(true)
+    cola.current = cola.current.catch(() => {}).then(async () => {
+      if (actual !== turno.current) return
+      try { const r = await guardarTransposicion(nuevo); if (actual === turno.current) setEstadoTono(r.success ? 'Tono y acordes guardados en la biblioteca.' : r.error || 'No se pudo guardar; puedes usar Guardar.') }
+      catch { if (actual === turno.current) setEstadoTono('No se pudo guardar el tono. Conserva la ficha abierta y vuelve a guardar.') }
+      finally { if (actual === turno.current) guardandoTono?.(false) }
+    })
   }
   return <div className="space-y-5 text-slate-900">
     <div className="grid gap-3">
@@ -25,6 +49,12 @@ export default function FichaCancionCampos({ valores, iniciales, cambiar }: {
         <label className="text-xs font-bold text-slate-600">Tono base<input name="tonalidad_base" {...props('tonalidadBase')} className={`${CAMPO} h-11 font-mono font-bold`} placeholder="Ej. D" /></label>
       </div>
     </div>
+    <div className="flex flex-wrap items-center gap-3 border-y border-slate-200 py-2">
+      <span className="text-xs font-bold text-slate-600">Transportar acordes</span>
+      <button type="button" onClick={() => transportar(-1)} className="min-h-11 px-3 text-sm font-bold text-violet-700" aria-label="Bajar medio tono">− ½ tono</button>
+      <button type="button" onClick={() => transportar(1)} className="min-h-11 px-3 text-sm font-bold text-violet-700" aria-label="Subir medio tono">+ ½ tono</button>
+    </div>
+    {estadoTono ? <p role="status" className="text-xs text-slate-600">{estadoTono}</p> : null}
     <div>
       <div role="tablist" aria-label="Contenido de la ficha" onKeyDown={(event) => {
         const items = ['letra', 'acordes', 'notas'] as const
@@ -40,7 +70,7 @@ export default function FichaCancionCampos({ valores, iniciales, cambiar }: {
       </div>
       <div role="tabpanel" id={`${id}-acordes`} aria-labelledby={`${id}-acordes-tab`} hidden={seccion !== 'acordes'} className="pt-3">
         <label className="text-xs font-bold text-slate-600">Acordes y estructura<textarea name="acordes" wrap="off" {...props('acordes')} className={`${CAMPO} min-h-64 resize-y overflow-x-auto py-3 font-mono leading-7`} placeholder={'Intro: D - A - Bm - G\nEstrofa:\nCoro:\nPuente:'} /></label>
-        <p className="mt-2 text-xs leading-5 text-slate-500">Separa los acordes con espacios. Puedes alinearlos encima de la letra y organizar Intro, Estrofa, Coro y Puente. El tono del servicio se elige en Programación.</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500">Separa los acordes con espacios. Puedes alinearlos encima de la letra y organizar Intro, Estrofa, Coro y Puente. El tono y los acordes de esta ficha se transportan juntos; los tonos ya asignados a servicios se conservan.</p>
       </div>
       <div role="tabpanel" id={`${id}-notas`} aria-labelledby={`${id}-notas-tab`} hidden={seccion !== 'notas'} className="pt-3">
         <label className="text-xs font-bold text-slate-600">Indicaciones de la canción<textarea name="notas_permanentes" {...props('notasPermanentes')} className={`${CAMPO} min-h-40 resize-y py-3 leading-6`} placeholder="Entrada, cortes, repeticiones, dinámica o detalles del arreglo." /></label>

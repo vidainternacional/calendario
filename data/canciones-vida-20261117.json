@@ -61,7 +61,9 @@
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
-      "https://www.youtube.com/watch?v=-7Hd0k9PwAo"
+      "https://www.youtube.com/watch?v=-7Hd0k9PwAo",
+      "https://open.spotify.com/intl-es/track/6vxb2lcRcqTium0lDzBH5H",
+      "https://open.spotify.com/track/6vxb2lcRcqTium0lDzBH5H"
     ],
     "fuente_usuario": null
   },
@@ -566,7 +568,7 @@
     "tonalidad_base": "F#m",
     "acordes": "Intro: F#m - D - A - E\nF#m - D - A\nBm - E\nD - E - F#m - A",
     "letra": null,
-    "notas_permanentes": "Usuario menciona Rojo y aporta referencia Emmanuel y Linda: comprobar si corresponde a la misma obra.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube.\nReferencia aportada: https://www.cifraclub.com/emmanuel-linda/mi-dios/",
+    "notas_permanentes": "Usuario menciona Rojo y aporta referencia Emmanuel y Linda: comprobar si corresponde a la misma obra.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/emmanuel-linda/mi-dios/\nPor completar: letra, enlace YouTube.",
     "spotify_url": "https://open.spotify.com/track/6141bKGUBiJjml05d9tMdu",
     "youtube_url": null,
     "estado": "identificada",
@@ -981,18 +983,18 @@
     "tonalidad_base": "G#m",
     "acordes": "G#m - E - B - F#\nG#m - C# - E - B - F#",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.",
-    "spotify_url": null,
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.",
+    "spotify_url": "https://open.spotify.com/track/2fkgdKavqQBxiL2ulcXLYO",
     "youtube_url": "https://www.youtube.com/watch?v=F0QtbeB4B2Q",
     "estado": "identificada",
     "campos_pendientes": [
-      "letra",
-      "spotify_url"
+      "letra"
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=F0QtbeB4B2Q",
-      "https://open.spotify.com/track/0Gx1krPcf6umcGUSfiMk4i"
+      "https://open.spotify.com/track/0Gx1krPcf6umcGUSfiMk4i",
+      "https://open.spotify.com/track/2fkgdKavqQBxiL2ulcXLYO"
     ],
     "fuente_usuario": null
   },
@@ -1516,7 +1518,7 @@
     "tonalidad_base": "A",
     "acordes": "Estrofa: Asus2 - F#m - Dsus2 - F#m - E\nPre-coro: D - Dm - Asus2 - E - D - Dm\nCoro: Asus2 - F#m - E - D - Dm",
     "letra": null,
-    "notas_permanentes": "También en E: E - C#m - F#m - E - B; pre F#m - Am - E - B; coro E - C#m - B - A - Am; puente E - C#m - B - A - Am - D. Conservar variante de ensayo.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://acordes.lacuerda.net/marcos_brunet/digno-3.shtml",
+    "notas_permanentes": "También en E: E - C#m - F#m - E - B; pre F#m - Am - E - B; coro E - C#m - B - A - Am; puente E - C#m - B - A - Am - D. Conservar variante de ensayo.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/marcos_brunet/digno-3.shtml\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/25tGKAPQyxt3XWoZaKh4YE",
     "youtube_url": "https://www.youtube.com/watch?v=q1SxbBtXLkw",
     "estado": "identificada",
@@ -1699,7 +1701,7 @@
     "tonalidad_base": "C",
     "acordes": "Estrofa: C - G - Am - G - F\nC/E - F - C/G\nBb - F/A - G\nCoro: C - Am - F - G\nAm - Am/G - F\nG - F/A - G/B - D",
     "letra": null,
-    "notas_permanentes": "Variante D: D - Bm - G - A; Bm - Bm/A - G; A - G/B - A/C# - E. Variante A/B al final del listado. Conservar todos los tonos en notas.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://www.cifraclub.com/ingrid-rosario/cante-al-seor/",
+    "notas_permanentes": "Variante D: D - Bm - G - A; Bm - Bm/A - G; A - G/B - A/C# - E. Variante A/B al final del listado. Conservar todos los tonos en notas.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/ingrid-rosario/cante-al-seor/\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=I5UND-9HlKo",
     "estado": "identificada",
@@ -1845,7 +1847,8 @@
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
-      "https://www.youtube.com/watch?v=lyYNJ_EAGQs"
+      "https://www.youtube.com/watch?v=lyYNJ_EAGQs",
+      "https://open.spotify.com/track/4FjIrnNntqI0d52hrvuxfv"
     ],
     "fuente_usuario": null
   },
@@ -1857,7 +1860,7 @@
     "tonalidad_base": "D",
     "acordes": "Estrofa: D - F#m - G - A\nBm - Bm/Bb - D/A - E/G#\nEm - F#m - G - A\nCoro: D - G - Bm - A - Em - A\nBm - Bm/Bb - D/A - E/G#\nEm - F#m - G - A",
     "letra": null,
-    "notas_permanentes": "Otra anotación usa F#/Bb en lugar de Bm/Bb y G/A - A. Preservar diferencias.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://acordes.lacuerda.net/marcos_witt/lavame-2.shtml",
+    "notas_permanentes": "Otra anotación usa F#/Bb en lugar de Bm/Bb y G/A - A. Preservar diferencias.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/marcos_witt/lavame-2.shtml\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=NOT2CjNasEU",
     "estado": "identificada",
@@ -2135,7 +2138,7 @@
     "tonalidad_base": "A",
     "acordes": "Estrofa: A - D\nF#m - E - A - E - D\nCoro: A - F#m - E - D - A - E - D",
     "letra": null,
-    "notas_permanentes": "También en B: B - E; G#m - F# - B; F# - E; coro B - G#m - F# - E - B - F# - E. Repeticiones conciliadas.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://chords.lacuerda.net/rojo/no_me_soltaras-4.shtml",
+    "notas_permanentes": "También en B: B - E; G#m - F# - B; F# - E; coro B - G#m - F# - E - B - F# - E. Repeticiones conciliadas.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://chords.lacuerda.net/rojo/no_me_soltaras-4.shtml\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/7y1szuVdtgBTKLXdghRYvH",
     "youtube_url": "https://www.youtube.com/watch?v=8A8DRwTvJ6A",
     "estado": "identificada",
@@ -2347,7 +2350,7 @@
     "tonalidad_base": "Cm",
     "acordes": "Ab - Bb - Cm - Gm\nCoro: Ab - Bb - Eb",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://acordes.lacuerda.net/gateway_worship/mas_grande-2.shtml",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/gateway_worship/mas_grande-2.shtml\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/4kaOMhptOAmVYIrYgmTIr7",
     "youtube_url": "https://www.youtube.com/watch?v=bzdfy8XNjAY",
     "estado": "identificada",
@@ -2370,7 +2373,7 @@
     "tonalidad_base": "G",
     "acordes": "G - D/F - C - Am7\nD/F# - C - G - D\nCoro: G - D/F - Am - C\nF - D - E",
     "letra": null,
-    "notas_permanentes": "El original alterna D/F y D/F#. No corregir por suposición.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://chords.lacuerda.net/yashira_guidini/te_seguire-3.shtml",
+    "notas_permanentes": "El original alterna D/F y D/F#. No corregir por suposición.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://chords.lacuerda.net/yashira_guidini/te_seguire-3.shtml\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=bzvp_C13Las",
     "estado": "identificada",
@@ -2509,7 +2512,7 @@
     "tonalidad_base": "D",
     "acordes": "Intro: D - Em - D/F# - G\nD\nD - Em7 - D/F# - G - Bm - F#m",
     "letra": null,
-    "notas_permanentes": "Delay jugando en Em. Fragmento Que todos los pueblos te alaben no se fusiona sin cotejo.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://acordes.lacuerda.net/miel_san_marcos/jubilo-3.shtml",
+    "notas_permanentes": "Delay jugando en Em. Fragmento Que todos los pueblos te alaben no se fusiona sin cotejo.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/miel_san_marcos/jubilo-3.shtml\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=zPf1Rvjixxc",
     "estado": "identificada",
@@ -3204,7 +3207,7 @@
     "tonalidad_base": "A",
     "acordes": "A - C#m - F#m7 - E\nD - Bm7 - Esus4 - E\nF#m7 - C#m7 - F#m7\nD - Bm - Esus4 - E\nD - C#m7 - Bm - A - A/C#\nD - D/F# - A - F#m7\nD - Esus4 - E\nA - A/G - D/F# - Esus4 - E - A",
     "letra": null,
-    "notas_permanentes": "También aparece como Más el Dios de toda gloria, pero el fragmento aportado dice gracia. Letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://acordes.lacuerda.net/marcos_witt/mas_el_dios_de_toda_gracia-4.shtml",
+    "notas_permanentes": "También aparece como Más el Dios de toda gloria, pero el fragmento aportado dice gracia. Letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/marcos_witt/mas_el_dios_de_toda_gracia-4.shtml\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=IUUSG-dAf2c",
     "estado": "identificada",
@@ -3261,7 +3264,8 @@
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
-      "https://www.youtube.com/watch?v=ySz6PkBvM9A"
+      "https://www.youtube.com/watch?v=ySz6PkBvM9A",
+      "https://open.spotify.com/intl-es/track/3FjzoUDoW0ERpybS8IvHkX"
     ],
     "fuente_usuario": null
   },
@@ -3529,17 +3533,17 @@
     "tonalidad_base": "Bm",
     "acordes": "Bm - G - D - A",
     "letra": null,
-    "notas_permanentes": "No fusionar con Danzaré.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube.",
+    "notas_permanentes": "No fusionar con Danzaré.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/6f5tn0dNPi24JKK4WXrCpG",
-    "youtube_url": null,
+    "youtube_url": "https://www.youtube.com/watch?v=_1MfaKz_eCQ",
     "estado": "identificada",
     "campos_pendientes": [
-      "letra",
-      "youtube_url"
+      "letra"
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
-      "https://open.spotify.com/track/6f5tn0dNPi24JKK4WXrCpG"
+      "https://open.spotify.com/track/6f5tn0dNPi24JKK4WXrCpG",
+      "https://www.youtube.com/watch?v=_1MfaKz_eCQ"
     ],
     "fuente_usuario": null
   },
@@ -3600,7 +3604,7 @@
     "tonalidad_base": "F",
     "acordes": "F - D - C\nF - C - G - Am",
     "letra": null,
-    "notas_permanentes": "También aparece Todo tú lo has cambiado y F - C/E - G - Am; F - C - Gsus; F#dim - G#dim - Am - Gm.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://www.cifraclub.com/danilo-montero/todo-lo-has-cambiado/",
+    "notas_permanentes": "También aparece Todo tú lo has cambiado y F - C/E - G - Am; F - C - Gsus; F#dim - G#dim - Am - Gm.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/danilo-montero/todo-lo-has-cambiado/\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=yMhUw6pxNFI",
     "estado": "identificada",
@@ -3669,7 +3673,7 @@
     "tonalidad_base": "E",
     "acordes": "E - F#m7 - E/G#\nBm7 - E7 - A2 - E/G# - F#m7 - Badd2\nE - F#m7 - E/G#\nBm7 - E7 - A2 - E/G# - F#m7 - Dadd2\nCoro: E2 - A2 - C#m7 - A2 - B2\nInter: E2 - A2 - C#m7 - A\nPuente: A2 - C#m7 - B/D# - E - F#m7 - C#m7 - A - B2",
     "letra": null,
-    "notas_permanentes": "Letra aportada. Coro final con ascenso cromático B2 - C2 - C#m7 - B/D# - E - F#m7 - B2.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube.\nReferencia aportada: https://acordes.lacuerda.net/freddy_rodriguez/nombre_no_hay.shtml",
+    "notas_permanentes": "Letra aportada. Coro final con ascenso cromático B2 - C2 - C#m7 - B/D# - E - F#m7 - B2.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/freddy_rodriguez/nombre_no_hay.shtml\nPor completar: letra, enlace YouTube.",
     "spotify_url": "https://open.spotify.com/track/4whuC0TW3m4LZiE3QqZO6d",
     "youtube_url": null,
     "estado": "identificada",
@@ -3818,7 +3822,7 @@
     "tonalidad_base": "D",
     "acordes": "D - A/C# - Bm\nEm7 - G/A - A7 - D\nPuente: G - D/F#\nC - Bm\nEm7 - G/A - A7 - D",
     "letra": null,
-    "notas_permanentes": "Parte de medley con Renuévame; letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://directorcreativo.pro/acorde/renuevame--tu-amor-por-mi-ft--elena-witt-guerra---krystal-guerra",
+    "notas_permanentes": "Parte de medley con Renuévame; letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://directorcreativo.pro/acorde/renuevame--tu-amor-por-mi-ft--elena-witt-guerra---krystal-guerra\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=h7I3B4Fy7Tc",
     "estado": "identificada",
@@ -4041,17 +4045,18 @@
     "tonalidad_base": "Cm",
     "acordes": "Cm - Fm - Bb - G\nCm - Gm - Fm - Eb - G\nFm - Eb - G",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube.",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/5oiTGxRzS0rUXRiZhHOrQT",
-    "youtube_url": null,
+    "youtube_url": "https://www.youtube.com/watch?v=UT62rOjZmc0",
     "estado": "identificada",
     "campos_pendientes": [
-      "letra",
-      "youtube_url"
+      "letra"
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
-      "https://open.spotify.com/track/5oiTGxRzS0rUXRiZhHOrQT"
+      "https://open.spotify.com/track/5oiTGxRzS0rUXRiZhHOrQT",
+      "https://www.youtube.com/watch?v=UT62rOjZmc0",
+      "https://www.youtube.com/watch?v=p9SQ-0JbvOg"
     ],
     "fuente_usuario": null
   },
@@ -4398,7 +4403,7 @@
     "tonalidad_base": "Eb",
     "acordes": "Eb - Bb - Gm - F",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://acordes.lacuerda.net/marcos_witt/de_gloria_en_gloria-2.shtml",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/marcos_witt/de_gloria_en_gloria-2.shtml\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/7zN3eBeHDYDJ62kxHSix7C",
     "youtube_url": "https://www.youtube.com/watch?v=0O2XfbxNIPc",
     "estado": "identificada",
@@ -4524,7 +4529,7 @@
     "tonalidad_base": "F#",
     "acordes": "Estrofa: F# - C#2 - D#m - B2\nNo hay nadie como tú: F# - D#m - B2 - C#2 - F#\nRey de reyes: C#2 - D#m - B2 - F# - C#2 - B2 - F#",
     "letra": null,
-    "notas_permanentes": "También referencia LaCuerda variante 4 aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://www.cifraclub.com/miel-san-marcos/glorificate/",
+    "notas_permanentes": "También referencia LaCuerda variante 4 aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/miel-san-marcos/glorificate/\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=nmbH8LDlOOQ",
     "estado": "identificada",
@@ -4717,7 +4722,7 @@
     "tonalidad_base": "Bb",
     "acordes": "Bbmaj7 - Ebmaj7 - F#dim - Bbmaj7\nEbmaj7 - F - F#dim - Gm7 - F\nBb - Dm7 - Ebmaj7 - F\nBb - Eb - F\nCoro: Bb - Dm7 - Eb - Dm7 - Cm7 - F\nBb",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://www.cifraclub.com/juan-carlos-alvarado/dios-el-mas-grande/",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/juan-carlos-alvarado/dios-el-mas-grande/\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/5z2qA8yyXQhc0GD6w57Bos",
     "youtube_url": "https://www.youtube.com/watch?v=BS2koQToNPo",
     "estado": "identificada",
@@ -5088,7 +5093,7 @@
     "tonalidad_base": "D",
     "acordes": "D - E - D - G",
     "letra": null,
-    "notas_permanentes": "Octavas.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://acordes.lacuerda.net/generacion_12/es_por_fe.shtml",
+    "notas_permanentes": "Octavas.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/generacion_12/es_por_fe.shtml\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/2fkgdKavqQBxiL2ulcXLYO",
     "youtube_url": "https://www.youtube.com/watch?v=MpINBdiEaf8",
     "estado": "identificada",
@@ -5262,7 +5267,8 @@
     "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=M0yZjNfVMls",
-      "https://www.youtube.com/watch?v=2cbVxPKaik4"
+      "https://www.youtube.com/watch?v=2cbVxPKaik4",
+      "https://open.spotify.com/intl-es/track/1yZWmSfSlfgxxcvLy7Tn6O"
     ],
     "fuente_usuario": null
   },
@@ -5297,18 +5303,19 @@
     "tonalidad_base": "B",
     "acordes": "B - F# - G#m - E\nB - F# - E\nVerso: E - B - F# - G#m\nE - B - F#\nG#m\nE - B - F#\nPre-coro: E - B - F# - G#m - E - B - F#\nPuente: B - D# - G#m - E",
     "letra": null,
-    "notas_permanentes": "Intro figura de guitarra; silencios; cuartas; mix; figura final.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube.",
+    "notas_permanentes": "Intro figura de guitarra; silencios; cuartas; mix; figura final.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.",
     "spotify_url": "https://open.spotify.com/track/4xoZvurwCJnaXVYKnnwfnX",
-    "youtube_url": null,
+    "youtube_url": "https://www.youtube.com/watch?v=sLdFEEMMm9Q",
     "estado": "identificada",
     "campos_pendientes": [
-      "letra",
-      "youtube_url"
+      "letra"
     ],
     "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://open.spotify.com/track/4xoZvurwCJnaXVYKnnwfnX",
-      "https://open.spotify.com/intl-es/track/4wtFwgSS2ZwBsk9qGO3ERf"
+      "https://open.spotify.com/intl-es/track/4wtFwgSS2ZwBsk9qGO3ERf",
+      "https://www.youtube.com/watch?v=sLdFEEMMm9Q",
+      "https://www.youtube.com/watch?v=fVdXt8hX8es"
     ],
     "fuente_usuario": null
   },
@@ -5392,7 +5399,7 @@
     "tonalidad_base": "F",
     "acordes": "Estrofa: F - Bb - F - Dm - C - Bb\nPre-coro: Bb - C - Dm - Dm - C - Bb\nGm\nCoro: Bb - Dm - C - Am7 - Dm - Gm7 - C - F",
     "letra": null,
-    "notas_permanentes": "También versión Holy Forever en C con letra bilingüe aportada: intro F - Am - G - C/E - Am - G; estrofa C - F - C - Am7 - Gadd4 - F; precoro F - Am - G - Am - F; F - Am - G - Am - Dm7; coro F - Am - G - C/E - Am - Dm - G - C - Csus4 - C. Mantener idioma/versión identificados.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://www.letras.com/la-ibi/santo-por-siempre/",
+    "notas_permanentes": "También versión Holy Forever en C con letra bilingüe aportada: intro F - Am - G - C/E - Am - G; estrofa C - F - C - Am7 - Gadd4 - F; precoro F - Am - G - Am - F; F - Am - G - Am - Dm7; coro F - Am - G - C/E - Am - Dm - G - C - Csus4 - C. Mantener idioma/versión identificados.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.letras.com/la-ibi/santo-por-siempre/\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=-CAFAc5OYqc",
     "estado": "identificada",
@@ -5403,7 +5410,8 @@
     "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=-CAFAc5OYqc",
-      "https://www.youtube.com/watch?v=YQay6GcxtII"
+      "https://www.youtube.com/watch?v=YQay6GcxtII",
+      "https://open.spotify.com/track/5PJLZOANm3pYBBnO4kFrpb"
     ],
     "fuente_usuario": "https://www.letras.com/la-ibi/santo-por-siempre/"
   },
@@ -5415,7 +5423,7 @@
     "tonalidad_base": "F#",
     "acordes": "Intro y estrofa: F# - D#m7 - B - C#\nCoro: B - C# - D#m - C#/F - F# - C#\nF# - D#m7 - C# - B - C#",
     "letra": null,
-    "notas_permanentes": "Figura de guitarra; no fusionar con Eterno sin cotejar.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://acordes.lacuerda.net/marco_barrientos/eterno_dios.shtml",
+    "notas_permanentes": "Figura de guitarra; no fusionar con Eterno sin cotejar.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://acordes.lacuerda.net/marco_barrientos/eterno_dios.shtml\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=7U3NKei5jKI",
     "estado": "identificada",
@@ -5462,7 +5470,7 @@
     "tonalidad_base": "Bb",
     "acordes": "Bb - Eb\nBb - F/A - Gm - Gm7 - Eb - Gm - F\nBb - Bb/A - Gm - F - Eb - Gm - F",
     "letra": null,
-    "notas_permanentes": "Variante C: C - F; C - G/B - Am - Am7 - F - Am - G; C - G/B - Am - Em - F - Am - G; F - Am - G - C. Bloques sin título con esa progresión guardados como variante probable, no certeza solo por acordes.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://www.cifraclub.com/ingrid-rosario/tu-eres-mi-respirar/",
+    "notas_permanentes": "Variante C: C - F; C - G/B - Am - Am7 - F - Am - G; C - G/B - Am - Em - F - Am - G; F - Am - G - C. Bloques sin título con esa progresión guardados como variante probable, no certeza solo por acordes.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/ingrid-rosario/tu-eres-mi-respirar/\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=j4nBk_-N2Yg",
     "estado": "identificada",
@@ -5485,7 +5493,7 @@
     "tonalidad_base": "G",
     "acordes": "G - D - Em - C\nAm\nAm - Em - D\nCoro: C - G\nD - C - Em\nC",
     "letra": null,
-    "notas_permanentes": "No fusionar con Rey de Christine ni Tú eres Rey del medley.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nReferencia aportada: https://www.cifraclub.com/coalo-zamorano/eres-rey/kzspkz.html",
+    "notas_permanentes": "No fusionar con Rey de Christine ni Tú eres Rey del medley.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://www.cifraclub.com/coalo-zamorano/eres-rey/kzspkz.html\nPor completar: letra, enlace Spotify.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=SraOft04GKM",
     "estado": "identificada",

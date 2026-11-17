@@ -60,14 +60,16 @@ function coincideInterprete(actual: unknown, esperado: string | null) {
 }
 
 export async function verificarReferenciasCancion(song: CancionCatalogoVida, fetcher: Fetcher = fetch) {
-  const sinComprobar = { verificada: false as const, youtubeUrl: null, spotifyUrl: null, error: 'No se pudieron comprobar ambos enlaces y la disponibilidad del video. La ficha queda pendiente.' }
-  if (!song.youtube_url || !song.spotify_url || !/^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]{22}$/.test(song.spotify_url)) return sinComprobar
+  const sinComprobar = { verificada: false as const, youtubeUrl: null, spotifyUrl: null, error: 'No se pudo comprobar la referencia de video o alguno de los enlaces aportados. La ficha queda pendiente.' }
+  if (!song.youtube_url || (song.spotify_url !== null && !/^https:\/\/open\.spotify\.com\/track\/[A-Za-z0-9]{22}$/.test(song.spotify_url))) return sinComprobar
   const candidatas = [song.youtube_url, ...song.fuentes_verificacion.filter((url) => /^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{11}$/.test(url))]
   const videos = [...new Set(candidatas)].filter((url) => /^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{11}$/.test(url)).slice(0, 2)
   if (!videos.length) return sinComprobar
   try {
-    const spotify: unknown = JSON.parse(await leer(`https://open.spotify.com/oembed?url=${encodeURIComponent(song.spotify_url)}`, 65536, fetcher))
-    if (!esObjeto(spotify) || !coincideTitulo(spotify.title, song.titulo)) return sinComprobar
+    if (song.spotify_url) {
+      const spotify: unknown = JSON.parse(await leer(`https://open.spotify.com/oembed?url=${encodeURIComponent(song.spotify_url)}`, 65536, fetcher))
+      if (!esObjeto(spotify) || !coincideTitulo(spotify.title, song.titulo)) return sinComprobar
+    }
     for (const url of videos) {
       try {
         const metadata: unknown = JSON.parse(await leer(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`, 65536, fetcher))

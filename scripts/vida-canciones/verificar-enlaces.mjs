@@ -14,7 +14,7 @@ const transcribir = (path, dependencias = {}) => {
 const util = transcribir('lib/musica/catalogo-vida.ts')
 const { verificarReferenciasCancion } = transcribir('lib/musica/verificar-referencias.ts', { 'server-only': {}, './catalogo-vida': util })
 const catalogo = JSON.parse(fs.readFileSync('data/canciones-vida-20261117.json', 'utf8'))
-const candidatas = catalogo.filter((song) => song.estado === 'identificada' && song.youtube_url && song.spotify_url)
+const candidatas = catalogo.filter((song) => song.estado === 'identificada' && song.youtube_url)
 const resultados = []
 for (let inicio = 0; inicio < candidatas.length; inicio += 2) {
   const lote = await Promise.all(candidatas.slice(inicio, inicio + 2).map(async (song) => {
@@ -36,7 +36,7 @@ for (let inicio = 0; inicio < candidatas.length; inicio += 2) {
   for (const item of lote) console.log('[Catálogo VIDA · ficha] ' + JSON.stringify(item))
   console.log(`[Catálogo VIDA] Comprobadas ${resultados.length}/${candidatas.length}; admitidas ${resultados.filter((row) => row.verificada).length}.`)
 }
-const informe = { fecha: new Date().toISOString(), commit: process.env.VERCEL_GIT_COMMIT_SHA || null, alcance: 'Metadatos Spotify e identidad y estado OK del reproductor de YouTube desde el servidor; no reproduce audio ni certifica todas las regiones.', candidatas: candidatas.length, verificadas: resultados.filter((row) => row.verificada).length, resultados }
+const informe = { fecha: new Date().toISOString(), commit: process.env.VERCEL_GIT_COMMIT_SHA || null, alcance: 'Identidad y estado OK de YouTube; Spotify se comprueba cuando hay enlace aportado, sin inventarlo cuando falta; no reproduce audio ni certifica todas las regiones.', candidatas: candidatas.length, verificadas: resultados.filter((row) => row.verificada).length, resultados }
 const certificado = { fecha: informe.fecha, catalogoSha256: createHash('sha256').update(JSON.stringify(catalogo)).digest('hex'), canciones: resultados.filter((item) => item.verificada).map(({ id, youtube_url, spotify_url }) => ({ id, youtube_url, spotify_url })) }
 fs.writeFileSync('data/canciones-vida-verificadas.json', JSON.stringify(certificado, null, 2) + '\n')
 console.log('[Catálogo VIDA · resumen] ' + JSON.stringify({ fecha: informe.fecha, candidatas: informe.candidatas, verificadas: informe.verificadas, hash: certificado.catalogoSha256 }))

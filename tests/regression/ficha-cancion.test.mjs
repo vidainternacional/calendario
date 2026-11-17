@@ -30,3 +30,10 @@ test('un ID, URL o pista fuera del manifiesto no se acepta aunque se inyecte en 
     assert.equal(modulo.obtenerReferenciaCertificada(song, c, hash, ahora), null)
   }
 })
+
+
+test('preserva Spotify null cuando solo hay video confirmado, sin fabricar una pista', () => {
+  const c = { ...certificado, canciones: [{ ...certificado.canciones[0], spotify_url: null }] }
+  const r = modulo.obtenerReferenciaCertificada({ ...song, spotify_url: null }, c, hash, ahora)
+  assert.equal(r.spotify_url, null)
+})
