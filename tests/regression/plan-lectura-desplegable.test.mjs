@@ -5,31 +5,32 @@ import fs from 'node:fs'
 const pagina = fs.readFileSync('app/(app)/hoy/planes/[planId]/[dia]/page.tsx', 'utf8')
 const acordeon = fs.readFileSync('components/biblia/PlanDiaLecturaAcordeon.tsx', 'utf8')
 
-test('el pasaje diario respeta libro, capítulo y límites guardados', () => {
-  for (const prop of ['bookCode', 'chapter', 'verseStart', 'verseEnd', 'referencia']) {
-    assert.match(pagina, new RegExp(prop + '=\\{'))
-  }
-  assert.match(acordeon, /\/api\/biblia\/fuente\/spaRV1909\//)
-  assert.match(acordeon, /item\.numero >= verseStart/)
-  assert.match(acordeon, /item\.numero <= verseEnd/)
-  assert.match(acordeon, /verseStart == null/)
-  assert.match(acordeon, /verseEnd == null/)
-  assert.match(acordeon, /onToggle=/)
-  assert.match(acordeon, /setAbierto\(false\)/)
+test('lectura usa la biblioteca bíblica RV1909 aprobada y los rangos editoriales guardados', () => {
+  assert.match(pagina, /from\('biblical_verse_texts'\)/)
+  assert.match(pagina, /b6fef01a-f304-4fd0-98aa-5fe070279946/)
+  assert.match(pagina, /\.eq\('book_code', reading\.book_code\)/)
+  assert.match(pagina, /\.eq\('chapter', reading\.chapter\)/)
+  assert.match(pagina, /reading\.verse_start == null \|\|/)
+  assert.match(pagina, /reading\.verse_end == null \|\|/)
+  assert.match(pagina, /versos=\{versosDelDia\}/)
+  assert.doesNotMatch(acordeon, /fetch\(|spaRV1909/)
+  assert.match(acordeon, /versos\.map/)
+  assert.match(acordeon, /<details className="group">/)
 })
 
-test('devocional y preguntas quedan en acordeones cerrados y admiten varias preguntas', () => {
+test('devocional siempre toma el contenido guardado y tiene vista previa dentro del acordeón', () => {
+  assert.match(pagina, /String\(reading\.devocional \?\? ''\)/)
+  assert.match(pagina, /paragraphs\[0\]/)
+  assert.match(pagina, /line-clamp-1/)
+  assert.match(pagina, /paragraphs\.map/)
   assert.equal((pagina.match(/<details className="group">/g) ?? []).length, 2)
-  assert.match(pagina, /preguntas\.map/)
-  assert.match(pagina, /preguntas\.length > 1/)
-  assert.match(pagina, /\.split\(\/\\n\+\/\)/)
 })
 
-test('se conservan Biblia, estudio con IA, guardado y navegación entre días', () => {
+test('se conservan pregunta, Biblia, IA, marcar completado y navegación', () => {
+  assert.match(pagina, /preguntas\.map/)
   assert.match(pagina, /href=\{bibleHref\}/)
   assert.match(pagina, /href=\{studyHref\}/)
-  assert.match(pagina, /Estudiar con IA/)
   assert.match(pagina, /PlanDiaCompletarButton/)
-  assert.match(pagina, /const nextDay =/)
   assert.match(pagina, /const previousDay =/)
+  assert.match(pagina, /const nextDay =/)
 })

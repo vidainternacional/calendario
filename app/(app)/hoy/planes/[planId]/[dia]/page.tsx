@@ -44,7 +44,7 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
   if (!plan || !reading) notFound()
 
   const paragraphs = String(reading.devocional ?? '')
-    .replaceAll('\\n', '\n')
+    .replace(/\\+n/g, '\n')
     .split(/\n\s*\n/)
     .map((text: string) => text.trim())
     .filter(Boolean)
@@ -54,6 +54,25 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
     .split(/\n+/)
     .map((text: string) => text.trim())
     .filter(Boolean)
+
+  // Reutiliza la misma biblioteca RV1909 aprobada de VIDA (ccvida), sin API externa.
+  const { data: textoBiblico, error: errorBiblia } = await (supabase as any)
+    .from('biblical_verse_texts')
+    .select('verse, original_text')
+    .eq('source_id', 'b6fef01a-f304-4fd0-98aa-5fe070279946')
+    .eq('language', 'spanish')
+    .eq('enabled', true)
+    .eq('review_status', 'approved')
+    .eq('book_code', reading.book_code)
+    .eq('chapter', reading.chapter)
+    .order('verse', { ascending: true })
+
+  const versosDelDia: Array<{ numero: number; texto: string }> = errorBiblia ? [] : (textoBiblico ?? [])
+    .filter((row: any) =>
+      (reading.verse_start == null || Number(row.verse) >= Number(reading.verse_start)) &&
+      (reading.verse_end == null || Number(row.verse) <= Number(reading.verse_end)))
+    .map((row: any) => ({ numero: Number(row.verse), texto: String(row.original_text ?? '') }))
+    .filter((row: { numero: number; texto: string }) => Number.isInteger(row.numero) && row.texto.trim().length > 0)
 
   const bibleHref = `/biblia?book=${encodeURIComponent(String(reading.book_code))}&chapter=${Number(reading.chapter)}${reading.verse_start ? `&verse=${Number(reading.verse_start)}` : ''}`
   const studyHref = `/estudios/profundo?pasaje=${encodeURIComponent(String(reading.referencia))}&auto=1`
@@ -77,10 +96,7 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
         <PlanDiaLecturaAcordeon
           key={planId + '-' + numeroDia}
           referencia={String(reading.referencia)}
-          bookCode={String(reading.book_code)}
-          chapter={Number(reading.chapter)}
-          verseStart={reading.verse_start == null ? null : Number(reading.verse_start)}
-          verseEnd={reading.verse_end == null ? null : Number(reading.verse_end)}
+          versos={versosDelDia}
         />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Link href={bibleHref} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-2 text-center text-xs font-bold text-white sm:text-sm"><BookOpen className="h-4 w-4 shrink-0" />Abrir Biblia</Link>
@@ -91,7 +107,10 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
       <section className="border-b border-slate-100 py-4">
         <details className="group">
           <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-lg font-bold text-slate-950 [&::-webkit-details-marker]:hidden">
-            Devocional
+            <span className="min-w-0">
+              <span className="block">Devocional</span>
+              {paragraphs[0] ? <span className="mt-1 block line-clamp-1 text-sm font-normal text-slate-500 group-open:hidden">{paragraphs[0]}</span> : null}
+            </span>
             <ChevronDown className="h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
           <div className="mt-3 space-y-4 pb-2 text-[16px] leading-7 text-slate-700">
