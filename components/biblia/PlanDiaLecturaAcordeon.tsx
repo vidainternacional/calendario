@@ -100,11 +100,11 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
             No pudimos cargar el texto bíblico. Podés abrirlo en Biblia.
             <button type="button" onClick={() => { setFallo(false); setReintento((valor) => valor + 1) }} className="ml-2 min-h-11 font-bold text-[#C0392B]">Reintentar</button>
           </div>
-        ) : cargando || abierto ? (
+        ) : (
           <div className="flex min-h-14 items-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Cargando lectura…
           </div>
-        ) : null}
+        )}
       </div>
     </details>
   )
