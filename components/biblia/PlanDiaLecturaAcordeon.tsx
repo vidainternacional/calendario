@@ -16,14 +16,13 @@ type Props = {
 
 // Mantiene primero el texto recibido desde servidor y reintenta con la sesión del navegador.
 export default function PlanDiaLecturaAcordeon({ referencia, versos: versosIniciales, bookCode, chapter, verseStart, verseEnd }: Props) {
-  const [abierto, setAbierto] = useState(false)
   const [versos, setVersos] = useState(versosIniciales)
   const [cargando, setCargando] = useState(false)
   const [fallo, setFallo] = useState(false)
   const [reintento, setReintento] = useState(0)
 
   useEffect(() => {
-    if (!abierto || versos.length > 0) return
+    if (versos.length > 0) return
 
     let activo = true
     const supabase = createClient()
@@ -57,16 +56,30 @@ export default function PlanDiaLecturaAcordeon({ referencia, versos: versosInici
       if (activo) setCargando(false)
     })
     return () => { activo = false }
-  }, [abierto, versos.length, bookCode, chapter, verseStart, verseEnd, reintento])
+  }, [versos.length, bookCode, chapter, verseStart, verseEnd, reintento])
+
+  const inicio = verseStart ?? versos[0]?.numero
+  const final = verseEnd ?? versos[versos.length - 1]?.numero
+  const citaCompleta = Number.isInteger(inicio) && Number.isInteger(final) && Number(final) >= Number(inicio)
+    ? referencia.replace(/:\d+(?:\s*[-–]\s*\d+)?$/, '') + ':' + inicio + (inicio === final ? '' : '–' + final)
+    : referencia
 
   return (
-    <details className="group" onToggle={(event) => setAbierto(event.currentTarget.open)}>
+    <details className="group">
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 items-start gap-2.5">
           <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-[#C0392B]" aria-hidden="true" />
           <span className="min-w-0">
             <span className="block text-sm font-bold text-slate-900">Lectura bíblica</span>
-            <span className="mt-1 block text-xl font-bold leading-7 text-slate-950">{referencia}</span>
+            <span className="mt-1 block text-xl font-bold leading-7 text-slate-950">{citaCompleta}</span>
+            {versos[0]?.texto ? (
+              <span aria-hidden="true" className="relative mt-2 block max-h-12 overflow-hidden group-open:hidden">
+                <span className="block line-clamp-2 text-[13px] font-normal leading-6 text-slate-600">
+                  {versos[0].texto} {versos[1]?.texto ?? ''}
+                </span>
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-b from-transparent to-white" />
+              </span>
+            ) : null}
           </span>
         </span>
         <ChevronDown className="h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
