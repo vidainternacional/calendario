@@ -1,12 +1,20 @@
 {
-  "task": "Registrar aprobación de producción de lectura bíblica y recuperación de contraseña (PR #315)",
-  "userRequest": "El usuario aprobó explícitamente incorporar a __VIDA_INTERNACIONAL.md la validación de producción propuesta para 2026-11-16: PR #315 fusionado, Vercel READY, lectura integrada, devocional y recuperación aprobados, tres pruebas históricas de CI pendientes. Únicamente documentación; conservar prioridad activa Bloque 4 — Discipulado y no tocar código, base de datos ni permisos.",
+  "task": "Preparar e incorporar catálogo de canciones VIDA desde el listado del usuario",
+  "userRequest": "Organizar las canciones cristianas entregadas, conciliar duplicados y tonalidades, investigar identidad y enlaces YouTube/Spotify, preparar letra suministrada y cifrado transportable e incorporarlas a la biblioteca existente de Alabanza. Conservar registros y permisos existentes. Identificaciones dudosas quedan pendientes; no inventar letras, artistas, acordes o enlaces. Sin cambios de diseño, maestro, esquema o RLS; sin merge ni producción de código. Preparar importación revisable desde Biblioteca mediante server action existente y sesión de administrador/líder, sin escritura SQL directa ni cambios de permisos.",
   "allowedPaths": [
     ".vida/change-scope.json",
-    "__VIDA_INTERNACIONAL.md"
+    "docs/CONTINUIDAD_VIDA.md",
+    "docs/CATALOGO_CANCIONES_VIDA_2026-11-17.md",
+    "scripts/vida-canciones/**",
+    "tests/regression/catalogo-canciones-vida.test.mjs",
+    "app/actions/biblioteca-alabanza.ts",
+    "components/ministerios/BibliotecaAlabanzaClient.tsx",
+    "components/ministerios/ImportarCatalogoVida.tsx",
+    "data/canciones-vida-20261117.json",
+    "lib/musica/catalogo-vida.ts"
   ],
   "allowSupabase": false,
-  "allowMasterUpdate": true,
+  "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true

@@ -3,6 +3,16 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Catálogo de canciones VIDA · preparado 2026-11-17
+
+- **Tarea actual:** organizar e incorporar el listado musical del usuario. Rama `agent/catalogo-canciones-vida-20261117`, base main `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`. [Checkpoint del catálogo](CATALOGO_CANCIONES_VIDA_2026-11-17.md).
+- **Preparado:** 235 entradas/variantes; 82 referencias candidatas con tono y cifrado aportados, 151 pendientes, 2 fichas existentes conservadas. Solo 25 candidatas tienen ambos enlaces. Todas las letras siguen pendientes; hubo bloqueo automático de la copia masiva de letras, sin reintentos para eludirlo. No afirmar catálogo completo ni coincidencia musical certificada.
+- **Implementado:** revisión e importación seleccionable en la biblioteca existente de Alabanza, por server action con sesión y permisos de administración/líder. Lotes de hasta 20; no sobrescribe ni reactiva fichas, admite reintentos. Las pendientes se pueden completar en el editor existente.
+- **Probado:** TypeScript, build completo, diez pruebas pertinentes y lint de archivos nuevos. Guardrails y recibo del único Preview se verifican al publicar la rama y se registran en el PR. No se certifican fallos históricos de CI ni pruebas visuales autenticadas.
+- **Datos/publicación:** no se escribió en Supabase ni se cambió RLS, roles, esquema, maestro o producción. El Preview comparte ccvida real: importar allí guarda contenido editorial visible para la biblioteca habitual. No enviar importaciones ficticias. Sin merge autorizado.
+- **Conservar trabajo anterior:** PR #313 Draft permanece separado en `agent/devocionales-centro-pastoral-20261116`, SHA `155c7614fe74b0f9c75046331f37820969a467fe`; Preview `https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`, READY `dpl_ButgTu9NgUSVFGLPhXAaiB1NXZnR`. Incluye continuidad Estudio/Cuaderno, paginación de videos y recordatorio de notificaciones; pendiente aprobación visual, no integrar automáticamente con el catálogo.
+- **Siguiente paso:** revisar el catálogo en el Preview de esta rama con la cuenta propia y confirmar las referencias elegidas; importar contenido real y resolver dudas. Falta aprobación nueva para integrar/publicar código. Maestro y Bloque 4 permanecen sin cambios. El registro que sigue conserva contexto histórico; el estado de este corte prevalece para esta tarea.
+
 ## Discipulado — Biblioteca de cursos y edición integral · preparado 2026-11-16
 
 - **Solicitud aprobada:** el usuario pidió sustituir la ficha visible permanentemente por una biblioteca de carpetas; abrir cada curso y editar Información, Lecciones y Examen final; permitir cursos temáticos propios, editor de respuestas tipo formulario, y eliminar cursos de forma protegida.

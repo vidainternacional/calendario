@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react'
 import { ChevronDown, ExternalLink, Music2, Plus, Save, Search, Trash2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import ImportarCatalogoVida from './ImportarCatalogoVida'
 import {
   archivarCancionBibliotecaAlabanza,
   guardarCancionBibliotecaAlabanza,
@@ -97,6 +98,11 @@ export default function BibliotecaAlabanzaClient({ ministerioId, canciones }: { 
   }
 
   return <div className="text-slate-900">
+    <ImportarCatalogoVida ministerioId={ministerioId} prepararFicha={(song) => {
+      setFormNueva({ titulo: song.titulo, artista: song.artista || '', tonalidadBase: song.tonalidad_base || '', letra: '', acordes: song.acordes || '', notasPermanentes: [song.notas_permanentes, ...song.observaciones_revision].join('\n'), spotifyUrl: song.spotify_url || '', youtubeUrl: song.youtube_url || '' })
+      setNueva(true); setAbierta(null); setMensaje('Revisa título, versión y acordes antes de guardar esta ficha pendiente.')
+      requestAnimationFrame(() => document.getElementById('nueva-cancion-vida')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    }} />
     <div className="flex items-center gap-2">
       <label className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" /><input value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar canción o artista" className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400" /></label>
       <button type="button" onClick={() => { setNueva((value) => !value); setAbierta(null); setMensaje(null) }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-violet-600 text-white" aria-label={nueva ? 'Cerrar nueva canción' : 'Nueva canción'}>{nueva ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}</button>
@@ -104,7 +110,7 @@ export default function BibliotecaAlabanzaClient({ ministerioId, canciones }: { 
 
     {mensaje ? <p className="mt-3 text-xs font-semibold text-slate-600">{mensaje}</p> : null}
 
-    {nueva ? <div className="mt-4 border-y border-slate-200 py-4">
+    {nueva ? <div id="nueva-cancion-vida" className="mt-4 border-y border-slate-200 py-4">
       <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-violet-500">Nueva canción</p>
       <div className="mt-3 grid gap-3">
         <label className="text-xs font-bold text-slate-600">Nombre<input value={formNueva.titulo} onChange={(e) => setFormNueva((c) => ({ ...c, titulo: e.target.value }))} className={`${FIELD} h-11`} placeholder="Nombre de la canción" /></label>
