@@ -33,7 +33,7 @@ export async function updateSession(request: NextRequest) {
 
   // Rutas públicas — no requieren autenticación en middleware.
   // /material aplica sus propios controles por audiencia y sesión.
-  const publicRoutes = ['/', '/login', '/signup', '/api/icon', '/auth/confirm', '/olvide', '/material']
+  const publicRoutes = ['/', '/login', '/signup', '/api/icon', '/auth/confirm', '/olvide', '/restablecer', '/material']
   const isPublicRoute = publicRoutes.some((route) =>
     route === '/' ? pathname === '/' : pathname.startsWith(route)
   )
