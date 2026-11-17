@@ -97,6 +97,10 @@ export default async function PlanDiaPage({ params }: { params: Promise<{ planId
           key={planId + '-' + numeroDia}
           referencia={String(reading.referencia)}
           versos={versosDelDia}
+          bookCode={String(reading.book_code)}
+          chapter={Number(reading.chapter)}
+          verseStart={reading.verse_start == null ? null : Number(reading.verse_start)}
+          verseEnd={reading.verse_end == null ? null : Number(reading.verse_end)}
         />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Link href={bibleHref} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-2 text-center text-xs font-bold text-white sm:text-sm"><BookOpen className="h-4 w-4 shrink-0" />Abrir Biblia</Link>
