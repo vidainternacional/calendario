@@ -1,12 +1,9 @@
 {
-  "task": "Registrar aprobación de producción de lectura bíblica y recuperación de contraseña (PR #315)",
-  "userRequest": "El usuario aprobó explícitamente incorporar a __VIDA_INTERNACIONAL.md la validación de producción propuesta para 2026-11-16: PR #315 fusionado, Vercel READY, lectura integrada, devocional y recuperación aprobados, tres pruebas históricas de CI pendientes. Únicamente documentación; conservar prioridad activa Bloque 4 — Discipulado y no tocar código, base de datos ni permisos.",
-  "allowedPaths": [
-    ".vida/change-scope.json",
-    "__VIDA_INTERNACIONAL.md"
-  ],
+  "task": "Corregir avisos de publicaciones dirigidas de Devocionales",
+  "userRequest": "El pastor Romy publicó un devocional para destinatarios seleccionados y nadie recibió el aviso. Diagnosticar y corregir la falta de llamada a push al publicar, mantener audiencia/RLS y permisos, evitar duplicados y mostrar el resultado. Preparar recuperación explícita por autor, sin enviar avisos reales de prueba ni reenviar la publicación existente desde esta sesión. No mezclar el trabajo musical ni publicar producción sin autorización.",
+  "allowedPaths": [".vida/change-scope.json", "app/actions/mensajes-dirigidos.ts", "lib/estudios/notificar-mensaje-dirigido.ts", "components/estudios/MensajesSemanalesEditor.tsx", "tests/regression/mensajes-dirigidos.test.mjs", "tests/regression/avisos-devocionales.test.mjs", "docs/CONTINUIDAD_VIDA.md", "docs/AVISOS_DEVOCIONALES_2026-11-17.md"],
   "allowSupabase": false,
-  "allowMasterUpdate": true,
+  "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,
   "preserveExistingUI": true

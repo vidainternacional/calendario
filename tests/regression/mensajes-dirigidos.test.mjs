@@ -55,14 +55,16 @@ function setup(options={}) {
   const opts={role:'pastor',status:'activo',active:true,allowedMinistries:[ministerioA,ministerioB],existing:null,race:false,...options}
   const calls=[]
   const refreshed=[]
+  const avisos=[]
   const db={from: table=>new Query(table,calls,opts)}
   const actions=cargarModulo('app/actions/mensajes-dirigidos.ts',{
     'next/cache': { revalidatePath: path=>refreshed.push(path) },
+    '@/lib/estudios/notificar-mensaje-dirigido': { notificarMensajeDirigido: async (...args) => { avisos.push(args); return 'Aviso preparado.' } },
     '@/lib/auth/permisos': { contextoPastoral: async()=>({ supabase:db,user:opts.user===null?null:{id:actor},error:null }) },
     '@/lib/estudios/youtube-link': { youtubeVideo: v=>v===videoUrl ? {url:'https://www.youtube.com/watch?v=fvBD-rFlTfg'} : null },
     '@/lib/estudios/mensajes-dirigidos-tipos': { ROL_DESTINO_IDS:new Set(['pastor','administrador','lider','servidor']), TIPO_DEVOCIONAL_IDS: new Set(['mensaje','devocional','serie','estudio_biblico','ensenanza','reflexion','testimonio','conferencia','capacitacion']) },
   })
-  return {actions,calls,refreshed}
+  return {actions,calls,refreshed,avisos}
 }
 
 test('sin marcar Publicar, el mensaje se guarda como borrador de su autor',async()=>{
@@ -85,8 +87,8 @@ test('puede publicar para dos ministerios y pastores sin abrir a toda la congreg
   const payload=op(q,'insert')[1]
   assert.equal(payload.publicado,true)
   assert.equal(payload.audiencia_iglesia,false)
-  assert.deepEqual(payload.roles_destino,['pastor'])
-  assert.deepEqual(payload.ministerios_destino,[ministerioA,ministerioB])
+  assert.deepEqual([...payload.roles_destino],['pastor'])
+  assert.deepEqual([...payload.ministerios_destino],[ministerioA,ministerioB])
   assert.equal(payload.tipo,'devocional')
   assert.ok(payload.published_at)
   assert.ok(refreshed.includes('/pastoral/mensajes'))
@@ -153,7 +155,7 @@ test('serie se guarda con título y número de capítulo, respetando borrador y 
   assert.equal(datos.serie_titulo,'Fundamentos de la fe')
   assert.equal(datos.serie_episodio,2)
   assert.equal(datos.publicado,false)
-  assert.deepEqual(datos.ministerios_destino,[ministerioA])
+  assert.deepEqual([...datos.ministerios_destino],[ministerioA])
 })
 
 test('serie rechaza nombre vacío, episodio fuera de rango y categoría desconocida',async()=>{
@@ -179,4 +181,36 @@ test('la migración de categorías solo amplía la tabla nueva y conserva polít
   assert.match(sql,/unique index if not exists/i)
   assert.doesNotMatch(sql,/drop table|delete from|update public[.]|create policy|drop policy/i)
   assert.doesNotMatch(sql,/pastoral_paquetes|ministerio_miembros|alter table public[.]profiles/i)
+})
+
+
+test('una nueva publicación solicita el aviso, pero el borrador y la edición publicada no lo repiten', async () => {
+  const nuevo=setup();await nuevo.actions.guardarMensajeDirigido(makeForm({publicar:true,iglesia:true}));assert.equal(nuevo.avisos.length,1)
+  const borrador=setup();await borrador.actions.guardarMensajeDirigido(makeForm());assert.equal(borrador.avisos.length,0)
+  const edicion=setup({existing:{updated_at:'revision',published_at:'2026-11-17T12:00:00Z'}})
+  const f=makeForm({publicar:true,iglesia:true});f.set('id',ministerioA);f.set('revision','revision')
+  await edicion.actions.guardarMensajeDirigido(f);assert.equal(edicion.avisos.length,0)
+})
+
+test('publicar un borrador desde la biblioteca avisa; despublicar no envía', async () => {
+  const e=setup({existing:{audiencia_iglesia:true,roles_destino:[],ministerios_destino:[],lideres_ministerio:false,published_at:null,updated_at:'revision'}})
+  assert.equal((await e.actions.cambiarPublicacionDirigida(ministerioA,'revision',true)).success,true)
+  assert.equal(e.avisos.length,1)
+  await e.actions.cambiarPublicacionDirigida(ministerioA,'revision',false)
+  assert.equal(e.avisos.length,1)
+})
+
+test('no dispara aviso si el guardado perdió la revisión o falló', async () => {
+  const e=setup({race:true});await e.actions.guardarMensajeDirigido(makeForm({publicar:true,iglesia:true}));assert.equal(e.avisos.length,0)
+})
+
+test('el reintento exige autor autenticado y mensaje publicado; no cambia destinatarios ni contenido', async () => {
+  const e=setup({existing:{id:ministerioA,publicado:true}})
+  assert.equal((await e.actions.avisarMensajeDirigido(ministerioA)).success,true)
+  assert.equal(e.avisos.length,1)
+  const consulta=e.calls.find(q=>q.table==='vida_devocionales')
+  assert.equal(op(consulta,'eq','autor_id')[2],actor)
+  assert.equal(e.calls.some(q=>op(q,'update')||op(q,'insert')),false)
+  const b=setup({existing:{publicado:false}});assert.equal((await b.actions.avisarMensajeDirigido(ministerioA)).success,false)
+  const a=setup({role:'servidor'});assert.equal((await a.actions.avisarMensajeDirigido(ministerioA)).success,false);assert.equal(a.avisos.length,0)
 })

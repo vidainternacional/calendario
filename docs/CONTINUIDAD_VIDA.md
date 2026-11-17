@@ -3,6 +3,16 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Incidencia prioritaria — avisos de Devocionales · 2026-11-17
+
+- Usuario reportó que el pastor Romy publicó para cinco ministerios y nadie recibió aviso. Verificados: publicación dirigida publicada, 17 destinatarios activos por pertenencia, 10 con push registrado (16 dispositivos), cero registros de envío para esa referencia. Sin trigger de envío en la tabla.
+- Causa comprobada: acciones de mensajes dirigidos guardan/publican y revalidan pantallas sin invocar Web Push. Producción/main siguen en `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`, deployment READY `dpl_BcmYyxoCZihqM9z5Zjxa5TS5GJMK`.
+- Preparada rama separada `agent/avisos-devocionales-20261117`: aviso deduplicado al publicar, audiencia conforme a RLS y preferencias, protección de autor/publicación/revisión y botón explícito **Enviar aviso pendiente** para el autor. Borradores/ediciones de contenido no reavisan; no se ampliaron destinatarios ni permisos.
+- 24 pruebas pertinentes, TypeScript/lint/build locales correctos. No se enviaron avisos reales, no se modificó la publicación afectada ni se probaron teléfonos. Falta autorización de producción y recuperación real por el autor; el botón del Preview enviaría un aviso real, no pulsarlo como prueba.
+- [Checkpoint de la incidencia](AVISOS_DEVOCIONALES_2026-11-17.md). Recibo de PR/Preview exacto se añade al PR sin otro build documental. Maestro, RLS, roles, cron y planes intactos.
+- No mezclar: PR musical #316 sigue Draft en `agent/catalogo-canciones-vida-20261117`, SHA `039283b278801ce1af4113d46dd758fab13903de`; último conteo verificado aquí: 23 canciones activas. Las candidatas comprobadas del build no equivalen a filas importadas. PR #313 también permanece separado.
+
+
 ## Discipulado — Biblioteca de cursos y edición integral · preparado 2026-11-16
 
 - **Solicitud aprobada:** el usuario pidió sustituir la ficha visible permanentemente por una biblioteca de carpetas; abrir cada curso y editar Información, Lecciones y Examen final; permitir cursos temáticos propios, editor de respuestas tipo formulario, y eliminar cursos de forma protegida.

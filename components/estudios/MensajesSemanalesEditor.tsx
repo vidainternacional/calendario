@@ -4,7 +4,7 @@ import { useId, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, ChevronDown, Loader2, Eye, PlayCircle, Users } from 'lucide-react'
 import { guardarMensajeSemanal, cambiarPublicacionMensaje } from '@/app/actions/mensajes-semanales'
-import { guardarMensajeDirigido, cambiarPublicacionDirigida } from '@/app/actions/mensajes-dirigidos'
+import { guardarMensajeDirigido, cambiarPublicacionDirigida, avisarMensajeDirigido } from '@/app/actions/mensajes-dirigidos'
 import { youtubeVideo } from '@/lib/estudios/youtube-link'
 import {
   ROLES_DESTINO, CATEGORIAS_DEVOCIONALES, TIPO_DEVOCIONAL_IDS, etiquetaTipo, resumenAudiencia,
@@ -14,7 +14,7 @@ import {
 const campo = 'mt-1.5 block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100'
 
 function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
-  mensaje?: MensajeConAudiencia; ministerios: MinisterioDestino[]; seriesDisponibles: string[]; onSaved: () => void
+  mensaje?: MensajeConAudiencia; ministerios: MinisterioDestino[]; seriesDisponibles: string[]; onSaved: (aviso?: string) => void
 }) {
   const router = useRouter()
   const seriesListId = useId()
@@ -56,10 +56,10 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
     setError(null)
     start(async () => {
       try {
-        const result = esLegado ? await guardarMensajeSemanal(values) : await guardarMensajeDirigido(values)
+        const result: { success: boolean; error?: string; aviso?: string } = esLegado ? await guardarMensajeSemanal(values) : await guardarMensajeDirigido(values)
         if (!result.success) { setError(result.error || 'No se pudo guardar.'); return }
         if (!mensaje) { form.reset(); restaurarFormulario() }
-        onSaved()
+        onSaved(result.aviso)
         router.refresh()
       } catch { setError('No se pudo guardar. Conservá tus datos e intentá nuevamente.') }
     })
@@ -155,7 +155,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
                   </label>)}
                 </div>}
             </div>
-            <p className="text-xs leading-5 text-slate-500">Al publicar, solo aparecerá en la biblioteca de las cuentas autorizadas. La privacidad del video original se configura por separado en YouTube.</p>
+            <p className="text-xs leading-5 text-slate-500">Al publicar, aparecerá en la biblioteca de las cuentas autorizadas y se les enviará el aviso si tienen notificaciones activadas. La privacidad del video original se configura por separado en YouTube.</p>
           </div>
         </details>
       </div>
@@ -204,7 +204,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
       </button>
     </div>
     <p className="mt-2 text-sm leading-6 text-slate-500">Subí el video a YouTube y pegá su enlace. Podés guardar un borrador o publicarlo para los grupos que elijás.</p>
-    {nuevo && <Editor onSaved={() => { setNuevo(false); setAviso('Mensaje guardado.') }} ministerios={ministerios} seriesDisponibles={seriesDisponibles} />}
+    {nuevo && <Editor onSaved={(aviso) => { setNuevo(false); setAviso(aviso || 'Mensaje guardado.') }} ministerios={ministerios} seriesDisponibles={seriesDisponibles} />}
     {aviso && <p role="status" className="mt-3 text-sm text-slate-700">{aviso}</p>}
     {mensajes.length > 0 && <div className="mt-4 divide-y divide-slate-200">{mensajes.map(m => <div key={m.id} className="py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -219,18 +219,19 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
           <button disabled={busy} className="min-h-11 text-sm font-semibold text-slate-600 disabled:opacity-50"
             onClick={() => { setAviso(null); start(async () => {
               try {
-                const r = m.origen === 'legado'
+                const r: { success: boolean; error?: string; aviso?: string } = m.origen === 'legado'
                   ? await cambiarPublicacionMensaje(m.id, m.revision, !m.publicado)
                   : await cambiarPublicacionDirigida(m.id, m.revision, !m.publicado)
-                setAviso(r.success ? (m.publicado ? 'El mensaje quedó como borrador.' : 'El mensaje ya está publicado.') : r.error || 'No se pudo actualizar.')
+                setAviso(r.success ? r.aviso || (m.publicado ? 'El mensaje quedó como borrador.' : 'El mensaje ya está publicado.') : r.error || 'No se pudo actualizar.')
                 if (r.success) router.refresh()
               } catch { setAviso('No se pudo actualizar. Intentá nuevamente.') }
             }) }}
           >{m.publicado ? 'Despublicar' : 'Publicar'}</button>
+          {m.publicado && m.origen !== 'legado' ? <button type="button" disabled={busy} className="min-h-11 text-sm font-semibold text-violet-700 disabled:opacity-50" onClick={() => { setAviso(null); start(async () => { try { const r = await avisarMensajeDirigido(m.id); setAviso(r.success ? r.aviso || 'Aviso preparado.' : r.error || 'No se pudo enviar.'); } catch { setAviso('No se pudo completar el aviso. Puedes reintentar.'); } }) }}>Enviar aviso pendiente</button> : null}
         </div>
       </div>
       {editando === m.id && <Editor key={m.id + m.revision} mensaje={m} ministerios={ministerios}
-        onSaved={() => { setEditando(null); setAviso('Mensaje actualizado.') }} seriesDisponibles={seriesDisponibles} />}
+        onSaved={(aviso) => { setEditando(null); setAviso(aviso || 'Mensaje actualizado.') }} seriesDisponibles={seriesDisponibles} />}
     </div>)}</div>}
   </section>
 }

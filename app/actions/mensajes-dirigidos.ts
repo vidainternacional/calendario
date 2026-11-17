@@ -1,12 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { notificarMensajeDirigido } from '@/lib/estudios/notificar-mensaje-dirigido'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { contextoPastoral } from '@/lib/auth/permisos'
 import { youtubeVideo } from '@/lib/estudios/youtube-link'
 import { ROL_DESTINO_IDS, TIPO_DEVOCIONAL_IDS, type RolDestino, type TipoDevocional } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
-type Resultado = { success: boolean; error?: string }
+type Resultado = { success: boolean; error?: string; aviso?: string }
 const uuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
 
 async function contexto() {
@@ -113,8 +114,10 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
     if (resultado.error?.code === '23505') return { success: false, error: 'Ese número de episodio ya existe en esta serie. Elegí otro.' }
     return { success: false, error: 'No se pudo guardar el mensaje. Comprobá tu conexión e intentá nuevamente.' }
   }
-  refrescar(String(resultado.data[0].id))
-  return { success: true }
+  const guardadoId = String(resultado.data[0].id)
+  refrescar(guardadoId)
+  const aviso = publicar && !anterior?.published_at ? await notificarMensajeDirigido(guardadoId, user.id) : undefined
+  return { success: true, aviso }
 }
 
 export async function cambiarPublicacionDirigida(id: string, revision: string, publicar: boolean): Promise<Resultado> {
@@ -138,5 +141,17 @@ export async function cambiarPublicacionDirigida(id: string, revision: string, p
     .eq('id', id).eq('autor_id', user.id).eq('updated_at', revision).select('id')
   if (updateError || !guardados?.length) return { success: false, error: 'No se pudo actualizar. Recargá la página.' }
   refrescar(id)
-  return { success: true }
+  const aviso = publicar && !data.published_at ? await notificarMensajeDirigido(id, user.id) : undefined
+  return { success: true, aviso }
+}
+
+
+// Reintento explícito del autor: nunca cambia publicación, contenido ni destinatarios.
+export async function avisarMensajeDirigido(id: string): Promise<Resultado> {
+  const { db, user } = await contexto()
+  if (!db || !user || !uuid(id)) return { success: false, error: 'No autorizado.' }
+  const { data, error } = await db.from('vida_devocionales').select('id,publicado')
+    .eq('id', id).eq('autor_id', user.id).eq('publicado', true).maybeSingle()
+  if (error || !data || !data.publicado) return { success: false, error: 'Solo el autor puede avisar sobre su mensaje publicado.' }
+  return { success: true, aviso: await notificarMensajeDirigido(id, user.id) }
 }
