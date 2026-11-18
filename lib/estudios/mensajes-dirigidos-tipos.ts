@@ -69,7 +69,7 @@ export function desdeVideoDirigido(row: Record<string, unknown>): MensajeConAudi
 }
 
 export function resumenAudiencia(m: MensajeConAudiencia, ministerios: MinisterioDestino[] = []): string {
-  if (!m.publicado) return 'Borrador · visible solo para ti'
+  if (!m.publicado) return m.origen === 'legado' ? 'Borrador · visible solo para ti' : 'Borrador · autor y administradores activos'
   if (m.audienciaIglesia) return 'Publicado · toda la congregación'
   const nombres: string[] = []
   if (m.lideresMinisterio) nombres.push('líderes de ministerio')
