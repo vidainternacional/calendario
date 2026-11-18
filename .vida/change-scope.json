@@ -1,6 +1,6 @@
 {
-  "task": "Completar carga musical pendiente con referencias comprobadas",
-  "userRequest": "El usuario aprueba la carga anterior y pide transportar acordes desde la ficha conservando el último tono guardado; mantener practicidad desde setlist; quitar recuadros y superficies del editor para integrarlo al fondo. Solicita completar las 82 candidatas y ampliar al menos al doble de las 22 actuales mediante referencias verificables. Investigar metadatos y enlaces; no copiar letras completas protegidas ni eludir el bloqueo anterior. Mantener roles, letras/datos de usuarios, historial y tonos de servicios existentes; sin producción ni maestro. El usuario pide retomar hasta terminar las canciones pendientes. Confirmado ccvida 23 activas (22 con acordes/YouTube, 20 Spotify, ninguna letra). Actualizar rama con main vigente a7bcf097, conciliar sin sobrescribir; corregir referencias identificables y renovar verificación antes de importar mediante sesión real. Mantener enlace único de prueba; no merge/producción sin aprobación nueva ni copiar letras protegidas.",
+  "task": "Ficha musical centrada, lectura en grande y orden del setlist",
+  "userRequest": "El usuario aprueba la carga anterior y pide transportar acordes desde la ficha conservando el último tono guardado; mantener practicidad desde setlist; quitar recuadros y superficies del editor para integrarlo al fondo. Solicita completar las 82 candidatas y ampliar al menos al doble de las 22 actuales mediante referencias verificables. Investigar metadatos y enlaces; no copiar letras completas protegidas ni eludir el bloqueo anterior. Mantener roles, letras/datos de usuarios, historial y tonos de servicios existentes; sin producción ni maestro. El usuario pide retomar hasta terminar las canciones pendientes. Confirmado ccvida 23 activas (22 con acordes/YouTube, 20 Spotify, ninguna letra). Actualizar rama con main vigente a7bcf097, conciliar sin sobrescribir; corregir referencias identificables y renovar verificación antes de importar mediante sesión real. Mantener enlace único de prueba; no merge/producción sin aprobación nueva ni copiar letras protegidas. El usuario confirma incorporación y pide ficha centrada con información general arriba y acordes/letra amplios debajo; transposición junto a acordes, vista grande para uso en vivo y cambio de orden del listado. 50 nuevas cotejadas/73 totales, 23 previas intactas; los datos ya están compartidos con producción. Preparar cambios mínimos de ficha y setlist. No alterar permisos; cualquier RPC nueva para orden atómico se presenta antes de aplicar. Autorización recibida: «Autorizar guardado del orden». Aplicar función SECURITY INVOKER exclusiva service_role desde action con sesión/rol/evento, sin cambiar RLS ni canciones; verificar huella intacta.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -22,9 +22,18 @@
     "tests/regression/ficha-cancion.test.mjs",
     "lib/musica/transponer.ts",
     "tests/regression/transposicion-ficha.test.mjs",
-    "components/ministerios/MusicianSetlistClient.tsx"
+    "components/ministerios/MusicianSetlistClient.tsx",
+    "components/ministerios/PantallaCancion.tsx",
+    "components/ministerios/RepertorioServicioEditor.tsx",
+    "app/(app)/ministerios/[id]/setlist/page.tsx",
+    "app/actions/repertorio-programacion.ts",
+    "tests/regression/vista-musical-en-vivo.test.mjs",
+    "docs/FICHA_MUSICAL_EN_VIVO_2026-11-18.md",
+    "app/(app)/ministerios/[id]/programacion/page.tsx",
+    "docs/sql-candidates/ORDEN_REPERTORIO_2026-11-18.sql",
+    "supabase/migrations/20261118130000_orden_repertorio_atomico.sql"
   ],
-  "allowSupabase": false,
+  "allowSupabase": true,
   "allowMasterUpdate": false,
   "allowStructuralCssOverride": false,
   "allowImportantCss": false,

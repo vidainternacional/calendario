@@ -3,6 +3,16 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Ficha musical centrada y uso en vivo — 2026-11-18 · PR #316
+
+- **Datos confirmados:** 50 nuevas guardadas mediante sesión real; 73 activas en ccvida/producción. Cotejo 50/50 completo, 23 previas intactas. El antiguo corte de 23 de abajo es histórico. Letras pendientes, catálogo no terminado.
+- Usuario pidió información general arriba, hoja de acordes/letra amplia y centrada, transposición junto a acordes, vista grande y control del orden. Implementado en la misma rama musical, sin modificar CSS global ni roles.
+- Pantalla grande editable en ficha y de lectura/navegación en Setlist; transposición personal sin escritura, guardado oficial restringido. Flechas Subir/Bajar de Programación/Setlist usan permiso existente de administración/liderazgo.
+- **SQL autorizado y aplicado:** respuesta «Autorizar guardado del orden». Función `vida_reordenar_repertorio`, migración `orden_repertorio_atomico_20261118`, ejecución solo service_role desde action con comprobación de sesión/rol/evento. RLS intacta; tres filas de repertorio con la misma huella antes/después. No reordenar servicios reales como prueba.
+- 34 pruebas pertinentes, TypeScript/lint específico/build local y pruebas Chromium aisladas de ficha/lector/orden con datos simulados. Falta validación autenticada/visual del usuario. No se declara CI global verde ni publicación de código.
+- **Fuente de continuidad del bloque:** `docs/FICHA_MUSICAL_EN_VIVO_2026-11-18.md`. Maestro intacto. Entrada única de pruebas conservada; asignar al nuevo deployment al verificar READY. Recibo final de SHA/alias y cotejo en PR #316, sin otro despliegue documental.
+- Falta aprobación nueva de merge/producción del código musical; los datos ya son compartidos con producción. Conservar pendientes de identificación y letras sin copiar material protegido.
+
 ## Retomar catálogo musical — 2026-11-18 · PR #316
 
 - Usuario solicita continuar hasta completar canciones. Recuento directo actual ccvida: 23 activas, 22 con acordes, 22 YouTube, 20 Spotify, ninguna letra. No confundir candidatas/controles del build con filas importadas.

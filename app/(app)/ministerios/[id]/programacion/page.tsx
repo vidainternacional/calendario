@@ -251,7 +251,7 @@ export default async function ProgramacionMinisterialPage({
         .eq('evento_id', evento.id)
         .eq('ministerio_id', id)
         .order('orden')
-        .order('created_at'),
+        .order('created_at').order('id'),
       admin
         .from('evento_paletas')
         .select('*')
