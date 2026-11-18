@@ -1,7 +1,15 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
+Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+
+## Publicación musical autorizada — 2026-11-18 · PR #316
+
+- Usuario validó la presentación («Perfecto me parece») y autorizó «pasa a la producción». Publicar únicamente PR #316; no integrar otros Draft ni modificar maestro.
+- Código aprobado `b82a51df868172f943fe6554660e7315745ac324`, Preview READY `dpl_9C6GUqMRqt72YmugxCEyamy9E1yf`, alias único cotejado. Cabecera editable única, Letra/Cifrado, transporte compacto, ficha grande, lectura y orden del servicio aprobados.
+- 37 pruebas pertinentes, TypeScript/lint específico/build y Guardrails correctos; Chromium aislado móvil/iPad/escritorio. CI general conserva exactamente tres fallos históricos de middleware/Inicio/Avisos. Validación visual del usuario recibida; no afirmar pruebas autenticadas de terceros.
+- Datos previamente cotejados: 73 canciones activas, 50 nuevas/23 previas intactas; letras y referencias pendientes, catálogo no terminado. No reimportar ni modificar datos para publicar. RPC de orden ya autorizada/aplicada; no repetir migración ni probar con servicios reales.
+- Este commit registra aprobación, sin cambios funcionales. Recibo final de merge SHA/deployment READY/dominio y revisión inicial de errores se registra en cuerpo del PR #316 para evitar otro despliegue documental. Confirmar dicho recibo antes de afirmar publicación.
 
 ## Cabecera editable sin duplicación — 2026-11-18 · PR #316
 
