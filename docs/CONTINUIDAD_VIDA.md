@@ -3,6 +3,16 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Retomar catálogo musical — 2026-11-18 · PR #316
+
+- Usuario solicita continuar hasta completar canciones. Recuento directo actual ccvida: 23 activas, 22 con acordes, 22 YouTube, 20 Spotify, ninguna letra. No confundir candidatas/controles del build con filas importadas.
+- Rama musical actualizada mediante merge de main `a7bcf097` (#317 y #318 publicados), conservando cambios musicales pendientes. No reabrir ni perder avisos, gestión pastoral o ministerio reciente. No se integró música a main.
+- Catálogo: 235 entradas/variantes; 87 candidatas identificadas, 146 pendientes de identidad/datos, 2 referencias existentes. De las 87, 21 coinciden con fichas actuales por UUID o título normalizado: 66 posibles nuevas antes de comprobación de enlaces (no equivale a 66 importables).
+- Corregida referencia de Pon aceite en mi vida a Jaime Murrell/Juan Salinas; retirado Spotify de Ricardo Rodríguez, que correspondía a otro canto. Añadidos videos oficiales para De los montes y Los muros caerán. Quiero entender/Renuévame ya son compatibles con el transportador vigente y vuelven a candidatas. No se cambia ningún registro guardado ni se copia letra protegida.
+- Renovar certificado de enlaces en el único build Preview del bloque. Ejecutar importación idempotente exclusivamente con sesión real autorizada de la aplicación, conservando fichas existentes. No escribir SQL de carga, suplantar sesiones ni leer claves para evitar la autenticación.
+- Entrada única conservada `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`; al quedar READY, asignarla al Preview musical y cotejar. El usuario abre Alabanza → Biblioteca con cuenta administradora; la carga autorizada se ejecuta automáticamente sin seleccionar canciones.
+- Falta contabilizar carga efectiva y resolver referencias ambiguas; todas las letras siguen pendientes salvo aportación/licencia autorizada. Sin autorización nueva de merge/producción ni maestro. Recibo exacto y pendientes de datos en PR #316, sin despliegue documental adicional.
+
 ## Publicación autorizada — último ministerio · 2026-11-18 · PR #318
 
 - Usuario aprobó el resultado del Preview y autorizó «Perfecto pásalo a producción». Publicar únicamente #318, sin mezclar otras ramas ni modificar el maestro.

@@ -90,3 +90,14 @@ El Preview usa **ccvida real**. Importar desde allí incorpora contenido editori
 ## Reversión
 
 El cambio de interfaz es reversible volviendo al código anterior; las fichas ya incorporadas siguen siendo editables en la biblioteca previa. No ejecutar borrados masivos: si hay una ficha equivocada, corregirla o archivarla con los controles existentes, preservando el historial. El retiro de esta interfaz no borra canciones ni repertorios.
+
+
+## Continuación — 2026-11-18
+
+Recuento real ccvida confirmado: 23 activas; 22 con acordes y video, 20 Spotify, cero letras. Actualizada rama desde main a7bcf097, conservando modificaciones musicales sin publicarlas. La ficha manual Nombre no hay y todas las correcciones existentes se preservan.
+
+Cinco referencias recuperadas/corregidas: Pon aceite en mi vida (Jaime Murrell), De los montes (Marco Barrientos), Los muros caerán (Miel San Marcos), Quiero entender (extensión Em7(add4) soportada) y Renuévame (A9sus4 soportada). 87 candidatas antes de verificación; 21 ya coinciden con DB, 66 aún no guardadas. Se mantiene estado pendiente en 146 entradas/variantes, no se inventan identidades ni acordes.
+
+Fuentes públicas de identidad: https://www.youtube.com/watch?v=mFOJZdJMGcU ; compositor https://www.youtube.com/watch?v=JctR6g0a39E ; https://www.youtube.com/watch?v=432KddN2yiY ; https://www.youtube.com/watch?v=nyrMayW_8oo . No se copiaron sus letras ni grabaciones. Spotify de Ricardo Rodríguez eliminado de la candidata Pon aceite por corresponder a un canto distinto; no se sustituyó por un enlace inventado.
+
+El catálogo requiere comprobación renovada en build (metadatos/estado del reproductor) y sesión real de administrador para insertar mediante action existente. No se usa SQL de escritura ni se simula sesión. La entrada de prueba acordada se mantiene; recibo exacto del único Preview, verificación de enlaces y carga real se registran en PR #316. No declarar completado hasta cotejar registros y pendientes. No publicar producción ni modificar maestro sin aprobación nueva.

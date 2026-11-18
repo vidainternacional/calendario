@@ -149,3 +149,11 @@ test('no se importa una ficha cuando el proveedor no confirma sus enlaces', asyn
   assert.equal(r.errores.length, 1)
   assert.equal(e.escrituras.length, 0)
 })
+
+test('la referencia de Pon aceite corresponde al canto correcto, no al medley de Ricardo Rodríguez',()=>{
+ const catalogo=JSON.parse(fs.readFileSync('data/canciones-vida-20261117.json','utf8'))
+ const song=catalogo.find(s=>s.indice_origen===7)
+ assert.equal(song.titulo,'Pon aceite en mi vida');assert.equal(song.artista,'Jaime Murrell');assert.equal(song.spotify_url,null)
+ assert.equal(song.youtube_url,'https://www.youtube.com/watch?v=mFOJZdJMGcU')
+ assert.ok(!song.fuentes_verificacion.some(url=>url.includes('2oxFhTlx3Xr0kkqUWdozJp')))
+})

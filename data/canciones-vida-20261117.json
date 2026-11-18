@@ -162,24 +162,23 @@
   {
     "id": "85941912-e232-59bb-a23e-78060bbe69ff",
     "indice_origen": 7,
-    "titulo": "Pon aceite en mí",
-    "artista": "Ricardo Rodriguez",
+    "titulo": "Pon aceite en mi vida",
+    "artista": "Jaime Murrell",
     "tonalidad_base": "Em",
     "acordes": "Em7 - Am7 - D - G\nEm7 - Am7 - Bsus4 - Em - F#m7\nCoro: D - Em - D - Em\nAm7 - D - G - D/F# - Em - Am7 - B7sus4 - B7(#9)\nAm7 - D - G - D/F# - Em - B7sus4 - B7(#9) - Em",
     "letra": null,
-    "notas_permanentes": "Segunda vez sin F#m7; letra aportada por usuario.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube.",
-    "spotify_url": "https://open.spotify.com/track/2oxFhTlx3Xr0kkqUWdozJp",
-    "youtube_url": null,
-    "estado": "pendiente",
+    "notas_permanentes": "Segunda vez sin F#m7; letra aportada por usuario.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nIdentidad corregida por fuente del compositor: Pon aceite en mi vida, Jaime Murrell/Juan Salinas. Se retiró la referencia de Ricardo Rodríguez porque era otro canto; Spotify pendiente de comprobar.\nPendientes actuales: letra, spotify_url.",
+    "spotify_url": null,
+    "youtube_url": "https://www.youtube.com/watch?v=mFOJZdJMGcU",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url"
+      "spotify_url"
     ],
-    "observaciones_revision": [
-      "Cifrado con tokens que el transportador actual no reconoce: B7sus4"
-    ],
+    "observaciones_revision": [],
     "fuentes_verificacion": [
-      "https://open.spotify.com/intl-es/track/2oxFhTlx3Xr0kkqUWdozJp"
+      "https://www.youtube.com/watch?v=mFOJZdJMGcU",
+      "https://www.youtube.com/watch?v=JctR6g0a39E"
     ],
     "fuente_usuario": null
   },
@@ -468,24 +467,23 @@
   {
     "id": "a1648f81-de01-576c-9cb2-290023712958",
     "indice_origen": 20,
-    "titulo": "De los montes a los valles",
-    "artista": null,
+    "titulo": "De los montes",
+    "artista": "Marco Barrientos",
     "tonalidad_base": "D",
     "acordes": "Intro: D - Dsus\nBm - G - Asus - A\nCoro: D - A/C# - G/B - Bm7 - F#m7 - G - Asus - D\nAleluya: G - Em7 - Bm7 - F#m7\nG - Em7 - Asus - A",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nTítulo de referencia oficial: De los montes. En los apuntes figura De los montes a los valles.\nPendientes actuales: letra, spotify_url.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=432KddN2yiY",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=432KddN2yiY"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -1402,17 +1400,15 @@
     "tonalidad_base": "G",
     "acordes": "Gadd2 - G\nGadd2 - G - Em7(add4) - Em7\nEm7(add4) - Em7 - Cadd2\nAm7 - Dsus4 - D\nAm7 - Cadd2 - Dsus4 - D\nCoro: G - Em7 - Cadd2 - G/B - Dsus4 - D",
     "letra": null,
-    "notas_permanentes": "Letra aportada; indicación final distorsión: G - E - F#m - B - E - C - D. Acorde compuesto requiere revisar compatibilidad del transportador.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.",
+    "notas_permanentes": "Letra aportada; indicación final distorsión: G - E - F#m - B - E - C - D. Acorde compuesto requiere revisar compatibilidad del transportador.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nRevisado 18-11-2026: el transportador vigente admite las extensiones anotadas; se conservan los acordes suministrados.\nPendientes actuales: letra, spotify_url.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=sR2vu6mRyPU",
-    "estado": "pendiente",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "Cifrado con tokens que el transportador actual no reconoce: Em7(add4)"
-    ],
+    "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=sR2vu6mRyPU",
       "https://www.youtube.com/watch?v=1Qr63Yk0joI"
@@ -3794,16 +3790,14 @@
     "tonalidad_base": "D",
     "acordes": "D - G/D - A/D - D\nEm9 - A9sus4 - A7\nEm7 - Asus4 - G/A\nCoro: D - A/C# - Bm7 - Bm7/A - Gadd9\nEm7 - Asus4 - G/A - A/C#\nD - A/C# - Bm7 - Bm7/A - G\nEm7 - A - D",
     "letra": null,
-    "notas_permanentes": "Cadena con Tu amor por mí; letra aportada; original en nomenclatura española.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nReferencia aportada: https://directorcreativo.pro/acorde/renuevame--tu-amor-por-mi-ft--elena-witt-guerra---krystal-guerra",
+    "notas_permanentes": "Cadena con Tu amor por mí; letra aportada; original en nomenclatura española.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nReferencia aportada: https://directorcreativo.pro/acorde/renuevame--tu-amor-por-mi-ft--elena-witt-guerra---krystal-guerra\nRevisado 18-11-2026: el transportador vigente admite las extensiones anotadas; se conservan los acordes suministrados.\nPendientes actuales: letra.",
     "spotify_url": "https://open.spotify.com/track/19q7qUu7jy0IfJEbI9pLsX",
     "youtube_url": "https://www.youtube.com/watch?v=zMAI3R37yNQ",
-    "estado": "pendiente",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra"
     ],
-    "observaciones_revision": [
-      "Cifrado con tokens que el transportador actual no reconoce: A9sus4"
-    ],
+    "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=zMAI3R37yNQ",
       "https://www.youtube.com/watch?v=YDy6QU0hess",
@@ -4929,23 +4923,22 @@
     "id": "cd47e05a-1dad-52af-b486-cd8accd3c4b1",
     "indice_origen": 210,
     "titulo": "Los muros caerán",
-    "artista": null,
+    "artista": "Miel San Marcos",
     "tonalidad_base": "Cm",
     "acordes": "Cm - Bb\nCm/Ab - Bb - Cm\nAb - Bb - Cm\nCoro: Cm - Cm/Ab - Bb - Gm - Cm\nPuente: Cm - Bb\nAb/F - Bb/G - Cm - Bb\nOutro: Cm - Ab - Bb - Cm",
     "letra": null,
-    "notas_permanentes": "Letra aportada. Melodía de trompetas C - Eb - F - G - Bb - Bb - C separada del cifrado.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Letra aportada. Melodía de trompetas C - Eb - F - G - Bb - Bb - C separada del cifrado.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPendientes actuales: letra, spotify_url.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=nyrMayW_8oo",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=nyrMayW_8oo"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
