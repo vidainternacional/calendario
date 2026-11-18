@@ -1,7 +1,47 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
+Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+
+## Publicación musical autorizada — 2026-11-18 · PR #316
+
+- Usuario validó la presentación («Perfecto me parece») y autorizó «pasa a la producción». Publicar únicamente PR #316; no integrar otros Draft ni modificar maestro.
+- Código aprobado `b82a51df868172f943fe6554660e7315745ac324`, Preview READY `dpl_9C6GUqMRqt72YmugxCEyamy9E1yf`, alias único cotejado. Cabecera editable única, Letra/Cifrado, transporte compacto, ficha grande, lectura y orden del servicio aprobados.
+- 37 pruebas pertinentes, TypeScript/lint específico/build y Guardrails correctos; Chromium aislado móvil/iPad/escritorio. CI general conserva exactamente tres fallos históricos de middleware/Inicio/Avisos. Validación visual del usuario recibida; no afirmar pruebas autenticadas de terceros.
+- Datos previamente cotejados: 73 canciones activas, 50 nuevas/23 previas intactas; letras y referencias pendientes, catálogo no terminado. No reimportar ni modificar datos para publicar. RPC de orden ya autorizada/aplicada; no repetir migración ni probar con servicios reales.
+- Este commit registra aprobación, sin cambios funcionales. Recibo final de merge SHA/deployment READY/dominio y revisión inicial de errores se registra en cuerpo del PR #316 para evitar otro despliegue documental. Confirmar dicho recibo antes de afirmar publicación.
+
+## Cabecera editable sin duplicación — 2026-11-18 · PR #316
+
+- Usuario aprueba aspecto contraído y cifrado; solicita editar nombre/artista/tono en esa misma cabecera, eliminando repetición de Información general. La fila cerrada permanece; abierta se sustituye por cabecera editable dentro del formulario, seguida de Letra/Cifrado. Formulario de canción nueva conserva etiquetas completas.
+- Transporte compacto − tono +, nombres accesibles indican medio tono; biblioteca, programación y pantalla grande mantienen comportamiento de persistencia anterior. Controles personales del lector con objetivos táctiles de 44px, sin nuevas escrituras ni permisos; navegación Anterior/Siguiente y vista grande conservadas.
+- Misma rama/PR y único Preview, sin producción, SQL, RLS ni maestro. 37 regresiones pertinentes; controles de navegador aislados con datos simulados y compilación antes de push. Pendiente validación visual autenticada; recibo SHA/READY/alias final en PR #316.
+
+## Ajuste solicitado de márgenes y cifrado — 2026-11-18 · PR #316
+
+- Usuario reportó ficha desalineada en Repertorio/Biblioteca y falta de aire incluso en icono/encabezado de Biblioteca. Márgenes internos explícitos en el panel completo y en Repertorio, sin modificar CSS global. Letra/Cifrado son desplegables inicialmente cerrados en ficha; selección evidente también en lector.
+- Cifrado de Programación parte del tono oficial y muestra el tono del servicio. Controles ±½ y campo de tono actualizan la lectura; Guardar conserva tono/indicaciones del servicio mediante action existente con sesión/rol/evento. `solo_servicio` evita escribir en biblioteca; músicos conservan transporte personal sin guardado oficial.
+- Sin SQL nuevo, RLS, roles, datos reales, maestro ni producción. 37 pruebas pertinentes; validaciones Chromium con datos/acciones simulados y compilación del bloque antes de push. Falta validación visual autenticada del usuario. Recibo final de SHA/READY/alias en PR #316; conservar único enlace de prueba.
+
+## Ficha musical centrada y uso en vivo — 2026-11-18 · PR #316
+
+- **Datos confirmados:** 50 nuevas guardadas mediante sesión real; 73 activas en ccvida/producción. Cotejo 50/50 completo, 23 previas intactas. El antiguo corte de 23 de abajo es histórico. Letras pendientes, catálogo no terminado.
+- Usuario pidió información general arriba, hoja de acordes/letra amplia y centrada, transposición junto a acordes, vista grande y control del orden. Implementado en la misma rama musical, sin modificar CSS global ni roles.
+- Pantalla grande editable en ficha y de lectura/navegación en Setlist; transposición personal sin escritura, guardado oficial restringido. Flechas Subir/Bajar de Programación/Setlist usan permiso existente de administración/liderazgo.
+- **SQL autorizado y aplicado:** respuesta «Autorizar guardado del orden». Función `vida_reordenar_repertorio`, migración `orden_repertorio_atomico_20261118`, ejecución solo service_role desde action con comprobación de sesión/rol/evento. RLS intacta; tres filas de repertorio con la misma huella antes/después. No reordenar servicios reales como prueba.
+- 34 pruebas pertinentes, TypeScript/lint específico/build local y pruebas Chromium aisladas de ficha/lector/orden con datos simulados. Falta validación autenticada/visual del usuario. No se declara CI global verde ni publicación de código.
+- **Fuente de continuidad del bloque:** `docs/FICHA_MUSICAL_EN_VIVO_2026-11-18.md`. Maestro intacto. Entrada única de pruebas conservada; asignar al nuevo deployment al verificar READY. Recibo final de SHA/alias y cotejo en PR #316, sin otro despliegue documental.
+- Falta aprobación nueva de merge/producción del código musical; los datos ya son compartidos con producción. Conservar pendientes de identificación y letras sin copiar material protegido.
+
+## Retomar catálogo musical — 2026-11-18 · PR #316
+
+- Usuario solicita continuar hasta completar canciones. Recuento directo actual ccvida: 23 activas, 22 con acordes, 22 YouTube, 20 Spotify, ninguna letra. No confundir candidatas/controles del build con filas importadas.
+- Rama musical actualizada mediante merge de main `a7bcf097` (#317 y #318 publicados), conservando cambios musicales pendientes. No reabrir ni perder avisos, gestión pastoral o ministerio reciente. No se integró música a main.
+- Catálogo: 235 entradas/variantes; 87 candidatas identificadas, 146 pendientes de identidad/datos, 2 referencias existentes. De las 87, 21 coinciden con fichas actuales por UUID o título normalizado: 66 posibles nuevas antes de comprobación de enlaces (no equivale a 66 importables).
+- Corregida referencia de Pon aceite en mi vida a Jaime Murrell/Juan Salinas; retirado Spotify de Ricardo Rodríguez, que correspondía a otro canto. Añadidos videos oficiales para De los montes y Los muros caerán. Quiero entender/Renuévame ya son compatibles con el transportador vigente y vuelven a candidatas. No se cambia ningún registro guardado ni se copia letra protegida.
+- Renovar certificado de enlaces en el único build Preview del bloque. Ejecutar importación idempotente exclusivamente con sesión real autorizada de la aplicación, conservando fichas existentes. No escribir SQL de carga, suplantar sesiones ni leer claves para evitar la autenticación.
+- Entrada única conservada `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`; al quedar READY, asignarla al Preview musical y cotejar. El usuario abre Alabanza → Biblioteca con cuenta administradora; la carga autorizada se ejecuta automáticamente sin seleccionar canciones.
+- Falta contabilizar carga efectiva y resolver referencias ambiguas; todas las letras siguen pendientes salvo aportación/licencia autorizada. Sin autorización nueva de merge/producción ni maestro. Recibo exacto y pendientes de datos en PR #316, sin despliegue documental adicional.
 
 ## Publicación autorizada — último ministerio · 2026-11-18 · PR #318
 
@@ -61,6 +101,52 @@
 - [Checkpoint de la incidencia](AVISOS_DEVOCIONALES_2026-11-17.md). Recibo de PR/Preview exacto se añade al PR sin otro build documental. Maestro, RLS, roles, cron y planes intactos.
 - No mezclar: PR musical #316 sigue Draft en `agent/catalogo-canciones-vida-20261117`, SHA `039283b278801ce1af4113d46dd758fab13903de`; último conteo verificado aquí: 23 canciones activas. Las candidatas comprobadas del build no equivalen a filas importadas. PR #313 también permanece separado.
 
+
+
+## Transposición persistente y ficha integrada · preparado 2026-11-17
+
+- Solicitud nueva del usuario: transportar dentro de la ficha y guardar el último tono/acordes; practicidad desde setlist; campos integrados al fondo, sin cajas; ampliar canciones y completar referencias. La carga anterior de 20 nuevas/22 totales fue confirmada por el usuario.
+- Ficha: controles ±½ tono transportan tono base y cifrado juntos. En canciones existentes guardan automáticamente solo esos dos campos mediante la action oficial ya autorizada para administración/líderes. Cola serial/coalescida evita que un guardado antiguo sustituya al último; Guardar completo queda bloqueado durante ese guardado para no pisar cambios. En canción nueva, la transposición se incluye al guardar la ficha. Letras/notas/enlaces no se transportan ni se sobrescriben por esa operación.
+- Setlist conserva transposición personal sin alterar la versión oficial; los gestores tienen «Guardar este tono en biblioteca». Comparte el transportador con la ficha: inversiones, extensiones y bemoles/sostenidos; preserva letras y espacios. No cambia tonos ya asignados a eventos ni historial de servicios.
+- Editor sin superficie blanca ni recuadros: fondo transparente y separadores inferiores. Se conserva el formulario completo y el guardado de los paneles ocultos. Sin CSS global, roles ni RLS modificados.
+- Ampliación: 82 candidatas, ahora 77 con video y 29 con ambos enlaces por la investigación disponible. La carga admite video confirmado aunque falte Spotify; si Spotify está presente también debe comprobarse. Ausencias se conservan como null y pendientes, nunca se inventan pistas. Se mantiene identidad/intérprete y estado OK del video, certificado de catálogo reciente e idempotencia. Los recuentos guardados posteriores se confirman en ccvida, no por cantidad de candidatos.
+- Letras: el usuario pidió buscarlas en sitios de letras/acordes. No se copiaron letras completas protegidas ni se eludió el bloqueo anterior. Permanecen editables y pendientes; no declarar las 82 fichas completas. Los cifrados de esta carga proceden de los apuntes aportados.
+- Verificado localmente: 28 regresiones pertinentes, TypeScript, lint de archivos nuevos y build. Chromium móvil con CSS compilado comprueba transposición +2, cola de guardado, conservación de campos/FormData y ausencia de desbordamiento con datos simulados. Falta validar la interacción autenticada de transposición y contabilizar la ampliación real.
+- Un Preview nuevo para este bloque; recibo SHA/deployment y cotejo real se registran en PR #316 sin otro despliegue documental. No hacer merge, producción, actualizar maestro ni asignar personas adicionales sin autorización. Los cortes siguientes son históricos.
+
+## Carga real comprobada — 2026-11-17
+
+- **20 canciones nuevas guardadas, 22 totales en ccvida.** Cotejo de 20/20 por UUID, título, artista, tono, acordes, notas y enlaces frente al catálogo y comprobación positiva; activas y letras pendientes. Datos reales compartidos con la aplicación habitual, incorporados mediante server action y sesión autorizada; sin SQL de escritura ni suplantación.
+- Preview READY `dpl_44U9twcumi5FxvPLb8wxxbH7JhX7`, SHA `456b7a6357469dec5c72c719d6df03d4244b9982`. Enlace estable: https://calendario-git-agent-catalogo-cancion-2d423b-vida-internacional.vercel.app/ministerios/335daa03-4b5a-4ff5-8958-851de6b641ed/biblioteca-alabanza . Ficha nueva solo en Preview, pendiente aprobación visual/producción; datos ya visibles en app habitual.
+- Quedan 213 entradas fuera de esta carga: 151 dudas/cifrado incompleto, 57 candidatas sin ambos enlaces y 5 que no pasaron todos los controles. No declarar catálogo completo ni letras cargadas. Dos fichas originales conservadas; sin roles/RLS, eventos o maestro modificados.
+- Recibo remoto completo en PR #316. Este registro documental posterior se guarda localmente sin push para no crear otro Preview; incorporarlo con el siguiente cambio autorizado. No confundir el commit documental local posterior con el HEAD de código desplegado.
+
+## Ficha musical y corrección de carga cero · 2026-11-17
+
+- Usuario confirmó «0 canciones incorporadas» y pidió ver canciones guardadas como creadas con +, además de ordenar su ficha de letra/acordes/tono/enlaces. Rama y PR #316 continúan sin merge.
+- Corrección: certificado completo generado por el build, ligado por SHA-256 al catálogo y vigente 24 horas; la action conserva sesión/rol e idempotencia, sin repetir solicitudes a proveedores durante cada inserción. La ejecución anterior descartaba fichas al fallar esa segunda comprobación. No atribuir aquellos fallos a una causa de red específica sin evidencia.
+- Nueva ficha compartida de creación/edición: nombre, artista/versión, tono base, Letra, Acordes y estructura, Notas y enlaces cerrados; campos ocultos permanecen montados para no perder datos al guardar. Permisos finales se conservan: administración/líderes y futuras personas expresamente autorizadas; nadie adicional asignado.
+- 20 pruebas pertinentes, build/TypeScript y lint local verificados. Flujo aislado Chromium móvil con CSS compilado verifica edición de campos y pestañas sin pérdida de datos ni desbordamiento. Recibo del único Preview del nuevo bloque, certificado real e importación observada se registran en PR #316; no declarar carga realizada sin cotejo de ccvida.
+- Pendiente concreto: verificar cuántas referencias admite el build nuevo, comprobar filas efectivamente incorporadas con sesión autorizada y validar la ficha real. Sin producción, cambios de RLS/roles ni cierre de fase. Los cortes siguientes son históricos.
+
+## Catálogo musical — corrección de disponibilidad y carga solicitada · 2026-11-17
+
+- El usuario rechazó importar manualmente y reportó videos «Not Available». PR #316 sigue Draft en `agent/catalogo-canciones-vida-20261117`; no está en main ni producción.
+- Se reemplazó la selección manual por carga automática preparada al abrir Biblioteca con sesión real de administración. Lotes de dos; título/intérprete/estado `OK` de YouTube y pista Spotify deben comprobarse antes de incorporar. Existentes y archivadas permanecen intactas. Las 82 referencias anteriores eran candidatas; solo 25 tienen ambos enlaces para intentar esta comprobación. No declarar 82 canciones verificadas.
+- El acceso a YouTube desde el entorno está bloqueado (proxy 403); falla también el acceso web directo. El Preview comprueba metadatos desde Vercel durante su build y genera un informe exclusivamente editorial en sus logs de build, sin usuarios/claves. El estado real de ese informe, importación y deployment queda en el recibo del PR. No afirmar filas importadas sin consulta posterior de ccvida.
+- **Aclaración final del propietario:** solo líderes de Alabanza y personas que él autorice pueden editar. Corrige su respuesta anterior «todos los integrantes». No se abrió el acceso a todos ni se otorgó rol/liderazgo a nadie; faltan identidades concretas para cualquier autorización adicional.
+- **Agregado con un toque ya existente:** componente activo `RepertorioServicioEditor.tsx`, con círculos, agregado directo e indicador de duplicado. Se conserva; el picker antiguo no es la superficie activa.
+- Verificado localmente: 17 pruebas, TypeScript, build, lint de archivos nuevos y flujo Chromium automático con datos simulados. Falta validación autenticada/medios reales; sin publicación ni cierre de fase. El historial siguiente del importador manual está sustituido por este corte.
+
+## Catálogo de canciones VIDA · preparado 2026-11-17
+
+- **Tarea actual:** organizar e incorporar el listado musical del usuario. Rama `agent/catalogo-canciones-vida-20261117`, base main `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`. [Checkpoint del catálogo](CATALOGO_CANCIONES_VIDA_2026-11-17.md).
+- **Preparado:** 235 entradas/variantes; 82 referencias candidatas con tono y cifrado aportados, 151 pendientes, 2 fichas existentes conservadas. Solo 25 candidatas tienen ambos enlaces. Todas las letras siguen pendientes; hubo bloqueo automático de la copia masiva de letras, sin reintentos para eludirlo. No afirmar catálogo completo ni coincidencia musical certificada.
+- **Implementado:** revisión e importación seleccionable en la biblioteca existente de Alabanza, por server action con sesión y permisos de administración/líder. Lotes de hasta 20; no sobrescribe ni reactiva fichas, admite reintentos. Las pendientes se pueden completar en el editor existente.
+- **Probado:** TypeScript, build completo, diez pruebas pertinentes y lint de archivos nuevos. Guardrails y recibo del único Preview se verifican al publicar la rama y se registran en el PR. No se certifican fallos históricos de CI ni pruebas visuales autenticadas.
+- **Datos/publicación:** no se escribió en Supabase ni se cambió RLS, roles, esquema, maestro o producción. El Preview comparte ccvida real: importar allí guarda contenido editorial visible para la biblioteca habitual. No enviar importaciones ficticias. Sin merge autorizado.
+- **Conservar trabajo anterior:** PR #313 Draft permanece separado en `agent/devocionales-centro-pastoral-20261116`, SHA `155c7614fe74b0f9c75046331f37820969a467fe`; Preview `https://calendario-git-agent-devocionales-cen-bd65af-vida-internacional.vercel.app`, READY `dpl_ButgTu9NgUSVFGLPhXAaiB1NXZnR`. Incluye continuidad Estudio/Cuaderno, paginación de videos y recordatorio de notificaciones; pendiente aprobación visual, no integrar automáticamente con el catálogo.
+- **Siguiente paso:** revisar el catálogo en el Preview de esta rama con la cuenta propia y confirmar las referencias elegidas; importar contenido real y resolver dudas. Falta aprobación nueva para integrar/publicar código. Maestro y Bloque 4 permanecen sin cambios. El registro que sigue conserva contexto histórico; el estado de este corte prevalece para esta tarea.
 
 ## Discipulado — Biblioteca de cursos y edición integral · preparado 2026-11-16
 

@@ -1,5 +1,6 @@
 'use server'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 
@@ -350,4 +351,21 @@ export async function crearCancionCompletaYAgregar(ministerioId: string, eventoI
 
   if (error) fail(error.message)
   revalidar(ministerioId)
+}
+
+/** Orden completo y atómico; usa los mismos permisos existentes de programación. */
+export async function reordenarCancionesServicio(ministerioId: string, eventoId: string, esperado: string[], nuevo: string[]) {
+  const uuid = (id: unknown) => typeof id === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(id)
+  if (!uuid(ministerioId) || !uuid(eventoId) || !Array.isArray(esperado) || !Array.isArray(nuevo) || !esperado.length || esperado.length > 300 || esperado.length !== nuevo.length || !esperado.every(uuid) || !nuevo.every(uuid) || new Set(esperado).size !== esperado.length || new Set(nuevo).size !== nuevo.length || [...esperado].sort().join() !== [...nuevo].sort().join()) return { success: false, error: 'El listado cambió o contiene canciones inválidas. Actualiza la página.' }
+  try {
+    const acceso = await obtenerAcceso(ministerioId)
+    if (!acceso) return { success: false, error: 'Solo administración o el líder autorizado puede cambiar el orden.' }
+    const admin = createAdminClient() as unknown as SupabaseClient
+    if (!await validarEvento(admin, ministerioId, eventoId)) return { success: false, error: 'El servicio no pertenece a este ministerio.' }
+    const { error } = await admin.rpc('vida_reordenar_repertorio', { p_ministerio: ministerioId, p_evento: eventoId, p_esperado: esperado, p_nuevo: nuevo })
+    if (error) return { success: false, error: error.code === '40001' ? 'Otra persona cambió el listado. Actualiza antes de reordenar.' : 'No se pudo guardar el orden. El listado anterior se conserva.' }
+    revalidar(ministerioId)
+    revalidatePath(`/ministerios/${ministerioId}/setlist`)
+    return { success: true }
+  } catch { return { success: false, error: 'No se pudo guardar el orden. Intenta nuevamente.' } }
 }
