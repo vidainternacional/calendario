@@ -214,3 +214,19 @@ test('el reintento exige autor autenticado y mensaje publicado; no cambia destin
   const b=setup({existing:{publicado:false}});assert.equal((await b.actions.avisarMensajeDirigido(ministerioA)).success,false)
   const a=setup({role:'servidor'});assert.equal((await a.actions.avisarMensajeDirigido(ministerioA)).success,false);assert.equal(a.avisos.length,0)
 })
+
+test('administrador activo corrige otro autor sin cambiar autoría ni reavisar al editar',async()=>{
+ const otro='44444444-4444-4444-8444-444444444444'
+ const p=setup({role:'administrador',existing:{autor_id:otro,updated_at:'r1',published_at:'2026-11-17T00:00:00Z'}})
+ const form=makeForm({publicar:true,iglesia:true});form.set('id',ministerioA);form.set('revision','r1')
+ assert.equal((await p.actions.guardarMensajeDirigido(form)).success,true)
+ const q=p.calls.find(q=>op(q,'update'));assert.equal(op(q,'eq','autor_id'),undefined)
+ assert.equal(op(q,'update')[1].autor_id,undefined);assert.equal(p.avisos.length,0)
+})
+test('reenvío de administrador usa autor original; administrador suspendido no obtiene acceso general',async()=>{
+ const otro='44444444-4444-4444-8444-444444444444'
+ const p=setup({role:'administrador',existing:{id:ministerioA,autor_id:otro,publicado:true}})
+ assert.equal((await p.actions.avisarMensajeDirigido(ministerioA)).success,true)
+ assert.equal(p.avisos[0][1],otro)
+ const no=setup({role:'administrador',active:false});assert.equal((await no.actions.avisarMensajeDirigido(ministerioA)).success,false);assert.equal(no.avisos.length,0)
+})

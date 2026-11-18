@@ -69,9 +69,13 @@ export async function cargarMisMensajesDirigidos() {
   const db = client as unknown as SupabaseClient
   const { data: { user } } = await client.auth.getUser()
   if (!user) return { ...viejo, autenticado: false, puedeGestionar: false, propios: [] as MensajeConAudiencia[], ministerios: vacio }
+  const { data: perfil, error: perfilError } = await db.from('profiles').select('rol,activo,estado_cuenta').eq('id', user.id).single()
+  if (perfilError || !perfil?.activo || perfil.estado_cuenta !== 'activo') return { ...viejo, propios: [], ministerios: vacio, error: 'No se pudieron comprobar tus permisos.' }
+  const esAdministrador = perfil.rol === 'administrador'
+  let consulta = db.from('vida_devocionales').select(CAMPOS_DIRIGIDOS)
+  if (!esAdministrador) consulta = consulta.eq('autor_id', user.id)
   const [videos, grupos] = await Promise.all([
-    db.from('vida_devocionales').select(CAMPOS_DIRIGIDOS).eq('autor_id', user.id)
-      .order('created_at', { ascending: false }).limit(100),
+    consulta.order('created_at', { ascending: false }).limit(100),
     db.from('ministerios').select('id,nombre').eq('activo', true).order('nombre'),
   ])
   if (videos.error || grupos.error) return { ...viejo, propios: [] as MensajeConAudiencia[], ministerios: vacio,
@@ -81,5 +85,5 @@ export async function cargarMisMensajesDirigidos() {
     ...(videos.data ?? []).map((row: Record<string, unknown>) => desdeVideoDirigido(row))
       .filter((m): m is MensajeConAudiencia => Boolean(m)),
   ].sort((a,b) => b.revision.localeCompare(a.revision))
-  return { ...viejo, propios, ministerios: (grupos.data ?? []) as MinisterioDestino[] }
+  return { ...viejo, esAdministrador, propios, ministerios: (grupos.data ?? []) as MinisterioDestino[] }
 }

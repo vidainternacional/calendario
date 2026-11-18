@@ -3,6 +3,16 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Gestión general de mensajes — 2026-11-18 · PR #317
+
+- Autorización expresa recibida: «Si solo administradores activos podrán hacerlo». Solo Administrador activo puede gestionar publicaciones dirigidas de otros autores, incluidos borradores. Pastor conserva gestión propia; no se cambian roles.
+- RLS **aplicada** en ccvida: `vida_devocionales_gestion_administrador_20261118`, tres políticas SELECT/UPDATE/DELETE exclusivas de administrador activo. Trigger impide cambiar UUID/autoría. Una publicación y misma huella antes/después; ningún contenido ni envío real modificado.
+- Código de galería/actions amplía consulta y gestión al administrador con JWT/RLS, mantiene autor original y revisión concurrente. Eliminar solo administrador. Borradores aclaran acceso del autor y administración. Estudios sigue como biblioteca publicada.
+- Propuesta anterior `20261118000100_vida_devocionales_eliminacion_autor.sql` nunca aplicada y retirada: NO restaurar ni conceder DELETE a pastores. Antecedentes de bloqueo inferiores superados por este registro, no por una aprobación de producción.
+- 45 pruebas pertinentes, TypeScript/lint específico/build locales correctos; browser aislado a 390 px con acciones simuladas. Falta validación autenticada del usuario. Sin merge ni despliegue de producción; maestro intacto.
+- Mantener entrada única `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`, misma rama `agent/avisos-devocionales-20261117`. Recibo de Preview final/SHA en PR #317. No usar alias de #313 para probar este bloque.
+- Alcance, evidencia y reversión: `docs/GALERIA_MENSAJES_PASTORALES_2026-11-17.md`. Gestión general aplica a `vida_devocionales`; no ampliar permisos de paquetes históricos.
+
 ## Centro Pastoral — Galería y edición · 2026-11-17 · PR #317
 
 - Usuario indicó «lo demás está bien» y pidió galería de mensajes anteriores, edición de título/video y eliminación desde Centro Pastoral. Preparado en la misma rama/alias del PR #317, aún sin producción.

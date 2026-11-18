@@ -18,7 +18,7 @@ async function contexto() {
     .select('rol,estado_cuenta,activo').eq('id', ctx.user.id).single()
   if (error || !data?.activo || data.estado_cuenta !== 'activo' ||
       !['pastor','administrador'].includes(data.rol)) return { db: null, user: null }
-  return { db, user: ctx.user }
+  return { db, user: ctx.user, esAdmin: data.rol === 'administrador' }
 }
 
 function refrescar(id: string) {
@@ -49,7 +49,7 @@ function destinatarios(form: FormData): {
 }
 
 export async function guardarMensajeDirigido(form: FormData): Promise<Resultado> {
-  const { db, user } = await contexto()
+  const { db, user, esAdmin } = await contexto()
   if (!db || !user) return { success: false, error: 'Solo pastores y administradores activos pueden publicar.' }
   const id = String(form.get('id') ?? '')
   const revision = String(form.get('revision') ?? '')
@@ -85,10 +85,11 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
     }
   }
 
-  let anterior: { published_at: string | null; updated_at: string } | null = null
+  let anterior: { published_at: string | null; updated_at: string; autor_id?: string } | null = null
   if (id) {
-    const { data, error } = await db.from('vida_devocionales')
-      .select('updated_at,published_at').eq('id', id).eq('autor_id', user.id).maybeSingle()
+    let consulta = db.from('vida_devocionales').select('updated_at,published_at,autor_id').eq('id', id)
+    if (!esAdmin) consulta = consulta.eq('autor_id', user.id)
+    const { data, error } = await consulta.maybeSingle()
     if (error || !data) return { success: false, error: 'No podés editar este mensaje.' }
     if (data.updated_at !== revision) return { success: false, error: 'El mensaje cambió. Actualizá la página antes de guardar.' }
     anterior = data
@@ -106,62 +107,68 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
     published_at: publicar ? (anterior?.published_at || new Date().toISOString()) : null,
     updated_at: new Date().toISOString(),
   }
-  const resultado = id
-    ? await db.from('vida_devocionales').update(campos)
-      .eq('id', id).eq('autor_id', user.id).eq('updated_at', revision).select('id')
-    : await db.from('vida_devocionales').insert({ ...campos, autor_id: user.id }).select('id')
+  let resultado
+  if (id) {
+    let actualizacion = db.from('vida_devocionales').update(campos).eq('id', id).eq('updated_at', revision)
+    if (!esAdmin) actualizacion = actualizacion.eq('autor_id', user.id)
+    resultado = await actualizacion.select('id')
+  } else resultado = await db.from('vida_devocionales').insert({ ...campos, autor_id: user.id }).select('id')
   if (resultado.error || !resultado.data?.length) {
     if (resultado.error?.code === '23505') return { success: false, error: 'Ese número de episodio ya existe en esta serie. Elegí otro.' }
     return { success: false, error: 'No se pudo guardar el mensaje. Comprobá tu conexión e intentá nuevamente.' }
   }
   const guardadoId = String(resultado.data[0].id)
   refrescar(guardadoId)
-  const aviso = publicar && !anterior?.published_at ? await notificarMensajeDirigido(guardadoId, user.id) : undefined
+  const aviso = publicar && !anterior?.published_at ? await notificarMensajeDirigido(guardadoId, anterior?.autor_id || user.id) : undefined
   return { success: true, aviso }
 }
 
 export async function cambiarPublicacionDirigida(id: string, revision: string, publicar: boolean): Promise<Resultado> {
-  const { db, user } = await contexto()
+  const { db, user, esAdmin } = await contexto()
   if (!db || !user || !uuid(id) || !revision || typeof publicar !== 'boolean') {
     return { success: false, error: 'No autorizado.' }
   }
-  const { data, error } = await db.from('vida_devocionales')
-    .select('audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,published_at,updated_at')
-    .eq('id', id).eq('autor_id', user.id).maybeSingle()
+  let consulta = db.from('vida_devocionales').select('audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,published_at,updated_at,autor_id').eq('id', id)
+  if (!esAdmin) consulta = consulta.eq('autor_id', user.id)
+  const { data, error } = await consulta.maybeSingle()
   if (error || !data) return { success: false, error: 'No podés modificar este mensaje.' }
   if (data.updated_at !== revision) return { success: false, error: 'El mensaje cambió. Actualizá la página.' }
   if (publicar && !data.audiencia_iglesia && !data.lideres_ministerio &&
       !(data.roles_destino?.length) && !(data.ministerios_destino?.length)) {
     return { success: false, error: 'Elegí primero los destinatarios dentro de Editar.' }
   }
-  const { data: guardados, error: updateError } = await db.from('vida_devocionales')
+  let cambio = db.from('vida_devocionales')
     .update({ publicado: publicar,
       published_at: publicar ? (data.published_at || new Date().toISOString()) : null,
       updated_at: new Date().toISOString() })
-    .eq('id', id).eq('autor_id', user.id).eq('updated_at', revision).select('id')
+    .eq('id', id).eq('updated_at', revision)
+  if (!esAdmin) cambio = cambio.eq('autor_id', user.id)
+  const { data: guardados, error: updateError } = await cambio.select('id')
   if (updateError || !guardados?.length) return { success: false, error: 'No se pudo actualizar. Recargá la página.' }
   refrescar(id)
-  const aviso = publicar && !data.published_at ? await notificarMensajeDirigido(id, user.id) : undefined
+  const aviso = publicar && !data.published_at ? await notificarMensajeDirigido(id, data.autor_id || user.id) : undefined
   return { success: true, aviso }
 }
 
 
-// Reintento explícito del autor: nunca cambia publicación, contenido ni destinatarios.
+// Reintento explícito del autor o administrador activo: nunca cambia publicación, contenido ni destinatarios.
 export async function avisarMensajeDirigido(id: string): Promise<Resultado> {
-  const { db, user } = await contexto()
+  const { db, user, esAdmin } = await contexto()
   if (!db || !user || !uuid(id)) return { success: false, error: 'No autorizado.' }
-  const { data, error } = await db.from('vida_devocionales').select('id,publicado')
-    .eq('id', id).eq('autor_id', user.id).eq('publicado', true).maybeSingle()
-  if (error || !data || !data.publicado) return { success: false, error: 'Solo el autor puede avisar sobre su mensaje publicado.' }
-  return { success: true, aviso: await notificarMensajeDirigido(id, user.id) }
+  let consulta = db.from('vida_devocionales').select('id,publicado,autor_id').eq('id', id).eq('publicado', true)
+  if (!esAdmin) consulta = consulta.eq('autor_id', user.id)
+  const { data, error } = await consulta.maybeSingle()
+  if (error || !data || !data.publicado) return { success: false, error: 'Solo el autor o un administrador activo pueden avisar sobre un mensaje publicado.' }
+  return { success: true, aviso: await notificarMensajeDirigido(id, data.autor_id || user.id) }
 }
 
-/** Eliminación explícita del autor; la política RLS debe permitirla por separado. */
+/** Eliminación explícita de administrador activo, protegida también por RLS. */
 export async function eliminarMensajeDirigido(id: string, revision: string): Promise<Resultado> {
-  const { db, user } = await contexto()
+  const { db, user, esAdmin } = await contexto()
   if (!db || !user || !uuid(id) || !revision) return { success: false, error: 'No autorizado.' }
+  if (!esAdmin) return { success: false, error: 'Solo administradores activos pueden eliminar mensajes.' }
   const { data, error } = await db.from('vida_devocionales').delete()
-    .eq('id', id).eq('autor_id', user.id).eq('updated_at', revision).select('id')
+    .eq('id', id).eq('updated_at', revision).select('id')
   if (error || !data?.length) return { success: false, error: 'No se pudo eliminar el mensaje. Actualizá la página; si continúa, consultá al administrador.' }
   refrescar(id)
   return { success: true }

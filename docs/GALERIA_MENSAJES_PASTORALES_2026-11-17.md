@@ -1,5 +1,22 @@
 # Centro Pastoral — Galería y edición de mensajes · 2026-11-17
 
+## Estado vigente — 2026-11-18: administración general autorizada y aplicada
+
+El usuario autorizó expresamente: «Si solo administradores activos podrán hacerlo», respondiendo a permitir que el rol Administrador activo gestione mensajes de otros autores, incluidos borradores, conservando autoría. Esta autorización aplica a RLS y a la gestión del Centro Pastoral; no autoriza merge ni publicación de la aplicación en producción.
+
+- Aplicada en ccvida la migración `vida_devocionales_gestion_administrador_20261118`, fuente `20261118000200_vida_devocionales_gestion_administrador.sql`: tres políticas adicionales SELECT/UPDATE/DELETE, exigiendo rol administrador, activo=true y estado_cuenta=activo. Políticas previas del autor y audiencia conservadas.
+- Trigger SECURITY INVOKER impide modificar UUID y autoría incluso a través de la API. No se cambian roles de usuarios ni se usa service role en las consultas de gestión.
+- La galería consulta con JWT y permite al administrador cargar mensajes dirigidos de otros autores. Pastor mantiene filtro de autor propio; miembros no acceden a la gestión. Las actions comprueban nuevamente rol/estado y preservan revisión concurrente y autor original. Publicar/reintentar desde administración usa el autor original para resolver la publicación; no se envían pruebas a la congregación.
+- Solo administrador activo ve y puede ejecutar Eliminar para devocionales. **La propuesta anterior de eliminación por autor/pastor nunca se aplicó y se retiró del directorio de migraciones**; no aplicarla ni recuperarla de commits anteriores.
+- Borradores dirigidos indican que son visibles al autor y a administradores activos. Estudios conserva únicamente contenido publicado; la gestión permanece en Centro Pastoral.
+- No se amplían permisos en `pastoral_paquetes`: formatos legados siguen sus políticas propias existentes. La gestión general nueva se limita a `vida_devocionales`.
+- Verificación de catálogo tras aplicar: RLS activa, seis políticas (tres originales + tres de administrador), un trigger de identidad/autoría; una publicación, misma huella antes/después `0454e8ce55adf889b15adcfa2dc62d9c`. No se ejecutó un borrado ni modificación de contenido para probar. No se suplantaron sesiones.
+- 45 pruebas pertinentes pasan, incluyendo administrador editando sin reatribuir ni avisar al corregir, reenvío con autor original, rechazo de administrador inactivo, consulta general para administrador y propia para pastor, y rechazo de eliminación por pastor. TypeScript/lint específico/build local correctos; browser aislado móvil con acciones simuladas. Falta validación visual autenticada del usuario, no se certifica entrega a teléfonos ni CI global.
+- Único enlace de entrada acordado: `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`. Navegar desde ahí a Centro Pastoral → Devocionales y mensajes. No alternar con alias antiguos ni enlaces únicos de deployments. Recibo de SHA/READY del bloque en PR #317.
+- Reversión del permiso: DROP POLICY de `vida_devocionales_admin_leer`, `vida_devocionales_admin_editar`, `vida_devocionales_admin_eliminar`; DROP TRIGGER `vida_devocionales_autoria_inmutable`; DROP FUNCTION `vida_devocionales_conservar_autoria()`. Conservar datos y registros de avisos. No recupera publicaciones que un administrador haya eliminado voluntariamente.
+
+**Las secciones siguientes son antecedentes del estado anterior y sus bloqueos quedan superados solo en el alcance anterior.**
+
 ## Pedido y alcance
 
 El usuario validó lo demás del bloque previo y pidió ver los mensajes anteriores en una galería dentro del Centro Pastoral, corregir título/descripcion/video y poder eliminarlos. Implementado en la misma rama de revisión `agent/avisos-devocionales-20261117`, PR #317. No se publicó producción ni se modificó el maestro.

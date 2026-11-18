@@ -101,7 +101,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
         <input className="mt-1 h-5 w-5 shrink-0 accent-violet-600" type="checkbox" name="publicar"
           checked={publicar} onChange={e => setPublicar(e.target.checked)} />
         <span><strong className="block text-slate-900">Publicar para los destinatarios seleccionados</strong>
-          Sin marcar, se guarda como borrador visible solo para ti.</span>
+          {esLegado ? 'Sin marcar, se guarda como borrador visible solo para ti.' : 'Sin marcar, se guarda como borrador para su autor y los administradores activos.'}</span>
       </label>
       <div className="mt-4">
         <p className="text-sm font-bold text-slate-800">¿Quiénes pueden ver este mensaje?</p>
@@ -189,8 +189,8 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
   </form>
 }
 
-export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
-  mensajes: MensajeConAudiencia[]; ministerios: MinisterioDestino[]
+export default function MensajesSemanalesEditor({ mensajes, ministerios, esAdministrador = false }: {
+  mensajes: MensajeConAudiencia[]; ministerios: MinisterioDestino[]; esAdministrador?: boolean
 }) {
   const router = useRouter()
   const [nuevo, setNuevo] = useState(false)
@@ -204,7 +204,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
   const seriesDisponibles = [...new Set(mensajes.filter(m => m.tipo === 'serie' && m.serieTitulo).map(m => m.serieTitulo!))].sort((a, b) => a.localeCompare(b, 'es'))
   return <section className="my-7 border-y border-slate-200 py-5" aria-labelledby="gestion-mensajes">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h2 id="gestion-mensajes" className="font-bold text-slate-900">Galería de tus mensajes</h2>
+      <h2 id="gestion-mensajes" className="font-bold text-slate-900">Galería de mensajes</h2>
       <button aria-expanded={nuevo} onClick={() => { setNuevo(v => !v); setEditando(null); setEliminando(null) }} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-sm font-bold text-white">
         <Plus className="h-4 w-4" />Nuevo mensaje
       </button>
@@ -222,7 +222,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
         </select>
       </label>
     </div>
-    <p className="mt-3 text-xs text-slate-500">{visibles.length} de {mensajes.length} mensajes · Solo administrás tus propios mensajes.</p>
+    <p className="mt-3 text-xs text-slate-500">{visibles.length} de {mensajes.length} mensajes · {esAdministrador ? 'Administración general de mensajes.' : 'Administrás tus propios mensajes.'}</p>
     {visibles.length === 0 && <p className="py-7 text-sm text-slate-500">{mensajes.length ? 'No hay mensajes con esos filtros.' : 'Tus mensajes aparecerán aquí cuando guardés el primero.'}</p>}
     {visibles.length > 0 && <div className="mt-4 grid grid-cols-1 gap-x-6 sm:grid-cols-2">{visibles.map(m => <div key={m.id} className={'min-w-0 border-t border-slate-200 py-4 ' + (editando === m.id || eliminando === m.id ? 'sm:col-span-2' : '')}>
       <button type="button" aria-label={`Editar video: ${m.titulo}`} disabled={busy} onClick={() => { setEditando(m.id); setNuevo(false); setEliminando(null) }} className="mb-3 block w-full overflow-hidden rounded-lg text-left disabled:opacity-50">
@@ -250,7 +250,7 @@ export default function MensajesSemanalesEditor({ mensajes, ministerios }: {
             }) }}
           >{m.publicado ? 'Despublicar' : 'Publicar'}</button>
           {m.publicado && <Link href={`/estudios/mensajes/${m.id}?origen=pastoral`} className="inline-flex min-h-11 items-center text-sm font-semibold text-slate-600">Ver publicación</Link>}
-          <button type="button" disabled={busy} className="min-h-11 text-sm font-semibold text-red-700 disabled:opacity-50" onClick={() => { setEliminando(m.id); setEditando(null); setNuevo(false); setAviso(null) }}>Eliminar</button>
+          {esAdministrador && <button type="button" disabled={busy} className="min-h-11 text-sm font-semibold text-red-700 disabled:opacity-50" onClick={() => { setEliminando(m.id); setEditando(null); setNuevo(false); setAviso(null) }}>Eliminar</button>}
           {m.publicado && m.origen !== 'legado' ? <button type="button" disabled={busy} className="min-h-11 text-sm font-semibold text-violet-700 disabled:opacity-50" onClick={() => { setAviso(null); start(async () => { try { const r = await avisarMensajeDirigido(m.id); setAviso(r.success ? r.aviso || 'Aviso preparado.' : r.error || 'No se pudo enviar.'); } catch { setAviso('No se pudo completar el aviso. Puedes reintentar.'); } }) }}>Reenviar aviso pendiente</button> : null}
         </div>
       </div>

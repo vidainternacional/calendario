@@ -1,6 +1,6 @@
 {
-  "task": "Galería editable de mensajes del Centro Pastoral y eliminación protegida",
-  "userRequest": "El pastor Romy publicó un devocional para destinatarios seleccionados y nadie recibió el aviso. Diagnosticar y corregir la falta de llamada a push al publicar, mantener audiencia/RLS y permisos, evitar duplicados y mostrar el resultado. Preparar recuperación explícita por autor, sin enviar avisos reales de prueba ni reenviar la publicación existente desde esta sesión. No mezclar el trabajo musical ni publicar producción sin autorización. El usuario pide reenvío aunque la publicación ya exista para personas sin aviso, un aviso de nuevo video ministerial al principio de Inicio y badges que lleven al video, independientes de push, más recordar activar notificaciones. Reutilizar recordatorio preparado en PR #313 sin mezclar Biblia/Cuaderno ni otras funciones. Mantener RLS, roles y permisos; marcas de apertura por usuario/dispositivo, sin registrar reproducciones ni crear tablas. El usuario valida lo demás y solicita galería de mensajes anteriores en Centro Pastoral, editar título/descripción/video y eliminar con confirmación. Conservar autoría; preparar política DELETE limitada al autor activo, sin aplicarla hasta aprobación específica. No borrar datos desde esta sesión.",
+  "task": "Gestión general de mensajes solo por administradores activos",
+  "userRequest": "El pastor Romy publicó un devocional para destinatarios seleccionados y nadie recibió el aviso. Diagnosticar y corregir la falta de llamada a push al publicar, mantener audiencia/RLS y permisos, evitar duplicados y mostrar el resultado. Preparar recuperación explícita por autor, sin enviar avisos reales de prueba ni reenviar la publicación existente desde esta sesión. No mezclar el trabajo musical ni publicar producción sin autorización. El usuario pide reenvío aunque la publicación ya exista para personas sin aviso, un aviso de nuevo video ministerial al principio de Inicio y badges que lleven al video, independientes de push, más recordar activar notificaciones. Reutilizar recordatorio preparado en PR #313 sin mezclar Biblia/Cuaderno ni otras funciones. Mantener RLS, roles y permisos; marcas de apertura por usuario/dispositivo, sin registrar reproducciones ni crear tablas. El usuario valida lo demás y solicita galería de mensajes anteriores en Centro Pastoral, editar título/descripción/video y eliminar con confirmación. Conservar autoría; preparar política DELETE limitada al autor activo, sin aplicarla hasta aprobación específica. No borrar datos desde esta sesión. Autorización expresa: solo administradores activos pueden gestionar mensajes de otros autores, incluidos borradores. Aplicar políticas limitadas de lectura/actualización/eliminación; conservar autor original e identidad. Pastores mantienen edición propia. No aplicar propuesta previa de DELETE propio para pastores. Mantener enlace único de Preview y no publicar producción.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "app/actions/mensajes-dirigidos.ts",
@@ -28,7 +28,11 @@
     "app/actions/mensajes-semanales.ts",
     "supabase/migrations/20261118000100_vida_devocionales_eliminacion_autor.sql",
     "docs/GALERIA_MENSAJES_PASTORALES_2026-11-17.md",
-    "tests/regression/galeria-mensajes-pastorales.test.mjs"
+    "tests/regression/galeria-mensajes-pastorales.test.mjs",
+    "lib/estudios/mensajes-dirigidos.ts",
+    "app/(app)/pastoral/mensajes/page.tsx",
+    "supabase/migrations/20261118000200_vida_devocionales_gestion_administrador.sql",
+    "lib/estudios/mensajes-dirigidos-tipos.ts"
   ],
   "allowSupabase": true,
   "allowMasterUpdate": false,
