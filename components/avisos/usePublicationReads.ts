@@ -12,6 +12,8 @@ const UNREAD_REFRESH_DEDUPE_MS = 1_500
 type UnreadCountListener = (count: number) => void
 
 const unreadCountListeners = new Set<UnreadCountListener>()
+let unreadCountGeneration = 0
+let unreadCountUser: string | null = null
 let unreadCountValue = 0
 let unreadCountLoaded = false
 let unreadCountLastFetchAt = 0
@@ -46,9 +48,16 @@ async function refreshUnreadCount(options: { force?: boolean } = {}) {
 
   unreadCountLastFetchAt = now
   const request = (async () => {
+    const generation = unreadCountGeneration
     const supabase = createClient()
+    const { data: auth } = await supabase.auth.getSession()
+    if (generation !== unreadCountGeneration) return unreadCountValue
+    const usuario = auth.session?.user.id || null
+    if (unreadCountUser !== usuario) { unreadCountUser = usuario; publishUnreadCount(0) }
+    if (!usuario) { publishUnreadCount(0); return 0 }
     const { data, error } = await (supabase as any).rpc('get_unread_publications_count')
 
+    if (generation !== unreadCountGeneration || unreadCountUser !== usuario) return unreadCountValue
     if (error) {
       console.error('No se pudo cargar el contador de avisos no leídos', error)
       return unreadCountValue
@@ -75,6 +84,13 @@ async function refreshUnreadCount(options: { force?: boolean } = {}) {
 function startUnreadCountGlobalListeners() {
   if (typeof window === 'undefined' || unreadCountStopGlobalListeners) return
 
+  const { data: auth } = createClient().auth.onAuthStateChange((_evento, session) => {
+    const usuario = session?.user.id || null
+    if (unreadCountUser !== usuario) {
+      unreadCountGeneration++; unreadCountUser = usuario; unreadCountLastFetchAt = 0; publishUnreadCount(0)
+      Promise.resolve().then(() => void refreshUnreadCount({ force: true }))
+    }
+  })
   const handleRead = () => void refreshUnreadCount({ force: true })
   const handleFocus = () => void refreshUnreadCount()
   const handleOnline = () => void refreshUnreadCount({ force: true })
@@ -89,6 +105,7 @@ function startUnreadCountGlobalListeners() {
   document.addEventListener('visibilitychange', handleVisibility)
 
   unreadCountStopGlobalListeners = () => {
+    auth.subscription.unsubscribe()
     window.clearInterval(interval)
     window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
     window.removeEventListener('focus', handleFocus)
@@ -107,7 +124,7 @@ function subscribeUnreadCount(listener: UnreadCountListener) {
 
   return () => {
     unreadCountListeners.delete(listener)
-    if (unreadCountListeners.size === 0) unreadCountStopGlobalListeners?.()
+    if (unreadCountListeners.size === 0) { unreadCountStopGlobalListeners?.(); unreadCountGeneration++; unreadCountUser = null; unreadCountLoaded = false; unreadCountLastFetchAt = 0; publishUnreadCount(0) }
   }
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { BadgeCheck, BookOpenCheck, ChevronLeft, ChevronRight, ClipboardCheck, GraduationCap, Loader2, Plus, ShieldCheck, Star, Trash2, UserCheck, UsersRound, FolderOpen, FolderPlus, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -49,7 +50,8 @@ function statusClass(status: Assignment['estado']) {
 
 export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
   const supabase = useMemo(() => createClient() as any, [])
-  const [tab, setTab] = useState<'curso' | 'personas' | 'previos'>('curso')
+  const params = useSearchParams()
+  const [tab, setTab] = useState<'curso' | 'personas' | 'previos'>(() => params.get('revision') === '1' ? 'personas' : 'curso')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -109,7 +111,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
   }, [courses, selectedCourseId])
 
   const selectedCourse = courses.find(course => course.id === selectedCourseId) || null
-  const peopleCourse = peopleCourseId || courses.find(course => course.tipo === 'discipulado' && course.estado === 'publicado')?.id || courses.find(course => course.tipo === 'discipulado')?.id || courses[0]?.id || null
+  const peopleCourse = peopleCourseId || (params.get('revision') === '1' ? assignments.find(a => a.estado === 'revision')?.curso_id : null) || courses.find(course => course.tipo === 'discipulado' && course.estado === 'publicado')?.id || courses.find(course => course.tipo === 'discipulado')?.id || courses[0]?.id || null
   const viewCourseId = tab === 'personas' ? peopleCourse : selectedCourseId
   const selectedLessons = lessons.filter(lesson => lesson.curso_id === viewCourseId).sort((a, b) => a.orden - b.orden)
   const selectedAssignments = assignments.filter(item => item.curso_id === viewCourseId)
@@ -409,7 +411,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
 
       {tab === 'personas' && <div className="space-y-4">
         <section className={`${panel} p-4`}><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-violet-50 text-violet-600"><UsersRound className="h-5 w-5" /></div><div><h2 className="font-bold text-[#171923]">Personas en el discipulado actual</h2><p className="mt-0.5 text-xs text-slate-500">Lista rápida con foto y progreso de cada persona.</p></div></div>{courses.length > 1 && <select value={peopleCourse || ''} onChange={event => setPeopleCourseId(event.target.value)} className={`${fieldClass} mt-4`}>{courses.map(course => <option key={course.id} value={course.id}>{course.titulo}</option>)}</select>}</section>
-        {selectedAssignments.length === 0 ? <section className={`${panel} p-8 text-center`}><BookOpenCheck className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm font-bold text-slate-600">Todavía nadie ha comenzado este curso.</p></section> : <section className={`${panel} overflow-hidden`}><div className="max-h-[36rem] divide-y divide-slate-100 overflow-y-auto">{selectedAssignments.map(assignment => {
+        {selectedAssignments.length === 0 ? <section className={`${panel} p-8 text-center`}><BookOpenCheck className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm font-bold text-slate-600">Todavía nadie ha comenzado este curso.</p></section> : <section className={`${panel} overflow-hidden`}><div className="max-h-[36rem] divide-y divide-slate-100 overflow-y-auto">{[...selectedAssignments].sort((a,b) => Number(b.estado === 'revision') - Number(a.estado === 'revision')).map(assignment => {
           const profile = profileMap.get(assignment.profile_id)
           const completedIds = new Set(progress.filter(item => item.asignacion_id === assignment.id).map(item => item.leccion_id))
           const viewedIds = new Set(videoProgress.filter(item => item.asignacion_id === assignment.id).map(item => item.leccion_id))

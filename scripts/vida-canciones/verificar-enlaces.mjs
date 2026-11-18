@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import vm from 'node:vm'
 import ts from 'typescript'
 import { createHash } from 'node:crypto'
-if (process.env.VERCEL !== '1' || process.env.VERCEL_GIT_COMMIT_REF !== 'agent/catalogo-canciones-vida-20261117') process.exit(0)
+if (process.env.VERCEL !== '1' || !['agent/catalogo-canciones-vida-20261117', 'agent/badges-generales-20261118'].includes(process.env.VERCEL_GIT_COMMIT_REF || '')) process.exit(0)
 const transcribir = (path, dependencias = {}) => {
   const { outputText } = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } })
   const modulo = { exports: {} }

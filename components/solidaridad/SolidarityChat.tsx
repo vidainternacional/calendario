@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { MessageCircle, RefreshCcw, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { enviarMensajeAyudaSolidaria } from '@/app/actions/solidaridad'
@@ -25,6 +25,7 @@ export default function SolidarityChat({
   defaultOpen?: boolean
   alwaysOpen?: boolean
 }) {
+  const lectura = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const [open, setOpen] = useState(defaultOpen)
   const [messages, setMessages] = useState<SolidarityMessage[]>([])
@@ -35,6 +36,10 @@ export default function SolidarityChat({
   const visible = alwaysOpen || open
 
   const markRead = useCallback(async () => {
+    const elemento = lectura.current
+    if (document.visibilityState !== 'visible' || !elemento || elemento.closest('details:not([open])') || !elemento.getClientRects().length) return
+    const rect = elemento.getBoundingClientRect()
+    if (rect.bottom <= 0 || rect.top >= window.innerHeight) return
     try {
       const supabase = createClient()
       const { error: readError } = await (supabase as any).rpc('marcar_ayuda_solidaria_leida', {
@@ -79,7 +84,13 @@ export default function SolidarityChat({
     if (!visible) return
     void load()
     const interval = window.setInterval(() => void load(), 8000)
-    return () => window.clearInterval(interval)
+    const observer = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) void load()
+    }) : null
+    if (lectura.current) observer?.observe(lectura.current)
+    const abrir = () => { if (lectura.current && !lectura.current.closest('details:not([open])')) void load() }
+    document.addEventListener('toggle', abrir, true)
+    return () => { window.clearInterval(interval); observer?.disconnect(); document.removeEventListener('toggle', abrir, true) }
   }, [load, visible])
 
   const send = () => {
@@ -112,7 +123,7 @@ export default function SolidarityChat({
       ) : null}
 
       {visible ? (
-        <div className={alwaysOpen ? '' : 'pt-2'}>
+        <div ref={lectura} className={alwaysOpen ? '' : 'pt-2'}>
           {!alwaysOpen ? (
             <div className="mb-2 flex items-center justify-between gap-3">
               <p className="text-[10px] font-medium text-slate-400">Privado entre tú y el equipo autorizado.</p>

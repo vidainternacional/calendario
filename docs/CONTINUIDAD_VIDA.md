@@ -3,6 +3,15 @@
 Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Badges generales y catálogo — 2026-11-18 · preparado
+
+- Nuevo pedido: badges coherentes en toda la app y continuar catálogo después; el resto aprobado no se reabre. Rama agent/badges-generales-20261118 desde main bd7aa236 (#316 musical ya publicado). Sin producción autorizada para este bloque.
+- Eliminada ocultación por visitar sección; pendientes conservan estado real, avisos/videos lectura/apertura exacta. Reinicio entre cuentas y respuestas atrasadas descartadas. Para ti añade servicios concretos, avisos por aprobar, revisión de Discipulado y mensajes solidarios, con permisos existentes. Reemplazos llevan a solicitudes del ministerio autorizado.
+- Ayuda Solidaria comparte consulta entre badges y no marca leído un chat oculto en details cerrado/fuera de pantalla. Discipulado abre Personas/curso con revisión por enlace explícito, sin cambiar reglas/progreso.
+- 30 pruebas pertinentes; compilación y Chromium aislado de Para ti/chat con acciones simuladas. Falta validación autenticada/visual y entrega push en teléfonos no probada; no enviar avisos reales para probar. Lint heredado any/setState-in-effect y CI histórico no se declaran corregidos.
+- Catálogo: 11 identidades adicionales con referencias públicas; 98 identificadas, 135 pendientes, 2 existentes sobre 235 entradas/variantes. Letras y cifrados aportados intactos. Certificación de disponibilidad en Preview y carga idempotente solo con sesión real administradora; todavía no equivale a nuevas filas. No declarar terminado ni inventar enlaces/letras.
+- Fuente y límites: docs/BADGES_GENERALES_2026-11-18.md. Un Preview y alias único; recibo SHA/READY/certificado en PR. Sin RLS, SQL, roles, maestro, gastos ni datos reales modificados por estas pruebas.
+
 ## Publicación musical autorizada — 2026-11-18 · PR #316
 
 - Usuario validó la presentación («Perfecto me parece») y autorizó «pasa a la producción». Publicar únicamente PR #316; no integrar otros Draft ni modificar maestro.
