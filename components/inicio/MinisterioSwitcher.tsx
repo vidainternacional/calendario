@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useMinisterioReciente, ordenarMinisteriosRecientes } from '@/lib/ministerios/ministerio-reciente'
 import { ChevronDown, ChevronRight, LayoutGrid } from 'lucide-react'
 import ShineSweep from '@/components/ui/ShineSweep'
 import { obtenerPendientesMinisterioDashboard } from '@/app/actions/pendientes-ministerio-dashboard'
@@ -17,7 +18,9 @@ type Mem = {
 
 type PendingByMinistry = Record<string, number>
 
-export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }) {
+export default function MinisterioSwitcher({ membresias, usuarioId }: { membresias: Mem[]; usuarioId: string }) {
+  const reciente = useMinisterioReciente(usuarioId)
+  const ordenadas = ordenarMinisteriosRecientes(membresias, reciente)
   const [abierto, setAbierto] = useState(false)
   const [pendientes, setPendientes] = useState<PendingByMinistry>({})
   const menuRef = useRef<HTMLElement>(null)
@@ -77,7 +80,7 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
   }, [ministryKey])
 
   if (!membresias.length) return null
-  const principal = membresias[0]
+  const principal = ordenadas[0]
   const principalPendientes = pendientes[principal.ministerio_id] || 0
   const totalPendientes = Object.values(pendientes).reduce((total, value) => total + value, 0)
 
@@ -149,7 +152,7 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
               </p>
             </div>
             <div className="space-y-1">
-              {membresias.map((ministerio, index) => {
+              {ordenadas.map((ministerio) => {
                 const pendingCount = pendientes[ministerio.ministerio_id] || 0
                 return (
                   <Link
@@ -175,8 +178,8 @@ export default function MinisterioSwitcher({ membresias }: { membresias: Mem[] }
                       <span className={`mt-0.5 block text-[10px] font-medium ${pendingCount > 0 ? 'text-rose-500' : 'text-slate-400'}`}>
                         {pendingCount > 0
                           ? `${pendingCount} ${pendingCount === 1 ? 'pendiente' : 'pendientes'} por revisar`
-                          : index === 0
-                            ? 'Ministerio principal'
+                          : ministerio.ministerio_id === reciente
+                            ? 'Último visitado'
                             : ministerio.es_lider
                               ? 'Liderazgo'
                               : 'Miembro'}

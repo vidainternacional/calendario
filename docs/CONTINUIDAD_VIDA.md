@@ -3,6 +3,66 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Publicación autorizada — último ministerio · 2026-11-18 · PR #318
+
+- Usuario aprobó el resultado del Preview y autorizó «Perfecto pásalo a producción». Publicar únicamente #318, sin mezclar otras ramas ni modificar el maestro.
+- Código aprobado `31092c6a60b4fdbd8447e3d84d4cd07643bf0130`, Preview READY `dpl_FExVtnkrgL3MDaiUsJYemMZk8X6R`. Cinco pruebas pertinentes y build correctos; Guardrails pasa. Tres fallos históricos de CI general siguen pendientes.
+- Este registro solo incorpora aprobación/continuidad. Recibo final de merge, deployment READY y alias oficial en PR #318 para evitar otra publicación documental. No afirmar publicado sin cotejar ese recibo.
+
+## Inicio — último ministerio visitado y ficha del líder · 2026-11-18
+
+- Solicitud nueva: el último ministerio abierto debe encabezar Inicio al regresar. Rama `agent/ministerio-reciente-20261118`, basada en main publicado `a117e24b` (#317). No mezclar #313/#316.
+- Implementado: preferencia por usuario/dispositivo al montar un ministerio autorizado con membresía; ordena Inicio/selector, conserva demás equipos y badges; ignora ministerios ajenos o retirados. Sin cambios de DB, RLS, membresías o permisos.
+- Cinco pruebas pertinentes, TypeScript/build local correctos. Falta validación autenticada y autorización de producción. Recibo de PR/Preview/SHA final en el PR de esta rama.
+- Presentación ya existe: líder asignado → su ministerio → lápiz superior Personalizar ministerio → Personalizar dashboard → descripción/portada/avatar/colores → Guardar cambios. No se construye otra ficha ni se otorgan permisos globales.
+- Entrada de prueba única conservada: `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`. No enviar enlaces de deployments distintos. Detalle/límites/reversión: `docs/MINISTERIO_RECIENTE_2026-11-18.md`.
+- Producción del bloque anterior ya confirmada en PR #317: merge `a117e24b`, deployment `dpl_CQntRW1Z4tVszbDtyn272dXX9zyx` READY y dominio habitual correcto. Maestro intacto.
+
+## Publicación autorizada — 2026-11-18 · PR #317
+
+- Usuario validó el resultado y autorizó expresamente: «Perfecto pásalo a producción». Integra únicamente el bloque de avisos, galería y administración de mensajes del PR #317; no integra #313/#316 completos ni modifica el maestro.
+- Código validado: `2513bd3ace5ee7d2091cb0858c778d4b6e257cc8`, Preview READY `dpl_Dhz2BV37YNc9WrhCWY3Czf5UzmgJ`. Este registro solo incorpora aprobación/continuidad; no cambia funciones.
+- 45 pruebas pertinentes, TypeScript/lint específico y build correctos. Guardrails GitHub pasó. Cotejados logs de CI temporal: persisten exactamente los tres fallos históricos de middleware/Inicio/Avisos; no declararlos corregidos ni CI general verde.
+- Migración de administración activa ya aplicada y cotejada; no volver a ejecutarla ni borrar contenido. Ningún aviso real enviado desde esta sesión.
+- Proceder a integrar/publicar en `https://calendario-vida-internacional.vercel.app`. Recibo final de merge SHA, deployment READY y dominio se registra en el cuerpo del PR #317 para evitar otra publicación solo documental. Antes de afirmar publicación, verificar ese recibo y estado real.
+
+## Gestión general de mensajes — 2026-11-18 · PR #317
+
+- Autorización expresa recibida: «Si solo administradores activos podrán hacerlo». Solo Administrador activo puede gestionar publicaciones dirigidas de otros autores, incluidos borradores. Pastor conserva gestión propia; no se cambian roles.
+- RLS **aplicada** en ccvida: `vida_devocionales_gestion_administrador_20261118`, tres políticas SELECT/UPDATE/DELETE exclusivas de administrador activo. Trigger impide cambiar UUID/autoría. Una publicación y misma huella antes/después; ningún contenido ni envío real modificado.
+- Código de galería/actions amplía consulta y gestión al administrador con JWT/RLS, mantiene autor original y revisión concurrente. Eliminar solo administrador. Borradores aclaran acceso del autor y administración. Estudios sigue como biblioteca publicada.
+- Propuesta anterior `20261118000100_vida_devocionales_eliminacion_autor.sql` nunca aplicada y retirada: NO restaurar ni conceder DELETE a pastores. Antecedentes de bloqueo inferiores superados por este registro, no por una aprobación de producción.
+- 45 pruebas pertinentes, TypeScript/lint específico/build locales correctos; browser aislado a 390 px con acciones simuladas. Falta validación autenticada del usuario. Sin merge ni despliegue de producción; maestro intacto.
+- Mantener entrada única `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`, misma rama `agent/avisos-devocionales-20261117`. Recibo de Preview final/SHA en PR #317. No usar alias de #313 para probar este bloque.
+- Alcance, evidencia y reversión: `docs/GALERIA_MENSAJES_PASTORALES_2026-11-17.md`. Gestión general aplica a `vida_devocionales`; no ampliar permisos de paquetes históricos.
+
+## Centro Pastoral — Galería y edición · 2026-11-17 · PR #317
+
+- Usuario indicó «lo demás está bien» y pidió galería de mensajes anteriores, edición de título/video y eliminación desde Centro Pastoral. Preparado en la misma rama/alias del PR #317, aún sin producción.
+- Galería propia con miniaturas, búsqueda, filtros Publicados/Borradores, edición existente y confirmación de eliminación. Se conservan autoría/audiencia, reenvío pendiente y publicar/despublicar.
+- 40 pruebas pertinentes, TypeScript/lint del editor/actions y build local correctos; browser aislado a 390 px con acciones simuladas. Falta validación visual autenticada; no se alteraron publicaciones reales ni se enviaron avisos.
+- **Bloqueo:** ccvida no tiene política DELETE en `vida_devocionales`; no afirmar que los devocionales ya se pueden borrar. Preparada migración `20261118000100_vida_devocionales_eliminacion_autor.sql`, NO APLICADA, limitada a autor pastor/admin activo. Requiere aprobación específica de RLS; no aplicarla automáticamente.
+- Alcance, impacto, reversión y límites de carga: `docs/GALERIA_MENSAJES_PASTORALES_2026-11-17.md`. Recibo del nuevo HEAD/Preview READY en PR #317. Maestro intacto; merge/producción requieren autorización nueva.
+
+## Ampliación de avisos — 2026-11-17 · PR #317
+
+- Pedido actual: reenvío para destinatarios pendientes aun publicado; aviso de video nuevo en Inicio/Avisos y badge hasta abrirlo; recordatorio de activar push.
+- Implementado en `agent/avisos-devocionales-20261117`, no en producción. Consulta con JWT/RLS del lector, marcadores locales por usuario/dispositivo (sin sincronización entre teléfonos), enlaces directos y renovación al reconectar/volver. Solo apertura del detalle retira ese video.
+- Reutiliza únicamente recordatorio push de #313; no integra su Estudio/Cuaderno. No mezclar #316 musical. Maestro, permisos, tablas, publicaciones y registros de envío intactos.
+- 35 comprobaciones pertinentes; compilación y TypeScript correctos; pruebas móviles aisladas con datos/acciones simuladas. Falta validación autenticada del usuario y aprobación nueva para merge/producción. No se enviaron notificaciones reales.
+- Detalles/limitaciones/reversión: `docs/AVISOS_DEVOCIONALES_2026-11-17.md`. Preview y SHA final en PR #317; verificar recibo antes de retomar.
+
+## Incidencia prioritaria — avisos de Devocionales · 2026-11-17
+
+- Usuario reportó que el pastor Romy publicó para cinco ministerios y nadie recibió aviso. Verificados: publicación dirigida publicada, 17 destinatarios activos por pertenencia, 10 con push registrado (16 dispositivos), cero registros de envío para esa referencia. Sin trigger de envío en la tabla.
+- Causa comprobada: acciones de mensajes dirigidos guardan/publican y revalidan pantallas sin invocar Web Push. Producción/main siguen en `76f28ff8da4a1f4ee19bbc2c682e281fd71ef309`, deployment READY `dpl_BcmYyxoCZihqM9z5Zjxa5TS5GJMK`.
+- Preparada rama separada `agent/avisos-devocionales-20261117`: aviso deduplicado al publicar, audiencia conforme a RLS y preferencias, protección de autor/publicación/revisión y botón explícito **Enviar aviso pendiente** para el autor. Borradores/ediciones de contenido no reavisan; no se ampliaron destinatarios ni permisos.
+- 24 pruebas pertinentes, TypeScript/lint/build locales correctos. No se enviaron avisos reales, no se modificó la publicación afectada ni se probaron teléfonos. Falta autorización de producción y recuperación real por el autor; el botón del Preview enviaría un aviso real, no pulsarlo como prueba.
+- [Checkpoint de la incidencia](AVISOS_DEVOCIONALES_2026-11-17.md). Recibo de PR/Preview exacto se añade al PR sin otro build documental. Maestro, RLS, roles, cron y planes intactos.
+- No mezclar: PR musical #316 sigue Draft en `agent/catalogo-canciones-vida-20261117`, SHA `039283b278801ce1af4113d46dd758fab13903de`; último conteo verificado aquí: 23 canciones activas. Las candidatas comprobadas del build no equivalen a filas importadas. PR #313 también permanece separado.
+
+
+
 ## Transposición persistente y ficha integrada · preparado 2026-11-17
 
 - Solicitud nueva del usuario: transportar dentro de la ficha y guardar el último tono/acordes; practicidad desde setlist; campos integrados al fondo, sin cajas; ampliar canciones y completar referencias. La carga anterior de 20 nuevas/22 totales fue confirmada por el usuario.

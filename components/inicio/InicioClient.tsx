@@ -1,5 +1,7 @@
 'use client'
 
+import VideosMinisterialesPendientes from '@/components/notificaciones/VideosMinisterialesPendientes'
+import PushReminder from '@/components/pwa/PushReminder'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
@@ -261,6 +263,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 [-webkit-overflow-scrolling:touch] sm:px-4">
+              <VideosMinisterialesPendientes />
               {publicaciones.length === 0 ? (
                 <div className="rounded-[22px] border border-white bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-sm">
                   No hay avisos disponibles por ahora.
@@ -325,6 +328,8 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           />
         </header>
 
+        <VideosMinisterialesPendientes />
+        <PushReminder userId={userId} />
         <div className="space-y-5 sm:space-y-6">
           <section aria-label={nextEventIsOngoing ? 'Evento en curso' : 'Tu próximo evento'}>
             {nextEvent && nextEventStart ? (
@@ -407,6 +412,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
 
           {membresias.length > 0 ? (
             <MinisterioSwitcher
+              usuarioId={userId}
               membresias={membresias.map((m: any) => ({
                 ministerio_id: m.ministerio_id,
                 es_lider: !!m.es_lider,

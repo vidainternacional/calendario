@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useVideosMinisteriales } from '@/components/notificaciones/useVideosMinisteriales'
 import { usePendingIndicators } from '@/components/notificaciones/usePendingIndicators'
 
 type BadgeCounts = {
@@ -94,6 +95,7 @@ function applyBadge(total: number) {
 
 export function useAttentionBadges() {
   const pathname = usePathname()
+  const { pendientes: videosPendientes } = useVideosMinisteriales()
   const {
     unreadAvisos,
     pendingMinisterioIngresos,
@@ -188,12 +190,13 @@ export function useAttentionBadges() {
 
   useEffect(() => {
     if (loadedUserId !== userId) return
-    applyBadge(total)
-  }, [loadedUserId, total, userId])
+    applyBadge(total + videosPendientes.length)
+  }, [loadedUserId, total, userId, videosPendientes.length])
 
   return {
     ...attention,
-    total,
+    unreadVideos: videosPendientes.length,
+    total: total + videosPendientes.length,
   }
 }
 

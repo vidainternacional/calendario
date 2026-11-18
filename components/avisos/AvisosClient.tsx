@@ -11,6 +11,7 @@ import NuevoAvisoModal from '@/components/avisos/NuevoAvisoModal'
 import PublicacionCard from '@/components/avisos/PublicacionCard'
 import { useUnreadPublicationIds } from '@/components/avisos/usePublicationReads'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import VideosMinisterialesPendientes from '@/components/notificaciones/VideosMinisterialesPendientes'
 import BackButton from '@/components/navigation/BackButton'
 
 type AvisosData = {
@@ -182,6 +183,7 @@ export default function AvisosClient({ userId, adminMode = false }: AvisosClient
           </div>
         )}
       </header>
+      <VideosMinisterialesPendientes />
 
       {items.length === 0 ? (
         <section className="overflow-hidden rounded-[26px] border border-white bg-white shadow-sm" aria-labelledby="avisos-vacio-titulo">
