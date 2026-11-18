@@ -43,3 +43,9 @@ Márgenes internos del panel Biblioteca incluyen cabecera/icono/descripción y e
 Programación calcula cifrado desde el tono oficial hasta el tono elegido para el servicio; ±½ o edición del campo actualizan la lectura, Guardar persiste tono e indicaciones. Bandera `solo_servicio` en action existente conserva biblioteca; autorización de sesión/rol/evento no cambia. La consulta editorial incluye cifrado/letra para lectura sin depender de acceso al panel del líder. No se escribieron servicios reales como prueba ni se amplió RLS.
 
 37 pruebas pertinentes pasan, incluyendo persistencia restringida del tono/indicaciones sin escribir biblioteca y rechazo de músicos. Chromium aislado comprueba formularios completos, acordeones, transposición y pantalla grande con datos simulados. Compilación final y recibo Preview exacto en PR #316. Pendiente validación visual autenticada; no producción autorizada para este bloque. Reversión de UI/action mediante revert de este cambio, sin revertir datos ni la función de orden previamente aprobada.
+
+## Cabecera única editable y transporte compacto
+
+Al abrir una canción existente en Biblioteca, la fila se convierte en cabecera editable (título, artista y tono) dentro del mismo formulario; no se repite Información general. La fila contraída permanece intacta. Letra/Cifrado siguen directamente debajo, conservando campos y enlaces. Crear canción nueva mantiene formulario descriptivo.
+
+Controles − tono + con etiqueta Transportar tono y nombres accesibles de medio tono. Se preserva guardado de tono/acordes de biblioteca, tono de servicio independiente y lectura personal sin escritura. Lector conserva Anterior/Siguiente, Letra/Cifrado y pantalla grande; botones de transporte con área táctil de 44px. Sin swipe añadido ni cambios de permisos, DB o CSS global. Pruebas con datos/acciones simulados; pendiente validación visual del usuario. Recibo de Preview exacto en PR, no en otro commit documental.

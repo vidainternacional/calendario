@@ -59,11 +59,11 @@ export default function MusicianSetlistClient({ ministerioId, eventoId, songs, c
 <p className="mt-0.5 text-xs text-slate-600">No cambia la versión oficial.</p>
 </div>
 <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1">
-<button type="button" onClick={()=>setShift((v)=>v-1)} className="grid h-9 w-9 place-items-center rounded-full bg-white text-slate-700 shadow-sm">
+<button type="button" aria-label="Bajar medio tono" onClick={()=>setShift((v)=>v-1)} className="grid h-11 w-11 place-items-center rounded-full bg-white text-slate-700 shadow-sm">
 <Minus className="h-4 w-4"/>
 </button>
 <span className="min-w-12 text-center text-xs font-black text-slate-800">{tone}</span>
-<button type="button" onClick={()=>setShift((v)=>v+1)} className="grid h-9 w-9 place-items-center rounded-full bg-white text-slate-700 shadow-sm">
+<button type="button" aria-label="Subir medio tono" onClick={()=>setShift((v)=>v+1)} className="grid h-11 w-11 place-items-center rounded-full bg-white text-slate-700 shadow-sm">
 <Plus className="h-4 w-4"/>
 </button>
 </div>
@@ -93,7 +93,7 @@ export default function MusicianSetlistClient({ ministerioId, eventoId, songs, c
 <button disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-extrabold text-white disabled:opacity-50">
 <Save className="h-4 w-4"/>Guardar versión oficial</button>{status?<p className="text-xs font-semibold text-slate-600">{status}</p>:null}</form>
 </details>:null}{grande && <PantallaCancion pagina={selected.rowId} titulo={`${selected.title} · ${tone}`} cerrar={cerrarGrande}>
-<div className="mb-3 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-slate-600">{selected.artist || 'Canción del repertorio'} · {selectedIndex!+1} de {songs.length}</p><div className="flex items-center gap-3"><button type="button" aria-label="Bajar medio tono" onClick={()=>setShift(v=>v-1)} className="min-h-11 px-3 font-bold text-violet-700">− ½</button><strong>{tone}</strong><button type="button" aria-label="Subir medio tono" onClick={()=>setShift(v=>v+1)} className="min-h-11 px-3 font-bold text-violet-700">+ ½</button></div></div>
+<div className="mb-3 flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-slate-600">{selected.artist || 'Canción del repertorio'} · {selectedIndex!+1} de {songs.length}</p><div className="flex items-center gap-3"><button type="button" aria-label="Bajar medio tono" onClick={()=>setShift(v=>v-1)} className="min-h-11 px-3 font-bold text-violet-700">−</button><strong>{tone}</strong><button type="button" aria-label="Subir medio tono" onClick={()=>setShift(v=>v+1)} className="min-h-11 px-3 font-bold text-violet-700">+</button></div></div>
 <div className="flex gap-5 border-b border-slate-200"><button type="button" aria-pressed={vista==='cifrado'} onClick={()=>setVista('cifrado')} className={`min-h-11 text-sm font-bold ${vista==='cifrado'?'border-b-2 border-violet-600 bg-violet-50 text-violet-800':'border-b-2 border-transparent text-slate-500'}`}>Acordes</button><button type="button" aria-pressed={vista==='letra'} onClick={()=>setVista('letra')} className={`min-h-11 text-sm font-bold ${vista==='letra'?'border-b-2 border-violet-600 bg-violet-50 text-violet-800':'border-b-2 border-transparent text-slate-500'}`}>Letra</button></div>
 {contenido}
 <div className="flex justify-between gap-4 border-t border-slate-200"><button type="button" disabled={pending||selectedIndex===0} onClick={()=>openSong(selectedIndex!-1)} className="min-h-12 text-sm font-bold text-violet-700 disabled:opacity-40">Anterior</button><button type="button" disabled={pending||selectedIndex===songs.length-1} onClick={()=>openSong(selectedIndex!+1)} className="min-h-12 text-sm font-bold text-violet-700 disabled:opacity-40">Siguiente</button></div>

@@ -3,6 +3,12 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Cabecera editable sin duplicación — 2026-11-18 · PR #316
+
+- Usuario aprueba aspecto contraído y cifrado; solicita editar nombre/artista/tono en esa misma cabecera, eliminando repetición de Información general. La fila cerrada permanece; abierta se sustituye por cabecera editable dentro del formulario, seguida de Letra/Cifrado. Formulario de canción nueva conserva etiquetas completas.
+- Transporte compacto − tono +, nombres accesibles indican medio tono; biblioteca, programación y pantalla grande mantienen comportamiento de persistencia anterior. Controles personales del lector con objetivos táctiles de 44px, sin nuevas escrituras ni permisos; navegación Anterior/Siguiente y vista grande conservadas.
+- Misma rama/PR y único Preview, sin producción, SQL, RLS ni maestro. 37 regresiones pertinentes; controles de navegador aislados con datos simulados y compilación antes de push. Pendiente validación visual autenticada; recibo SHA/READY/alias final en PR #316.
+
 ## Ajuste solicitado de márgenes y cifrado — 2026-11-18 · PR #316
 
 - Usuario reportó ficha desalineada en Repertorio/Biblioteca y falta de aire incluso en icono/encabezado de Biblioteca. Márgenes internos explícitos en el panel completo y en Repertorio, sin modificar CSS global. Letra/Cifrado son desplegables inicialmente cerrados en ficha; selección evidente también en lector.

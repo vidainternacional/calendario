@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useId, useRef, useState } from 'react'
+import { ChevronDown, Music2 } from 'lucide-react'
 import PantallaCancion from './PantallaCancion'
 import { transportarCifrado, transportarTono } from '@/lib/musica/transponer'
 
@@ -10,8 +11,8 @@ export type DatosFichaCancion = {
 }
 const CAMPO = 'mt-1.5 w-full rounded-none border-0 border-b border-slate-200 bg-transparent px-0 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400'
 
-export default function FichaCancionCampos({ valores, iniciales, cambiar, guardarTransposicion, guardandoTono }: {
-  valores?: DatosFichaCancion; iniciales?: DatosFichaCancion; cambiar?: (datos: DatosFichaCancion) => void; guardarTransposicion?: (datos: DatosFichaCancion) => Promise<{ success: boolean; error?: string }>; guardandoTono?: (ocupado: boolean) => void
+export default function FichaCancionCampos({ valores, iniciales, cambiar, guardarTransposicion, guardandoTono, cabeceraCompacta, cerrarFicha }: {
+  cabeceraCompacta?: boolean; cerrarFicha?: () => void; valores?: DatosFichaCancion; iniciales?: DatosFichaCancion; cambiar?: (datos: DatosFichaCancion) => void; guardarTransposicion?: (datos: DatosFichaCancion) => Promise<{ success: boolean; error?: string }>; guardandoTono?: (ocupado: boolean) => void
 }) {
   const id = useId()
   const [grande, setGrande] = useState(false)
@@ -45,14 +46,28 @@ export default function FichaCancionCampos({ valores, iniciales, cambiar, guarda
     })
   }
   return <div className="mx-auto w-full min-w-0 space-y-6 text-slate-900">
-    <div className="grid gap-4">
+    {cabeceraCompacta ? <div>
+      <div className="flex min-w-0 items-start gap-3 py-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-50 text-violet-600"><Music2 className="h-4 w-4" /></span>
+        <div className="min-w-0 flex-1">
+          <input name="titulo" required maxLength={160} aria-label="Nombre de la canción" {...props('titulo')} className="block min-h-9 w-full min-w-0 border-0 border-b border-slate-200 bg-transparent px-0 text-sm font-extrabold text-slate-900 outline-none focus:border-violet-400" placeholder="Nombre de la canción" />
+          <div className="mt-1 flex min-w-0 items-center gap-2">
+            <input name="artista" aria-label="Artista / versión" {...props('artista')} className="min-h-9 w-full min-w-0 flex-1 border-0 border-b border-slate-200 bg-transparent px-0 text-xs text-slate-600 outline-none focus:border-violet-400" placeholder="Artista / versión" />
+            <span aria-hidden="true" className="text-slate-400">·</span>
+            <input name="tonalidad_base" aria-label="Tono base" {...props('tonalidadBase')} className="min-h-9 w-14 shrink-0 border-0 border-b border-slate-200 bg-transparent px-0 text-center font-mono text-xs font-bold text-slate-700 outline-none focus:border-violet-400" placeholder="Tono" />
+          </div>
+        </div>
+        <button type="button" onClick={cerrarFicha} aria-label="Cerrar ficha de canción" className="grid h-11 w-8 shrink-0 place-items-center text-slate-500"><ChevronDown className="h-4 w-4 rotate-180" /></button>
+      </div>
+      <p className="text-[11px] text-slate-500">Toca el nombre, artista o tono para editar. Pulsa Guardar al terminar.</p>
+    </div> : <div className="grid gap-4">
       <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">Información general</h3>
       <label className="text-xs font-bold text-slate-600">Nombre de la canción<input name="titulo" required maxLength={160} {...props('titulo')} className={`${CAMPO} h-12 text-base font-semibold`} placeholder="Nombre de la canción" /></label>
       <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3">
         <label className="min-w-0 text-xs font-bold text-slate-600">Artista / versión<input name="artista" {...props('artista')} className={`${CAMPO} h-11`} placeholder="Artista o versión" /></label>
         <label className="text-xs font-bold text-slate-600">Tono base<input name="tonalidad_base" {...props('tonalidadBase')} className={`${CAMPO} h-11 font-mono font-bold`} placeholder="Ej. D" /></label>
       </div>
-    </div>
+    </div>}
     <div>
       <div className="mb-2 flex items-center justify-between gap-3"><h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">Hoja musical</h3><button type="button" onClick={() => { if (!seccion) setSeccion(datos.acordes ? 'acordes' : 'letra'); setGrande(true) }} className="min-h-11 text-sm font-bold text-violet-700">Ver en grande</button></div>
       <div className="grid grid-cols-2 gap-3 border-b border-slate-200 pb-2">
@@ -63,10 +78,13 @@ export default function FichaCancionCampos({ valores, iniciales, cambiar, guarda
         <label className="text-xs font-bold text-slate-600">Letra<textarea name="letra" {...props('letra')} className={`${CAMPO} min-h-64 resize-y py-3 font-mono leading-7`} placeholder="Pega o escribe la letra, separando estrofas y coro con una línea en blanco." /></label>
       </div>
       <div role="region" id={`${id}-acordes`} aria-labelledby={`${id}-acordes-tab`} hidden={seccion !== 'acordes'} className="pt-3">
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-200 pb-2">
-      <span className="text-sm font-bold text-slate-700">Tono: {datos.tonalidadBase || '—'}</span>
-      <button type="button" onClick={() => transportar(-1)} className="min-h-11 px-3 text-sm font-bold text-violet-700" aria-label="Bajar medio tono">− ½ tono</button>
-      <button type="button" onClick={() => transportar(1)} className="min-h-11 px-3 text-sm font-bold text-violet-700" aria-label="Subir medio tono">+ ½ tono</button>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-2">
+      <span className="text-xs font-bold text-slate-500">Transportar tono</span>
+      <div role="group" aria-label="Transportar tono" className="flex items-center gap-2">
+        <button type="button" onClick={() => transportar(-1)} className="h-11 w-11 rounded-full text-xl font-bold text-violet-700 active:bg-violet-50" aria-label="Bajar medio tono">−</button>
+        <strong aria-live="polite" className="min-w-12 text-center text-sm text-slate-800">{datos.tonalidadBase || '—'}</strong>
+        <button type="button" onClick={() => transportar(1)} className="h-11 w-11 rounded-full text-xl font-bold text-violet-700 active:bg-violet-50" aria-label="Subir medio tono">+</button>
+      </div>
     </div>
     {estadoTono ? <p role="status" className="text-xs text-slate-600">{estadoTono}</p> : null}
         <label className="text-xs font-bold text-slate-600">Acordes y estructura<textarea name="acordes" wrap="off" {...props('acordes')} className={`${CAMPO} min-h-64 resize-y overflow-x-auto py-3 font-mono leading-7`} placeholder={'Intro: D - A - Bm - G\nEstrofa:\nCoro:\nPuente:'} /></label>
@@ -85,7 +103,7 @@ export default function FichaCancionCampos({ valores, iniciales, cambiar, guarda
       </div>
     </details>
     {grande && <PantallaCancion titulo={`${datos.titulo || 'Canción'} · ${seccion === 'acordes' ? 'Acordes y estructura' : seccion === 'letra' ? 'Letra' : 'Indicaciones'}`} cerrar={cerrarGrande}>
-      {seccion === 'acordes' && <div className="mb-4 flex flex-wrap items-center gap-4"><span className="text-lg font-bold">Tono: {datos.tonalidadBase || '—'}</span><button type="button" onClick={() => transportar(-1)} className="min-h-11 px-2 font-bold text-violet-700" aria-label="Bajar medio tono">− ½ tono</button><button type="button" onClick={() => transportar(1)} className="min-h-11 px-2 font-bold text-violet-700" aria-label="Subir medio tono">+ ½ tono</button></div>}
+      {seccion === 'acordes' && <div className="mb-4 flex flex-wrap items-center gap-4"><span className="text-lg font-bold">Tono: {datos.tonalidadBase || '—'}</span><button type="button" onClick={() => transportar(-1)} className="min-h-11 px-2 font-bold text-violet-700" aria-label="Bajar medio tono">−</button><button type="button" onClick={() => transportar(1)} className="min-h-11 px-2 font-bold text-violet-700" aria-label="Subir medio tono">+</button></div>}
       <label className="block text-sm font-bold text-slate-600">{seccion === 'acordes' ? 'Acordes y estructura' : seccion === 'letra' ? 'Letra' : 'Indicaciones de la canción'}
         <textarea aria-label="Contenido en grande" value={seccion === 'acordes' ? datos.acordes : seccion === 'letra' ? datos.letra : datos.notasPermanentes} onChange={e => actualizar({ ...datos, [seccion === 'acordes' ? 'acordes' : seccion === 'letra' ? 'letra' : 'notasPermanentes']: e.target.value })} className="mt-3 min-h-[65dvh] w-full resize-y border-0 bg-transparent py-3 font-mono text-lg leading-8 text-slate-900 outline-none" />
       </label>
