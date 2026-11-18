@@ -1,6 +1,6 @@
 {
   "task": "Inicio recuerda el último ministerio visitado",
-  "userRequest": "Al volver a Inicio debe encabezar el último ministerio abierto entre las membresías del usuario. Revisar dónde el líder edita la ficha de presentación, reutilizar lo existente sin cambiar permisos ni diseño. No publicar producción sin nueva autorización.",
+  "userRequest": "Al volver a Inicio debe encabezar el último ministerio abierto entre las membresías del usuario. Revisar dónde el líder edita la ficha de presentación, reutilizar lo existente sin cambiar permisos ni diseño. No publicar producción sin nueva autorización. El usuario validó el ajuste y autorizó expresamente «Perfecto pásalo a producción». Integrar solo PR #318 y comprobar dominio habitual, sin modificar maestro ni datos.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "components/inicio/MinisterioSwitcher.tsx",

@@ -3,6 +3,12 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Publicación autorizada — último ministerio · 2026-11-18 · PR #318
+
+- Usuario aprobó el resultado del Preview y autorizó «Perfecto pásalo a producción». Publicar únicamente #318, sin mezclar otras ramas ni modificar el maestro.
+- Código aprobado `31092c6a60b4fdbd8447e3d84d4cd07643bf0130`, Preview READY `dpl_FExVtnkrgL3MDaiUsJYemMZk8X6R`. Cinco pruebas pertinentes y build correctos; Guardrails pasa. Tres fallos históricos de CI general siguen pendientes.
+- Este registro solo incorpora aprobación/continuidad. Recibo final de merge, deployment READY y alias oficial en PR #318 para evitar otra publicación documental. No afirmar publicado sin cotejar ese recibo.
+
 ## Inicio — último ministerio visitado y ficha del líder · 2026-11-18
 
 - Solicitud nueva: el último ministerio abierto debe encabezar Inicio al regresar. Rama `agent/ministerio-reciente-20261118`, basada en main publicado `a117e24b` (#317). No mezclar #313/#316.
