@@ -3,6 +3,21 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Publicación autorizada — último ministerio · 2026-11-18 · PR #318
+
+- Usuario aprobó el resultado del Preview y autorizó «Perfecto pásalo a producción». Publicar únicamente #318, sin mezclar otras ramas ni modificar el maestro.
+- Código aprobado `31092c6a60b4fdbd8447e3d84d4cd07643bf0130`, Preview READY `dpl_FExVtnkrgL3MDaiUsJYemMZk8X6R`. Cinco pruebas pertinentes y build correctos; Guardrails pasa. Tres fallos históricos de CI general siguen pendientes.
+- Este registro solo incorpora aprobación/continuidad. Recibo final de merge, deployment READY y alias oficial en PR #318 para evitar otra publicación documental. No afirmar publicado sin cotejar ese recibo.
+
+## Inicio — último ministerio visitado y ficha del líder · 2026-11-18
+
+- Solicitud nueva: el último ministerio abierto debe encabezar Inicio al regresar. Rama `agent/ministerio-reciente-20261118`, basada en main publicado `a117e24b` (#317). No mezclar #313/#316.
+- Implementado: preferencia por usuario/dispositivo al montar un ministerio autorizado con membresía; ordena Inicio/selector, conserva demás equipos y badges; ignora ministerios ajenos o retirados. Sin cambios de DB, RLS, membresías o permisos.
+- Cinco pruebas pertinentes, TypeScript/build local correctos. Falta validación autenticada y autorización de producción. Recibo de PR/Preview/SHA final en el PR de esta rama.
+- Presentación ya existe: líder asignado → su ministerio → lápiz superior Personalizar ministerio → Personalizar dashboard → descripción/portada/avatar/colores → Guardar cambios. No se construye otra ficha ni se otorgan permisos globales.
+- Entrada de prueba única conservada: `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`. No enviar enlaces de deployments distintos. Detalle/límites/reversión: `docs/MINISTERIO_RECIENTE_2026-11-18.md`.
+- Producción del bloque anterior ya confirmada en PR #317: merge `a117e24b`, deployment `dpl_CQntRW1Z4tVszbDtyn272dXX9zyx` READY y dominio habitual correcto. Maestro intacto.
+
 ## Publicación autorizada — 2026-11-18 · PR #317
 
 - Usuario validó el resultado y autorizó expresamente: «Perfecto pásalo a producción». Integra únicamente el bloque de avisos, galería y administración de mensajes del PR #317; no integra #313/#316 completos ni modifica el maestro.
