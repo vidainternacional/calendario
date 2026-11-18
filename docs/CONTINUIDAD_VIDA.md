@@ -3,6 +3,14 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Publicación autorizada — 2026-11-18 · PR #317
+
+- Usuario validó el resultado y autorizó expresamente: «Perfecto pásalo a producción». Integra únicamente el bloque de avisos, galería y administración de mensajes del PR #317; no integra #313/#316 completos ni modifica el maestro.
+- Código validado: `2513bd3ace5ee7d2091cb0858c778d4b6e257cc8`, Preview READY `dpl_Dhz2BV37YNc9WrhCWY3Czf5UzmgJ`. Este registro solo incorpora aprobación/continuidad; no cambia funciones.
+- 45 pruebas pertinentes, TypeScript/lint específico y build correctos. Guardrails GitHub pasó. Cotejados logs de CI temporal: persisten exactamente los tres fallos históricos de middleware/Inicio/Avisos; no declararlos corregidos ni CI general verde.
+- Migración de administración activa ya aplicada y cotejada; no volver a ejecutarla ni borrar contenido. Ningún aviso real enviado desde esta sesión.
+- Proceder a integrar/publicar en `https://calendario-vida-internacional.vercel.app`. Recibo final de merge SHA, deployment READY y dominio se registra en el cuerpo del PR #317 para evitar otra publicación solo documental. Antes de afirmar publicación, verificar ese recibo y estado real.
+
 ## Gestión general de mensajes — 2026-11-18 · PR #317
 
 - Autorización expresa recibida: «Si solo administradores activos podrán hacerlo». Solo Administrador activo puede gestionar publicaciones dirigidas de otros autores, incluidos borradores. Pastor conserva gestión propia; no se cambian roles.
