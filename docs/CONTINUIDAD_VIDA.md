@@ -3,6 +3,12 @@
 Último corte: 16 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Ajuste solicitado de márgenes y cifrado — 2026-11-18 · PR #316
+
+- Usuario reportó ficha desalineada en Repertorio/Biblioteca y falta de aire incluso en icono/encabezado de Biblioteca. Márgenes internos explícitos en el panel completo y en Repertorio, sin modificar CSS global. Letra/Cifrado son desplegables inicialmente cerrados en ficha; selección evidente también en lector.
+- Cifrado de Programación parte del tono oficial y muestra el tono del servicio. Controles ±½ y campo de tono actualizan la lectura; Guardar conserva tono/indicaciones del servicio mediante action existente con sesión/rol/evento. `solo_servicio` evita escribir en biblioteca; músicos conservan transporte personal sin guardado oficial.
+- Sin SQL nuevo, RLS, roles, datos reales, maestro ni producción. 37 pruebas pertinentes; validaciones Chromium con datos/acciones simulados y compilación del bloque antes de push. Falta validación visual autenticada del usuario. Recibo final de SHA/READY/alias en PR #316; conservar único enlace de prueba.
+
 ## Ficha musical centrada y uso en vivo — 2026-11-18 · PR #316
 
 - **Datos confirmados:** 50 nuevas guardadas mediante sesión real; 73 activas en ccvida/producción. Cotejo 50/50 completo, 23 previas intactas. El antiguo corte de 23 de abajo es histórico. Letras pendientes, catálogo no terminado.

@@ -247,7 +247,7 @@ export default async function ProgramacionMinisterialPage({
     const [repertorioReq, paletaReq] = await Promise.all([
       admin
         .from('evento_repertorio')
-        .select('*, ministerio_canciones(id,titulo,artista,spotify_url,youtube_url)')
+        .select('*, ministerio_canciones(id,titulo,artista,spotify_url,youtube_url,tonalidad_base,acordes,letra,notas_permanentes)')
         .eq('evento_id', evento.id)
         .eq('ministerio_id', id)
         .order('orden')

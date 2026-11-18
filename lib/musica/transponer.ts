@@ -33,3 +33,11 @@ export function transportarCifrado(texto: string, semitonos: number) {
     return linea.replace(/\[([^\]\n]+)\]/g, (todo, acorde: string) => tokenAcorde(acorde, semitonos) === null ? todo : '[' + tokenAcorde(acorde, semitonos) + ']')
   }).join('\n')
 }
+
+// Distancia desde el cifrado oficial hasta el tono elegido para este servicio.
+export function distanciaTonos(origen: string, destino: string) {
+  const a = origen.trim().match(/^([A-G](?:#|b)?)/)?.[1]
+  const b = destino.trim().match(/^([A-G](?:#|b)?)/)?.[1]
+  if (!a || !b || NOTAS[a] === undefined || NOTAS[b] === undefined) return 0
+  return (NOTAS[b] - NOTAS[a] + 12) % 12
+}

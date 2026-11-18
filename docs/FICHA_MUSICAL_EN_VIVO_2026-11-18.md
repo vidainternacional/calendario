@@ -35,3 +35,11 @@ Chromium con datos/acciones simulados y CSS real, 390px y 1280px: ficha centrada
 Rama/PR #316 `agent/catalogo-canciones-vida-20261117`. Un Preview de este bloque al concluir; entrada única `https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio`. Recibo final de SHA/READY/alias y datos en PR sin despliegue documental adicional.
 
 Pendientes: validación visual del usuario y aprobación de publicación del código. La solicitud de llevar canciones a producción está satisfecha en datos (73); no interpretar como aprobación visual de la ficha recién ajustada. Maestro intacto; no merge/producción de código sin autorización nueva.
+
+## Ajuste posterior solicitado: aire lateral y cifrado del servicio
+
+Márgenes internos del panel Biblioteca incluyen cabecera/icono/descripción y editor; Repertorio tiene ancho centrado y márgenes propios frente al CSS ministerial. En biblioteca, Letra/Cifrado comienzan cerrados y muestran estado abierto; Indicaciones permanece accesible, todos los campos montados y enlaces debajo. Lector con selección visible y aria-pressed.
+
+Programación calcula cifrado desde el tono oficial hasta el tono elegido para el servicio; ±½ o edición del campo actualizan la lectura, Guardar persiste tono e indicaciones. Bandera `solo_servicio` en action existente conserva biblioteca; autorización de sesión/rol/evento no cambia. La consulta editorial incluye cifrado/letra para lectura sin depender de acceso al panel del líder. No se escribieron servicios reales como prueba ni se amplió RLS.
+
+37 pruebas pertinentes pasan, incluyendo persistencia restringida del tono/indicaciones sin escribir biblioteca y rechazo de músicos. Chromium aislado comprueba formularios completos, acordeones, transposición y pantalla grande con datos simulados. Compilación final y recibo Preview exacto en PR #316. Pendiente validación visual autenticada; no producción autorizada para este bloque. Reversión de UI/action mediante revert de este cambio, sin revertir datos ni la función de orden previamente aprobada.

@@ -33,10 +33,10 @@ export default async function BibliotecaAlabanzaPage({ params }: { params: Promi
   const color = ministerio.color_primario || '#5b3df5'
 
   return <main className="mx-auto min-h-screen w-full min-w-0 max-w-4xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+5.25rem)] sm:px-6">
-    <div className="mx-auto w-full min-w-0 max-w-4xl">
+    <div className="mx-auto w-full min-w-0 max-w-4xl px-4 sm:px-6">
     <header className="pb-5">
       <Link href={`/ministerios/${id}`} className="inline-flex min-h-10 items-center gap-2 text-sm font-bold text-slate-600"><ArrowLeft className="h-4 w-4" /> Alabanza</Link>
-      <div className="mt-3 flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-full text-white" style={{ backgroundColor: color }}><BookOpen className="h-5 w-5" /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>Panel del líder</p><h1 className="mt-0.5 text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">Biblioteca de Alabanza</h1></div></div>
+      <div className="mt-3 flex min-w-0 items-center gap-3"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-white" style={{ backgroundColor: color }}><BookOpen className="h-5 w-5" /></span><div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>Panel del líder</p><h1 className="mt-0.5 text-2xl font-extrabold tracking-[-0.03em] text-[#171923]">Biblioteca de Alabanza</h1></div></div>
       <p className="mt-3 text-sm leading-6 text-slate-500">Aquí preparas una sola vez la letra, el cifrado, el tono base, las notas y los enlaces de cada canción.</p>
     </header>
     <section className="py-4"><BibliotecaAlabanzaClient ministerioId={id} canciones={canciones} cargarCatalogo={profile.rol === 'administrador' && cargaCatalogoDisponible()} /></section>

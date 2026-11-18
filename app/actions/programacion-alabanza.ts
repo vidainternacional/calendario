@@ -356,7 +356,7 @@ export async function actualizarCancionAlabanza(ministerioId: string, eventoId: 
     .maybeSingle()
   if (!fila) fail('La canción ya no está en este repertorio.')
 
-  if (fila.cancion_id) {
+  if (fila.cancion_id && texto(formData, 'solo_servicio') !== 'true') {
     const { error: bibliotecaError } = await admin
       .from('ministerio_canciones')
       .update({
@@ -385,6 +385,7 @@ export async function actualizarCancionAlabanza(ministerioId: string, eventoId: 
     .eq('ministerio_id', ministerioId)
   if (error) fail(error.message)
   revalidarProgramacion(ministerioId)
+  revalidatePath(`/ministerios/${ministerioId}/setlist`)
 }
 
 export async function eliminarCancionAlabanza(ministerioId: string, eventoId: string, formData: FormData): Promise<void> {
