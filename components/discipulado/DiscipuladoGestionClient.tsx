@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { BadgeCheck, BookOpenCheck, ChevronLeft, ChevronRight, ClipboardCheck, GraduationCap, Loader2, Plus, ShieldCheck, Star, Trash2, UserCheck, UsersRound, FolderOpen, FolderPlus, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import PreguntaEditor, { type PreguntaPayload } from './PreguntaEditor'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 type Props = { userId: string; isAdmin: boolean }
 type Course = { id: string; titulo: string; descripcion: string; tipo: 'discipulado' | 'tematico'; estado: 'borrador' | 'publicado' | 'archivado'; creado_por: string; created_at: string; updated_at: string }
@@ -284,7 +285,8 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
 
   async function review(assignment: Assignment, decision: 'aprobado' | 'rechazado', form: HTMLFormElement | null) {
     const notes = form ? String(new FormData(form).get('notas') || '').trim() || null : null
-    await run(() => supabase.rpc('discipulado_revisar', { p_asignacion_id: assignment.id, p_decision: decision, p_notas: notes }), decision === 'aprobado' ? 'Discipulado aprobado.' : 'Se solicitó repetir el examen.')
+    const resultado = await run(() => supabase.rpc('discipulado_revisar', { p_asignacion_id: assignment.id, p_decision: decision, p_notas: notes }), decision === 'aprobado' ? 'Discipulado aprobado.' : 'Se solicitó repetir el examen.')
+    if (resultado) requestPendingIndicatorsRefresh()
   }
 
   async function recognizePrior(event: FormEvent<HTMLFormElement>) {

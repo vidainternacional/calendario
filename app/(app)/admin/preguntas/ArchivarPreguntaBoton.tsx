@@ -1,6 +1,7 @@
 'use client'
 
 import { mostrarToast } from '@/lib/ui/toast'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 import { useState } from 'react'
 import { archivarPregunta } from '@/app/actions/preguntas'
@@ -17,6 +18,8 @@ export default function ArchivarPreguntaBoton({ preguntaId }: { preguntaId: stri
     if (!res?.success) {
       mostrarToast(res?.error || 'Error al archivar.')
       setLoading(false)
+    } else {
+      requestPendingIndicatorsRefresh()
     }
   }
 

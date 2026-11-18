@@ -10,6 +10,24 @@ test('suma pendientes reales sin restar visitas o cantidades vistas y rechaza co
  assert.equal(atencion.sumarAtencion({servicios:2,contactos:1,avisos:3}),6)
  for(const n of [-1,NaN,Infinity])assert.equal(atencion.conteoAtencion(n),0)
 })
+test('gestiones locales solicitan un refresco inmediato después de confirmar guardado',()=>{
+ const rutas=[
+  'components/contactos/ContactosClient.tsx',
+  'app/(app)/admin/preguntas/ResponderPreguntaForm.tsx',
+  'app/(app)/admin/preguntas/ArchivarPreguntaBoton.tsx',
+  'app/(app)/avisos/pendientes-aprobacion/BotonesAprobacionAviso.tsx',
+  'components/solicitudes/BotonesAprobacion.tsx',
+  'components/discipulado/DiscipuladoGestionClient.tsx',
+  'components/solidaridad/SolidarityAdminBoard.tsx',
+ ];
+ for(const ruta of rutas){
+  const codigo=fs.readFileSync(ruta,'utf8');
+  assert.match(codigo,/requestPendingIndicatorsRefresh\(\)/,'Falta refresco en '+ruta);
+ }
+ assert.match(fs.readFileSync(rutas[0],'utf8'),/if \(!respuesta\.error\) requestPendingIndicatorsRefresh\(\)/);
+ assert.match(fs.readFileSync(rutas[4],'utf8'),/if \(respuesta\?\.success\) requestPendingIndicatorsRefresh\(\)/);
+ assert.match(fs.readFileSync(rutas[5],'utf8'),/if \(resultado\) requestPendingIndicatorsRefresh\(\)/);
+})
 function preparar() {
  let sesion={user:{id:'a'}},auth,cleanup;const listeners=new Map(),queryErrors=new Set();let retener=false,resolver;const values={a:2,b:0};
  const cliente={auth:{getSession:async()=>({data:{session:sesion}}),onAuthStateChange(fn){auth=fn;return{data:{subscription:{unsubscribe(){}}}}}},rpc:async(name)=>name==='puede_gestionar_discipulado'?{data:true}:{data:[{no_leidos:sesion?.user.id==='a'?3:0}]} ,from(tabla){let cuenta=false;const usuario=sesion?.user.id;const q={select(_cols,opts){cuenta=!!opts?.count;return q},then(ok,bad){if(tabla==='evento_asignaciones'&&retener&&usuario==='a')return new Promise(r=>{resolver=()=>r({data:[{evento_id:'evento-a'}]})}).then(ok,bad);const resultado=queryErrors.has(tabla)?{error:{message:'fallo'}}:tabla==='profiles'?{data:{rol:'administrador',activo:true,estado_cuenta:'activo'}}:tabla==='evento_asignaciones'?{data:usuario==='a'?[{evento_id:'evento-a'}]:[]}:cuenta?{count:values[usuario]||0}:{data:[]};return Promise.resolve(resultado).then(ok,bad)}};for(const m of ['eq','in','gte','maybeSingle'])q[m]=()=>q;return q}}

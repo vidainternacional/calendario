@@ -5,6 +5,8 @@
 
 ## Badges generales y catálogo — 2026-11-18 · preparado
 
+- Continuación del bloque: conectar refresco inmediato del contador tras resolución exitosa de contactos, preguntas pastorales, avisos por aprobar, solicitudes, evaluaciones de Discipulado y estados de Ayuda Solidaria. Sin reabrir ingresos ministeriales ni confirmaciones de servicios, que ya refrescaban. Sin cambios de SQL/RLS, datos, maestro ni permisos. Una regresión de contrato verifica los puntos de activación. Mantener PR #319 Draft y único Preview; validar CI/head antes de aprobar.
+
 - Nuevo pedido: badges coherentes en toda la app y continuar catálogo después; el resto aprobado no se reabre. Rama agent/badges-generales-20261118 desde main bd7aa236 (#316 musical ya publicado). Sin producción autorizada para este bloque.
 - Eliminada ocultación por visitar sección; pendientes conservan estado real, avisos/videos lectura/apertura exacta. Reinicio entre cuentas y respuestas atrasadas descartadas. Para ti añade servicios concretos, avisos por aprobar, revisión de Discipulado y mensajes solidarios, con permisos existentes. Reemplazos llevan a solicitudes del ministerio autorizado.
 - Ayuda Solidaria comparte consulta entre badges y no marca leído un chat oculto en details cerrado/fuera de pantalla. Discipulado abre Personas/curso con revisión por enlace explícito, sin cambiar reglas/progreso.

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { Camera, Check, Loader2, QrCode, ScanLine, Trash2, UserRoundPlus, Users, X } from 'lucide-react'
 import { eliminarContacto, enviarSolicitudPorCodigo, enviarSolicitudPorQr, responderSolicitudContacto } from '@/app/actions/contactos'
 import UserAvatar from '@/components/comunidad/UserAvatar'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
 type Persona = { id: string; nombre_completo: string; avatar_url: string | null; email: string | null }
 type Relacion = {
@@ -67,6 +68,7 @@ export default function ContactosClient({ miId, miNombre, miAvatarUrl, qrToken, 
     startTransition(async () => {
       const respuesta = await responderSolicitudContacto(id, aceptar)
       flash(respuesta.error ?? (aceptar ? '✓ ¡Ahora son contactos!' : 'Solicitud rechazada'), !respuesta.error)
+      if (!respuesta.error) requestPendingIndicatorsRefresh()
     })
   }
 

@@ -11,6 +11,7 @@ import UserAvatar from '@/components/comunidad/UserAvatar'
 import SolidarityChat from '@/components/solidaridad/SolidarityChat'
 import SolidarityPantryManager from '@/components/solidaridad/SolidarityPantryManager'
 import SolidarityUnreadBadge from '@/components/solidaridad/SolidarityUnreadBadge'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 import {
   SOLIDARITY_CONTRIBUTION_STATUS_LABELS,
   SOLIDARITY_CONTRIBUTION_TYPE_LABELS,
@@ -130,10 +131,12 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
   const updateRequest = (item: RequestItem, status: SolidarityRequestStatus) => startTransition(async () => {
     const result = await actualizarSolicitudAyudaSolidaria({ id: item.id, status, response: responses[item.id] ?? item.respuesta ?? '' })
     setMessage(result.success ? 'Actualizado.' : result.error || 'No fue posible actualizar.')
+    if (result.success) requestPendingIndicatorsRefresh()
   })
   const updateContribution = (item: ContributionItem, status: SolidarityContributionStatus) => startTransition(async () => {
     const result = await actualizarAporteSolidario({ id: item.id, status, response: responses[item.id] ?? item.respuesta ?? '' })
     setMessage(result.success ? 'Actualizado.' : result.error || 'No fue posible actualizar.')
+    if (result.success) requestPendingIndicatorsRefresh()
   })
   const thankContribution = (item: ContributionItem) => startTransition(async () => {
     const result = await marcarAgradecimientoAporte(item.id, !item.agradecido_at)

@@ -27,6 +27,15 @@ Base: main bd7aa236, bloque musical #316 publicado. Alcance nuevo del usuario: r
 
 No equivale a haber probado todos los roles/dispositivos ni la entrega push a teléfonos. No se añadieron avisos por cada edición/tecla, no se amplían audiencias ni se crean marcadores remotos de lectura. No hay fuente de novedades nueva para funciones sin un evento/estado pendiente; no se inventan contadores. Esta revisión no cierra Bloque 4 ni Fase I.
 
+## Refresco inmediato al cerrar pendientes
+
+- Contactos: aceptar/rechazar una solicitud actualiza el recuento al confirmar éxito, sin esperar 30 segundos.
+- Buzón pastoral: responder o archivar una pregunta dispara la actualización tras completar la acción.
+- Avisos por aprobar, solicitudes y evaluaciones de Discipulado: aprobar o rechazar dispara la actualización solo con resultado satisfactorio.
+- Ayuda Solidaria: cambios de estado de solicitudes y aportes refrescan los indicadores de atención.
+- Se reutiliza el evento compartido `requestPendingIndicatorsRefresh` y el contador existente; no hay nuevos sondeos, migraciones ni cambios de permisos. Los avisos de ingresos ministeriales y confirmación de servicios permanecen intactos.
+- Prueba de contrato agregada al conjunto de regresión. Pendiente CI en head nuevo y validación visual autenticada; no afirmar que la entrega push en otros dispositivos sea inmediata.
+
 ## Verificación
 
 30 pruebas pertinentes: recuentos, resolución de reemplazos al destino autorizado, salida/cambio de cuenta, respuesta atrasada, fallos de consulta y catálogo/idempotencia/referencias. TypeScript/build comprobados antes de entrega. Chromium aislado con componentes reales: Para ti a 390px sin desborde, destinos de reemplazo/servicio/revisión y retiro al resolver; chat dentro de details cerrado no marca leído, abrir/mostrar sí. Datos y RPC simulados, sin envío ni escritura real. Lint de componentes heredados señala any/setState-in-effect existentes; no declarar lint general limpio. CI conserva deuda histórica; no afirmar CI global verde.
