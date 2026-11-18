@@ -7,6 +7,7 @@ import BackButton from '@/components/navigation/BackButton'
 import MinisterioDashboardSwitcher from '@/components/ministerios/MinisterioDashboardSwitcher'
 import PersonalizarMinisterioButton from '@/components/ministerios/PersonalizarMinisterioButton'
 import MinisterioSolicitudesEnhancer from '@/components/ministerios/MinisterioSolicitudesEnhancer'
+import RegistrarMinisterioReciente from '@/components/ministerios/RegistrarMinisterioReciente'
 import MinisterioBienvenida from '@/components/ministerios/MinisterioBienvenida'
 import styles from './MinisterioLayout.module.css'
 
@@ -135,6 +136,7 @@ export default async function MinisterioLayout({
         </div>
       </div>
 
+      {membresiaReq.data && <RegistrarMinisterioReciente usuarioId={user.id} ministerioId={id} />}
       <MinisterioBienvenida ministerioId={id} ministerioNombre={ministerio.nombre} />
       <MinisterioSolicitudesEnhancer ministerioId={id} puedeGestionar={esLider} />
       <div className={styles.content}>{children}</div>

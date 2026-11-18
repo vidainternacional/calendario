@@ -412,6 +412,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
 
           {membresias.length > 0 ? (
             <MinisterioSwitcher
+              usuarioId={userId}
               membresias={membresias.map((m: any) => ({
                 ministerio_id: m.ministerio_id,
                 es_lider: !!m.es_lider,
