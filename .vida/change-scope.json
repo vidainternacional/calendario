@@ -1,6 +1,6 @@
 {
   "task": "Badges generales y continuidad del catálogo",
-  "userRequest": "Usuario pide badges, avisos y notificaciones en toda la aplicación cuando exista algo por ver o resolver; conservar lo demás aprobado y después continuar catálogo sin duplicados. Auditar rutas/lectura/actualización, corregir ocultación por entrar a secciones y aislamiento entre cuentas, incluir pendientes existentes de avisos por aprobar, revisión de Discipulado y mensajes solidarios. Sin SQL, permisos/RLS, envíos push de prueba, producción o maestro. Catálogo solo metadatos y cifrados aportados ya preparados, nunca copiar letras protegidas ni inventar identidad/enlaces.",
+  "userRequest": "Usuario pide badges, avisos y notificaciones en toda la aplicación cuando exista algo por ver o resolver; conservar lo demás aprobado y después continuar catálogo sin duplicados. Auditar rutas/lectura/actualización, corregir ocultación por entrar a secciones y aislamiento entre cuentas, incluir pendientes existentes de avisos por aprobar, revisión de Discipulado y mensajes solidarios. Sin SQL, permisos/RLS, envíos push de prueba, producción o maestro. Catálogo solo metadatos y cifrados aportados ya preparados, nunca copiar letras protegidas ni inventar identidad/enlaces. Continuación literal comunicada por el usuario: conectar actualización inmediata después de gestionar contactos, preguntas pastorales, avisos, solicitudes y evaluaciones; conservar ingresos ministeriales y confirmación de servicios. Aplicar al finalizar éxito real y conservar sondeo de respaldo.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -18,7 +18,13 @@
     "scripts/vida-canciones/verificar-enlaces.mjs",
     "components/avisos/usePublicationReads.ts",
     "tests/regression/catalogo-canciones-vida.test.mjs",
-    "app/actions/centro-solicitudes-ministerio.ts"
+    "app/actions/centro-solicitudes-ministerio.ts",
+    "components/contactos/ContactosClient.tsx",
+    "app/(app)/admin/preguntas/ResponderPreguntaForm.tsx",
+    "app/(app)/admin/preguntas/ArchivarPreguntaBoton.tsx",
+    "app/(app)/avisos/pendientes-aprobacion/BotonesAprobacionAviso.tsx",
+    "components/solicitudes/BotonesAprobacion.tsx",
+    "components/solidaridad/SolidarityAdminBoard.tsx"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,
