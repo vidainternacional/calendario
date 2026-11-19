@@ -22,6 +22,16 @@ export default function PendingAttentionShortcut() {
   const pathname = usePathname()
   const surface = pathname === '/inicio' ? 'inicio' : pathname === '/avisos' ? 'avisos' : null
   const {
+    pendingServicios,
+    servicioPendienteHref,
+    ingresoPendienteHref,
+    solicitudesPendientesHref,
+    ayudaPendienteHref,
+    mensajesSolidariosHref,
+    ayudaPendienteDetalle,
+    pendingAvisosAprobacion,
+    pendingDiscipuladoRevision,
+    pendingMensajesSolidarios,
     pendingMinisterioIngresos,
     pendingSolicitudesGestionables,
     pendingContactos,
@@ -147,7 +157,7 @@ export default function PendingAttentionShortcut() {
       const accesoGlobal = rol === 'administrador'
       items.push({
         key: 'ingresos',
-        href: accesoGlobal ? '/admin/solicitudes-ministerios' : '/ministerios',
+        href: ingresoPendienteHref || (accesoGlobal ? '/admin/solicitudes-ministerios' : '/ministerios'),
         label: 'Solicitudes de ingreso',
         detail: accesoGlobal ? 'Personas esperando revisión en ministerios' : 'Personas esperando respuesta de tu ministerio',
         count: pendingMinisterioIngresos,
@@ -158,7 +168,7 @@ export default function PendingAttentionShortcut() {
     if (pendingSolicitudesGestionables > 0) {
       items.push({
         key: 'solicitudes',
-        href: '/solicitudes',
+        href: solicitudesPendientesHref || '/solicitudes',
         label: 'Solicitudes por resolver',
         detail: 'Recursos, decisiones o reemplazos que requieren atención',
         count: pendingSolicitudesGestionables,
@@ -169,9 +179,9 @@ export default function PendingAttentionShortcut() {
     if (pendingAyudaSolidaria > 0) {
       items.push({
         key: 'ayuda-solidaria',
-        href: '/ayuda-solidaria',
+        href: ayudaPendienteHref || '/ayuda-solidaria',
         label: 'Ayuda Solidaria',
-        detail: 'Solicitudes o aportes pendientes de revisión',
+        detail: ayudaPendienteDetalle || 'Solicitudes o siembras por atender; leer el chat no las resuelve.',
         count: pendingAyudaSolidaria,
         icon: ClipboardCheck,
       })
@@ -188,8 +198,13 @@ export default function PendingAttentionShortcut() {
       })
     }
 
+    if (pendingServicios > 0 && servicioPendienteHref) items.push({ key: 'servicios', href: servicioPendienteHref, label: 'Servicio por confirmar', detail: 'Abre tu asignación y confirma tu disponibilidad', count: pendingServicios, icon: ClipboardCheck })
+    if (pendingAvisosAprobacion > 0) items.push({ key: 'aprobar-avisos', href: '/avisos/pendientes-aprobacion', label: 'Avisos por aprobar', detail: 'Publicaciones esperando revisión autorizada', count: pendingAvisosAprobacion, icon: ClipboardCheck })
+    if (pendingDiscipuladoRevision > 0) items.push({ key: 'discipulado', href: '/discipulado/gestion?revision=1', label: 'Discipulado por revisar', detail: 'Evaluaciones esperando aprobación', count: pendingDiscipuladoRevision, icon: ClipboardCheck })
+    if (pendingMensajesSolidarios > 0) items.push({ key: 'mensajes-solidarios', href: mensajesSolidariosHref || '/ayuda-solidaria?tab=seguimiento', label: 'Mensajes de Ayuda Solidaria', detail: 'Abre la conversación marcada para leer la respuesta', count: pendingMensajesSolidarios, icon: ClipboardCheck })
     return items
   }, [
+    pendingServicios, servicioPendienteHref, ingresoPendienteHref, solicitudesPendientesHref, ayudaPendienteHref, mensajesSolidariosHref, ayudaPendienteDetalle, pendingAvisosAprobacion, pendingDiscipuladoRevision, pendingMensajesSolidarios,
     pendingAyudaSolidaria,
     pendingContactos,
     pendingMinisterioIngresos,

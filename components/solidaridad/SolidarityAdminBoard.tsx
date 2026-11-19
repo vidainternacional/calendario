@@ -1,5 +1,8 @@
 'use client'
 
+import { pendienteSolidario } from '@/lib/notificaciones/solidaridad-atencion'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
 import { ArrowLeft, ChevronDown, MessageCircle, Phone, Search, Sparkles } from 'lucide-react'
 import {
@@ -83,7 +86,10 @@ function timeLabel(value: string) {
   return date.toLocaleDateString('es-SV', { day: '2-digit', month: '2-digit' })
 }
 
-export default function SolidarityAdminBoard({ currentUserId, requests, contributions, pantryNeeds, serviceNeeds, packages, packageItems }: {
+export default function SolidarityAdminBoard({ currentUserId, requests, contributions, pantryNeeds, serviceNeeds, packages, packageItems, initialView, initialContext, onlyPending = false }: {
+  initialView?: View
+  initialContext?: { tipo: 'solicitud' | 'aporte'; id: string }
+  onlyPending?: boolean
   currentUserId: string
   requests: RequestItem[]
   contributions: ContributionItem[]
@@ -92,8 +98,10 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
   packages: PantryPackage[]
   packageItems: PantryPackageItem[]
 }) {
-  const [view, setView] = useState<View>('ayudas')
-  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const router = useRouter()
+  const [view, setView] = useState<View>(() => initialContext ? (initialContext.tipo === 'aporte' ? 'siembras' : 'ayudas') : initialView || (requests.some(r => pendienteSolidario('solicitud', r.estado)) ? 'ayudas' : contributions.some(r => pendienteSolidario('aporte', r.estado)) ? 'siembras' : 'ayudas'))
+  const [soloPendientes, setSoloPendientes] = useState(onlyPending)
+  const [selectedKey, setSelectedKey] = useState<string | null>(() => initialContext && (initialContext.tipo === 'solicitud' ? requests : contributions).some(r => r.id === initialContext.id) ? `${initialContext.tipo}:${initialContext.id}` : null)
   const [query, setQuery] = useState('')
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<string | null>(null)
@@ -122,34 +130,46 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
   const conversations = view === 'siembras' ? seedConversations : helpConversations
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('es')
-    if (!normalized) return conversations
-    return conversations.filter((item) => `${item.name} ${item.preview}`.toLocaleLowerCase('es').includes(normalized))
-  }, [conversations, query])
+    const lista = soloPendientes ? conversations.filter(c => pendienteSolidario(c.kind, c.item.estado)) : conversations
+    if (!normalized) return lista
+    return lista.filter((item) => `${item.name} ${item.preview}`.toLocaleLowerCase('es').includes(normalized))
+  }, [conversations, query, soloPendientes])
   const selected = [...helpConversations, ...seedConversations].find((item) => item.key === selectedKey) || null
+
+  const pendientesAyuda = requests.filter(r => pendienteSolidario('solicitud', r.estado)).length
+  const pendientesSiembra = contributions.filter(r => pendienteSolidario('aporte', r.estado)).length
+  const actualizarIndicadores = () => { requestPendingIndicatorsRefresh(); router.refresh() }
 
   const updateRequest = (item: RequestItem, status: SolidarityRequestStatus) => startTransition(async () => {
     const result = await actualizarSolicitudAyudaSolidaria({ id: item.id, status, response: responses[item.id] ?? item.respuesta ?? '' })
     setMessage(result.success ? 'Actualizado.' : result.error || 'No fue posible actualizar.')
+    if (result.success) actualizarIndicadores()
   })
   const updateContribution = (item: ContributionItem, status: SolidarityContributionStatus) => startTransition(async () => {
     const result = await actualizarAporteSolidario({ id: item.id, status, response: responses[item.id] ?? item.respuesta ?? '' })
     setMessage(result.success ? 'Actualizado.' : result.error || 'No fue posible actualizar.')
+    if (result.success) actualizarIndicadores()
   })
   const thankContribution = (item: ContributionItem) => startTransition(async () => {
     const result = await marcarAgradecimientoAporte(item.id, !item.agradecido_at)
     setMessage(result.success ? (item.agradecido_at ? 'Marcado como pendiente.' : 'Agradecimiento registrado.') : result.error || 'No fue posible actualizar.')
+    if (result.success) actualizarIndicadores()
   })
 
   const list = (
     <div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+        <p className="text-xs text-slate-600">{view === 'siembras' ? pendientesSiembra : pendientesAyuda} por atender · los mensajes nuevos se indican aparte.</p>
+        <button type="button" aria-pressed={soloPendientes} onClick={() => setSoloPendientes(v => !v)} className="min-h-11 text-xs font-bold text-violet-700">{soloPendientes ? 'Ver todas' : 'Ver solo pendientes'}</button>
+      </div>
       <label className="flex min-h-11 items-center gap-2 border-b border-slate-200 px-4">
         <Search className="h-4 w-4 text-slate-500" />
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={view === 'siembras' ? 'Buscar quienes quieren sembrar' : 'Buscar solicitudes de ayuda'} className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500" />
       </label>
       <div className="divide-y divide-slate-100">
-        {filtered.length === 0 ? <p className="px-4 py-10 text-center text-sm text-slate-600">No hay conversaciones para mostrar.</p> : filtered.map((conversation) => {
+        {filtered.length === 0 ? <p className="px-4 py-10 text-center text-sm text-slate-600">{soloPendientes ? 'No hay casos por atender en esta sección.' : 'No hay conversaciones para mostrar.'}</p> : filtered.map((conversation) => {
           const status = conversation.kind === 'solicitud' ? SOLIDARITY_REQUEST_STATUS_LABELS[conversation.item.estado] : SOLIDARITY_CONTRIBUTION_STATUS_LABELS[conversation.item.estado]
-          return <button key={conversation.key} type="button" onClick={() => setSelectedKey(conversation.key)} className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-slate-50"><UserAvatar nombre={conversation.name} avatarUrl={conversation.avatarUrl} size="md" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-extrabold text-slate-900">{conversation.name}</p><span className="inline-flex shrink-0 items-center gap-1.5"><SolidarityUnreadBadge scope="context" contextType={conversation.kind} contextId={conversation.item.id} /><span className="text-[10px] text-slate-500">{timeLabel(conversation.createdAt)}</span></span></div><div className="mt-0.5 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{conversation.preview}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${conversation.kind === 'solicitud' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700'}`}>{status}</span></div></div></button>
+          return <button key={conversation.key} type="button" onClick={() => setSelectedKey(conversation.key)} className="flex w-full items-center gap-3 px-3 py-3 text-left active:bg-slate-50"><UserAvatar nombre={conversation.name} avatarUrl={conversation.avatarUrl} size="md" /><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-extrabold text-slate-900">{conversation.name}</p><span className="inline-flex shrink-0 items-center gap-1.5">{pendienteSolidario(conversation.kind, conversation.item.estado) && <span className="rounded-full bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-700">Por atender</span>}<SolidarityUnreadBadge scope="context" contextType={conversation.kind} contextId={conversation.item.id} /><span className="text-[10px] text-slate-500">{timeLabel(conversation.createdAt)}</span></span></div><div className="mt-0.5 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{conversation.preview}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${conversation.kind === 'solicitud' ? 'bg-violet-50 text-violet-700' : 'bg-emerald-50 text-emerald-700'}`}>{status}</span></div></div></button>
         })}
       </div>
     </div>
@@ -160,15 +180,21 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
       {message ? <p className="border-b border-slate-100 bg-slate-900 px-4 py-2 text-xs font-semibold text-white">{message}</p> : null}
 
       {!selected ? <div className="grid grid-cols-3 border-b border-slate-200 bg-white">
-        <button type="button" onClick={() => { setView('ayudas'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'ayudas' ? 'border-violet-600 text-violet-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Necesitan ayuda <SolidarityUnreadBadge scope="solicitud" /></span></button>
-        <button type="button" onClick={() => { setView('siembras'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'siembras' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}><span className="inline-flex items-center gap-1.5">Quieren sembrar <SolidarityUnreadBadge scope="aporte" /></span></button>
+        <button type="button" aria-pressed={view === 'ayudas'} onClick={() => { setView('ayudas'); setQuery('') }} className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 border-b-2 px-1 py-2 text-[11px] font-extrabold ${view === 'ayudas' ? 'border-violet-600 text-violet-700' : 'border-transparent text-slate-600'}`}>
+          <span>Necesitan ayuda</span>
+          <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-1">{pendientesAyuda > 0 ? <span aria-label={`${pendientesAyuda} solicitudes por atender`} className="rounded-full bg-rose-50 px-2 py-1 text-[10px] text-rose-700">{pendientesAyuda} por atender</span> : <span className="text-[10px] font-medium">Sin pendientes</span>}<SolidarityUnreadBadge scope="solicitud" /></span>
+        </button>
+        <button type="button" aria-pressed={view === 'siembras'} onClick={() => { setView('siembras'); setQuery('') }} className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 border-b-2 px-1 py-2 text-[11px] font-extrabold ${view === 'siembras' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>
+          <span>Quieren sembrar</span>
+          <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-1">{pendientesSiembra > 0 ? <span aria-label={`${pendientesSiembra} siembras por atender`} className="rounded-full bg-rose-50 px-2 py-1 text-[10px] text-rose-700">{pendientesSiembra} por atender</span> : <span className="text-[10px] font-medium">Sin pendientes</span>}<SolidarityUnreadBadge scope="aporte" /></span>
+        </button>
         <button type="button" onClick={() => { setView('despensa'); setQuery('') }} className={`min-h-12 border-b-2 px-2 text-[11px] font-extrabold ${view === 'despensa' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-600'}`}>Despensa</button>
       </div> : null}
 
       {!selected && view !== 'despensa' ? list : null}
       {!selected && view === 'despensa' ? <SolidarityPantryManager needs={pantryNeeds} serviceNeeds={serviceNeeds} packages={packages} packageItems={packageItems} /> : null}
 
-      {selected ? <div>
+      {selected ? <div id={`caso-${selected.item.id}`}>
         <div className="flex min-h-16 items-center gap-3 border-b border-slate-200 bg-white px-3 py-2">
           <button type="button" onClick={() => setSelectedKey(null)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-700 active:bg-slate-100" aria-label="Volver"><ArrowLeft className="h-5 w-5" /></button>
           <UserAvatar nombre={selected.name} avatarUrl={selected.avatarUrl} size="md" />
@@ -176,6 +202,11 @@ export default function SolidarityAdminBoard({ currentUserId, requests, contribu
           {selected.item.telefono ? <div className="flex shrink-0 gap-1"><a href={phoneHref(selected.item.telefono)} className="grid h-9 w-9 place-items-center rounded-full text-slate-600" aria-label="Llamar"><Phone className="h-4 w-4" /></a><a href={phoneHref(selected.item.telefono, true)} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full text-emerald-600" aria-label="WhatsApp"><MessageCircle className="h-4 w-4" /></a></div> : null}
         </div>
 
+        {pendienteSolidario(selected.kind, selected.item.estado) && <div className="border-b border-rose-100 bg-rose-50 px-4 py-3">
+          <p className="text-sm font-bold text-rose-800">{selected.kind === 'aporte' ? 'Siembra por atender' : 'Solicitud de ayuda por atender'}</p>
+          <p className="mt-1 text-xs leading-5 text-rose-700">Leer la conversación quita los mensajes nuevos. Para retirar este pendiente, comienza la atención o actualiza su estado.</p>
+          <button type="button" disabled={pending} onClick={() => selected.kind === 'solicitud' ? updateRequest(selected.item, 'revisando') : updateContribution(selected.item, 'contactando')} className="mt-2 min-h-11 text-sm font-bold text-rose-800 disabled:opacity-50">{selected.kind === 'solicitud' ? 'Comenzar revisión' : 'Comenzar contacto'}</button>
+        </div>}
         <SolidarityChat contextType={selected.kind} contextId={selected.item.id} currentUserId={currentUserId} alwaysOpen />
 
         <details className="border-t border-slate-200 bg-white">

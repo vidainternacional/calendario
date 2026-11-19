@@ -15,12 +15,13 @@ type Tab = 'solicitar' | 'aportar' | 'seguimiento'
 export default async function AyudaSolidariaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>
+  searchParams: Promise<{ tab?: string; vista?: string; contexto?: string; item?: string; pendientes?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const navegacion = await searchParams
   const { data: profile } = await (supabase as any)
     .from('profiles')
     .select('rol, activo, estado_cuenta, es_pastor_general')
@@ -89,6 +90,10 @@ export default async function AyudaSolidariaPage({
 
         <div className="mx-auto max-w-3xl pt-2 sm:px-6 sm:pt-4">
           <SolidarityAdminBoard
+            key={`${navegacion.vista || ''}:${navegacion.contexto || ''}:${navegacion.item || ''}:${navegacion.pendientes || ''}`}
+            initialView={navegacion.vista === 'siembras' || navegacion.vista === 'ayudas' ? navegacion.vista : undefined}
+            initialContext={(navegacion.contexto === 'solicitud' || navegacion.contexto === 'aporte') && /^[0-9a-f-]{36}$/i.test(navegacion.item || '') ? { tipo: navegacion.contexto, id: navegacion.item! } : undefined}
+            onlyPending={navegacion.pendientes === '1'}
             currentUserId={user.id}
             requests={requests}
             contributions={contributions}
@@ -147,6 +152,8 @@ export default async function AyudaSolidariaPage({
         <div className="mx-auto max-w-2xl"><BackButton /></div>
       </div>
       <SolidarityHub
+        key={`${navegacion.contexto || ''}:${navegacion.item || ''}`}
+        initialContext={(navegacion.contexto === 'solicitud' || navegacion.contexto === 'aporte') && /^[0-9a-f-]{36}$/i.test(navegacion.item || '') ? { tipo: navegacion.contexto, id: navegacion.item! } : undefined}
         userId={user.id}
         requests={requests || []}
         contributions={contributions || []}

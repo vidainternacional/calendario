@@ -50,11 +50,19 @@ export default function PublicacionCard({
   variant = 'card',
 }: PublicacionCardProps) {
   const [abierta, setAbierta] = useState(false)
+  const [errorLectura, setErrorLectura] = useState<string | null>(null)
   const tracked = Boolean(publicationId)
 
+  const registrarLectura = async () => {
+    if (!publicationId) return
+    setErrorLectura(null)
+    const result = await markPublicationRead(publicationId)
+    if (!result.success) setErrorLectura(result.error || 'No se pudo guardar la lectura.')
+  }
   const abrir = () => {
     setAbierta(true)
-    if (publicationId && unread) void markPublicationRead(publicationId)
+    // El indicador puede estar cargando: el RPC ya es idempotente.
+    void registrarLectura()
   }
 
   useEffect(() => {
@@ -106,6 +114,7 @@ export default function PublicacionCard({
             aria-label={titulo}
             className="flex min-h-0 max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.32)]"
           >
+            {errorLectura && <div role="alert" className="border-b border-amber-200 px-4 py-3 text-xs text-amber-800">{errorLectura}<button type="button" onClick={() => void registrarLectura()} className="ml-2 min-h-11 font-bold underline">Reintentar lectura</button></div>}
             <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

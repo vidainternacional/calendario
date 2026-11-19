@@ -170,19 +170,20 @@ export async function obtenerCentroSolicitudesMinisterio(
   }
 }
 
-export async function obtenerConteoSolicitudesGestionables() {
+export async function obtenerResumenSolicitudesGestionables() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return 0
+  if (!user) return { total: 0, href: null }
 
   const admin = createAdminClient() as any
-  const { data: profile } = await admin
+  const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('rol,activo,estado_cuenta')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') return 0
+  if (profileError) throw profileError
+  if (!profile || profile.activo !== true || profile.estado_cuenta !== 'activo') return { total: 0, href: null }
 
   let ministerioIds: string[] = []
   if (profile.rol === 'administrador') {
@@ -197,9 +198,9 @@ export async function obtenerConteoSolicitudesGestionables() {
     ministerioIds = Array.from(new Set((liderazgos as any[]).map((row) => String(row.ministerio_id))))
   }
 
-  if (ministerioIds.length === 0) return 0
+  if (ministerioIds.length === 0) return { total: 0, href: null }
 
-  const [{ count: generales = 0 }, { data: asignaciones = [] }] = await Promise.all([
+  const [{ count: generales = 0, error: generalesError }, { data: asignaciones = [], error: asignacionesError }] = await Promise.all([
     admin
       .from('solicitudes')
       .select('id', { count: 'exact', head: true })
@@ -211,15 +212,17 @@ export async function obtenerConteoSolicitudesGestionables() {
       .in('ministerio_id', ministerioIds),
   ])
 
+  if (generalesError || asignacionesError) throw generalesError || asignacionesError
   const asignacionIds = (asignaciones as any[]).map((row) => String(row.id))
-  if (asignacionIds.length === 0) return Number(generales || 0)
+  if (asignacionIds.length === 0) return { total: Number(generales || 0), href: Number(generales || 0) > 0 ? '/solicitudes' : null }
 
-  const { data: pendientes = [] } = await admin
+  const { data: pendientes = [], error: pendientesError } = await admin
     .from('intercambios')
     .select('asignacion_origen_id,solicitante_id')
     .in('asignacion_origen_id', asignacionIds)
     .eq('estado', 'pendiente')
 
+  if (pendientesError) throw pendientesError
   const asignacionMap = new Map(
     (asignaciones as any[]).map((row) => [
       String(row.id),
@@ -230,12 +233,18 @@ export async function obtenerConteoSolicitudesGestionables() {
       },
     ]),
   )
+  let destinoReemplazo: string | null = null
   const grupos = new Set<string>()
   for (const row of pendientes as any[]) {
     const origen = asignacionMap.get(String(row.asignacion_origen_id))
     if (!origen || (origen.estado !== 'no_disponible' && origen.estado !== 'declinado')) continue
+    destinoReemplazo ||= `/ministerios/${origen.ministerioId}/solicitudes`
     grupos.add(`${origen.ministerioId}:${origen.eventoId}:${String(row.solicitante_id)}`)
   }
 
-  return Number(generales || 0) + grupos.size
+  return { total: Number(generales || 0) + grupos.size, href: destinoReemplazo || (Number(generales || 0) > 0 ? '/solicitudes' : null) }
+}
+
+export async function obtenerConteoSolicitudesGestionables() {
+  return (await obtenerResumenSolicitudesGestionables()).total
 }

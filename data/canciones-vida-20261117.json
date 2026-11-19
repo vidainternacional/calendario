@@ -1023,23 +1023,22 @@
     "id": "6c371328-be36-5719-8a0b-27d816f9ced5",
     "indice_origen": 44,
     "titulo": "Todo se lo debo",
-    "artista": null,
+    "artista": "Marcos Yaroide",
     "tonalidad_base": "C#",
     "acordes": "C# - G# - F# - C#sus2 - G#\nD#m - Fm - F# - G#\nCoro: C# - F# - Fm - D#m - G# - C#maj7/C - G#\nC# - Fm - F# - F#m - G# - C# - G#\nC# - G# - Bbm - G#\nC# - G# - Bbm - F# - G# - D#m - Fm - F#",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=dFOXP7eHjjs",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=dFOXP7eHjjs"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -1050,16 +1049,14 @@
     "tonalidad_base": "F",
     "acordes": "F - Bb - C\nAm7 - Dm7 - Gm7 - C\nF - Bb - C\nF - Cm - F7\nBmaj7 - Am7 - Dm7 - Gm7 - Bb/C - F - Bb - C - F\nCoro: C - F\nBb - F\nDm - Bbsus2 - F - C - Bbsus2",
     "letra": null,
-    "notas_permanentes": "Bmaj7 procede del apunte; verificar si pretendía Bbmaj7, sin corregir por suposición.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.",
+    "notas_permanentes": "Bmaj7 procede del apunte; verificar si pretendía Bbmaj7, sin corregir por suposición.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": "https://open.spotify.com/track/1IO1PaLQXdWuBUJu0lNmwo",
     "youtube_url": "https://www.youtube.com/watch?v=Lirf7puHwy4",
-    "estado": "pendiente",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra"
     ],
-    "observaciones_revision": [
-      "Identidad o variante musical requiere confirmación."
-    ],
+    "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=Lirf7puHwy4",
       "https://open.spotify.com/intl-es/track/1IO1PaLQXdWuBUJu0lNmwo"
@@ -1141,23 +1138,23 @@
     "id": "d4bdbaf4-1e18-59b4-b68e-c86b5d7c53f3",
     "indice_origen": 49,
     "titulo": "Quién nos separará",
-    "artista": null,
+    "artista": "Marco Barrientos",
     "tonalidad_base": "D",
     "acordes": "D - G\nC - Em - C - Asus\nCoro: D - Em - D/F# - G - G/A\nD - Em - D/F# - G - A#dim\nBm - B/A - E7/G# - Em - G/A - A - D",
     "letra": null,
-    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Arreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=u2LxN2N3F_Q",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=u2LxN2N3F_Q",
+      "https://es.scribd.com/document/1038400633/Quien-nos-separara"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -1209,24 +1206,22 @@
     "id": "cee9f870-16be-5b30-8cc0-321da55003d8",
     "indice_origen": 52,
     "titulo": "Ciudad de colores",
-    "artista": null,
+    "artista": "Bani Muñoz",
     "tonalidad_base": "B",
     "acordes": "B - F# - G#m - E\nE - B\nC#m - F#\nE\nCoro: B - F#m - A - E\nC#m - E\nPuente: E - E/G#m - B",
     "letra": null,
-    "notas_permanentes": "Rock tapado; punteo con delay en C#m. E/G#m es notación dudosa del original.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Rock tapado; punteo con delay en C#m. E/G#m es notación dudosa del original.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=NxJKCeglmL0",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado.",
-      "Cifrado con tokens que el transportador actual no reconoce: E/G#m"
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=NxJKCeglmL0"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -1419,23 +1414,22 @@
     "id": "d232d14a-5fc7-5a05-802c-d1723dcb859f",
     "indice_origen": 61,
     "titulo": "El Padre que siempre soñé",
-    "artista": null,
+    "artista": "Abel Zavala",
     "tonalidad_base": "Bm",
     "acordes": "Bm - A - G - A - Bm\nCoro: D - A - Bm - A - G - D - G - A - D\nA - Bm - A - G - D - G - D - A - Bm",
     "letra": null,
-    "notas_permanentes": "Letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.\nIdentidad contrastada el 18-11-2026; disponibilidad de enlaces pendiente de certificado.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=VEBd0FmI47M",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=VEBd0FmI47M"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -1465,23 +1459,23 @@
     "id": "25513242-0c0d-5d00-af9d-feb5dd1c05f1",
     "indice_origen": 63,
     "titulo": "Tan solo he venido",
-    "artista": null,
+    "artista": "Juan Luis Guerra",
     "tonalidad_base": "G",
     "acordes": "G - D - Cadd9\nEm7 - Cadd9 - D\nCoro: G - D - Em - D - C - Am - D",
     "letra": null,
-    "notas_permanentes": "Letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Letra aportada.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=Jq0JuM6xquk",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=Jq0JuM6xquk",
+      "https://es.wikipedia.org/wiki/Para_ti"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -1647,23 +1641,23 @@
     "id": "2a90992e-c1d6-5eab-976d-bfe2c583c0a5",
     "indice_origen": 71,
     "titulo": "Alfarero",
-    "artista": null,
+    "artista": "Mariana Sa",
     "tonalidad_base": "G",
     "acordes": "Estrofa: G - D/F# - C - Cm6/Eb - Em - Asus4 - A/C# - Am7/D - D\nPuente: Em - D/F# - G - C/G - D/F# - Em - Asus4 - A - Am7/D - Dsus4\nCoro: G - D/F# - Am7 - D/E - Em - F - C/E - Am7 - Dsus4 - D\nAm7 - G/B - Em7 - Dsus4 - D",
     "letra": null,
-    "notas_permanentes": "También contiene letra y cifrado simplificado aportados.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "También contiene letra y cifrado simplificado aportados.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=CkkU5oMqqD4",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=CkkU5oMqqD4",
+      "https://himnosycanciones.com/acordes/alfarero-rey-de-reyes/"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -2014,23 +2008,23 @@
     "id": "8bb8be4c-4e61-5422-ab3f-4356a16c5967",
     "indice_origen": 87,
     "titulo": "Soberano Dios",
-    "artista": null,
+    "artista": "Renan Carias",
     "tonalidad_base": "A",
     "acordes": "A - A/C - D\nBm7 - D/E - A\nAmaj7 - C#dim - F#7\nD - Dm/F - A/E - E - D - A",
     "letra": null,
-    "notas_permanentes": "Fragmento con letra aportada en G: G - G/B - C; Am7 - C/D - G; Gmaj7; Bdim - E7; C - Cm/Eb - G/D; D - C - G. Confirmar si son el mismo arreglo.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Fragmento con letra aportada en G: G - G/B - C; Am7 - C/D - G; Gmaj7; Bdim - E7; C - Cm/Eb - G/D; D - C - G. Confirmar si son el mismo arreglo.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=5CW2MhEq2D8",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=5CW2MhEq2D8",
+      "https://www.cifraclub.com/renan-carias/soberano-dios/"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -2319,23 +2313,23 @@
     "id": "3bb9671a-885b-569f-aea5-272828132740",
     "indice_origen": 100,
     "titulo": "No nos moverán",
-    "artista": null,
+    "artista": "BJ Putnam",
     "tonalidad_base": "E",
     "acordes": "A - E - C#m - B\nSigo firme: E - Bm7 - F#m - A - E",
     "letra": null,
-    "notas_permanentes": "Golpes en E; repetida en sets 2 y 2.0.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Golpes en E; repetida en sets 2 y 2.0.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=zUGUyutjmbo",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=zUGUyutjmbo",
+      "https://www.cifraclub.com/bj-putnam/no-nos-moveran/"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -3107,23 +3101,22 @@
     "id": "4ae0a417-c656-5ccb-a1e9-801d48ed5867",
     "indice_origen": 134,
     "titulo": "Tú nos creaste",
-    "artista": null,
+    "artista": "Jesús Adrián Romero",
     "tonalidad_base": "E",
     "acordes": "Asus2 - E\nAsus2 - B\nCoro: Asus2 - Bsus2\nPuente: D - Asus2 - E\nD - A - Bsus4 - B",
     "letra": null,
-    "notas_permanentes": "Melodía F# - G#, no acordes de paso sin confirmar.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.",
+    "notas_permanentes": "Melodía F# - G#, no acordes de paso sin confirmar.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace YouTube, enlace Spotify.\nIdentidad contrastada el 18-11-2026; disponibilidad de enlaces pendiente de certificado.",
     "spotify_url": null,
-    "youtube_url": null,
-    "estado": "pendiente",
+    "youtube_url": "https://www.youtube.com/watch?v=yfN1O9oy7U8",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
-      "youtube_url",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "No se confirmó grabación de referencia con intérprete cristiano identificado."
+    "observaciones_revision": [],
+    "fuentes_verificacion": [
+      "https://www.youtube.com/watch?v=yfN1O9oy7U8"
     ],
-    "fuentes_verificacion": [],
     "fuente_usuario": null
   },
   {
@@ -3340,17 +3333,15 @@
     "tonalidad_base": "Dm",
     "acordes": "Dm - Bb - F - C",
     "letra": null,
-    "notas_permanentes": "Final Bb; no fusionar con Gracia Soberana sin cotejar.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.",
+    "notas_permanentes": "Final Bb; no fusionar con Gracia Soberana sin cotejar.\nArreglo VIDA a partir de apuntes suministrados; revisar cortes y repeticiones en ensayo. La grabación enlazada es una referencia; su tono y arreglo pueden diferir.\nPor completar: letra, enlace Spotify.\nIdentidad editorial contrastada el 18-11-2026. La disponibilidad de enlaces requiere comprobación vigente.",
     "spotify_url": null,
     "youtube_url": "https://www.youtube.com/watch?v=HruQmKbC8r0",
-    "estado": "pendiente",
+    "estado": "identificada",
     "campos_pendientes": [
       "letra",
       "spotify_url"
     ],
-    "observaciones_revision": [
-      "Identidad o variante musical requiere confirmación."
-    ],
+    "observaciones_revision": [],
     "fuentes_verificacion": [
       "https://www.youtube.com/watch?v=HruQmKbC8r0",
       "https://www.youtube.com/watch?v=vwhvMBxUH2A"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, CheckCheck, Globe, Megaphone } from 'lucide-react'
@@ -31,9 +31,12 @@ export default function PublicacionDetalle({
   ministerioNombre,
 }: Props) {
   const searchParams = useSearchParams()
+  const [errorLectura, setErrorLectura] = useState<string | null>(null)
 
   useEffect(() => {
-    void markPublicationRead(id)
+    let cancelado = false
+    void markPublicationRead(id).then(result => { if (!cancelado) setErrorLectura(result.success ? null : result.error || 'No se pudo guardar la lectura.') })
+    return () => { cancelado = true }
   }, [id])
 
   const abiertoDesdePush = searchParams.get('origen') === 'push'
@@ -56,6 +59,7 @@ export default function PublicacionDetalle({
           <span>{backLabel}</span>
         </Link>
 
+        {errorLectura && <div role="alert" className="mt-4 border-b border-amber-200 py-3 text-sm text-amber-800">{errorLectura}<button type="button" onClick={() => { void markPublicationRead(id).then(result => setErrorLectura(result.success ? null : result.error || 'No se pudo guardar la lectura.')) }} className="ml-2 min-h-11 font-bold underline">Reintentar lectura</button></div>}
         <article className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)]">
           <header className="border-b border-slate-100 px-5 py-5 sm:px-7 sm:py-6">
             <div className="flex flex-wrap items-center gap-2">

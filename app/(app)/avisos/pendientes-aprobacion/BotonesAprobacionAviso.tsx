@@ -1,5 +1,8 @@
 'use client'
 
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
+import { requestUnreadPublicationsRefresh } from '@/components/avisos/usePublicationReads'
 import { mostrarToast } from '@/lib/ui/toast'
 
 import { useState } from 'react'
@@ -15,6 +18,9 @@ export default function BotonesAprobacionAviso({ avisoId }: { avisoId: string })
     if (!res?.success) {
       mostrarToast(res?.error || 'Error al aprobar aviso')
       setLoading(false)
+    } else {
+      requestPendingIndicatorsRefresh()
+      requestUnreadPublicationsRefresh()
     }
   }
 
@@ -25,6 +31,9 @@ export default function BotonesAprobacionAviso({ avisoId }: { avisoId: string })
     if (!res?.success) {
       mostrarToast(res?.error || 'Error al rechazar aviso')
       setLoading(false)
+    } else {
+      requestPendingIndicatorsRefresh()
+      requestUnreadPublicationsRefresh()
     }
   }
 

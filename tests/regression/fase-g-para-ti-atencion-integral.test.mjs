@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { cargarModulo } from './seguridad-real-loader.mjs'
 
 function source(path) {
   return readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
@@ -27,7 +28,7 @@ test('Para ti reúne contactos y atención pastoral en el estado compartido', ()
 
   assert.match(shortcut, /href: '\/contactos'/)
   assert.match(shortcut, /href: '\/pastoral\/preguntas'/)
-  assert.match(shortcut, /href: '\/pastoral\/ayuda-solidaria'/)
+  assert.match(shortcut, /ayudaPendienteHref \|\| '\/ayuda-solidaria'/)
   assert.match(shortcut, /label: 'Solicitudes de contacto'/)
   assert.match(shortcut, /label: 'Buzón pastoral'/)
   assert.match(shortcut, /label: 'Ayuda Solidaria'/)
@@ -36,9 +37,9 @@ test('Para ti reúne contactos y atención pastoral en el estado compartido', ()
 test('badge global suma los nuevos pendientes sin contar casos pastorales ya en seguimiento', () => {
   const indicators = source('components/notificaciones/usePendingIndicators.ts')
 
-  assert.match(indicators, /\+ Math\.max\(0, pendingContactos\)/)
-  assert.match(indicators, /\+ Math\.max\(0, pendingPreguntasPastorales\)/)
-  assert.match(indicators, /\+ Math\.max\(0, pendingAyudaSolidaria\)/)
+  const { sumarAtencion } = cargarModulo('lib/notificaciones/atencion.ts')
+  assert.equal(sumarAtencion({ pendingContactos: 2, pendingPreguntasPastorales: 3, pendingAyudaSolidaria: 4 }), 9)
+  assert.equal(sumarAtencion({ pendingContactos: 0, pendingPreguntasPastorales: 0, pendingAyudaSolidaria: 0 }), 0)
   assert.doesNotMatch(indicators, /\.in\('estado', \['enviada', 'revisando'/)
   assert.doesNotMatch(indicators, /\.in\('estado', \['ofrecido', 'contactando'/)
 })

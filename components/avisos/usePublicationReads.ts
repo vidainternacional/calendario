@@ -12,6 +12,8 @@ const UNREAD_REFRESH_DEDUPE_MS = 1_500
 type UnreadCountListener = (count: number) => void
 
 const unreadCountListeners = new Set<UnreadCountListener>()
+let unreadCountGeneration = 0
+let unreadCountUser: string | null = null
 let unreadCountValue = 0
 let unreadCountLoaded = false
 let unreadCountLastFetchAt = 0
@@ -46,9 +48,16 @@ async function refreshUnreadCount(options: { force?: boolean } = {}) {
 
   unreadCountLastFetchAt = now
   const request = (async () => {
+    const generation = unreadCountGeneration
     const supabase = createClient()
+    const { data: auth } = await supabase.auth.getSession()
+    if (generation !== unreadCountGeneration) return unreadCountValue
+    const usuario = auth.session?.user.id || null
+    if (unreadCountUser !== usuario) { unreadCountUser = usuario; publishUnreadCount(0) }
+    if (!usuario) { publishUnreadCount(0); return 0 }
     const { data, error } = await (supabase as any).rpc('get_unread_publications_count')
 
+    if (generation !== unreadCountGeneration || unreadCountUser !== usuario) return unreadCountValue
     if (error) {
       console.error('No se pudo cargar el contador de avisos no leídos', error)
       return unreadCountValue
@@ -75,6 +84,13 @@ async function refreshUnreadCount(options: { force?: boolean } = {}) {
 function startUnreadCountGlobalListeners() {
   if (typeof window === 'undefined' || unreadCountStopGlobalListeners) return
 
+  const { data: auth } = createClient().auth.onAuthStateChange((_evento, session) => {
+    const usuario = session?.user.id || null
+    if (unreadCountUser !== usuario) {
+      unreadCountGeneration++; unreadCountUser = usuario; unreadCountLastFetchAt = 0; publishUnreadCount(0)
+      Promise.resolve().then(() => void refreshUnreadCount({ force: true }))
+    }
+  })
   const handleRead = () => void refreshUnreadCount({ force: true })
   const handleFocus = () => void refreshUnreadCount()
   const handleOnline = () => void refreshUnreadCount({ force: true })
@@ -89,6 +105,7 @@ function startUnreadCountGlobalListeners() {
   document.addEventListener('visibilitychange', handleVisibility)
 
   unreadCountStopGlobalListeners = () => {
+    auth.subscription.unsubscribe()
     window.clearInterval(interval)
     window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
     window.removeEventListener('focus', handleFocus)
@@ -107,7 +124,7 @@ function subscribeUnreadCount(listener: UnreadCountListener) {
 
   return () => {
     unreadCountListeners.delete(listener)
-    if (unreadCountListeners.size === 0) unreadCountStopGlobalListeners?.()
+    if (unreadCountListeners.size === 0) { unreadCountStopGlobalListeners?.(); unreadCountGeneration++; unreadCountUser = null; unreadCountLoaded = false; unreadCountLastFetchAt = 0; publishUnreadCount(0) }
   }
 }
 
@@ -122,24 +139,20 @@ export function requestPublicationsContentRefresh() {
   window.dispatchEvent(new Event(PUBLICATIONS_CONTENT_REFRESH_EVENT))
 }
 
-export async function markPublicationRead(publicationId: string) {
-  if (!publicationId) return
-
-  const supabase = createClient()
-  const { error } = await (supabase as any).rpc('mark_publication_read', {
-    p_publicacion_id: publicationId,
-  })
-
-  if (error) {
+export async function markPublicationRead(publicationId: string): Promise<{ success: boolean; error?: string }> {
+  if (!publicationId) return { success: false, error: 'No se identificó el aviso.' }
+  const generacion = unreadCountGeneration
+  try {
+    const supabase = createClient()
+    const { error } = await (supabase as any).rpc('mark_publication_read', { p_publicacion_id: publicationId })
+    if (generacion !== unreadCountGeneration) return { success: false, error: 'La sesión cambió. Vuelve a abrir el aviso.' }
+    if (error) throw error
+    window.dispatchEvent(new CustomEvent(PUBLICATION_READ_EVENT, { detail: { publicationId } }))
+    return { success: true }
+  } catch (error) {
     console.error('No se pudo registrar la lectura de la publicación', error)
-    return
+    return { success: false, error: 'No se pudo guardar la lectura. Revisa la conexión y vuelve a intentarlo.' }
   }
-
-  window.dispatchEvent(
-    new CustomEvent(PUBLICATION_READ_EVENT, {
-      detail: { publicationId },
-    }),
-  )
 }
 
 export function useUnreadPublicationIds(publicationIds: string[]) {
@@ -148,9 +161,12 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
 
   useEffect(() => {
     let cancelled = false
+    let generacion = 0
+    const leidosDuranteConsulta = new Set<string>()
     const ids = idsKey ? idsKey.split('|') : []
 
     async function refresh() {
+      const actual = generacion
       if (ids.length === 0) {
         if (!cancelled) setUnreadIds(new Set())
         return
@@ -166,14 +182,15 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
         return
       }
 
-      if (!cancelled) {
-        setUnreadIds(new Set((data || []).map((item: any) => String(item.publicacion_id))))
+      if (!cancelled && actual === generacion) {
+        setUnreadIds(new Set<string>((data || []).map((item: { publicacion_id: string }) => String(item.publicacion_id)).filter((id: string) => !leidosDuranteConsulta.has(id))))
       }
     }
 
     const handleRead = (event: Event) => {
       const publicationId = (event as CustomEvent<{ publicationId?: string }>).detail?.publicationId
       if (!publicationId) return
+      leidosDuranteConsulta.add(publicationId)
       setUnreadIds((current) => {
         if (!current.has(publicationId)) return current
         const next = new Set(current)
@@ -182,10 +199,15 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
       })
     }
 
+    const { data: auth } = createClient().auth.onAuthStateChange(() => {
+      generacion++; leidosDuranteConsulta.clear(); setUnreadIds(new Set())
+      Promise.resolve().then(() => { if (!cancelled) void refresh() })
+    })
     void refresh()
     window.addEventListener(PUBLICATION_READ_EVENT, handleRead)
     return () => {
       cancelled = true
+      auth.subscription.unsubscribe()
       window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
     }
   }, [idsKey])

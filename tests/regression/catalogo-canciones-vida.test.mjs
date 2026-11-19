@@ -53,7 +53,7 @@ test('el catálogo distingue referencias, dudas y fichas existentes sin inventar
     }
   }
   for (const indice of [33, 97]) assert.equal(catalogo.find((song) => song.indice_origen === indice).estado, 'existente')
-  for (const indice of [3, 45, 48, 78, 113, 205, 212]) assert.equal(catalogo.find((song) => song.indice_origen === indice).estado, 'pendiente')
+  for (const indice of [3, 48, 78, 113, 205, 212]) assert.equal(catalogo.find((song) => song.indice_origen === indice).estado, 'pendiente')
 })
 
 test('la selección rechaza fichas dudosas, identificadores ajenos y lotes grandes', () => {

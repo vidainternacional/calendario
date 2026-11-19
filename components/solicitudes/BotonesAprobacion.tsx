@@ -3,14 +3,27 @@
 import { useActionState } from 'react'
 import { aprobarSolicitud, rechazarSolicitud, type SolicitudState } from '@/app/actions/solicitudes'
 import { Check, X, Loader2 } from 'lucide-react'
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
+async function aprobarYActualizar(state: SolicitudState, datos: FormData): Promise<SolicitudState> {
+  const respuesta = await aprobarSolicitud(state, datos)
+  if (respuesta?.success) requestPendingIndicatorsRefresh()
+  return respuesta
+}
+
+async function rechazarYActualizar(state: SolicitudState, datos: FormData): Promise<SolicitudState> {
+  const respuesta = await rechazarSolicitud(state, datos)
+  if (respuesta?.success) requestPendingIndicatorsRefresh()
+  return respuesta
+}
 
 export function BotonesAprobacion({ solicitudId }: { solicitudId: string }) {
   const [stateAprobar, actionAprobar, pendingAprobar] = useActionState<SolicitudState, FormData>(
-    aprobarSolicitud,
+    aprobarYActualizar,
     undefined
   )
   const [stateRechazar, actionRechazar, pendingRechazar] = useActionState<SolicitudState, FormData>(
-    rechazarSolicitud,
+    rechazarYActualizar,
     undefined
   )
 
