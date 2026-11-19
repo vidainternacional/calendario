@@ -16,10 +16,11 @@ export default function ArchivarPreguntaBoton({ preguntaId }: { preguntaId: stri
     
     setLoading(true)
     const res = await archivarPregunta(preguntaId)
-    if (res?.success) requestPendingIndicatorsRefresh()
     if (!res?.success) {
       mostrarToast(res?.error || 'Error al archivar.')
       setLoading(false)
+    } else {
+      requestPendingIndicatorsRefresh()
     }
   }
 

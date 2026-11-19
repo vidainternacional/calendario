@@ -2,6 +2,7 @@
 
 import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
 
+
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -129,7 +130,6 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
       if (result?.error) throw result.error
       if (success) setNotice(success)
       await load(false)
-      requestPendingIndicatorsRefresh()
       return result
     } catch (err: any) {
       setError(err?.message || 'No se pudo completar la acción.')
@@ -287,7 +287,8 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
 
   async function review(assignment: Assignment, decision: 'aprobado' | 'rechazado', form: HTMLFormElement | null) {
     const notes = form ? String(new FormData(form).get('notas') || '').trim() || null : null
-    await run(() => supabase.rpc('discipulado_revisar', { p_asignacion_id: assignment.id, p_decision: decision, p_notas: notes }), decision === 'aprobado' ? 'Discipulado aprobado.' : 'Se solicitó repetir el examen.')
+    const resultado = await run(() => supabase.rpc('discipulado_revisar', { p_asignacion_id: assignment.id, p_decision: decision, p_notas: notes }), decision === 'aprobado' ? 'Discipulado aprobado.' : 'Se solicitó repetir el examen.')
+    if (resultado) requestPendingIndicatorsRefresh()
   }
 
   async function recognizePrior(event: FormEvent<HTMLFormElement>) {
