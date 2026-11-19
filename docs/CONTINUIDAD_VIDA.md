@@ -1,7 +1,16 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
+Último corte: 19 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+
+## Auditoría reportada de badges — 2026-11-19 · PR #319 en Draft
+
+- Usuario administrador reportó Ayuda Solidaria permanente y Avisos vistos sin quitar indicador. Conservar trabajo de #319 y no publicar sin aprobación nueva. Producción sigue bd7aa236 (#316 musical); los ajustes de badges solo están en Preview.
+- Consulta agregada, sin contenido privado: dos ayudas cerradas y una siembra ofrecida; el indicador de atención no era necesariamente un chat sin leer. Pestañas/filas ahora muestran atención pendiente aparte de mensajes; entrada prioriza categoría pendiente y accesos abren pestaña/caso autorizado. Leer no cambia estados; botón explícito reutiliza atención existente.
+- Avisos: apertura incondicional del UUID aunque unread esté cargando, RPC idempotente; error/reintento visible; respuesta atrasada no restaura lo leído. Refresco después de acciones exitosas de contactos, solicitudes, preguntas, avisos, Discipulado y Ayuda Solidaria; ingresos/servicios ya lo hacían.
+- 48 pruebas pertinentes pasan, compilación/TypeScript y navegadores aislados con componentes reales a 320/390/820px. Se verificaron errores/éxitos, lectura frente a atención, sesión y respuestas lentas, destinos y actualización. Las tres pruebas históricas generales y el lint heredado no se declaran corregidos.
+- Sin SQL de escritura, RLS, roles, datos privados/casos reales, maestro, gastos o producción modificados. No hubo push de prueba. Falta validación autenticada del usuario; no afirmar prueba con su cuenta. Alcance y matriz: docs/BADGES_GENERALES_2026-11-18.md. Un Preview del bloque, mismo alias, recibo SHA/READY en PR #319.
+- Catálogo del bloque anterior conservado: 8 referencias nuevas certificadas para importación idempotente en sesión administradora real; no declarar incorporadas ni terminado sin cotejo. No se copian letras protegidas ni se relajan controles.
 
 ## Badges generales y catálogo — 2026-11-18 · preparado
 

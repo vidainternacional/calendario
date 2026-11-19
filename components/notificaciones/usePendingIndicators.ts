@@ -1,5 +1,6 @@
 'use client'
 
+import { destinoSolidario } from '@/lib/notificaciones/solidaridad-atencion'
 import { sumarAtencion } from '@/lib/notificaciones/atencion'
 import { useSyncExternalStore } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -25,6 +26,9 @@ type PendingSnapshot = {
   servicioPendienteHref: string | null
   ingresoPendienteHref: string | null
   solicitudesPendientesHref: string | null
+  ayudaPendienteHref: string | null
+  mensajesSolidariosHref: string | null
+  ayudaPendienteDetalle: string
 }
 
 const EMPTY_PENDING_SNAPSHOT: PendingSnapshot = {
@@ -41,6 +45,9 @@ const EMPTY_PENDING_SNAPSHOT: PendingSnapshot = {
   servicioPendienteHref: null,
   ingresoPendienteHref: null,
   solicitudesPendientesHref: null,
+  ayudaPendienteHref: null,
+  mensajesSolidariosHref: null,
+  ayudaPendienteDetalle: '',
 }
 
 let pendingSnapshot: PendingSnapshot = EMPTY_PENDING_SNAPSHOT
@@ -239,6 +246,9 @@ async function refreshSharedPending(force = false) {
       pendingContactos: nextContactos,
       pendingPreguntasPastorales: nextPreguntasPastorales,
       pendingAyudaSolidaria: nextAyudaSolidaria,
+      ayudaPendienteHref: ayudaSolicitudesReq.error || ayudaAportesReq.error ? pendingSnapshot.ayudaPendienteHref : Number(ayudaSolicitudesReq.count || 0) > 0 ? destinoSolidario('solicitud', undefined, true) : Number(ayudaAportesReq.count || 0) > 0 ? destinoSolidario('aporte', undefined, true) : null,
+      ayudaPendienteDetalle: ayudaSolicitudesReq.error || ayudaAportesReq.error ? pendingSnapshot.ayudaPendienteDetalle : `${Number(ayudaSolicitudesReq.count || 0)} solicitudes de ayuda y ${Number(ayudaAportesReq.count || 0)} siembras por atender. Leer el chat no cambia su estado.`,
+      mensajesSolidariosHref: mensajesReq.error ? pendingSnapshot.mensajesSolidariosHref : mensajesReq.data?.[0] ? destinoSolidario(mensajesReq.data[0].contexto, mensajesReq.data[0].contexto_id) : null,
       pendingAvisosAprobacion: avisosReq.error ? pendingSnapshot.pendingAvisosAprobacion : Number(avisosReq.count || 0),
       pendingDiscipuladoRevision: discipuladoReq.error ? pendingSnapshot.pendingDiscipuladoRevision : Number(discipuladoReq.count || 0),
       mensajesSolidarios: mensajesReq.error ? pendingSnapshot.mensajesSolidarios : mensajesReq.data || [],
@@ -332,6 +342,6 @@ export function requestPendingIndicatorsRefresh() {
 export function usePendingIndicators() {
   const unreadAvisos = useUnreadPublicationsCount()
   const snapshot = useSyncExternalStore(subscribePending, getPendingSnapshot, getPendingServerSnapshot)
-  const { servicioPendienteHref, ingresoPendienteHref, solicitudesPendientesHref, mensajesSolidarios, ...conteos } = snapshot
+  const { servicioPendienteHref, ingresoPendienteHref, solicitudesPendientesHref, ayudaPendienteHref, mensajesSolidariosHref, ayudaPendienteDetalle, mensajesSolidarios, ...conteos } = snapshot
   return { ...snapshot, unreadAvisos, total: sumarAtencion({ ...conteos, unreadAvisos }) }
 }

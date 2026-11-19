@@ -1,5 +1,7 @@
 'use client'
 
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Camera, Check, Loader2, QrCode, ScanLine, Trash2, UserRoundPlus, Users, X } from 'lucide-react'
 import { eliminarContacto, enviarSolicitudPorCodigo, enviarSolicitudPorQr, responderSolicitudContacto } from '@/app/actions/contactos'
@@ -66,6 +68,7 @@ export default function ContactosClient({ miId, miNombre, miAvatarUrl, qrToken, 
   const responder = (id: string, aceptar: boolean) => {
     startTransition(async () => {
       const respuesta = await responderSolicitudContacto(id, aceptar)
+      if (!respuesta.error) requestPendingIndicatorsRefresh()
       flash(respuesta.error ?? (aceptar ? '✓ ¡Ahora son contactos!' : 'Solicitud rechazada'), !respuesta.error)
     })
   }

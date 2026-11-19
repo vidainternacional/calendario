@@ -1,5 +1,8 @@
 'use client'
 
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
+import { requestUnreadPublicationsRefresh } from '@/components/avisos/usePublicationReads'
 import { mostrarToast } from '@/lib/ui/toast'
 
 import { useState } from 'react'
@@ -12,6 +15,7 @@ export default function BotonesAprobacionAviso({ avisoId }: { avisoId: string })
   const handleAprobar = async () => {
     setLoading(true)
     const res = await aprobarAviso(avisoId)
+    if (res?.success) { requestPendingIndicatorsRefresh(); requestUnreadPublicationsRefresh() }
     if (!res?.success) {
       mostrarToast(res?.error || 'Error al aprobar aviso')
       setLoading(false)
@@ -22,6 +26,7 @@ export default function BotonesAprobacionAviso({ avisoId }: { avisoId: string })
     if (!confirm('¿Estás seguro de rechazar este aviso global?')) return
     setLoading(true)
     const res = await rechazarAviso(avisoId)
+    if (res?.success) { requestPendingIndicatorsRefresh(); requestUnreadPublicationsRefresh() }
     if (!res?.success) {
       mostrarToast(res?.error || 'Error al rechazar aviso')
       setLoading(false)

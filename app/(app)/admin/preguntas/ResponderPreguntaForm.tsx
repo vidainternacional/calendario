@@ -1,5 +1,7 @@
 'use client'
 
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
 import { mostrarToast } from '@/lib/ui/toast'
 import { useState } from 'react'
 import { responderPregunta } from '@/app/actions/preguntas'
@@ -15,6 +17,7 @@ export default function ResponderPreguntaForm({ preguntaId }: { preguntaId: stri
 
     setLoading(true)
     const res = await responderPregunta(preguntaId, respuesta)
+    if (res?.success) requestPendingIndicatorsRefresh()
     if (!res?.success) {
       mostrarToast(res?.error || 'Ocurrió un error al responder.')
       setLoading(false)

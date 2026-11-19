@@ -24,7 +24,9 @@ test('el dashboard reserva liderazgo a es_lider y Pastor no recibe gestión glob
   assert.match(hub, /esLiderMinisterio\s*=\s*mem\?\.es_lider\s*===\s*true/)
   assert.match(hub, /accesoGlobal\s*=\s*perfil\?\.rol\s*===\s*'administrador'/)
   assert.match(hub, /visible\s*:\s*esLiderMinisterio/)
-  assert.match(hub, /\{esLiderMinisterio\s*&&\s*<section>/)
+  assert.match(hub, /\{\(esLiderMinisterio\|\|mostrarGestionAlabanza\)&&<section/)
+  assert.match(hub, /const mostrarGestionAlabanza=esAlabanza&&\(esLiderMinisterio\|\|responsablePaleta\)/)
+  assert.match(hub, /esLiderMinisterio&&esAlabanza&&<Link href=\{`\/ministerios\/\$\{id\}\/biblioteca-alabanza`\}/)
   assert.match(hub, /Eres parte del equipo/)
   assert.doesNotMatch(hub, /mem\?\.es_lider\s*===\s*true\s*\|\|/)
   assert.doesNotMatch(hub, /\['pastor',\s*'administrador'\]\.includes\(perfil\?\.rol\)/)
@@ -156,7 +158,7 @@ test('acciones gestionables forman parte de Para ti y respetan liderazgo real', 
   assert.match(indicators, /\.eq\('es_lider', true\)/)
   assert.match(indicators, /const esAdministrador = .*rol === 'administrador'/)
   assert.match(indicators, /\.in\('ministerio_id', ministeriosLiderados\)/)
-  assert.match(indicators, /obtenerConteoSolicitudesGestionables/)
+  assert.match(indicators, /obtenerResumenSolicitudesGestionables/)
 })
 
 test('una nueva solicitud de ingreso notifica líderes reales y administradores', () => {

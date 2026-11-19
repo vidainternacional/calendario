@@ -1,16 +1,18 @@
 'use client'
 
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
 import { useActionState } from 'react'
 import { aprobarSolicitud, rechazarSolicitud, type SolicitudState } from '@/app/actions/solicitudes'
 import { Check, X, Loader2 } from 'lucide-react'
 
 export function BotonesAprobacion({ solicitudId }: { solicitudId: string }) {
   const [stateAprobar, actionAprobar, pendingAprobar] = useActionState<SolicitudState, FormData>(
-    aprobarSolicitud,
+    async (anterior, data) => { const r = await aprobarSolicitud(anterior, data); if (r?.success) requestPendingIndicatorsRefresh(); return r },
     undefined
   )
   const [stateRechazar, actionRechazar, pendingRechazar] = useActionState<SolicitudState, FormData>(
-    rechazarSolicitud,
+    async (anterior, data) => { const r = await rechazarSolicitud(anterior, data); if (r?.success) requestPendingIndicatorsRefresh(); return r },
     undefined
   )
 

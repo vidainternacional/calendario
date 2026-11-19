@@ -139,24 +139,20 @@ export function requestPublicationsContentRefresh() {
   window.dispatchEvent(new Event(PUBLICATIONS_CONTENT_REFRESH_EVENT))
 }
 
-export async function markPublicationRead(publicationId: string) {
-  if (!publicationId) return
-
-  const supabase = createClient()
-  const { error } = await (supabase as any).rpc('mark_publication_read', {
-    p_publicacion_id: publicationId,
-  })
-
-  if (error) {
+export async function markPublicationRead(publicationId: string): Promise<{ success: boolean; error?: string }> {
+  if (!publicationId) return { success: false, error: 'No se identificó el aviso.' }
+  const generacion = unreadCountGeneration
+  try {
+    const supabase = createClient()
+    const { error } = await (supabase as any).rpc('mark_publication_read', { p_publicacion_id: publicationId })
+    if (generacion !== unreadCountGeneration) return { success: false, error: 'La sesión cambió. Vuelve a abrir el aviso.' }
+    if (error) throw error
+    window.dispatchEvent(new CustomEvent(PUBLICATION_READ_EVENT, { detail: { publicationId } }))
+    return { success: true }
+  } catch (error) {
     console.error('No se pudo registrar la lectura de la publicación', error)
-    return
+    return { success: false, error: 'No se pudo guardar la lectura. Revisa la conexión y vuelve a intentarlo.' }
   }
-
-  window.dispatchEvent(
-    new CustomEvent(PUBLICATION_READ_EVENT, {
-      detail: { publicationId },
-    }),
-  )
 }
 
 export function useUnreadPublicationIds(publicationIds: string[]) {
@@ -165,9 +161,12 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
 
   useEffect(() => {
     let cancelled = false
+    let generacion = 0
+    const leidosDuranteConsulta = new Set<string>()
     const ids = idsKey ? idsKey.split('|') : []
 
     async function refresh() {
+      const actual = generacion
       if (ids.length === 0) {
         if (!cancelled) setUnreadIds(new Set())
         return
@@ -183,14 +182,15 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
         return
       }
 
-      if (!cancelled) {
-        setUnreadIds(new Set((data || []).map((item: any) => String(item.publicacion_id))))
+      if (!cancelled && actual === generacion) {
+        setUnreadIds(new Set<string>((data || []).map((item: { publicacion_id: string }) => String(item.publicacion_id)).filter((id: string) => !leidosDuranteConsulta.has(id))))
       }
     }
 
     const handleRead = (event: Event) => {
       const publicationId = (event as CustomEvent<{ publicationId?: string }>).detail?.publicationId
       if (!publicationId) return
+      leidosDuranteConsulta.add(publicationId)
       setUnreadIds((current) => {
         if (!current.has(publicationId)) return current
         const next = new Set(current)
@@ -199,10 +199,15 @@ export function useUnreadPublicationIds(publicationIds: string[]) {
       })
     }
 
+    const { data: auth } = createClient().auth.onAuthStateChange(() => {
+      generacion++; leidosDuranteConsulta.clear(); setUnreadIds(new Set())
+      Promise.resolve().then(() => { if (!cancelled) void refresh() })
+    })
     void refresh()
     window.addEventListener(PUBLICATION_READ_EVENT, handleRead)
     return () => {
       cancelled = true
+      auth.subscription.unsubscribe()
       window.removeEventListener(PUBLICATION_READ_EVENT, handleRead)
     }
   }, [idsKey])

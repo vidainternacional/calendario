@@ -1,6 +1,6 @@
 {
-  "task": "Badges generales y continuidad del catálogo",
-  "userRequest": "Usuario pide badges, avisos y notificaciones en toda la aplicación cuando exista algo por ver o resolver; conservar lo demás aprobado y después continuar catálogo sin duplicados. Auditar rutas/lectura/actualización, corregir ocultación por entrar a secciones y aislamiento entre cuentas, incluir pendientes existentes de avisos por aprobar, revisión de Discipulado y mensajes solidarios. Sin SQL, permisos/RLS, envíos push de prueba, producción o maestro. Catálogo solo metadatos y cifrados aportados ya preparados, nunca copiar letras protegidas ni inventar identidad/enlaces.",
+  "task": "Auditoría de badges: lectura, atención y destino exacto",
+  "userRequest": "Usuario pide badges, avisos y notificaciones en toda la aplicación cuando exista algo por ver o resolver; conservar lo demás aprobado y después continuar catálogo sin duplicados. Auditar rutas/lectura/actualización, corregir ocultación por entrar a secciones y aislamiento entre cuentas, incluir pendientes existentes de avisos por aprobar, revisión de Discipulado y mensajes solidarios. Sin SQL, permisos/RLS, envíos push de prueba, producción o maestro. Catálogo solo metadatos y cifrados aportados ya preparados, nunca copiar letras protegidas ni inventar identidad/enlaces. Usuario reporta en su cuenta administradora badge persistente de Ayuda Solidaria sin indicar si es ayuda o siembra, chats leídos sin despejar Avisos; solicita chequeo exhaustivo de badges. Corregir distinción lectura/acción, rutas a pestaña/caso exactos, actualización tras gestionar y apertura rápida de avisos, sin marcar atendidos por abrir ni modificar solicitudes ajenas.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -18,7 +18,21 @@
     "scripts/vida-canciones/verificar-enlaces.mjs",
     "components/avisos/usePublicationReads.ts",
     "tests/regression/catalogo-canciones-vida.test.mjs",
-    "app/actions/centro-solicitudes-ministerio.ts"
+    "app/actions/centro-solicitudes-ministerio.ts",
+    "components/solidaridad/SolidarityAdminBoard.tsx",
+    "components/avisos/PublicacionCard.tsx",
+    "components/avisos/PublicacionDetalle.tsx",
+    "lib/notificaciones/solidaridad-atencion.ts",
+    "tests/regression/badges-recorrido-integral.test.mjs",
+    "app/(app)/ayuda-solidaria/page.tsx",
+    "components/solidaridad/SolidarityHub.tsx",
+    "components/contactos/ContactosClient.tsx",
+    "components/solicitudes/BotonesAprobacion.tsx",
+    "app/(app)/admin/preguntas/ResponderPreguntaForm.tsx",
+    "app/(app)/admin/preguntas/ArchivarPreguntaBoton.tsx",
+    "app/(app)/avisos/pendientes-aprobacion/BotonesAprobacionAviso.tsx",
+    "tests/regression/fase-g-para-ti-atencion-integral.test.mjs",
+    "tests/regression/fase-g-lider-solicitudes-programacion.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

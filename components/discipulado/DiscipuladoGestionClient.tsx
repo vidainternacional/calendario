@@ -1,5 +1,7 @@
 'use client'
 
+import { requestPendingIndicatorsRefresh } from '@/components/notificaciones/usePendingIndicators'
+
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -127,6 +129,7 @@ export default function DiscipuladoGestionClient({ userId, isAdmin }: Props) {
       if (result?.error) throw result.error
       if (success) setNotice(success)
       await load(false)
+      requestPendingIndicatorsRefresh()
       return result
     } catch (err: any) {
       setError(err?.message || 'No se pudo completar la acción.')
