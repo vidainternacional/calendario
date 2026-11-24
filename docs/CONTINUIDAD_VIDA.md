@@ -7,6 +7,12 @@
 
 
 
+## Mi congregación en Perfil — revisión24-11-2026
+
+- Pedido «Ok hazlo quiero verlo»: campo visible dentro de la ficha ampliada en Perfil, antes de Completar/Actualizar ficha y visible también al editar. Santa Ana, Chalchuapa, ambas o ninguna; independiente de domicilio y sedes visibles de Inicio.
+- Preferencia de prueba por UUID/dispositivo, explícitamente sin afiliación en servidor ni permisos. No usa guardarMiFichaVida ni altera formulario existente. No declarar inscripción ministerial o traslado aplicado. Esquema/RLS real sigue pendiente de propuesta/aprobación.
+- TypeScript/lint/build y revisión aislada antes de entrega. Mismo PR321/alias, sin producción. Recibo exacto en PR.
+
 ## Selector de sedes junto al perfil — 24-11-2026 · PR321
 
 - Usuario pide círculo en Inicio real, junto al perfil a la derecha del saludo. Añadido para cualquier cuenta, sin condición de rol. SA/CH/2 y nombre completo, diálogo con dos casillas, al menos una activa. Preferencia local por UUID/dispositivo, no pertenencia ni permiso.

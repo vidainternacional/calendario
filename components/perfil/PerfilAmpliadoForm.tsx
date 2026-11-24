@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { BriefcaseBusiness, Check, ChevronUp, Languages, MapPin, Pencil, PhoneCall, Sparkles, UserRound } from 'lucide-react'
+import MiCongregacionReview from '@/components/perfil/MiCongregacionReview'
 import { guardarMiFichaVida } from '@/app/actions/member-profile'
 
 const inputCls = 'min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base font-medium text-slate-800 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-transparent focus:ring-2 focus:ring-indigo-500 sm:text-sm'
@@ -14,7 +15,7 @@ function joinList(value: unknown) {
   return Array.isArray(value) ? value.join(', ') : ''
 }
 
-export default function PerfilAmpliadoForm({ details }: { details: any | null }) {
+export default function PerfilAmpliadoForm({ details, userId }: { details: any | null; userId: string }) {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [pending, startTransition] = useTransition()
@@ -60,6 +61,7 @@ export default function PerfilAmpliadoForm({ details }: { details: any | null })
           {details?.municipio && <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 shadow-sm">{details.municipio}</span>}
           {Array.isArray(details?.habilidades_personales) && details.habilidades_personales.slice(0, 2).map((skill: string) => <span key={skill} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-indigo-600 shadow-sm">{skill}</span>)}
         </div>}
+        <MiCongregacionReview userId={userId} />
         <button type="button" onClick={() => setOpen((value) => !value)} className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white shadow-sm">
           {open ? <ChevronUp className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}{open ? 'Cerrar edición' : completion ? 'Actualizar mi ficha' : 'Completar mi ficha'}
         </button>

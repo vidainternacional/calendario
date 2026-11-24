@@ -78,7 +78,7 @@ export default async function PerfilPage() {
           <EditarPerfilForm nombre={nombre} telefono={(profile as any)?.telefono ?? null} fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null} />
         </section>
 
-        <PerfilAmpliadoForm details={(details as any) ?? null} />
+        <PerfilAmpliadoForm userId={user.id} details={(details as any) ?? null} />
 
         <section className="rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-[#171923]">Tus Ministerios</h3>
