@@ -7,6 +7,11 @@
 
 
 
+## Botón de congregación reducido —24-11-2026
+
+- Usuario considera grande y con demasiado texto el acceso superior. Sustituido por botón de una línea, icono ubicación, nombre corto y flecha; mismo alto táctil44px y aspecto de Editar mi información. Sin título explicativo ni Cambiar extra en ese botón. Ficha conserva resumen completo.
+- Selección automática/cierre/sincronización local intactos. Sin servidor, permisos, RLS ni producción. Compilación/TypeScript/lint y revisión móvil/tableta antes de entregar; recibo final del mismo Preview en PR321.
+
 ## Congregación compacta y acceso superior —24-11-2026
 
 - Usuario pide dato integrado, sin opciones abiertas tras seleccionar y junto a Editar mi información. Resumen compacto en ficha + acceso superior; selector cerrado inicialmente en ventana accesible; al tocar una opción guarda selección local y cierra automáticamente. Si falla almacenamiento mantiene ventana y reintento. Ambos leen la misma preferencia por UUID/dispositivo, sin mezclarla con domicilio/sedes visibles.

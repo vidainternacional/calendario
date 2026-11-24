@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
+import { MapPin, ChevronDown } from 'lucide-react'
 const EVENT = 'vida:congregacion-review'
 const OPTIONS = [ ['santa-ana', 'VIDA Santa Ana'], ['chalchuapa', 'VIDA Chalchuapa'], ['ambas', 'Ambas congregaciones'], ['ninguna', 'Todavía no pertenezco a una sede'] ] as const
 const normalize = (v: string | null) => OPTIONS.some(o => o[0] === v) ? v || '' : ''
@@ -40,10 +41,14 @@ export default function MiCongregacionReview({ userId, compact = false }: { user
   }
   const label = OPTIONS.find(o => o[0] === saved)?.[1] || 'Sin seleccionar'
   return <>
-    <div className={compact ? 'min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-800' : 'mt-5 flex min-w-0 items-center justify-between gap-3 border-t border-slate-200 pt-4 text-slate-800'}>
-      <div className="min-w-0"><p className="text-xs font-semibold text-slate-500">{compact ? 'Congregación a la que asisto' : 'Mi congregación'}</p><p className="mt-1 break-words text-sm font-semibold">{label}</p></div>
-      <button type="button" aria-label={compact ? 'Elegir congregación desde mi información' : 'Cambiar congregación en mi ficha'} aria-haspopup="dialog" aria-expanded={open} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold underline underline-offset-4" onClick={() => { setDraft(saved); setMessage(''); setOpen(true) }}>{saved ? 'Cambiar' : 'Elegir'}</button>
-    </div>
+    {compact ? <button type="button" aria-label="Elegir congregación desde mi información" title={`Mi congregación: ${label}`} aria-haspopup="dialog" aria-expanded={open} className="inline-flex min-h-11 min-w-0 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 sm:text-sm" onClick={() => { setDraft(saved); setMessage(''); setOpen(true) }}>
+      <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span className="truncate">{saved === 'santa-ana' ? 'Santa Ana' : saved === 'chalchuapa' ? 'Chalchuapa' : saved === 'ambas' ? 'Ambas' : saved === 'ninguna' ? 'Sin sede' : 'Congregación'}</span>
+      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+    </button> : <div className="mt-5 flex min-w-0 items-center justify-between gap-3 border-t border-slate-200 pt-4 text-slate-800">
+      <div className="min-w-0"><p className="text-xs font-semibold text-slate-500">Mi congregación</p><p className="mt-1 break-words text-sm font-semibold">{label}</p></div>
+      <button type="button" aria-label="Cambiar congregación en mi ficha" aria-haspopup="dialog" aria-expanded={open} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold underline underline-offset-4" onClick={() => { setDraft(saved); setMessage(''); setOpen(true) }}>{saved ? 'Cambiar' : 'Elegir'}</button>
+    </div>}
     {open && createPortal(<div className="fixed inset-0 z-[260] flex items-end justify-center bg-slate-950/30 p-3 sm:items-center" onMouseDown={e => { if (e.target === e.currentTarget) setOpen(false) }}>
       <section ref={panel} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="max-h-[85dvh] w-full max-w-sm overflow-y-auto rounded-[28px] bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-slate-800">
         <header className="flex items-center justify-between gap-3"><h3 id={`${id}-title`} className="text-lg font-bold">Mi congregación</h3><button type="button" className="min-h-11 px-2 text-sm font-semibold" onClick={() => setOpen(false)}>Cerrar</button></header>
