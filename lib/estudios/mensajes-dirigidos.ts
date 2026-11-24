@@ -26,18 +26,19 @@ export async function cargarBibliotecaDirigida(pagina = 1, categoria: 'todos' | 
   const db = client as unknown as SupabaseClient
   const page = Math.min(100, Math.max(1, Math.floor(pagina) || 1))
   const tope = page * POR_PAGINA + 1
-  let consulta = db.from('vida_devocionales').select(CAMPOS_DIRIGIDOS).eq('publicado', true)
+  let consulta = db.rpc('vida_devocionales_visibles').select(CAMPOS_DIRIGIDOS).eq('publicado', true)
   if (categoria !== 'todos') consulta = consulta.eq('tipo', categoria)
   const { data: nuevos, error } = categoria === 'serie'
     ? await consulta.order('serie_titulo', { ascending: true }).order('serie_episodio', { ascending: true }).limit(tope)
     : await consulta.order('published_at', { ascending: false }).order('id').limit(tope)
   if (error) return { ...viejo, mensajes: [] as MensajeBiblioteca[], haySiguiente: false,
     error: 'No se pudieron cargar los mensajes. Intenta nuevamente.' }
+  const nuevosRows = Array.isArray(nuevos) ? nuevos as Record<string, unknown>[] : []
 
-  const convertidos = ((nuevos ?? []) as Record<string, unknown>[])
+  const convertidos = nuevosRows
     .map(desdeVideoDirigido).filter((m): m is MensajeConAudiencia => Boolean(m))
   const paginaNueva = convertidos.slice((page - 1) * POR_PAGINA, page * POR_PAGINA)
-  const idsAutores = [...new Set(((nuevos ?? []) as Record<string, unknown>[])
+  const idsAutores = [...new Set(nuevosRows
     .map(v => String(v.autor_id || '')).filter(Boolean))]
   const nombres = new Map<string, string>()
   if (idsAutores.length) {
@@ -47,7 +48,7 @@ export async function cargarBibliotecaDirigida(pagina = 1, categoria: 'todos' | 
       error: 'No se pudieron cargar los autores de los mensajes.' }
     for (const perfil of perfiles ?? []) nombres.set(String(perfil.id), String(perfil.nombre_completo || 'Equipo pastoral'))
   }
-  const autoresPorVideo = new Map((nuevos ?? []).map((v: Record<string, unknown>) =>
+  const autoresPorVideo = new Map(nuevosRows.map((v: Record<string, unknown>) =>
     [String(v.id), nombres.get(String(v.autor_id)) || 'Equipo pastoral'] as const))
 
   const adaptados: MensajeBiblioteca[] = incluyeLegado ? viejo.mensajes.map(m => ({ ...adaptarLegado(m), autor: m.autor })) : []

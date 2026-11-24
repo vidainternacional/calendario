@@ -7,6 +7,9 @@ import { contextoPastoral } from '@/lib/auth/permisos'
 import { youtubeVideo } from '@/lib/estudios/youtube-link'
 import { ROL_DESTINO_IDS, TIPO_DEVOCIONAL_IDS, type RolDestino, type TipoDevocional } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
+import { audienciaDesdeForm } from '@/lib/sedes/audiencias'
+import { validarAudienciaSedes } from '@/lib/sedes/servidor'
+
 type Resultado = { success: boolean; error?: string; aviso?: string }
 const uuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
 
@@ -61,7 +64,9 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
   const episodioTexto = String(form.get('serie_episodio') || '').trim()
   const serieEpisodio = Number(episodioTexto)
   const publicar = form.get('publicar') === 'on'
-  const audiencia = destinatarios(form)
+  let scoped
+  try { scoped = audienciaDesdeForm(form); if (form.get('vida_sedes_requeridas') === '1' && !scoped) throw new Error('Selecciona sede y destinatarios.'); if (scoped) await validarAudienciaSedes(db, scoped) } catch (e) { return { success: false, error: e instanceof Error ? e.message : 'Revisa los destinatarios.' } }
+  const audiencia = scoped ? { iglesia: scoped.todos, lideres: scoped.lideres, roles: scoped.roles as RolDestino[], ministerios: scoped.ministerios, error: undefined } : destinatarios(form)
 
   if (!titulo || titulo.length > 140) return { success: false, error: 'Escribí un título de hasta 140 caracteres.' }
   if (descripcion.length > 2000) return { success: false, error: 'La descripción no puede superar los 2000 caracteres.' }
@@ -71,7 +76,7 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
     return { success: false, error: 'Para una serie indicá el nombre (máximo 100 caracteres) y un episodio entre 1 y 999.' }
   }
   if (audiencia.error) return { success: false, error: audiencia.error }
-  if (publicar && !audiencia.iglesia && !audiencia.lideres &&
+  if (publicar && !scoped && !audiencia.iglesia && !audiencia.lideres &&
       !audiencia.roles.length && !audiencia.ministerios.length) {
     return { success: false, error: 'Elegí al menos un grupo o ministerio antes de publicar.' }
   }
@@ -96,6 +101,7 @@ export async function guardarMensajeDirigido(form: FormData): Promise<Resultado>
   }
 
   const campos = {
+    ...(scoped ? { vida_audiencia: scoped } : {}),
     titulo, descripcion, video_url: video.url, tipo,
     serie_titulo: tipo === 'serie' ? serieTitulo : null,
     serie_episodio: tipo === 'serie' ? serieEpisodio : null,
@@ -128,12 +134,12 @@ export async function cambiarPublicacionDirigida(id: string, revision: string, p
   if (!db || !user || !uuid(id) || !revision || typeof publicar !== 'boolean') {
     return { success: false, error: 'No autorizado.' }
   }
-  let consulta = db.from('vida_devocionales').select('audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,published_at,updated_at,autor_id').eq('id', id)
+  let consulta = db.from('vida_devocionales').select('audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,published_at,updated_at,autor_id,vida_audiencia').eq('id', id)
   if (!esAdmin) consulta = consulta.eq('autor_id', user.id)
   const { data, error } = await consulta.maybeSingle()
   if (error || !data) return { success: false, error: 'No podés modificar este mensaje.' }
   if (data.updated_at !== revision) return { success: false, error: 'El mensaje cambió. Actualizá la página.' }
-  if (publicar && !data.audiencia_iglesia && !data.lideres_ministerio &&
+  if (publicar && !data.vida_audiencia && !data.audiencia_iglesia && !data.lideres_ministerio &&
       !(data.roles_destino?.length) && !(data.ministerios_destino?.length)) {
     return { success: false, error: 'Elegí primero los destinatarios dentro de Editar.' }
   }

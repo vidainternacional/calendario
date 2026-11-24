@@ -1,5 +1,11 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Multisede integral — Supabase aplicado, Preview en preparación · 25-11-2026
+
+El usuario solicita terminar antes de revisar con personas reales. El25-11 responde Ok al paquete concreto: SQL ccvida + mismo Preview autorizados, no producción/merge. Migración20261125185122 aplicada y verificada; alcance/recibo al inicio del documento específico. El estado de preparación del24-11 que sigue es histórico. Implementación integral preparada en el mismo worktree/PR321; todavía sin aplicar segundo SQL ni publicar Preview/producción. Documento de alcance, impacto, recuperación y estado: [SEDES_ENTREGA_INTEGRAL_2026-11-24.md](SEDES_ENTREGA_INTEGRAL_2026-11-24.md). SQL exacto completo y reversión en docs/sql; no ejecutar además las fuentes separadas. Solo base de cinco tablas aplicada con autorización anterior. No reutilizar ese permiso para nuevas RLS/RPC. Maestro estricto13 exige aprobación explícita del segundo paquete presentado. No publicar código dependiente antes de su aplicación/verificación. Las asignaciones de ministerios y pastores se eligen administrativamente, no se adivinan ni se importan automáticamente.
+
+Pruebas locales aisladas:20 PostgreSQL y9 recorridos Chromium320/390/820 pasan; compilación final/TypeScript correctos y76 regresiones afectadas pasan. No representan prueba autenticada real, recepción push ni publicación. Main comprobado bd7aa236, HEAD remoto de rama9b49a1d; alias fijo aún entrega base. No R2, gastos ni claves tocados. Al cerrar actualizar resultados exactos; mientras el diff no se publique, otra conversación no puede leerlo automáticamente desde GitHub.
+
 Último corte: 24 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 

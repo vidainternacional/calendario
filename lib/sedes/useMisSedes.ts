@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import { obtenerMisSedes, guardarMisSedes } from '@/app/actions/sedes'
 import { crearSedesStore, SEDES_INITIAL } from './store'
+import { requestUnreadPublicationsRefresh } from '@/components/avisos/usePublicationReads'
 
 const stores = new Map<string, ReturnType<typeof crearSedesStore>>()
 export function useMisSedes(userId: string) {
@@ -17,5 +18,10 @@ export function useMisSedes(userId: string) {
     document.addEventListener('visibilitychange', refresh)
     return () => { window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh) }
   }, [current])
-  return { ...snapshot, guardar: current.guardar, refresh: current.refresh }
+  const guardar: typeof current.guardar = async (tipo, ids) => {
+    const result = await current.guardar(tipo, ids)
+    if (result.success && tipo === 'visibles') requestUnreadPublicationsRefresh()
+    return result
+  }
+  return { ...snapshot, guardar, refresh: current.refresh }
 }

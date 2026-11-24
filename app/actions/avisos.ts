@@ -1,9 +1,15 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
 import { composePushBody, notifyUsersOnceByReference } from '@/lib/webpush'
+
+import { audienciaDesdeForm } from '@/lib/sedes/audiencias'
+import { validarAudienciaSedes, destinatariosSedes } from '@/lib/sedes/servidor'
+
+import { notificacionSedes } from '@/lib/sedes/notificacion'
 
 export type AvisoState = {
   error?: string
@@ -61,8 +67,11 @@ async function resolverOrigenAviso(
 async function enviarNotificacionAviso(input: AvisoPushInput): Promise<number> {
   const service = createServiceClient()
   let targetUserIds: string[] = []
+  const { data: alcance, error: alcanceError } = await service.from('publicaciones').select('vida_audiencia').eq('id', input.id).maybeSingle()
+  if (alcanceError) throw alcanceError
+  const scoped = Boolean(alcance?.vida_audiencia)
 
-  if (!input.ministerioId) {
+  if (scoped) { targetUserIds = await destinatariosSedes('aviso', input.id) } else if (!input.ministerioId) {
     const { data: allUsers, error: usersError } = await service.from('profiles').select('id').eq('activo', true)
     if (usersError) throw usersError
     targetUserIds = (allUsers || []).map((user: any) => user.id)
@@ -94,13 +103,13 @@ async function enviarNotificacionAviso(input: AvisoPushInput): Promise<number> {
     input.remitenteNombre,
   )
 
-  const result = await notifyUsersOnceByReference(finalUserIds, {
+  const result = await notifyUsersOnceByReference(finalUserIds, notificacionSedes(alcance?.vida_audiencia, {
     title: origen,
     body: composePushBody(input.titulo, input.cuerpo),
     url: `/avisos/${input.id}?origen=push`,
     tag: `aviso-${input.id}`,
     renotify: true,
-  }, { tipo: 'aviso', referenciaId: input.id })
+  }), { tipo: 'aviso', referenciaId: input.id })
 
   console.log('[avisos] Reparto push completado', {
     avisoId: input.id,
@@ -136,6 +145,8 @@ export async function crearAviso(
     .eq('id', user.id)
     .single()
 
+  let scoped
+  try { scoped = audienciaDesdeForm(formData); if (formData.get('vida_sedes_requeridas') === '1' && !scoped) throw new Error('Selecciona sede y destinatarios.'); if (scoped) await validarAudienciaSedes(supabase as unknown as SupabaseClient, scoped) } catch (e) { return { error: e instanceof Error ? e.message : 'Revisa los destinatarios.' } }
   const perfil = profile as any
   const esPastorAdmin = perfil?.rol === 'administrador' || perfil?.rol === 'pastor' || perfil?.es_pastor_general
   const isGlobal = !minIdForm
@@ -159,6 +170,7 @@ export async function crearAviso(
   const { data: aviso, error } = await (supabase as any)
     .from('publicaciones')
     .insert({
+      ...(scoped ? { vida_audiencia: scoped } : {}),
       ministerio_id: minIdForm || null,
       autor_id: user.id,
       tipo: 'aviso',

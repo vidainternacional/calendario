@@ -33,6 +33,11 @@ import ShineSweep from '@/components/ui/ShineSweep'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import UserAvatar from '@/components/comunidad/UserAvatar'
 import SedesVisiblesSelector from '@/components/inicio/SedesVisiblesSelector'
+import { useMisSedes } from '@/lib/sedes/useMisSedes'
+
+import InvitacionesServicio from '@/components/inicio/InvitacionesServicio'
+
+import { nombreMinisterioConSede } from '@/lib/sedes/nombre-ministerio'
 
 type InicioData = {
   profile: any | null
@@ -74,6 +79,8 @@ function eventStatus(estado?: string | null) {
 }
 
 export default function InicioClient({ userId, email }: InicioClientProps) {
+  const { seleccion: sedesSeleccionadas } = useMisSedes(userId)
+  const sedesKey = [...sedesSeleccionadas.visibles].sort().join(',')
   const [data, setData] = useState<InicioData | null>(() =>
     readUserCache<InicioData>(userId, CACHE_SCOPE),
   )
@@ -105,7 +112,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           (supabase as any).rpc('get_next_visible_calendar_item'),
           supabase
             .from('ministerio_miembros')
-            .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario )')
+            .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario, vida_ministerio_sedes(vida_sedes(nombre)) )')
             .eq('profile_id', userId),
           (supabase as any).rpc('get_visible_pastoral_packages'),
         ])
@@ -116,7 +123,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         const puedeVerTodoAvisos = role === 'pastor' || role === 'administrador'
 
         let publicacionesQuery = supabase
-          .from('publicaciones')
+          .rpc('vida_avisos_inicio' as never)
           .select(`
             id,
             titulo,
@@ -131,7 +138,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
 
         if (!puedeVerTodoAvisos) {
           publicacionesQuery = publicacionesQuery.or(
-            `ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
+            `vida_audiencia.not.is.null,ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
           )
         }
 
@@ -158,7 +165,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, sedesKey])
 
   useEffect(() => {
     if (!avisosPreviewOpen) return
@@ -331,6 +338,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           />
           </div>
         </header>
+      <InvitacionesServicio userId={userId} />
 
         <VideosMinisterialesPendientes />
         <PushReminder userId={userId} />
@@ -420,7 +428,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
               membresias={membresias.map((m: any) => ({
                 ministerio_id: m.ministerio_id,
                 es_lider: !!m.es_lider,
-                nombre: m.ministerios?.nombre ?? 'Ministerio',
+                nombre: nombreMinisterioConSede(m.ministerios),
                 emoji: m.ministerios?.emoji ?? '⛪',
                 color: m.ministerios?.color_primario ?? '#5B3DF5',
               }))}

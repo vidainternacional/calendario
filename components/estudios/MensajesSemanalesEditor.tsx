@@ -13,6 +13,9 @@ import {
   type MensajeConAudiencia, type MinisterioDestino, type RolDestino, type TipoDevocional,
 } from '@/lib/estudios/mensajes-dirigidos-tipos'
 
+import DestinatariosSelector from '@/components/sedes/DestinatariosSelector'
+import type { AudienciaSedes } from '@/lib/sedes/audiencias'
+
 const campo = 'mt-1.5 block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100'
 
 function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
@@ -29,6 +32,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
   const [serieTitulo, setSerieTitulo] = useState(mensaje?.serieTitulo ?? '')
   const [serieEpisodio, setSerieEpisodio] = useState(mensaje?.serieEpisodio?.toString() ?? '1')
   const [publicar, setPublicar] = useState(mensaje?.publicado ?? false)
+  const [scoped, setScoped] = useState<AudienciaSedes | null>(mensaje?.vidaAudiencia || null)
   const [iglesia, setIglesia] = useState(mensaje?.audienciaIglesia ?? true)
   const [roles, setRoles] = useState<RolDestino[]>(mensaje?.rolesDestino ?? [])
   const [grupos, setGrupos] = useState<string[]>(mensaje?.ministeriosDestino ?? [])
@@ -96,6 +100,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
       <p className="text-xs leading-5 text-slate-600">Usá el mismo nombre de serie en cada episodio. La biblioteca los agrupará y ordenará por número.</p>
     </div>}
 
+    {!scoped && Boolean(mensaje) && <>
     <div className="border-t border-slate-200 pt-4">
       <label className="flex items-start gap-3 text-sm leading-6 text-slate-700">
         <input className="mt-1 h-5 w-5 shrink-0 accent-violet-600" type="checkbox" name="publicar"
@@ -163,6 +168,9 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
       </div>
     </div>
 
+    </>}
+    <DestinatariosSelector key={mensaje?.id || 'nuevo'} initial={mensaje?.vidaAudiencia} preservarLegado={Boolean(mensaje)} onChange={setScoped} />
+
     <section className="border-t border-slate-200 pt-4" aria-label="Vista previa del mensaje">
       <button type="button" onClick={() => setVistaPrevia(v => !v)} aria-expanded={vistaPrevia}
         className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-bold text-slate-800">
@@ -179,7 +187,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
           <PlayCircle className="h-10 w-10" aria-hidden="true" /><p className="px-3 text-xs">Pegá un enlace válido de YouTube para ver el video.</p>
         </div>}
         {descripcion.trim() && <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{descripcion}</p>}
-        <p className="text-xs font-medium text-violet-800">Audiencia: {seleccion} · {publicar ? 'Se publicará al guardar' : 'Se guardará como borrador'}</p>
+        <p className="text-xs font-medium text-violet-800">Audiencia: {scoped ? `${scoped.sedes.length} sede(s) · ${scoped.todos ? 'Congregación' : 'Destinatarios seleccionados'}` : seleccion} · {publicar ? 'Se publicará al guardar' : 'Se guardará como borrador'}</p>
       </div>}
     </section>
     {error && <p role="alert" className="text-sm font-semibold text-red-700">{error}</p>}

@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import InicioOnlineRefresh from '@/components/inicio/InicioOnlineRefresh'
 
+import CompletarCongregacion from '@/components/sedes/CompletarCongregacion'
+
 export const metadata: Metadata = {
   title: 'Inicio',
 }
@@ -17,6 +19,7 @@ export default async function InicioPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f5f9]">
+      <CompletarCongregacion userId={user.id} />
       <InicioOnlineRefresh userId={user.id} email={user.email} />
     </div>
   )

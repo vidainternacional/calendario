@@ -7,7 +7,9 @@ function preparar({legado=false,rol='pastor',activo=true,usuario=true,fallo=fals
  const consultas=[],paths=[]
  const db={from(tabla){const ops=[];consultas.push({tabla,ops});const q={then(ok,fail){const eliminado=ops.some(x=>x[0]==='delete');const perfil=tabla==='profiles';return Promise.resolve({data:perfil?{rol,activo,estado_cuenta:activo?'activo':'suspendido'}:eliminado?(vacio?[]:[{id}]):{id,updated_at:revision,audiencia:'iglesia',instrucciones:'https://www.youtube.com/watch?v=abcdefghijk',recurso_ids:paquete?['recurso']:[],bosquejo_id:null,coleccion_id:null},error:fallo&&!perfil?{}:null}).then(ok,fail)}};for(const k of ['select','eq','delete','maybeSingle','single'])q[k]=(...a)=>{ops.push([k,...a]);return q};return q}}
  const api=cargarModulo(legado?'app/actions/mensajes-semanales.ts':'app/actions/mensajes-dirigidos.ts',{
- 'next/cache':{revalidatePath:p=>paths.push(p)},
+ '@/lib/sedes/audiencias': cargarModulo('lib/sedes/audiencias.ts'),
+    '@/lib/sedes/servidor': { validarAudienciaSedes: async () => { throw new Error('La audiencia histórica no usa RPC multisede') } },
+    'next/cache':{revalidatePath:p=>paths.push(p)},
  '@/lib/auth/permisos':{contextoPastoral:async()=>({supabase:db,user:usuario?{id:autor}:null,error:null})},
  '@/lib/estudios/youtube-link':{youtubeVideo:()=>({url:'https://www.youtube.com/watch?v=abcdefghijk'}),esMensajeSemanal:r=>r.audiencia==='iglesia'&&r.recurso_ids.length===0},
  '@/lib/estudios/notificar-mensaje-dirigido':{notificarMensajeDirigido:()=>{throw Error('Eliminar no debe notificar')}},

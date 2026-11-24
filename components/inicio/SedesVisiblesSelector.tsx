@@ -59,7 +59,7 @@ export default function SedesVisiblesSelector({ userId }: { userId: string }) {
           </fieldset>
           <p role="status" className="mt-2 text-xs leading-5 text-slate-600">{saving ? 'Guardando…' : notice || error || (!loaded ? 'Cargando sedes…' : '')}</p>
           {error && <button type="button" className="min-h-11 text-sm font-semibold underline" onClick={() => void refresh()}>Volver a consultar</button>}
-          <p className="mt-4 border-l-2 border-amber-500 pl-3 text-xs leading-5 text-amber-900">Tu preferencia ya se guarda en tu cuenta. El filtrado de publicaciones por sede está pendiente de activar. No cambia tu pertenencia, ministerios ni permisos.</p>
+          <p className="mt-4 border-l-2 border-amber-500 pl-3 text-xs leading-5 text-amber-900">Tu preferencia ya se guarda en tu cuenta. Inicio muestra la información pública de las sedes elegidas; los mensajes privados autorizados siguen disponibles. No cambia tu pertenencia, ministerios ni permisos.</p>
           <button type="button" onClick={() => setOpen(false)} className="mt-5 min-h-11 w-full rounded-full bg-slate-900 px-4 text-sm font-semibold text-white">Listo</button>
         </section>
       </div>, document.body)}

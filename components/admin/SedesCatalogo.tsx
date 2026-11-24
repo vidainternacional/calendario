@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Church } from 'lucide-react'
 import { crearSede } from '@/app/actions/sedes'
 import { useMisSedes } from '@/lib/sedes/useMisSedes'
+import SedesAsignaciones from './SedesAsignaciones'
+import SedesUbicaciones from './SedesUbicaciones'
 
 export default function SedesCatalogo({ userId }: { userId: string }) {
   const { sedes, loaded, error, refresh } = useMisSedes(userId)
@@ -23,7 +25,7 @@ export default function SedesCatalogo({ userId }: { userId: string }) {
   }
   return <section className="mt-5 text-slate-900">
     <h1 className="text-2xl font-bold">Sedes VIDA</h1>
-    <p className="mt-2 text-sm leading-6 text-slate-600">Catálogo real de sedes. La elección de congregación se guarda desde el Perfil; la asignación de equipos y el envío por sede siguen en preparación.</p>
+    <p className="mt-2 text-sm leading-6 text-slate-600">Cada congregación conserva sus equipos y responsables. Las personas eligen su congregación desde el Perfil; Administración asigna los ministerios y permisos.</p>
     <ul className="mt-5 divide-y divide-slate-200">
       {sedes.map(sede => <li key={sede.id} className="flex items-center gap-3 py-4">
         <Church className="h-5 w-5 shrink-0 text-rose-700" aria-hidden="true" />
@@ -43,5 +45,7 @@ export default function SedesCatalogo({ userId }: { userId: string }) {
       </form>
     </details>
     <p role="status" className="mt-3 text-sm leading-6">{message}</p>
+    <SedesAsignaciones userId={userId} />
+    <SedesUbicaciones />
   </section>
 }

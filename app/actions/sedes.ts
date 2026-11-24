@@ -68,3 +68,16 @@ export async function crearSede(formData: FormData, ownerId: string) {
     return { success: true }
   } catch (error) { return { error: error instanceof Error ? error.message : 'No se pudo crear la sede.' } }
 }
+export async function aplicarCongregacionRegistro(ownerId: string) {
+  try {
+    const { db, user } = await contextoSedes()
+    if (user.id !== ownerId) throw new Error('Tu sesión cambió.')
+    // Es una preferencia propia declarada al registrarse, nunca una fuente de autorización.
+    const initial = user.user_metadata?.vida_congregacion_inicial
+    if (!Array.isArray(initial)) return { success: false }
+    const ids = validarSeleccionSedes(initial, true)
+    const { error } = await db.rpc('vida_aplicar_registro_sedes', { p_seleccion: ids })
+    if (error) return { error: 'Puedes elegir tu congregación desde el Perfil.' }
+    return { success: true }
+  } catch { return { error: 'No se pudo recuperar la elección del registro.' } }
+}

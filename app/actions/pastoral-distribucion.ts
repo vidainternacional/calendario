@@ -2,8 +2,14 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
-import { notifyMultipleUsers } from '@/lib/webpush'
+import { notifyMultipleUsers, notifyUsersOnceByReference } from '@/lib/webpush'
 import { contextoPastoral } from '@/lib/auth/permisos'
+
+import { validarAudienciaSedes, destinatariosSedes } from '@/lib/sedes/servidor'
+import type { AudienciaSedes } from '@/lib/sedes/audiencias'
+
+import { notificacionSedes } from '@/lib/sedes/notificacion'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const AUDIENCIAS = ['iglesia', 'lideres', 'servidores', 'publico'] as const
 
@@ -44,22 +50,28 @@ export async function actualizarDistribucionPaquete(
   audiencia: string,
   publicado: boolean,
   destacado = false,
+  seleccionSedes?: AudienciaSedes | null,
+  revision?: string,
 ) {
   const { supabase, user, error } = await contextoPastoral('No tienes permiso para publicar paquetes pastorales.')
   if (error || !user) return { success: false, error: error ?? 'No autorizado.' }
 
-  const audienciaFinal = audienciaValida(audiencia)
+  let scoped = seleccionSedes
+  try { if (scoped) scoped = await validarAudienciaSedes(supabase as unknown as SupabaseClient, scoped) } catch (e) { return { success: false, error: e instanceof Error ? e.message : 'Revisa los destinatarios.' } }
+  const audienciaFinal = scoped ? 'iglesia' as const : audienciaValida(audiencia)
   const { data: anterior } = await (supabase as any)
     .from('pastoral_paquetes')
-    .select('titulo, descripcion_publica, publicado, public_slug, published_at')
+    .select('titulo, descripcion_publica, publicado, public_slug, published_at, vida_audiencia, updated_at')
     .eq('id', paqueteId)
     .eq('profile_id', user.id)
     .maybeSingle()
 
   if (!anterior) return { success: false, error: 'No se encontró el paquete pastoral.' }
+  if (revision && revision !== anterior.updated_at) return { success: false, error: 'El material cambió en otra ventana. Vuelve a cargar antes de guardar.' }
 
   const esPublicacionNueva = publicado && !Boolean(anterior.publicado)
   const cambios: Record<string, unknown> = {
+    ...(scoped ? { vida_audiencia: scoped } : {}),
     audiencia: audienciaFinal,
     publicado,
     destacado: Boolean(destacado),
@@ -74,7 +86,8 @@ export async function actualizarDistribucionPaquete(
     .update(cambios)
     .eq('id', paqueteId)
     .eq('profile_id', user.id)
-    .select('titulo, descripcion_publica, public_slug, audiencia, publicado, destacado')
+    .eq('updated_at', anterior.updated_at)
+    .select('titulo, descripcion_publica, public_slug, audiencia, publicado, destacado, updated_at')
     .single()
 
   if (updateError || !data) {
@@ -82,10 +95,13 @@ export async function actualizarDistribucionPaquete(
   }
 
   let notificaciones = 0
+  let aviso: string | undefined
 
   if (esPublicacionNueva) {
-    const { admin, profileIds } = await destinatariosPorAudiencia(audienciaFinal)
-    notificaciones = await notifyMultipleUsers(admin, profileIds, {
+    try {
+    const { admin, profileIds: historicos } = await destinatariosPorAudiencia(audienciaFinal)
+    const profileIds = scoped || anterior.vida_audiencia ? await destinatariosSedes('paquete', paqueteId) : historicos
+    const payload = notificacionSedes(scoped || anterior.vida_audiencia, {
       title: destacado ? '✨ Nuevo material importante' : '📖 Nuevo material de la iglesia',
       body: data.descripcion_publica
         ? `${data.titulo}: ${String(data.descripcion_publica).slice(0, 120)}`
@@ -93,6 +109,11 @@ export async function actualizarDistribucionPaquete(
       url: `/material/${data.public_slug}`,
       tag: `pastoral-${paqueteId}`,
     })
+    if (scoped || anterior.vida_audiencia) {
+      const resultado = await notifyUsersOnceByReference(profileIds, payload, { tipo: 'paquete_sede', referenciaId: paqueteId })
+      notificaciones = resultado.devices
+    } else notificaciones = await notifyMultipleUsers(admin, profileIds, payload)
+    } catch { aviso = 'El material está publicado. No se pudo confirmar el envío de avisos; revisa la audiencia antes de reintentar.' }
   }
 
   revalidatePath('/inicio')
@@ -108,5 +129,7 @@ export async function actualizarDistribucionPaquete(
     publicado: Boolean(data.publicado),
     destacado: Boolean(data.destacado),
     notificaciones,
+    aviso,
+    revision: String(data.updated_at),
   }
 }

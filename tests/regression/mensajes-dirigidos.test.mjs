@@ -58,6 +58,8 @@ function setup(options={}) {
   const avisos=[]
   const db={from: table=>new Query(table,calls,opts)}
   const actions=cargarModulo('app/actions/mensajes-dirigidos.ts',{
+    '@/lib/sedes/audiencias': cargarModulo('lib/sedes/audiencias.ts'),
+    '@/lib/sedes/servidor': { validarAudienciaSedes: async () => { throw new Error('La audiencia histórica no usa RPC multisede') } },
     'next/cache': { revalidatePath: path=>refreshed.push(path) },
     '@/lib/estudios/notificar-mensaje-dirigido': { notificarMensajeDirigido: async (...args) => { avisos.push(args); return 'Aviso preparado.' } },
     '@/lib/auth/permisos': { contextoPastoral: async()=>({ supabase:db,user:opts.user===null?null:{id:actor},error:null }) },

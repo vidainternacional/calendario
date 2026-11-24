@@ -42,6 +42,6 @@ test('doble toque no produce guardados simultáneos; sin carga no permite guarda
 })
 test('guardado y lectura del servidor comprueban el dueño esperado de la pantalla',()=>{
  const source=fs.readFileSync('app/actions/sedes.ts','utf8')
- assert.equal((source.match(/user.id !== ownerId/g)||[]).length,3)
+ assert.equal((source.match(/user.id !== ownerId/g)||[]).length,4)
  assert.doesNotMatch(fs.readFileSync('lib/sedes/useMisSedes.ts','utf8'),/localStorage|sessionStorage/)
 })
