@@ -7,6 +7,12 @@
 
 
 
+## Congregación compacta y acceso superior —24-11-2026
+
+- Usuario pide dato integrado, sin opciones abiertas tras seleccionar y junto a Editar mi información. Resumen compacto en ficha + acceso superior; selector cerrado inicialmente en ventana accesible, guarda selección local y cierra. Ambos leen la misma preferencia por UUID/dispositivo, sin mezclarla con domicilio/sedes visibles.
+- EditarPerfilForm acepta slot de congregación junto al botón; formulario habitual conserva action/campos y ancho al abrir. En móvil estrecho los accesos se acomodan verticalmente. No cambia porcentaje de ficha ni permisos.
+- TypeScript/lint/build local y navegador aislado de320/390/820px antes de entrega. Afiliación real/RLS sigue pendiente; no declarar guardado en servidor. Mismo PR321/alias, sin producción. Recibo exacto en PR.
+
 ## Mi congregación en Perfil — revisión24-11-2026
 
 - Pedido «Ok hazlo quiero verlo»: campo visible dentro de la ficha ampliada en Perfil, antes de Completar/Actualizar ficha y visible también al editar. Santa Ana, Chalchuapa, ambas o ninguna; independiente de domicilio y sedes visibles de Inicio.

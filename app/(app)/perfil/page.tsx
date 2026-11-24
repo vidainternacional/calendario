@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion, Star, GraduationCap } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
+import MiCongregacionReview from '@/components/perfil/MiCongregacionReview'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
 import AvatarUploader from '@/components/perfil/AvatarUploader'
 import UbicacionVidaCard from '@/components/perfil/UbicacionVidaCard'
@@ -75,7 +76,7 @@ export default async function PerfilPage() {
             <div className="flex min-w-0 items-start gap-3 text-[#171923]"><Mail className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" /><span className="min-w-0 break-all text-sm">{user.email}</span></div>
             <div className="flex min-w-0 items-start gap-3 text-[#171923]"><User className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" /><span className="min-w-0 break-words text-sm">{(profile as any)?.telefono || 'Sin teléfono registrado'}</span></div>
           </div>
-          <EditarPerfilForm nombre={nombre} telefono={(profile as any)?.telefono ?? null} fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null} />
+          <EditarPerfilForm congregacion={<MiCongregacionReview userId={user.id} compact />} nombre={nombre} telefono={(profile as any)?.telefono ?? null} fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null} />
         </section>
 
         <PerfilAmpliadoForm userId={user.id} details={(details as any) ?? null} />
