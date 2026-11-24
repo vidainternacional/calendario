@@ -33,6 +33,11 @@ export default function MiCongregacionReview({ userId, compact = false }: { user
     document.addEventListener('keydown', onKey)
     return () => { document.removeEventListener('keydown', onKey); previous?.focus() }
   }, [open])
+  const apply = (value: string) => {
+    setDraft(value)
+    try { localStorage.setItem(key, value); window.dispatchEvent(new Event(EVENT)); setOpen(false); setMessage('') }
+    catch { setMessage('No se pudo guardar en este dispositivo. Puedes reintentar sin perder la selección.') }
+  }
   const label = OPTIONS.find(o => o[0] === saved)?.[1] || 'Sin seleccionar'
   return <>
     <div className={compact ? 'min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-800' : 'mt-5 flex min-w-0 items-center justify-between gap-3 border-t border-slate-200 pt-4 text-slate-800'}>
@@ -45,7 +50,7 @@ export default function MiCongregacionReview({ userId, compact = false }: { user
         <p className="mt-2 text-sm leading-6">Es independiente de dónde vives y de las sedes que quieres ver en Inicio.</p>
         <fieldset className="mt-3"><legend className="sr-only">Congregación a la que pertenezco</legend>
           {OPTIONS.map(([value, name]) => <label key={value} className="flex min-h-12 cursor-pointer items-center gap-3 py-2 text-sm">
-            <input type="radio" name={`congregacion-${id}`} value={value} checked={draft === value} onChange={() => setDraft(value)} className="h-5 w-5 accent-red-700" />
+            <input type="radio" name={`congregacion-${id}`} value={value} checked={draft === value} onChange={() => apply(value)} className="h-5 w-5 accent-red-700" />
             {name}
           </label>)}
         </fieldset>
@@ -53,10 +58,7 @@ export default function MiCongregacionReview({ userId, compact = false }: { user
         <p className="mt-3 border-l-2 border-amber-500 pl-3 text-xs leading-5 text-amber-900">Revisión: guarda la selección en este dispositivo y actualiza ambos lugares del Perfil. Todavía no cambia tu cuenta ni permisos.</p>
 
 
-        <button type="button" disabled={!draft} className="mt-4 min-h-11 w-full rounded-full bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-40" onClick={() => {
-          try { localStorage.setItem(key, draft); window.dispatchEvent(new Event(EVENT)); setOpen(false) }
-          catch { setMessage('No se pudo guardar en este dispositivo. La selección sigue abierta para reintentar.') }
-        }}>Guardar selección</button>
+        {message && <button type="button" className="mt-4 min-h-11 rounded-full bg-slate-900 px-4 text-sm font-semibold text-white" onClick={() => apply(draft)}>Reintentar</button>}
         <p role="status" className="mt-2 text-xs leading-5 text-slate-600">{message}</p>
       </section>
     </div>, document.body)}
