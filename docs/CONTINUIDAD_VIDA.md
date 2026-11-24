@@ -7,6 +7,13 @@
 
 
 
+## Implementación real de sedes — preparación24-11-2026
+
+- Usuario solicita completar funcionalidad. No confundir aceptación visual con backend terminado. Base nueva preparada en docs/SEDES_IMPLEMENTACION_2026-11-24.md y docs/sql/sedes-base.sql, NO aplicada. Cinco tablas nuevas, dos sedes sin asignaciones, RLS propio y RPC invoker; servidor sin service role. Reversión aditiva deshabilita escrituras sin borrar filas.
+- Diez escenarios SQL reales en PGlite (11 pruebas con padre) +2 pruebas de dominio; TypeScript/lint específicos. Build Next16.2.10 y Guardrails9archivos correctos;13pruebas pasan. Paquete solo en rama local agent/recuperar-fotos-20261124, sin push, nuevo Preview ni producción; componentes aprobados y selectores locales intactos.
+- Bloqueo real: maestro exige alcance/impacto/reversión y aprobación antes de Supabase. Requiere aprobar primer paquete; luego cableado real y presentar hardening exacto de permisos históricos (lectura general de eventos/publicaciones y poder pastoral global), aún no aplicado. No habilitar privados Chalchuapa hasta verificar API/RLS y audiencias.
+- Plan completo y límites en documento. No asignar usuarios/equipos a Santa Ana automáticamente, no convertir preferencias locales de revisión ni activar R2. Maestro intacto, Bloque4/FASEI conservados.
+
 ## Icono y color del círculo de Inicio —24-11-2026
 
 - Usuario pide identidad visual en el círculo junto al avatar. Icono Church, fondo rosa/rojo suave, aro y distintivo pequeñoSA/CH/2; nombre completo debajo conservado. No cambia tamaño/selección/portal de servicios ni perfil.
