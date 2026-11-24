@@ -3,6 +3,15 @@
 Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
+## Recuperación de seis fotos — 24-11-2026
+
+- Usuario autoriza copiar las seis fotos a ccvida y eliminar únicamente originales ya verificados; excluye expresamente el archivo pastoral de prueba «La fe». No borrar usuarios ni otros datos todavía.
+- Rama `agent/recuperar-fotos-20261124` basada en main `bd7aa236`; action con sesión real y administrador activo, fuente antigua fija, destino ccvida fijo y secretos existentes SOLO en servidor. Recuperación desde Analytics para evitar extraer secretos mediante herramientas (estas devolvieron valores vacíos). No cambiar claves ni RLS.
+- Inventario avatars acotado, seis huellas SHA256 autorizadas, ruta nueva determinista sin sobrescribir fotos nuevas, encuadre conservado, cambio de URL condicional por concurrencia. Tras verificar todas las copias/referencias, vuelve a cotejar contenido antes de retirar cada original; reanudable. Nunca toca pastoral-library.
+- Cinco regresiones pertinentes, TypeScript y lint específico; compilación y Preview se registran en recibo de entrega. No se ejecutó con sesión falsa ni se afirma fotos subidas/eliminadas antes del recibo real. Producción intacta.
+- Sedes: Santa Ana central y Chalchuapa sede, más futuras sedes; grupos guardados, públicos compartidos y permisos por responsabilidad siguen en propuesta documental separada, sin SQL aplicado. Analytics PR320 y badges PR319 continúan separados; no fusionarlos para esta recuperación.
+- Biblia origen: textos124504 cotejados con NeonB por huella59509f9ff3a909960256da649ba5a213; cero ocurrencias de análisis. No activar sustitución integral de Neon, ni volver a cargar611398 ocurrencias en Free. Caché, medición y respaldo textual se evalúan sin superar cuotas.
+
 ## Publicación musical autorizada — 2026-11-18 · PR #316
 
 - Usuario validó la presentación («Perfecto me parece») y autorizó «pasa a la producción». Publicar únicamente PR #316; no integrar otros Draft ni modificar maestro.
