@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import BackButton from '@/components/navigation/BackButton'
 import AiDiagnosticsCard from '@/components/admin/AiDiagnosticsCard'
+import ResourceUsagePanel from '@/components/admin/ResourceUsagePanel'
 
 export const dynamic = 'force-dynamic'
 
@@ -200,6 +201,7 @@ export default async function AdminAnalyticsPage() {
         </div>
       </section>
 
+      {currentProfile?.rol === 'administrador' ? <ResourceUsagePanel /> : null}
       {currentProfile?.rol === 'administrador' ? <AiDiagnosticsCard /> : null}
 
       <section className="mt-5 rounded-[22px] border border-dashed border-slate-200 bg-white/60 p-5"><div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-slate-400"/><h2 className="text-sm font-extrabold text-[#171923]">Próxima capa de analítica</h2></div><p className="mt-2 text-xs leading-5 text-slate-500">Las búsquedas escritas y las interacciones sociales entre personas todavía no se registran globalmente. Se añadirán únicamente cuando exista telemetría explícita y respetuosa con la privacidad.</p></section>

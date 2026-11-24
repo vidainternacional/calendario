@@ -1,7 +1,17 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
+Último corte: 24 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+
+
+## Analytics — Recursos y cuotas · 2026-11-24
+
+- Pedido autorizado: barras de Supabase ccvida, ambos Neon y Cloudflare R2 en Analytics administrador. Rama aislada `agent/analytics-recursos-20261124`, base main `bd7aa236`; no integra #319 ni cambia otras funciones.
+- Implementado: panel integrado, consulta solo administrador activo contra ccvida, métricas agregadas sin datos personales, caché 5 minutos, estados sin datos/error, margen, referencias de cuota y alertas 70/85/95%. Neon usa rama principal y CU ponderados, no campos heredados en cero.
+- Verificado: siete pruebas pertinentes, TypeScript y lint específicos correctos; Chromium aislado a 320/390/820 px con datos simulados: sin desborde, crítico visible, desconocido sin barra falsa, fallo conserva lectura anterior y avisa. Compilación local final se registra en entrega. No se declara CI general verde ni prueba autenticada real.
+- Bloqueo para consumo vivo dentro de VIDA: credenciales de métricas del servidor no configuradas en este bloque. Conectores ChatGPT no autorizan automáticamente a Vercel. R2 todavía sin conexión. No copiar claves al chat ni configurar producción sin autorización.
+- Detalle, variables, mediciones independientes y límites: `docs/ANALYTICS_RECURSOS_2026-11-24.md`. Panel no es vigilancia en segundo plano; automatización diaria Supabase existente se conserva, no se duplicó. Algunas cuotas (Auth/tráfico Supabase, operaciones R2) siguen en panel del proveedor y no están certificadas por esta lectura.
+- Maestro/RLS/roles/datos/planes/gastos intactos. No merge ni producción. Próximo paso: conectar métricas con credenciales de solo lectura, validar panel con sesión administradora y revisar el único Preview del bloque sin sustituir el alias de pruebas anterior prematuramente.
 
 ## Publicación musical autorizada — 2026-11-18 · PR #316
 
