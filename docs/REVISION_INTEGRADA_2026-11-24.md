@@ -43,3 +43,9 @@ Producción, cuentas, datos sensibles y RLS sin cambios nuevos. No activar R2. N
 Separa Inicio de ejemplo de Nuevo mensaje: selección múltiple de sedes para contenido público; ministerios de cada sede explícitos y distintos. Asunto y cuerpo son lo principal del editor; destinatarios después, inicialmente plegados con resumen visible; grupos guardados y comprobación de permisos plegados. Adjuntos locales conservados. Dos Alabanzas pueden seleccionarse juntas y respetan filtros de sede y alcance.
 
 Este es el patrón propuesto común para Avisos, mensajes ministeriales y paquetes, sin reemplazar todavía formularios productivos ni afirmar backend multisede. Navegación entre vistas conserva borrador, pero desplegables vuelven a cerrarse al reconstruir su vista. Seis pruebas pertinentes y controles TypeScript/lint/build, más navegador aislado de320/390/820px. No enviar mensajes reales ni guardar asignaciones por esta aprobación visual.
+
+## Selector solicitado en Inicio real — 24-11-2026
+
+Se añade junto al perfil, visible para todas las cuentas, con nombre de selección Santa Ana/Chalchuapa/Ambas. Dos casillas independientes (mínimo una), modal accesible con Escape/retorno de foco y preferencia de revisión por usuario/dispositivo. No cambia afiliación ni permisos ni filtra publicaciones reales. Aviso explícito en diálogo para no crear falsa expectativa. Integra el círculo sin romper el portal Mis servicios, conservando avatar.
+
+Pertenencia propuesta, todavía no implementada: al registro elegir sede o no pertenezco; cuentas existentes desde Perfil; valor guardado en servidor, sin preguntar cada login ni asignar automáticamente Santa Ana. La elección de sedes visibles del círculo es distinta y no modifica membresía de ministerios. Revisión debe aprobar esquema/roles antes de activarse ese guardado real.

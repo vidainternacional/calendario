@@ -6,6 +6,14 @@
 
 
 
+
+## Selector de sedes junto al perfil — 24-11-2026 · PR321
+
+- Usuario pide círculo en Inicio real, junto al perfil a la derecha del saludo. Añadido para cualquier cuenta, sin condición de rol. SA/CH/2 y nombre completo, diálogo con dos casillas, al menos una activa. Preferencia local por UUID/dispositivo, no pertenencia ni permiso.
+- Header agrupa selector/avatar como último hijo, manteniendo el punto de inserción del acceso Mis servicios. Saludo admite líneas y tamaño móvil ajustado para conservar espacio. Sin CSS global.
+- Selector explícitamente EN REVISIÓN: no filtra mensajes reales, no asigna ministerios ni sede de pertenencia. No presentar la elección local como afiliación de iglesia. Registro futuro deberá pedir sede o todavía no pertenezco; cuentas actuales elegirán en perfil y se guardará en servidor tras aprobar esquema/permisos. Servicio ministerial requiere asignación/solicitud aprobada.
+- Tres pruebas pertinentes y TypeScript/lint/build local correctos; navegador aislado sobre header real y servicios simulados antes de entregar: móvil/tableta, elección, persistencia, Escape y cambio de cuenta. Preview exacto/alias se registran en PR321. No producción, RLS ni datos de usuario cambiados.
+
 ## Ajuste de Inicio/editor solicitado — 24-11-2026 · PR321
 
 - Usuario valida idea general pero rechaza lista única: separar selección pública de sedes del formulario. Revisión conserva mismo PR/alias, sin producción ni RLS.
