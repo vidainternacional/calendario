@@ -5,6 +5,15 @@
 
 
 
+
+## Ajuste de Inicio/editor solicitado — 24-11-2026 · PR321
+
+- Usuario valida idea general pero rechaza lista única: separar selección pública de sedes del formulario. Revisión conserva mismo PR/alias, sin producción ni RLS.
+- Dos vistas de ejemplo: Inicio (Santa Ana, Chalchuapa o ambas activas a la vez, publicaciones públicas etiquetadas) y Nuevo mensaje (Asunto/Mensaje primero, adjunto, destinos resumidos y desplegables cerrados). Responsabilidad simulada queda en herramienta de comprobación plegada, no como primer campo del editor.
+- Ministerios con IDs distintos por sede; selección múltiple Santa Ana/Chalchuapa, unión con roles/personas sin duplicar, alcance autorizado siempre aplicado. Grupos/adjuntos conservados. Ver otra sede no concede membresía ni acceso privado.
+- Patrón de destinatarios destinado a reutilizarse en Avisos, mensajes ministeriales y paquetes; esas superficies reales NO se modificaron ni se implementó backend multisede todavía. No confundir propuesta con funcionalidad publicada.
+- Seis pruebas pertinentes, TypeScript/lint/build local; navegador aislado de revisión móvil/tableta antes de entregar. Recibo SHA/READY/alias se registra en PR321. Personas de ejemplo, no envíos ni sedes reales. No volver a tocar recuperación de fotos ya certificada.
+
 ## Recibo posterior de recuperación real — 24-11-2026
 
 Se comprobó directamente ccvida: siete objetos avatars,2028295 bytes; seis recuperadas suman1581601 bytes, descargadas de destino y cotejadas SHA256 íntegramente contra sus huellas certificadas. Cinco perfiles apuntan a recuperadas; cero perfiles con referencia al Supabase anterior. La foto nueva previa de446694 bytes permanece. Origen: cero objetos avatars. Por tanto la recuperación/retirada autorizada YA ocurrió; no solicitar repetirla ni seguir marcándola pendiente por falta de sesión en esta ejecución técnica. No se atribuye la acción a una sesión suplantada: se certifica estado final observado. Archivo pastoral excluido; no copiado. La validación visual del avatar en cuenta real sigue siendo del usuario.

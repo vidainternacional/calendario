@@ -37,3 +37,9 @@ Supabase anterior:124504 textos cotejados por huella íntegra con NeonB; no tien
 5. Recursos/Biblia: distinguir Sin datos de consumo medido; Biblia real conserva AT/NT y Estudio. Medición real de ahorro y respaldo automático todavía pendientes.
 
 Producción, cuentas, datos sensibles y RLS sin cambios nuevos. No activar R2. No publicar sin autorización expresa.
+
+## Ajuste posterior de composición — 24-11-2026
+
+Separa Inicio de ejemplo de Nuevo mensaje: selección múltiple de sedes para contenido público; ministerios de cada sede explícitos y distintos. Asunto y cuerpo son lo principal del editor; destinatarios después, inicialmente plegados con resumen visible; grupos guardados y comprobación de permisos plegados. Adjuntos locales conservados. Dos Alabanzas pueden seleccionarse juntas y respetan filtros de sede y alcance.
+
+Este es el patrón propuesto común para Avisos, mensajes ministeriales y paquetes, sin reemplazar todavía formularios productivos ni afirmar backend multisede. Navegación entre vistas conserva borrador, pero desplegables vuelven a cerrarse al reconstruir su vista. Seis pruebas pertinentes y controles TypeScript/lint/build, más navegador aislado de320/390/820px. No enviar mensajes reales ni guardar asignaciones por esta aprobación visual.
