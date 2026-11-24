@@ -4,7 +4,6 @@ import {
   BarChart3, BookOpenCheck, Building2, CheckCircle2, ChevronRight,
   MessageCircleQuestion, Megaphone, Settings2, UserPlus, Users,
 } from 'lucide-react'
-import BackButton from '@/components/navigation/BackButton'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -33,8 +32,9 @@ export default async function AdminPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl bg-[#f4f5f9] px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+4.75rem)] sm:px-6 sm:pt-12">
-      <div className="mb-7"><BackButton /></div>
+      <div className="mb-7"><Link href="/inicio" className="inline-flex min-h-11 items-center text-sm font-semibold text-slate-700">← Inicio</Link></div>
       <header className="mb-5"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-500">Centro de control</p><h1 className="mt-1 text-3xl font-extrabold tracking-[-0.035em] text-[#171923]">Administración</h1><p className="mt-1.5 text-sm leading-6 text-slate-500">Entra directamente a cada área. El panel principal ya no mezcla las herramientas entre sí.</p></header>
+      <nav aria-label="Herramientas de revisión" className="mb-5 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"><Link href="/admin/fotos" className="inline-flex min-h-11 items-center underline">Recuperar fotos</Link><Link href="/admin/sedes" className="inline-flex min-h-11 items-center underline">Sedes y mensajería</Link><Link href="/admin/analisis" className="inline-flex min-h-11 items-center underline">Recursos y Analytics</Link></nav>
       <section className="grid grid-cols-2 gap-3">
         {modulos.map(({ label, value, detail, href, icon: Icon, tone }) => <Link key={label} href={href} className="rounded-[20px] bg-white p-4 shadow-sm ring-1 ring-black/[0.04] active:scale-[0.99]"><div className="flex items-start justify-between gap-2"><span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}><Icon className="h-4.5 w-4.5" /></span><ChevronRight className="h-4 w-4 text-slate-300" /></div><p className="mt-3 text-2xl font-extrabold text-[#171923]">{value}</p><p className="mt-1 text-xs font-bold text-slate-700">{label}</p><p className="mt-0.5 text-[10px] leading-4 text-slate-400">{detail}</p></Link>)}
       </section>

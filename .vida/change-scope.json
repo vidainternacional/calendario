@@ -1,6 +1,6 @@
 {
-  "task": "Recuperar seis fotos en ccvida y retirar originales verificados",
-  "userRequest": "Copiar seis fotos al destino conservando fotos nuevas, verificar integridad y solo después borrar esos originales. Excluir archivo pastoral de prueba La fe. Preparar ejecución con sesión real de administrador usando secretos del servidor ya existentes; no eliminar usuarios, modificar RLS ni publicar producción.",
+  "task": "Revisión integrada: fotos, navegación, recursos, Biblia y sedes/mensajería",
+  "userRequest": "Copiar seis fotos al destino conservando fotos nuevas, verificar integridad y solo después borrar esos originales. Excluir archivo pastoral de prueba La fe. Preparar ejecución con sesión real de administrador usando secretos del servidor ya existentes; no eliminar usuarios, modificar RLS ni publicar producción. Usuario pide revisar todo junto en un Preview, corregir ausencia de fotos y retorno sin historial, preparar sedes/mensajería para revisar sin activar R2. No aplicar cambios de tablas/RLS sin alcance exacto aprobado. Prototipo de sedes usa ejemplos y no envía mensajes reales.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -9,7 +9,22 @@
     "app/actions/recuperar-fotos.ts",
     "components/admin/RecuperarFotosButton.tsx",
     "app/(app)/admin/analisis/page.tsx",
-    "tests/regression/recuperar-fotos.test.mjs"
+    "tests/regression/recuperar-fotos.test.mjs",
+    "app/(app)/admin/page.tsx",
+    "app/(app)/admin/fotos/page.tsx",
+    "app/(app)/admin/sedes/page.tsx",
+    "components/admin/SedesReviewWorkspace.tsx",
+    "lib/admin/sedes-review.ts",
+    "lib/admin/resource-metrics.ts",
+    "lib/admin/resource-usage.ts",
+    "app/api/admin/recursos/route.ts",
+    "components/admin/ResourceUsagePanel.tsx",
+    "lib/neon/biblical-client.ts",
+    "tests/regression/sedes-review.test.mjs",
+    "tests/regression/analytics-recursos.test.mjs",
+    "tests/regression/biblia-cache.test.mjs",
+    "docs/REVISION_INTEGRADA_2026-11-24.md",
+    "tests/regression/neon-bible-read.test.mjs"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

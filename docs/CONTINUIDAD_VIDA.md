@@ -1,7 +1,22 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
+Último corte: 24 de noviembre de 2026. Leer primero al retomar este repositorio.
 
+
+
+
+## Recibo posterior de recuperación real — 24-11-2026
+
+Se comprobó directamente ccvida: siete objetos avatars,2028295 bytes; seis recuperadas suman1581601 bytes, descargadas de destino y cotejadas SHA256 íntegramente contra sus huellas certificadas. Cinco perfiles apuntan a recuperadas; cero perfiles con referencia al Supabase anterior. La foto nueva previa de446694 bytes permanece. Origen: cero objetos avatars. Por tanto la recuperación/retirada autorizada YA ocurrió; no solicitar repetirla ni seguir marcándola pendiente por falta de sesión en esta ejecución técnica. No se atribuye la acción a una sesión suplantada: se certifica estado final observado. Archivo pastoral excluido; no copiado. La validación visual del avatar en cuenta real sigue siendo del usuario.
+
+## Revisión integrada solicitada — 24-11-2026 · PR321
+
+- Usuario no encontraba fotos en Analytics y retorno sin historial no funcionaba. Acceso propio /admin/fotos, enlaces fijos a Administración/Inicio y accesos directos en /admin y Analytics; recuperación real ahora antes de estadísticas.
+- Mismo PR321/rama y alias fijo. Se incorporan solo recursos de PR320, no sus otros cambios ni se fusiona PR319. Maestro intacto.
+- /admin/sedes permite revisar Santa Ana/Chalchuapa, futura sede, audiencias, alcance por responsabilidad, grupos de prueba y PDF dentro de la página. PERSONAS DE EJEMPLO; no hay envío, sedes reales ni grupos persistentes. Cambios de tablas/RLS siguen sin aplicar y requieren alcance exacto aprobado. No decir sistema multisede productivo.
+- Biblia: consultas editoriales iguales reutilizables300s con autorización antes de consultar. No guarda datos personales en esa caché. Respaldo automático de textos origen NO implementado, análisis léxico continúa en Neon. No duplicar corpus completo en Free.
+-22 pruebas pertinentes, TypeScript/lint/build local y Chromium aislado320/390/820px correctos, sin sesión real. Recibo de Preview exacto en PR321. Fotos todavía requieren ejecución real y cotejo de Storage; no declarar copiadas/eliminadas por compilar. No activar R2 ni producción.
+- Detalle y checklist: docs/REVISION_INTEGRADA_2026-11-24.md. La revisión contiene simulación explícita, sin alterar permisos/datos de sedes. Recursos con credenciales pendientes muestra Sin datos, no cero.
 
 ## Recuperación de seis fotos — 24-11-2026
 
