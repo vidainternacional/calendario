@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { Church, X } from 'lucide-react'
 import { normalizeVisibleSedes, toggleVisibleSede, visibleSedesKey, type VisibleSedes } from '@/lib/inicio/sedes-visibles'
 
 const CHANGE = 'vida:sedes-visibles:changed'
@@ -52,7 +52,10 @@ export default function SedesVisiblesSelector({ userId }: { userId: string }) {
 
   return <>
     <button ref={trigger} type="button" aria-label={`Sedes visibles: ${LABELS[choice]}. Elegir sedes`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); setNotice('') }} className="flex w-14 shrink-0 flex-col items-center text-slate-800">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-white text-base font-bold ring-1 ring-slate-200">{choice === 'santa-ana' ? 'SA' : choice === 'chalchuapa' ? 'CH' : '2'}</span>
+      <span className="relative grid h-12 w-12 place-items-center rounded-full bg-rose-100 text-rose-700 ring-1 ring-rose-200">
+        <Church className="h-6 w-6" aria-hidden="true" />
+        <span className="absolute -bottom-0.5 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-700 px-1 text-[9px] font-bold text-white ring-2 ring-[#f4f5f9]" aria-hidden="true">{choice === 'santa-ana' ? 'SA' : choice === 'chalchuapa' ? 'CH' : '2'}</span>
+      </span>
       <span className="mt-1 text-[10px] font-semibold leading-3">{LABELS[choice]}</span>
     </button>
     {open && createPortal(

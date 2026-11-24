@@ -7,6 +7,11 @@
 
 
 
+## Icono y color del círculo de Inicio —24-11-2026
+
+- Usuario pide identidad visual en el círculo junto al avatar. Icono Church, fondo rosa/rojo suave, aro y distintivo pequeñoSA/CH/2; nombre completo debajo conservado. No cambia tamaño/selección/portal de servicios ni perfil.
+- TypeScript/lint/build y regresiones pertinentes de selector antes de entrega. Mismo Preview/PR321, sin producción/datos/permisos. Estado de revisión y límites de filtrado siguen vigentes.
+
 ## Botón de congregación reducido —24-11-2026
 
 - Usuario considera grande y con demasiado texto el acceso superior. Sustituido por botón de una línea, icono ubicación, nombre corto y flecha; mismo alto táctil44px y aspecto de Editar mi información. Sin título explicativo ni Cambiar extra en ese botón. Ficha conserva resumen completo.
