@@ -16,9 +16,10 @@ async function contextoSedes() {
   return { db, user, perfil }
 }
 
-export async function obtenerMisSedes(): Promise<{ sedes?: Sede[]; seleccion?: MisSedes; error?: string }> {
+export async function obtenerMisSedes(ownerId: string): Promise<{ sedes?: Sede[]; seleccion?: MisSedes; error?: string }> {
   try {
     const { db, user } = await contextoSedes()
+    if (user.id !== ownerId) throw new Error('Tu sesión cambió. Vuelve a abrir tu Perfil.')
     const [catalogo, preferencias, seleccion] = await Promise.all([
       db.from('vida_sedes').select('id,slug,nombre,pais,zona_horaria,central,activa').eq('activa', true).order('central', { ascending: false }).order('nombre'),
       db.from('vida_sede_preferencias').select('congregacion_definida').eq('profile_id', user.id).maybeSingle(),
@@ -33,11 +34,12 @@ export async function obtenerMisSedes(): Promise<{ sedes?: Sede[]; seleccion?: M
   } catch (error) { return { error: error instanceof Error ? error.message : 'No se pudieron consultar tus sedes.' } }
 }
 
-export async function guardarMisSedes(tipo: 'congregacion' | 'visibles', seleccion: unknown) {
+export async function guardarMisSedes(tipo: 'congregacion' | 'visibles', seleccion: unknown, ownerId: string) {
   try {
     if (tipo !== 'congregacion' && tipo !== 'visibles') throw new Error('Selección no válida.')
     const ids = validarSeleccionSedes(seleccion, tipo === 'congregacion')
-    const { db } = await contextoSedes()
+    const { db, user } = await contextoSedes()
+    if (user.id !== ownerId) throw new Error('Tu sesión cambió. Vuelve a abrir tu Perfil.')
     // RPC invoker: auth.uid y RLS fijan el dueño; no acepta otro profile_id.
     const { error } = await db.rpc('vida_guardar_mis_sedes', {
       p_congregacion: tipo === 'congregacion' ? ids : null,
@@ -49,9 +51,10 @@ export async function guardarMisSedes(tipo: 'congregacion' | 'visibles', selecci
   } catch (error) { return { error: error instanceof Error ? error.message : 'No se pudo guardar.' } }
 }
 
-export async function crearSede(formData: FormData) {
+export async function crearSede(formData: FormData, ownerId: string) {
   try {
-    const { db, perfil } = await contextoSedes()
+    const { db, perfil, user } = await contextoSedes()
+    if (user.id !== ownerId) throw new Error('Tu sesión cambió. Vuelve a abrir Administración.')
     if (!esGestorGlobalSedes(perfil)) throw new Error('Solo administración o el pastor general puede crear sedes.')
     const nombre = String(formData.get('nombre') || '').trim()
     const slug = String(formData.get('slug') || '').trim().toLowerCase()

@@ -7,12 +7,14 @@
 
 
 
-## Implementación real de sedes — preparación24-11-2026
+## Sedes base autorizadas y aplicadas —24-11-2026
 
-- Usuario solicita completar funcionalidad. No confundir aceptación visual con backend terminado. Base nueva preparada en docs/SEDES_IMPLEMENTACION_2026-11-24.md y docs/sql/sedes-base.sql, NO aplicada. Cinco tablas nuevas, dos sedes sin asignaciones, RLS propio y RPC invoker; servidor sin service role. Reversión aditiva deshabilita escrituras sin borrar filas.
-- Diez escenarios SQL reales en PGlite (11 pruebas con padre) +2 pruebas de dominio; TypeScript/lint específicos. Build Next16.2.10 y Guardrails9archivos correctos;13pruebas pasan. Paquete solo en rama local agent/recuperar-fotos-20261124, sin push, nuevo Preview ni producción; componentes aprobados y selectores locales intactos.
-- Bloqueo real: maestro exige alcance/impacto/reversión y aprobación antes de Supabase. Requiere aprobar primer paquete; luego cableado real y presentar hardening exacto de permisos históricos (lectura general de eventos/publicaciones y poder pastoral global), aún no aplicado. No habilitar privados Chalchuapa hasta verificar API/RLS y audiencias.
-- Plan completo y límites en documento. No asignar usuarios/equipos a Santa Ana automáticamente, no convertir preferencias locales de revisión ni activar R2. Maestro intacto, Bloque4/FASEI conservados.
+- Usuario aprobó expresamente el paquete de cinco tablas con «Ok hazlo». Aplicada SOLO en ccvida lnkrojvyiwnlcoponxud la migración remota20261124221418 sedes_base_perfil_20261124; SQL versionado con ese número. Catálogo Santa Ana central y Chalchuapa activas. RLS en5tablas,3funciones invoker, anon sin ejecución;230políticas anteriores con misma huella cc79aafabe8b9a43c5dd60fc37b97aa7. Cero preferencias/asociaciones/responsables al aplicar; no se asignó ni cambió ninguna cuenta/equipo.
+- Perfil/ficha y círculo de Inicio ahora consultan/guardan en servidor mediante sesión real y dueño esperado. Store por UUID comparte ambos accesos, descarta lecturas viejas, bloquea doble guardado y conserva valor confirmado al fallar. No importa localStorage de revisión. Catálogo administrativo real permite crear futuras sedes sin asignaciones; propuesta de mensajería sigue plegada y marcada como ejemplos.
+- TypeScript/lint/build y10regresiones del servidor/store/selector correctos; SQL local11pruebas. Chromium aislado320/390/820px con backend simulado verifica error sin éxito falso, sincronización, recarga, cambio de cuenta y edición personal intacta. No se afirma prueba autenticada remota del guardado con un usuario real.
+- Actualizar mismo PR321/alias al nuevo HEAD; recibo exacto en PR. No merge/producción, R2, cobros ni políticas históricas cambiadas. Revisión de asesores:sin hallazgos de las5tablas/3funciones nuevas; avisos heredados se conservan fuera de alcance.
+- NO están completas ambas sedes: todavía sin separación real de publicaciones/eventos/ministerios, audiencias por sede/grupos ni músicos invitados. El círculo guarda visibilidad pero lo indica expresamente: publicaciones aún sin filtrar. No confundir con pertenencia ni permisos. No habilitar privados de Chalchuapa todavía.
+- Próximo bloque: preparar diff y SQL/reversión exactos para las fronteras históricas antes de pedir su aprobación específica. Elegir congregación no mueve equipos ni concede liderazgo. Plan:docs/SEDES_IMPLEMENTACION_2026-11-24.md. Maestro/Bloque4/FASEI intactos.
 
 ## Icono y color del círculo de Inicio —24-11-2026
 

@@ -23,7 +23,7 @@ test('selector en header sin alterar portal de servicio ni avatar',()=>{
  assert.ok(header.indexOf('<SedesVisiblesSelector')<header.indexOf('<UserAvatar'))
  assert.match(header,/userId=\{userId\}/)
  const selector=fs.readFileSync('components/inicio/SedesVisiblesSelector.tsx','utf8')
- assert.match(selector,/todavía no filtra las publicaciones reales/)
+ assert.match(selector,/filtrado de publicaciones por sede está pendiente/)
  assert.match(selector,/No cambia tu pertenencia/)
  assert.doesNotMatch(selector,/supabase|\.from\(|\.rpc\(/)
 })

@@ -1,29 +1,19 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Church, X } from 'lucide-react'
-import { normalizeVisibleSedes, toggleVisibleSede, visibleSedesKey, type VisibleSedes } from '@/lib/inicio/sedes-visibles'
-
-const CHANGE = 'vida:sedes-visibles:changed'
-function subscribe(listener: () => void) {
-  window.addEventListener('storage', listener)
-  window.addEventListener(CHANGE, listener)
-  return () => { window.removeEventListener('storage', listener); window.removeEventListener(CHANGE, listener) }
-}
-const LABELS = { 'santa-ana': 'Santa Ana', chalchuapa: 'Chalchuapa', ambas: 'Ambas' }
+import { useMisSedes } from '@/lib/sedes/useMisSedes'
 
 export default function SedesVisiblesSelector({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false)
-  const [fallback, setFallback] = useState<{ owner: string; value: VisibleSedes } | null>(null)
   const [notice, setNotice] = useState('')
+  const { sedes, seleccion, loaded, saving, error, guardar, refresh } = useMisSedes(userId)
   const trigger = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLElement>(null)
-  const choice = useSyncExternalStore(subscribe, () => {
-    if (fallback?.owner === userId) return fallback.value
-    try { return normalizeVisibleSedes(window.localStorage.getItem(visibleSedesKey(userId))) }
-    catch { return fallback?.owner === userId ? fallback.value : 'ambas' }
-  }, () => 'ambas' as VisibleSedes)
+  const elegidas = sedes.filter(sede => seleccion.visibles.includes(sede.id))
+  const label = elegidas.length === 1 ? elegidas[0].nombre.replace(/^VIDA /, '') : elegidas.length === 2 && sedes.length === 2 ? 'Ambas' : elegidas.length ? 'Varias' : 'Sedes'
+  const badge = elegidas.length === 1 ? elegidas[0].slug === 'santa-ana' ? 'SA' : elegidas[0].slug === 'chalchuapa' ? 'CH' : elegidas[0].nombre.replace(/^VIDA /, '').slice(0, 2).toUpperCase() : elegidas.length || '…'
 
   useEffect(() => {
     if (!open) return
@@ -32,7 +22,7 @@ export default function SedesVisiblesSelector({ userId }: { userId: string }) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); setOpen(false); return }
       if (event.key !== 'Tab') return
-      const elements = panel.current?.querySelectorAll<HTMLElement>('button,input')
+      const elements = panel.current?.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled])')
       if (!elements?.length) return
       const first = elements[0], last = elements[elements.length - 1]
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
@@ -42,21 +32,20 @@ export default function SedesVisiblesSelector({ userId }: { userId: string }) {
     return () => { document.removeEventListener('keydown', onKey); previous?.focus() }
   }, [open])
 
-  const change = (sede: 'santa-ana' | 'chalchuapa') => {
-    const value = toggleVisibleSede(choice, sede)
-    if (value === choice) { setNotice('Mantén al menos una sede activa. Puedes activar la otra antes de desmarcar esta.'); return }
-    try { window.localStorage.setItem(visibleSedesKey(userId), value); setFallback(null); setNotice('Selección de revisión guardada en este dispositivo.') }
-    catch { setFallback({ owner: userId, value }); setNotice('La selección es temporal: el navegador no permite guardarla.') }
-    window.dispatchEvent(new Event(CHANGE))
+  const change = async (sede: string) => {
+    const ids = seleccion.visibles.includes(sede) ? seleccion.visibles.filter(id => id !== sede) : [...seleccion.visibles, sede]
+    if (!ids.length) { setNotice('Mantén al menos una sede activa. Puedes activar la otra antes de desmarcar esta.'); return }
+    const result = await guardar('visibles', ids)
+    setNotice(result.success ? 'Selección guardada en tu cuenta.' : result.error || 'No se pudo guardar.')
   }
 
   return <>
-    <button ref={trigger} type="button" aria-label={`Sedes visibles: ${LABELS[choice]}. Elegir sedes`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); setNotice('') }} className="flex w-14 shrink-0 flex-col items-center text-slate-800">
+    <button ref={trigger} type="button" aria-label={`Sedes visibles: ${label}. Elegir sedes`} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpen(true); setNotice('') }} className="flex w-14 shrink-0 flex-col items-center text-slate-800">
       <span className="relative grid h-12 w-12 place-items-center rounded-full bg-rose-100 text-rose-700 ring-1 ring-rose-200">
         <Church className="h-6 w-6" aria-hidden="true" />
-        <span className="absolute -bottom-0.5 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-700 px-1 text-[9px] font-bold text-white ring-2 ring-[#f4f5f9]" aria-hidden="true">{choice === 'santa-ana' ? 'SA' : choice === 'chalchuapa' ? 'CH' : '2'}</span>
+        <span className="absolute -bottom-0.5 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-700 px-1 text-[9px] font-bold text-white ring-2 ring-[#f4f5f9]" aria-hidden="true">{badge}</span>
       </span>
-      <span className="mt-1 text-[10px] font-semibold leading-3">{LABELS[choice]}</span>
+      <span className="mt-1 text-[10px] font-semibold leading-3">{label}</span>
     </button>
     {open && createPortal(
       <div className="fixed inset-0 z-[250] flex items-end justify-center bg-slate-950/30 p-3 sm:items-center" onMouseDown={event => { if (event.target === event.currentTarget) setOpen(false) }}>
@@ -65,11 +54,12 @@ export default function SedesVisiblesSelector({ userId }: { userId: string }) {
           <p className="mt-2 text-sm leading-6 text-slate-600">Puedes activar una sede o las dos. Esta elección es distinta de la sede a la que perteneces.</p>
           <fieldset className="mt-4 divide-y divide-slate-100">
             <legend className="sr-only">Sedes visibles</legend>
-            {(['santa-ana', 'chalchuapa'] as const).map(sede => <label key={sede} className="flex min-h-16 cursor-pointer items-center justify-between gap-4 py-3 text-sm font-semibold"><span>{LABELS[sede]}</span><input type="checkbox" className="h-5 w-5 accent-red-700" checked={choice === 'ambas' || choice === sede} onChange={() => change(sede)} />
+            {sedes.map(sede => <label key={sede.id} className="flex min-h-16 cursor-pointer items-center justify-between gap-4 py-3 text-sm font-semibold"><span>{sede.nombre.replace(/^VIDA /, '')}</span><input type="checkbox" className="h-5 w-5 accent-red-700" checked={seleccion.visibles.includes(sede.id)} disabled={!loaded || saving} onChange={() => void change(sede.id)} />
               </label>)}
           </fieldset>
-          <p role="status" className="mt-2 text-xs leading-5 text-slate-600">{notice}</p>
-          <p className="mt-4 border-l-2 border-amber-500 pl-3 text-xs leading-5 text-amber-900">Selector en revisión: todavía no filtra las publicaciones reales. No cambia tu pertenencia, ministerios ni permisos.</p>
+          <p role="status" className="mt-2 text-xs leading-5 text-slate-600">{saving ? 'Guardando…' : notice || error || (!loaded ? 'Cargando sedes…' : '')}</p>
+          {error && <button type="button" className="min-h-11 text-sm font-semibold underline" onClick={() => void refresh()}>Volver a consultar</button>}
+          <p className="mt-4 border-l-2 border-amber-500 pl-3 text-xs leading-5 text-amber-900">Tu preferencia ya se guarda en tu cuenta. El filtrado de publicaciones por sede está pendiente de activar. No cambia tu pertenencia, ministerios ni permisos.</p>
           <button type="button" onClick={() => setOpen(false)} className="mt-5 min-h-11 w-full rounded-full bg-slate-900 px-4 text-sm font-semibold text-white">Listo</button>
         </section>
       </div>, document.body)}

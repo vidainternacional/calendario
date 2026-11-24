@@ -1,4 +1,5 @@
--- PROPUESTA PARA APROBACIÓN. No ejecutada en ccvida.
+-- Autorizada por el usuario y aplicada en ccvida el24-11-2026.
+-- Registro remoto:20261124221418 sedes_base_perfil_20261124.
 -- Solo estructuras nuevas: no asigna cuentas, ministerios ni responsabilidades.
 begin;
 create table public.vida_sedes (
