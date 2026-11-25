@@ -1,12 +1,16 @@
 # VIDA Internacional — Bitácora de continuidad
 
-## Multisede integral — Supabase aplicado, Preview en preparación · 25-11-2026
+## Recibo final del Preview —25-11-2026
 
-El usuario solicita terminar antes de revisar con personas reales. El25-11 responde Ok al paquete concreto: SQL ccvida + mismo Preview autorizados, no producción/merge. Migración20261125185122 aplicada y verificada; alcance/recibo al inicio del documento específico. El estado de preparación del24-11 que sigue es histórico. Implementación integral preparada en el mismo worktree/PR321; todavía sin aplicar segundo SQL ni publicar Preview/producción. Documento de alcance, impacto, recuperación y estado: [SEDES_ENTREGA_INTEGRAL_2026-11-24.md](SEDES_ENTREGA_INTEGRAL_2026-11-24.md). SQL exacto completo y reversión en docs/sql; no ejecutar además las fuentes separadas. Solo base de cinco tablas aplicada con autorización anterior. No reutilizar ese permiso para nuevas RLS/RPC. Maestro estricto13 exige aprobación explícita del segundo paquete presentado. No publicar código dependiente antes de su aplicación/verificación. Las asignaciones de ministerios y pastores se eligen administrativamente, no se adivinan ni se importan automáticamente.
+Implementación funcional publicada en rama/PR321 con commit a3f40699306ca2603e351e1f485f68cac9970cb0. Deployment dpl_HujCiNsQQMBDVVivWfd4X4HstGKs READY, mismo SHA. Alias fijo confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio . No crear otro Preview para entregar este recibo documental.
 
-Pruebas locales aisladas:20 PostgreSQL y9 recorridos Chromium320/390/820 pasan; compilación final/TypeScript correctos y76 regresiones afectadas pasan. No representan prueba autenticada real, recepción push ni publicación. Main comprobado bd7aa236, HEAD remoto de rama9b49a1d; alias fijo aún entrega base. No R2, gastos ni claves tocados. Al cerrar actualizar resultados exactos; mientras el diff no se publique, otra conversación no puede leerlo automáticamente desde GitHub.
+Comprobación por conector Vercel: /signup HTTP200 con ambas sedes reales del catálogo, /sedes/administrar sin sesión lleva a login y no expone Administración; consulta inicial de logs error/fatal del deployment sin resultados. No hubo prueba autenticada/recepción push ni sesión suplantada. Producción confirmada sin cambio en dpl_78e612TyrSRrc4PNrs4keQkVB9EG, main bd7aa236143eb829c0fcbe263099431c19033cfd.
 
-Último corte: 24 de noviembre de 2026. Leer primero al retomar este repositorio.
+Configuración de negocio pendiente: Administración debe clasificar ministerios reales y asociar pastores; cero asignaciones automáticas. El usuario revisará con personas reales públicos/privados, grupos, reenvíos, invitados y GPS si se usa. Cambio aplicado y compilado; falta validación visual tuya. No declarar toda la app multisede certificada ni producción publicada. exigir_sedes_legacy=false hasta aprobación separada de publicación final.
+
+Recibo remoto completo y accesible en https://github.com/vidainternacional/calendario/pull/321 . Estas actualizaciones finales de bitácora/documento se conservan en un commit local documental posterior, todavía sin push para evitar un segundo Preview por bloque; incluirlas en el siguiente cambio autorizado. No volver a aplicar la migración ni generar despliegues para sincronizar solo documentación. Maestro y fases intactos.
+
+Último corte: 25 de noviembre de 2026. Leer primero al retomar este repositorio.
 
 
 

@@ -1,5 +1,15 @@
 # Entrega integral de sedes — activación autorizada
 
+## Recibo final del Preview —25-11-2026
+
+Implementación funcional publicada en rama/PR321 con commit a3f40699306ca2603e351e1f485f68cac9970cb0. Deployment dpl_HujCiNsQQMBDVVivWfd4X4HstGKs READY, mismo SHA. Alias fijo confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio . No crear otro Preview para entregar este recibo documental.
+
+Comprobación por conector Vercel: /signup HTTP200 con ambas sedes reales del catálogo, /sedes/administrar sin sesión lleva a login y no expone Administración; consulta inicial de logs error/fatal del deployment sin resultados. No hubo prueba autenticada/recepción push ni sesión suplantada. Producción confirmada sin cambio en dpl_78e612TyrSRrc4PNrs4keQkVB9EG, main bd7aa236143eb829c0fcbe263099431c19033cfd.
+
+Configuración de negocio pendiente: Administración debe clasificar ministerios reales y asociar pastores; cero asignaciones automáticas. El usuario revisará con personas reales públicos/privados, grupos, reenvíos, invitados y GPS si se usa. Cambio aplicado y compilado; falta validación visual tuya. No declarar toda la app multisede certificada ni producción publicada. exigir_sedes_legacy=false hasta aprobación separada de publicación final.
+
+Recibo remoto completo y accesible en https://github.com/vidainternacional/calendario/pull/321 . Estas actualizaciones finales de bitácora/documento se conservan en un commit local documental posterior, todavía sin push para evitar un segundo Preview por bloque; incluirlas en el siguiente cambio autorizado. No volver a aplicar la migración ni generar despliegues para sincronizar solo documentación. Maestro y fases intactos.
+
 ## Activación autorizada — 25-11-2026
 
 El usuario responde «Ok» a la solicitud concreta de aplicar este paquete en ccvida y conectarlo al mismo Preview. Autoriza SQL presentado y Preview; no merge, producción ni corte definitivo legacy. Aplicada por conector la migración **20261125185122_sedes_integracion_audiencias_servicios_20261125** con el mismo SQL SHA256 d769580f52d5809b7408a76aa402b1d831a00ec2dd0364e55adae5a14e833015. Copia idéntica versionada en supabase/migrations; no se inventó timestamp local.
