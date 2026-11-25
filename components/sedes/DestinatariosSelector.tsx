@@ -4,8 +4,8 @@ import { useEffect, useId, useState } from 'react'
 import { obtenerOpcionesDestinatarios, obtenerAudienciaPaquete, guardarGrupoDestinatarios, archivarGrupoDestinatarios, type OpcionesDestinatarios } from '@/app/actions/sedes-audiencias'
 import { normalizarAudiencia, ROLES_SEDES, type AudienciaSedes } from '@/lib/sedes/audiencias'
 
-export default function DestinatariosSelector({ initial = null, preservarLegado = false, defaultMinisterio, paqueteId, onChange, onRevision }: {
-  initial?: AudienciaSedes | null; preservarLegado?: boolean; defaultMinisterio?: string; paqueteId?: string; onChange?: (value: AudienciaSedes | null) => void; onRevision?: (value: string) => void
+export default function DestinatariosSelector({ initial = null, preservarLegado = false, defaultMinisterio, paqueteId, onChange, onRevision, onCompatibilidad }: {
+  initial?: AudienciaSedes | null; preservarLegado?: boolean; defaultMinisterio?: string; paqueteId?: string; onChange?: (value: AudienciaSedes | null) => void; onRevision?: (value: string) => void; onCompatibilidad?: (value: boolean) => void
 }) {
   const [opciones, setOpciones] = useState<OpcionesDestinatarios | null>(null)
   const [value, setValue] = useState<AudienciaSedes | null>(initial)
@@ -14,6 +14,7 @@ export default function DestinatariosSelector({ initial = null, preservarLegado 
   const [grupo, setGrupo] = useState('')
   const [busy, setBusy] = useState(false)
   const [legado, setLegado] = useState(preservarLegado && !initial)
+  const [compatibilidad, setCompatibilidad] = useState(false)
   const id = useId()
   useEffect(() => {
     let active = true
@@ -23,6 +24,9 @@ export default function DestinatariosSelector({ initial = null, preservarLegado 
       setOpciones(result.opciones)
       if (paquete?.error) { setError(paquete.error); return }
       if (paquete?.revision) onRevision?.(paquete.revision)
+      const historico = result.opciones.sedes.length === 0 && !initial && !paquete?.audiencia
+      setCompatibilidad(historico); onCompatibilidad?.(historico)
+      if (historico) { setValue(null); onChange?.(null); return }
       if (paquete?.audiencia) setLegado(false)
       if (paquete?.audiencia) { setValue(paquete.audiencia); onChange?.(paquete.audiencia); return }
       if (!initial && !preservarLegado) {
@@ -48,6 +52,10 @@ export default function DestinatariosSelector({ initial = null, preservarLegado 
   }
   const pastoral = Boolean(opciones?.global || (value?.sedes.length && value.sedes.every(sede => opciones?.pastorales.includes(sede))))
   const label = value ? `${value.sedes.length} sede${value.sedes.length === 1 ? '' : 's'} · ${value.todos ? 'Publicación para la congregación' : 'Destinatarios seleccionados'}` : 'Destinatarios actuales sin cambiar'
+  if (compatibilidad) return <details className="border-t border-slate-200 pt-3 text-slate-800">
+    <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Destinatarios actuales</summary>
+    <p className="mt-2 text-sm leading-6 text-slate-600">Puedes seguir usando los destinatarios habituales. Administración debe asociar tus equipos o responsabilidad pastoral con una sede para habilitar los nuevos filtros por congregación.</p>
+  </details>
   return <details className="border-t border-slate-200 pt-3">
     <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-slate-800">Destinatarios · {label}</summary>
     <input type="hidden" name="vida_audiencia" value={value ? JSON.stringify(value) : ''} />

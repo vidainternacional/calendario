@@ -33,6 +33,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
   const [serieEpisodio, setSerieEpisodio] = useState(mensaje?.serieEpisodio?.toString() ?? '1')
   const [publicar, setPublicar] = useState(mensaje?.publicado ?? false)
   const [scoped, setScoped] = useState<AudienciaSedes | null>(mensaje?.vidaAudiencia || null)
+  const [compatibilidad, setCompatibilidad] = useState(false)
   const [iglesia, setIglesia] = useState(mensaje?.audienciaIglesia ?? true)
   const [roles, setRoles] = useState<RolDestino[]>(mensaje?.rolesDestino ?? [])
   const [grupos, setGrupos] = useState<string[]>(mensaje?.ministeriosDestino ?? [])
@@ -100,7 +101,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
       <p className="text-xs leading-5 text-slate-600">Usá el mismo nombre de serie en cada episodio. La biblioteca los agrupará y ordenará por número.</p>
     </div>}
 
-    {!scoped && Boolean(mensaje) && <>
+    {!scoped && (Boolean(mensaje) || compatibilidad) && <>
     <div className="border-t border-slate-200 pt-4">
       <label className="flex items-start gap-3 text-sm leading-6 text-slate-700">
         <input className="mt-1 h-5 w-5 shrink-0 accent-violet-600" type="checkbox" name="publicar"
@@ -169,7 +170,7 @@ function Editor({ mensaje, ministerios, seriesDisponibles, onSaved }: {
     </div>
 
     </>}
-    <DestinatariosSelector key={mensaje?.id || 'nuevo'} initial={mensaje?.vidaAudiencia} preservarLegado={Boolean(mensaje)} onChange={setScoped} />
+    <DestinatariosSelector key={mensaje?.id || 'nuevo'} initial={mensaje?.vidaAudiencia} preservarLegado={Boolean(mensaje)} onChange={setScoped} onCompatibilidad={setCompatibilidad} />
 
     <section className="border-t border-slate-200 pt-4" aria-label="Vista previa del mensaje">
       <button type="button" onClick={() => setVistaPrevia(v => !v)} aria-expanded={vistaPrevia}

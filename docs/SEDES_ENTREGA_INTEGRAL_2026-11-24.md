@@ -1,5 +1,15 @@
 # Entrega integral de sedes — activación autorizada
 
+## Publicación solicitada —25-11-2026 · en verificación
+
+El usuario autoriza expresamente pasar a producción sin afectar lo que funciona y solicita un texto sencillo para un líder. Esta aprobación incluye integrar PR321/publicar main, pero no asignar sedes/pastores automáticamente ni modificar el maestro. No afirmar que solo faltan pruebas: también falta clasificación administrativa real.
+
+Bloqueo comprobado antes de liberar:0 ministerios/responsables clasificados dejaban al líder/pastor sin opciones nuevas y el campo requerido impedía publicar. Corrección limitada a la transición del selector: si el servidor devuelve cero sedes gestionables y el material no tiene audiencia explícita, conserva formulario/destinatarios históricos. Las audiencias privadas existentes nunca se degradan a históricas; si no cargan los permisos, se mantiene la validación requerida y falla sin publicar. La base conserva sus validaciones y exigir_sedes_legacy=false. No SQL/RLS nuevo ni roles cambiados. No activar el corte definitivo mientras existan responsables sin configurar.
+
+Verificación local de la corrección: compilación de producción correcta;76 regresiones previas afectadas correctas más un caso nuevo de transición/autoría en mensajes dirigidos;15 recorridos Chromium con componentes reales y servidor simulado a320/390/820(admin/pastor/líder, sin clasificar y privado con alcance retirado). Sin pruebas con cuentas reales ni push. Lint de selector/editor correcto; el modal conserva su advertencia histórica set-state-in-effect. CI remoto anterior conserva exactamente los3fallos históricos documentados; no se declara todo el CI verde.
+
+Publicar solo un Preview de este ajuste en el alias habitual, confirmar READY/SHA, integrar el HEAD comprobado sin forzar protecciones y verificar producción con variables productivas. Recibo final accesible en PR321. Incluir este checkpoint y el recibo local anterior que no se había subido, sin rehacer migraciones/fotos.
+
 ## Recibo final del Preview —25-11-2026
 
 Implementación funcional publicada en rama/PR321 con commit a3f40699306ca2603e351e1f485f68cac9970cb0. Deployment dpl_HujCiNsQQMBDVVivWfd4X4HstGKs READY, mismo SHA. Alias fijo confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio . No crear otro Preview para entregar este recibo documental.

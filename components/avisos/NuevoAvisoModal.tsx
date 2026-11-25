@@ -31,6 +31,7 @@ type RemitenteTipo = 'autor' | 'ministerio' | 'lider' | 'personalizado' | 'vida'
 export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: NuevoAvisoModalProps) {
   const [open, setOpen] = useState(false)
   const [scoped, setScoped] = useState<AudienciaSedes | null>(null)
+  const [compatibilidad, setCompatibilidad] = useState(false)
   const [paso, setPaso] = useState<'redactar' | 'revisar' | 'resultado'>('redactar')
   const [ministerioId, setMinisterioId] = useState(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
   const [remitenteTipo, setRemitenteTipo] = useState<RemitenteTipo>(esPastorAdmin ? 'vida' : 'ministerio')
@@ -62,6 +63,7 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
     setRemitenteTipo(esPastorAdmin ? 'vida' : 'ministerio')
     setRemitenteNombrePersonalizado('')
     setScoped(null)
+    setCompatibilidad(false)
     setTitulo('')
     setCuerpo('')
   }
@@ -167,7 +169,7 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
             ) : (
               <form action={action} className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <input type="hidden" name="vida_audiencia" value={scoped ? JSON.stringify(scoped) : ''} />
-                <input type="hidden" name="vida_sedes_requeridas" value="1" />
+                <input type="hidden" name="vida_sedes_requeridas" value={compatibilidad ? '0' : '1'} />
                 <input type="hidden" name="ministerio_id" value={ministerioId} />
                 <input type="hidden" name="remitente_tipo" value={remitenteTipo} />
                 <input type="hidden" name="remitente_nombre" value={remitenteNombrePersonalizado} />
@@ -196,7 +198,7 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
                         </div>
                         <textarea id="aviso-cuerpo" value={cuerpo} onChange={(event) => setCuerpo(event.target.value)} rows={7} placeholder="Escribe el mensaje con la información que las personas necesitan conocer..." required className="min-h-44 w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-base leading-relaxed text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm" />
                       </div>
-                      <DestinatariosSelector initial={scoped} defaultMinisterio={ministerioId} onChange={setScoped} />
+                      <DestinatariosSelector initial={scoped} defaultMinisterio={ministerioId} onChange={setScoped} onCompatibilidad={setCompatibilidad} />
                       <section className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="mb-3 flex items-center gap-2">
                           <Users className="h-4 w-4 text-indigo-500" />

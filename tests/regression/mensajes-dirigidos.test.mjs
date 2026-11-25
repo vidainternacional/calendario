@@ -81,6 +81,21 @@ test('sin marcar Publicar, el mensaje se guarda como borrador de su autor',async
   assert.equal(payload.audiencia_iglesia,false)
 })
 
+test('una selección multisede sin cargar no publica; el recorrido histórico conserva la autoría',async()=>{
+  const bloqueado=setup()
+  const pendiente=makeForm({publicar:true,iglesia:true})
+  pendiente.set('vida_sedes_requeridas','1')
+  assert.equal((await bloqueado.actions.guardarMensajeDirigido(pendiente)).success,false)
+  assert.equal(bloqueado.calls.some(q=>op(q,'insert')),false)
+  const historico=setup()
+  const habitual=makeForm({publicar:true,iglesia:true})
+  habitual.set('vida_sedes_requeridas','0')
+  assert.equal((await historico.actions.guardarMensajeDirigido(habitual)).success,true)
+  const payload=op(historico.calls.find(q=>op(q,'insert')),'insert')[1]
+  assert.equal(payload.autor_id,actor)
+  assert.equal('vida_audiencia' in payload,false)
+})
+
 test('puede publicar para dos ministerios y pastores sin abrir a toda la congregación',async()=>{
   const {actions,calls,refreshed}=setup()
   const f=makeForm({publicar:true,roles:['pastor'],ministerios:[ministerioA,ministerioB],tipo:'devocional'})
