@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ListMusic, Music2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { redirect, notFound } from 'next/navigation'
 import { tieneListadosCompartidosMinisterio } from '@/app/actions/repertorio-compartido'
 import BackButton from '@/components/navigation/BackButton'
@@ -10,6 +11,8 @@ import MinisterioSolicitudesEnhancer from '@/components/ministerios/MinisterioSo
 import RegistrarMinisterioReciente from '@/components/ministerios/RegistrarMinisterioReciente'
 import MinisterioBienvenida from '@/components/ministerios/MinisterioBienvenida'
 import styles from './MinisterioLayout.module.css'
+
+import { nombreMinisterioConSede } from '@/lib/sedes/nombre-ministerio'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +32,7 @@ export default async function MinisterioLayout({
   const [minReq, membresiaReq, profileReq] = await Promise.all([
     supabase
       .from('ministerios')
-      .select('id, nombre, descripcion, emoji, color_primario, color_secundario, portada_url, avatar_url, fuente_titulo, fuente_cuerpo')
+      .select('id, nombre, descripcion, emoji, color_primario, color_secundario, portada_url, avatar_url, fuente_titulo, fuente_cuerpo, vida_ministerio_sedes(vida_sedes(nombre))')
       .eq('id', id)
       .single(),
     supabase
@@ -64,11 +67,10 @@ export default async function MinisterioLayout({
   const esLider = Boolean((membresiaReq.data as any)?.es_lider)
   const esAlabanza = String(ministerio.nombre || '').trim().toLowerCase() === 'alabanza'
 
-  // Pastor no implica membresía ni liderazgo global. Un pastor entra al dashboard
-  // únicamente si pertenece al ministerio; Administrador conserva acceso transversal.
-  if (!membresiaReq.data && !esAdministrador) {
-    redirect('/ministerios')
-  }
+  const { data: accesibles } = await (supabase as unknown as SupabaseClient).rpc('vida_ministerios_accesibles')
+  const idsAccesibles = new Set<string>((accesibles || []).map((m: { id: string }) => m.id))
+  // La responsabilidad pastoral es por sede; visitar una sede no concede este acceso.
+  if (!membresiaReq.data && !esAdministrador && !idsAccesibles.has(id)) redirect('/ministerios')
 
   const [membresiasReq, tieneListadoCompartido] = await Promise.all([
     supabase
@@ -78,7 +80,7 @@ export default async function MinisterioLayout({
     esAlabanza ? Promise.resolve(false) : tieneListadosCompartidosMinisterio(id),
   ])
 
-  const ids = (membresiasReq.data || []).map((item: any) => item.ministerio_id)
+  const ids = Array.from(new Set([...idsAccesibles, ...(membresiasReq.data || []).map((item: { ministerio_id: string }) => item.ministerio_id)]))
   let ministeriosAccesibles: Array<{
     id: string
     nombre: string
@@ -89,14 +91,14 @@ export default async function MinisterioLayout({
   if (ids.length > 0) {
     const { data } = await supabase
       .from('ministerios')
-      .select('id, nombre, emoji, color_primario')
+      .select('id, nombre, emoji, color_primario, vida_ministerio_sedes(vida_sedes(nombre))')
       .in('id', ids)
       .eq('activo', true)
       .order('orden', { ascending: true })
 
     ministeriosAccesibles = (data || []).map((item: any) => ({
       id: item.id,
-      nombre: item.nombre,
+      nombre: nombreMinisterioConSede(item),
       emoji: item.emoji,
       color: item.color_primario,
     }))
@@ -116,7 +118,7 @@ export default async function MinisterioLayout({
             actualId={id}
             actual={{
               id: ministerio.id,
-              nombre: ministerio.nombre,
+              nombre: nombreMinisterioConSede(ministerio),
               emoji: ministerio.emoji,
               color: ministerio.color_primario,
             }}

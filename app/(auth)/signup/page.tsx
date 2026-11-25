@@ -6,7 +6,10 @@ export const metadata: Metadata = {
   title: 'Crear cuenta',
 }
 
-export default function SignupPage() {
+import { catalogoRegistroSedes } from '@/lib/sedes/catalogo-registro'
+
+export default async function SignupPage() {
+  const sedes = await catalogoRegistroSedes()
   return (
     <AuthFrame
       title="Crea tu cuenta"
@@ -14,7 +17,7 @@ export default function SignupPage() {
       backHref="/login"
       backLabel="Iniciar sesión"
     >
-      <SignupForm />
+      <SignupForm sedes={sedes} />
     </AuthFrame>
   )
 }

@@ -6,6 +6,8 @@ type Audiencia = { audiencia_iglesia: boolean; roles_destino: string[]; minister
 type Perfil = { id: string; rol: string }
 type Miembro = { profile_id: string; ministerio_id: string; es_lider: boolean }
 type Preferencia = { profile_id: string; ministerio_id: string | null }
+import { destinatariosSedes } from '@/lib/sedes/servidor'
+import { notificacionSedes } from '@/lib/sedes/notificacion'
 const TIPO = 'devocional_publicado'
 
 // Reproduce la unión de destinatarios de la política de lectura, respetando bajas push.
@@ -34,7 +36,7 @@ export async function notificarMensajeDirigido(id: string, autorId: string): Pro
   try {
     const service = createServiceClient()
     const { data: mensaje, error } = await service.from('vida_devocionales')
-      .select('id,titulo,publicado,autor_id,audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,updated_at')
+      .select('id,titulo,publicado,autor_id,audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,updated_at,vida_audiencia')
       .eq('id', id).eq('autor_id', autorId).eq('publicado', true).maybeSingle()
     if (error || !mensaje || !mensaje.publicado || mensaje.autor_id !== autorId) return 'No se envió el aviso: la publicación no está disponible para su autor.'
     const perfiles = await paginas<Perfil>((a, b) => service.from('profiles').select('id,rol')
@@ -50,7 +52,7 @@ export async function notificarMensajeDirigido(id: string, autorId: string): Pro
     }
     const bajas = await paginas<Preferencia>((a, b) => service.from('notificaciones_preferencias')
       .select('profile_id,ministerio_id').eq('activo', false).order('id').range(a, b))
-    const ids = elegirDestinatarios(mensaje, perfiles, miembros, bajas)
+    const ids = mensaje.vida_audiencia ? await destinatariosSedes('devocional', id) : elegirDestinatarios(mensaje, perfiles, miembros, bajas)
     if (!ids.length) return 'Publicado. No hay destinatarios activos con avisos habilitados para esta selección.'
     // Si se despublicó o cambió la audiencia mientras se preparaba, no enviar el contenido anterior.
     const { data: vigente, error: revisionError } = await service.from('vida_devocionales').select('id')
@@ -61,10 +63,10 @@ export async function notificarMensajeDirigido(id: string, autorId: string): Pro
     const registrados = new Set(previos.map((p) => p.profile_id))
     const pendientes = ids.filter((pid) => !registrados.has(pid))
     if (!pendientes.length) return 'La publicación está disponible. No hay destinatarios nuevos pendientes de aviso.'
-    const resultado = await notifyUsersOnceByReference(pendientes, {
+    const resultado = await notifyUsersOnceByReference(pendientes, notificacionSedes(mensaje.vida_audiencia, {
       title: 'Nuevo mensaje pastoral', body: mensaje.titulo,
       url: `/estudios/mensajes/${id}`, tag: `devocional-${id}`,
-    }, { tipo: TIPO, referenciaId: id })
+    }), { tipo: TIPO, referenciaId: id })
     console.log('[devocionales] Resultado de aviso', { id, destinatarios: ids.length, usuarios: resultado.users, dispositivos: resultado.devices })
     return resultado.users > 0
       ? `Publicado. Aviso enviado a ${resultado.users} personas con notificaciones activadas. Quienes no las tienen activadas pueden abrir el mensaje en Devocionales.`

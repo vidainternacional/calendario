@@ -51,7 +51,7 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
         const supabase = createClient()
 
         let query = supabase
-          .from('publicaciones')
+          .rpc('vida_avisos_inicio' as never)
           .select(`
             id,
             titulo,
@@ -66,7 +66,7 @@ export default function InicioOnlineRefresh({ userId, email }: InicioOnlineRefre
 
         if (!puedeVerTodoAvisos) {
           query = query.or(
-            `ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
+            `vida_audiencia.not.is.null,ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
           )
         }
 

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { User, Mail, Shield, Bell, Settings2, Users, BookHeart, HeartHandshake, MessageCircleQuestion, Star, GraduationCap } from 'lucide-react'
 import PushToggle from '@/components/pwa/PushToggle'
 import EditarPerfilForm from '@/components/perfil/EditarPerfilForm'
+import MiCongregacionReview from '@/components/perfil/MiCongregacionReview'
 import PerfilAmpliadoForm from '@/components/perfil/PerfilAmpliadoForm'
 import AvatarUploader from '@/components/perfil/AvatarUploader'
 import UbicacionVidaCard from '@/components/perfil/UbicacionVidaCard'
@@ -75,10 +76,10 @@ export default async function PerfilPage() {
             <div className="flex min-w-0 items-start gap-3 text-[#171923]"><Mail className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" /><span className="min-w-0 break-all text-sm">{user.email}</span></div>
             <div className="flex min-w-0 items-start gap-3 text-[#171923]"><User className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" /><span className="min-w-0 break-words text-sm">{(profile as any)?.telefono || 'Sin teléfono registrado'}</span></div>
           </div>
-          <EditarPerfilForm nombre={nombre} telefono={(profile as any)?.telefono ?? null} fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null} />
+          <EditarPerfilForm congregacion={<MiCongregacionReview userId={user.id} compact />} nombre={nombre} telefono={(profile as any)?.telefono ?? null} fechaNacimiento={(profile as any)?.fecha_nacimiento ?? null} />
         </section>
 
-        <PerfilAmpliadoForm details={(details as any) ?? null} />
+        <PerfilAmpliadoForm userId={user.id} details={(details as any) ?? null} />
 
         <section className="rounded-[22px] border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-[#171923]">Tus Ministerios</h3>
@@ -98,6 +99,7 @@ export default async function PerfilPage() {
           {mostrarGestionDiscipulado && <Link href="/discipulado/gestion" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-violet-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-violet-300 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-50"><GraduationCap className="h-5 w-5 text-violet-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Gestión de Discipulado</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Cursos, progreso, evaluaciones y reconocimientos previos</p></div></div><span className="shrink-0 text-violet-300">›</span></Link>}
           {puedeGestionarAtencion && <Link href="/pastoral/preguntas" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-indigo-200 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50"><MessageCircleQuestion className="h-5 w-5 text-indigo-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Buzón de preguntas</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Preguntas y motivos de oración pendientes</p></div></div><span className="shrink-0 text-slate-300">›</span></Link>}
           {puedeGestionarAtencion && <Link href="/pastoral/ayuda-solidaria" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] border border-slate-200 bg-white px-4 py-4 text-[#171923] shadow-sm transition-all hover:border-rose-200 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50"><HeartHandshake className="h-5 w-5 text-rose-600" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Ayuda Solidaria</p><p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">Solicitudes y aportes que requieren seguimiento</p></div></div><span className="shrink-0 text-slate-300">›</span></Link>}
+          {(tienePanelAdministrativo || (profile as { es_pastor_general?: boolean } | null)?.es_pastor_general === true) && <Link href="/sedes/administrar" className="inline-flex min-h-11 items-center text-sm font-semibold text-rose-800">Administrar sedes y responsables</Link>}
           {tienePanelAdministrativo && <PushTestButton />}
           {tienePanelAdministrativo && <Link href="/admin" className="flex min-w-0 items-center justify-between gap-4 rounded-[20px] bg-indigo-600 px-4 py-4 text-indigo-50 shadow-[0_6px_24px_rgba(79,70,229,0.30)] transition-all hover:bg-indigo-500 active:scale-[.98] sm:px-5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-500"><Settings2 className="h-5 w-5 text-indigo-50" /></div><div className="min-w-0"><p className="break-words text-sm font-bold">Panel de Administración</p><p className="mt-0.5 text-[11px] leading-relaxed text-indigo-200">Ministerios, usuarios y membresías</p></div></div><span className="shrink-0 text-indigo-200">›</span></Link>}
         </section>}

@@ -1,7 +1,99 @@
 # VIDA Internacional — Bitácora de continuidad
 
-Último corte: 18 de noviembre de 2026. Leer primero al retomar este repositorio.
+## Publicación solicitada —25-11-2026 · en verificación
 
+El usuario autoriza expresamente pasar a producción sin afectar lo que funciona y solicita un texto sencillo para un líder. Esta aprobación incluye integrar PR321/publicar main, pero no asignar sedes/pastores automáticamente ni modificar el maestro. No afirmar que solo faltan pruebas: también falta clasificación administrativa real.
+
+Bloqueo comprobado antes de liberar:0 ministerios/responsables clasificados dejaban al líder/pastor sin opciones nuevas y el campo requerido impedía publicar. Corrección limitada a la transición del selector: si el servidor devuelve cero sedes gestionables y el material no tiene audiencia explícita, conserva formulario/destinatarios históricos. Las audiencias privadas existentes nunca se degradan a históricas; si no cargan los permisos, se mantiene la validación requerida y falla sin publicar. La base conserva sus validaciones y exigir_sedes_legacy=false. No SQL/RLS nuevo ni roles cambiados. No activar el corte definitivo mientras existan responsables sin configurar.
+
+Verificación local de la corrección: compilación de producción correcta;76 regresiones previas afectadas correctas más un caso nuevo de transición/autoría en mensajes dirigidos;15 recorridos Chromium con componentes reales y servidor simulado a320/390/820(admin/pastor/líder, sin clasificar y privado con alcance retirado). Sin pruebas con cuentas reales ni push. Lint de selector/editor correcto; el modal conserva su advertencia histórica set-state-in-effect. CI remoto anterior conserva exactamente los3fallos históricos documentados; no se declara todo el CI verde.
+
+Publicar solo un Preview de este ajuste en el alias habitual, confirmar READY/SHA, integrar el HEAD comprobado sin forzar protecciones y verificar producción con variables productivas. Recibo final accesible en PR321. Incluir este checkpoint y el recibo local anterior que no se había subido, sin rehacer migraciones/fotos.
+
+## Recibo final del Preview —25-11-2026
+
+Implementación funcional publicada en rama/PR321 con commit a3f40699306ca2603e351e1f485f68cac9970cb0. Deployment dpl_HujCiNsQQMBDVVivWfd4X4HstGKs READY, mismo SHA. Alias fijo confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/inicio . No crear otro Preview para entregar este recibo documental.
+
+Comprobación por conector Vercel: /signup HTTP200 con ambas sedes reales del catálogo, /sedes/administrar sin sesión lleva a login y no expone Administración; consulta inicial de logs error/fatal del deployment sin resultados. No hubo prueba autenticada/recepción push ni sesión suplantada. Producción confirmada sin cambio en dpl_78e612TyrSRrc4PNrs4keQkVB9EG, main bd7aa236143eb829c0fcbe263099431c19033cfd.
+
+Configuración de negocio pendiente: Administración debe clasificar ministerios reales y asociar pastores; cero asignaciones automáticas. El usuario revisará con personas reales públicos/privados, grupos, reenvíos, invitados y GPS si se usa. Cambio aplicado y compilado; falta validación visual tuya. No declarar toda la app multisede certificada ni producción publicada. exigir_sedes_legacy=false hasta aprobación separada de publicación final.
+
+Recibo remoto completo y accesible en https://github.com/vidainternacional/calendario/pull/321 . Estas actualizaciones finales de bitácora/documento se conservan en un commit local documental posterior, todavía sin push para evitar un segundo Preview por bloque; incluirlas en el siguiente cambio autorizado. No volver a aplicar la migración ni generar despliegues para sincronizar solo documentación. Maestro y fases intactos.
+
+Último corte: 25 de noviembre de 2026. Leer primero al retomar este repositorio.
+
+
+
+
+
+
+## Sedes base autorizadas y aplicadas —24-11-2026
+
+- Usuario aprobó expresamente el paquete de cinco tablas con «Ok hazlo». Aplicada SOLO en ccvida lnkrojvyiwnlcoponxud la migración remota20261124221418 sedes_base_perfil_20261124; SQL versionado con ese número. Catálogo Santa Ana central y Chalchuapa activas. RLS en5tablas,3funciones invoker, anon sin ejecución;230políticas anteriores con misma huella cc79aafabe8b9a43c5dd60fc37b97aa7. Cero preferencias/asociaciones/responsables al aplicar; no se asignó ni cambió ninguna cuenta/equipo.
+- Perfil/ficha y círculo de Inicio ahora consultan/guardan en servidor mediante sesión real y dueño esperado. Store por UUID comparte ambos accesos, descarta lecturas viejas, bloquea doble guardado y conserva valor confirmado al fallar, incluido radio seleccionado; permite reintentar la misma opción. Compilación de corrección final correcta; build intermedio cancelado y recibo final en PR. No importa localStorage de revisión. Catálogo administrativo real permite crear futuras sedes sin asignaciones; propuesta de mensajería sigue plegada y marcada como ejemplos.
+- TypeScript/lint/build y10regresiones del servidor/store/selector correctos; SQL local11pruebas. Chromium aislado320/390/820px con backend simulado verifica error sin éxito falso, sincronización, recarga, cambio de cuenta y edición personal intacta. No se afirma prueba autenticada remota del guardado con un usuario real.
+- Actualizar mismo PR321/alias al nuevo HEAD; recibo exacto en PR. No merge/producción, R2, cobros ni políticas históricas cambiadas. Revisión de asesores:sin hallazgos de las5tablas/3funciones nuevas; avisos heredados se conservan fuera de alcance.
+- NO están completas ambas sedes: todavía sin separación real de publicaciones/eventos/ministerios, audiencias por sede/grupos ni músicos invitados. El círculo guarda visibilidad pero lo indica expresamente: publicaciones aún sin filtrar. No confundir con pertenencia ni permisos. No habilitar privados de Chalchuapa todavía.
+- Próximo bloque: preparar diff y SQL/reversión exactos para las fronteras históricas antes de pedir su aprobación específica. Elegir congregación no mueve equipos ni concede liderazgo. Plan:docs/SEDES_IMPLEMENTACION_2026-11-24.md. Maestro/Bloque4/FASEI intactos.
+
+## Icono y color del círculo de Inicio —24-11-2026
+
+- Usuario pide identidad visual en el círculo junto al avatar. Icono Church, fondo rosa/rojo suave, aro y distintivo pequeñoSA/CH/2; nombre completo debajo conservado. No cambia tamaño/selección/portal de servicios ni perfil.
+- TypeScript/lint/build y regresiones pertinentes de selector antes de entrega. Mismo Preview/PR321, sin producción/datos/permisos. Estado de revisión y límites de filtrado siguen vigentes.
+
+## Botón de congregación reducido —24-11-2026
+
+- Usuario considera grande y con demasiado texto el acceso superior. Sustituido por botón de una línea, icono ubicación, nombre corto y flecha; mismo alto táctil44px y aspecto de Editar mi información. Sin título explicativo ni Cambiar extra en ese botón. Ficha conserva resumen completo.
+- Selección automática/cierre/sincronización local intactos. Sin servidor, permisos, RLS ni producción. Compilación/TypeScript/lint y revisión móvil/tableta antes de entregar; recibo final del mismo Preview en PR321.
+
+## Congregación compacta y acceso superior —24-11-2026
+
+- Usuario pide dato integrado, sin opciones abiertas tras seleccionar y junto a Editar mi información. Resumen compacto en ficha + acceso superior; selector cerrado inicialmente en ventana accesible; al tocar una opción guarda selección local y cierra automáticamente. Si falla almacenamiento mantiene ventana y reintento. Ambos leen la misma preferencia por UUID/dispositivo, sin mezclarla con domicilio/sedes visibles.
+- EditarPerfilForm acepta slot de congregación junto al botón; formulario habitual conserva action/campos y ancho al abrir. En móvil estrecho los accesos se acomodan verticalmente. No cambia porcentaje de ficha ni permisos.
+- TypeScript/lint/build local y navegador aislado de320/390/820px antes de entrega. Afiliación real/RLS sigue pendiente; no declarar guardado en servidor. Mismo PR321/alias, sin producción. Recibo exacto en PR.
+
+## Mi congregación en Perfil — revisión24-11-2026
+
+- Pedido «Ok hazlo quiero verlo»: campo visible dentro de la ficha ampliada en Perfil, antes de Completar/Actualizar ficha y visible también al editar. Santa Ana, Chalchuapa, ambas o ninguna; independiente de domicilio y sedes visibles de Inicio.
+- Preferencia de prueba por UUID/dispositivo, explícitamente sin afiliación en servidor ni permisos. No usa guardarMiFichaVida ni altera formulario existente. No declarar inscripción ministerial o traslado aplicado. Esquema/RLS real sigue pendiente de propuesta/aprobación.
+- TypeScript/lint/build y revisión aislada antes de entrega. Mismo PR321/alias, sin producción. Recibo exacto en PR.
+
+## Selector de sedes junto al perfil — 24-11-2026 · PR321
+
+- Usuario pide círculo en Inicio real, junto al perfil a la derecha del saludo. Añadido para cualquier cuenta, sin condición de rol. SA/CH/2 y nombre completo, diálogo con dos casillas, al menos una activa. Preferencia local por UUID/dispositivo, no pertenencia ni permiso.
+- Header agrupa selector/avatar como último hijo, manteniendo el punto de inserción del acceso Mis servicios. Saludo admite líneas y tamaño móvil ajustado para conservar espacio. Sin CSS global.
+- Selector explícitamente EN REVISIÓN: no filtra mensajes reales, no asigna ministerios ni sede de pertenencia. No presentar la elección local como afiliación de iglesia. Registro futuro deberá pedir sede o todavía no pertenezco; cuentas actuales elegirán en perfil y se guardará en servidor tras aprobar esquema/permisos. Servicio ministerial requiere asignación/solicitud aprobada.
+- Tres pruebas pertinentes y TypeScript/lint/build local correctos; navegador aislado sobre header real y servicios simulados antes de entregar: móvil/tableta, elección, persistencia, Escape y cambio de cuenta. Preview exacto/alias se registran en PR321. No producción, RLS ni datos de usuario cambiados.
+
+## Ajuste de Inicio/editor solicitado — 24-11-2026 · PR321
+
+- Usuario valida idea general pero rechaza lista única: separar selección pública de sedes del formulario. Revisión conserva mismo PR/alias, sin producción ni RLS.
+- Dos vistas de ejemplo: Inicio (Santa Ana, Chalchuapa o ambas activas a la vez, publicaciones públicas etiquetadas) y Nuevo mensaje (Asunto/Mensaje primero, adjunto, destinos resumidos y desplegables cerrados). Responsabilidad simulada queda en herramienta de comprobación plegada, no como primer campo del editor.
+- Ministerios con IDs distintos por sede; selección múltiple Santa Ana/Chalchuapa, unión con roles/personas sin duplicar, alcance autorizado siempre aplicado. Grupos/adjuntos conservados. Ver otra sede no concede membresía ni acceso privado.
+- Patrón de destinatarios destinado a reutilizarse en Avisos, mensajes ministeriales y paquetes; esas superficies reales NO se modificaron ni se implementó backend multisede todavía. No confundir propuesta con funcionalidad publicada.
+- Seis pruebas pertinentes, TypeScript/lint/build local; navegador aislado de revisión móvil/tableta antes de entregar. Recibo SHA/READY/alias se registra en PR321. Personas de ejemplo, no envíos ni sedes reales. No volver a tocar recuperación de fotos ya certificada.
+
+## Recibo posterior de recuperación real — 24-11-2026
+
+Se comprobó directamente ccvida: siete objetos avatars,2028295 bytes; seis recuperadas suman1581601 bytes, descargadas de destino y cotejadas SHA256 íntegramente contra sus huellas certificadas. Cinco perfiles apuntan a recuperadas; cero perfiles con referencia al Supabase anterior. La foto nueva previa de446694 bytes permanece. Origen: cero objetos avatars. Por tanto la recuperación/retirada autorizada YA ocurrió; no solicitar repetirla ni seguir marcándola pendiente por falta de sesión en esta ejecución técnica. No se atribuye la acción a una sesión suplantada: se certifica estado final observado. Archivo pastoral excluido; no copiado. La validación visual del avatar en cuenta real sigue siendo del usuario.
+
+## Revisión integrada solicitada — 24-11-2026 · PR321
+
+- Usuario no encontraba fotos en Analytics y retorno sin historial no funcionaba. Acceso propio /admin/fotos, enlaces fijos a Administración/Inicio y accesos directos en /admin y Analytics; recuperación real ahora antes de estadísticas.
+- Mismo PR321/rama y alias fijo. Se incorporan solo recursos de PR320, no sus otros cambios ni se fusiona PR319. Maestro intacto.
+- /admin/sedes permite revisar Santa Ana/Chalchuapa, futura sede, audiencias, alcance por responsabilidad, grupos de prueba y PDF dentro de la página. PERSONAS DE EJEMPLO; no hay envío, sedes reales ni grupos persistentes. Cambios de tablas/RLS siguen sin aplicar y requieren alcance exacto aprobado. No decir sistema multisede productivo.
+- Biblia: consultas editoriales iguales reutilizables300s con autorización antes de consultar. No guarda datos personales en esa caché. Respaldo automático de textos origen NO implementado, análisis léxico continúa en Neon. No duplicar corpus completo en Free.
+-22 pruebas pertinentes, TypeScript/lint/build local y Chromium aislado320/390/820px correctos, sin sesión real. Recibo de Preview exacto en PR321. Fotos todavía requieren ejecución real y cotejo de Storage; no declarar copiadas/eliminadas por compilar. No activar R2 ni producción.
+- Detalle y checklist: docs/REVISION_INTEGRADA_2026-11-24.md. La revisión contiene simulación explícita, sin alterar permisos/datos de sedes. Recursos con credenciales pendientes muestra Sin datos, no cero.
+
+## Recuperación de seis fotos — 24-11-2026
+
+- Usuario autoriza copiar las seis fotos a ccvida y eliminar únicamente originales ya verificados; excluye expresamente el archivo pastoral de prueba «La fe». No borrar usuarios ni otros datos todavía.
+- Rama `agent/recuperar-fotos-20261124` basada en main `bd7aa236`; action con sesión real y administrador activo, fuente antigua fija, destino ccvida fijo y secretos existentes SOLO en servidor. Recuperación desde Analytics para evitar extraer secretos mediante herramientas (estas devolvieron valores vacíos). No cambiar claves ni RLS.
+- Inventario avatars acotado, seis huellas SHA256 autorizadas, ruta nueva determinista sin sobrescribir fotos nuevas, encuadre conservado, cambio de URL condicional por concurrencia. Tras verificar todas las copias/referencias, vuelve a cotejar contenido antes de retirar cada original; reanudable. Nunca toca pastoral-library.
+- Cinco regresiones pertinentes, TypeScript y lint específico; compilación y Preview se registran en recibo de entrega. No se ejecutó con sesión falsa ni se afirma fotos subidas/eliminadas antes del recibo real. Producción intacta.
+- Sedes: Santa Ana central y Chalchuapa sede, más futuras sedes; grupos guardados, públicos compartidos y permisos por responsabilidad siguen en propuesta documental separada, sin SQL aplicado. Analytics PR320 y badges PR319 continúan separados; no fusionarlos para esta recuperación.
+- Biblia origen: textos124504 cotejados con NeonB por huella59509f9ff3a909960256da649ba5a213; cero ocurrencias de análisis. No activar sustitución integral de Neon, ni volver a cargar611398 ocurrencias en Free. Caché, medición y respaldo textual se evalúan sin superar cuotas.
 
 ## Publicación musical autorizada — 2026-11-18 · PR #316
 

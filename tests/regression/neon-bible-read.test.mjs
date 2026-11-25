@@ -86,7 +86,8 @@ test('la combinación global conserva orden, página y conteo sin duplicar AT de
   const seen = []
   globalThis.fetch = async (url, options) => {
     assert.equal(options.headers['Neon-Batch-Read-Only'], 'true')
-    assert.equal(options.cache, 'no-store')
+    assert.equal(options.cache, 'force-cache')
+    assert.equal(options.next.revalidate, 300)
     const request = JSON.parse(options.body).queries[0]
     const isA = String(url).includes('a.neon.tech')
     if (!isA) assert.ok(!request.params.includes('GEN'))

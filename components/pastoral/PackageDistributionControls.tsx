@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react'
 import { Bell, Check, EyeOff, Globe2, Loader2, Sparkles } from 'lucide-react'
 import { actualizarDistribucionPaquete } from '@/app/actions/pastoral-distribucion'
 import { mostrarToast } from '@/lib/ui/toast'
+import DestinatariosSelector from '@/components/sedes/DestinatariosSelector'
+import type { AudienciaSedes } from '@/lib/sedes/audiencias'
 
 type Audiencia = 'iglesia' | 'lideres' | 'servidores' | 'publico'
 type AudienciaVisible = Exclude<Audiencia, 'publico'>
@@ -26,13 +28,16 @@ export default function PackageDistributionControls({
   initialFeatured?: boolean
 }) {
   const [audiencia, setAudiencia] = useState<AudienciaVisible>(initialAudience === 'publico' ? 'iglesia' : initialAudience)
+  const [scoped, setScoped] = useState<AudienciaSedes | null>(null)
+  const [revision, setRevision] = useState('')
   const [publicado, setPublicado] = useState(initialPublished)
   const [destacado, setDestacado] = useState(initialFeatured)
   const [isPending, startTransition] = useTransition()
 
   const guardar = (nuevoPublicado = publicado) => {
     startTransition(async () => {
-      const resultado = await actualizarDistribucionPaquete(paqueteId, audiencia, nuevoPublicado, destacado)
+      if (!revision) { mostrarToast('Espera a que carguen los destinatarios actuales.'); return }
+      const resultado = await actualizarDistribucionPaquete(paqueteId, audiencia, nuevoPublicado, destacado, scoped, revision)
       if (!resultado.success) {
         mostrarToast(resultado.error)
         return
@@ -40,8 +45,9 @@ export default function PackageDistributionControls({
 
       const estadoPublicado = Boolean(resultado.publicado)
       setPublicado(estadoPublicado)
+      if (resultado.revision) setRevision(resultado.revision)
 
-      if (estadoPublicado && !publicado) {
+      if (resultado.aviso) { mostrarToast(resultado.aviso) } else if (estadoPublicado && !publicado) {
         const cantidad = Number(resultado.notificaciones ?? 0)
         mostrarToast(cantidad > 0 ? `Material publicado y ${cantidad} notificación${cantidad === 1 ? '' : 'es'} enviada${cantidad === 1 ? '' : 's'}` : 'Material publicado en Inicio')
       } else {
@@ -65,13 +71,14 @@ export default function PackageDistributionControls({
       </div>
 
       <div className="p-5 sm:p-6">
-        <label>
+        <DestinatariosSelector paqueteId={paqueteId} preservarLegado onChange={setScoped} onRevision={setRevision} />
+        {!scoped && <label>
           <span className="mb-1.5 block text-xs font-bold text-slate-700">¿Quién debe recibirlo?</span>
           <select value={audiencia} onChange={(event) => setAudiencia(event.target.value as AudienciaVisible)} className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-base text-slate-900">
             {OPCIONES.map((opcion) => <option key={opcion.value} value={opcion.value}>{opcion.label}</option>)}
           </select>
           <span className="mt-1.5 block text-xs leading-5 text-slate-500">{OPCIONES.find((opcion) => opcion.value === audiencia)?.detalle}</span>
-        </label>
+        </label>}
 
         <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
           <input type="checkbox" checked={destacado} onChange={(event) => setDestacado(event.target.checked)} className="mt-0.5 h-5 w-5 rounded border-violet-300" />
@@ -91,7 +98,7 @@ export default function PackageDistributionControls({
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-emerald-700"><Check className="h-4 w-4" /></span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-emerald-950">Publicado para {OPCIONES.find((opcion) => opcion.value === audiencia)?.label.toLowerCase()}</p>
+                <p className="text-sm font-bold text-emerald-950">{scoped ? 'Publicado para los destinatarios seleccionados' : `Publicado para ${OPCIONES.find((opcion) => opcion.value === audiencia)?.label.toLowerCase()}`}</p>
                 <p className="mt-1 text-xs leading-5 text-emerald-900/75">Los cambios de audiencia o importancia se guardan sin volver a enviar la notificación.</p>
               </div>
             </div>

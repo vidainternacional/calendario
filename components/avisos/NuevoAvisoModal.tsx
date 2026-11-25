@@ -13,6 +13,9 @@ import {
   X,
 } from 'lucide-react'
 
+import DestinatariosSelector from '@/components/sedes/DestinatariosSelector'
+import type { AudienciaSedes } from '@/lib/sedes/audiencias'
+
 interface Ministerio {
   id: string
   nombre: string
@@ -27,6 +30,8 @@ type RemitenteTipo = 'autor' | 'ministerio' | 'lider' | 'personalizado' | 'vida'
 
 export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: NuevoAvisoModalProps) {
   const [open, setOpen] = useState(false)
+  const [scoped, setScoped] = useState<AudienciaSedes | null>(null)
+  const [compatibilidad, setCompatibilidad] = useState(false)
   const [paso, setPaso] = useState<'redactar' | 'revisar' | 'resultado'>('redactar')
   const [ministerioId, setMinisterioId] = useState(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
   const [remitenteTipo, setRemitenteTipo] = useState<RemitenteTipo>(esPastorAdmin ? 'vida' : 'ministerio')
@@ -57,6 +62,8 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
     setMinisterioId(esPastorAdmin ? '' : ministeriosLider[0]?.id || '')
     setRemitenteTipo(esPastorAdmin ? 'vida' : 'ministerio')
     setRemitenteNombrePersonalizado('')
+    setScoped(null)
+    setCompatibilidad(false)
     setTitulo('')
     setCuerpo('')
   }
@@ -161,6 +168,8 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
               </div>
             ) : (
               <form action={action} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <input type="hidden" name="vida_audiencia" value={scoped ? JSON.stringify(scoped) : ''} />
+                <input type="hidden" name="vida_sedes_requeridas" value={compatibilidad ? '0' : '1'} />
                 <input type="hidden" name="ministerio_id" value={ministerioId} />
                 <input type="hidden" name="remitente_tipo" value={remitenteTipo} />
                 <input type="hidden" name="remitente_nombre" value={remitenteNombrePersonalizado} />
@@ -174,10 +183,26 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
 
                   {paso === 'redactar' ? (
                     <div className="space-y-5">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <label htmlFor="aviso-titulo" className="text-xs font-bold uppercase tracking-wide text-gray-500">Título</label>
+                          <span className="text-[11px] text-slate-400">{titulo.length}/120</span>
+                        </div>
+                        <input id="aviso-titulo" value={titulo} onChange={(event) => setTitulo(event.target.value)} type="text" placeholder="Ej: Reunión de líderes este sábado" required maxLength={120} className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <label htmlFor="aviso-cuerpo" className="text-xs font-bold uppercase tracking-wide text-gray-500">Mensaje</label>
+                          <span className="text-[11px] text-slate-400">{cuerpo.length} caracteres</span>
+                        </div>
+                        <textarea id="aviso-cuerpo" value={cuerpo} onChange={(event) => setCuerpo(event.target.value)} rows={7} placeholder="Escribe el mensaje con la información que las personas necesitan conocer..." required className="min-h-44 w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-base leading-relaxed text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm" />
+                      </div>
+                      <DestinatariosSelector initial={scoped} defaultMinisterio={ministerioId} onChange={setScoped} onCompatibilidad={setCompatibilidad} />
                       <section className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                         <div className="mb-3 flex items-center gap-2">
                           <Users className="h-4 w-4 text-indigo-500" />
-                          <h3 className="text-sm font-bold text-[#171923]">Destinatarios</h3>
+                          <h3 className="text-sm font-bold text-[#171923]">Ministerio del remitente</h3>
                         </div>
                         <label htmlFor="aviso-ministerio" className="sr-only">Publicar en</label>
                         <div className="relative">
@@ -194,7 +219,7 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
                           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         </div>
                         <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                          {ministerioId ? 'Recibirán el aviso los miembros activos de este ministerio.' : 'Se publicará como aviso general para toda la congregación.'}
+                          {scoped ? 'Los destinatarios se definen en la selección de sedes; este campo conserva la identidad del remitente.' : 'Selecciona a los destinatarios antes de publicar.'}
                         </p>
                       </section>
 
@@ -233,28 +258,13 @@ export default function NuevoAvisoModal({ ministeriosLider, esPastorAdmin }: Nue
                         <p className="mt-2 text-xs leading-relaxed text-slate-500">Esta identidad aparecerá como remitente del aviso y de su notificación push.</p>
                       </section>
 
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <label htmlFor="aviso-titulo" className="text-xs font-bold uppercase tracking-wide text-gray-500">Título</label>
-                          <span className="text-[11px] text-slate-400">{titulo.length}/120</span>
-                        </div>
-                        <input id="aviso-titulo" value={titulo} onChange={(event) => setTitulo(event.target.value)} type="text" placeholder="Ej: Reunión de líderes este sábado" required maxLength={120} className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm" />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-3">
-                          <label htmlFor="aviso-cuerpo" className="text-xs font-bold uppercase tracking-wide text-gray-500">Mensaje</label>
-                          <span className="text-[11px] text-slate-400">{cuerpo.length} caracteres</span>
-                        </div>
-                        <textarea id="aviso-cuerpo" value={cuerpo} onChange={(event) => setCuerpo(event.target.value)} rows={7} placeholder="Escribe el mensaje con la información que las personas necesitan conocer..." required className="min-h-44 w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-base leading-relaxed text-[#171923] outline-none focus:ring-2 focus:ring-indigo-400 sm:text-sm" />
-                      </div>
                     </div>
                   ) : (
                     <div className="space-y-5">
                       <section className="overflow-hidden rounded-[22px] border border-slate-100 bg-white shadow-sm">
                         <div className="border-b border-slate-100 bg-indigo-50 px-4 py-3">
                           <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-500">Se publicará en</p>
-                          <p className="mt-1 font-bold text-[#171923]">{ministerioNombre}</p>
+                          <p className="mt-1 font-bold text-[#171923]">{scoped ? `${scoped.sedes.length} sede(s) · ${scoped.todos ? 'Toda la congregación' : 'Audiencia seleccionada'}` : ministerioNombre}</p>
                           <p className="mt-1 text-xs font-semibold text-indigo-600">Como: {remitenteNombre}</p>
                         </div>
                         <div className="p-5">

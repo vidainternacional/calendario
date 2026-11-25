@@ -5,7 +5,8 @@ import { signup, type AuthState } from '@/app/actions/auth'
 import { User, Mail, Lock, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 
-export default function SignupForm() {
+export default function SignupForm({ sedes = [] }: { sedes?: { id: string; nombre: string }[] }) {
+  const [sinSede, setSinSede] = useState(false)
   const [state, action, pending] = useActionState<AuthState, FormData>(signup, undefined)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -44,6 +45,12 @@ export default function SignupForm() {
           <input id="email" name="email" type="email" placeholder="tu@correo.com" required autoComplete="email" className={inputClass} />
         </div>
       </div>
+
+      <fieldset className="border-t border-slate-100 pt-3"><legend className="text-sm font-bold text-slate-700">Mi congregación <span className="font-normal text-slate-400">· opcional</span></legend>
+        <p className="mt-1 text-xs leading-5 text-slate-500">Puedes pertenecer a una o varias sedes. Después podrás cambiarlo desde tu Perfil.</p>
+        {sedes.map(sede => <label key={sede.id} className="flex min-h-11 items-center gap-3 text-sm text-slate-800"><input type="checkbox" name="congregacion_sede" value={sede.id} disabled={sinSede} className="h-5 w-5 accent-rose-700" />{sede.nombre}</label>)}
+        <label className="flex min-h-11 items-center gap-3 text-sm text-slate-800"><input type="checkbox" name="congregacion_sin_sede" checked={sinSede} onChange={e => setSinSede(e.target.checked)} className="h-5 w-5 accent-rose-700" />Todavía no pertenezco a una sede</label>
+      </fieldset>
 
       <div className="space-y-2">
         <label htmlFor="password" className="block text-sm font-bold text-slate-700">Contraseña</label>

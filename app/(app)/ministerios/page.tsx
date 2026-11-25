@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { HandHeart, UsersRound } from 'lucide-react'
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   title: 'Ministerios',
 }
 
-export default async function MinisteriosPage() {
+export default async function MinisteriosPage({ searchParams }: { searchParams: Promise<{ sede?: string }> }) {
+  const { sede: filtroSede } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -30,6 +32,9 @@ export default async function MinisteriosPage() {
     .select('ministerio_id, es_lider')
     .eq('profile_id', user.id)
 
+  const { data: accesibles } = await (supabase as unknown as SupabaseClient).rpc('vida_ministerios_accesibles')
+  const ministeriosAccesibles = new Set<string>((accesibles || []).map((m: { id: string }) => m.id))
+
   const membresiaMap = new Map((membresias as any[])?.map(m => [m.ministerio_id, m]))
 
   const { data: solicitudes } = await (supabase as any)
@@ -39,7 +44,11 @@ export default async function MinisteriosPage() {
     .in('estado', ['pendiente', 'rechazada'])
 
   const solicitudMap = new Map(solicitudes?.map((s: any) => [s.ministerio_id, s.estado]))
-  const allMinisterios = ministeriosActivos || []
+  const { data: mapaSedes } = await (supabase as unknown as SupabaseClient).from('vida_ministerio_sedes').select('ministerio_id,sede_id,vida_sedes(nombre)')
+  const { data: sedes } = await (supabase as unknown as SupabaseClient).from('vida_sedes').select('id,nombre').eq('activa', true).order('central', { ascending: false })
+  const sedePorMinisterio = new Map<string, { sede_id: string; nombre: string }>((mapaSedes || []).map((r: { ministerio_id: string; sede_id: string; vida_sedes: { nombre: string } | { nombre: string }[] }) => [r.ministerio_id, { sede_id: r.sede_id, nombre: (Array.isArray(r.vida_sedes) ? r.vida_sedes[0]?.nombre : r.vida_sedes?.nombre) || 'Sede' }]))
+  const sedeValida = (sedes || []).some((s: { id: string }) => s.id === filtroSede) ? filtroSede : null
+  const allMinisterios = ((ministeriosActivos || []) as { id: string; nombre: string; emoji: string; descripcion: string | null; color_primario: string }[]).filter(m => !sedeValida || sedePorMinisterio.get(m.id)?.sede_id === sedeValida)
   const sinMembresias = !membresias || membresias.length === 0
 
   return (
@@ -55,6 +64,7 @@ export default async function MinisteriosPage() {
         </p>
       </header>
 
+      <nav aria-label="Filtrar ministerios por sede" className="mb-5 flex flex-wrap gap-2"><Link href="/ministerios" aria-current={!sedeValida ? 'page' : undefined} className="inline-flex min-h-11 items-center rounded-full border border-slate-200 px-4 text-sm font-semibold text-slate-700">Todas</Link>{(sedes || []).map((s: { id: string; nombre: string }) => <Link key={s.id} href={`/ministerios?sede=${s.id}`} aria-current={sedeValida === s.id ? 'page' : undefined} className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold ${sedeValida === s.id ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-slate-200 text-slate-700'}`}>{s.nombre}</Link>)}</nav>
       {allMinisterios.length === 0 ? (
         <EmptyState
           icon={UsersRound}
@@ -84,6 +94,7 @@ export default async function MinisteriosPage() {
               const mem = membresiaMap.get(min.id) as any
               const esMiembro = !!mem
               const esLider = mem?.es_lider
+              const puedeVer = esMiembro || ministeriosAccesibles.has(min.id)
               const estadoSolicitud = solicitudMap.get(min.id) as 'pendiente' | 'rechazada' | undefined
 
               const CardContent = (
@@ -119,6 +130,8 @@ export default async function MinisteriosPage() {
                         )}
                       </div>
 
+                      {!esMiembro && puedeVer && <p className="mt-1 text-xs font-semibold text-indigo-700">Acceso pastoral autorizado</p>}
+                      {sedePorMinisterio.get(min.id) && <p className="mt-1 text-xs font-semibold text-rose-700">{sedePorMinisterio.get(min.id)?.nombre}</p>}
                       {min.descripcion ? (
                         <p className="mt-1.5 line-clamp-2 break-words text-sm leading-relaxed text-gray-500">
                           {min.descripcion}
@@ -127,7 +140,7 @@ export default async function MinisteriosPage() {
                         <p className="mt-1.5 break-words text-sm text-gray-400">Conoce y sirve junto a este ministerio.</p>
                       )}
 
-                      {!esMiembro && (
+                      {!puedeVer && (
                         <div className="mt-4 min-w-0">
                           <SolicitarIngresoBoton ministerioId={min.id} estadoActual={estadoSolicitud || 'ninguno'} />
                         </div>
@@ -139,7 +152,7 @@ export default async function MinisteriosPage() {
 
               const baseClasses = 'group relative min-h-[132px] min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(20,24,40,0.06)] transition-all sm:p-5'
 
-              if (esMiembro) {
+              if (puedeVer) {
                 return (
                   <Link
                     key={min.id}

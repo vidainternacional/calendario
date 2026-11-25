@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 
+import { nombreMinisterioConSede } from '@/lib/sedes/nombre-ministerio'
+
 export type MinisterioCompartible = {
   id: string
   nombre: string
@@ -103,7 +105,7 @@ export async function obtenerConfiguracionCompartirRepertorio(ministerioId: stri
   const [{ data: ministerios = [] }, { data: compartidos = [] }] = await Promise.all([
     acceso.admin
       .from('ministerios')
-      .select('id,nombre')
+      .select('id,nombre,vida_ministerio_sedes(vida_sedes(nombre))')
       .eq('activo', true)
       .neq('id', ministerioId)
       .order('orden', { ascending: true }),
@@ -115,7 +117,7 @@ export async function obtenerConfiguracionCompartirRepertorio(ministerioId: stri
   ])
 
   return {
-    ministerios: (ministerios || []).map((item: any) => ({ id: String(item.id), nombre: String(item.nombre || 'Ministerio') })),
+    ministerios: (ministerios || []).map((item: { id: string; nombre: string; vida_ministerio_sedes: unknown }) => ({ id: String(item.id), nombre: nombreMinisterioConSede(item) })),
     seleccionados: (compartidos || []).map((item: any) => String(item.ministerio_destino_id)),
   }
 }
@@ -213,7 +215,7 @@ export async function obtenerListadosCompartidosMinisterio(ministerioDestinoId: 
 
   const [{ data: eventos = [] }, { data: origenes = [] }, { data: repertorio = [] }] = await Promise.all([
     acceso.admin.from('eventos').select('id,titulo,fecha_inicio').in('id', eventoIds),
-    acceso.admin.from('ministerios').select('id,nombre').in('id', origenIds),
+    acceso.admin.from('ministerios').select('id,nombre,vida_ministerio_sedes(vida_sedes(nombre))').in('id', origenIds),
     acceso.admin
       .from('evento_repertorio')
       .select('id,evento_id,ministerio_id,cancion_id,orden,titulo,spotify_url,youtube_url')

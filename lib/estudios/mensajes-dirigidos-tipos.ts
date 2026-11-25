@@ -1,3 +1,4 @@
+import type { AudienciaSedes } from '@/lib/sedes/audiencias'
 import { youtubeVideo, type MensajeSemanal } from './youtube-link'
 
 export type RolDestino = 'pastor' | 'administrador' | 'lider' | 'servidor'
@@ -19,6 +20,7 @@ export function etiquetaTipo(tipo: TipoDevocional): string {
 }
 export type MinisterioDestino = { id: string; nombre: string }
 export type MensajeConAudiencia = MensajeSemanal & {
+  vidaAudiencia?: AudienciaSedes | null
   origen: 'dirigido' | 'legado'
   tipo: TipoDevocional
   serieTitulo: string | null
@@ -40,7 +42,7 @@ export const ROLES_DESTINO: Array<{ id: RolDestino; nombre: string }> = [
 export const ROL_DESTINO_IDS = new Set<RolDestino>(ROLES_DESTINO.map(r => r.id))
 
 /** La tabla nueva es exclusiva de videos; jamás devuelve columnas privadas de otro módulo. */
-export const CAMPOS_DIRIGIDOS = 'id,autor_id,titulo,descripcion,video_url,tipo,publicado,audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,serie_titulo,serie_episodio,published_at,updated_at'
+export const CAMPOS_DIRIGIDOS = 'id,autor_id,titulo,descripcion,video_url,tipo,publicado,audiencia_iglesia,roles_destino,ministerios_destino,lideres_ministerio,serie_titulo,serie_episodio,published_at,updated_at,vida_audiencia'
 
 export function adaptarLegado(m: MensajeSemanal): MensajeConAudiencia {
   return { ...m, origen: 'legado', tipo: 'mensaje', serieTitulo: null, serieEpisodio: null, audienciaIglesia: true,
@@ -56,6 +58,7 @@ export function desdeVideoDirigido(row: Record<string, unknown>): MensajeConAudi
     videoUrl: video.url, publicado: row.publicado === true,
     fecha: typeof row.published_at === 'string' ? row.published_at : null,
     revision: typeof row.updated_at === 'string' ? row.updated_at : '',
+    vidaAudiencia: (row.vida_audiencia as AudienciaSedes | null) || null,
     origen: 'dirigido',
     tipo: TIPO_DEVOCIONAL_IDS.has(row.tipo as TipoDevocional) ? row.tipo as TipoDevocional : 'mensaje',
     serieTitulo: typeof row.serie_titulo === 'string' ? row.serie_titulo : null,

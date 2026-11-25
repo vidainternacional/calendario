@@ -6,6 +6,8 @@ import { Loader2 } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
+import DestinatariosSelector from '@/components/sedes/DestinatariosSelector'
+
 export default function NuevoAvisoForm({ ministerioId }: { ministerioId: string }) {
   const actionWithId = crearAviso.bind(null, ministerioId)
   const [state, action, pending] = useActionState(actionWithId, undefined)
@@ -71,6 +73,7 @@ export default function NuevoAvisoForm({ ministerioId }: { ministerioId: string 
         />
       </div>
 
+      <DestinatariosSelector defaultMinisterio={ministerioId} />
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">
         <Link
           href={`/ministerios/${ministerioId}/avisos`}

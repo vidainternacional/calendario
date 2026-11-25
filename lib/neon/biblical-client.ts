@@ -19,7 +19,8 @@ async function readNeon(target: Target, spec: ReadSpec): Promise<PageResult> {
   const { query, params } = compileRead(spec, target)
   // Una transacción de solo lectura impide mutaciones incluso con una credencial privilegiada.
   const response = await fetch(`https://${hostname}/sql`, {
-    method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(25000),
+    // Solo contenido editorial aprobado; la autorización de cuenta se comprueba antes de cada lectura.
+    method: 'POST', cache: 'force-cache', next: { revalidate: 300 }, signal: AbortSignal.timeout(25000),
     headers: {
       'Content-Type': 'application/json', 'Neon-Connection-String': uri,
       'Neon-Array-Mode': 'true', 'Neon-Raw-Text-Output': 'true',

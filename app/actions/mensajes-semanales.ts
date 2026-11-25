@@ -5,6 +5,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { contextoPastoral } from '@/lib/auth/permisos'
 import { esMensajeSemanal, youtubeVideo } from '@/lib/estudios/youtube-link'
 
+import { audienciaDesdeForm } from '@/lib/sedes/audiencias'
+import { validarAudienciaSedes } from '@/lib/sedes/servidor'
+
 type Resultado = { success: boolean; error?: string }
 const uuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)
 
@@ -39,6 +42,8 @@ export async function guardarMensajeSemanal(form: FormData): Promise<Resultado> 
   if (!video) return { success: false, error: 'Pega un enlace HTTPS válido de un video de YouTube.' }
   if (id && (!uuid(id) || !revision)) return { success: false, error: 'Actualiza la página antes de editar este mensaje.' }
 
+  let scoped
+  try { scoped = audienciaDesdeForm(form); if (scoped) await validarAudienciaSedes(db, scoped) } catch (e) { return { success: false, error: e instanceof Error ? e.message : 'Revisa los destinatarios.' } }
   const publicar = form.get('publicar') === 'on'
   let anterior: Record<string, unknown> | null = null
   if (id) {
@@ -49,6 +54,7 @@ export async function guardarMensajeSemanal(form: FormData): Promise<Resultado> 
     anterior = data
   }
   const campos = {
+    ...(scoped ? { vida_audiencia: scoped } : {}),
     titulo, descripcion_publica: descripcion, instrucciones: video.url, audiencia: 'iglesia',
     publicado: publicar, estado: publicar ? 'compartido' : 'borrador',
     published_at: publicar ? (anterior?.published_at || new Date().toISOString()) : null,

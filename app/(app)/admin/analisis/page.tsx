@@ -14,8 +14,10 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import BackButton from '@/components/navigation/BackButton'
+import Link from 'next/link'
 import AiDiagnosticsCard from '@/components/admin/AiDiagnosticsCard'
+import RecuperarFotosButton from '@/components/admin/RecuperarFotosButton'
+import ResourceUsagePanel from '@/components/admin/ResourceUsagePanel'
 
 export const dynamic = 'force-dynamic'
 
@@ -128,7 +130,7 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-[430px] bg-[#f4f5f9] pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+6.5rem)] sm:max-w-4xl sm:pt-14" style={{ width: 'calc(100% - 64px)', paddingLeft: 0, paddingRight: 0 }}>
-      <div className="mb-8"><BackButton /></div>
+      <nav className="mb-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"><Link href="/admin" className="inline-flex min-h-11 items-center">← Administración</Link><Link href="/admin/fotos" className="inline-flex min-h-11 items-center underline">Recuperar fotos</Link><Link href="/admin/sedes" className="inline-flex min-h-11 items-center underline">Sedes y mensajería</Link></nav>
 
       <header className="mb-8">
         <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-500">Comportamiento y operación</p>
@@ -136,6 +138,8 @@ export default async function AdminAnalyticsPage() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Una vista visual del uso real de VIDA durante los últimos 30 días.</p>
       </header>
 
+      {currentProfile?.rol === 'administrador' ? <RecuperarFotosButton /> : null}
+      {currentProfile?.rol === 'administrador' ? <ResourceUsagePanel /> : null}
       <section className="overflow-hidden rounded-[28px] bg-[linear-gradient(145deg,#17132e,#392681_55%,#6b4cff)] p-5 text-white shadow-[0_16px_40px_rgba(67,43,153,0.22)]">
         <div className="flex items-start justify-between gap-4">
           <div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/55">Actividad total</p><p className="mt-2 text-4xl font-extrabold tracking-[-0.05em]">{totalInteractions}</p><p className="mt-1 text-xs text-white/60">interacciones registradas</p></div>

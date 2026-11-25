@@ -32,6 +32,12 @@ import InstallBanner from '@/components/pwa/InstallBanner'
 import ShineSweep from '@/components/ui/ShineSweep'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import UserAvatar from '@/components/comunidad/UserAvatar'
+import SedesVisiblesSelector from '@/components/inicio/SedesVisiblesSelector'
+import { useMisSedes } from '@/lib/sedes/useMisSedes'
+
+import InvitacionesServicio from '@/components/inicio/InvitacionesServicio'
+
+import { nombreMinisterioConSede } from '@/lib/sedes/nombre-ministerio'
 
 type InicioData = {
   profile: any | null
@@ -73,6 +79,8 @@ function eventStatus(estado?: string | null) {
 }
 
 export default function InicioClient({ userId, email }: InicioClientProps) {
+  const { seleccion: sedesSeleccionadas } = useMisSedes(userId)
+  const sedesKey = [...sedesSeleccionadas.visibles].sort().join(',')
   const [data, setData] = useState<InicioData | null>(() =>
     readUserCache<InicioData>(userId, CACHE_SCOPE),
   )
@@ -104,7 +112,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
           (supabase as any).rpc('get_next_visible_calendar_item'),
           supabase
             .from('ministerio_miembros')
-            .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario )')
+            .select('ministerio_id, es_lider, ministerios ( nombre, emoji, color_primario, vida_ministerio_sedes(vida_sedes(nombre)) )')
             .eq('profile_id', userId),
           (supabase as any).rpc('get_visible_pastoral_packages'),
         ])
@@ -115,7 +123,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         const puedeVerTodoAvisos = role === 'pastor' || role === 'administrador'
 
         let publicacionesQuery = supabase
-          .from('publicaciones')
+          .rpc('vida_avisos_inicio' as never)
           .select(`
             id,
             titulo,
@@ -130,7 +138,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
 
         if (!puedeVerTodoAvisos) {
           publicacionesQuery = publicacionesQuery.or(
-            `ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
+            `vida_audiencia.not.is.null,ministerio_id.is.null,ministerio_id.in.(${ministerioIds.length > 0 ? ministerioIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
           )
         }
 
@@ -157,7 +165,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, sedesKey])
 
   useEffect(() => {
     if (!avisosPreviewOpen) return
@@ -309,7 +317,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
         <header className="mb-5 flex items-center justify-between gap-4 sm:mb-6">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-[0.02em] text-slate-500">{todayLabel}</p>
-            <h1 className="mt-1 truncate text-[26px] font-bold leading-tight tracking-[-0.035em] text-[#171923]">
+            <h1 className="mt-1 break-words text-[22px] font-bold leading-tight tracking-[-0.035em] text-[#171923] sm:text-[26px]">
               {greetingFor(clock)}, {firstName}
             </h1>
             {isRefreshing && (
@@ -320,13 +328,17 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
             )}
           </div>
 
+          <div className="flex shrink-0 items-start gap-2">
+            <SedesVisiblesSelector userId={userId} />
           <UserAvatar
             nombre={nombre}
             avatarUrl={profile?.avatar_url}
             size="lg"
             className="shadow-[0_8px_20px_rgba(79,70,229,0.22)] ring-4 ring-white/80"
           />
+          </div>
         </header>
+      <InvitacionesServicio userId={userId} />
 
         <VideosMinisterialesPendientes />
         <PushReminder userId={userId} />
@@ -416,7 +428,7 @@ export default function InicioClient({ userId, email }: InicioClientProps) {
               membresias={membresias.map((m: any) => ({
                 ministerio_id: m.ministerio_id,
                 es_lider: !!m.es_lider,
-                nombre: m.ministerios?.nombre ?? 'Ministerio',
+                nombre: nombreMinisterioConSede(m.ministerios),
                 emoji: m.ministerios?.emoji ?? '⛪',
                 color: m.ministerios?.color_primario ?? '#5B3DF5',
               }))}

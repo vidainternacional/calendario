@@ -20,7 +20,7 @@ for (const method of ['select', 'eq', 'in', 'is', 'like', 'range', 'order', 'lim
 }
 const op = (q, name, field) => q.ops.find(v => v[0] === name && (field === undefined || v[1] === field))
 function database(resolver, calls) {
-  return { from: table => new Query(table, resolver, calls), rpc: name => new Query('rpc:' + name, resolver, calls) }
+  return { from: table => new Query(table, resolver, calls), rpc: (name,args) => { const query=new Query('rpc:' + name, resolver, calls);query.args=args;return query } }
 }
 function form(extra = {}) {
   const f = new FormData()
@@ -38,6 +38,8 @@ function actions({ role = 'pastor', status = 'activo', user = { id: actor }, exi
     return { data: existing?.profile_id === owner ? existing : null, error: null }
   }, calls)
   const mod = cargarModulo('app/actions/mensajes-semanales.ts', {
+    '@/lib/sedes/audiencias': cargarModulo('lib/sedes/audiencias.ts'),
+    '@/lib/sedes/servidor': { validarAudienciaSedes: async () => { throw new Error('La audiencia histórica no usa RPC multisede') } },
     'next/cache': { revalidatePath: p => refreshed.push(p) },
     '@/lib/auth/permisos': { contextoPastoral: async () => ({ supabase: db, user, error: null }) },
     '@/lib/estudios/youtube-link': youtube,
@@ -124,8 +126,8 @@ function reader({ user = { id: actor }, rpcError = false, rows = [row()], visibl
   const db = database(q => {
     if (q.table === 'profiles') return { data: { rol: 'servidor', estado_cuenta: 'activo' }, error: null }
     if (q.table.startsWith('rpc:')) {
-      const range = op(q, 'range')
-      return { data: visible.slice(range[1], range[2] + 1).map(id => ({ id })), error: rpcError ? { message: 'falló' } : null }
+      assert.equal(q.table,'rpc:vida_mensajes_legado_visibles')
+      return { data: rows.filter(r=>visible.includes(r.id)&&r.publicado&&r.audiencia==='iglesia').slice(0,q.args.p_tope), error: rpcError ? { message: 'falló' } : null }
     }
     return { data: [], error: null }
   }, calls)
@@ -155,24 +157,22 @@ test('sin sesión o sin autorización del RPC no se inicia ninguna lectura admin
   assert.equal(c.count(), 0)
 })
 
-test('la lectura pública se limita a IDs autorizados y vuelve a filtrar borradores y audiencia', async () => {
+test('la lectura usa la proyección autorizada del RPC sin volver a leer filas con service role', async () => {
   const a = reader({ rows: [row({ notas_privadas: 'SECRETO' })] })
   const result = await a.mod.cargarMensajesSemanales()
   assert.equal(result.mensajes.length, 1)
   assert.equal(result.puedePublicar, false)
   assert.equal(JSON.stringify(result).includes('SECRETO'), false)
-  const q = a.calls.find(q => q.table === 'pastoral_paquetes')
-  assert.equal(JSON.stringify(op(q, 'in', 'id')[2]), JSON.stringify([id]))
-  assert.equal(op(q, 'eq', 'publicado')[2], true)
-  assert.equal(op(q, 'eq', 'audiencia')[2], 'iglesia')
-  assert.equal(op(q, 'select')[1].includes('notas_privadas'), false)
+  assert.equal(a.count(),0)
+  assert.equal(a.calls.some(q=>q.table==='pastoral_paquetes'),false)
+  assert.ok(a.calls.some(q=>q.table==='rpc:vida_mensajes_legado_visibles'&&q.args.p_tope===13))
   const b = reader({ rows: [row({ publicado: false })] })
   assert.equal((await b.mod.cargarMensajesSemanales()).mensajes.length, 0)
   const c = reader({ rows: [row({ audiencia: 'lideres' })] })
   assert.equal((await c.mod.cargarMensajesSemanales()).mensajes.length, 0)
 })
 
-test('combina lotes autorizados y pagina cronológicamente sin repetir mensajes', async () => {
+test('pagina la proyección autorizada cronológicamente sin repetir mensajes', async () => {
   const rows = Array.from({ length: 105 }, (_, i) => row({
     id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
     titulo: `Mensaje ${i}`, published_at: new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString(),
@@ -187,5 +187,7 @@ test('combina lotes autorizados y pagina cronológicamente sin repetir mensajes'
   assert.equal(second.mensajes[0].titulo, 'Mensaje 92')
   assert.equal(first.haySiguiente, true)
   assert.equal(new Set([...first.mensajes, ...second.mensajes].map(m => m.id)).size, 24)
-  for (const q of a.calls.filter(q => q.table === 'pastoral_paquetes')) assert.ok(op(q, 'in', 'id')[2].length <= 100)
+  assert.equal(a.count(),0)
+  assert.equal(a.calls.some(q=>q.table==='pastoral_paquetes'),false)
+  assert.deepEqual(a.calls.filter(q=>q.table.startsWith('rpc:')).map(q=>q.args.p_tope),[13,25])
 })

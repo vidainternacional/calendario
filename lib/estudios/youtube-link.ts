@@ -1,3 +1,5 @@
+import type { AudienciaSedes } from '@/lib/sedes/audiencias'
+
 /** Acepta videos de YouTube; no resuelve páginas ni descarga archivos externos. */
 export function youtubeVideo(value: string): { id: string; url: string; embed: string } | null {
   try {
@@ -18,6 +20,7 @@ export function youtubeVideo(value: string): { id: string; url: string; embed: s
 }
 
 export type MensajeSemanal = {
+  vidaAudiencia?: AudienciaSedes | null
   id: string
   titulo: string
   descripcion: string
@@ -37,6 +40,7 @@ export function esMensajeSemanal(row: Record<string, unknown>): boolean {
 export function mensajeDesdeFila(row: Record<string, unknown>): MensajeSemanal | null {
   if (!esMensajeSemanal(row) || typeof row.id !== 'string') return null
   return {
+    vidaAudiencia: (row.vida_audiencia as AudienciaSedes | null) || null,
     id: row.id, titulo: String(row.titulo ?? ''), descripcion: String(row.descripcion_publica ?? ''),
     videoUrl: String(row.instrucciones), publicado: row.publicado === true,
     fecha: typeof row.published_at === 'string' ? row.published_at : null,

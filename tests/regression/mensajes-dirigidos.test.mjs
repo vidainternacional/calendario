@@ -58,6 +58,8 @@ function setup(options={}) {
   const avisos=[]
   const db={from: table=>new Query(table,calls,opts)}
   const actions=cargarModulo('app/actions/mensajes-dirigidos.ts',{
+    '@/lib/sedes/audiencias': cargarModulo('lib/sedes/audiencias.ts'),
+    '@/lib/sedes/servidor': { validarAudienciaSedes: async () => { throw new Error('La audiencia histórica no usa RPC multisede') } },
     'next/cache': { revalidatePath: path=>refreshed.push(path) },
     '@/lib/estudios/notificar-mensaje-dirigido': { notificarMensajeDirigido: async (...args) => { avisos.push(args); return 'Aviso preparado.' } },
     '@/lib/auth/permisos': { contextoPastoral: async()=>({ supabase:db,user:opts.user===null?null:{id:actor},error:null }) },
@@ -77,6 +79,21 @@ test('sin marcar Publicar, el mensaje se guarda como borrador de su autor',async
   assert.equal(payload.published_at,null)
   assert.equal(payload.autor_id,actor)
   assert.equal(payload.audiencia_iglesia,false)
+})
+
+test('una selección multisede sin cargar no publica; el recorrido histórico conserva la autoría',async()=>{
+  const bloqueado=setup()
+  const pendiente=makeForm({publicar:true,iglesia:true})
+  pendiente.set('vida_sedes_requeridas','1')
+  assert.equal((await bloqueado.actions.guardarMensajeDirigido(pendiente)).success,false)
+  assert.equal(bloqueado.calls.some(q=>op(q,'insert')),false)
+  const historico=setup()
+  const habitual=makeForm({publicar:true,iglesia:true})
+  habitual.set('vida_sedes_requeridas','0')
+  assert.equal((await historico.actions.guardarMensajeDirigido(habitual)).success,true)
+  const payload=op(historico.calls.find(q=>op(q,'insert')),'insert')[1]
+  assert.equal(payload.autor_id,actor)
+  assert.equal('vida_audiencia' in payload,false)
 })
 
 test('puede publicar para dos ministerios y pastores sin abrir a toda la congregación',async()=>{

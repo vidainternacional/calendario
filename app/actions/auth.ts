@@ -2,6 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { validarSeleccionSedes } from '@/lib/sedes/modelo'
+import { catalogoRegistroSedes } from '@/lib/sedes/catalogo-registro'
 
 export type AuthState =
   | { error?: string; success?: string }
@@ -71,11 +73,19 @@ export async function signup(
     return { error: 'La contraseña debe tener al menos 8 caracteres.' }
   }
 
+  const seleccion = formData.getAll('congregacion_sede').map(String)
+  const ninguna = formData.get('congregacion_sin_sede') === 'on'
+  let congregacion: string[] | undefined
+  if (seleccion.length || ninguna) {
+    try { congregacion = validarSeleccionSedes(ninguna ? [] : seleccion, true) } catch { return { error: 'Revisa la congregación seleccionada.' } }
+    const catalogo = await catalogoRegistroSedes()
+    if (congregacion.some(id => !catalogo.some(s => s.id === id))) return { error: 'Una sede ya no está disponible. Actualiza la página.' }
+  }
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { nombre } },
+    options: { data: { nombre, ...(congregacion ? { vida_congregacion_inicial: congregacion } : {}) } },
   })
 
   if (error) {

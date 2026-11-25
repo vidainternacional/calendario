@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 
+import { sesionSedes } from '@/lib/sedes/servidor'
+
 type AccesoEquipo = {
   userId: string
   puedeProgramar: boolean
@@ -101,7 +103,10 @@ export async function obtenerDatosEquipoServicio(ministerioId: string, eventoId:
     admin.from('evento_asignaciones').select('id,profile_id,capacidad_id,estado,ministerio_id').eq('evento_id', eventoId).eq('ministerio_id', ministerioId),
   ])
 
-  const profileIds = (membresiasRows as any[]).map((row: any) => String(row.profile_id))
+  const { data: invitados = [], error: invitadosError } = await admin.from('vida_evento_invitados').select('profile_id').eq('evento_id', eventoId).eq('ministerio_id', ministerioId).eq('activo', true)
+  if (invitadosError) fail('No se pudieron comprobar los invitados de este servicio.')
+  const invitadosIds = new Set<string>((invitados as { profile_id: string }[]).map(row => row.profile_id))
+  const profileIds = Array.from(new Set([...(membresiasRows as { profile_id: string }[]).map(row => String(row.profile_id)), ...invitadosIds]))
   if (profileIds.length === 0) return { funciones: [], miembros: [], asignaciones: [] }
 
   const [{ data: perfiles = [] }, { data: disponibilidad = [] }] = await Promise.all([
@@ -121,8 +126,9 @@ export async function obtenerDatosEquipoServicio(ministerioId: string, eventoId:
     .map((row: any) => ({
       id: String(row.id),
       nombre_completo: String(row.nombre_completo || 'Integrante'),
+      invitado: invitadosIds.has(String(row.id)),
       avatar_url: row.avatar_url || null,
-      capacidades: (capacidadesPorPersona.get(String(row.id)) || []).filter((id) => funcionesActivas.has(id)),
+      capacidades: invitadosIds.has(String(row.id)) ? [...funcionesActivas] : (capacidadesPorPersona.get(String(row.id)) || []).filter((id) => funcionesActivas.has(id)),
     }))
 
   const miembrosIds = new Set(miembros.map((row) => row.id))
@@ -254,6 +260,10 @@ export async function cambiarDisponibilidadFuncionMiembro(ministerioId: string, 
 }
 
 export async function asignarFuncionEquipoMinisterial(ministerioId: string, eventoId: string, formData: FormData) {
+  const { db } = await sesionSedes()
+  const { data: invitado, error: invitadoError } = await db.rpc('vida_asignar_invitado', { p_evento: eventoId, p_ministerio: ministerioId, p_profile: String(formData.get('profile_id') || ''), p_capacidad: String(formData.get('capacidad_id') || '') })
+  if (invitadoError) fail('No se pudieron comprobar la invitación y sus permisos.')
+  if (invitado === true) { revalidar(ministerioId); return }
   const profileId = String(formData.get('profile_id') || '')
   const capacidadId = String(formData.get('capacidad_id') || '')
   if (!profileId || !capacidadId) fail('Selecciona una persona y una función válidas.')
