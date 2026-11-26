@@ -30,6 +30,9 @@ import { readStudyScripture } from '@/lib/estudios/study-scripture'
 import { esPreguntaBiblica } from '@/lib/estudios/biblical-question-evidence'
 import { responderPreguntaBiblica } from '@/lib/estudios/biblical-question'
 import type { BiblicalQuestionAnswer } from '@/lib/estudios/biblical-question-types'
+import { reuseSavedStudy, saveStudy } from '@/lib/estudios/study-history'
+import type { StudyHistoryReceipt } from '@/lib/estudios/study-history-types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -39,7 +42,7 @@ import {
 
 export type EstudioResultado = EstudioResultadoValidado
 
-export type EstudioState =
+export type EstudioState = (
   | { status: 'idle' }
   | {
       status: 'success'
@@ -65,6 +68,7 @@ export type EstudioState =
   | { status: 'place'; query: string; place: LugarBiblicoBusqueda }
   | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[]; suggestionKind?: 'related' }
   | { status: 'error'; error: string }
+) & { history?: StudyHistoryReceipt; historyWarning?: string }
 
 function unirSecciones(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).filter(Boolean).join('\n\n')
@@ -186,7 +190,7 @@ async function buscarConcordanciasDesdeContexto(bundle: BiblicalContextBundle) {
     .slice(0, 8)
 }
 
-export async function analizarPasaje(
+async function resolverConsulta(
   _prev: EstudioState,
   formData: FormData
 ): Promise<EstudioState> {
@@ -337,6 +341,26 @@ export async function analizarPasaje(
     status: 'error',
     error: `No encontramos un tema aprobado suficientemente relacionado con “${query}”. Pruebe con otra forma de expresarlo o use una referencia bíblica concreta.`,
   }
+}
+
+export async function analizarPasaje(prev: EstudioState, formData: FormData): Promise<EstudioState> {
+  const raw = formData.get('pasaje')
+  if (typeof raw !== 'string') return { status: 'error', error: 'Escriba una consulta de texto.' }
+  const query = raw.trim()
+  if (!query || query.length > 500) return resolverConsulta(prev, formData)
+  const db = await createClient()
+  const { data: { user } } = await db.auth.getUser()
+  if (!user) return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
+  const requested = String(formData.get('translation_id') ?? '').trim()
+  const translation = /^[a-z0-9_-]{2,80}$/i.test(requested) ? requested : 'spa_r09'
+  const session = db as unknown as SupabaseClient
+  const saved = await reuseSavedStudy(session, user.id, query, translation).catch(() => ({ status: 'unavailable' as const }))
+  if (saved.status === 'found') return saved.state
+  if (saved.status === 'unavailable' && esPreguntaBiblica(query)) {
+    return { status: 'error', error: 'No pudimos comprobar tus respuestas guardadas. Intenta de nuevo; no enviamos esta consulta a la IA.' }
+  }
+  const result = await resolverConsulta(prev, formData)
+  return saveStudy(session, user.id, query, translation, result)
 }
 
 export async function obtenerHistorial() { return obtenerHistorialBase() }

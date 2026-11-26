@@ -80,7 +80,7 @@ test('No lee textos sin sesión ni escribe datos o añade fuentes',async()=>{
 })
 
 function action(e){return cargarModulo('app/actions/estudio-interno.ts',{
-'@/lib/supabase/server':{createClient:async()=>e.db},'@/lib/estudios/biblical-question-evidence':{esPreguntaBiblica:()=>false},'@/lib/estudios/biblical-question':{},'@/lib/estudios/internal-study':{obtenerEstudioInterno:()=>null},
+'@/lib/estudios/study-history':{reuseSavedStudy:async()=>({status:'missing'}),saveStudy:async(_db,_owner,_query,_translation,state)=>state},'@/lib/supabase/server':{createClient:async()=>e.db},'@/lib/estudios/biblical-question-evidence':{esPreguntaBiblica:()=>false},'@/lib/estudios/biblical-question':{},'@/lib/estudios/internal-study':{obtenerEstudioInterno:()=>null},
 '@/lib/estudios/biblical-concordance':{...e.concordance,buscarConcordanciasParaReferencia:async()=>({results:[]})},
 '@/lib/estudios/biblical-place-search':{buscarLugarBiblico:async()=>null},'@/lib/estudios/biblical-search-assist':{asistirTemaBiblico:async()=>null},
 '@/lib/estudios/biblical-text-search':e.textual,

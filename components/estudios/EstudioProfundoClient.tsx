@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Check,
   ChevronDown,
-  Clock,
   Copy,
   Download,
   Edit3,
@@ -23,9 +22,9 @@ import {
 } from 'lucide-react'
 import { mostrarToast } from '@/lib/ui/toast'
 import BiblicalQuestionAnswer from '@/components/estudios/BiblicalQuestionAnswer'
+import StudyHistory from '@/components/estudios/StudyHistory'
 import {
   analizarPasaje,
-  obtenerHistorial,
   obtenerNota,
   guardarNota,
   type EstudioResultado,
@@ -143,11 +142,13 @@ export default function EstudioProfundoClient({
   initialPasaje?: string
   initialTab?: Tab
 }) {
-  const [state, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
+  const [actionState, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
+  const [restoredState, setRestoredState] = useState<EstudioState | null>(null)
+  const [historyBusy, setHistoryBusy] = useState(false)
+  const state = restoredState ?? actionState
   const [queryInput, setQueryInput] = useState(initialPasaje)
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [historial, setHistorial] = useState<{ pasaje: string; created_at: string }[]>([])
   const [nota, setNota] = useState('')
   const [notaGuardando, setNotaGuardando] = useState(false)
   const [notaSuccess, setNotaSuccess] = useState(false)
@@ -244,16 +245,11 @@ export default function EstudioProfundoClient({
   const relatedConcordances = isStudyResult ? (state.relatedConcordances ?? []) : []
 
   useEffect(() => {
-    obtenerHistorial().then(setHistorial).catch(() => setHistorial([]))
-  }, [])
-
-  useEffect(() => {
     if (state.status !== 'success') return
     setActiveTab(state.kind)
     if (state.kind === 'study') {
       setActiveSection(null)
       setEstudioGuardado(false)
-      obtenerHistorial().then(setHistorial).catch(() => {})
       obtenerNota(state.pasaje).then(value => setNota(value || '')).catch(() => setNota(''))
     }
   }, [state])
@@ -407,7 +403,7 @@ export default function EstudioProfundoClient({
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
-      <form id="estudio-form" action={formAction} onSubmit={event => setQueryInput((event.currentTarget.elements.namedItem('pasaje') as HTMLInputElement).value)} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <form id="estudio-form" action={formAction} onSubmit={event => { if (historyBusy) { event.preventDefault(); return }; setRestoredState(null); setQueryInput((event.currentTarget.elements.namedItem('pasaje') as HTMLInputElement).value) }} className="rounded-3xl border border-slate-200 bg-white p-4 text-slate-900 shadow-sm sm:p-6">
         <div className="mb-4 text-center">
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C0392B]">Centro de Estudio</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">Estudio bíblico y concordancias en una sola herramienta.</p>
@@ -417,14 +413,31 @@ export default function EstudioProfundoClient({
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-            <input type="text" id="pasaje" name="pasaje" required disabled={isPending} placeholder="Ejemplo: Juan 3:16, Patmos, Daniel 2 o perdón" className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50" value={queryInput} onChange={event => setQueryInput(event.target.value)} />
+            <input
+              type="text"
+              id="pasaje"
+              name="pasaje"
+              required
+              disabled={isPending || historyBusy}
+              placeholder="Ejemplo: Juan 3:16, Patmos, Daniel 2 o perdón"
+              className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50"
+              value={queryInput}
+              onChange={event => setQueryInput(event.target.value)}
+            />
           </div>
-          <button type="submit" disabled={isPending} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-7 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#a93226] disabled:cursor-not-allowed disabled:opacity-70">
+          <button
+            type="submit"
+            disabled={isPending || historyBusy}
+            className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-7 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#a93226] disabled:cursor-not-allowed disabled:opacity-70">
             {isPending ? <><RefreshCw className="h-4 w-4 animate-spin" /> Buscando…</> : <><Search className="h-4 w-4" /> Buscar</>}
           </button>
         </div>
         {state.status === 'error' && <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />{state.error}</p>}
       </form>
+
+      <StudyHistory revision={state.history?.id} disabled={isPending} onBusy={setHistoryBusy} onRestore={saved => { setRestoredState(saved); if ('query' in saved) setQueryInput(saved.query) }} />
+      {state.history?.reused && <p className="px-1 text-xs leading-5 text-slate-500" role="status">Respuesta guardada · {new Date(state.history.createdAt).toLocaleDateString('es')} · No se volvió a consultar la IA.</p>}
+      {state.historyWarning && <p className="px-1 text-sm leading-6 text-amber-800" role="status">{state.historyWarning}</p>}
 
       {isPending && (
         <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm" aria-live="polite">
@@ -669,26 +682,6 @@ export default function EstudioProfundoClient({
             </article>
           ))}
         </section>
-      )}
-
-      {historial.length > 0 && state.status === 'idle' && !isPending && activeTab === 'study' && (
-        <details className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-slate-400" /> Estudios recientes</span>
-            <span className="text-xs font-semibold text-slate-400">{historial.length}</span>
-          </summary>
-          <div className="grid gap-2 border-t border-slate-100 p-4 sm:grid-cols-2">
-            {historial.map((item, index) => (
-              <button key={`${item.pasaje}-${index}`} type="button" onClick={() => loadQuery(item.pasaje)} className="flex min-h-14 items-center gap-3 rounded-2xl p-3 text-left hover:bg-slate-50">
-                <FileText className="h-4 w-4 shrink-0 text-[#C0392B]" aria-hidden="true" />
-                <span className="min-w-0">
-                  <span className="block break-words text-sm font-semibold text-slate-800">{item.pasaje}</span>
-                  <span className="mt-1 block text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </details>
       )}
 
       {mensaje && <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-4 right-4 z-[90] mx-auto max-w-sm rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white shadow-xl" role="status">{mensaje}</div>}

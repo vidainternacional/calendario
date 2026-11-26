@@ -37,7 +37,7 @@ test('sin sesión, fuente aprobada o lectura disponible no inventa resultados',a
 function action({user=true,direct=[],text=[],suggestions=null,place=null,study=null}={}){
  const reads=[],db={auth:{getUser:async()=>({data:{user:user?{id:'actor'}:null}})}}
  const api=cargarModulo('app/actions/estudio-interno.ts',{
-  '@/lib/supabase/server':{createClient:async()=>db},
+  '@/lib/estudios/study-history':{reuseSavedStudy:async()=>({status:'missing'}),saveStudy:async(_db,_owner,_query,_translation,state)=>state},'@/lib/supabase/server':{createClient:async()=>db},
   '@/lib/estudios/biblical-question-evidence':{esPreguntaBiblica:()=>false},'@/lib/estudios/biblical-question':{},
   '@/lib/estudios/study-scripture':{readStudyScripture:async()=>({status:'not_reference'})},
   '@/lib/estudios/internal-study':{obtenerEstudioInterno:()=>study},

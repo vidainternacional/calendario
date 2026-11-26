@@ -1,5 +1,19 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Historial privado — 26-11-2026 · preparado localmente, SQL no autorizado todavía
+
+El usuario solicita historial de búsquedas/respuestas para reabrirlas sin volver a generar IA. Implementación, SQL exacto y reversión en `docs/ESTUDIO_HISTORIAL_2026-11-26.md` y `docs/sql/estudio-historial-privado.sql`. No se aplicó SQL remoto ni se publicó esta parte. No decir que ya aparece en el Preview.
+
+Causa comprobada: listado antiguo solo leía diez registros del generador anterior; el nuevo flujo no guardaba respuestas, y el clic repetía la búsqueda. La tabla antigua tiene lectura compartida para cuentas activas y cero filas en el recuento de solo lectura; no reutilizarla para preguntas privadas ni modificar su política sin otro alcance.
+
+Preparada una tabla privada separada con cuatro políticas de propietario/cuenta activa, índice y unicidad. Permite snapshot completo, apertura sin generador, reutilización de consulta idéntica por usuario/traducción/versión, paginación y eliminación propia confirmada. Las notas no se modifican. Las consultas anteriores no guardadas no se reconstruyen como respuestas originales. Puede accederse con la misma cuenta en otro dispositivo una vez autorizado y aplicado.
+
+Pruebas locales: doce casos nuevos de aplicación, doce comprobaciones PostgreSQL/PGlite de RLS con cuentas ficticias y 97 regresiones relacionadas correctas; TypeScript/build y lint nuevos correctos. Conjunto general798:789pasan/9fallos anteriores. Chromium320/390/820 con React real/controlado confirma historial cerrado, cero llamadas de generación al abrir, paginación, error sin perder respuesta y eliminación propia. No son pruebas autenticadas en la base real.
+
+Siguiente paso obligatorio: presentar y obtener aprobación para crear únicamente esta tabla y sus cuatro políticas, conforme al maestro. La implementación y propuesta ya están listas para esa revisión. No publicar antes porque falta la tabla. No hacer merge/producción ni alterar RLS/datos existentes. Reversión conserva filas, retirando código y revocando solo acceso a la tabla nueva. Este checkpoint permanece local hasta el siguiente paso autorizado.
+
+Continuidad de la explicación con IA: el usuario aportó su conexión existente y señaló que su proyecto es gratuito; la activación de revisión anterior se realizó sin cambios de facturación ni producción. Su comentario positivo precede a esta solicitud de historial. Los apartados anteriores de conexión ausente describen un estado histórico; no volver a pedir otra clave ni publicar detalles de secretos en metadatos externos.
+
 ## Respuestas directas con evidencia — 26-11-2026 · implementadas, conexión IA pendiente
 
 El usuario aprueba «0k hazlo» tras el ejemplo de «Qué es el bautismo y qué dice la Biblia al respecto». Nuevo bloque general de preguntas con explicación breve y citas de RV1909 comprobadas; no respuesta fija de bautismo ni cambio doctrinal. Alcance y preparación/reversión en `docs/ESTUDIO_RESPUESTAS_2026-11-26.md`.
