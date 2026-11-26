@@ -1,5 +1,17 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Recibo de revisión —26-11-2026
+
+Preview final funcional READY: dpl_BB3mEVKXULacT2HvUS4ZN2Uj6UGv, commit6a4fd9a74457d4f26fd111ce7bb1c9684bfd1bb6. Mismo alias confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/estudios/profundo?q=odio&auto=1 . Catálogo /signup comprobado con ccvida(SantaAna/Chalchuapa). Logs iniciales error/fatal sin resultados. Esto no certifica consulta autenticada ni validación visual del usuario.
+
+Revisión local:28regresiones, build/TypeScript correctos, módulo nuevo sin errores lint y3recorridos Chromium320/390/820 reales con acciones simuladas. La lectura editorial real confirma1Juan2:9 y3:15 con aborrece. No se cambia corpus/RLS/notas ni producción.
+
+Entorno: se reasociaron por metadatos5overrides Preview de la rama ya integrada PR321 a esta rama, sin leer/reemplazar valores ni tocar production. Nueva rama requiere ccvida y ambosNeon; la compilación automática inicial sin esos overrides no se usó ni se asignó al alias. Los deployments anteriores conservan su snapshot; no volver a desplegar la rama anterior sin revisar configuración. Reversión:devolver gitBranch anterior de esas5variables. Se entrega únicamente el Preview final correcto.
+
+Producción sigue en PR321/commit6db8d0cd, deployment dpl_EhqV3yachPhDSDZcyi6zaNm2QyHX. PR322 quedaDraft, sin merge/autorización de producción de este cambio. Cambio aplicado y compilado; falta validación visual tuya. La bitácora local posterior conserva este recibo; se incluirá con el próximo bloque para no crear otro despliegue solo por documentación.
+
+---
+
 ### Entorno de revisión —26-11-2026
 
 PR322 Draft. La primera compilación automática de la rama nueva no recibió los overrides de ccvida/Neon y no se asignó al alias habitual ni se entregó para revisar. Se intentó cancelarla, pero ya no aceptó cancelación. Antes de entregar se configura el entorno correcto y se sustituye por la compilación final del mismo código.
