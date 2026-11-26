@@ -1,5 +1,13 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Preservación de comportamiento —instrucción expresa del26-11-2026
+
+El usuario exige que no se repita una modificación sustancial mediante una regla que no pidió. Norma explícita añadida a AGENTS: mejora técnica/corrección no autoriza reglas nuevas; cambios observables fuera del pedido requieren antes/después y aprobación específica. No inferir aprobación de una regla por aprobación general de PR/Preview. Los arreglos solicitados y decisiones técnicas normales siguen autorizados sin repetir permisos. IA conserva consulta original y alternativas optativas; pruebas no legitiman cambios silenciosos.
+
+Auditoría histórica solo lectura: dbaa2616 agregó el mapa odio→Amor/Perdón/Paz el17-08-2026;6b4217ef abrió sus concordancias automáticamente. Ambos se integraron en PR284. El PR registra validación general del bloque; no se encontró autorización específica de esa sustitución ni está aquí la conversación original de agosto. No afirmar categóricamente que fue autorizado o que se hizo sin permiso. No atribuir autoría material al usuario por el commit firmado con su cuenta.
+
+Este refuerzo es documental: no cambia nuevamente código, base de datos ni producción, no genera otro Preview y no modifica el maestro. Commit local en la rama de PR322; norma y recibo también en la descripción remota del PR. Incorporar estos documentos con el siguiente cambio autorizado; no afirmar que ya están en main. Producción sigue en PR321; búsqueda corregida sigue solo en Preview de PR322 pendiente de aprobación/publicación.
+
 ## Recibo de revisión —26-11-2026
 
 Preview final funcional READY: dpl_BB3mEVKXULacT2HvUS4ZN2Uj6UGv, commit6a4fd9a74457d4f26fd111ce7bb1c9684bfd1bb6. Mismo alias confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/estudios/profundo?q=odio&auto=1 . Catálogo /signup comprobado con ccvida(SantaAna/Chalchuapa). Logs iniciales error/fatal sin resultados. Esto no certifica consulta autenticada ni validación visual del usuario.
