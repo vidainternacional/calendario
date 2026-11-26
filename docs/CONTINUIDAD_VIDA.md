@@ -1,5 +1,17 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Estudios: búsqueda fiel al tema —26-11-2026 · en revisión
+
+Solicitud: al consultar odio aparecían amor/perdón. Causa reproducida en código y datos: no hay alias/tema aprobado de odio/aborrecer en el índice de NeonB; el mapa controlado sugería Amor/Perdón/Paz y la action abría sus concordancias automáticamente, mostrándolas como interpretación de la consulta original. Esta sustitución queda retirada. La IA tampoco convierte su primary directamente en respuesta: ofrece opciones explícitas.
+
+La lectura adicional busca palabras concretas en RV1909 aprobada/licenciada, solo si no hay concordancia directa; para odio/odiar consulta las formas reales odio/aborrecer. Conserva consulta, texto y referencia exactos, identifica coincidencias textuales y permite abrir contexto. No genera versículos ni crea datos editoriales. Consultas acotadas80filas, hasta12pasajes, fuentes/libros aprobados, autorización normal antes de leer; misma caché editorial y permisos. No hay SQL/RLS/datos modificados ni modelos/planes nuevos. Consultas compuestas no se convierten arbitrariamente en una palabra.
+
+Verificación editorial real solo lectura: NeonB contiene1Juan2:9,2:11,3:13,3:15 y4:20 con aborrece. Pruebas locales:28regresiones correctas, incluyendo7casos nuevos del recorrido real con dependencias controladas(autorización, fuente, falta de datos, conservar tema, no abrir relacionados, referentes/lugares, primaryIA); build/TypeScript correctos. Chromium320/390/820 con componenteReact real y acciones simuladas: tema original, enlace exacto, selección explícita y sin desborde. No es prueba autenticada remota. Lint del módulo nuevo correcto;3avisos heredados en archivos existentes no se tocaron.
+
+Rama agent/estudio-busqueda-fiel-20261126 desde main6db8d0cd; no mezclar los commits documentales locales de la rama de sedes. Preparar un único Preview y reutilizar el alias habitual. No merge/producción nuevos sin autorización de este cambio. Maestro/Bloque4/FASEI intactos. Recibo final del Preview se registra en el PR.
+
+Continuidad de sedes anterior: PR321 ya MERGED y producción6db8d0cd READY(dpl_EhqV3yachPhDSDZcyi6zaNm2QyHX), dominio habitual verificado. Recibo remoto en PR321; todavía falta clasificación administrativa y pruebas con personas. No reaplicar migraciones/fotos ni activar exigir_sedes_legacy mientras no se configure ese alcance.
+
 ## Publicación solicitada —25-11-2026 · en verificación
 
 El usuario autoriza expresamente pasar a producción sin afectar lo que funciona y solicita un texto sencillo para un líder. Esta aprobación incluye integrar PR321/publicar main, pero no asignar sedes/pastores automáticamente ni modificar el maestro. No afirmar que solo faltan pruebas: también falta clasificación administrativa real.

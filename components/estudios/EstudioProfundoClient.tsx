@@ -434,8 +434,8 @@ export default function EstudioProfundoClient({
       {!isPending && state.status === 'suggestions' && (
         <section className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-sm">
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700">Ayuda de búsqueda</p>
-          <h2 className="mt-1 text-lg font-bold text-slate-950">¿Quisiste decir alguna de estas opciones?</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600">Encontramos coincidencias cercanas para “{state.query}”. Elige una para continuar sin perder el flujo del estudio.</p>
+          <h2 className="mt-1 text-lg font-bold text-slate-950">{state.suggestionKind === 'related' ? 'Otros temas relacionados' : '¿Quisiste decir alguna de estas opciones?'}</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">{state.suggestionKind === 'related' ? `No encontramos una coincidencia directa suficiente para “${state.query}”. Estas opciones son complementarias y no sustituyen lo que preguntaste. Puedes abrir una si deseas explorarla.` : `Encontramos coincidencias cercanas para “${state.query}”. Elige una para continuar sin perder el flujo del estudio.`}</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {state.suggestions.map(suggestion => (
               <button key={`${suggestion.label}-${suggestion.query}`} type="button" onClick={() => loadQuery(suggestion.query)} className="min-h-14 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-left shadow-sm transition hover:bg-amber-50">
@@ -638,12 +638,12 @@ export default function EstudioProfundoClient({
       {!isPending && isConcordanceResult && activeTab === 'concordance' && (
         <section className="space-y-4" aria-label="Resultados de concordancias">
           <header className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-[0_0_28px_rgba(245,158,11,0.14)]">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Concordancias internas</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">{state.resultSource === 'text' ? 'Pasajes del texto bíblico' : 'Concordancias internas'}</p>
             <h2 className="mt-1 text-xl font-bold text-slate-950">Resultados para “{state.query}”</h2>
             {state.interpretedFrom && state.interpretedAs && (
               <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">Interpretamos “{state.interpretedFrom}” como <strong>{state.interpretedAs}</strong>.</p>
             )}
-            <p className="mt-2 text-sm leading-6 text-slate-600">Temas y pasajes ordenados según coincidencias revisadas en la biblioteca.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{state.resultSource === 'text' ? 'Coincidencias en Reina-Valera 1909. Abre cada pasaje para estudiar su contexto; no son una respuesta generada por IA.' : 'Temas y pasajes ordenados según coincidencias revisadas en la biblioteca.'}</p>
           </header>
           {state.results.map(result => (
             <article key={result.termId} className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">

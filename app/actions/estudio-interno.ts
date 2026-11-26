@@ -13,6 +13,7 @@ import {
   type SugerenciaLugarBiblico,
 } from '@/lib/estudios/biblical-place-search'
 import { asistirTemaBiblico } from '@/lib/estudios/biblical-search-assist'
+import { buscarTextoBiblico } from '@/lib/estudios/biblical-text-search'
 import {
   getInternalBiblicalContext,
   type BiblicalContextBundle,
@@ -54,9 +55,10 @@ export type EstudioState =
       results: ConcordanciaResultado[]
       interpretedFrom?: string
       interpretedAs?: string
+      resultSource?: 'text'
     }
   | { status: 'place'; query: string; place: LugarBiblicoBusqueda }
-  | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[] }
+  | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[]; suggestionKind?: 'related' }
   | { status: 'error'; error: string }
 
 function unirSecciones(...values: Array<string | null | undefined>) {
@@ -173,41 +175,6 @@ async function buscarConcordanciasDesdeContexto(bundle: BiblicalContextBundle) {
     .slice(0, 8)
 }
 
-async function resolverConcordanciasSugeridas(suggestions: SugerenciaLugarBiblico[]) {
-  const searches = await Promise.all(
-    suggestions.slice(0, 4).map(suggestion => buscarConcordanciasBiblicas(suggestion.query, 80))
-  )
-  const merged = new Map<string, ConcordanciaResultado>()
-
-  for (const search of searches) {
-    for (const result of search.results) {
-      const previous = merged.get(result.termId)
-      if (!previous) {
-        merged.set(result.termId, { ...result, matches: [...result.matches] })
-        continue
-      }
-
-      const seen = new Set(previous.matches.map(match => `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`))
-      for (const match of result.matches) {
-        const key = `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`
-        if (!seen.has(key) && previous.matches.length < 12) {
-          previous.matches.push(match)
-          seen.add(key)
-        }
-      }
-      previous.score = Math.max(previous.score, result.score)
-    }
-  }
-
-  return {
-    labels: suggestions.slice(0, 4).map(suggestion => suggestion.label),
-    results: Array.from(merged.values())
-      .filter(result => result.matches.length > 0)
-      .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term, 'es'))
-      .slice(0, 8),
-  }
-}
-
 export async function analizarPasaje(
   _prev: EstudioState,
   formData: FormData
@@ -316,6 +283,11 @@ export async function analizarPasaje(
     return { status: 'success', kind: 'concordance', query, results: concordancias.results }
   }
 
+  const texto = await buscarTextoBiblico(query)
+  if (texto.length > 0) {
+    return { status: 'success', kind: 'concordance', query, results: texto, resultSource: 'text' }
+  }
+
   const assistedTopic = await asistirTemaBiblico(query)
   if (assistedTopic?.kind === 'resolved') {
     const corrected = await buscarConcordanciasBiblicas(assistedTopic.query, 80)
@@ -331,18 +303,7 @@ export async function analizarPasaje(
     }
   }
   if (assistedTopic?.kind === 'suggestions') {
-    const related = await resolverConcordanciasSugeridas(assistedTopic.suggestions)
-    if (related.results.length > 0) {
-      return {
-        status: 'success',
-        kind: 'concordance',
-        query,
-        results: related.results,
-        interpretedFrom: query,
-        interpretedAs: related.labels.join(', '),
-      }
-    }
-    return { status: 'suggestions', query, suggestions: assistedTopic.suggestions }
+    return { status: 'suggestions', query, suggestions: assistedTopic.suggestions, suggestionKind: 'related' }
   }
 
   return {
