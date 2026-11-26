@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { mostrarToast } from '@/lib/ui/toast'
+import BiblicalQuestionAnswer from '@/components/estudios/BiblicalQuestionAnswer'
 import {
   analizarPasaje,
   obtenerHistorial,
@@ -640,13 +641,14 @@ export default function EstudioProfundoClient({
       {!isPending && isConcordanceResult && activeTab === 'concordance' && (
         <section className="space-y-4" aria-label="Resultados de concordancias">
           <header className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-[0_0_28px_rgba(245,158,11,0.14)]">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">{state.resultSource === 'text' ? 'Pasajes del texto bíblico' : 'Concordancias internas'}</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">{state.answer ? 'Pregunta bíblica' : state.resultSource === 'text' ? 'Pasajes del texto bíblico' : 'Concordancias internas'}</p>
             <h2 className="mt-1 text-xl font-bold text-slate-950">Resultados para “{state.query}”</h2>
             {state.interpretedFrom && state.interpretedAs && (
               <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">Interpretamos “{state.interpretedFrom}” como <strong>{state.interpretedAs}</strong>.</p>
             )}
-            <p className="mt-2 text-sm leading-6 text-slate-600">{state.resultSource === 'text' ? 'Coincidencias en Reina-Valera 1909. Abre cada pasaje para estudiar su contexto; no son una respuesta generada por IA.' : 'Temas y pasajes ordenados según coincidencias revisadas en la biblioteca.'}</p>
+            {!state.answer && <p className="mt-2 text-sm leading-6 text-slate-600">{state.resultSource === 'text' ? 'Coincidencias en Reina-Valera 1909. Abre cada pasaje para estudiar su contexto; no son una respuesta generada por IA.' : 'Temas y pasajes ordenados según coincidencias revisadas en la biblioteca.'}</p>}
           </header>
+          {state.answer && <BiblicalQuestionAnswer answer={state.answer} />}
           {state.results.map(result => (
             <article key={result.termId} className="overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-sm">
               <header className="border-b border-amber-100 bg-amber-50/40 px-5 py-4 sm:px-6">

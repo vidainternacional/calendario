@@ -1,5 +1,19 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Respuestas directas con evidencia — 26-11-2026 · implementadas, conexión IA pendiente
+
+El usuario aprueba «0k hazlo» tras el ejemplo de «Qué es el bautismo y qué dice la Biblia al respecto». Nuevo bloque general de preguntas con explicación breve y citas de RV1909 comprobadas; no respuesta fija de bautismo ni cambio doctrinal. Alcance y preparación/reversión en `docs/ESTUDIO_RESPUESTAS_2026-11-26.md`.
+
+Código: recuperación de palabras/familias y contexto aprobado, ocho fuentes, citas por ID con enlaces construidos por servidor, explicación primero y fuentes plegadas, concordancias conservadas. Casos sin conexión/error/insuficiencia explícitos; no inventar respuestas ni presentar fixtures como IA real. Se mantienen búsquedas, referencias, notas, permisos y maestro.
+
+**Bloqueo comprobado:** metadatos de Vercel no muestran proveedor IA configurado. La generación queda apagada; el Preview solo puede mostrar pasajes/estado de conexión hasta completar ese requisito. No afirmar que ya responde con un modelo real. No se llamaron servicios facturables ni se crearon secretos o planes.
+
+Conexión separada de otras funciones: `VIDA_BIBLE_QA_API_KEY` como secreto, `VIDA_BIBLE_QA_MODEL` explícito y `VIDA_BIBLE_QA_ENABLED` tras confirmar Free Tier y condiciones. Nueva tarea solo Gemini, sin fallback de pago. Docs oficiales verifican Free Tier para Gemini 3.5 Flash-Lite, con límites y posible uso de consultas/respuestas por Google para mejorar sus productos; informar al propietario antes de activar. No se envían notas ni perfiles, pero sí la pregunta al proveedor. No solicitar claves por chat.
+
+Pruebas de generación con dependencias controladas; quince casos nuevos y recorridos Chromium320/390/820 sobre React real. Conjunto general785:776pasan/9fallos previos, más último caso de aislamiento aprobado por separado. No declarar CI global verde ni prueba autenticada real. Compilación/TypeScript y validaciones exactas se registran con el recibo de PR322. Un único Preview actualizado en el alias habitual; sin merge/producción. Producción sigue separada en main6db8d0cd.
+
+Siguiente paso tras la preparación: el propietario guarda conexión gratuita en Vercel Preview sin compartir la clave; verificar modelo/condiciones y generar una respuesta real antes de afirmar solución integral. El recibo final del despliegue va en PR322 para evitar un segundo deployment documental.
+
 ## Mejora autorizada de Estudios — 26-11-2026 · preparada para Preview
 
 El usuario aprobó «Ok empieza la mejora» después de revisar los fallos, las pruebas permanentes y la validación de citas sin duplicar datos. Alcance ejecutado: búsqueda fiel, referencias completas/existentes y prevención de regresiones. No se añade aprendizaje autónomo, entrenamiento con notas, reportes almacenados, nuevas tablas, modelos ni gastos. Maestro, roles, RLS y producción intactos. Rama/PR siguen siendo `agent/estudio-busqueda-fiel-20261126` / #322 Draft; publicación requiere autorización nueva.

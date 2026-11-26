@@ -38,6 +38,7 @@ function action({user=true,direct=[],text=[],suggestions=null,place=null,study=n
  const reads=[],db={auth:{getUser:async()=>({data:{user:user?{id:'actor'}:null}})}}
  const api=cargarModulo('app/actions/estudio-interno.ts',{
   '@/lib/supabase/server':{createClient:async()=>db},
+  '@/lib/estudios/biblical-question-evidence':{esPreguntaBiblica:()=>false},'@/lib/estudios/biblical-question':{},
   '@/lib/estudios/study-scripture':{readStudyScripture:async()=>({status:'not_reference'})},
   '@/lib/estudios/internal-study':{obtenerEstudioInterno:()=>study},
   '@/lib/estudios/biblical-concordance':{buscarConcordanciasBiblicas:async(q)=>{reads.push(q);return{results:direct}},buscarConcordanciasParaReferencia:async()=>({results:[]})},

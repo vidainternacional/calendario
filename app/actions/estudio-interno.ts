@@ -27,6 +27,9 @@ import {
 } from '@/lib/estudios/biblical-chronology-maps'
 import type { TraduccionEspanolaEstudio } from '@/app/actions/traduccion-espanola-estudio'
 import { readStudyScripture } from '@/lib/estudios/study-scripture'
+import { esPreguntaBiblica } from '@/lib/estudios/biblical-question-evidence'
+import { responderPreguntaBiblica } from '@/lib/estudios/biblical-question'
+import type { BiblicalQuestionAnswer } from '@/lib/estudios/biblical-question-types'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -57,6 +60,7 @@ export type EstudioState =
       interpretedFrom?: string
       interpretedAs?: string
       resultSource?: 'text'
+      answer?: BiblicalQuestionAnswer
     }
   | { status: 'place'; query: string; place: LugarBiblicoBusqueda }
   | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[]; suggestionKind?: 'related' }
@@ -283,6 +287,14 @@ export async function analizarPasaje(
       status: 'error',
       error: `${contexto.reference.book.nameEs} está reconocido dentro del índice completo de 66 libros, pero no existe contenido contextual aprobado para ${contexto.reference.canonicalReference}.`,
     }
+  }
+
+  if (esPreguntaBiblica(query)) {
+    const [answer, concordancias] = await Promise.all([
+      responderPreguntaBiblica(query, user.id),
+      buscarConcordanciasBiblicas(query, 80),
+    ])
+    return { status: 'success', kind: 'concordance', query, results: concordancias.results, answer }
   }
 
   const placeSearch = await buscarLugarBiblico(query)
