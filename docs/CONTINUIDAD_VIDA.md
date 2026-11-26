@@ -1,5 +1,11 @@
 # VIDA Internacional — Bitácora de continuidad
 
+### Entorno de revisión —26-11-2026
+
+PR322 Draft. La primera compilación automática de la rama nueva no recibió los overrides de ccvida/Neon y no se asignó al alias habitual ni se entregó para revisar. Se intentó cancelarla, pero ya no aceptó cancelación. Antes de entregar se configura el entorno correcto y se sustituye por la compilación final del mismo código.
+
+Se reasociaron exclusivamente por metadatos5variables de target Preview desde la rama integrada/cerrada agent/recuperar-fotos-20261124 a agent/estudio-busqueda-fiel-20261126: NEXT_PUBLIC_SUPABASE_URL/ANON_KEY, VIDA_BIBLE_READ_BACKEND y NEON_BIBLE_LEXICON/TEXTS_DATABASE_URL. Valores conservados en Vercel, sin leerlos ni copiarlos a archivos. Producción y otras ramas no se modificaron; deployments anteriores conservan su snapshot. Reversión de esta configuración: devolver gitBranch al anterior en esos mismos5IDs; no cambiar valores. No desplegar nuevamente la rama anterior sin revisar su entorno. El nuevo Preview debe confirmarse por SHA/READY/catálogo ccvida antes de asignar el alias estable. Esta nota viaja en la compilación final; no cambia código funcional.
+
 ## Estudios: búsqueda fiel al tema —26-11-2026 · en revisión
 
 Solicitud: al consultar odio aparecían amor/perdón. Causa reproducida en código y datos: no hay alias/tema aprobado de odio/aborrecer en el índice de NeonB; el mapa controlado sugería Amor/Perdón/Paz y la action abría sus concordancias automáticamente, mostrándolas como interpretación de la consulta original. Esta sustitución queda retirada. La IA tampoco convierte su primary directamente en respuesta: ofrece opciones explícitas.
