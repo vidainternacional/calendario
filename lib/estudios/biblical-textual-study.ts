@@ -359,7 +359,7 @@ export async function getInternalBiblicalTextualStudy(
   rawQuery: string
 ): Promise<BiblicalTextualStudyBundle | null> {
   const reference = await parseInternalBibleReference(rawQuery)
-  if (!reference || reference.verse === null) return null
+  if (!reference || reference.verse === null || reference.endChapter !== undefined) return null
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

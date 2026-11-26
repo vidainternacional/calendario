@@ -1,5 +1,31 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Mejora autorizada de Estudios — 26-11-2026 · preparada para Preview
+
+El usuario aprobó «Ok empieza la mejora» después de revisar los fallos, las pruebas permanentes y la validación de citas sin duplicar datos. Alcance ejecutado: búsqueda fiel, referencias completas/existentes y prevención de regresiones. No se añade aprendizaje autónomo, entrenamiento con notas, reportes almacenados, nuevas tablas, modelos ni gastos. Maestro, roles, RLS y producción intactos. Rama/PR siguen siendo `agent/estudio-busqueda-fiel-20261126` / #322 Draft; publicación requiere autorización nueva.
+
+Antes → después: clamor/ira ya no responden automáticamente con Amor/mentira por subcadenas; preguntas naturales sobre odio alcanzan RV1909; preguntas compuestas o no equivalentes conservan su texto y ofrecen alternativas explícitas. Se conservan los 305 alias aprobados mediante fixture editorial no personal en GitHub. Los errores ortográficos siguen disponibles como sugerencias, sin convertir similitud en equivalencia automática.
+
+Rangos como Juan 3:16-18, con guion normal/largo, Juan 3-4 y Juan 3:36-4:2 conservan extremos y lectura completa paginada. El contexto de varios capítulos reúne sus unidades con títulos. Las capas originales/léxicas continúan siendo por versículo individual y no se etiquetan falsamente con un rango; consultar un versículo conserva esas capas. Juan 3:99 se valida contra RV1909 y no genera un estudio aparente. Avería/fuente no disponible tienen mensaje distinto de cita no encontrada. La consulta escrita se conserva tras responder, también si hubo error. Lectura individual filtra solo los versículos pedidos. No se guardan consultas nuevas.
+
+Verificación: TypeScript y compilación local correctos; 77 pruebas del bloque incluyendo 32 nuevas y comprobación de 305 alias. Conjunto general: 771 pruebas, 762 pasan y 9 fallan; los mismos nueve fallos se reprodujeron sobre HEAD anterior sin estos cambios (33 pruebas de sus archivos: 24 pasan/9 fallan). No declarar CI general verde ni limitar deuda conocida a tres fallos. Nombres y evidencia en auditoría. Chromium 320/390/820, componente React real con acciones/datos controlados: rangos completos, capítulos numerados, panel cerrado inicialmente, error claro con consulta conservada, temas relacionados optativos y sin desborde. No es una sesión real autenticada.
+
+Neon B solo lectura: Juan 3 tiene 36 versículos, Juan 4 tiene 54 y Salmos 23 tiene 6; sin huecos internos de numeración en RV1909 aprobado. Nuevos tests se ejecutan con el glob de regresión ya presente en CI. No se ejecutan modelos ni se alteran datos para probar.
+
+Siguiente paso: un único push/despliegue Preview, comprobar SHA/READY y reasignar el alias de revisión habitual; conservar producción en 6db8d0cd. El recibo exacto posterior se deja en el PR sin generar otro deployment documental. Prueba autenticada y validación visual del usuario pendientes. Reversión: retirar el commit funcional de esta rama; no hay SQL que revertir.
+
+## Auditoría integral de Estudio Bíblico — 26-11-2026
+
+Solicitud: chequeo completo, optimizaciones, facilidad de uso y ventajas/desventajas. Resultado en `docs/AUDITORIA_ESTUDIO_BIBLICO_2026-11-26.md`. Auditoría sin cambios funcionales, sin nuevo Preview ni publicación, sin tocar maestro, corpus, RLS o datos personales. Documentación local pendiente de incorporar al siguiente bloque autorizado; no afirmar que está en main o disponible automáticamente en otra sesión.
+
+Neon B, consultas editoriales de solo lectura: 66 libros, 31,084 textos RV1909, cobertura contextual de 1,189 capítulos, 34 temas y 305 alias aprobados. Se ejecutaron 45 pruebas relacionadas: 45 pasan. Eso no certifica visualmente la aplicación ni resuelve los huecos descubiertos.
+
+Reproducción con módulos reales e índice editorial real, dependencias controladas: `clamor` selecciona Amor; `ira` coincide dentro de mentira y selecciona Palabras y comunicación; la pregunta natural «¿Qué dice la Biblia sobre odiar a alguien?» selecciona Obediencia antes de llegar a la búsqueda textual. **PR #322 corrige la sustitución automática por relacionados, pero su solución no está completa para preguntas naturales**; no publicarlo como arreglo integral. Las ocurrencias de integración fueron fixtures; la existencia de referencias aprobadas en esos temas se comprobó separadamente por agregados de solo lectura.
+
+Otros casos: `Juan 3:16-18` pierde el final; con guion largo no se reconoce; `Juan 3-4` queda Juan 3; `Juan 3:99` se acepta por parser y la acción puede devolver estudio contextual sin versículo. Historial activo consulta la tabla del generador anterior; retorno del cuaderno no incluye consulta original. Analítica dependiente de etiquetas no reconoce la nueva etiqueta textual de PR #322. Ver límites y propuestas precisas en auditoría antes de intervenir. No añadir nuevos criterios de interpretación sin aprobación específica.
+
+Siguiente bloque recomendado: fidelidad de búsqueda, rangos y existencia de referencias; después continuidad y claridad, manteniendo notas, fuentes y diseño. La IA generativa de explicaciones nuevas es una propuesta separada con costes/riesgos, no una función activada por esta revisión. Producción no modificada por la auditoría.
+
 ## Preservación de comportamiento —instrucción expresa del26-11-2026
 
 El usuario exige que no se repita una modificación sustancial mediante una regla que no pidió. Norma explícita añadida a AGENTS: mejora técnica/corrección no autoriza reglas nuevas; cambios observables fuera del pedido requieren antes/después y aprobación específica. No inferir aprobación de una regla por aprobación general de PR/Preview. Los arreglos solicitados y decisiones técnicas normales siguen autorizados sin repetir permisos. IA conserva consulta original y alternativas optativas; pruebas no legitiman cambios silenciosos.

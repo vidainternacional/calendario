@@ -1,0 +1,2047 @@
+{
+  "terms": [
+    {
+      "id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "description": "Lealtad, compañía, consejo, corrección y relaciones sanas.",
+      "canonical_term": "Amistad",
+      "normalized_term": "amistad"
+    },
+    {
+      "id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "description": "Respuesta reverente a Dios mediante vida, oración, canto y obediencia.",
+      "canonical_term": "Adoración",
+      "normalized_term": "adoracion"
+    },
+    {
+      "id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "description": "Amor de Dios, amor al prójimo, entrega, fidelidad y vida comunitaria.",
+      "canonical_term": "Amor",
+      "normalized_term": "amor"
+    },
+    {
+      "id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "description": "Preocupación, temor por el futuro, descanso y confianza en el cuidado de Dios.",
+      "canonical_term": "Ansiedad y preocupación",
+      "normalized_term": "ansiedad y preocupacion"
+    },
+    {
+      "id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "description": "Uso responsable de recursos, generosidad, contentamiento y peligro de la avaricia.",
+      "canonical_term": "Dinero y mayordomía",
+      "normalized_term": "dinero y mayordomia"
+    },
+    {
+      "id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "description": "Pérdida, consuelo, esperanza de resurrección y acompañamiento en el duelo.",
+      "canonical_term": "Duelo y muerte",
+      "normalized_term": "duelo y muerte"
+    },
+    {
+      "id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "description": "Confianza futura en Dios en medio del sufrimiento, la espera y la incertidumbre.",
+      "canonical_term": "Esperanza",
+      "normalized_term": "esperanza"
+    },
+    {
+      "id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "description": "Presencia y obra del Espíritu, guía, consuelo, dones y transformación.",
+      "canonical_term": "Espíritu Santo",
+      "normalized_term": "espiritu santo"
+    },
+    {
+      "id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "description": "Relaciones familiares, crianza, honra, cuidado y vida en el hogar.",
+      "canonical_term": "Familia",
+      "normalized_term": "familia"
+    },
+    {
+      "id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "description": "Confianza en Dios, fidelidad, perseverancia y respuesta humana a su promesa.",
+      "canonical_term": "Fe",
+      "normalized_term": "fe"
+    },
+    {
+      "id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "description": "Agradecimiento a Dios, contentamiento y reconocimiento de sus dones.",
+      "canonical_term": "Gratitud",
+      "normalized_term": "gratitud"
+    },
+    {
+      "id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "description": "Actitud de servicio, dependencia de Dios y renuncia al orgullo.",
+      "canonical_term": "Humildad",
+      "normalized_term": "humildad"
+    },
+    {
+      "id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "description": "Dignidad humana, nueva identidad, llamado y propósito delante de Dios.",
+      "canonical_term": "Identidad y propósito",
+      "normalized_term": "identidad y proposito"
+    },
+    {
+      "id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "description": "Comunidad de creyentes, unidad, adoración, misión y cuidado mutuo.",
+      "canonical_term": "Iglesia y comunidad",
+      "normalized_term": "iglesia y comunidad"
+    },
+    {
+      "id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "description": "Rectitud, defensa del vulnerable, juicio justo y justicia de Dios.",
+      "canonical_term": "Justicia",
+      "normalized_term": "justicia"
+    },
+    {
+      "id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "description": "Servicio, carácter, responsabilidad, autoridad y cuidado de personas.",
+      "canonical_term": "Liderazgo",
+      "normalized_term": "liderazgo"
+    },
+    {
+      "id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "description": "Pacto matrimonial, fidelidad, servicio mutuo y reconciliación conyugal.",
+      "canonical_term": "Matrimonio",
+      "normalized_term": "matrimonio"
+    },
+    {
+      "id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "description": "Temor, seguridad, valor y confianza en la presencia de Dios.",
+      "canonical_term": "Miedo y valentía",
+      "normalized_term": "miedo y valentia"
+    },
+    {
+      "id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "description": "Escuchar y responder a Dios con fidelidad, amor y práctica.",
+      "canonical_term": "Obediencia",
+      "normalized_term": "obediencia"
+    },
+    {
+      "id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "description": "Comunicación con Dios, petición, gratitud, intercesión, perseverancia y confianza.",
+      "canonical_term": "Oración",
+      "normalized_term": "oracion"
+    },
+    {
+      "id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "description": "Uso responsable del habla, verdad, ánimo, chisme y control de la lengua.",
+      "canonical_term": "Palabras y comunicación",
+      "normalized_term": "palabras y comunicacion"
+    },
+    {
+      "id": "f113e653-d3fb-4e63-b8b1-22a99d776f3c",
+      "description": "Imagen bíblica de guía, cuidado, protección y responsabilidad.",
+      "canonical_term": "Pastor",
+      "normalized_term": "pastor"
+    },
+    {
+      "id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "description": "Shalom, reconciliación, descanso interior y paz con Dios y con los demás.",
+      "canonical_term": "Paz",
+      "normalized_term": "paz"
+    },
+    {
+      "id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "description": "Rebelión, culpa, consecuencias, confesión y restauración.",
+      "canonical_term": "Pecado",
+      "normalized_term": "pecado"
+    },
+    {
+      "id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "description": "Perdón divino, arrepentimiento, reconciliación y perdón entre personas.",
+      "canonical_term": "Perdón",
+      "normalized_term": "perdon"
+    },
+    {
+      "id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "description": "Discernimiento, prudencia, conocimiento aplicado y temor de Dios.",
+      "canonical_term": "Sabiduría",
+      "normalized_term": "sabiduria"
+    },
+    {
+      "id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "description": "Liberación del pecado, gracia, fe, vida nueva y reconciliación con Dios.",
+      "canonical_term": "Salvación",
+      "normalized_term": "salvacion"
+    },
+    {
+      "id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "description": "Enfermedad, cuidado, oración, medicina, sufrimiento y esperanza.",
+      "canonical_term": "Sanidad y enfermedad",
+      "normalized_term": "sanidad y enfermedad"
+    },
+    {
+      "id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "description": "Servicio humilde a Dios y al prójimo, dones y responsabilidad comunitaria.",
+      "canonical_term": "Servicio",
+      "normalized_term": "servicio"
+    },
+    {
+      "id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "description": "Cuerpo, fidelidad, deseo, pureza, matrimonio y dignidad.",
+      "canonical_term": "Sexualidad y pureza",
+      "normalized_term": "sexualidad y pureza"
+    },
+    {
+      "id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "description": "Dolor, prueba, perseverancia, lamento y presencia de Dios.",
+      "canonical_term": "Sufrimiento",
+      "normalized_term": "sufrimiento"
+    },
+    {
+      "id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "description": "Uso sabio del tiempo, prioridades, descanso y brevedad de la vida.",
+      "canonical_term": "Tiempo y prioridades",
+      "normalized_term": "tiempo y prioridades"
+    },
+    {
+      "id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "description": "Trabajo diligente, servicio, propósito, descanso y justicia laboral.",
+      "canonical_term": "Trabajo y vocación",
+      "normalized_term": "trabajo y vocacion"
+    },
+    {
+      "id": "a8832ccd-3cb8-487a-a517-5bb4637bd8e8",
+      "description": "Vida recibida de Dios y definida por la relación con Él.",
+      "canonical_term": "Vida eterna",
+      "normalized_term": "vida eterna"
+    }
+  ],
+  "aliases": [
+    {
+      "alias": "Dios escucha mis oraciones",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios escucha mis oraciones"
+    },
+    {
+      "alias": "qué es el amor",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "que es el amor"
+    },
+    {
+      "alias": "Dios me cuida",
+      "term_id": "f113e653-d3fb-4e63-b8b1-22a99d776f3c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios me cuida"
+    },
+    {
+      "alias": "buen pastor",
+      "term_id": "f113e653-d3fb-4e63-b8b1-22a99d776f3c",
+      "alias_kind": "synonym",
+      "normalized_alias": "buen pastor"
+    },
+    {
+      "alias": "cómo tener vida eterna",
+      "term_id": "a8832ccd-3cb8-487a-a517-5bb4637bd8e8",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como tener vida eterna"
+    },
+    {
+      "alias": "salvación",
+      "term_id": "a8832ccd-3cb8-487a-a517-5bb4637bd8e8",
+      "alias_kind": "synonym",
+      "normalized_alias": "salvacion"
+    },
+    {
+      "alias": "orar",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "synonym",
+      "normalized_alias": "orar"
+    },
+    {
+      "alias": "oración",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "synonym",
+      "normalized_alias": "oracion"
+    },
+    {
+      "alias": "plegaria",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "synonym",
+      "normalized_alias": "plegaria"
+    },
+    {
+      "alias": "rezar",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "synonym",
+      "normalized_alias": "rezar"
+    },
+    {
+      "alias": "hablar con Dios",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "hablar con dios"
+    },
+    {
+      "alias": "pedir a Dios",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "pedir a dios"
+    },
+    {
+      "alias": "interceder",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "synonym",
+      "normalized_alias": "interceder"
+    },
+    {
+      "alias": "intercesión",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "synonym",
+      "normalized_alias": "intercesion"
+    },
+    {
+      "alias": "acción de gracias",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "accion de gracias"
+    },
+    {
+      "alias": "dar gracias",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dar gracias"
+    },
+    {
+      "alias": "cómo orar",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como orar"
+    },
+    {
+      "alias": "Dios escucha",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios escucha"
+    },
+    {
+      "alias": "Dios responde",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios responde"
+    },
+    {
+      "alias": "vida de oración",
+      "term_id": "eda0230d-d3a8-480f-bafb-2e0a08a44b4d",
+      "alias_kind": "question_intent",
+      "normalized_alias": "vida de oracion"
+    },
+    {
+      "alias": "amar",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "synonym",
+      "normalized_alias": "amar"
+    },
+    {
+      "alias": "amor de Dios",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amor de dios"
+    },
+    {
+      "alias": "amor al prójimo",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amor al projimo"
+    },
+    {
+      "alias": "caridad",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "synonym",
+      "normalized_alias": "caridad"
+    },
+    {
+      "alias": "afecto",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "synonym",
+      "normalized_alias": "afecto"
+    },
+    {
+      "alias": "compasión",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "synonym",
+      "normalized_alias": "compasion"
+    },
+    {
+      "alias": "cómo amar",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como amar"
+    },
+    {
+      "alias": "Dios me ama",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios me ama"
+    },
+    {
+      "alias": "amor verdadero",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amor verdadero"
+    },
+    {
+      "alias": "amor cristiano",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amor cristiano"
+    },
+    {
+      "alias": "amar enemigos",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amar enemigos"
+    },
+    {
+      "alias": "amor incondicional",
+      "term_id": "7a257b88-29d3-4419-a721-1b23e7589aa7",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amor incondicional"
+    },
+    {
+      "alias": "creer",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "synonym",
+      "normalized_alias": "creer"
+    },
+    {
+      "alias": "confianza en Dios",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "confianza en dios"
+    },
+    {
+      "alias": "tener fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "tener fe"
+    },
+    {
+      "alias": "falta de fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "falta de fe"
+    },
+    {
+      "alias": "aumentar mi fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "aumentar mi fe"
+    },
+    {
+      "alias": "duda",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "synonym",
+      "normalized_alias": "duda"
+    },
+    {
+      "alias": "dudas de fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dudas de fe"
+    },
+    {
+      "alias": "fidelidad",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "synonym",
+      "normalized_alias": "fidelidad"
+    },
+    {
+      "alias": "caminar por fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "caminar por fe"
+    },
+    {
+      "alias": "vivir por fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "vivir por fe"
+    },
+    {
+      "alias": "qué es la fe",
+      "term_id": "2e8bbb27-a3f7-4d89-907c-42c0ab614dda",
+      "alias_kind": "question_intent",
+      "normalized_alias": "que es la fe"
+    },
+    {
+      "alias": "esperar en Dios",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "question_intent",
+      "normalized_alias": "esperar en dios"
+    },
+    {
+      "alias": "esperanza cristiana",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "question_intent",
+      "normalized_alias": "esperanza cristiana"
+    },
+    {
+      "alias": "no perder esperanza",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "question_intent",
+      "normalized_alias": "no perder esperanza"
+    },
+    {
+      "alias": "futuro",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "synonym",
+      "normalized_alias": "futuro"
+    },
+    {
+      "alias": "ánimo",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "synonym",
+      "normalized_alias": "animo"
+    },
+    {
+      "alias": "desánimo",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "synonym",
+      "normalized_alias": "desanimo"
+    },
+    {
+      "alias": "Dios tiene propósito",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios tiene proposito"
+    },
+    {
+      "alias": "esperanza en tiempos difíciles",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "question_intent",
+      "normalized_alias": "esperanza en tiempos dificiles"
+    },
+    {
+      "alias": "seguir adelante",
+      "term_id": "c6f3422c-328a-4c17-ab69-520ea26ccf97",
+      "alias_kind": "question_intent",
+      "normalized_alias": "seguir adelante"
+    },
+    {
+      "alias": "perdonar",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "synonym",
+      "normalized_alias": "perdonar"
+    },
+    {
+      "alias": "perdón de Dios",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "question_intent",
+      "normalized_alias": "perdon de dios"
+    },
+    {
+      "alias": "cómo perdonar",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como perdonar"
+    },
+    {
+      "alias": "no puedo perdonar",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "question_intent",
+      "normalized_alias": "no puedo perdonar"
+    },
+    {
+      "alias": "culpa",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "synonym",
+      "normalized_alias": "culpa"
+    },
+    {
+      "alias": "reconciliación",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "synonym",
+      "normalized_alias": "reconciliacion"
+    },
+    {
+      "alias": "pedir perdón",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "question_intent",
+      "normalized_alias": "pedir perdon"
+    },
+    {
+      "alias": "arrepentirse",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "synonym",
+      "normalized_alias": "arrepentirse"
+    },
+    {
+      "alias": "misericordia",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "synonym",
+      "normalized_alias": "misericordia"
+    },
+    {
+      "alias": "borrar pecados",
+      "term_id": "a5ecddd6-d957-4d71-b2cf-b4c7f954a093",
+      "alias_kind": "question_intent",
+      "normalized_alias": "borrar pecados"
+    },
+    {
+      "alias": "ser salvo",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ser salvo"
+    },
+    {
+      "alias": "cómo salvarme",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como salvarme"
+    },
+    {
+      "alias": "salvación eterna",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "salvacion eterna"
+    },
+    {
+      "alias": "gracia",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "synonym",
+      "normalized_alias": "gracia"
+    },
+    {
+      "alias": "nuevo nacimiento",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "nuevo nacimiento"
+    },
+    {
+      "alias": "nacer de nuevo",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "nacer de nuevo"
+    },
+    {
+      "alias": "redención",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "synonym",
+      "normalized_alias": "redencion"
+    },
+    {
+      "alias": "vida eterna",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "vida eterna"
+    },
+    {
+      "alias": "evangelio",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "synonym",
+      "normalized_alias": "evangelio"
+    },
+    {
+      "alias": "aceptar a Jesús",
+      "term_id": "fd6d524a-8819-4dde-bc8e-28574eb70987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "aceptar a jesus"
+    },
+    {
+      "alias": "ansiedad",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "synonym",
+      "normalized_alias": "ansiedad"
+    },
+    {
+      "alias": "preocupación",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "synonym",
+      "normalized_alias": "preocupacion"
+    },
+    {
+      "alias": "preocupado",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "synonym",
+      "normalized_alias": "preocupado"
+    },
+    {
+      "alias": "estrés",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "synonym",
+      "normalized_alias": "estres"
+    },
+    {
+      "alias": "no puedo dormir",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "question_intent",
+      "normalized_alias": "no puedo dormir"
+    },
+    {
+      "alias": "miedo al futuro",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "question_intent",
+      "normalized_alias": "miedo al futuro"
+    },
+    {
+      "alias": "ataque de ansiedad",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ataque de ansiedad"
+    },
+    {
+      "alias": "cómo dejar de preocuparme",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como dejar de preocuparme"
+    },
+    {
+      "alias": "Dios cuida de mí",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios cuida de mi"
+    },
+    {
+      "alias": "descansar en Dios",
+      "term_id": "d1df66a8-99d6-41dd-a723-508c4f85c184",
+      "alias_kind": "question_intent",
+      "normalized_alias": "descansar en dios"
+    },
+    {
+      "alias": "miedo",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "synonym",
+      "normalized_alias": "miedo"
+    },
+    {
+      "alias": "temor",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "synonym",
+      "normalized_alias": "temor"
+    },
+    {
+      "alias": "pánico",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "synonym",
+      "normalized_alias": "panico"
+    },
+    {
+      "alias": "valentía",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "synonym",
+      "normalized_alias": "valentia"
+    },
+    {
+      "alias": "ser valiente",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ser valiente"
+    },
+    {
+      "alias": "no tengas miedo",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "no tengas miedo"
+    },
+    {
+      "alias": "Dios está conmigo",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios esta conmigo"
+    },
+    {
+      "alias": "inseguridad",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "synonym",
+      "normalized_alias": "inseguridad"
+    },
+    {
+      "alias": "cómo vencer el miedo",
+      "term_id": "0e535bf9-486b-4192-a922-1ec04d73e0a4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como vencer el miedo"
+    },
+    {
+      "alias": "paz interior",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "question_intent",
+      "normalized_alias": "paz interior"
+    },
+    {
+      "alias": "shalom",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "transliteration",
+      "normalized_alias": "shalom"
+    },
+    {
+      "alias": "tranquilidad",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "synonym",
+      "normalized_alias": "tranquilidad"
+    },
+    {
+      "alias": "descanso",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "synonym",
+      "normalized_alias": "descanso"
+    },
+    {
+      "alias": "paz de Dios",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "question_intent",
+      "normalized_alias": "paz de dios"
+    },
+    {
+      "alias": "cómo tener paz",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como tener paz"
+    },
+    {
+      "alias": "conflicto",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "synonym",
+      "normalized_alias": "conflicto"
+    },
+    {
+      "alias": "reconciliarse",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "synonym",
+      "normalized_alias": "reconciliarse"
+    },
+    {
+      "alias": "vivir en paz",
+      "term_id": "59a39aac-eccd-4959-a0fe-8f3137a1e033",
+      "alias_kind": "question_intent",
+      "normalized_alias": "vivir en paz"
+    },
+    {
+      "alias": "sabiduría",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "synonym",
+      "normalized_alias": "sabiduria"
+    },
+    {
+      "alias": "discernimiento",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "synonym",
+      "normalized_alias": "discernimiento"
+    },
+    {
+      "alias": "tomar decisiones",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "question_intent",
+      "normalized_alias": "tomar decisiones"
+    },
+    {
+      "alias": "qué debo hacer",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "question_intent",
+      "normalized_alias": "que debo hacer"
+    },
+    {
+      "alias": "prudencia",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "synonym",
+      "normalized_alias": "prudencia"
+    },
+    {
+      "alias": "consejo",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "synonym",
+      "normalized_alias": "consejo"
+    },
+    {
+      "alias": "pedir sabiduría",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "question_intent",
+      "normalized_alias": "pedir sabiduria"
+    },
+    {
+      "alias": "decisión difícil",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "question_intent",
+      "normalized_alias": "decision dificil"
+    },
+    {
+      "alias": "dirección de Dios",
+      "term_id": "ce10e7ba-af37-4402-9ee0-d41f78e98847",
+      "alias_kind": "question_intent",
+      "normalized_alias": "direccion de dios"
+    },
+    {
+      "alias": "pecado",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "synonym",
+      "normalized_alias": "pecado"
+    },
+    {
+      "alias": "tentación",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "synonym",
+      "normalized_alias": "tentacion"
+    },
+    {
+      "alias": "caer en pecado",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "caer en pecado"
+    },
+    {
+      "alias": "culpa",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "synonym",
+      "normalized_alias": "culpa"
+    },
+    {
+      "alias": "desobediencia",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "synonym",
+      "normalized_alias": "desobediencia"
+    },
+    {
+      "alias": "vicio",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "synonym",
+      "normalized_alias": "vicio"
+    },
+    {
+      "alias": "cómo vencer el pecado",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "como vencer el pecado"
+    },
+    {
+      "alias": "confesar pecados",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "confesar pecados"
+    },
+    {
+      "alias": "arrepentimiento",
+      "term_id": "169b9bae-6044-4ff8-a231-c362377e418c",
+      "alias_kind": "synonym",
+      "normalized_alias": "arrepentimiento"
+    },
+    {
+      "alias": "Espíritu Santo",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "synonym",
+      "normalized_alias": "espiritu santo"
+    },
+    {
+      "alias": "ruaj",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "transliteration",
+      "normalized_alias": "ruaj"
+    },
+    {
+      "alias": "Espíritu de Dios",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "espiritu de dios"
+    },
+    {
+      "alias": "llenura del Espíritu",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "llenura del espiritu"
+    },
+    {
+      "alias": "dones espirituales",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dones espirituales"
+    },
+    {
+      "alias": "fruto del Espíritu",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "fruto del espiritu"
+    },
+    {
+      "alias": "guía del Espíritu",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "guia del espiritu"
+    },
+    {
+      "alias": "Consolador",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "synonym",
+      "normalized_alias": "consolador"
+    },
+    {
+      "alias": "bautismo en el Espíritu",
+      "term_id": "dd5158bf-5842-403b-9e93-981e720e60a6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "bautismo en el espiritu"
+    },
+    {
+      "alias": "familia",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "synonym",
+      "normalized_alias": "familia"
+    },
+    {
+      "alias": "hogar",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "synonym",
+      "normalized_alias": "hogar"
+    },
+    {
+      "alias": "padres",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "synonym",
+      "normalized_alias": "padres"
+    },
+    {
+      "alias": "hijos",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "synonym",
+      "normalized_alias": "hijos"
+    },
+    {
+      "alias": "crianza",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "synonym",
+      "normalized_alias": "crianza"
+    },
+    {
+      "alias": "matrimonio",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "synonym",
+      "normalized_alias": "matrimonio"
+    },
+    {
+      "alias": "problemas familiares",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "question_intent",
+      "normalized_alias": "problemas familiares"
+    },
+    {
+      "alias": "honrar padres",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "question_intent",
+      "normalized_alias": "honrar padres"
+    },
+    {
+      "alias": "educar hijos",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "question_intent",
+      "normalized_alias": "educar hijos"
+    },
+    {
+      "alias": "familia cristiana",
+      "term_id": "a4d1af69-5228-4107-8c81-9ca5dcc79850",
+      "alias_kind": "question_intent",
+      "normalized_alias": "familia cristiana"
+    },
+    {
+      "alias": "matrimonio",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "matrimonio"
+    },
+    {
+      "alias": "esposo",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "esposo"
+    },
+    {
+      "alias": "esposa",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "esposa"
+    },
+    {
+      "alias": "pareja",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "pareja"
+    },
+    {
+      "alias": "divorcio",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "divorcio"
+    },
+    {
+      "alias": "infidelidad",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "infidelidad"
+    },
+    {
+      "alias": "problemas de pareja",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "question_intent",
+      "normalized_alias": "problemas de pareja"
+    },
+    {
+      "alias": "amor matrimonial",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amor matrimonial"
+    },
+    {
+      "alias": "casarse",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "synonym",
+      "normalized_alias": "casarse"
+    },
+    {
+      "alias": "relación conyugal",
+      "term_id": "232dd32f-8d31-4352-9715-d234a2d605ea",
+      "alias_kind": "question_intent",
+      "normalized_alias": "relacion conyugal"
+    },
+    {
+      "alias": "amistad",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "synonym",
+      "normalized_alias": "amistad"
+    },
+    {
+      "alias": "amigos",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "synonym",
+      "normalized_alias": "amigos"
+    },
+    {
+      "alias": "mejores amigos",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "question_intent",
+      "normalized_alias": "mejores amigos"
+    },
+    {
+      "alias": "amistad tóxica",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "question_intent",
+      "normalized_alias": "amistad toxica"
+    },
+    {
+      "alias": "soledad",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "synonym",
+      "normalized_alias": "soledad"
+    },
+    {
+      "alias": "compañerismo",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "synonym",
+      "normalized_alias": "companerismo"
+    },
+    {
+      "alias": "buen amigo",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "question_intent",
+      "normalized_alias": "buen amigo"
+    },
+    {
+      "alias": "traición de un amigo",
+      "term_id": "e9fb4696-b7e8-4820-9f5d-8493810f4094",
+      "alias_kind": "question_intent",
+      "normalized_alias": "traicion de un amigo"
+    },
+    {
+      "alias": "dinero",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "dinero"
+    },
+    {
+      "alias": "finanzas",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "finanzas"
+    },
+    {
+      "alias": "deudas",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "deudas"
+    },
+    {
+      "alias": "riqueza",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "riqueza"
+    },
+    {
+      "alias": "pobreza",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "pobreza"
+    },
+    {
+      "alias": "ofrenda",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "ofrenda"
+    },
+    {
+      "alias": "diezmo",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "diezmo"
+    },
+    {
+      "alias": "generosidad",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "generosidad"
+    },
+    {
+      "alias": "avaricia",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "avaricia"
+    },
+    {
+      "alias": "administrar dinero",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "question_intent",
+      "normalized_alias": "administrar dinero"
+    },
+    {
+      "alias": "mayordomía",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "mayordomia"
+    },
+    {
+      "alias": "prosperidad",
+      "term_id": "e7d56925-3e7b-4eed-bd42-969195764800",
+      "alias_kind": "synonym",
+      "normalized_alias": "prosperidad"
+    },
+    {
+      "alias": "trabajo",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "trabajo"
+    },
+    {
+      "alias": "empleo",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "empleo"
+    },
+    {
+      "alias": "vocación",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "vocacion"
+    },
+    {
+      "alias": "negocio",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "negocio"
+    },
+    {
+      "alias": "desempleo",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "desempleo"
+    },
+    {
+      "alias": "jefe",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "jefe"
+    },
+    {
+      "alias": "empleado",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "synonym",
+      "normalized_alias": "empleado"
+    },
+    {
+      "alias": "trabajar para Dios",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "trabajar para dios"
+    },
+    {
+      "alias": "propósito profesional",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "proposito profesional"
+    },
+    {
+      "alias": "éxito laboral",
+      "term_id": "9506bf59-b274-46a0-b161-2f2a609b074c",
+      "alias_kind": "question_intent",
+      "normalized_alias": "exito laboral"
+    },
+    {
+      "alias": "justicia",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "synonym",
+      "normalized_alias": "justicia"
+    },
+    {
+      "alias": "injusticia",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "synonym",
+      "normalized_alias": "injusticia"
+    },
+    {
+      "alias": "corrupción",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "synonym",
+      "normalized_alias": "corrupcion"
+    },
+    {
+      "alias": "opresión",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "synonym",
+      "normalized_alias": "opresion"
+    },
+    {
+      "alias": "derechos",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "synonym",
+      "normalized_alias": "derechos"
+    },
+    {
+      "alias": "defender al pobre",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "defender al pobre"
+    },
+    {
+      "alias": "juicio de Dios",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "juicio de dios"
+    },
+    {
+      "alias": "hacer lo correcto",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "hacer lo correcto"
+    },
+    {
+      "alias": "equidad",
+      "term_id": "4b5a9569-f7f0-4f01-805a-30090210e9a5",
+      "alias_kind": "synonym",
+      "normalized_alias": "equidad"
+    },
+    {
+      "alias": "servir",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "synonym",
+      "normalized_alias": "servir"
+    },
+    {
+      "alias": "servicio",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "synonym",
+      "normalized_alias": "servicio"
+    },
+    {
+      "alias": "ministerio",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "synonym",
+      "normalized_alias": "ministerio"
+    },
+    {
+      "alias": "ayudar a otros",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ayudar a otros"
+    },
+    {
+      "alias": "voluntariado",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "synonym",
+      "normalized_alias": "voluntariado"
+    },
+    {
+      "alias": "siervo",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "synonym",
+      "normalized_alias": "siervo"
+    },
+    {
+      "alias": "dones para servir",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dones para servir"
+    },
+    {
+      "alias": "liderazgo de servicio",
+      "term_id": "c8dec7f0-1be7-4359-8971-f084224d79f1",
+      "alias_kind": "question_intent",
+      "normalized_alias": "liderazgo de servicio"
+    },
+    {
+      "alias": "iglesia",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "synonym",
+      "normalized_alias": "iglesia"
+    },
+    {
+      "alias": "congregación",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "synonym",
+      "normalized_alias": "congregacion"
+    },
+    {
+      "alias": "comunidad cristiana",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "question_intent",
+      "normalized_alias": "comunidad cristiana"
+    },
+    {
+      "alias": "cuerpo de Cristo",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "question_intent",
+      "normalized_alias": "cuerpo de cristo"
+    },
+    {
+      "alias": "reunirse",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "synonym",
+      "normalized_alias": "reunirse"
+    },
+    {
+      "alias": "comunión",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "synonym",
+      "normalized_alias": "comunion"
+    },
+    {
+      "alias": "unidad de la iglesia",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "question_intent",
+      "normalized_alias": "unidad de la iglesia"
+    },
+    {
+      "alias": "problemas en la iglesia",
+      "term_id": "5f74b02f-3d32-481f-91ef-7386c6bfe19e",
+      "alias_kind": "question_intent",
+      "normalized_alias": "problemas en la iglesia"
+    },
+    {
+      "alias": "adoración",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "synonym",
+      "normalized_alias": "adoracion"
+    },
+    {
+      "alias": "alabanza",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "synonym",
+      "normalized_alias": "alabanza"
+    },
+    {
+      "alias": "adorar",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "synonym",
+      "normalized_alias": "adorar"
+    },
+    {
+      "alias": "cantar a Dios",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "cantar a dios"
+    },
+    {
+      "alias": "culto",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "synonym",
+      "normalized_alias": "culto"
+    },
+    {
+      "alias": "música cristiana",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "musica cristiana"
+    },
+    {
+      "alias": "adoración en espíritu y verdad",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "adoracion en espiritu y verdad"
+    },
+    {
+      "alias": "dar gloria a Dios",
+      "term_id": "f847bcae-6351-46fe-a1db-cffa2f0ef987",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dar gloria a dios"
+    },
+    {
+      "alias": "sanidad",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "synonym",
+      "normalized_alias": "sanidad"
+    },
+    {
+      "alias": "enfermedad",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "synonym",
+      "normalized_alias": "enfermedad"
+    },
+    {
+      "alias": "salud",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "synonym",
+      "normalized_alias": "salud"
+    },
+    {
+      "alias": "milagro de sanidad",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "milagro de sanidad"
+    },
+    {
+      "alias": "orar por enfermos",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "orar por enfermos"
+    },
+    {
+      "alias": "dolor físico",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dolor fisico"
+    },
+    {
+      "alias": "Dios sana",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios sana"
+    },
+    {
+      "alias": "medicina",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "synonym",
+      "normalized_alias": "medicina"
+    },
+    {
+      "alias": "estar enfermo",
+      "term_id": "db5eb1fb-6d5f-4099-ba17-0eda4e2b1fe3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "estar enfermo"
+    },
+    {
+      "alias": "sufrimiento",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "synonym",
+      "normalized_alias": "sufrimiento"
+    },
+    {
+      "alias": "dolor",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "synonym",
+      "normalized_alias": "dolor"
+    },
+    {
+      "alias": "prueba",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "synonym",
+      "normalized_alias": "prueba"
+    },
+    {
+      "alias": "por qué sufro",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "question_intent",
+      "normalized_alias": "por que sufro"
+    },
+    {
+      "alias": "Dios permite el dolor",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios permite el dolor"
+    },
+    {
+      "alias": "tribulación",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "synonym",
+      "normalized_alias": "tribulacion"
+    },
+    {
+      "alias": "aflicción",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "synonym",
+      "normalized_alias": "afliccion"
+    },
+    {
+      "alias": "momento difícil",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "question_intent",
+      "normalized_alias": "momento dificil"
+    },
+    {
+      "alias": "lamento",
+      "term_id": "8d02cda7-9c18-42ac-85dc-510a45b7e9db",
+      "alias_kind": "synonym",
+      "normalized_alias": "lamento"
+    },
+    {
+      "alias": "duelo",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "synonym",
+      "normalized_alias": "duelo"
+    },
+    {
+      "alias": "muerte",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "synonym",
+      "normalized_alias": "muerte"
+    },
+    {
+      "alias": "perdí a un ser querido",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "perdi a un ser querido"
+    },
+    {
+      "alias": "luto",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "synonym",
+      "normalized_alias": "luto"
+    },
+    {
+      "alias": "consuelo por muerte",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "consuelo por muerte"
+    },
+    {
+      "alias": "funeral",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "synonym",
+      "normalized_alias": "funeral"
+    },
+    {
+      "alias": "resurrección",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "synonym",
+      "normalized_alias": "resurreccion"
+    },
+    {
+      "alias": "vida después de la muerte",
+      "term_id": "03eb3c98-5397-494f-9a9b-b9590e0688f3",
+      "alias_kind": "question_intent",
+      "normalized_alias": "vida despues de la muerte"
+    },
+    {
+      "alias": "identidad",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "synonym",
+      "normalized_alias": "identidad"
+    },
+    {
+      "alias": "quién soy",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "quien soy"
+    },
+    {
+      "alias": "propósito de vida",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "proposito de vida"
+    },
+    {
+      "alias": "para qué nací",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "para que naci"
+    },
+    {
+      "alias": "valor personal",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "valor personal"
+    },
+    {
+      "alias": "Dios me creó",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios me creo"
+    },
+    {
+      "alias": "identidad en Cristo",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "identidad en cristo"
+    },
+    {
+      "alias": "llamado de Dios",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "question_intent",
+      "normalized_alias": "llamado de dios"
+    },
+    {
+      "alias": "autoestima",
+      "term_id": "58696521-6080-4fce-9ea2-8f61c5d74cd4",
+      "alias_kind": "synonym",
+      "normalized_alias": "autoestima"
+    },
+    {
+      "alias": "humildad",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "synonym",
+      "normalized_alias": "humildad"
+    },
+    {
+      "alias": "orgullo",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "synonym",
+      "normalized_alias": "orgullo"
+    },
+    {
+      "alias": "soberbia",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "synonym",
+      "normalized_alias": "soberbia"
+    },
+    {
+      "alias": "ser humilde",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ser humilde"
+    },
+    {
+      "alias": "ego",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "synonym",
+      "normalized_alias": "ego"
+    },
+    {
+      "alias": "vanidad",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "synonym",
+      "normalized_alias": "vanidad"
+    },
+    {
+      "alias": "Dios resiste al soberbio",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dios resiste al soberbio"
+    },
+    {
+      "alias": "humillarse ante Dios",
+      "term_id": "176dfb86-05cd-445b-ab25-c8723d4b1c61",
+      "alias_kind": "question_intent",
+      "normalized_alias": "humillarse ante dios"
+    },
+    {
+      "alias": "obediencia",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "synonym",
+      "normalized_alias": "obediencia"
+    },
+    {
+      "alias": "obedecer a Dios",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "question_intent",
+      "normalized_alias": "obedecer a dios"
+    },
+    {
+      "alias": "desobediencia",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "synonym",
+      "normalized_alias": "desobediencia"
+    },
+    {
+      "alias": "voluntad de Dios",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "question_intent",
+      "normalized_alias": "voluntad de dios"
+    },
+    {
+      "alias": "hacer lo que Dios dice",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "question_intent",
+      "normalized_alias": "hacer lo que dios dice"
+    },
+    {
+      "alias": "mandamientos",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "synonym",
+      "normalized_alias": "mandamientos"
+    },
+    {
+      "alias": "seguir a Jesús",
+      "term_id": "7cc1e9c4-b2d2-4e7b-be33-9c29a981d7ab",
+      "alias_kind": "question_intent",
+      "normalized_alias": "seguir a jesus"
+    },
+    {
+      "alias": "liderazgo",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "synonym",
+      "normalized_alias": "liderazgo"
+    },
+    {
+      "alias": "líder",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "synonym",
+      "normalized_alias": "lider"
+    },
+    {
+      "alias": "pastor",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "synonym",
+      "normalized_alias": "pastor"
+    },
+    {
+      "alias": "autoridad",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "synonym",
+      "normalized_alias": "autoridad"
+    },
+    {
+      "alias": "dirigir",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "synonym",
+      "normalized_alias": "dirigir"
+    },
+    {
+      "alias": "liderazgo cristiano",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "liderazgo cristiano"
+    },
+    {
+      "alias": "mal liderazgo",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "mal liderazgo"
+    },
+    {
+      "alias": "ser un buen líder",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ser un buen lider"
+    },
+    {
+      "alias": "responsabilidad espiritual",
+      "term_id": "b2a58f8b-e752-4885-9549-e712a60bbee6",
+      "alias_kind": "question_intent",
+      "normalized_alias": "responsabilidad espiritual"
+    },
+    {
+      "alias": "sexualidad",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "synonym",
+      "normalized_alias": "sexualidad"
+    },
+    {
+      "alias": "sexo",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "synonym",
+      "normalized_alias": "sexo"
+    },
+    {
+      "alias": "pureza",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "synonym",
+      "normalized_alias": "pureza"
+    },
+    {
+      "alias": "pornografía",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "synonym",
+      "normalized_alias": "pornografia"
+    },
+    {
+      "alias": "adulterio",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "synonym",
+      "normalized_alias": "adulterio"
+    },
+    {
+      "alias": "fornicación",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "synonym",
+      "normalized_alias": "fornicacion"
+    },
+    {
+      "alias": "tentación sexual",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "question_intent",
+      "normalized_alias": "tentacion sexual"
+    },
+    {
+      "alias": "cuerpo templo",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "question_intent",
+      "normalized_alias": "cuerpo templo"
+    },
+    {
+      "alias": "relaciones sexuales",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "question_intent",
+      "normalized_alias": "relaciones sexuales"
+    },
+    {
+      "alias": "deseo sexual",
+      "term_id": "ccaffbaf-bc7e-4a5b-bb6d-686990ee3c2b",
+      "alias_kind": "question_intent",
+      "normalized_alias": "deseo sexual"
+    },
+    {
+      "alias": "palabras",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "synonym",
+      "normalized_alias": "palabras"
+    },
+    {
+      "alias": "lengua",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "synonym",
+      "normalized_alias": "lengua"
+    },
+    {
+      "alias": "chisme",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "synonym",
+      "normalized_alias": "chisme"
+    },
+    {
+      "alias": "mentira",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "synonym",
+      "normalized_alias": "mentira"
+    },
+    {
+      "alias": "insulto",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "synonym",
+      "normalized_alias": "insulto"
+    },
+    {
+      "alias": "hablar bien",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "question_intent",
+      "normalized_alias": "hablar bien"
+    },
+    {
+      "alias": "controlar la lengua",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "question_intent",
+      "normalized_alias": "controlar la lengua"
+    },
+    {
+      "alias": "comunicación",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "synonym",
+      "normalized_alias": "comunicacion"
+    },
+    {
+      "alias": "decir la verdad",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "question_intent",
+      "normalized_alias": "decir la verdad"
+    },
+    {
+      "alias": "palabras que edifican",
+      "term_id": "99191b27-a915-4b13-8236-507b6d19e6a8",
+      "alias_kind": "question_intent",
+      "normalized_alias": "palabras que edifican"
+    },
+    {
+      "alias": "tiempo",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "synonym",
+      "normalized_alias": "tiempo"
+    },
+    {
+      "alias": "prioridades",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "synonym",
+      "normalized_alias": "prioridades"
+    },
+    {
+      "alias": "perder el tiempo",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "question_intent",
+      "normalized_alias": "perder el tiempo"
+    },
+    {
+      "alias": "organizar mi vida",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "question_intent",
+      "normalized_alias": "organizar mi vida"
+    },
+    {
+      "alias": "descanso",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "synonym",
+      "normalized_alias": "descanso"
+    },
+    {
+      "alias": "día de reposo",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dia de reposo"
+    },
+    {
+      "alias": "aprovechar el tiempo",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "question_intent",
+      "normalized_alias": "aprovechar el tiempo"
+    },
+    {
+      "alias": "vida corta",
+      "term_id": "8383fa30-2125-4432-93f4-8dba0dee538f",
+      "alias_kind": "question_intent",
+      "normalized_alias": "vida corta"
+    },
+    {
+      "alias": "gratitud",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "synonym",
+      "normalized_alias": "gratitud"
+    },
+    {
+      "alias": "agradecimiento",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "synonym",
+      "normalized_alias": "agradecimiento"
+    },
+    {
+      "alias": "dar gracias",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "dar gracias"
+    },
+    {
+      "alias": "ser agradecido",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "ser agradecido"
+    },
+    {
+      "alias": "contentamiento",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "synonym",
+      "normalized_alias": "contentamiento"
+    },
+    {
+      "alias": "quejarse",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "synonym",
+      "normalized_alias": "quejarse"
+    },
+    {
+      "alias": "acción de gracias",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "accion de gracias"
+    },
+    {
+      "alias": "gracias a Dios",
+      "term_id": "e0e8ac6b-1f09-4a6b-8c61-2e67993d51d5",
+      "alias_kind": "question_intent",
+      "normalized_alias": "gracias a dios"
+    }
+  ],
+  "provenance": {
+    "source": "Índice editorial aprobado de VIDA, Neon B; solo lectura",
+    "date": "2026-11-26",
+    "terms": 34,
+    "aliases": 305,
+    "purpose": "Reproducir selección de temas con alias reales; no contiene perfiles ni notas"
+  }
+}

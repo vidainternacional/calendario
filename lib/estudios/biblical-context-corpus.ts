@@ -20,6 +20,8 @@ export type ParsedBibleReference = {
   book: BiblicalBook
   chapter: number
   verse: number | null
+  endChapter?: number
+  endVerse?: number | null
   canonicalReference: string
 }
 
@@ -49,6 +51,7 @@ export type BiblicalContextBundle = {
   reference: ParsedBibleReference
   bookProfile: BiblicalContextUnit | null
   sectionContext: BiblicalContextUnit | null
+  rangeContexts?: BiblicalContextUnit[]
   version: string
 }
 
@@ -88,6 +91,7 @@ type ContextRow = {
 
 function normalizeReference(value: string) {
   return value
+    .replace(/[–—−]/g, '-')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -179,7 +183,7 @@ export async function parseInternalBibleReference(rawQuery: string): Promise<Par
   if (!match) return null
 
   const remainder = query.slice(match.alias.length).trim()
-  const referenceMatch = remainder.match(/^(\d{1,3})(?:\s*:\s*(\d{1,3}))?(?:\s*[-–]\s*\d{1,3})?$/)
+  const referenceMatch = remainder.match(/^(\d{1,3})(?:\s*:\s*(\d{1,3}))?(?:\s*-\s*(\d{1,3})(?:\s*:\s*(\d{1,3}))?)?$/)
   if (!referenceMatch) return null
 
   const chapter = Number(referenceMatch[1])
@@ -187,16 +191,32 @@ export async function parseInternalBibleReference(rawQuery: string): Promise<Par
   if (!Number.isInteger(chapter) || chapter < 1 || chapter > match.book.chapterCount) return null
   if (verse !== null && (!Number.isInteger(verse) || verse < 1 || verse > 200)) return null
 
+  let endChapter = chapter
+  let endVerse = verse
+  if (referenceMatch[3]) {
+    if (referenceMatch[4]) {
+      if (verse === null) return null
+      endChapter = Number(referenceMatch[3])
+      endVerse = Number(referenceMatch[4])
+    } else if (verse !== null) endVerse = Number(referenceMatch[3])
+    else endChapter = Number(referenceMatch[3])
+    if (endChapter < chapter || endChapter > match.book.chapterCount) return null
+    if (endVerse !== null && (endVerse < 1 || endVerse > 200 || (endChapter === chapter && endVerse < (verse ?? 1)))) return null
+  }
+  const isRange = endChapter !== chapter || endVerse !== verse
+  const suffix = !isRange ? '' : verse === null ? `-${endChapter}` : endChapter === chapter ? `-${endVerse}` : `-${endChapter}:${endVerse}`
+
   return {
     book: match.book,
     chapter,
     verse,
-    canonicalReference: `${match.book.nameEs} ${chapter}${verse ? `:${verse}` : ''}`,
+    ...(isRange ? { endChapter, endVerse } : {}),
+    canonicalReference: `${match.book.nameEs} ${chapter}${verse ? `:${verse}` : ''}${suffix}`,
   }
 }
 
-export async function getInternalBiblicalContext(rawQuery: string): Promise<BiblicalContextBundle | null> {
-  const reference = await parseInternalBibleReference(rawQuery)
+export async function getInternalBiblicalContext(rawQuery: string, parsed?: ParsedBibleReference): Promise<BiblicalContextBundle | null> {
+  const reference = parsed ?? await parseInternalBibleReference(rawQuery)
   if (!reference) return null
 
   const supabase = await createClient()
@@ -209,9 +229,9 @@ export async function getInternalBiblicalContext(rawQuery: string): Promise<Bibl
     .eq('book_code', reference.book.code)
     .eq('enabled', true)
     .eq('review_status', 'approved')
-    .lte('chapter_start', reference.chapter)
+    .lte('chapter_start', reference.endChapter ?? reference.chapter)
     .gte('chapter_end', reference.chapter)
-    .limit(20)
+    .limit(reference.endChapter ? 500 : 20)
 
   if (error) {
     console.error('[biblical-context-corpus] No se pudo recuperar contexto:', error)
@@ -219,9 +239,16 @@ export async function getInternalBiblicalContext(rawQuery: string): Promise<Bibl
   }
 
   const units: BiblicalContextUnit[] = ((data ?? []) as ContextRow[]).map(mapContext)
+  const rangeContexts = reference.endChapter && reference.endChapter !== reference.chapter
+    ? Array.from(new Map(Array.from({ length: reference.endChapter - reference.chapter + 1 }, (_, index) => {
+        const chapter = reference.chapter + index
+        return units.filter(unit => unit.scopeKind !== 'book' && unit.chapterStart <= chapter && unit.chapterEnd >= chapter)
+          .sort((a, b) => (a.chapterEnd - a.chapterStart) - (b.chapterEnd - b.chapterStart))[0]
+      }).filter((unit): unit is BiblicalContextUnit => Boolean(unit)).map(unit => [unit.slug, unit])).values())
+    : undefined
   const bookProfile = units.find((unit: BiblicalContextUnit) => unit.scopeKind === 'book') ?? null
   const sectionContext = units
-    .filter((unit: BiblicalContextUnit) => unit.scopeKind !== 'book')
+    .filter((unit: BiblicalContextUnit) => unit.scopeKind !== 'book' && unit.chapterStart <= reference.chapter && unit.chapterEnd >= reference.chapter)
     .sort((a: BiblicalContextUnit, b: BiblicalContextUnit) => {
       const scopePriority = (value: BiblicalContextUnit) => value.scopeKind === 'chapter' ? 0 : 1
       return scopePriority(a) - scopePriority(b)
@@ -233,6 +260,8 @@ export async function getInternalBiblicalContext(rawQuery: string): Promise<Bibl
       reference.book.code,
       String(reference.chapter),
       String(reference.verse ?? ''),
+      reference.canonicalReference,
+      ...(rangeContexts?.map(unit => unit.contentHash) ?? []),
       bookProfile?.contentHash ?? '',
       sectionContext?.contentHash ?? '',
     ].join('|'))
@@ -244,6 +273,7 @@ export async function getInternalBiblicalContext(rawQuery: string): Promise<Bibl
     reference,
     bookProfile,
     sectionContext,
+    ...(rangeContexts ? { rangeContexts } : {}),
     version,
   }
 }

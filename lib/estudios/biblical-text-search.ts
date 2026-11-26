@@ -14,7 +14,7 @@ export function planBusquedaLiteral(rawQuery: string) {
   let tokens = [...new Set(tokenizeBiblicalSearchQuery(rawQuery).filter(t => !PREGUNTA.has(t)))]
   const verboOdio = tokens.find(token => ODIO.has(token))
   if (verboOdio && tokens.every(token => ODIO.has(token) || CONTEXTO_ODIO.has(token))) tokens = [verboOdio]
-  if (tokens.length !== 1 || !/^[a-z]{4,30}$/.test(tokens[0])) return null
+  if (tokens.length !== 1 || !/^[a-z]{3,30}$/.test(tokens[0])) return null
   const odio = ODIO.has(tokens[0])
   return { palabra: tokens[0], label: odio ? 'Odio y aborrecimiento' : rawQuery.trim(), patrones: odio ? ['%odio%', '%aborre%'] : [`%${tokens[0]}%`], odio }
 }

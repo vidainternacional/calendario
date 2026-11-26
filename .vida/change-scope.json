@@ -1,6 +1,6 @@
 {
-  "task": "Estudios: responder al tema consultado sin sustituirlo por temas relacionados",
-  "userRequest": "Revisar Estudios con IA: al preguntar por odio muestra amor y perdón. Corregir sustitución automática, priorizar coincidencias del tema en texto aprobado RV1909 y presentar relaciones solo como opciones explícitas. No inventar versículos ni incorporar fuentes, no modificar corpus, RLS, permisos, funciones aprobadas o diseño global. Un único Preview en alias habitual, sin producción/merge nuevos hasta autorización específica. Configuración necesaria del Preview: reutilizar por metadatos las cinco variables Preview de la rama ya integrada PR321 en la nueva rama de revisión, sin leer/reemplazar valores ni tocar producción. Conservar alias habitual y registrar el alcance/reversión. El usuario exige que no se repitan reglas que cambien sustancialmente el funcionamiento sin su autorización. Registrar una norma explícita en AGENTS y continuidad, con solicitud concreta, antes/después, aprobación específica y comprobación de preservación. Solo documentación, sin cambiar de nuevo la app ni desplegar.",
+  "task": "Estudio bíblico: búsquedas fieles, referencias completas y prevención de regresiones",
+  "userRequest": "Revisar Estudios con IA: al preguntar por odio muestra amor y perdón. Corregir sustitución automática, priorizar coincidencias del tema en texto aprobado RV1909 y presentar relaciones solo como opciones explícitas. No inventar versículos ni incorporar fuentes, no modificar corpus, RLS, permisos, funciones aprobadas o diseño global. Un único Preview en alias habitual, sin producción/merge nuevos hasta autorización específica. Configuración necesaria del Preview: reutilizar por metadatos las cinco variables Preview de la rama ya integrada PR321 en la nueva rama de revisión, sin leer/reemplazar valores ni tocar producción. Conservar alias habitual y registrar el alcance/reversión. El usuario exige que no se repitan reglas que cambien sustancialmente el funcionamiento sin su autorización. Registrar una norma explícita en AGENTS y continuidad, con solicitud concreta, antes/después, aprobación específica y comprobación de preservación. Solo documentación, sin cambiar de nuevo la app ni desplegar. Solicitud actual: chequeo completo del estudio bíblico, optimizaciones y mejoras con ventajas y desventajas. Ejecutar consultas editoriales de solo lectura, reproducir fallos con módulos reales y dependencias controladas, revisar navegación/notas/fuentes/IA/rendimiento, documentar resultados y propuestas antes de introducir cambios de comportamiento. No modificar código funcional, Supabase, maestro, producción ni crear otro Preview en esta auditoría. El 26-11-2026 el usuario aprobó empezar la mejora tras explicar pruebas permanentes en GitHub y validación de citas sin duplicar datos. Autoriza corregir coincidencias parciales, conservar preguntas, mostrar rangos completos, validar existencia sin confundir avería con ausencia y añadir regresiones de los errores reales. Conservar sinónimos, sugerencias elegibles, fuentes, Biblia/notas/permisos/diseño. No añadir entrenamiento, reportes almacenados, conversaciones, modelos ni gasto. Se prepara un único Preview actualizado en el alias habitual; no merge ni producción. La auditoría anterior sigue como antecedente, ya no limita este bloque a documentación.",
   "allowedPaths": [
     ".vida/change-scope.json",
     "docs/CONTINUIDAD_VIDA.md",
@@ -12,7 +12,20 @@
     "tests/regression/fase-f-busqueda-estudio-moderna.test.mjs",
     "tests/regression/fase-f-busqueda-resultados-relacionados.test.mjs",
     "tests/regression/estudio-consulta-fiel.test.mjs",
-    "AGENTS.md"
+    "AGENTS.md",
+    "docs/AUDITORIA_ESTUDIO_BIBLICO_2026-11-26.md",
+    "lib/estudios/biblical-concordance.ts",
+    "lib/estudios/biblical-query-intent.ts",
+    "lib/estudios/biblical-context-corpus.ts",
+    "lib/estudios/biblical-textual-study.ts",
+    "lib/estudios/resolved-biblical-textual-study.ts",
+    "lib/estudios/multilingual-biblical-textual-study.ts",
+    "lib/estudios/study-scripture.ts",
+    "app/actions/traduccion-espanola-estudio.ts",
+    "components/estudios/StudyAnalyticsTracker.tsx",
+    "tests/regression/estudio-prevencion-errores.test.mjs",
+    "tests/fixtures/estudio-indice-editorial.json",
+    "lib/estudios/biblical-search-ranking.ts"
   ],
   "allowSupabase": false,
   "allowMasterUpdate": false,

@@ -8,6 +8,7 @@ import {
   tokenizeBiblicalSearchQuery,
 } from '@/lib/estudios/biblical-search-ranking'
 import { relatedApprovedThemeLabels } from '@/lib/estudios/biblical-search-relations'
+import { esTemaDirecto } from './biblical-query-intent'
 
 export type AsistenciaTemaBiblico =
   | { kind: 'resolved'; label: string; query: string; score: number }
@@ -153,6 +154,7 @@ export async function asistirTemaBiblico(rawQuery: string): Promise<AsistenciaTe
       id: term.id,
       label: term.canonical_term,
       query: term.canonical_term,
+      direct: esTemaDirecto(query, [term.canonical_term, term.normalized_term, ...(aliasesByTerm.get(term.id) ?? [])]),
       score: scoreBiblicalSearchCandidate(query, [
         { value: term.canonical_term, weight: 1 },
         { value: term.normalized_term, weight: 1 },
@@ -172,7 +174,7 @@ export async function asistirTemaBiblico(rawQuery: string): Promise<AsistenciaTe
       && best.score >= 0.82
       && (best.score >= 0.94 || !runnerUp || best.score - runnerUp.score >= 0.08)
 
-    if (confident) {
+    if (confident && best.direct) {
       return { kind: 'resolved', label: best.label, query: best.query, score: best.score }
     }
 

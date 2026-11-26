@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { cargarModulo } from './seguridad-real-loader.mjs'
 const ranking=cargarModulo('lib/estudios/biblical-search-ranking.ts')
+const intent=cargarModulo('lib/estudios/biblical-query-intent.ts',{'./biblical-search-ranking':ranking})
 const sample={termId:'texto',term:'Odio y aborrecimiento',description:'RV1909',score:1,matches:[{reference:'1 Juan 2:9',bookCode:'1JN',chapter:2,verse:9,excerpt:'El que dice que está en luz, y aborrece á su hermano, el tal aun está en tinieblas todavía.',relevance:1,relationKind:'direct'}]}
 function query(table,resolver,calls){const q={table,ops:[],then(a,b){return Promise.resolve(resolver(q)).then(a,b)}};calls.push(q);for(const k of ['select','eq','gt','in','or','order','limit','maybeSingle'])q[k]=(...args)=>{q.ops.push([k,...args]);return q};return q}
 function textReader({user=true,unapproved=false,failed=false,verses=[{book_code:'1JN',chapter:2,verse:9,original_text:sample.matches[0].excerpt}]}={}){
@@ -37,6 +38,7 @@ function action({user=true,direct=[],text=[],suggestions=null,place=null,study=n
  const reads=[],db={auth:{getUser:async()=>({data:{user:user?{id:'actor'}:null}})}}
  const api=cargarModulo('app/actions/estudio-interno.ts',{
   '@/lib/supabase/server':{createClient:async()=>db},
+  '@/lib/estudios/study-scripture':{readStudyScripture:async()=>({status:'not_reference'})},
   '@/lib/estudios/internal-study':{obtenerEstudioInterno:()=>study},
   '@/lib/estudios/biblical-concordance':{buscarConcordanciasBiblicas:async(q)=>{reads.push(q);return{results:direct}},buscarConcordanciasParaReferencia:async()=>({results:[]})},
   '@/lib/estudios/biblical-place-search':{buscarLugarBiblico:async()=>place},
@@ -64,6 +66,6 @@ test('una elección primary de IA tampoco reemplaza automáticamente una consult
  const calls=[]
  const db={auth:{getUser:async()=>({data:{user:{id:'actor'}}})},from:table=>query(table,()=>({data:table==='biblical_concordance_terms'?[{id:'amor',canonical_term:'Amor',normalized_term:'amor',description:null}]:[],error:null}),calls)}
  const relations=cargarModulo('lib/estudios/biblical-search-relations.ts',{'@/lib/estudios/biblical-search-ranking':ranking})
- const api=cargarModulo('lib/estudios/biblical-search-assist.ts',{'server-only':{},'@/lib/neon/biblical-client':{createClient:async()=>db},'@/lib/ai/vida-ai':{VidaAiError:class extends Error{},vidaAI:async()=>({text:'{"primary":"Amor","alternatives":[]}'})},'@/lib/estudios/biblical-search-ranking':ranking,'@/lib/estudios/biblical-search-relations':relations})
+ const api=cargarModulo('lib/estudios/biblical-search-assist.ts',{'server-only':{},'@/lib/neon/biblical-client':{createClient:async()=>db},'@/lib/ai/vida-ai':{VidaAiError:class extends Error{},vidaAI:async()=>({text:'{"primary":"Amor","alternatives":[]}'})},'@/lib/estudios/biblical-search-ranking':ranking,'@/lib/estudios/biblical-search-relations':relations,'./biblical-query-intent':intent})
  const r=await api.asistirTemaBiblico('rechazo');assert.equal(r.kind,'suggestions');assert.equal(r.suggestions[0].label,'Amor')
 })

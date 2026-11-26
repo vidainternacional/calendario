@@ -143,6 +143,7 @@ export default function EstudioProfundoClient({
   initialTab?: Tab
 }) {
   const [state, formAction, isPending] = useActionState<EstudioState, FormData>(analizarPasaje, { status: 'idle' })
+  const [queryInput, setQueryInput] = useState(initialPasaje)
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [historial, setHistorial] = useState<{ pasaje: string; created_at: string }[]>([])
@@ -279,6 +280,7 @@ export default function EstudioProfundoClient({
     const form = document.getElementById('estudio-form') as HTMLFormElement | null
     const input = form?.elements.namedItem('pasaje') as HTMLInputElement | null
     if (!form || !input) return
+    setQueryInput(query)
     input.value = query
     form.requestSubmit()
   }
@@ -404,7 +406,7 @@ export default function EstudioProfundoClient({
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
-      <form id="estudio-form" action={formAction} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <form id="estudio-form" action={formAction} onSubmit={event => setQueryInput((event.currentTarget.elements.namedItem('pasaje') as HTMLInputElement).value)} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-4 text-center">
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C0392B]">Centro de Estudio</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">Estudio bíblico y concordancias en una sola herramienta.</p>
@@ -414,7 +416,7 @@ export default function EstudioProfundoClient({
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-            <input type="text" id="pasaje" name="pasaje" required disabled={isPending} placeholder="Ejemplo: Juan 3:16, Patmos, Daniel 2 o perdón" className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50" defaultValue={initialPasaje} />
+            <input type="text" id="pasaje" name="pasaje" required disabled={isPending} placeholder="Ejemplo: Juan 3:16, Patmos, Daniel 2 o perdón" className="min-h-13 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-4 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#C0392B] focus:ring-2 focus:ring-[#C0392B]/20 disabled:opacity-50" value={queryInput} onChange={event => setQueryInput(event.target.value)} />
           </div>
           <button type="submit" disabled={isPending} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-[#C0392B] px-7 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#a93226] disabled:cursor-not-allowed disabled:opacity-70">
             {isPending ? <><RefreshCw className="h-4 w-4 animate-spin" /> Buscando…</> : <><Search className="h-4 w-4" /> Buscar</>}

@@ -25,7 +25,8 @@ import {
   listarCronologiaBiblicaParaReferencia,
   type PaqueteCronologicoBiblico,
 } from '@/lib/estudios/biblical-chronology-maps'
-import { cargarTraduccionEspanolaEstudio } from '@/app/actions/traduccion-espanola-estudio'
+import type { TraduccionEspanolaEstudio } from '@/app/actions/traduccion-espanola-estudio'
+import { readStudyScripture } from '@/lib/estudios/study-scripture'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -79,10 +80,11 @@ function apartado(unit: BiblicalContextUnit | null, key: keyof BiblicalContextUn
 }
 
 function formatearTraduccionEspanola(
-  translation: Awaited<ReturnType<typeof cargarTraduccionEspanolaEstudio>>
+  translation: TraduccionEspanolaEstudio | null
 ) {
   if (!translation) return ''
-  const texto = translation.verses.map(item => `${item.verse}. ${item.text}`).join('\n')
+  const multiChapter = new Set(translation.verses.map(item => item.chapter)).size > 1
+  const texto = translation.verses.map(item => `${multiChapter ? `${item.chapter}:` : ''}${item.verse}. ${item.text}`).join('\n')
   return unirSecciones(
     `${translation.sourceName} — ${translation.canonicalReference}`,
     texto,
@@ -95,10 +97,15 @@ function ensamblarEstudioContextual(
   traduccionEspanola = ''
 ): EstudioResultado {
   const { reference, bookProfile, sectionContext } = bundle
+  const contexts = bundle.rangeContexts ?? (sectionContext ? [sectionContext] : [])
+  const apartadoSeccion = (key: keyof BiblicalContextUnit) => unirSecciones(...contexts.map(unit => {
+    const text = apartado(unit, key)
+    return text && contexts.length > 1 ? `${unit.title}\n${text}` : text
+  }))
   const languages = reference.book.originalLanguages.map(nombreIdioma)
   const terms = Array.from(new Set([
     ...(bookProfile?.keyTerms ?? []),
-    ...(sectionContext?.keyTerms ?? []),
+    ...contexts.flatMap(unit => unit.keyTerms),
   ]))
 
   return {
@@ -111,27 +118,27 @@ function ensamblarEstudioContextual(
       'Contexto general del libro:',
       apartado(bookProfile, 'historicalContext'),
       'Contexto de la sección:',
-      apartado(sectionContext, 'historicalContext'),
+      apartadoSeccion('historicalContext'),
       'Contexto judío:',
-      apartado(sectionContext, 'jewishContext') || apartado(bookProfile, 'jewishContext')
+      apartadoSeccion('jewishContext') || apartado(bookProfile, 'jewishContext')
     ),
     analisis_linguistico: unirSecciones(
       languages.length > 0 ? `Idioma(s) del libro: ${languages.join(', ')}.` : null,
       terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null
     ),
     que_quiso_comunicar: unirSecciones(
-      apartado(sectionContext, 'authorialIntent'),
+      apartadoSeccion('authorialIntent'),
       apartado(bookProfile, 'authorialIntent')
     ),
     que_no_quiso_decir: unirSecciones(
-      apartado(sectionContext, 'interpretiveCautions'),
+      apartadoSeccion('interpretiveCautions'),
       apartado(bookProfile, 'interpretiveCautions')
     ),
     explicacion: unirSecciones(
-      apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
-      apartado(sectionContext, 'literaryContext') || apartado(bookProfile, 'literaryContext')
+      apartadoSeccion('summary') || apartado(bookProfile, 'summary'),
+      apartadoSeccion('literaryContext') || apartado(bookProfile, 'literaryContext')
     ),
-    reflexion: apartado(sectionContext, 'theologicalReflection') || apartado(bookProfile, 'theologicalReflection'),
+    reflexion: apartadoSeccion('theologicalReflection') || apartado(bookProfile, 'theologicalReflection'),
   }
 }
 
@@ -192,10 +199,18 @@ export async function analizarPasaje(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
 
-  const [textualEvidence, contexto, traduccionEspanolaData] = await Promise.all([
-    getVidaBiblicalTextualStudy(query, translationId),
-    getInternalBiblicalContext(query),
-    cargarTraduccionEspanolaEstudio(query),
+  const scripture = await readStudyScripture(query).catch(() => ({ status: 'unavailable' as const }))
+  if (scripture.status === 'unavailable') {
+    return { status: 'error', error: 'No pudimos consultar la biblioteca bíblica en este momento. Su consulta se conserva; vuelva a intentarlo.' }
+  }
+  if (scripture.status === 'missing') {
+    return { status: 'error', error: `No encontramos ${scripture.reference.canonicalReference} en el texto aprobado Reina-Valera 1909. Revise el capítulo y los versículos.` }
+  }
+  const parsed = scripture.status === 'ready' ? scripture.reference : undefined
+  const traduccionEspanolaData = scripture.status === 'ready' ? scripture.translation : null
+  const [textualEvidence, contexto] = await Promise.all([
+    parsed?.endChapter === undefined ? getVidaBiblicalTextualStudy(query, translationId) : Promise.resolve(null),
+    getInternalBiblicalContext(query, parsed),
   ])
   const traduccionEspanola = formatearTraduccionEspanola(traduccionEspanolaData)
 
@@ -208,12 +223,12 @@ export async function analizarPasaje(
       listarCronologiaBiblicaParaReferencia({
         bookCode: contexto.reference.book.code,
         chapter: contexto.reference.chapter,
-        verse: contexto.reference.verse,
+        verse: contexto.reference.endChapter === undefined ? contexto.reference.verse : null,
       }),
       buscarConcordanciasParaReferencia({
         bookCode: contexto.reference.book.code,
         chapter: contexto.reference.chapter,
-        verse: contexto.reference.verse,
+        verse: contexto.reference.endChapter === undefined ? contexto.reference.verse : null,
         limit: 80,
       }),
     ])
@@ -295,7 +310,7 @@ export async function analizarPasaje(
       return {
         status: 'success',
         kind: 'concordance',
-        query: assistedTopic.query,
+        query,
         results: corrected.results,
         interpretedFrom: query,
         interpretedAs: assistedTopic.label,
