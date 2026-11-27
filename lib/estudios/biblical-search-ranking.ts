@@ -120,7 +120,7 @@ export function scoreBiblicalSearchCandidate(
     if (!value) continue
 
     if (value === query) best = Math.max(best, 1 * weight)
-    else if (value.includes(query) || query.includes(value)) best = Math.max(best, 0.95 * weight)
+    else if (` ${value} `.includes(` ${query} `) || ` ${query} `.includes(` ${value} `)) best = Math.max(best, 0.95 * weight)
 
     const valueTokens = tokenizeBiblicalSearchQuery(value)
     if (!queryTokens.length || !valueTokens.length) {

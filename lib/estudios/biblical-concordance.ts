@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { createClient } from '@/lib/neon/biblical-client'
+import { esTemaDirecto } from './biblical-query-intent'
 
 export type ConcordanciaResultado = {
   termId: string
@@ -49,6 +50,7 @@ function tokenize(value: string) {
 }
 
 function scoreCandidate(query: string, tokens: string[], values: string[]) {
+  if (!esTemaDirecto(query, values)) return 0
   let score = 0
 
   for (const rawValue of values) {
@@ -56,21 +58,20 @@ function scoreCandidate(query: string, tokens: string[], values: string[]) {
     if (!value) continue
 
     if (value === query) score = Math.max(score, 140)
-    else if (value.startsWith(query) || query.startsWith(value)) score = Math.max(score, 115)
-    else if (value.includes(query) || query.includes(value)) score = Math.max(score, 95)
+    else if (` ${value} `.includes(` ${query} `) || ` ${query} `.includes(` ${value} `)) score = Math.max(score, 95)
 
     const valueTokens = new Set(tokenize(value))
-    const matchedTokens = tokens.filter(token => value.includes(token) || valueTokens.has(token))
+    const matchedTokens = tokens.filter(token => valueTokens.has(token))
     const tokenScore = matchedTokens.reduce((total, token) => {
       if (value === token) return total + 35
-      if (value.startsWith(token)) return total + 25
+      if (value.split(' ')[0] === token) return total + 25
       return total + 16
     }, 0)
 
     score = Math.max(score, tokenScore)
   }
 
-  return score
+  return Math.max(score, 35)
 }
 
 export async function listarTemasConcordancia(limit = 60): Promise<Array<{

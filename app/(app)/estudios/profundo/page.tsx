@@ -63,7 +63,7 @@ export default async function EstudioProfundoPage({
         </div>
       </header>
 
-      <EstudioProfundoClient initialPasaje={initialQuery} initialTab={initialTab} />
+      <EstudioProfundoClient key={user.id} initialPasaje={initialQuery} initialTab={initialTab} />
       <StudyAnalyticsTracker />
       <AutoSubmitStudyQuery query={initialQuery} enabled={auto === '1' && Boolean(initialQuery.trim())} />
 

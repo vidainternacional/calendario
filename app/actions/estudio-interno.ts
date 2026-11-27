@@ -13,6 +13,7 @@ import {
   type SugerenciaLugarBiblico,
 } from '@/lib/estudios/biblical-place-search'
 import { asistirTemaBiblico } from '@/lib/estudios/biblical-search-assist'
+import { buscarTextoBiblico } from '@/lib/estudios/biblical-text-search'
 import {
   getInternalBiblicalContext,
   type BiblicalContextBundle,
@@ -24,7 +25,14 @@ import {
   listarCronologiaBiblicaParaReferencia,
   type PaqueteCronologicoBiblico,
 } from '@/lib/estudios/biblical-chronology-maps'
-import { cargarTraduccionEspanolaEstudio } from '@/app/actions/traduccion-espanola-estudio'
+import type { TraduccionEspanolaEstudio } from '@/app/actions/traduccion-espanola-estudio'
+import { readStudyScripture } from '@/lib/estudios/study-scripture'
+import { esPreguntaBiblica } from '@/lib/estudios/biblical-question-evidence'
+import { responderPreguntaBiblica } from '@/lib/estudios/biblical-question'
+import type { BiblicalQuestionAnswer } from '@/lib/estudios/biblical-question-types'
+import { reuseSavedStudy, saveStudy } from '@/lib/estudios/study-history'
+import type { StudyHistoryReceipt } from '@/lib/estudios/study-history-types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EstudioResultadoValidado } from '@/lib/estudios/ai-config'
 import {
   guardarNota as guardarNotaBase,
@@ -34,7 +42,7 @@ import {
 
 export type EstudioResultado = EstudioResultadoValidado
 
-export type EstudioState =
+export type EstudioState = (
   | { status: 'idle' }
   | {
       status: 'success'
@@ -54,10 +62,13 @@ export type EstudioState =
       results: ConcordanciaResultado[]
       interpretedFrom?: string
       interpretedAs?: string
+      resultSource?: 'text'
+      answer?: BiblicalQuestionAnswer
     }
   | { status: 'place'; query: string; place: LugarBiblicoBusqueda }
-  | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[] }
+  | { status: 'suggestions'; query: string; suggestions: SugerenciaLugarBiblico[]; suggestionKind?: 'related' }
   | { status: 'error'; error: string }
+) & { history?: StudyHistoryReceipt; historyWarning?: string }
 
 function unirSecciones(...values: Array<string | null | undefined>) {
   return values.map(value => value?.trim()).filter(Boolean).join('\n\n')
@@ -77,10 +88,11 @@ function apartado(unit: BiblicalContextUnit | null, key: keyof BiblicalContextUn
 }
 
 function formatearTraduccionEspanola(
-  translation: Awaited<ReturnType<typeof cargarTraduccionEspanolaEstudio>>
+  translation: TraduccionEspanolaEstudio | null
 ) {
   if (!translation) return ''
-  const texto = translation.verses.map(item => `${item.verse}. ${item.text}`).join('\n')
+  const multiChapter = new Set(translation.verses.map(item => item.chapter)).size > 1
+  const texto = translation.verses.map(item => `${multiChapter ? `${item.chapter}:` : ''}${item.verse}. ${item.text}`).join('\n')
   return unirSecciones(
     `${translation.sourceName} — ${translation.canonicalReference}`,
     texto,
@@ -93,10 +105,15 @@ function ensamblarEstudioContextual(
   traduccionEspanola = ''
 ): EstudioResultado {
   const { reference, bookProfile, sectionContext } = bundle
+  const contexts = bundle.rangeContexts ?? (sectionContext ? [sectionContext] : [])
+  const apartadoSeccion = (key: keyof BiblicalContextUnit) => unirSecciones(...contexts.map(unit => {
+    const text = apartado(unit, key)
+    return text && contexts.length > 1 ? `${unit.title}\n${text}` : text
+  }))
   const languages = reference.book.originalLanguages.map(nombreIdioma)
   const terms = Array.from(new Set([
     ...(bookProfile?.keyTerms ?? []),
-    ...(sectionContext?.keyTerms ?? []),
+    ...contexts.flatMap(unit => unit.keyTerms),
   ]))
 
   return {
@@ -109,27 +126,27 @@ function ensamblarEstudioContextual(
       'Contexto general del libro:',
       apartado(bookProfile, 'historicalContext'),
       'Contexto de la sección:',
-      apartado(sectionContext, 'historicalContext'),
+      apartadoSeccion('historicalContext'),
       'Contexto judío:',
-      apartado(sectionContext, 'jewishContext') || apartado(bookProfile, 'jewishContext')
+      apartadoSeccion('jewishContext') || apartado(bookProfile, 'jewishContext')
     ),
     analisis_linguistico: unirSecciones(
       languages.length > 0 ? `Idioma(s) del libro: ${languages.join(', ')}.` : null,
       terms.length > 0 ? `Términos y temas clave de esta unidad: ${terms.join(', ')}.` : null
     ),
     que_quiso_comunicar: unirSecciones(
-      apartado(sectionContext, 'authorialIntent'),
+      apartadoSeccion('authorialIntent'),
       apartado(bookProfile, 'authorialIntent')
     ),
     que_no_quiso_decir: unirSecciones(
-      apartado(sectionContext, 'interpretiveCautions'),
+      apartadoSeccion('interpretiveCautions'),
       apartado(bookProfile, 'interpretiveCautions')
     ),
     explicacion: unirSecciones(
-      apartado(sectionContext, 'summary') || apartado(bookProfile, 'summary'),
-      apartado(sectionContext, 'literaryContext') || apartado(bookProfile, 'literaryContext')
+      apartadoSeccion('summary') || apartado(bookProfile, 'summary'),
+      apartadoSeccion('literaryContext') || apartado(bookProfile, 'literaryContext')
     ),
-    reflexion: apartado(sectionContext, 'theologicalReflection') || apartado(bookProfile, 'theologicalReflection'),
+    reflexion: apartadoSeccion('theologicalReflection') || apartado(bookProfile, 'theologicalReflection'),
   }
 }
 
@@ -173,42 +190,7 @@ async function buscarConcordanciasDesdeContexto(bundle: BiblicalContextBundle) {
     .slice(0, 8)
 }
 
-async function resolverConcordanciasSugeridas(suggestions: SugerenciaLugarBiblico[]) {
-  const searches = await Promise.all(
-    suggestions.slice(0, 4).map(suggestion => buscarConcordanciasBiblicas(suggestion.query, 80))
-  )
-  const merged = new Map<string, ConcordanciaResultado>()
-
-  for (const search of searches) {
-    for (const result of search.results) {
-      const previous = merged.get(result.termId)
-      if (!previous) {
-        merged.set(result.termId, { ...result, matches: [...result.matches] })
-        continue
-      }
-
-      const seen = new Set(previous.matches.map(match => `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`))
-      for (const match of result.matches) {
-        const key = `${match.bookCode}:${match.chapter}:${match.verse}:${match.relationKind}`
-        if (!seen.has(key) && previous.matches.length < 12) {
-          previous.matches.push(match)
-          seen.add(key)
-        }
-      }
-      previous.score = Math.max(previous.score, result.score)
-    }
-  }
-
-  return {
-    labels: suggestions.slice(0, 4).map(suggestion => suggestion.label),
-    results: Array.from(merged.values())
-      .filter(result => result.matches.length > 0)
-      .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term, 'es'))
-      .slice(0, 8),
-  }
-}
-
-export async function analizarPasaje(
+async function resolverConsulta(
   _prev: EstudioState,
   formData: FormData
 ): Promise<EstudioState> {
@@ -225,10 +207,18 @@ export async function analizarPasaje(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
 
-  const [textualEvidence, contexto, traduccionEspanolaData] = await Promise.all([
-    getVidaBiblicalTextualStudy(query, translationId),
-    getInternalBiblicalContext(query),
-    cargarTraduccionEspanolaEstudio(query),
+  const scripture = await readStudyScripture(query).catch(() => ({ status: 'unavailable' as const }))
+  if (scripture.status === 'unavailable') {
+    return { status: 'error', error: 'No pudimos consultar la biblioteca bíblica en este momento. Su consulta se conserva; vuelva a intentarlo.' }
+  }
+  if (scripture.status === 'missing') {
+    return { status: 'error', error: `No encontramos ${scripture.reference.canonicalReference} en el texto aprobado Reina-Valera 1909. Revise el capítulo y los versículos.` }
+  }
+  const parsed = scripture.status === 'ready' ? scripture.reference : undefined
+  const traduccionEspanolaData = scripture.status === 'ready' ? scripture.translation : null
+  const [textualEvidence, contexto] = await Promise.all([
+    parsed?.endChapter === undefined ? getVidaBiblicalTextualStudy(query, translationId) : Promise.resolve(null),
+    getInternalBiblicalContext(query, parsed),
   ])
   const traduccionEspanola = formatearTraduccionEspanola(traduccionEspanolaData)
 
@@ -241,12 +231,12 @@ export async function analizarPasaje(
       listarCronologiaBiblicaParaReferencia({
         bookCode: contexto.reference.book.code,
         chapter: contexto.reference.chapter,
-        verse: contexto.reference.verse,
+        verse: contexto.reference.endChapter === undefined ? contexto.reference.verse : null,
       }),
       buscarConcordanciasParaReferencia({
         bookCode: contexto.reference.book.code,
         chapter: contexto.reference.chapter,
-        verse: contexto.reference.verse,
+        verse: contexto.reference.endChapter === undefined ? contexto.reference.verse : null,
         limit: 80,
       }),
     ])
@@ -303,6 +293,14 @@ export async function analizarPasaje(
     }
   }
 
+  if (esPreguntaBiblica(query)) {
+    const [answer, concordancias] = await Promise.all([
+      responderPreguntaBiblica(query, user.id),
+      buscarConcordanciasBiblicas(query, 80),
+    ])
+    return { status: 'success', kind: 'concordance', query, results: concordancias.results, answer }
+  }
+
   const placeSearch = await buscarLugarBiblico(query)
   if (placeSearch?.kind === 'place') {
     return { status: 'place', query, place: placeSearch.place }
@@ -316,6 +314,11 @@ export async function analizarPasaje(
     return { status: 'success', kind: 'concordance', query, results: concordancias.results }
   }
 
+  const texto = await buscarTextoBiblico(query)
+  if (texto.length > 0) {
+    return { status: 'success', kind: 'concordance', query, results: texto, resultSource: 'text' }
+  }
+
   const assistedTopic = await asistirTemaBiblico(query)
   if (assistedTopic?.kind === 'resolved') {
     const corrected = await buscarConcordanciasBiblicas(assistedTopic.query, 80)
@@ -323,7 +326,7 @@ export async function analizarPasaje(
       return {
         status: 'success',
         kind: 'concordance',
-        query: assistedTopic.query,
+        query,
         results: corrected.results,
         interpretedFrom: query,
         interpretedAs: assistedTopic.label,
@@ -331,24 +334,33 @@ export async function analizarPasaje(
     }
   }
   if (assistedTopic?.kind === 'suggestions') {
-    const related = await resolverConcordanciasSugeridas(assistedTopic.suggestions)
-    if (related.results.length > 0) {
-      return {
-        status: 'success',
-        kind: 'concordance',
-        query,
-        results: related.results,
-        interpretedFrom: query,
-        interpretedAs: related.labels.join(', '),
-      }
-    }
-    return { status: 'suggestions', query, suggestions: assistedTopic.suggestions }
+    return { status: 'suggestions', query, suggestions: assistedTopic.suggestions, suggestionKind: 'related' }
   }
 
   return {
     status: 'error',
     error: `No encontramos un tema aprobado suficientemente relacionado con “${query}”. Pruebe con otra forma de expresarlo o use una referencia bíblica concreta.`,
   }
+}
+
+export async function analizarPasaje(prev: EstudioState, formData: FormData): Promise<EstudioState> {
+  const raw = formData.get('pasaje')
+  if (typeof raw !== 'string') return { status: 'error', error: 'Escriba una consulta de texto.' }
+  const query = raw.trim()
+  if (!query || query.length > 500) return resolverConsulta(prev, formData)
+  const db = await createClient()
+  const { data: { user } } = await db.auth.getUser()
+  if (!user) return { status: 'error', error: 'Debe iniciar sesión para usar esta función.' }
+  const requested = String(formData.get('translation_id') ?? '').trim()
+  const translation = /^[a-z0-9_-]{2,80}$/i.test(requested) ? requested : 'spa_r09'
+  const session = db as unknown as SupabaseClient
+  const saved = await reuseSavedStudy(session, user.id, query, translation).catch(() => ({ status: 'unavailable' as const }))
+  if (saved.status === 'found') return saved.state
+  if (saved.status === 'unavailable' && esPreguntaBiblica(query)) {
+    return { status: 'error', error: 'No pudimos comprobar tus respuestas guardadas. Intenta de nuevo; no enviamos esta consulta a la IA.' }
+  }
+  const result = await resolverConsulta(prev, formData)
+  return saveStudy(session, user.id, query, translation, result)
 }
 
 export async function obtenerHistorial() { return obtenerHistorialBase() }

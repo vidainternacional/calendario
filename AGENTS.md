@@ -31,6 +31,17 @@ Contexto obligatorio para cualquier asistente o agente de IA trabajando en este 
 4. Si el pedido cambia, actualizar primero `.vida/change-scope.json`; no ampliar alcance por iniciativa propia.
 5. Ejecutar `node scripts/vida-guardrails.mjs` antes de push. CI vuelve a ejecutarlo automáticamente.
 
+## Autorización específica de cambios de comportamiento
+
+Norma reforzada por instrucción expresa del usuario el26-11-2026, tras detectar la sustitución automática de temas en Estudios:
+
+1. Una solicitud de corrección, optimización o mejora técnica no autoriza introducir reglas de negocio o cambiar la intención de una función aprobada. Conservar su comportamiento salvo que el pedido actual solicite claramente modificarlo.
+2. Antes de introducir una regla que sustituya una consulta/respuesta, oculte resultados, agregue restricciones o cambie un recorrido, identificar la instrucción concreta que la autoriza. Si falta, presentar en lenguaje sencillo el antes/después, alcance y recuperación y obtener aprobación específica antes de aplicarla. La aprobación general de un bloque, un Preview o una fusión no demuestra aprobación de cada regla interna.
+3. Las decisiones normales de implementación y los arreglos ya pedidos por el usuario se ejecutan dentro de ese alcance sin repetir solicitudes de permiso. No convertir esta norma en una aprobación adicional para cada cambio técnico reversible.
+4. En búsquedas/IA, conservar la pregunta original. Una relación, un tema contrario o una recomendación pastoral no es un sinónimo. Las alternativas se identifican y solo se abren por elección explícita del usuario; no presentarlas como su petición original sin autorización de esa experiencia.
+5. Comprobar el caso reportado y las rutas aprobadas afectadas. No cambiar pruebas ni lógica para legitimar silenciosamente una regla no autorizada o hacer que el CI pase. Registrar solicitud, cambio observable y evidencia, distinguiendo implementación, prueba, aprobación y publicación.
+6. Si el historial no acredita la autorización específica, decirlo; no atribuir la decisión al usuario ni inferirla del nombre del autor del commit.
+
 ## Reglas técnicas existentes
 
 1. Toda mutación pasa por server actions (`app/actions/`) con verificación de sesión + rol.

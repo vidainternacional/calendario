@@ -1,5 +1,97 @@
 # VIDA Internacional — Bitácora de continuidad
 
+## Historial privado y estudio completo — 27-11-2026 · SQL aplicado, revisión preparada
+
+El propietario autorizó el historial tras evaluar su coste de espacio. Se aplicó únicamente la tabla privada nueva, sus cuatro políticas por propietario/cuenta activa e índices. La comprobación detectó privilegios predeterminados excesivos sobre esa tabla nueva; se retiraron TRUNCATE/REFERENCES/TRIGGER de authenticated, sin cambiar privilegios predeterminados ni otras tablas. Los archivos de migración y el paquete SQL consolidado registran ese alcance. No se borraron datos existentes ni se cambió producción.
+
+Medición UTC 27-11-2026 00:08:52: base252008115bytes; tabla nueva32768bytes/0filas. RLS activa, cuatro políticas, anon sin SELECT y authenticated solo CRUD sin los tres privilegios excedentes. El advisor de seguridad no añade hallazgos de esta tabla; las advertencias anteriores permanecen fuera del bloque. Una respuesta controlada de6041bytes sirve solo como ejemplo, no promedio; índices/filas y respuestas extensas añaden espacio. El monitor existente sigue vigente; no se incorpora limpieza automática ni gastos.
+
+Se guardan respuestas completas, con contexto histórico, geografía, cronología/mapas, análisis textual y citas presentes. Reabrir desde historial no invoca el generador; repetir la misma consulta por usuario/traducción/versión recupera lo guardado. No se reconstruyen respuestas anteriores que nunca se almacenaron. Desde cada fuente de una pregunta se puede abrir el estudio completo existente; conserva sus capas y mapas cuando hay evidencia aprobada. La explicación breve no sustituye esa superficie.
+
+Pruebas:67 regresiones relacionadas correctas (13 de historial, incluida conservación íntegra de capas);13 comprobaciones SQL con usuarios ficticios, incluida protección frente a privilegios heredados. TypeScript/build correctos. Chromium320/390/820 comprueba restauración sin generación, paginación y vínculo exacto al estudio completo. No equivalen a sesión real autenticada. El conjunto general anterior conserva nueve fallos heredados documentados.
+
+Rama de PR322 Draft; se prepara un único push para actualizar el mismo alias Preview. No hacer merge ni producción. Verificar HEAD/READY tras ese push; recibo final mediante PR, sin otro deployment documental. Falta validación autenticada del propietario: guardar una consulta, abrir historial, revisar respuesta conservada y entrar al estudio completo de una cita. Reversión en docs/sql conserva las filas y revoca solo acceso a la tabla nueva, después de retirar el código.
+
+La activación Gemini del Preview anterior sigue vigente; referencias antiguas a conexión ausente corresponden a su preparación histórica. No se modifican claves, facturación o producción en este bloque.
+
+## Respuestas directas con evidencia — 26-11-2026 · implementadas, conexión IA pendiente
+
+El usuario aprueba «0k hazlo» tras el ejemplo de «Qué es el bautismo y qué dice la Biblia al respecto». Nuevo bloque general de preguntas con explicación breve y citas de RV1909 comprobadas; no respuesta fija de bautismo ni cambio doctrinal. Alcance y preparación/reversión en `docs/ESTUDIO_RESPUESTAS_2026-11-26.md`.
+
+Código: recuperación de palabras/familias y contexto aprobado, ocho fuentes, citas por ID con enlaces construidos por servidor, explicación primero y fuentes plegadas, concordancias conservadas. Casos sin conexión/error/insuficiencia explícitos; no inventar respuestas ni presentar fixtures como IA real. Se mantienen búsquedas, referencias, notas, permisos y maestro.
+
+**Bloqueo comprobado:** metadatos de Vercel no muestran proveedor IA configurado. La generación queda apagada; el Preview solo puede mostrar pasajes/estado de conexión hasta completar ese requisito. No afirmar que ya responde con un modelo real. No se llamaron servicios facturables ni se crearon secretos o planes.
+
+Conexión separada de otras funciones: `VIDA_BIBLE_QA_API_KEY` como secreto, `VIDA_BIBLE_QA_MODEL` explícito y `VIDA_BIBLE_QA_ENABLED` tras confirmar Free Tier y condiciones. Nueva tarea solo Gemini, sin fallback de pago. Docs oficiales verifican Free Tier para Gemini 3.5 Flash-Lite, con límites y posible uso de consultas/respuestas por Google para mejorar sus productos; informar al propietario antes de activar. No se envían notas ni perfiles, pero sí la pregunta al proveedor. No solicitar claves por chat.
+
+Pruebas de generación con dependencias controladas; quince casos nuevos y recorridos Chromium320/390/820 sobre React real. Conjunto general785:776pasan/9fallos previos, más último caso de aislamiento aprobado por separado. No declarar CI global verde ni prueba autenticada real. Compilación/TypeScript y validaciones exactas se registran con el recibo de PR322. Un único Preview actualizado en el alias habitual; sin merge/producción. Producción sigue separada en main6db8d0cd.
+
+Siguiente paso tras la preparación: el propietario guarda conexión gratuita en Vercel Preview sin compartir la clave; verificar modelo/condiciones y generar una respuesta real antes de afirmar solución integral. El recibo final del despliegue va en PR322 para evitar un segundo deployment documental.
+
+## Mejora autorizada de Estudios — 26-11-2026 · preparada para Preview
+
+El usuario aprobó «Ok empieza la mejora» después de revisar los fallos, las pruebas permanentes y la validación de citas sin duplicar datos. Alcance ejecutado: búsqueda fiel, referencias completas/existentes y prevención de regresiones. No se añade aprendizaje autónomo, entrenamiento con notas, reportes almacenados, nuevas tablas, modelos ni gastos. Maestro, roles, RLS y producción intactos. Rama/PR siguen siendo `agent/estudio-busqueda-fiel-20261126` / #322 Draft; publicación requiere autorización nueva.
+
+Antes → después: clamor/ira ya no responden automáticamente con Amor/mentira por subcadenas; preguntas naturales sobre odio alcanzan RV1909; preguntas compuestas o no equivalentes conservan su texto y ofrecen alternativas explícitas. Se conservan los 305 alias aprobados mediante fixture editorial no personal en GitHub. Los errores ortográficos siguen disponibles como sugerencias, sin convertir similitud en equivalencia automática.
+
+Rangos como Juan 3:16-18, con guion normal/largo, Juan 3-4 y Juan 3:36-4:2 conservan extremos y lectura completa paginada. El contexto de varios capítulos reúne sus unidades con títulos. Las capas originales/léxicas continúan siendo por versículo individual y no se etiquetan falsamente con un rango; consultar un versículo conserva esas capas. Juan 3:99 se valida contra RV1909 y no genera un estudio aparente. Avería/fuente no disponible tienen mensaje distinto de cita no encontrada. La consulta escrita se conserva tras responder, también si hubo error. Lectura individual filtra solo los versículos pedidos. No se guardan consultas nuevas.
+
+Verificación: TypeScript y compilación local correctos; 77 pruebas del bloque incluyendo 32 nuevas y comprobación de 305 alias. Conjunto general: 771 pruebas, 762 pasan y 9 fallan; los mismos nueve fallos se reprodujeron sobre HEAD anterior sin estos cambios (33 pruebas de sus archivos: 24 pasan/9 fallan). No declarar CI general verde ni limitar deuda conocida a tres fallos. Nombres y evidencia en auditoría. Chromium 320/390/820, componente React real con acciones/datos controlados: rangos completos, capítulos numerados, panel cerrado inicialmente, error claro con consulta conservada, temas relacionados optativos y sin desborde. No es una sesión real autenticada.
+
+Neon B solo lectura: Juan 3 tiene 36 versículos, Juan 4 tiene 54 y Salmos 23 tiene 6; sin huecos internos de numeración en RV1909 aprobado. Nuevos tests se ejecutan con el glob de regresión ya presente en CI. No se ejecutan modelos ni se alteran datos para probar.
+
+Siguiente paso: un único push/despliegue Preview, comprobar SHA/READY y reasignar el alias de revisión habitual; conservar producción en 6db8d0cd. El recibo exacto posterior se deja en el PR sin generar otro deployment documental. Prueba autenticada y validación visual del usuario pendientes. Reversión: retirar el commit funcional de esta rama; no hay SQL que revertir.
+
+## Auditoría integral de Estudio Bíblico — 26-11-2026
+
+Solicitud: chequeo completo, optimizaciones, facilidad de uso y ventajas/desventajas. Resultado en `docs/AUDITORIA_ESTUDIO_BIBLICO_2026-11-26.md`. Auditoría sin cambios funcionales, sin nuevo Preview ni publicación, sin tocar maestro, corpus, RLS o datos personales. Documentación local pendiente de incorporar al siguiente bloque autorizado; no afirmar que está en main o disponible automáticamente en otra sesión.
+
+Neon B, consultas editoriales de solo lectura: 66 libros, 31,084 textos RV1909, cobertura contextual de 1,189 capítulos, 34 temas y 305 alias aprobados. Se ejecutaron 45 pruebas relacionadas: 45 pasan. Eso no certifica visualmente la aplicación ni resuelve los huecos descubiertos.
+
+Reproducción con módulos reales e índice editorial real, dependencias controladas: `clamor` selecciona Amor; `ira` coincide dentro de mentira y selecciona Palabras y comunicación; la pregunta natural «¿Qué dice la Biblia sobre odiar a alguien?» selecciona Obediencia antes de llegar a la búsqueda textual. **PR #322 corrige la sustitución automática por relacionados, pero su solución no está completa para preguntas naturales**; no publicarlo como arreglo integral. Las ocurrencias de integración fueron fixtures; la existencia de referencias aprobadas en esos temas se comprobó separadamente por agregados de solo lectura.
+
+Otros casos: `Juan 3:16-18` pierde el final; con guion largo no se reconoce; `Juan 3-4` queda Juan 3; `Juan 3:99` se acepta por parser y la acción puede devolver estudio contextual sin versículo. Historial activo consulta la tabla del generador anterior; retorno del cuaderno no incluye consulta original. Analítica dependiente de etiquetas no reconoce la nueva etiqueta textual de PR #322. Ver límites y propuestas precisas en auditoría antes de intervenir. No añadir nuevos criterios de interpretación sin aprobación específica.
+
+Siguiente bloque recomendado: fidelidad de búsqueda, rangos y existencia de referencias; después continuidad y claridad, manteniendo notas, fuentes y diseño. La IA generativa de explicaciones nuevas es una propuesta separada con costes/riesgos, no una función activada por esta revisión. Producción no modificada por la auditoría.
+
+## Preservación de comportamiento —instrucción expresa del26-11-2026
+
+El usuario exige que no se repita una modificación sustancial mediante una regla que no pidió. Norma explícita añadida a AGENTS: mejora técnica/corrección no autoriza reglas nuevas; cambios observables fuera del pedido requieren antes/después y aprobación específica. No inferir aprobación de una regla por aprobación general de PR/Preview. Los arreglos solicitados y decisiones técnicas normales siguen autorizados sin repetir permisos. IA conserva consulta original y alternativas optativas; pruebas no legitiman cambios silenciosos.
+
+Auditoría histórica solo lectura: dbaa2616 agregó el mapa odio→Amor/Perdón/Paz el17-08-2026;6b4217ef abrió sus concordancias automáticamente. Ambos se integraron en PR284. El PR registra validación general del bloque; no se encontró autorización específica de esa sustitución ni está aquí la conversación original de agosto. No afirmar categóricamente que fue autorizado o que se hizo sin permiso. No atribuir autoría material al usuario por el commit firmado con su cuenta.
+
+Este refuerzo es documental: no cambia nuevamente código, base de datos ni producción, no genera otro Preview y no modifica el maestro. Commit local en la rama de PR322; norma y recibo también en la descripción remota del PR. Incorporar estos documentos con el siguiente cambio autorizado; no afirmar que ya están en main. Producción sigue en PR321; búsqueda corregida sigue solo en Preview de PR322 pendiente de aprobación/publicación.
+
+## Recibo de revisión —26-11-2026
+
+Preview final funcional READY: dpl_BB3mEVKXULacT2HvUS4ZN2Uj6UGv, commit6a4fd9a74457d4f26fd111ce7bb1c9684bfd1bb6. Mismo alias confirmado: https://calendario-git-agent-avisos-devociona-15ceac-vida-internacional.vercel.app/estudios/profundo?q=odio&auto=1 . Catálogo /signup comprobado con ccvida(SantaAna/Chalchuapa). Logs iniciales error/fatal sin resultados. Esto no certifica consulta autenticada ni validación visual del usuario.
+
+Revisión local:28regresiones, build/TypeScript correctos, módulo nuevo sin errores lint y3recorridos Chromium320/390/820 reales con acciones simuladas. La lectura editorial real confirma1Juan2:9 y3:15 con aborrece. No se cambia corpus/RLS/notas ni producción.
+
+Entorno: se reasociaron por metadatos5overrides Preview de la rama ya integrada PR321 a esta rama, sin leer/reemplazar valores ni tocar production. Nueva rama requiere ccvida y ambosNeon; la compilación automática inicial sin esos overrides no se usó ni se asignó al alias. Los deployments anteriores conservan su snapshot; no volver a desplegar la rama anterior sin revisar configuración. Reversión:devolver gitBranch anterior de esas5variables. Se entrega únicamente el Preview final correcto.
+
+Producción sigue en PR321/commit6db8d0cd, deployment dpl_EhqV3yachPhDSDZcyi6zaNm2QyHX. PR322 quedaDraft, sin merge/autorización de producción de este cambio. Cambio aplicado y compilado; falta validación visual tuya. La bitácora local posterior conserva este recibo; se incluirá con el próximo bloque para no crear otro despliegue solo por documentación.
+
+---
+
+### Entorno de revisión —26-11-2026
+
+PR322 Draft. La primera compilación automática de la rama nueva no recibió los overrides de ccvida/Neon y no se asignó al alias habitual ni se entregó para revisar. Se intentó cancelarla, pero ya no aceptó cancelación. Antes de entregar se configura el entorno correcto y se sustituye por la compilación final del mismo código.
+
+Se reasociaron exclusivamente por metadatos5variables de target Preview desde la rama integrada/cerrada agent/recuperar-fotos-20261124 a agent/estudio-busqueda-fiel-20261126: NEXT_PUBLIC_SUPABASE_URL/ANON_KEY, VIDA_BIBLE_READ_BACKEND y NEON_BIBLE_LEXICON/TEXTS_DATABASE_URL. Valores conservados en Vercel, sin leerlos ni copiarlos a archivos. Producción y otras ramas no se modificaron; deployments anteriores conservan su snapshot. Reversión de esta configuración: devolver gitBranch al anterior en esos mismos5IDs; no cambiar valores. No desplegar nuevamente la rama anterior sin revisar su entorno. El nuevo Preview debe confirmarse por SHA/READY/catálogo ccvida antes de asignar el alias estable. Esta nota viaja en la compilación final; no cambia código funcional.
+
+## Estudios: búsqueda fiel al tema —26-11-2026 · en revisión
+
+Solicitud: al consultar odio aparecían amor/perdón. Causa reproducida en código y datos: no hay alias/tema aprobado de odio/aborrecer en el índice de NeonB; el mapa controlado sugería Amor/Perdón/Paz y la action abría sus concordancias automáticamente, mostrándolas como interpretación de la consulta original. Esta sustitución queda retirada. La IA tampoco convierte su primary directamente en respuesta: ofrece opciones explícitas.
+
+La lectura adicional busca palabras concretas en RV1909 aprobada/licenciada, solo si no hay concordancia directa; para odio/odiar consulta las formas reales odio/aborrecer. Conserva consulta, texto y referencia exactos, identifica coincidencias textuales y permite abrir contexto. No genera versículos ni crea datos editoriales. Consultas acotadas80filas, hasta12pasajes, fuentes/libros aprobados, autorización normal antes de leer; misma caché editorial y permisos. No hay SQL/RLS/datos modificados ni modelos/planes nuevos. Consultas compuestas no se convierten arbitrariamente en una palabra.
+
+Verificación editorial real solo lectura: NeonB contiene1Juan2:9,2:11,3:13,3:15 y4:20 con aborrece. Pruebas locales:28regresiones correctas, incluyendo7casos nuevos del recorrido real con dependencias controladas(autorización, fuente, falta de datos, conservar tema, no abrir relacionados, referentes/lugares, primaryIA); build/TypeScript correctos. Chromium320/390/820 con componenteReact real y acciones simuladas: tema original, enlace exacto, selección explícita y sin desborde. No es prueba autenticada remota. Lint del módulo nuevo correcto;3avisos heredados en archivos existentes no se tocaron.
+
+Rama agent/estudio-busqueda-fiel-20261126 desde main6db8d0cd; no mezclar los commits documentales locales de la rama de sedes. Preparar un único Preview y reutilizar el alias habitual. No merge/producción nuevos sin autorización de este cambio. Maestro/Bloque4/FASEI intactos. Recibo final del Preview se registra en el PR.
+
+Continuidad de sedes anterior: PR321 ya MERGED y producción6db8d0cd READY(dpl_EhqV3yachPhDSDZcyi6zaNm2QyHX), dominio habitual verificado. Recibo remoto en PR321; todavía falta clasificación administrativa y pruebas con personas. No reaplicar migraciones/fotos ni activar exigir_sedes_legacy mientras no se configure ese alcance.
+
 ## Publicación solicitada —25-11-2026 · en verificación
 
 El usuario autoriza expresamente pasar a producción sin afectar lo que funciona y solicita un texto sencillo para un líder. Esta aprobación incluye integrar PR321/publicar main, pero no asignar sedes/pastores automáticamente ni modificar el maestro. No afirmar que solo faltan pruebas: también falta clasificación administrativa real.

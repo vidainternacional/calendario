@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { classifyVidaAiProviderFailure, providerFailureCooldownMs, readProviderFailureFingerprint, type VidaAiProviderFailureCategory } from './provider-failure'
 
 export type VidaAiLevel = 1 | 2
-export type VidaAiTask = 'organizar_notas' | 'interpretar_busqueda_biblica'
+export type VidaAiTask = 'organizar_notas' | 'interpretar_busqueda_biblica' | 'responder_pregunta_biblica'
 export type VidaAiProviderName = 'gemini' | 'openai' | 'grok' | 'perplexity' | 'kimi' | 'claude'
 
 type VidaAiPolicy = { level: VidaAiLevel; maxInputChars: number; maxOutputTokens: number; timeoutMs: number; cacheTtlMs: number }
@@ -31,6 +31,7 @@ class ProviderError extends Error {
 const POLICIES: Record<VidaAiTask, VidaAiPolicy> = {
   organizar_notas: { level: 1, maxInputChars: 16_000, maxOutputTokens: 1_200, timeoutMs: 25_000, cacheTtlMs: 10 * 60 * 1000 },
   interpretar_busqueda_biblica: { level: 1, maxInputChars: 5_000, maxOutputTokens: 240, timeoutMs: 12_000, cacheTtlMs: 30 * 60 * 1000 },
+  responder_pregunta_biblica: { level: 1, maxInputChars: 16_000, maxOutputTokens: 1_600, timeoutMs: 25_000, cacheTtlMs: 30 * 60 * 1000 },
 }
 
 const privateCache = new Map<string, CachedResult>()
@@ -132,9 +133,10 @@ export async function vidaAI(request: VidaAiRequest): Promise<VidaAiResult> {
   const key = cacheKey({ ...request, input })
   if (!request.bypassCache) { const cached = readCache(key); if (cached) return cached }
   enforceBurstLimit(request.ownerId, request.task)
-  const requestedProviders = request.provider ? [request.provider] : configuredProviderOrder(policy.level)
-  const providers = requestedProviders.map((provider) => ({ provider, apiKey: providerKey(provider), model: providerModel(provider, policy.level) })).filter((entry) => Boolean(entry.apiKey)).filter((entry) => providerAvailable(entry.provider, entry.model))
-  if (providers.length === 0) { const configured = requestedProviders.some((provider) => Boolean(providerKey(provider))); if (configured) throw new VidaAiError('provider_unavailable', 'Los proveedores configurados están temporalmente en espera.'); throw new VidaAiError('not_configured', 'No hay un proveedor de IA configurado en el servidor.') }
+  const questionTask = request.task === 'responder_pregunta_biblica'
+  const requestedProviders: VidaAiProviderName[] = questionTask ? ['gemini'] : request.provider ? [request.provider] : configuredProviderOrder(policy.level)
+  const providers = requestedProviders.map((provider) => ({ provider, apiKey: questionTask ? process.env.VIDA_BIBLE_QA_API_KEY || '' : providerKey(provider), model: questionTask ? process.env.VIDA_BIBLE_QA_MODEL || '' : providerModel(provider, policy.level) })).filter((entry) => Boolean(entry.apiKey) && Boolean(entry.model)).filter((entry) => providerAvailable(entry.provider, entry.model))
+  if (providers.length === 0) { const configured = questionTask ? Boolean(process.env.VIDA_BIBLE_QA_API_KEY && process.env.VIDA_BIBLE_QA_MODEL) : requestedProviders.some((provider) => Boolean(providerKey(provider))); if (configured) throw new VidaAiError('provider_unavailable', 'Los proveedores configurados están temporalmente en espera.'); throw new VidaAiError('not_configured', 'No hay un proveedor de IA configurado en el servidor.') }
   const attempts: VidaAiProviderAttempt[] = []
   for (const entry of providers) {
     try {

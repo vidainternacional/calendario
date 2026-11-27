@@ -198,7 +198,7 @@ export async function getResolvedBiblicalTextualStudy(
   translationId = 'spa_r09'
 ): Promise<ResolvedBiblicalTextualStudyBundle | null> {
   const target = await parseInternalBibleReference(rawQuery)
-  if (!target || target.verse === null) return null
+  if (!target || target.verse === null || target.endChapter !== undefined) return null
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

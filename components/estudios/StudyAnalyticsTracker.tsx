@@ -32,7 +32,7 @@ function detectStudyResult(query: string) {
     }
   }
 
-  const concordanceLabel = exactText('p', 'Concordancias internas')
+  const concordanceLabel = exactText('p', 'Concordancias internas') ?? exactText('p', 'Pasajes del texto bíblico')
   if (concordanceLabel) {
     const section = concordanceLabel.closest('section')
     const topic = section?.querySelector('article h3')?.textContent?.trim() || null
@@ -57,7 +57,7 @@ function detectStudyResult(query: string) {
     }
   }
 
-  const suggestionLabel = exactText('p', 'Ayuda de búsqueda')
+  const suggestionLabel = exactText('p', 'Ayuda de búsqueda') ?? exactText('p', 'Otros temas relacionados')
   if (suggestionLabel) {
     const section = suggestionLabel.closest('section')
     const suggestion = section?.querySelector('button span')?.textContent?.trim() || null

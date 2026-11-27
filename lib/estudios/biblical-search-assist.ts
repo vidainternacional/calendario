@@ -8,6 +8,7 @@ import {
   tokenizeBiblicalSearchQuery,
 } from '@/lib/estudios/biblical-search-ranking'
 import { relatedApprovedThemeLabels } from '@/lib/estudios/biblical-search-relations'
+import { esTemaDirecto } from './biblical-query-intent'
 
 export type AsistenciaTemaBiblico =
   | { kind: 'resolved'; label: string; query: string; score: number }
@@ -62,7 +63,7 @@ async function interpretarConIaEconomica({
         'Solo puedes seleccionar etiquetas que aparezcan exactamente en temas_aprobados.',
         'Responde únicamente JSON válido con esta forma:',
         '{"primary": string|null, "alternatives": string[]}.',
-        'Usa primary solo cuando exista un tema aprobado razonablemente equivalente o claramente pertinente.',
+        'Usa primary solo cuando exista un tema aprobado equivalente: un tema contrario o una respuesta pastoral no es un sinónimo.',
         'Si solo hay temas relacionados, colócalos en alternatives. Si no hay relación suficiente, devuelve primary null y alternatives [].',
       ].join(' '),
     })
@@ -85,14 +86,15 @@ async function interpretarConIaEconomica({
         )).filter(label => label !== primary).slice(0, 4)
       : []
 
-    if (primary) return { kind: 'resolved', label: primary, query: primary, score: 0.76 }
-    if (alternatives.length > 0) {
+    // Una elección del modelo no certifica equivalencia. El usuario decide abrirla.
+    const suggestions = primary ? [primary, ...alternatives].slice(0, 4) : alternatives
+    if (suggestions.length > 0) {
       return {
         kind: 'suggestions',
-        suggestions: alternatives.map((label, index) => ({
+        suggestions: suggestions.map((label, index) => ({
           label,
           query: label,
-          detail: 'Tema aprobado relacionado con su consulta',
+          detail: 'Tema relacionado; no sustituye su consulta',
           score: 0.72 - index * 0.03,
         })),
       }
@@ -152,6 +154,7 @@ export async function asistirTemaBiblico(rawQuery: string): Promise<AsistenciaTe
       id: term.id,
       label: term.canonical_term,
       query: term.canonical_term,
+      direct: esTemaDirecto(query, [term.canonical_term, term.normalized_term, ...(aliasesByTerm.get(term.id) ?? [])]),
       score: scoreBiblicalSearchCandidate(query, [
         { value: term.canonical_term, weight: 1 },
         { value: term.normalized_term, weight: 1 },
@@ -171,7 +174,7 @@ export async function asistirTemaBiblico(rawQuery: string): Promise<AsistenciaTe
       && best.score >= 0.82
       && (best.score >= 0.94 || !runnerUp || best.score - runnerUp.score >= 0.08)
 
-    if (confident) {
+    if (confident && best.direct) {
       return { kind: 'resolved', label: best.label, query: best.query, score: best.score }
     }
 
