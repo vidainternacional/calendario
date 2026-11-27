@@ -1,4 +1,4 @@
--- PROPUESTA: no ejecutar en ccvida sin autorización específica.
+-- Historial privado autorizado por el propietario el 27-11-2026 tras evaluación de espacio.
 -- Tabla nueva; no modifica caché antiguo, notas, usuarios, roles o políticas existentes.
 begin;
 
@@ -18,7 +18,7 @@ create index estudio_historial_privado_recientes
   on public.estudio_historial_privado (profile_id, created_at desc, id desc);
 
 alter table public.estudio_historial_privado enable row level security;
-revoke all on public.estudio_historial_privado from public, anon;
+revoke all on public.estudio_historial_privado from public, anon, authenticated;
 grant select, insert, update, delete on public.estudio_historial_privado to authenticated;
 
 create policy estudio_historial_leer_propio on public.estudio_historial_privado

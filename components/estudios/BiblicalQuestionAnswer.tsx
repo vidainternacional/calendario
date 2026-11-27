@@ -27,6 +27,7 @@ export default function BiblicalQuestionAnswer({ answer }: { answer: Answer }) {
           <Link href={`/biblia?book=${source.bookCode}&chapter=${source.chapter}&verse=${source.verse}`} className="inline-flex min-h-10 items-center text-sm font-bold text-[#A93226]">{source.reference}</Link>
           <p className="text-sm leading-6 text-slate-700">{source.text}</p>
           <p className="mt-1 text-xs text-slate-500">{source.sourceName}</p>
+          <Link href={`/estudios/profundo?q=${encodeURIComponent(source.reference)}&auto=1`} className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-[#A93226]">Ver estudio completo de {source.reference}</Link>
         </div>)}</div>
       </details>}
     </section>

@@ -63,3 +63,11 @@ test('El listado pagina metadatos y no descarga las respuestas ni se limita a di
 test('Reutilizar no incluye recibos anteriores dentro del snapshot que se guarda',async()=>{
  const e=dbFixture(),saved=await history.saveStudy(e.db,A,answer.query,'spa_r09',{...answer,history:{id:ID,createdAt:'ayer',reused:true},historyWarning:'anterior'});assert.equal(saved.history.reused,false);assert.equal(e.stored[0].resultado.history,undefined);assert.equal(e.stored[0].resultado.historyWarning,undefined)
 })
+test('El historial conserva íntegros contexto histórico, geografía, mapas y análisis textual',async()=>{
+ const e=dbFixture();const state={status:'success',kind:'study',query:'Mateo 3:13',pasaje:'Mateo 3:13',resultado:{explicacion:'Explicación de prueba',contexto_historico:'Contexto histórico de prueba',geografia:'Ubicación de prueba'},textualEvidence:{editions:[{text:'Texto original de prueba',words:[{lemma:'fixture'}]}]},chronology:{events:[{id:'fixture',places:[{name:'Lugar de prueba',latitude:31,longitude:35}],source:{name:'Fuente de prueba'}}]},relatedConcordances:[{theme:'Tema de prueba',matches:[]}]};
+ await history.saveStudy(e.db,A,state.query,'spa_r09',state);
+ const restored=await actions(e).abrirEstudioHistorial(ID);
+ const {history:receipt,...snapshot}=restored;
+ assert.equal(receipt.reused,true);assert.deepEqual(snapshot,state);
+ assert.deepEqual(JSON.parse(JSON.stringify(e.stored[0].resultado)),state);
+})

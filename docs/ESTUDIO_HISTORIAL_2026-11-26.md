@@ -1,4 +1,4 @@
-# Historial privado de Estudio Profundo — propuesta lista para aprobación
+# Historial privado de Estudio Profundo — autorizado y aplicado el 27-11-2026
 
 ## Solicitud y causa comprobada
 
@@ -34,9 +34,11 @@ Seguridad nueva solo para esa tabla:
 - Las acciones del servidor comprueban sesión y filtran por propietario; no usan service-role. Un identificador ajeno no permite leer ni borrar el registro.
 - No cambia roles, políticas/grants de otras tablas, notas, autenticación, corpus ni datos ya existentes. No hay importación de filas privadas, cron, disparadores o llamadas a IA en SQL.
 
-**Estado: no aplicado a Supabase.** No crear la tabla, migración remota, políticas o grants hasta recibir aprobación específica del propietario después de presentar esta propuesta. El documento maestro exige «No modificar Supabase/RLS/permisos/datos sensibles sin presentar antes cambio exacto, impacto y reversión y recibir aprobación explícita». El pedido funcional autoriza preparar la implementación, pero no acredita la aprobación de un alcance SQL que todavía no se había presentado.
+**Estado: autorizado y aplicado el 27-11-2026.** El propietario aprobó ejecutarlo si la evaluación de espacio era razonable. Se midieron251950771bytes antes y252008115bytes después; tabla inicial32768bytes/0filas. No hay promesa de capacidad ilimitada. CLI oficial2.81.3 generó las migraciones locales; el conector asigna sus propias versiones remotas al aplicar los mismos paquetes.
 
-Después de autorización: generar la migración mediante el CLI según la guía Supabase, copiar exactamente esta propuesta, aplicar únicamente en el proyecto principal, verificar metadatos y desplegar un solo Preview del bloque. No hacer merge ni producción. Hasta entonces el código del historial permanece local; publicar antes dejaría a la pantalla dependiendo de una tabla ausente.
+Migraciones: `20261127000637_estudio_historial_privado.sql` y `20261127000804_estudio_historial_privilegios_minimos.sql`. La primera crea el paquete preparado. La segunda retira tres privilegios que los defaults del proyecto habían heredado en la tabla nueva. El SQL consolidado de docs incluye esa limitación desde la creación. Verificado: RLS activa, cuatro políticas, anon sin acceso y authenticated sin TRUNCATE/REFERENCES/TRIGGER. No se cambian defaults ni otras tablas. Advisor sin hallazgos nuevos para esta tabla.
+
+La rama de revisión incorpora el historial al único Preview del bloque. No se hace merge ni producción. La sesión autenticada real queda pendiente del propietario.
 
 ## Espacio y reversión
 
@@ -48,13 +50,15 @@ Reversión preparada en `docs/sql/estudio-historial-reversion.sql`: retirar prim
 
 ## Verificación local
 
-- Doce pruebas nuevas de aplicación: primera consulta genera una vez, repetición recupera el mismo resultado, aislamiento de cuenta, ausencia de sesión, fallo de lectura sin consumir IA, estados que no deben cachearse, fallo al guardar sin perder respuesta, tamaño máximo, restauración directa, borrado propio, paginación y snapshot sin metadatos de otro guardado.
-- Doce comprobaciones SQL mediante PostgreSQL local/PGlite y usuarios ficticios: RLS real, propietario, otra cuenta, administración sin acceso ajeno, cuenta inactiva, anon, transferencia de propietario bloqueada, unicidad, tamaño, eliminación y reversión conservadora. No se ejecutó SQL de escritura en la base real.
+- Trece pruebas nuevas de aplicación (incluida conservación de contexto histórico, geografía, mapas y análisis textual): primera consulta genera una vez, repetición recupera el mismo resultado, aislamiento de cuenta, ausencia de sesión, fallo de lectura sin consumir IA, estados que no deben cachearse, fallo al guardar sin perder respuesta, tamaño máximo, restauración directa, borrado propio, paginación y snapshot sin metadatos de otro guardado.
+- Trece comprobaciones SQL mediante PostgreSQL local/PGlite y usuarios ficticios: RLS real, propietario, otra cuenta, administración sin acceso ajeno, cuenta inactiva, anon, transferencia de propietario bloqueada, unicidad, tamaño, eliminación y reversión conservadora. Los casos con usuarios ficticios se ejecutaron localmente; la verificación remota consultó solo metadatos/recuentos.
 - Noventa y siete pruebas relacionadas correctas. TypeScript y compilación local correctos, lint de módulos nuevos sin errores.
 - Chromium con React real y servidor controlado a 320/390/820: historial cerrado, apertura sin llamada al generador, paginación, conservación del resultado ante error, eliminación confirmada y sin desbordes. No representa una sesión real autenticada ni la activación remota del historial.
 - La deuda histórica del conjunto general sigue documentada; no declarar CI global verde ni cerrar pruebas con personas por estos resultados locales.
-- Comprobación general final: 798 pruebas, 789 pasan y permanecen los mismos nueve fallos anteriores. No apareció un fallo nuevo del historial. Las doce comprobaciones de SQL local se ejecutan aparte.
+- Comprobación general final: 798 pruebas, 789 pasan y permanecen los mismos nueve fallos anteriores. No apareció un fallo nuevo del historial. Las trece comprobaciones de SQL local se ejecutan aparte.
 
-## Siguiente paso
+## Preservación y siguiente paso
 
-Presentar la solicitud concreta de autorización para una tabla privada y sus cuatro políticas nuevas. Después de aprobación se ejecuta el paquete exacto y se conecta el mismo Preview. Sin esa aprobación no se modifica la base de datos ni se publica este bloque.
+La explicación breve conserva el acceso al estudio completo existente desde cada pasaje citado. El historial guarda el snapshot íntegro de las capas disponibles: contexto histórico, geografía, cronología/mapas, texto original y análisis. No se inventan ubicaciones ni se promete mapa en todo pasaje. Notas y corpus intactos.
+
+Validar con la cuenta real en el mismo Preview: consultar, abrir la respuesta desde historial sin regenerar, entrar al estudio completo de una fuente y revisar sus capas. Solo después de revisión y autorización nueva se considera producción. No repetir el SQL ni el despliegue para documentar un recibo.
